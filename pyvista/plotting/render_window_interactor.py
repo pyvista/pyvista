@@ -1,5 +1,6 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
 import collections.abc
+from contextlib import contextmanager
 from functools import partial
 import logging
 import time
@@ -8,7 +9,7 @@ import weakref
 
 from pyvista import _vtk
 from pyvista.utilities import try_callback
-from pyvista.utilities.misc import vtk_version_info
+from pyvista.utilities.misc import PyVistaDeprecationWarning, vtk_version_info
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -57,6 +58,8 @@ class RenderWindowInteractor:
         self.track_click_position(
             self._toggle_chart_interaction, side="left", double=True, viewport=True
         )
+
+        self.reset_picker()
 
     @property
     def _plotter(self):
@@ -819,6 +822,31 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetEventPosition()
 
+    def get_poked_renderer(self, x=None, y=None):
+        if x is None or y is None:
+            x, y = self.get_event_position()
+        return self.interactor.FindPokedRenderer(x, y)
+
+    def get_event_subplot_loc(self):
+        poked_renderer = self.get_poked_renderer()
+        for index in range(len(self._plotter.renderers)):
+            renderer = self._plotter.renderers[index]
+            if renderer is poked_renderer:
+                return self._plotter.renderers.index_to_loc(index)
+        raise RuntimeError('Poked rendered not found in Plotter.')
+
+    @contextmanager
+    def poked_subplot(self):
+        active_renderer_index = self._plotter.renderers._active_index
+        loc = self.get_event_subplot_loc()
+        self._plotter.subplot(*loc)
+        try:
+            yield
+        finally:
+            # Reset to the active renderer.
+            loc = self._plotter.renderers.index_to_loc(active_renderer_index)
+            self._plotter.subplot(*loc)
+
     def get_interactor_style(self):
         """Get the interactor style.
 
@@ -901,11 +929,66 @@ class RenderWindowInteractor:
         vtk.vtkAbstractPicker
             VTK picker.
         """
-        return self.interactor.GetPicker()
+        # Deprecated on v0.39.0, estimated removal on v0.41.0
+        warnings.warn(
+            "Use of `get_picker` is deprecated. Use `picker` property instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.picker
 
     def set_picker(self, picker):
         """Set the picker."""
+        # Deprecated on v0.39.0, estimated removal on v0.41.0
+        warnings.warn(
+            "Use of `get_picker` is deprecated. Use `picker` property instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.picker = picker
+
+    @property
+    def picker(self):
+        """Get/set the picker.
+
+        Returns
+        -------
+        vtk.vtkAbstractPicker
+            VTK picker.
+        """
+        return self.interactor.GetPicker()
+
+    @picker.setter
+    def picker(self, picker):
+        pickers = {
+            'area': _vtk.vtkAreaPicker,
+            'cell': _vtk.vtkCellPicker,
+            'hardware': _vtk.vtkHardwarePicker,
+            'point': _vtk.vtkPointPicker,
+            'prop': _vtk.vtkPropPicker,
+            'rendered_area': _vtk.vtkRenderedAreaPicker,
+            'reslice': _vtk.vtkResliceCursorPicker,
+            'scene': _vtk.vtkScenePicker,
+            'volume': _vtk.vtkVolumePicker,
+            'world': _vtk.vtkWorldPointPicker,
+        }
+        if isinstance(picker, str):
+            try:
+                picker = pickers[picker]()
+            except KeyError:
+                raise KeyError(f'Picker class `{picker}` is unknown.')
+            # Set default tolerance for internal configurations
+            if hasattr(picker, 'SetTolerance'):
+                picker.SetTolerance(0.025)
         self.interactor.SetPicker(picker)
+
+    def add_pick_obeserver(self, observer):
+        """Add a callback observer to the picker for end pick events."""
+        self.picker.AddObserver(_vtk.vtkCommand.EndPickEvent, observer)
+
+    def reset_picker(self):
+        # Remove observers
+        self.picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
+        # Set default picker to vtkWorldPointPicker
+        self.picker = 'world'
 
     def fly_to(self, renderer, point):
         """Fly to the given point."""

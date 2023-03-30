@@ -1,5 +1,4 @@
 """Module managing picking events."""
-
 from functools import partial
 import warnings
 import weakref
@@ -19,26 +18,126 @@ def _launch_pick_event(interactor, event):
     click_z = 0
 
     picker = interactor.GetPicker()
-    renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
+    renderer = interactor.GetInteractorStyle()._parent()._plotter.iren.get_poked_renderer()
     picker.Pick(click_x, click_y, click_z, renderer)
 
 
-class PickingHelper:
+class PyVistaPickingError(RuntimeError):
+    pass
+
+
+class ElementHandler:
+    def __init__(self, mode='cell', callback=None):
+        self._picker_ = None
+        self.callback = callback
+        self.mode = mode
+
+    @property
+    def picker(self):
+        return self._picker_()
+
+    @picker.setter
+    def picker(self, picker):
+        self._picker_ = weakref.ref(picker)
+
+    def get_mesh(self):
+        ds = self.picker.GetDataSet()
+        if ds is not None:
+            return pyvista.wrap(ds)
+
+    def get_cell(self, picked_point):
+        mesh = self.get_mesh()
+        # cell_id = self.picker.GetCellId()
+        cell_id = mesh.find_containing_cell(picked_point)  # more accurate
+        if cell_id < 0:
+            return  # TODO: this happens but shouldn't
+        cell = mesh.extract_cells(cell_id)
+        cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
+        return cell
+
+    def get_face(self, picked_point):
+        cell = self.get_cell(picked_point).get_cell(0)
+        if cell.n_faces > 1:
+            for i, face in enumerate(cell.faces):
+                contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
+                if contains > -1:
+                    break
+            if contains < 0:
+                # this shouldn't happen
+                raise RuntimeError('Trouble aligning point with face.')
+            face = face.cast_to_unstructured_grid()
+            face.field_data['vtkOriginalFaceIds'] = np.array([i])
+        else:
+            face = cell.cast_to_unstructured_grid()
+            face.field_data['vtkOriginalFaceIds'] = np.array([0])
+        return face
+
+    def get_edge(self, picked_point):
+        cell = self.get_cell(picked_point).get_cell(0)
+        if cell.n_edges > 1:
+            ei = (
+                cell.cast_to_unstructured_grid().extract_all_edges().find_closest_cell(picked_point)
+            )
+            edge = cell.edges[ei].cast_to_unstructured_grid()
+            edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
+        else:
+            edge = cell.cast_to_unstructured_grid()
+        return edge
+
+    def get_point(self, picked_point):
+        mesh = self.get_mesh()
+        pid = mesh.find_closest_point(picked_point)
+        picked = pyvista.PolyData(mesh.points[pid])
+        picked.point_data['vtkOriginalPointIds'] = np.array([pid])
+        return picked
+
+    def __call__(self, picked_point, picker):
+        self.picker = picker
+        mesh = self.get_mesh()
+        if mesh is None:
+            return  # No selected mesh (point not on surface of mesh)
+
+        if self.mode == 'mesh':
+            picked = mesh
+        elif self.mode == 'cell':
+            picked = self.get_cell(picked_point)
+            if picked is None:
+                return  # TODO: handle
+        elif self.mode == 'face':
+            picked = self.get_face(picked_point)
+        elif self.mode == 'edge':
+            picked = self.get_edge(picked_point)
+        elif self.mode == 'point':
+            picked = self.get_point(picked_point)
+
+        if self.callback:
+            try_callback(self.callback, picked)
+
+
+class PickingInterface:
     """An internal class to hold picking related features."""
 
     def __init__(self, *args, **kwargs):
-        """Initialize the picking helper."""
+        """Initialize the picking interface."""
         super().__init__(*args, **kwargs)
-        self.picked_cells = None
-        self._picked_point = None
-        self._picked_mesh = None
-        self.picked_path = None
-        self.picked_geodesic = None
-        self.picked_horizon = None
         self._picking_left_clicking_observer = None
-        self._picking_text = None
-        self._picker = None
-        self._picked_block_index = None
+        self._picking_right_clicking_observer = None
+        self._picker_in_use = False
+        self._picked_point = None
+
+    @property
+    def picked_point(self):
+        """Return the picked point.
+
+        This returns the picked point after selecting a point.
+
+        Returns
+        -------
+        numpy.ndarray or None
+            Picked point if available.
+
+        """
+        return self._picked_point
 
     def get_pick_position(self):
         """Get the pick position or area.
@@ -51,6 +150,544 @@ class PickingHelper:
         """
         return self.renderer.get_pick_position()
 
+    def pick_click_position(self):
+        """Get corresponding click location in the 3D plot.
+
+        Returns
+        -------
+        tuple
+            Three item tuple with the 3D picked position.
+
+        """
+        if self.click_position is None:
+            self.store_click_position()
+        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
+        return self.iren.picker.GetPickPosition()
+
+    def pick_mouse_position(self):
+        """Get corresponding mouse location in the 3D plot.
+
+        Returns
+        -------
+        tuple
+            Three item tuple with the 3D picked position.
+
+        """
+        if self.mouse_position is None:
+            self.store_mouse_position()
+        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
+        return self.iren.picker.GetPickPosition()
+
+    def _init_click_picking_callback(self, left_clicking=False):
+        if left_clicking:
+            self._picking_left_clicking_observer = self.iren.add_observer(
+                "LeftButtonPressEvent",
+                partial(try_callback, _launch_pick_event),
+            )
+        else:
+            self._picking_right_clicking_observer = self.iren.add_observer(
+                "RightButtonPressEvent",
+                partial(try_callback, _launch_pick_event),
+            )
+
+    def disable_picking(self):
+        """Disable any active picking and remove observers.
+
+        Examples
+        --------
+        Enable and then disable picking.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(center=(1, 0, 0))
+        >>> cube = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(cube)
+        >>> _ = pl.enable_mesh_picking(left_clicking=True)
+        >>> pl.disable_picking()
+
+        """
+
+        # remove left and right clicking observer if available
+        if getattr(self, 'iren', None):
+            self.iren.remove_observer(self._picking_left_clicking_observer)
+            self.iren.remove_observer(self._picking_right_clicking_observer)
+        self._picking_left_clicking_observer = None
+        self._picking_right_clicking_observer = None
+
+        # Reset to default picker
+        self.iren.reset_picker()
+
+        self._picker_in_use = False
+
+    def _validate_picker_not_in_use(self):
+        if self._picker_in_use:
+            raise PyVistaPickingError(
+                'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            )
+
+    def enable_point_picking(
+        self,
+        callback=None,
+        tolerance=0.025,
+        left_clicking=False,
+        picker='point',
+        show_message=True,
+        font_size=18,
+        color='pink',
+        point_size=10,
+        show_point=True,
+        use_picker=False,
+        **kwargs,
+    ):
+        """Enable picking at points under the cursor.
+
+        Enable picking a point at the mouse location in the render
+        view using the ``P`` key. This point is saved to the
+        ``.picked_point`` attribute on the plotter. Pass a callback
+        that takes that point as an argument. The picked
+        point can either be a point on the first intersecting mesh, or
+        a point in the 3D window.
+
+        The ``picker`` choice will help determine how the point picking
+        is performed.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, calls this callable after a pick is made. The
+            picked point is input as the first parameter to this
+            callable.
+
+        tolerance : float, tolerance: 0.025
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size. Rendering window size is measured across diagonal.
+            This is only valid for some choices of ``picker``.
+
+        left_clicking : bool, default: False
+            When ``True``, points can be picked by clicking the left mouse
+            button. Default is to use the right mouse button.
+
+        picker : str | vtk.vtkAbstractPicker, optional
+            The picker to use.
+
+        show_message : bool | str, default: True
+            Show the message about how to use the point picking
+            tool. If this is a string, that will be the message shown.
+
+        font_size : int, default: 18
+            Sets the size of the message.
+
+        color : ColorLike, default: "pink"
+            The color of the selected mesh when shown.
+
+        point_size : int, default: 10
+            Size of picked points if ``show_point`` is ``True``.
+
+        show_point : bool, default: True
+            Show the picked point after clicking.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked point is interactively displayed.
+
+        Examples
+        --------
+        Enable point picking with a custom message.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> _ = pl.add_mesh(pv.Cube(), pickable=False)
+        >>> pl.enable_point_picking(show_message='Pick a point')
+
+        See :ref:`point_picking_example` for a full example using this method.
+
+        """
+        self._validate_picker_not_in_use()
+        # TODO: Removed kwargs: pickable_window, use_mesh
+        if 'use_mesh' in kwargs:
+            raise ValueError('`use_mesh` has been deprecated.')
+        if 'pickable_window' in kwargs:
+            raise ValueError('`pickable_window` has been deprecated.')
+
+        self_ = weakref.ref(self)
+
+        def _end_pick_event(picker, event):
+            with self_().iren.poked_subplot():
+                self_()._picked_point = np.array(picker.GetPickPosition())
+                if show_point:
+                    self_().add_mesh(
+                        self_().picked_point,
+                        color=color,
+                        point_size=point_size,
+                        name='_picked_point',
+                        pickable=False,
+                        reset_camera=False,
+                        **kwargs,
+                    )
+                if callable(callback):
+                    if use_picker:
+                        try_callback(callback, self.picked_point, picker)
+                    else:
+                        try_callback(callback, self.picked_point)
+
+        if picker is not None:  # If None, that means use already set picker
+            self.iren.picker = picker
+        if hasattr(self.iren.picker, 'SetTolerance'):
+            self.iren.picker.SetTolerance(tolerance)
+        self.iren.add_pick_obeserver(_end_pick_event)
+        self._init_click_picking_callback(left_clicking=left_clicking)
+        self._picker_in_use = True
+
+        # Now add text about cell-selection
+        if show_message:
+            if show_message is True:
+                if left_clicking:
+                    show_message = "Left-click"
+                else:
+                    show_message = "Right-click"
+                show_message += ' or press P to pick under the mouse'
+            self._picking_text = self.add_text(
+                str(show_message), font_size=font_size, name='_point_picking_message'
+            )
+
+    def enable_rectangle_picking(
+        self,
+        callback=None,
+        mode='viewport',
+        show_message=True,
+        font_size=18,
+        start=False,
+        **kwargs,
+    ):
+        """Enable area based picking at cells.
+
+        Press ``"r"`` to enable retangle based selection. Press
+        ``"r"`` again to turn it off.
+
+        This has two modes:
+
+        1. Viewport: the callback is passed the viewport coordinates of
+           the selection rectangle
+        2. Frustum: the callback is passed the full frustrum made from
+           the selection rectangle into the scene
+
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, calls this callable after a selection is made.
+            The picked_cells are input as the first parameter to this
+            callable.
+
+        through : bool, default: True
+            When ``True`` the picker will select all cells
+            through the mesh(es). When ``False``, the picker will select
+            only visible cells on the selected surface(s).
+
+        show : bool, default: True
+            Show the selection interactively.
+
+        show_message : bool | str, default: True
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
+
+        style : str, default: "wireframe"
+            Visualization style of the selection.  One of the
+            following: ``style='surface'``, ``style='wireframe'``, or
+            ``style='points'``.
+
+        line_width : float, default: 5.0
+            Thickness of selected mesh edges.
+
+        color : ColorLike, default: "pink"
+            The color of the selected mesh when shown.
+
+        font_size : int, default: 18
+            Sets the font size of the message.
+
+        start : bool, default: True
+            Automatically start the cell selection tool.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the selection is interactively displayed.
+
+        Examples
+        --------
+        Add a mesh and a cube to a plot and enable cell picking.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(center=(1, 0, 0))
+        >>> cube = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(cube)
+        >>> _ = pl.enable_cell_picking(left_clicking=True)
+
+        """
+        self._validate_picker_not_in_use()
+
+        # self_ = weakref.ref(self)
+
+        # TODO: validate mode choice
+
+        def _end_pick_event(picker, event_id):
+            if mode == 'frustum':
+                sel = picker.GetFrustum()
+            else:
+                renderer = picker.GetRenderer()
+                x0 = int(renderer.GetPickX1())
+                x1 = int(renderer.GetPickX2())
+                y0 = int(renderer.GetPickY1())
+                y1 = int(renderer.GetPickY2())
+                sel = x0, y0, x1, y1
+
+            if callback is not None:
+                try_callback(callback, sel)
+
+            # HACK: Deactivate selection tool
+            # self_().iren.interactor.SetInteractorStyle(before_style)
+            return
+
+        self.enable_rubber_band_style()  # TODO: better handle
+        self.iren.picker = 'rendered_area'
+        self.iren.add_pick_obeserver(_end_pick_event)
+        self._picker_in_use = True
+
+        # Now add text about cell-selection
+        if show_message:
+            if show_message is True:
+                show_message = "Press R to toggle selection tool"
+            self._picking_text = self.add_text(
+                str(show_message), font_size=font_size, name='_rectangle_picking_message'
+            )
+
+        if start:
+            self.iren._style_class.StartSelect()
+
+
+class PickingMethods(PickingInterface):
+    def __init__(self, *args, **kwargs):
+        """Initialize the picking methods."""
+        super().__init__(*args, **kwargs)
+        self.picked_cells = None
+        self._picked_actor = None
+        self._picked_mesh = None
+        self._picked_cell = None
+        self._picking_text = None
+        self._picked_block_index = None
+
+    @property
+    def picked_actor(self):
+        """Return the picked mesh.
+
+        This returns the picked actor after selecting a mesh with
+        :func:`enable_surface_picking <pyvista.Plotter.enable_surface_picking>` or
+        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>`.
+
+        Returns
+        -------
+        pyvista.Actor or None
+            Picked actor if available.
+
+        """
+        return self._picked_actor
+
+    @property
+    def picked_mesh(self):
+        """Return the picked mesh.
+
+        This returns the picked mesh after selecting a mesh with
+        :func:`enable_surface_picking <pyvista.Plotter.enable_surface_picking>` or
+        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>`.
+
+        Returns
+        -------
+        pyvista.DataSet or None
+            Picked mesh if available.
+
+        """
+        return self._picked_mesh
+
+    @property
+    def picked_cell(self):
+        """Return the picked cell.
+
+        This returns the picked cell after selecting a cell.
+
+        Returns
+        -------
+        pyvista.Cell or None
+            Picked cell if available.
+
+        """
+        return self._picked_cell
+
+    @property
+    def picked_block_index(self):
+        """Return the picked block index.
+
+        This returns the picked block index after selecting a point with
+        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
+
+        Returns
+        -------
+        int or None
+            Picked block if available. If ``-1``, then a non-composite dataset
+            was selected.
+
+        """
+        return self._picked_block_index
+
+    def disable_picking(self):
+        super().__init__()
+        # remove any picking text
+        if hasattr(self, 'renderers'):
+            self.remove_actor(self._picking_text, render=False)
+        self._picking_text = None
+
+    def enable_surface_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color='pink',
+        show_point=True,
+        point_size=10,
+        tolerance=0.025,
+        pickable_window=False,
+        left_clicking=False,
+        picker='cell',
+        use_picker=False,
+        **kwargs,
+    ):
+        """Enable picking of a point on the surface of a mesh.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, calls this callable after a selection is made. The
+            ``mesh`` is input as the first parameter to this callable.
+
+        show_message : bool | str, default: True
+            Show the message about how to use the mesh picking tool. If this
+            is a string, that will be the message shown.
+
+        font_size : int, default: 18
+            Sets the font size of the message.
+
+        color : ColorLike, default: "pink"
+            The color of the selected mesh when shown.
+
+        show_point : bool, default: True
+            Show the selection interactively.
+
+        point_size : int, default: 10
+            Size of picked points if ``show_point`` is ``True``.
+
+        tolerance : float, default: 0.025
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size. Rendering window size is measured across diagonal.
+
+            .. warning::
+                This is ignored with the ``'hardware'`` ``picker``.
+
+        pickable_window : bool, default: False
+            When ``True``, points in the 3D window are pickable.
+
+        left_clicking : bool, default: False
+            When ``True``, meshes can be picked by clicking the left
+            mousebutton.
+
+            .. note::
+               If enabled, left-clicking will **not** display the bounding box
+               around the picked mesh.
+
+        picker : str, optional
+            Choice of VTK picker class type:
+
+                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                  performant for large geometries (default).
+                * ``'cell'``: Uses ``vtkCellPicker``.
+                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                  points on the surface of the mesh.
+                * ``'volume'``: Uses ``vtkVolumePicker``.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked path is interactively displayed.
+
+        Notes
+        -----
+        Picked point can be accessed from :attr:`picked_point
+        <pyvista.Plotter.picked_point>` attribute.
+
+        Examples
+        --------
+        Add a cube to a plot and enable cell picking. Enable ``left_clicking``
+        to immediately start picking on the left click and disable showing the
+        box. You can still press the ``p`` key to select meshes.
+
+        >>> import pyvista as pv
+        >>> cube = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(cube)
+        >>> _ = pl.enable_surface_picking(left_clicking=True)
+
+        See :ref:`surface_picking_example` for a full example using this method.
+
+        """
+        # only allow certain pickers to be used for surface picking
+        #  the picker class needs to have `GetDataSet()`
+        valid_pickers = ['point', 'cell', 'hardware', 'volume']
+        if picker not in valid_pickers:
+            raise ValueError(
+                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
+            )
+
+        self_ = weakref.ref(self)
+
+        def _end_pick_event(picked_point, picker):
+            if not pickable_window and picker.GetDataSet() is None:
+                self_()._picked_point = None
+                self_()._picked_actor = None
+                self_()._picked_mesh = None
+                return
+            self_()._picked_actor = picker.GetActor()
+            self_()._picked_mesh = picker.GetDataSet()
+
+            if show_point:
+                with self_().poked_subplot():
+                    self_().add_mesh(
+                        picked_point,
+                        color=color,
+                        point_size=point_size,
+                        name='_picked_point',
+                        pickable=False,
+                        reset_camera=False,
+                        **kwargs,
+                    )
+            if callable(callback):
+                if use_picker:
+                    try_callback(callback, picked_point, picker)
+                else:
+                    try_callback(callback, picked_point)
+
+        self.enable_point_picking(
+            callback=_end_pick_event,
+            picker=picker,
+            show_point=False,
+            show_message=show_message,
+            left_clicking=left_clicking,
+            use_picker=True,
+            font_size=font_size,
+            tolerance=tolerance,
+        )
+
     def enable_mesh_picking(
         self,
         callback=None,
@@ -62,6 +699,7 @@ class PickingHelper:
         font_size=18,
         left_clicking=False,
         use_actor=False,
+        picker='point',
         **kwargs,
     ):
         """Enable picking of a mesh.
@@ -135,51 +773,34 @@ class PickingHelper:
         See :ref:`mesh_picking_example` for a full example using this method.
 
         """
+        self_ = weakref.ref(self)
 
-        def end_pick_call_back(picked, event):
-            is_valid_selection = False
-            self_ = weakref.ref(self)
-            actor = picked.GetActor()
-            if actor:
-                mesh = actor.GetMapper().GetInputAsDataSet()
-                is_valid_selection = True
-
-            if is_valid_selection:
-                self_()._picked_mesh = mesh
-
-            if callback and is_valid_selection:
+        def end_pick_call_back(_, picker):
+            if callback:
                 if use_actor:
-                    try_callback(callback, actor)
+                    try_callback(callback, self_()._picked_actor)
                 else:
-                    try_callback(callback, mesh)
+                    try_callback(callback, self_()._picked_mesh)
 
-            if show and is_valid_selection:
+            if show:
                 # Select the renderer where the mesh is added.
                 active_renderer_index = self_().renderers._active_index
-                for index in range(len(self.renderers)):
-                    renderer = self.renderers[index]
-                    for actor in renderer._actors.values():
-                        mapper = actor.GetMapper()
-                        if (
-                            isinstance(mapper, _vtk.vtkDataSetMapper)
-                            and mapper.GetInputAsDataSet() == mesh
-                        ):
-                            loc = self_().renderers.index_to_loc(index)
-                            self_().subplot(*loc)
-                            break
+                loc = self_().iren.get_event_subplot_loc()
+                self_().subplot(*loc)
 
                 # Use try in case selection is empty or invalid
                 try:
-                    self_().add_mesh(
-                        mesh,
-                        name='_mesh_picking_selection',
-                        style=style,
-                        color=color,
-                        line_width=line_width,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
-                    )
+                    with self_().poked_subplot():
+                        self_().add_mesh(
+                            self_()._picked_mesh,
+                            name='_mesh_picking_selection',
+                            style=style,
+                            color=color,
+                            line_width=line_width,
+                            pickable=False,
+                            reset_camera=False,
+                            **kwargs,
+                        )
                 except Exception as e:  # pragma: no cover
                     warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
 
@@ -189,32 +810,26 @@ class PickingHelper:
 
                 # render here prior to running the callback
                 self_().render()
-            elif not is_valid_selection:
-                self.remove_actor('_mesh_picking_selection')
-                self_()._picked_mesh = None
 
         # add on-screen message about point-selection
         if show_message:
             if show_message is True:
-                show_message = "\nPress P to pick a single dataset under the mouse pointer."
                 if left_clicking:
-                    show_message += "\nor click to select a dataset under the mouse pointer."
+                    show_message = "Left-click"
+                else:
+                    show_message = "Right-click"
+                show_message += ' or press P to pick single dataset under the mouse pointer'
 
-            self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_mesh_picking_message'
-            )
-
-        if left_clicking:
-            self._picking_left_clicking_observer = self.iren.interactor.AddObserver(
-                "LeftButtonPressEvent",
-                partial(try_callback, _launch_pick_event),
-            )
-
-        self._picker = _vtk.vtkPropPicker()
-        self._picker.AddObserver(_vtk.vtkCommand.EndPickEvent, end_pick_call_back)
-        self.enable_trackball_style()
-        self.iren.set_picker(self._picker)
-        return self._picker
+        self.enable_surface_picking(
+            callback=end_pick_call_back,
+            picker=picker,
+            show_point=False,
+            show_message=show_message,
+            left_clicking=left_clicking,
+            use_picker=True,
+            font_size=font_size,
+            pickable_window=False,
+        )
 
     def enable_cell_picking(
         self,
@@ -338,16 +953,17 @@ class PickingHelper:
                             break
 
                 # Use try in case selection is empty
-                self_().add_mesh(
-                    picked,
-                    name='_cell_picking_selection',
-                    style=style,
-                    color=color,
-                    line_width=line_width,
-                    pickable=False,
-                    reset_camera=False,
-                    **kwargs,
-                )
+                with self_().poked_subplot():
+                    self_().add_mesh(
+                        picked,
+                        name='_cell_picking_selection',
+                        style=style,
+                        color=color,
+                        line_width=line_width,
+                        pickable=False,
+                        reset_camera=False,
+                        **kwargs,
+                    )
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -429,19 +1045,17 @@ class PickingHelper:
                 self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
-        self._picker = _vtk.vtkRenderedAreaPicker()
+        self.enable_rubber_band_style()
+        self.iren.picker = 'rendered_area'
         if through:
-            self._picker.AddObserver(_vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+            self.iren.add_pick_obeserver(through_pick_call_back)
         else:
             # NOTE: there can be issues with non-triangulated meshes
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
             #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
-            self._picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
-
-        self.enable_rubber_band_style()
-        self.iren.set_picker(self._picker)
+            self.iren.add_pick_obeserver(visible_pick_call_back)
 
         # Now add text about cell-selection
         if show_message:
@@ -456,315 +1070,186 @@ class PickingHelper:
         if start:
             self.iren._style_class.StartSelect()
 
-    @property
-    def picked_mesh(self):
-        """Return the picked mesh.
-
-        This returns the picked mesh after selecting a mesh with
-        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>` or
-        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
-
-        Returns
-        -------
-        pyvista.DataSet or None
-            Picked mesh if available.
-
-        """
-        return self._picked_mesh
-
-    @property
-    def picked_point(self):
-        """Return the picked point.
-
-        This returns the picked point after selecting a point.
-
-        Returns
-        -------
-        numpy.ndarray or None
-            Picked point if available.
-
-        """
-        return self._picked_point
-
-    @property
-    def picked_block_index(self):
-        """Return the picked block index.
-
-        This returns the picked block index after selecting a point with
-        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
-
-        Returns
-        -------
-        int or None
-            Picked block if available. If ``-1``, then a non-composite dataset
-            was selected.
-
-        """
-        return self._picked_block_index
-
-    def enable_surface_picking(
+    def enable_element_picking(
         self,
         callback=None,
+        show=True,
         show_message=True,
         font_size=18,
         color='pink',
-        show_point=True,
-        point_size=10,
         tolerance=0.025,
         pickable_window=False,
         left_clicking=False,
+        picker='cell',
+        mode='cell',
         **kwargs,
     ):
-        """Enable picking of a point on the surface of a mesh.
+        """Select individual elements on a mesh."""
+
+        def _end_handler(picked):
+            if callback:
+                try_callback(callback, picked)
+
+            if show:
+                if mode == 'cell':
+                    kwargs.setdefault('color', 'pink')
+                elif mode == 'edge':
+                    kwargs.setdefault('color', 'magenta')
+                else:
+                    kwargs.setdefault('color', 'pink')
+
+                if mode in ['cell', 'face']:
+                    picked = picked.extract_all_edges()
+
+                with self.iren.poked_subplot():
+                    self.add_mesh(
+                        picked,
+                        name='_element_handler_picked',
+                        pickable=False,
+                        point_size=5,
+                        line_width=5,
+                        **kwargs,
+                    )
+
+        handler = ElementHandler(mode=mode, callback=_end_handler)
+
+        self.enable_surface_picking(
+            callback=handler,
+            show_message=show_message,
+            font_size=font_size,
+            color=color,
+            show_point=False,
+            tolerance=tolerance,
+            pickable_window=pickable_window,
+            left_clicking=left_clicking,
+            picker=picker,
+            use_picker=True,
+            **kwargs,
+        )
+
+    def enable_block_picking(
+        self,
+        callback=None,
+        side='left',
+    ):
+        """Enable composite block picking.
+
+        Use this picker to return the index of a DataSet when using composite
+        dataset like :class:`pyvista.MultiBlock` and pass it to a callback.
 
         Parameters
         ----------
         callback : callable, optional
-            When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            When input, this picker calls this callable after a selection is
+            made. The composite index is passed to ``callback`` as the first
+            argument and the dataset as the second argument.
 
-        show_message : bool | str, default: True
-            Show the message about how to use the mesh picking tool. If this
-            is a string, that will be the message shown.
-
-        font_size : int, default: 18
-            Sets the font size of the message.
-
-        color : ColorLike, default: "pink"
-            The color of the selected mesh when shown.
-
-        show_point : bool, default: True
-            Show the selection interactively.
-
-        point_size : int, default: 10
-            Size of picked points if ``show_point`` is ``True``.
-
-        tolerance : float, default: 0.025
-            Specify tolerance for performing pick operation. Tolerance
-            is specified as fraction of rendering window
-            size. Rendering window size is measured across diagonal.
-
-        pickable_window : bool, default: False
-            When ``True``, points in the 3D window are pickable.
-
-        left_clicking : bool, default: False
-            When ``True``, meshes can be picked by clicking the left
-            mousebutton.
-
-            .. note::
-               If enabled, left-clicking will **not** display the bounding box
-               around the picked mesh.
-
-        **kwargs : dict, optional
-            All remaining keyword arguments are used to control how
-            the picked path is interactively displayed.
-
-        Returns
-        -------
-        vtk.vtkPropPicker
-            Property picker.
+        side : str, default: "left"
+            The mouse button to track (either ``'left'`` or ``'right'``).
+            Also accepts ``'r'`` or ``'l'``.
 
         Notes
         -----
-        Picked point can be accessed from :attr:`picked_point
-        <pyvista.Plotter.picked_point>` attribute.
+        The picked block index can be accessed from :attr:`picked_block_index
+        <pyvista.Plotter.picked_block_index>` attribute.
 
         Examples
         --------
-        Add a cube to a plot and enable cell picking. Enable ``left_clicking``
-        to immediately start picking on the left click and disable showing the
-        box. You can still press the ``p`` key to select meshes.
+        Enable block picking with a multiblock dataset. Left clicking will turn
+        blocks blue while right picking will turn the block back to the default
+        color.
 
         >>> import pyvista as pv
-        >>> cube = pv.Cube()
+        >>> multiblock = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_surface_picking(left_clicking=True)
-
-        See :ref:`surface_picking_example` for a full example using this method.
+        >>> actor, mapper = pl.add_composite(multiblock)
+        >>> def turn_blue(index, dataset):
+        ...     mapper.block_attr[index].color = 'blue'
+        ...
+        >>> pl.enable_block_picking(callback=turn_blue, side='left')
+        >>> def clear_color(index, dataset):
+        ...     mapper.block_attr[index].color = None
+        ...
+        >>> pl.enable_block_picking(callback=clear_color, side='right')
+        >>> pl.show()
 
         """
+        # use a weak reference to enable garbage collection
+        renderer_ = weakref.ref(self.renderer)
 
-        def _end_pick_event(picker, event):
-            picked_point_id = picker.GetPointId()
-            if not pickable_window and picked_point_id < 0:
-                self._picked_point = None
-                return
+        sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
+        sel_prop = _vtk.vtkSelectionNode.PROP()
 
-            self._picked_point = np.array(picker.GetPickPosition())
-            self._picked_mesh = picker.GetDataSet()
-            if show_point:
-                self.add_mesh(
-                    self.picked_point,
-                    color=color,
-                    point_size=point_size,
-                    name='_picked_point',
-                    pickable=False,
-                    reset_camera=False,
-                    **kwargs,
-                )
-            if callable(callback):
-                try_callback(callback, self.picked_point)
+        def get_picked_block(*args, **kwargs):
+            """Get the picked block and pass it to the user callback."""
+            x, y = self.mouse_position
+            selector = _vtk.vtkOpenGLHardwareSelector()
+            selector.SetRenderer(renderer_())
+            selector.SetArea(x, y, x, y)  # single pixel
+            selection = selector.Select()
 
-        picker = _vtk.vtkCellPicker()
-        picker.SetTolerance(tolerance)
-        self._picker = picker
-        picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
+            for ii in range(selection.GetNumberOfNodes()):
+                node = selection.GetNode(ii)
+                if node is None:  # pragma: no cover
+                    continue
+                node_prop = node.GetProperties()
+                self._picked_block_index = node_prop.Get(sel_index)
 
-        self.enable_trackball_style()
-        self.iren.set_picker(picker)
+                # Safely return the dataset as it's possible a non pyvista
+                # mapper was added
+                mapper = node_prop.Get(sel_prop).GetMapper()
+                if isinstance(mapper, CompositePolyDataMapper):
+                    dataset = mapper.block_attr.get_block(self._picked_block_index)
+                else:  # pragma: no cover
+                    dataset = None
 
-        if left_clicking:
-            self._picking_left_clicking_observer = self.iren.interactor.AddObserver(
-                "LeftButtonPressEvent",
-                partial(try_callback, _launch_pick_event),
-            )
+                if callable(callback):
+                    try_callback(callback, self._picked_block_index, dataset)
 
-        # add on-screen message about point-selection
-        if show_message:
-            if show_message is True:
-                show_message = "\nPress P to pick a point on the surface under the mouse pointer."
-                if left_clicking:
-                    show_message += "\nor click to select a point under the mouse pointer."
+        self.track_click_position(callback=get_picked_block, viewport=True, side=side)
 
-            self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_surf_picking_message'
-            )
 
-        return picker
+class PickingHelper(PickingMethods):
+    def __init__(self, *args, **kwargs):
+        """Initialize the picking methods."""
+        super().__init__(*args, **kwargs)
+        self.picked_path = None
+        self.picked_geodesic = None
+        self.picked_horizon = None
 
-    def enable_point_picking(
-        self,
-        callback=None,
-        show_message=True,
-        font_size=18,
-        color='pink',
-        point_size=10,
-        use_mesh=False,
-        show_point=True,
-        tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
-        **kwargs,
-    ):
-        """Enable picking at points.
+    def fly_to_mouse_position(self, focus=False):
+        """Focus on last stored mouse position."""
+        if self.mouse_position is None:
+            self.store_mouse_position()
+        click_point = self.pick_mouse_position()
+        if focus:
+            self.set_focus(click_point)
+        else:
+            self.fly_to(click_point)
 
-        Enable picking a point at the mouse location in the render
-        view using the ``P`` key. This point is saved to the
-        ``.picked_point`` attribute on the plotter. Pass a callback
-        that takes that point as an argument. The picked
-        point can either be a point on the first intersecting mesh, or
-        a point in the 3D window.
+    def enable_fly_to_right_click(self, callback=None):
+        """Set the camera to track right click positions.
+
+        A convenience method to track right click positions and fly to
+        the picked point in the scene. The callback will be passed the
+        point in 3D space.
 
         Parameters
         ----------
-        callback : callable, optional
-            When input, calls this callable after a pick is made.  The
-            picked point is input as the first parameter to this
-            callable.  If ``use_mesh`` is ``True``, the callback
-            callable will be passed a pointer to the picked mesh and
-            the point ID of the selected mesh.
-
-        show_message : bool | str, default: True
-            Show the message about how to use the point picking
-            tool. If this is a string, that will be the message shown.
-
-        font_size : int, default: 18
-            Sets the size of the message.
-
-        color : ColorLike, default: "pink"
-            The color of the selected mesh when shown.
-
-        point_size : int, default: 10
-            Size of picked points if ``show_point`` is ``True``.
-
-        use_mesh : bool, default: False
-            If ``True``, the callback will be passed the picked
-            mesh and the point ID of the selected mesh.
-
-        show_point : bool, default: True
-            Show the picked point after clicking.
-
-        tolerance : float, tolerance: 0.025
-            Specify tolerance for performing pick operation. Tolerance
-            is specified as fraction of rendering window
-            size. Rendering window size is measured across diagonal.
-
-        pickable_window : bool, default: False
-            When ``True``, points in the 3D window are pickable.
-
-        left_clicking : bool, default: False
-            When ``True``, points can be picked by clicking the left mouse
-            button.  Note, if enabled, left-clicking will **not** display the
-            bounding box around the picked mesh.
-
-        **kwargs : dict, optional
-            All remaining keyword arguments are used to control how
-            the picked point is interactively displayed.
-
-        Examples
-        --------
-        Enable point picking with a custom message.
-
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Sphere())
-        >>> _ = pl.add_mesh(pv.Cube(), pickable=False)
-        >>> pl.enable_point_picking(show_message="Press P to pick")
-
-        See :ref:`point_picking_example` for a full example using this method.
+        callback : callable
+            Callback to call immediately after right clicking.
 
         """
 
-        def _end_pick_event(picker, event):
-            picked_point_id = picker.GetPointId()
-            if (not pickable_window) and (picked_point_id < 0):
-                return None
-
-            self._picked_point = np.array(picker.GetPickPosition())
-            self._picked_mesh = picker.GetDataSet()
-            self._picked_block_index = picker.GetFlatBlockIndex()
-
-            self.picked_point_id = picked_point_id
-            if show_point:
-                self.add_mesh(
-                    self.picked_point,
-                    color=color,
-                    point_size=point_size,
-                    name='_picked_point',
-                    pickable=False,
-                    reset_camera=False,
-                    **kwargs,
-                )
+        def _the_callback(*args):
+            click_point = self.pick_mouse_position()
+            self.fly_to(click_point)
             if callable(callback):
-                if use_mesh:
-                    try_callback(callback, self.picked_mesh, self.picked_point_id)
-                else:
-                    try_callback(callback, self.picked_point)
+                try_callback(callback, click_point)
 
-        point_picker = _vtk.vtkPointPicker()
-        point_picker.SetTolerance(tolerance)
-        self._picker = point_picker
-        point_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
-
-        self.enable_trackball_style()
-        self.iren.set_picker(point_picker)
-
-        if left_clicking:
-            self._picking_left_clicking_observer = self.iren.add_observer(
-                "LeftButtonPressEvent",
-                partial(try_callback, _launch_pick_event),
-            )
-
-        # Now add text about cell-selection
-        if show_message:
-            if show_message is True and left_clicking:
-                show_message = "Left-click or press P to pick under the mouse"
-            elif show_message is True:
-                show_message = "Press P to pick under the mouse"
-            self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_point_picking_message'
-            )
+        self.track_click_position(callback=_the_callback, side="right")
 
     def enable_path_picking(
         self,
@@ -842,15 +1327,16 @@ class PickingHelper:
             self.picked_path = pyvista.PolyData(np.array(the_points))
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                self.add_mesh(
-                    self.picked_path,
-                    color=color,
-                    name='_picked_path',
-                    line_width=line_width,
-                    point_size=point_size,
-                    reset_camera=False,
-                    **kwargs,
-                )
+                with self.poked_subplot():
+                    self.add_mesh(
+                        self.picked_path,
+                        color=color,
+                        name='_picked_path',
+                        line_width=line_width,
+                        point_size=point_size,
+                        reset_camera=False,
+                        **kwargs,
+                    )
             if callable(callback):
                 try_callback(callback, self.picked_path)
 
@@ -975,15 +1461,16 @@ class PickingHelper:
             self._last_picked_idx = idx
 
             if show_path:
-                self.add_mesh(
-                    self.picked_geodesic,
-                    color=color,
-                    name='_picked_path',
-                    line_width=line_width,
-                    point_size=point_size,
-                    reset_camera=False,
-                    **kwargs,
-                )
+                with self.poked_subplot():
+                    self.add_mesh(
+                        self.picked_geodesic,
+                        color=color,
+                        name='_picked_path',
+                        line_width=line_width,
+                        point_size=point_size,
+                        reset_camera=False,
+                        **kwargs,
+                    )
             if callable(callback):
                 try_callback(callback, self.picked_geodesic)
 
@@ -1083,14 +1570,15 @@ class PickingHelper:
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                self.add_mesh(
-                    self.picked_horizon,
-                    name=name,
-                    color=color,
-                    opacity=opacity,
-                    pickable=False,
-                    reset_camera=False,
-                )
+                with self.poked_subplot():
+                    self.add_mesh(
+                        self.picked_horizon,
+                        name=name,
+                        color=color,
+                        opacity=opacity,
+                        pickable=False,
+                        reset_camera=False,
+                    )
 
             if callable(callback):
                 try_callback(callback, path)
@@ -1105,178 +1593,3 @@ class PickingHelper:
             show_path=show_path,
             **kwargs,
         )
-
-    def enable_block_picking(
-        self,
-        callback=None,
-        side='left',
-    ):
-        """Enable composite block picking.
-
-        Use this picker to return the index of a DataSet when using composite
-        dataset like :class:`pyvista.MultiBlock` and pass it to a callback.
-
-        Parameters
-        ----------
-        callback : callable, optional
-            When input, this picker calls this callable after a selection is
-            made. The composite index is passed to ``callback`` as the first
-            argument and the dataset as the second argument.
-
-        side : str, default: "left"
-            The mouse button to track (either ``'left'`` or ``'right'``).
-            Also accepts ``'r'`` or ``'l'``.
-
-        Notes
-        -----
-        The picked block index can be accessed from :attr:`picked_block_index
-        <pyvista.Plotter.picked_block_index>` attribute.
-
-        Examples
-        --------
-        Enable block picking with a multiblock dataset. Left clicking will turn
-        blocks blue while right picking will turn the block back to the default
-        color.
-
-        >>> import pyvista as pv
-        >>> multiblock = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
-        >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(multiblock)
-        >>> def turn_blue(index, dataset):
-        ...     mapper.block_attr[index].color = 'blue'
-        ...
-        >>> pl.enable_block_picking(callback=turn_blue, side='left')
-        >>> def clear_color(index, dataset):
-        ...     mapper.block_attr[index].color = None
-        ...
-        >>> pl.enable_block_picking(callback=clear_color, side='right')
-        >>> pl.show()
-
-        """
-        # use a weak reference to enable garbage collection
-        renderer_ = weakref.ref(self.renderer)
-
-        sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
-        sel_prop = _vtk.vtkSelectionNode.PROP()
-
-        def get_picked_block(*args, **kwargs):
-            """Get the picked block and pass it to the user callback."""
-            x, y = self.mouse_position
-            selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetRenderer(renderer_())
-            selector.SetArea(x, y, x, y)  # single pixel
-            selection = selector.Select()
-
-            for ii in range(selection.GetNumberOfNodes()):
-                node = selection.GetNode(ii)
-                if node is None:  # pragma: no cover
-                    continue
-                node_prop = node.GetProperties()
-                self._picked_block_index = node_prop.Get(sel_index)
-
-                # Safely return the dataset as it's possible a non pyvista
-                # mapper was added
-                mapper = node_prop.Get(sel_prop).GetMapper()
-                if isinstance(mapper, CompositePolyDataMapper):
-                    dataset = mapper.block_attr.get_block(self._picked_block_index)
-                else:  # pragma: no cover
-                    dataset = None
-
-                if callable(callback):
-                    try_callback(callback, self._picked_block_index, dataset)
-
-        self.track_click_position(callback=get_picked_block, viewport=True, side=side)
-
-    def pick_click_position(self):
-        """Get corresponding click location in the 3D plot.
-
-        Returns
-        -------
-        tuple
-            Three item tuple with the 3D picked position.
-
-        """
-        if self.click_position is None:
-            self.store_click_position()
-        picker = _vtk.vtkWorldPointPicker()
-        picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
-        return picker.GetPickPosition()
-
-    def pick_mouse_position(self):
-        """Get corresponding mouse location in the 3D plot.
-
-        Returns
-        -------
-        tuple
-            Three item tuple with the 3D picked position.
-
-        """
-        if self.mouse_position is None:
-            self.store_mouse_position()
-        picker = _vtk.vtkWorldPointPicker()
-        picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
-        return picker.GetPickPosition()
-
-    def fly_to_mouse_position(self, focus=False):
-        """Focus on last stored mouse position."""
-        if self.mouse_position is None:
-            self.store_mouse_position()
-        click_point = self.pick_mouse_position()
-        if focus:
-            self.set_focus(click_point)
-        else:
-            self.fly_to(click_point)
-
-    def enable_fly_to_right_click(self, callback=None):
-        """Set the camera to track right click positions.
-
-        A convenience method to track right click positions and fly to
-        the picked point in the scene. The callback will be passed the
-        point in 3D space.
-
-        Parameters
-        ----------
-        callback : callable
-            Callback to call immediately after right clicking.
-
-        """
-
-        def _the_callback(*args):
-            click_point = self.pick_mouse_position()
-            self.fly_to(click_point)
-            if callable(callback):
-                try_callback(callback, click_point)
-
-        self.track_click_position(callback=_the_callback, side="right")
-
-    def disable_picking(self):
-        """Disable any active picking.
-
-        Examples
-        --------
-        Enable and then disable picking.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere(center=(1, 0, 0))
-        >>> cube = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh)
-        >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_mesh_picking(left_clicking=True)
-        >>> pl.disable_picking()
-
-        """
-        if getattr(self, '_picker', None):
-            self._picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
-
-        # remove left clicking observer if available
-        if getattr(self, 'iren', None):
-            self.iren.remove_observer(self._picking_left_clicking_observer)
-        self._picking_left_clicking_observer = None
-
-        # remove any picking text
-        if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text, render=False)
-        self._picking_text = None
