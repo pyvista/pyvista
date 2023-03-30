@@ -9,6 +9,7 @@ import logging
 import os
 import pathlib
 import platform
+import sys
 import textwrap
 from threading import Thread
 import time
@@ -16,6 +17,7 @@ from typing import Dict, Optional
 import warnings
 import weakref
 
+import matplotlib
 import numpy as np
 import scooby
 
@@ -1490,7 +1492,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple
+        tuple[float, float, float, float, float, float]
             Bounds of the active renderer.
 
         Examples
@@ -3601,6 +3603,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
         render=True,
+        log_scale=False,
         **kwargs,
     ):
         """Add a volume, rendered using a smart mapper by default.
@@ -3653,11 +3656,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         opacity : str | numpy.ndarray, optional
             Opacity mapping for the scalars array.
+
             A string can also be specified to map the scalars range to a
-            predefined opacity transfer function (options include: 'linear',
-            'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
+            predefined opacity transfer function. Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
-            shorter.
+            array, or you can pass a string to select a built in transfer
+            function. If a string, should be one of the following:
+
+            * ``'linear'`` - Linear
+            * ``'linear_r'`` - Linear except reversed
+            * ``'geom'`` - Evenly spaced on the log scale
+            * ``'geom_r'`` - Evenly spaced on the log scale except reversed
+            * ``'sigmoid'`` - Linear map between -10.0 and 10.0
+            * ``'sigmoid_1'`` - Linear map between -1.0 and 1.0
+            * ``'sigmoid_2'`` - Linear map between -2.0 and 2.0
+            * ``'sigmoid_3'`` - Linear map between -3.0 and 3.0
+            * ``'sigmoid_4'`` - Linear map between -4.0 and 4.0
+            * ``'sigmoid_5'`` - Linear map between -5.0 and 5.0
+            * ``'sigmoid_6'`` - Linear map between -6.0 and 6.0
+            * ``'sigmoid_7'`` - Linear map between -7.0 and 7.0
+            * ``'sigmoid_8'`` - Linear map between -8.0 and 8.0
+            * ``'sigmoid_9'`` - Linear map between -9.0 and 9.0
+            * ``'sigmoid_10'`` - Linear map between -10.0 and 10.0
 
             If RGBA scalars are provided, this parameter is set to ``'linear'``
             to ensure the opacity transfer function has no effect on the input
@@ -3795,6 +3815,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when True.
+
+        log_scale : bool, default: False
+            Use log scale when mapping data to colors. Scalars less
+            than zero are mapped to the smallest representable
+            positive float.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -4066,6 +4091,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, float) or isinstance(clim, int):
             clim = [-clim, clim]
 
+        if log_scale:
+            if clim[0] <= 0:
+                clim = [sys.float_info.min, clim[1]]
+
         # data must be between [0, 255], but not necessarily UINT8
         # Preserve backwards compatibility and have same behavior as VTK.
         if scalars.dtype != np.uint8 and clim != [0, 255]:
@@ -4073,9 +4102,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = np.array(scalars)
             clim = np.asarray(clim, dtype=scalars.dtype)
             scalars.clip(clim[0], clim[1], out=scalars)
-            if min_ is None:
-                min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-            np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
+            if log_scale:
+                out = matplotlib.colors.LogNorm(clim[0], clim[1])(scalars)
+                scalars = out.data * 255
+            else:
+                if min_ is None:
+                    min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
+                np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
 
         volume[title] = scalars
         volume.active_scalars_name = title
@@ -4110,6 +4143,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.lookup_table.apply_cmap(cmap, n_colors)
             self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
+            self.mapper.lookup_table.log_scale = log_scale
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 

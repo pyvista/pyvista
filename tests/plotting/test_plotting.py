@@ -528,16 +528,17 @@ def test_plot_show_grid(sphere):
         plotter.show_grid(location='foo')
     with pytest.raises(TypeError, match='location must be a string'):
         plotter.show_grid(location=10)
-    with pytest.raises(ValueError, match='Value of ticks'):
+    with pytest.raises(ValueError, match='Value of tick'):
         plotter.show_grid(ticks='foo')
-    with pytest.raises(TypeError, match='ticks must be a string'):
+    with pytest.raises(TypeError, match='must be a string'):
         plotter.show_grid(ticks=10)
 
-    plotter.show_grid()
+    plotter.show_grid()  # Add mesh after to make sure bounds update
     plotter.add_mesh(sphere)
     plotter.show()
 
 
+@skip_mesa
 def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     """Show the grid bounds for a specific mesh."""
     verify_image_cache.macos_skip_image_cache = True
@@ -633,7 +634,7 @@ def test_plot_show_bounds(sphere):
 def test_plot_label_fmt(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
+    plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
     plotter.show()
 
 
@@ -641,7 +642,7 @@ def test_plot_label_fmt(sphere):
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
     plotter = pyvista.Plotter()
-    plotter.add_mesh(pyvista.Cube())
+    plotter.add_mesh(pyvista.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
     plotter.show_bounds(grid=grid, ticks='outside', location=location)
     plotter.show_bounds(grid=grid, ticks='both', location=location)
@@ -3165,6 +3166,18 @@ def test_plotter_volume_add_scalars(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars_log_scale(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+
+    # for below zero to trigger the edge case
+    scalars = uniform.z - 0.01
+    assert any(scalars < 0), 'need negative values to test log_scale entrirely'
+    pl.add_volume(uniform, scalars=scalars, show_scalar_bar=True, log_scale=True)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
@@ -3626,3 +3639,39 @@ def test_axes_actor_properties():
     pl = pyvista.Plotter()
     pl.add_actor(axes_actor)
     pl.show()
+
+
+def test_show_bounds_no_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        show_xlabels=False,
+        show_ylabels=False,
+        show_zlabels=False,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.show()
+
+
+def test_show_bounds_n_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        n_xlabels=2,
+        n_ylabels=2,
+        n_zlabels=2,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.show()
