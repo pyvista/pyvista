@@ -47,7 +47,7 @@ Highlights of the API include:
    structures.
 
    .. jupyter-execute::
-      
+
       >>> import pyvista as pv
       >>> mesh = pv.Cube()
       >>> pl = pv.Plotter()
@@ -68,7 +68,7 @@ Highlights of the API include:
       >>> from pyvista import examples
       >>> reader = pv.get_reader(examples.hexbeamfile)
       >>> reader
-   
+
 
 .. card:: Utilities
    :link: utilities-api-index
