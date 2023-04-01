@@ -5044,7 +5044,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         connected : bool, default: False
             Treat ``lines`` as points representing a series of *connected* lines.
             For example, two connected line segments would be represented as
-            ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
+            ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``. If ``False``, an *even*
+            number of points must be passed to ``lines``, and the lines need not be
+            connected.
+
 
         Returns
         -------
