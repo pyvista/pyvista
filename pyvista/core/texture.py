@@ -15,7 +15,7 @@ from .dataset import DataObject
 
 
 class Texture(_vtk.vtkTexture, DataObject):
-    """Wrap vtk.Texture.
+    """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
     :ref:`ref_texture_example`.
