@@ -269,7 +269,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         .. deprecated:: 0.37.0
            ``flip`` is deprecated. Use :func:`Texture.flip_x` or
-           :func:`Texture.flip_x` instead.
+           :func:`Texture.flip_y` instead.
 
         """
         warnings.warn(
