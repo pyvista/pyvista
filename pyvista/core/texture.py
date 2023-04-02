@@ -447,7 +447,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     def n_components(self) -> int:
         """Return the number of components in the image.
 
-        In textures, 3 or 4 component are used for representing RGB and RGBA
+        In textures, 3 or 4 components are used for representing RGB and RGBA
         images.
 
         Examples
