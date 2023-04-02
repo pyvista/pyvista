@@ -335,7 +335,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Notes
         -----
-        The shape of this the array's first two dimensions will be swapped. For
+        The shape of the array's first two dimensions will be swapped. For
         example, a ``(300, 200)`` image will return an array of ``(200, 300)``.
 
         Returns
