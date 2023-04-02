@@ -5067,7 +5067,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         Adding lines with ``connected=True`` will add a series of connected
-        lines segments.
+        line segments.
 
         >>> import numpy as np
         >>> import pyvista
