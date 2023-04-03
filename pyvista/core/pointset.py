@@ -19,7 +19,7 @@ from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
 from .celltype import CellType
 from .dataset import DataSet
-from .errors import DeprecationError, VTKVersionError
+from .errors import DeprecationError, PointSetNotSupported, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
 DEFAULT_INPLACE_WARNING = (
@@ -322,6 +322,117 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
+
+    @wraps(PolyDataFilters.threshold)
+    def threshold(self, *args, **kwargs):
+        """Cast to PolyData and threshold.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.threshold_percent)
+    def threshold_percent(self, *args, **kwargs):
+        """Cast to PolyData and threshold.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.explode)
+    def explode(self, *args, **kwargs):
+        """Cast to PolyData and explode.
+
+        The explode filter relies on cells.
+
+        """
+        return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
+
+    @property
+    def area(self) -> float:
+        """Return 0.0 since a PointSet has no area."""
+        return 0.0
+
+    @property
+    def volume(self) -> float:
+        """Return 0.0 since a PointSet has no volume."""
+        return 0.0
+
+    def contour(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Contour and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def cell_data_to_point_data(self, *args, **kwargs):
+        """Raise PointSets do not have cells."""
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+
+    def point_data_to_cell_data(self, *args, **kwargs):
+        """Raise PointSets do not have cells."""
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+
+    def triangulate(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def decimate_boundary(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def find_cells_along_line(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def tessellate(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def slice(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Slice and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def slice_along_axis(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Slice and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def slice_along_line(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Slice and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def slice_implicit(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Slice and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def slice_orthogonal(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Slice and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def shrink(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def separate_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def remove_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+
+    def point_is_inside_cell(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
 
 
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):

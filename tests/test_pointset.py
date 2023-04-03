@@ -5,6 +5,7 @@ import pytest
 import vtk
 
 import pyvista
+from pyvista.core.errors import PointSetNotSupported
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
@@ -208,6 +209,70 @@ def test_flip_normal():
             ],
         ),
     )
+
+
+def test_threshold(pointset):
+    pointset['scalars'] = range(pointset.n_points)
+    out = pointset.threshold(pointset.n_points // 2)
+    assert isinstance(out, pyvista.PointSet)
+    assert out.n_points == pointset.n_points // 2
+
+
+def test_threshold_percent(pointset):
+    pointset['scalars'] = range(pointset.n_points)
+    out = pointset.threshold_percent(50)
+    assert isinstance(out, pyvista.PointSet)
+    assert out.n_points == pointset.n_points // 2
+
+
+def raise_unsupported(pointset):  # PointSetNotSupported
+    with pytest.raises(PointSetNotSupported):
+        pointset.contour()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.cell_data_to_point_data()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.point_data_to_cell_data()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.triangulate()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.decimate_boundary()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.find_cells_along_line()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.tessellate()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.slice()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.slice_along_axis()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.slice_along_line()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.slice_implicit()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.slice_orthogonal()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.shrink()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.separate_cells()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.remove_cells()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.point_is_inside_cell()
 
 
 def test_rotate_x():
