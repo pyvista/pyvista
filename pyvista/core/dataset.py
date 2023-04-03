@@ -589,12 +589,12 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str or None
+        name : str, optional
             Name of the scalars array to assign as active.  If
             ``None``, deactivates active scalars for both point and
             cell data.
 
-        preference : str, optional
+        preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
@@ -647,10 +647,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str
+        name : str, optional
             Name of the vectors array to assign as active.
 
-        preference : str, optional
+        preference : str, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
@@ -684,10 +684,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str
+        name : str, optional
             Name of the tensors array to assign as active.
 
-        preference : str, optional
+        preference : str, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
@@ -725,7 +725,7 @@ class DataSet(DataSetFilters, DataObject):
         new_name : str
             Name to rename the array to.
 
-        preference : str, optional
+        preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
@@ -819,7 +819,7 @@ class DataSet(DataSetFilters, DataObject):
             The name of the array to get the range. If ``None``, the
             active scalars is used.
 
-        preference : str, optional
+        preference : str, default: "cell"
             When scalars is specified, this is the preferred array type
             to search for in the dataset.  Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
@@ -864,15 +864,15 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -918,15 +918,14 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : float, optional
+        point : sequence[float], default: (0.0, 0.0, 0.0)
             Point to rotate about.
 
-        transform_all_input_vectors : bool, optional
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -972,15 +971,15 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about.  Defaults to origin.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1028,21 +1027,21 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        vector : Iterable
-            Axes to rotate about.
+        vector : sequence[float]
+            Axis to rotate about.
 
         angle : float
             Angle in degrees to rotate about the vector.
 
-        point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about.  Defaults to origin.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1086,15 +1085,15 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : list or tuple or np.ndarray
-            Length 3 list, tuple or array.
+        xyz : sequence[float]
+            Length 3 sequence of floats.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1136,17 +1135,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : float or list or tuple or np.ndarray
-            A scalar or length 3 list, tuple or array defining the scale
-            factors along x, y, and z. If a scalar, the same uniform scale is
-            used along all three axes.
+        xyz : float | sequence[float]
+            A scalar or length 3 sequence defining the scale factors along x,
+            y, and z. If a scalar, the same uniform scale is used along all
+            three axes.
 
-        transform_all_input_vectors : bool, optional
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1191,16 +1189,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : list, optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1242,16 +1240,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : list, optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1349,16 +1347,16 @@ class DataSet(DataSetFilters, DataObject):
         normal : tuple
            Normal vector to flip about.
 
-        point : list, optional
+        point : sequence[float]
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1399,7 +1397,7 @@ class DataSet(DataSetFilters, DataObject):
         ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
-        deep : bool, optional
+        deep : bool, default: True
             Deep or shallow copy.
 
         """
@@ -1733,7 +1731,7 @@ class DataSet(DataSetFilters, DataObject):
         name : str
             Name of the array.
 
-        preference : str, optional
+        preference : str, default: "cell"
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
@@ -1787,7 +1785,7 @@ class DataSet(DataSetFilters, DataObject):
         name : str
             Name of the array.
 
-        preference : str, optional
+        preference : str, default: "cell"
             When ``name`` is specified, this is the preferred array
             association to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
@@ -2065,9 +2063,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pass_cell_data : bool, optional
-            Run the ``cell_data_to_point_data`` filter and pass cell data
-            fields to the new pointset.
+        pass_cell_data : bool, default: False
+            Run the :func:`cell_data_to_point_data()
+            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            cell data fields to the new pointset.
 
         Returns
         -------
@@ -2101,9 +2100,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pass_cell_data : bool, optional
-            Run the ``cell_data_to_point_data`` filter and pass cell data
-            fields to the new pointset.
+        pass_cell_data : bool, default: False
+            Run the :func:`cell_data_to_point_data()
+            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            cell data fields to the new pointset.
 
         Returns
         -------
@@ -2164,7 +2164,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : iterable(float)
+        point : sequence[float]
             Length 3 coordinate of the point to query.
 
         n : int, optional
@@ -2224,11 +2224,11 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Sequence(float) or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : array_like[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
-        return_closest_point : bool, optional
+        return_closest_point : bool, default: False
             If ``True``, the closest point within a mesh cell to that point is
             returned.  This is not necessarily the closest nodal point on the
             mesh.  Default is ``False``.
@@ -2355,9 +2355,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Sequence(float) or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : array_like[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
         Returns
         -------
@@ -2425,13 +2425,13 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : iterable(float)
+        pointa : sequence[float]
             Length 3 coordinate of the start of the line.
 
-        pointb : iterable(float)
+        pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, optional
+        tolerance : float, default: False
             The absolute tolerance to use to find cells along line.
 
         Returns
@@ -2470,7 +2470,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        bounds : iterable(float)
+        bounds : sequence[float]
             Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Returns
@@ -2664,7 +2664,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        tuple(float)
+        tuple[float, float, float]
             The limits of the cell in the X, Y and Z directions respectively.
 
         """
@@ -3203,9 +3203,9 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Sequence[float] or np.ndarray
-            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``(n, 3)``.
+        point : array_like[float]
+            Coordinates of point to query (length 3) or a
+            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
         Returns
         -------
