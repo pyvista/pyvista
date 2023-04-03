@@ -81,6 +81,7 @@ repos:
     args: [--branch, main]
   - id: requirements-txt-fixer
   - id: trailing-whitespace
+    exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
