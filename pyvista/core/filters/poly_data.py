@@ -350,14 +350,7 @@ class PolyDataFilters(DataSetFilters):
         so the in-place merge attempt will raise.
 
         """
-        try:
-            merged = self.merge(dataset, inplace=True)
-        except TypeError:
-            raise TypeError(
-                'In-place merge only possible if the other mesh '
-                'is also a PolyData.\nPlease use `mesh + other_mesh` '
-                'instead, which returns a new UnstructuredGrid.'
-            ) from None
+        merged = self.merge(dataset, inplace=True)
         return merged
 
     def merge(
