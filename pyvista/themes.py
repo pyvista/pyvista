@@ -273,6 +273,9 @@ class _LightingConfig(_ThemeConfig):
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.interpolation = 'Phong'
+        >>> pv.global_theme.lighting_params.interpolation
+        <InterpolationType.PHONG: 2>
+
 
         """
         return InterpolationType.from_any(self._interpolation)
@@ -285,10 +288,19 @@ class _LightingConfig(_ThemeConfig):
     def metallic(self) -> float:
         """Return or set the metallic value.
 
+        Usually this value is either 0 or 1 for a real material but any
+        value in between is valid. This parameter is only used by PBR
+        interpolation.
+
         Examples
         --------
+        Set the global metallic value used in physically based rendering to
+        ``0.5``.
+
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.metallic = 0.5
+        >>> pv.global_theme.lighting_params.metallic
+        0.5
 
         """
         return self._metallic
@@ -301,10 +313,19 @@ class _LightingConfig(_ThemeConfig):
     def roughness(self) -> float:
         """Return or set the roughness value.
 
+        This value has to be between 0 (glossy) and 1 (rough). A glossy
+        material has reflections and a high specular part. This parameter is
+        only used by PBR interpolation.
+
         Examples
         --------
+        Set the global roughness value used in physically based rendering to
+        ``0.25``.
+
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.roughness = 0.25
+        >>> pv.global_theme.lighting_params.roughness
+        0.25
 
         """
         return self._roughness
@@ -315,7 +336,22 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def ambient(self) -> float:
-        """Return or set the ambient value."""
+        """Return or set the ambient value.
+
+        When lighting is enabled, this is the amount of light in the range of 0
+        to 1 that reaches the actor when not directed at the light source
+        emitted from the viewer.
+
+        Examples
+        --------
+        Set the global ambient lighting value to ``0.2``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.ambient = 0.2
+        >>> pv.global_theme.lighting_params.ambient
+        0.2
+
+        """
         return self._ambient
 
     @ambient.setter
@@ -324,7 +360,18 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def diffuse(self) -> float:
-        """Return or set the diffuse value."""
+        """Return or set the diffuse value.
+
+        Examples
+        --------
+        Set the global diffuse lighting value to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.diffuse = 0.5
+        >>> pv.global_theme.lighting_params.diffuse
+        0.5
+
+        """
         return self._diffuse
 
     @diffuse.setter
@@ -333,7 +380,20 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def specular(self) -> float:
-        """Return or set the specular value."""
+        """Return or set the specular value.
+
+        Should be between 0 and 1.
+
+        Examples
+        --------
+        Set the global specular value to ``0.1``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.specular = 0.1
+        >>> pv.global_theme.lighting_params.specular
+        0.1
+
+        """
         return self._specular
 
     @specular.setter
@@ -342,7 +402,18 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def specular_power(self) -> float:
-        """Return or set the specular power value."""
+        """Return or set the specular power value.
+
+        Examples
+        --------
+        Set the global specular power value to ``50``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.specular_power = 50
+        >>> pv.global_theme.lighting_params.specular_power
+        50
+
+        """
         return self._specular_power
 
     @specular_power.setter
@@ -351,7 +422,18 @@ class _LightingConfig(_ThemeConfig):
 
     @property
     def emissive(self) -> bool:
-        """Return or set if emissive is used with point gaussian style."""
+        """Return or set if emissive is used with point Gaussian style.
+
+        Examples
+        --------
+        Globally enable emissive lighting when using the point Gaussian style.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.emissive = True
+        >>> pv.global_theme.lighting_params.emissive
+        True
+
+        """
         return self._emissive
 
     @emissive.setter
@@ -1271,7 +1353,6 @@ class _TrameConfig(_ThemeConfig):
         '_server_proxy_enabled',
         '_server_proxy_prefix',
         '_default_mode',
-        '_enable_vtk_warnings',
     ]
 
     def __init__(self):
@@ -1283,14 +1364,11 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service:  # pragma: no cover
+        if service and not prefix.startswith('http'):  # pragma: no cover
             self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
         else:
             self._server_proxy_prefix = prefix
         self._default_mode = 'trame'
-        self._enable_vtk_warnings = (
-            os.environ.get('VTK_ENABLE_SERIALIZER_WARNINGS', 'false').lower() == 'true'
-        )
 
     @property
     def interactive_ratio(self) -> Number:
@@ -1385,15 +1463,6 @@ class _TrameConfig(_ThemeConfig):
     @default_mode.setter
     def default_mode(self, mode: str):
         self._default_mode = mode
-
-    @property
-    def enable_vtk_warnings(self) -> bool:
-        """Return or set if VTK web serializer warnings are enabled."""
-        return self._enable_vtk_warnings
-
-    @enable_vtk_warnings.setter
-    def enable_vtk_warnings(self, enabled: bool):
-        self._enable_vtk_warnings = bool(enabled)
 
 
 class DefaultTheme(_ThemeConfig):

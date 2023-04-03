@@ -211,7 +211,7 @@ class Renderers:
 
         Parameters
         ----------
-        loc : int, tuple, or list
+        loc : int | sequence[int]
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
@@ -282,7 +282,7 @@ class Renderers:
         index_row : int
             Index of the subplot to activate along the rows.
 
-        index_column : int
+        index_column : int, optional
             Index of the subplot to activate along the columns.
 
         """
@@ -306,14 +306,14 @@ class Renderers:
 
         Parameters
         ----------
-        interactive : bool, Chart, int, list of Chart or list of int
+        interactive : bool | Chart | int | sequence[Chart] | sequence[int]
             Following parameter values are accepted:
 
-                * A boolean to enable (``True``) or disable (``False``) interaction
-                  with all charts in the active renderer.
-                * The chart or its index to enable interaction with. Interaction
-                  with multiple charts can be enabled by passing a list of charts
-                  or indices.
+            * A boolean to enable (``True``) or disable (``False``) interaction
+              with all charts in the active renderer.
+            * The chart or its index to enable interaction with. Interaction
+              with multiple charts can be enabled by passing a list of charts
+              or indices.
 
         toggle : bool, default: False
             Instead of enabling interaction with the provided chart(s), interaction
@@ -363,13 +363,13 @@ class Renderers:
         image_path : str
             Path to an image file.
 
-        scale : float, optional
+        scale : float
             Scale the image larger or smaller relative to the size of
             the window.  For example, a scale size of 2 will make the
             largest dimension of the image twice as large as the
             largest dimension of the render window.  Defaults to 1.
 
-        as_global : bool, optional
+        as_global : bool
             When multiple render windows are present, setting
             ``as_global=False`` will cause the background to only
             appear in one window.
@@ -457,7 +457,7 @@ class Renderers:
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
 
-        all_renderers : bool
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 
@@ -508,10 +508,10 @@ class Renderers:
 
         Parameters
         ----------
-        color_cycler : str, cycler.Cycler, list(ColorLike)
+        color_cycler : str | cycler.Cycler | sequence[ColorLike]
             The colors to cycle through.
 
-        all_renderers : bool
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 

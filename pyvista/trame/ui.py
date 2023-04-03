@@ -332,6 +332,11 @@ class Viewer:
                 icons=('mdi-ruler-square', 'mdi-ruler-square'),
                 tooltip=f"Toggle ruler ({{{{ {self.GRID} ? 'on' : 'off' }}}})",
             )
+            checkbox(
+                model=(self.AXIS, False),
+                icons=('mdi-axis-arrow-info', 'mdi-axis-arrow-info'),
+                tooltip=f"Toggle axis ({{{{ {self.AXIS} ? 'on' : 'off' }}}})",
+            )
             # Server rendering options
             if mode == 'trame':
                 vuetify.VDivider(vertical=True, classes='mx-1')
@@ -344,11 +349,6 @@ class Viewer:
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center',
             ):
-                checkbox(
-                    model=(self.AXIS, False),
-                    icons=('mdi-axis-arrow-info', 'mdi-axis-arrow-info'),
-                    tooltip=f"Toggle axis ({{{{ {self.AXIS} ? 'on' : 'off' }}}})",
-                )
 
                 def attach_screenshot():
                     return server.protocol.addAttachment(self.screenshot())
@@ -414,7 +414,7 @@ class Viewer:
             server = container.server
             # Initialize state variables
             server.state[self.EDGES] = False
-            server.state[self.GRID] = hasattr(self.plotter.renderer, 'cube_axes_actor')
+            server.state[self.GRID] = self.plotter.renderer.cube_axes_actor is not None
             server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
             server.state[self.AXIS] = (
                 hasattr(self.plotter.renderer, 'axes_widget')

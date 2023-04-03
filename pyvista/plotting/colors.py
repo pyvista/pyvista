@@ -662,7 +662,7 @@ class Color:
         * ``[255, 255, 255, 255]``
         * ``'#FFFFFF'``
 
-    opacity : int, float or str, optional
+    opacity : int | float | str, optional
         Opacity of the represented color. Overrides any opacity associated
         with the provided ``color``. Allowed opacities are floats between 0
         and 1, ints between 0 and 255 or hexadecimal strings of length 2
@@ -678,7 +678,7 @@ class Color:
         ``None``, then defaults to the global theme color. Format is
         identical to ``color``.
 
-    default_opacity : int, float or str, optional
+    default_opacity : int | float | str, optional
         Default opacity of the represented color. Used when ``color``
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
@@ -813,7 +813,7 @@ class Color:
 
         Parameters
         ----------
-        val : int, float or str
+        val : int | float | str
             Color channel value to convert. Supported input values are a
             hex string of length 2 (``'00'`` to ``'ff'``) with an optional
             prefix (``'#'`` or ``'0x'``), a float (``0.0`` to ``1.0``) or
@@ -1057,7 +1057,7 @@ class Color:
 
         Returns
         -------
-        str or None
+        str | None
             The color name, in case this color has a name; otherwise ``None``.
 
         Notes
