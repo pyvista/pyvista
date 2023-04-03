@@ -152,13 +152,14 @@ jobs:
           path: .
 
       - name: Deploy on main multiversion
-        uses: pyansys/actions/doc-deploy-dev@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-            cname: ${{ env.DOCUMENTATION_CNAME }}
-            token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-            decompress_artifact: true
-            repository: 'pyvista/multiversion-docs-testing'
-            doc-artifact-name: docs-build
+          external_repository: 'pyvista/multiversion-docs-testing'
+          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          publish_dir: doc/_build/html/
+          cname: dev.pyvista.org
+
+
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
