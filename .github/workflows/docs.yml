@@ -154,7 +154,7 @@ jobs:
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
             cname: ${{ env.DOCUMENTATION_CNAME }}
-            token: ${{ secrets.GITHUB_TOKEN }}
+            token: ${{ secrets.PYVISTA_BOT_TOKEN }}
             decompress_artifact: true
             repository: 'pyvista/multiversion-docs-testing'
             doc-artifact-name: docs-build
