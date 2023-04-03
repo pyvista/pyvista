@@ -348,6 +348,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         """
         return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
 
+    @wraps(PolyDataFilters.delaunay_3d)
+    def delaunay_3d(self, *args, **kwargs):
+        """Cast to PolyData and run delaunay_3d."""
+        return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
+
     @property
     def area(self) -> float:
         """Return 0.0 since a PointSet has no area."""
@@ -391,31 +396,31 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def slice(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets'
+            'Slice and other dimension reducing filters are not supported on PointSets.'
         )
 
     def slice_along_axis(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets'
+            'Slice and other dimension reducing filters are not supported on PointSets.'
         )
 
     def slice_along_line(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets'
+            'Slice and other dimension reducing filters are not supported on PointSets.'
         )
 
     def slice_implicit(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets'
+            'Slice and other dimension reducing filters are not supported on PointSets.'
         )
 
     def slice_orthogonal(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets'
+            'Slice and other dimension reducing filters are not supported on PointSets.'
         )
 
     def shrink(self, *args, **kwargs):

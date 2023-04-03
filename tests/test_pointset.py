@@ -225,6 +225,20 @@ def test_threshold_percent(pointset):
     assert out.n_points == pointset.n_points // 2
 
 
+def test_explode(pointset):
+    out = pointset.explode(1)
+    assert isinstance(out, pyvista.PointSet)
+    ori_xlen = pointset.bounds[1] - pointset.bounds[0]
+    new_xlen = out.bounds[1] - out.bounds[0]
+    assert np.isclose(2 * ori_xlen, new_xlen)
+
+
+def test_delaunay_3d(pointset):
+    out = pointset.delaunay_3d()
+    assert isinstance(out, pyvista.UnstructuredGrid)
+    assert out.n_cells > 10
+
+
 def raise_unsupported(pointset):  # PointSetNotSupported
     with pytest.raises(PointSetNotSupported):
         pointset.contour()
