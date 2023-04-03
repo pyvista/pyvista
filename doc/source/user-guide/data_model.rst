@@ -281,9 +281,9 @@ in the same order as we defined earlier.
    as many (or as few as one) points per cell as we wish.
 
 .. note::
-   All cell types follow the same connectivity array format: 
+   All cell types follow the same connectivity array format:
 
-   ``[Number of points, Point 1, Point 2, ...]`` 
+   ``[Number of points, Point 1, Point 2, ...]``
 
 
    Except for ``polyhedron`` type, in which we need to define each face of the cell. The
