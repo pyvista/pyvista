@@ -74,7 +74,7 @@ class Property(_vtk.vtkProperty):
         The specular lighting coefficient.
 
     specular_power : float, default: :attr:`pyvista.themes._LightingConfig.specular_power`
-        The specular power. Between 0.0 and 128.0.
+        The specular power. Must be between 0.0 and 128.0.
 
     show_edges : bool, default: :attr:`pyvista.themes.DefaultTheme.show_edges`
         Shows the edges.  Does not apply to a wireframe representation.
@@ -547,7 +547,7 @@ class Property(_vtk.vtkProperty):
         Default Default :attr:`pyvista.themes._LightingConfig.specular`.
 
         Specular lighting simulates the bright spot of a light that appears
-        on shiny objects. Must be between 0 and 1
+        on shiny objects. Must be between 0 and 1.
 
         Examples
         --------

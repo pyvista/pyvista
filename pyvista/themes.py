@@ -358,6 +358,11 @@ class _LightingConfig(_ThemeConfig):
     def diffuse(self) -> float:
         """Return or set the diffuse value.
 
+        This is the scattering of light by reflection or
+        transmission. Diffuse reflection results when light strikes an
+        irregular surface such as a frosted window or the surface of a
+        frosted or coated light bulb. Must be between 0 and 1.
+
         Examples
         --------
         Set the global diffuse lighting value to ``0.5``.
@@ -379,7 +384,8 @@ class _LightingConfig(_ThemeConfig):
     def specular(self) -> float:
         """Return or set the specular value.
 
-        Must be between 0 and 1.
+        Specular lighting simulates the bright spot of a light that appears
+        on shiny objects. Must be between 0 and 1.
 
         Examples
         --------
@@ -401,6 +407,8 @@ class _LightingConfig(_ThemeConfig):
     @property
     def specular_power(self) -> float:
         """Return or set the specular power value.
+
+        Must be between 0.0 and 128.0.
 
         Examples
         --------
