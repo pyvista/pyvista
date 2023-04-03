@@ -361,7 +361,13 @@ class PolyDataFilters(DataSetFilters):
         return merged
 
     def merge(
-        self, dataset, merge_points=True, inplace=False, main_has_priority=True, progress_bar=False
+        self,
+        dataset,
+        merge_points=True,
+        tolerance=0.0,
+        inplace=False,
+        main_has_priority=True,
+        progress_bar=False,
     ):
         """Merge this mesh with one or more datasets.
 
@@ -384,6 +390,10 @@ class PolyDataFilters(DataSetFilters):
 
         merge_points : bool, optional
             Merge equivalent points when ``True``.
+
+        tolerance : float, default: 0.0
+            The absolute tolerance to use to find coincident points when
+            ``merge_points=True``.
 
         inplace : bool, default: False
             Updates grid inplace when ``True`` if the input type is a
@@ -428,6 +438,7 @@ class PolyDataFilters(DataSetFilters):
             self,
             dataset,
             merge_points=merge_points,
+            tolerance=tolerance,
             main_has_priority=main_has_priority,
             inplace=False,
             progress_bar=progress_bar,
