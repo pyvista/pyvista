@@ -6,7 +6,7 @@ imageio-ffmpeg==0.4.8
 ipygany==0.5.0
 ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
-jupyterlab==3.6.2
+jupyterlab==3.6.3
 lxml==4.9.2
 meshio==5.3.4
 mypy==1.1.1
