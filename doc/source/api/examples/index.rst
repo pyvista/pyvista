@@ -118,7 +118,7 @@ cell types.
 .. autosummary::
    :toctree: _autosummary
 
-   plot_cell   
+   plot_cell
    Empty
    Vertex
    PolyVertex
