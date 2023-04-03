@@ -19,6 +19,15 @@ class _BasePyVistaView:
                 renderer.camera_position = renderer.get_default_cam_pos()
                 renderer.ResetCamera()
 
+    def _post_initialize(self):
+        if self._server.running:
+            self.update()
+        else:
+            self._server.controller.on_server_ready.add(self.update)
+
+        # Callback to sync view on PyVista's render call when renders are suppressed
+        self._plotter().add_on_render_callback(lambda *args: self.update(), render_event=False)
+
     def update_camera(self):
         """Update camera or push the image."""
         self.push_camera()
@@ -83,10 +92,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
             namespace=namespace,
             **kwargs,
         )
-        # Sometimes there is a lag
-        self._server.controller.on_server_ready.add(self.update)
-
-        plotter.add_on_render_callback(lambda *args: self.update_camera(), render_event=True)
+        self._post_initialize()
 
     def push_camera(self, *args, **kwargs):
         """No-op implementation to match local viewers."""
@@ -126,13 +132,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
             namespace=namespace,
             **kwargs,
         )
-        if self._server.running:
-            self.update()
-        else:
-            self._server.controller.on_server_ready.add(self.update)
-
-        # Callback to sync view on PyVista's render call when renders are suppressed
-        plotter.add_on_render_callback(lambda *args: self.update_camera(), render_event=False)
+        self._post_initialize()
 
     def update_image(self, *args, **kwargs):
         """No-op implementation to match remote viewers."""
@@ -194,10 +194,4 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         # Track namespace for our use since trame attributes are name mangled
         self._namespace = namespace
 
-        if self._server.running:
-            self.update()
-        else:
-            self._server.controller.on_server_ready.add(self.update)
-
-        # Callback to sync view on PyVista's render call when using local view
-        plotter.add_on_render_callback(lambda *args: self.update_camera(), render_event=False)
+        self._post_initialize()
