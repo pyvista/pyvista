@@ -151,6 +151,9 @@ jobs:
           name: docs-build
           path: .
 
+      - name: Untar build
+        run: tar -xzvf docs-build.tar.gz
+
       - name: Deploy on main multiversion
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
