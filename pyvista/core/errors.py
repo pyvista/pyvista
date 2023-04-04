@@ -52,7 +52,7 @@ class PointSetNotSupported(NotImplementedError):
     """Requested filter or property is not supported by the PointSet class."""
 
     def __init__(
-        self, message='Slice and other dimension reducing filters are not supported on PointSets'
+        self, message='The requested operation is not supported for PointSets.'
     ):
         """Empty init."""
         NotImplementedError.__init__(self, message)
