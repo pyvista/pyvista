@@ -113,10 +113,6 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Tar build
-        if: always()
-        run: tar -zcvf docs-build.tar.gz doc/_build/html/
-
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v3
@@ -150,9 +146,6 @@ jobs:
         with:
           name: docs-build
           path: .
-
-      - name: Untar build
-        run: tar -xzvf docs-build.tar.gz
 
       - name: Deploy on main multiversion
         uses: pyansys/actions/doc-deploy-dev@v4
