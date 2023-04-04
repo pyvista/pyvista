@@ -51,8 +51,6 @@ class VTKVersionError(RuntimeError):
 class PointSetNotSupported(NotImplementedError):
     """Requested filter or property is not supported by the PointSet class."""
 
-    def __init__(
-        self, message='The requested operation is not supported for PointSets.'
-    ):
+    def __init__(self, message='The requested operation is not supported for PointSets.'):
         """Empty init."""
         NotImplementedError.__init__(self, message)
