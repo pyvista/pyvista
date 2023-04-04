@@ -11,7 +11,7 @@ preferred-citation:
     orcid: "https://orcid.org/0000-0002-8232-7212"
   doi: "10.21105/joss.01450"
   journal: "Journal of Open Source Software"
-  publisher: 
+  publisher:
     name: "The Open Journal"
   month: May
   title: "PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)"
