@@ -98,6 +98,10 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         """No-op implementation to match local viewers."""
         pass  # pragma: no cover
 
+    def update_image(self, *args, **kwargs):
+        """Wrap update call."""
+        return self.update(*args, **kwargs)
+
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     """PyVista wrapping of trame VtkLocalView for in-browser rendering.
