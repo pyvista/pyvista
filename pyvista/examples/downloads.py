@@ -3904,6 +3904,41 @@ def download_cavity(load=True):  # pragma: no cover
     return pyvista.OpenFOAMReader(filename).read()
 
 
+def download_openfoam_tubes(load=True):  # pragma: no cover
+    """Download tubes OpenFOAM example.
+
+    Data generated from public SimScale examples.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_openfoam_tubes()  # doctest:+SKIP
+
+    See :ref:`openfoam_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fea/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
+        target_file='case.foam',
+    )
+    if not load:
+        return filename
+    reader = pyvista.OpenFOAMReader(filename)
+    reader.set_active_time_value(1000)
+    return reader.read()[0]
+
+
 def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 
