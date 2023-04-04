@@ -3907,7 +3907,12 @@ def download_cavity(load=True):  # pragma: no cover
 def download_openfoam_tubes(load=True):  # pragma: no cover
     """Download tubes OpenFOAM example.
 
-    Data generated from public SimScale examples.
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
 
     Parameters
     ----------
@@ -3922,10 +3927,24 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_openfoam_tubes()  # doctest:+SKIP
+    Plot the outline of the dataset along with a cross section of the flow velocity.
 
-    See :ref:`openfoam_example` for a full example using this dataset.
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_openfoam_tubes()
+    >>> y_slice = dataset.slice('y')
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     y_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Flow Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(dataset, color='w', opacity=0.25)
+    >>> pl.enable_anti_aliasing()
+    >>> pl.show()
+
+    See :ref:`openfoam_tubes_example` for a full example using this dataset.
 
     """
     filename = _download_archive(

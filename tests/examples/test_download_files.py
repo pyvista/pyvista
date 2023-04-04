@@ -492,6 +492,14 @@ def test_download_cavity():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+def test_download_openfoam_tubes():
+    filename = examples.download_openfoam_tubes(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_openfoam_tubes(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+
+
 def test_download_lucy():
     filename = examples.download_lucy(load=False)
     assert os.path.isfile(filename)
