@@ -212,11 +212,10 @@ class PickingInterface:
         if getattr(self, 'iren', None):
             self.iren.remove_observer(self._picking_left_clicking_observer)
             self.iren.remove_observer(self._picking_right_clicking_observer)
+            # Reset to default picker
+            self.iren.reset_picker()
         self._picking_left_clicking_observer = None
         self._picking_right_clicking_observer = None
-
-        # Reset to default picker
-        self.iren.reset_picker()
 
         self._picker_in_use = False
 
@@ -543,7 +542,7 @@ class PickingMethods(PickingInterface):
         return self._picked_block_index
 
     def disable_picking(self):
-        super().__init__()
+        super().disable_picking()
         # remove any picking text
         if hasattr(self, 'renderers'):
             self.remove_actor(self._picking_text, render=False)
@@ -661,7 +660,7 @@ class PickingMethods(PickingInterface):
             self_()._picked_mesh = picker.GetDataSet()
 
             if show_point:
-                with self_().poked_subplot():
+                with self_().iren.poked_subplot():
                     self_().add_mesh(
                         picked_point,
                         color=color,
@@ -790,7 +789,7 @@ class PickingMethods(PickingInterface):
 
                 # Use try in case selection is empty or invalid
                 try:
-                    with self_().poked_subplot():
+                    with self_().iren.poked_subplot():
                         self_().add_mesh(
                             self_()._picked_mesh,
                             name='_mesh_picking_selection',
@@ -953,7 +952,7 @@ class PickingMethods(PickingInterface):
                             break
 
                 # Use try in case selection is empty
-                with self_().poked_subplot():
+                with self_().iren.poked_subplot():
                     self_().add_mesh(
                         picked,
                         name='_cell_picking_selection',
@@ -1317,17 +1316,15 @@ class PickingHelper(PickingMethods):
             return cells
 
         the_points = []
-        the_ids = []
 
-        def _the_callback(mesh, idx):
-            if mesh is None:
+        def _the_callback(picked_point, picker):
+            if picker.GetDataSet() is None:
                 return
-            the_ids.append(idx)
-            the_points.append(mesh.points[idx])
+            the_points.append(picked_point)
             self.picked_path = pyvista.PolyData(np.array(the_points))
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                with self.poked_subplot():
+                with self.iren.poked_subplot():
                     self.add_mesh(
                         self.picked_path,
                         color=color,
@@ -1342,16 +1339,15 @@ class PickingHelper(PickingMethods):
 
         def _clear_path_event_watcher():
             del the_points[:]
-            del the_ids[:]
             self.remove_actor('_picked_path')
 
         self.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        self.enable_point_picking(
+        self.enable_surface_picking(
             callback=_the_callback,
-            use_mesh=True,
+            use_picker=True,
             font_size=font_size,
             show_message=show_message,
             show_point=False,
@@ -1435,9 +1431,11 @@ class PickingHelper(PickingMethods):
         self.picked_geodesic = pyvista.PolyData()
         self._last_picked_idx = None
 
-        def _the_callback(mesh, idx):
-            if mesh is None:
+        def _the_callback(picked_point, picker):
+            if picker.GetDataSet() is None:
                 return
+            mesh = pyvista.wrap(picker.GetDataSet())
+            idx = mesh.find_closest_point(picked_point)
             point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
@@ -1461,7 +1459,7 @@ class PickingHelper(PickingMethods):
             self._last_picked_idx = idx
 
             if show_path:
-                with self.poked_subplot():
+                with self.iren.poked_subplot():
                     self.add_mesh(
                         self.picked_geodesic,
                         color=color,
@@ -1483,9 +1481,9 @@ class PickingHelper(PickingMethods):
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        self.enable_point_picking(
+        self.enable_surface_picking(
             callback=_the_callback,
-            use_mesh=True,
+            use_picker=True,
             font_size=font_size,
             show_message=show_message,
             tolerance=tolerance,
@@ -1570,7 +1568,7 @@ class PickingHelper(PickingMethods):
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                with self.poked_subplot():
+                with self.iren.poked_subplot():
                     self.add_mesh(
                         self.picked_horizon,
                         name=name,

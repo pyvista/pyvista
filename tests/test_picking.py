@@ -261,35 +261,30 @@ def test_enable_cell_picking_interactive_two_ren_win():
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_point_picking(left_clicking):
     sphere = pyvista.Sphere()
-    for use_mesh in (False, True):
-        plotter = pyvista.Plotter(
-            window_size=(100, 100),
-        )
-        if use_mesh:
-            callback = (lambda picked_point, picked_mesh: None,)
-        else:
-            callback = (lambda picked_point: None,)
-        plotter.add_mesh(sphere)
-        plotter.enable_point_picking(
-            show_message=True,
-            use_mesh=use_mesh,
-            left_clicking=left_clicking,
-            callback=callback,
-        )
-        # must show to activate the interactive renderer (for left_clicking)
-        plotter.show(auto_close=False)
+    plotter = pyvista.Plotter(
+        window_size=(100, 100),
+    )
+    callback = (lambda picked_point: None,)
+    plotter.add_mesh(sphere)
+    plotter.enable_point_picking(
+        show_message=True,
+        left_clicking=left_clicking,
+        callback=callback,
+    )
+    # must show to activate the interactive renderer (for left_clicking)
+    plotter.show(auto_close=False)
 
-        # simulate the pick
-        width, height = plotter.window_size
-        if left_clicking:
-            plotter.iren._mouse_left_button_press(width // 2, height // 2)
-            plotter.iren._mouse_left_button_release(width, height)
-            plotter.iren._mouse_move(width // 2, height // 2)
-        else:
-            renderer = plotter.renderer
-            picker = plotter.iren.get_picker()
-            picker.Pick(width // 2, height // 2, 0, renderer)
-        plotter.close()
+    # simulate the pick
+    width, height = plotter.window_size
+    if left_clicking:
+        plotter.iren._mouse_left_button_press(width // 2, height // 2)
+        plotter.iren._mouse_left_button_release(width, height)
+        plotter.iren._mouse_move(width // 2, height // 2)
+    else:
+        renderer = plotter.renderer
+        picker = plotter.iren.picker
+        picker.Pick(width // 2, height // 2, 0, renderer)
+    plotter.close()
 
 
 def test_point_picking_window_not_pickable():
@@ -309,13 +304,13 @@ def test_point_picking_window_not_pickable():
 
     plotter.view_xy()
     plotter.enable_point_picking(
-        pickable_window=False,
         tolerance=0.2,
+        # picker=...  # default picker should not allow picking in the window
     )
 
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.get_picker()
+    picker = plotter.iren.picker
 
     successful_pick = picker.Pick(0, 0, 0, renderer)
     assert successful_pick
@@ -338,7 +333,7 @@ def test_path_picking():
     )
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.get_picker()
+    picker = plotter.iren.picker
     picker.Pick(50, 50, 0, renderer)
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
@@ -364,7 +359,7 @@ def test_geodesic_picking():
 
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.get_picker()
+    picker = plotter.iren.picker
     picker.Pick(50, 50, 0, renderer)
     picker.Pick(45, 45, 0, renderer)
     # pick nothing
@@ -388,7 +383,7 @@ def test_horizon_picking():
     )
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.get_picker()
+    picker = plotter.iren.picker
     # at least 3 picks
     picker.Pick(50, 50, 0, renderer)
     picker.Pick(49, 50, 0, renderer)
