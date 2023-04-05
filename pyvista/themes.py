@@ -41,7 +41,7 @@ from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.opts import InterpolationType
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
-from .utilities.misc import PyVistaDeprecationWarning
+from .utilities.misc import PyVistaDeprecationWarning, _check_range
 
 
 class _rcParams(dict):  # pragma: no cover
@@ -71,12 +71,6 @@ class _rcParams(dict):  # pragma: no cover
             'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning
         )
         return repr(pyvista.global_theme)
-
-
-def _check_between_zero_and_one(value: float, value_name: str = 'value'):
-    """Check if a value is between zero and one."""
-    if value < 0 or value > 1:
-        raise ValueError(f'{value_name} must be between 0 and 1.')
 
 
 def load_theme(filename):
@@ -288,9 +282,8 @@ class _LightingConfig(_ThemeConfig):
     def metallic(self) -> float:
         """Return or set the metallic value.
 
-        Usually this value is either 0 or 1 for a real material but any
-        value in between is valid. This parameter is only used by PBR
-        interpolation.
+        This requires that the interpolation be set to ``'Physically based
+        rendering'``. Must be between 0 and 1.
 
         Examples
         --------
@@ -307,6 +300,7 @@ class _LightingConfig(_ThemeConfig):
 
     @metallic.setter
     def metallic(self, metallic: float):
+        _check_range(metallic, (0, 1), 'metallic')
         self._metallic = metallic
 
     @property
@@ -332,6 +326,7 @@ class _LightingConfig(_ThemeConfig):
 
     @roughness.setter
     def roughness(self, roughness: float):
+        _check_range(roughness, (0, 1), 'roughness')
         self._roughness = roughness
 
     @property
@@ -356,11 +351,17 @@ class _LightingConfig(_ThemeConfig):
 
     @ambient.setter
     def ambient(self, ambient: float):
+        _check_range(ambient, (0, 1), 'ambient')
         self._ambient = ambient
 
     @property
     def diffuse(self) -> float:
         """Return or set the diffuse value.
+
+        This is the scattering of light by reflection or
+        transmission. Diffuse reflection results when light strikes an
+        irregular surface such as a frosted window or the surface of a
+        frosted or coated light bulb. Must be between 0 and 1.
 
         Examples
         --------
@@ -376,13 +377,15 @@ class _LightingConfig(_ThemeConfig):
 
     @diffuse.setter
     def diffuse(self, diffuse: float):
+        _check_range(diffuse, (0, 1), 'diffuse')
         self._diffuse = diffuse
 
     @property
     def specular(self) -> float:
         """Return or set the specular value.
 
-        Should be between 0 and 1.
+        Specular lighting simulates the bright spot of a light that appears
+        on shiny objects. Must be between 0 and 1.
 
         Examples
         --------
@@ -398,11 +401,14 @@ class _LightingConfig(_ThemeConfig):
 
     @specular.setter
     def specular(self, specular: float):
+        _check_range(specular, (0, 1), 'specular')
         self._specular = specular
 
     @property
     def specular_power(self) -> float:
         """Return or set the specular power value.
+
+        Must be between 0.0 and 128.0.
 
         Examples
         --------
@@ -418,6 +424,7 @@ class _LightingConfig(_ThemeConfig):
 
     @specular_power.setter
     def specular_power(self, specular_power: float):
+        _check_range(specular_power, (0, 128), 'specular_power')
         self._specular_power = specular_power
 
     @property
@@ -603,7 +610,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_between_zero_and_one(opacity, 'opacity')
+        _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
 
     @property
@@ -641,7 +648,7 @@ class _SilhouetteConfig(_ThemeConfig):
         if decimate is None:
             self._decimate = None
         else:
-            _check_between_zero_and_one(decimate, 'decimate')
+            _check_range(decimate, (0, 1), 'decimate')
             self._decimate = float(decimate)
 
     def __repr__(self):
@@ -1138,6 +1145,7 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
+        _check_range(cap_opacity, (0, 1), 'cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -1723,7 +1731,7 @@ class DefaultTheme(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_between_zero_and_one(opacity, 'opacity')
+        _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
 
     @property
