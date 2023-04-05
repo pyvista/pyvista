@@ -3904,6 +3904,60 @@ def download_cavity(load=True):  # pragma: no cover
     return pyvista.OpenFOAMReader(filename).read()
 
 
+def download_openfoam_tubes(load=True):  # pragma: no cover
+    """Download tubes OpenFOAM example.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Plot the outline of the dataset along with a cross section of the flow velocity.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_openfoam_tubes()
+    >>> y_slice = dataset.slice('y')
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     y_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Flow Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(dataset, color='w', opacity=0.25)
+    >>> pl.enable_anti_aliasing()
+    >>> pl.show()
+
+    See :ref:`openfoam_tubes_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fea/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
+        target_file='case.foam',
+    )
+    if not load:
+        return filename
+    reader = pyvista.OpenFOAMReader(filename)
+    reader.set_active_time_value(1000)
+    return reader.read()[0]
+
+
 def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 
