@@ -140,7 +140,7 @@ jobs:
     name: Publish Documentation
     runs-on: ubuntu-20.04
     needs: doc
-    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -148,7 +148,8 @@ jobs:
           name: docs-build
           path: .
 
-      - name: Deploy multiversion
+      - name: Deploy Dev Docs
+        if: github.event_name == 'push'
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
@@ -156,6 +157,18 @@ jobs:
           repository: 'pyvista/multiversion-docs-testing'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
+
+      - name: Deploy Stable Docs
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+        uses: pyansys/actions/doc-deploy-stable@v4
+        with:
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          decompress_artifact: true
+          repository: 'pyvista/multiversion-docs-testing'
+          doc-artifact-name: docs-build
+          cname: ${{ env.DOCUMENTATION_CNAME }}
+
+
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
