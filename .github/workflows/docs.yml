@@ -105,6 +105,7 @@ jobs:
         run: |
           cp doc/README.md doc/_build/html/
           cp doc/source/ads.txt doc/_build/html/
+
       - name: Dump Sphinx Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
@@ -147,7 +148,7 @@ jobs:
           name: docs-build
           path: .
 
-      - name: Deploy on main multiversion
+      - name: Deploy multiversion
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
