@@ -74,8 +74,8 @@ pl.show()
 
 
 ###############################################################################
-# Plot Air Velocity
-# ~~~~~~~~~~~~~~~~~
+# Plot Air Temperature
+# ~~~~~~~~~~~~~~~~~~~~
 # Let's also plot the temperature of the air. This time, let's also plot the
 # temperature of the components.
 
