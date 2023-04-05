@@ -24,8 +24,8 @@ pl.show()
 
 
 ###############################################################################
-# Enable a callback that creates a cube at the clicked point and add a label at
-# the point as well it.
+# Enable a callback that creates a cube at the right-clicked point and add a
+# label at the point as well it.
 
 
 def callback(point):
@@ -37,5 +37,5 @@ def callback(point):
 
 pl = pv.Plotter()
 pl.add_mesh(cube, show_edges=True)
-pl.enable_surface_picking(callback=callback, left_clicking=True, show_point=False)
+pl.enable_surface_picking(callback=callback, show_point=False)
 pl.show()

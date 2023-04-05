@@ -214,7 +214,7 @@ class PickingInterface:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_mesh_picking(left_clicking=True)
+        >>> _ = pl.enable_mesh_picking()
         >>> pl.disable_picking()
 
         """
@@ -247,6 +247,7 @@ class PickingInterface:
         point_size=10,
         show_point=True,
         use_picker=False,
+        pickable_window=True,
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -297,6 +298,10 @@ class PickingInterface:
         show_point : bool, default: True
             Show the picked point after clicking.
 
+        pickable_window : bool, default: True
+            When ``True`` and the chosen picker supports it, points in the
+            3D window are pickable.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked point is interactively displayed.
@@ -315,15 +320,19 @@ class PickingInterface:
 
         """
         self._validate_picker_not_in_use()
-        # TODO: Removed kwargs: pickable_window, use_mesh
+        # TODO: Removed kwargs: use_mesh
         if 'use_mesh' in kwargs:
             raise ValueError('`use_mesh` has been deprecated.')
-        if 'pickable_window' in kwargs:
-            raise ValueError('`pickable_window` has been deprecated.')
 
         self_ = weakref.ref(self)
 
         def _end_pick_event(picker, event):
+            if (
+                not pickable_window
+                and hasattr(picker, 'GetDataSet')
+                and picker.GetDataSet() is None
+            ):
+                return
             with self_().iren.poked_subplot():
                 self_()._picked_point = np.array(picker.GetPickPosition())
                 if show_point:
@@ -434,7 +443,7 @@ class PickingInterface:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_cell_picking(left_clicking=True)
+        >>> _ = pl.enable_cell_picking()
 
         """
         self._validate_picker_not_in_use()
@@ -641,15 +650,13 @@ class PickingMethods(PickingInterface):
 
         Examples
         --------
-        Add a cube to a plot and enable cell picking. Enable ``left_clicking``
-        to immediately start picking on the left click and disable showing the
-        box. You can still press the ``p`` key to select meshes.
+        Add a cube to a plot and enable cell picking.
 
         >>> import pyvista as pv
         >>> cube = pv.Cube()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_surface_picking(left_clicking=True)
+        >>> _ = pl.enable_surface_picking()
 
         See :ref:`surface_picking_example` for a full example using this method.
 
@@ -712,7 +719,7 @@ class PickingMethods(PickingInterface):
         font_size=18,
         left_clicking=False,
         use_actor=False,
-        picker='point',
+        picker='cell',
         **kwargs,
     ):
         """Enable picking of a mesh.
@@ -781,7 +788,7 @@ class PickingMethods(PickingInterface):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_mesh_picking(left_clicking=True)
+        >>> _ = pl.enable_mesh_picking()
 
         See :ref:`mesh_picking_example` for a full example using this method.
 
@@ -934,7 +941,7 @@ class PickingMethods(PickingInterface):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_cell_picking(left_clicking=True)
+        >>> _ = pl.enable_cell_picking()
 
         """
         self_ = weakref.ref(self)
@@ -1140,11 +1147,7 @@ class PickingMethods(PickingInterface):
             **kwargs,
         )
 
-    def enable_block_picking(
-        self,
-        callback=None,
-        side='left',
-    ):
+    def enable_block_picking(self, callback=None, side='left'):
         """Enable composite block picking.
 
         Use this picker to return the index of a DataSet when using composite

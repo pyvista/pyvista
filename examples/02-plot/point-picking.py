@@ -61,5 +61,5 @@ sphere = pv.Sphere()
 
 p = pv.Plotter()
 p.add_mesh(sphere, pickable=True)
-p.enable_point_picking(left_clicking=True)
+p.enable_point_picking(left_clicking=True, pickable_window=False)
 p.show()
