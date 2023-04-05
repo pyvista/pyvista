@@ -1,5 +1,5 @@
 """Module managing picking events."""
-from functools import partial
+from functools import partial, wraps
 import warnings
 import weakref
 
@@ -23,10 +23,14 @@ def _launch_pick_event(interactor, event):
 
 
 class PyVistaPickingError(RuntimeError):
+    """General picking error class."""
+
     pass
 
 
 class ElementHandler:
+    """Internal picking handler for element-based picking."""
+
     def __init__(self, mode='cell', callback=None):
         self._picker_ = None
         self.callback = callback
@@ -34,6 +38,7 @@ class ElementHandler:
 
     @property
     def picker(self):
+        """Get or set the picker instance."""
         return self._picker_()
 
     @picker.setter
@@ -41,11 +46,13 @@ class ElementHandler:
         self._picker_ = weakref.ref(picker)
 
     def get_mesh(self):
+        """Get the picked mesh."""
         ds = self.picker.GetDataSet()
         if ds is not None:
             return pyvista.wrap(ds)
 
     def get_cell(self, picked_point):
+        """Get the picked cell of the picked mesh."""
         mesh = self.get_mesh()
         # cell_id = self.picker.GetCellId()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
@@ -56,6 +63,7 @@ class ElementHandler:
         return cell
 
     def get_face(self, picked_point):
+        """Get the picked face of the picked cell."""
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_faces > 1:
             for i, face in enumerate(cell.faces):
@@ -73,6 +81,7 @@ class ElementHandler:
         return face
 
     def get_edge(self, picked_point):
+        """Get the picked edge of the picked cell."""
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_edges > 1:
             ei = (
@@ -85,6 +94,7 @@ class ElementHandler:
         return edge
 
     def get_point(self, picked_point):
+        """Get the picked point of the picked mesh."""
         mesh = self.get_mesh()
         pid = mesh.find_closest_point(picked_point)
         picked = pyvista.PolyData(mesh.points[pid])
@@ -92,6 +102,7 @@ class ElementHandler:
         return picked
 
     def __call__(self, picked_point, picker):
+        """Perform the pick."""
         self.picker = picker
         mesh = self.get_mesh()
         if mesh is None:
@@ -207,7 +218,6 @@ class PickingInterface:
         >>> pl.disable_picking()
 
         """
-
         # remove left and right clicking observer if available
         if getattr(self, 'iren', None):
             self.iren.remove_observer(self._picking_left_clicking_observer)
@@ -469,6 +479,8 @@ class PickingInterface:
 
 
 class PickingMethods(PickingInterface):
+    """Internal class to contain picking utilities."""
+
     def __init__(self, *args, **kwargs):
         """Initialize the picking methods."""
         super().__init__(*args, **kwargs)
@@ -541,7 +553,9 @@ class PickingMethods(PickingInterface):
         """
         return self._picked_block_index
 
+    @wraps(PickingInterface.disable_picking)
     def disable_picking(self):
+        """Disable picking."""
         super().disable_picking()
         # remove any picking text
         if hasattr(self, 'renderers'):
@@ -1211,6 +1225,8 @@ class PickingMethods(PickingInterface):
 
 
 class PickingHelper(PickingMethods):
+    """Internal container class to contain picking helper methods."""
+
     def __init__(self, *args, **kwargs):
         """Initialize the picking methods."""
         super().__init__(*args, **kwargs)

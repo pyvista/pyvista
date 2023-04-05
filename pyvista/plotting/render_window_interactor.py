@@ -823,11 +823,13 @@ class RenderWindowInteractor:
         return self.interactor.GetEventPosition()
 
     def get_poked_renderer(self, x=None, y=None):
+        """Get poked renderer for last or specified event position."""
         if x is None or y is None:
             x, y = self.get_event_position()
         return self.interactor.FindPokedRenderer(x, y)
 
     def get_event_subplot_loc(self):
+        """Get the subplot location of the last event."""
         poked_renderer = self.get_poked_renderer()
         for index in range(len(self._plotter.renderers)):
             renderer = self._plotter.renderers[index]
@@ -837,6 +839,7 @@ class RenderWindowInteractor:
 
     @contextmanager
     def poked_subplot(self):
+        """Activate the sublot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
         loc = self.get_event_subplot_loc()
         self._plotter.subplot(*loc)
@@ -985,6 +988,7 @@ class RenderWindowInteractor:
         self.picker.AddObserver(_vtk.vtkCommand.EndPickEvent, observer)
 
     def reset_picker(self):
+        """Reset the picker."""
         # Remove observers
         self.picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
         # Set default picker to vtkWorldPointPicker
