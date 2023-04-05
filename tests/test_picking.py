@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import vtk
 
@@ -287,36 +288,50 @@ def test_point_picking(left_clicking):
     plotter.close()
 
 
-def test_point_picking_window_not_pickable():
+@pytest.mark.parametrize('pickable_window', [False, True])
+def test_point_picking_window(pickable_window):
+    class Tracker:
+        def __init__(self):
+            self.last_picked = None
+
+        def __call__(self, picked_point):
+            self.last_picked = picked_point
+
     plotter = pyvista.Plotter(
         window_size=(100, 100),
     )
 
     # bottom left corner, pickable
     sphere = pyvista.Sphere()
-    sphere.translate([-100, -100, 0], inplace=True)
+    sphere.translate([-1, -1, 0], inplace=True)
     plotter.add_mesh(sphere, pickable=True)
 
-    # top right corner, not pickable
-    unpickable_sphere = pyvista.Sphere()
-    unpickable_sphere.translate([100, 100, 0], inplace=True)
-    plotter.add_mesh(unpickable_sphere, pickable=False)
+    plotter.camera_position = [(0.0, 0.0, 8.5), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
-    plotter.view_xy()
+    tracker = Tracker()
     plotter.enable_point_picking(
+        callback=tracker,
         tolerance=0.2,
-        # picker=...  # default picker should not allow picking in the window
+        pickable_window=pickable_window,
+        picker='hardware',  # picker allows picking in the window
+        # do not use point picker as it snaps to points
     )
 
     # simulate the pick
     renderer = plotter.renderer
     picker = plotter.iren.picker
 
-    successful_pick = picker.Pick(0, 0, 0, renderer)
-    assert successful_pick
+    successful_pick = picker.Pick(25, 25, 0, renderer)
+    assert successful_pick  # not a complete test
+    assert tracker.last_picked is not None
+    good_point = tracker.last_picked
 
-    successful_pick = picker.Pick(100, 100, 0, renderer)
-    assert not successful_pick
+    successful_pick = picker.Pick(75, 75, 0, renderer)
+    assert not successful_pick  # not a complete test
+    if pickable_window:
+        assert not np.allclose(tracker.last_picked, good_point)  # make sure new point picked
+    else:
+        assert np.allclose(tracker.last_picked, good_point)  # make sure point did not change
 
     plotter.close()
 
