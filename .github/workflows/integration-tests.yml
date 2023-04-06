@@ -63,22 +63,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Qt and testing dependencies
-        run: pip install PyQt6 pytest pytest-qt pytest-cov ipython
-      - name: Clone PyVistaQt
-        run: git clone --depth=1 https://github.com/pyvista/pyvistaqt.git --branch main --single-branch
-      - name: Setup Xvfb and Qt dependencies
-        run: ./pyvistaqt/.ci/setup_headless_display.sh
-      - name: Install PyVistaQt
-        run: pip install -ve .
-        working-directory: pyvistaqt
-      - name: Install dependencies
-        run: pip install -r requirements_test.txt
-      - name: Install PyVista
-        run: pip install -ve .
-      - name: Run pyvistaqt tests
-        uses: GabrielBB/xvfb-action@v1
+      - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
+      - uses: pyvista/setup-headless-display-action@main
         with:
-          run: pytest tests
-          working-directory: pyvistaqt
-
+          qt: true
+          pyvista: false
+      - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt PyQt6
+      - run: pip install -ve .
+      - run: pytest ./tests
+        working-directory: pyvistaqt
