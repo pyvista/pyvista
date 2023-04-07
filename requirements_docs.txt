@@ -9,7 +9,7 @@ jupyter_sphinx==0.4.0
 jupyterlab==3.6.3
 lxml==4.9.2
 meshio==5.3.4
-mypy==1.1.1
+mypy==1.2.0
 mypy-extensions==1.0.0
 numpydoc==1.5.0
 osmnx==1.3.0
