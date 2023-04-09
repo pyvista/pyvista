@@ -4028,7 +4028,7 @@ def download_electronics_cooling(load=True):  # pragma: no cover
     See :ref:`openfoam_cooling_example` for a full example using this dataset.
 
     """
-    fnames = _download_archive('fea/cooling_electronics/datasets.zip')
+    fnames = _download_archive('fvm/cooling_electronics/datasets.zip')
     if load:
         # return the structure dataset first
         if fnames[1].endswith('structure.vtp'):

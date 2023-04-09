@@ -104,14 +104,15 @@ pl.show()
 # Now, let's plot the steamlines of this dataset so we can see how the air is
 # flowing through the case.
 #
-# Generate streamlines using :func:`streamlines() <pyvista.DataSetFilters.streamlines>`.
+# Generate streamlines using :func:`streamlines_from_source()
+# <pyvista.DataSetFilters.streamlines_from_source>`.
 
 # Have our streamlines start from the regular openings of the case.
-lines = []
-z_rng = np.linspace(0, 0.03, 5)
+points = []
 for x in np.linspace(0.045, 0.105, 7, endpoint=True):
-    lines.extend([air.streamlines(start_position=[x, 0.2, z], max_time=2.0) for z in z_rng])
-lines = pv.merge(lines)
+    points.extend([x, 0.2, z] for z in np.linspace(0, 0.03, 5))
+points = pv.PointSet(points)
+lines = air.streamlines_from_source(points, max_time=2.0)
 
 # Plot
 pl = pv.Plotter()
@@ -136,22 +137,21 @@ pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Show a 3D plot of areas of temperature.
 #
-# For this example, we will first interpolate the results from the
+# For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.UniformGrid` using
-# :func:`interpolate() <pyvista.DataSetFilters.interpolate>`. This is so we can
-# visualize it using :func:`add_volume() <pyvista.Plotter.add_volume>`
+# :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
+# it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
 bounds = np.array(air.bounds) * 1.2
 origin = (bounds[0], bounds[2], bounds[4])
-spacing = (0.003, 0.003, 0.003)
+spacing = (0.002, 0.002, 0.002)
 dimensions = (
     int((bounds[1] - bounds[0]) // spacing[0] + 2),
     int((bounds[3] - bounds[2]) // spacing[1] + 2),
     int((bounds[5] - bounds[4]) // spacing[2] + 2),
 )
 grid = pv.UniformGrid(dimensions=dimensions, spacing=spacing, origin=origin)
-grid = grid.interpolate(air, radius=0.005)
-
+grid = grid.sample(air)
 
 opac = np.zeros(20)
 opac[1:] = np.geomspace(1e-7, 0.1, 19)
