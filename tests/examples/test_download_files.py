@@ -508,6 +508,16 @@ def test_download_lucy():
     assert isinstance(dataset, pv.PolyData)
 
 
+def test_download_electronics_cooling():
+    filenames = examples.download_electronics_cooling(load=False)
+    for filename in filenames:
+        assert os.path.isfile(filename)
+
+    structure, air = examples.download_electronics_cooling(load=True)
+    assert isinstance(structure, pv.PolyData)
+    assert isinstance(air, pv.UnstructuredGrid)
+
+
 def test_angular_sector():
     filename = examples.download_angular_sector(load=False)
     assert os.path.isfile(filename)
