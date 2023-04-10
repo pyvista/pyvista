@@ -58,3 +58,13 @@ class RepresentationType(AnnotatedIntEnum):
     POINTS = (0, 'Points')
     WIREFRAME = (1, 'Wireframe')
     SURFACE = (2, 'Surface')
+
+
+class ElementType(AnnotatedIntEnum):
+    """Types of elemental geometries."""
+
+    MESH = (0, 'Mesh')
+    CELL = (1, 'Cell')
+    FACE = (2, 'Face')
+    EDGE = (3, 'Edge')
+    POINT = (4, 'Point')

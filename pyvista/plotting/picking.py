@@ -1,5 +1,6 @@
 """Module managing picking events."""
 from functools import partial, wraps
+from typing import Tuple
 import warnings
 import weakref
 
@@ -8,9 +9,9 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import try_callback
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .composite_mapper import CompositePolyDataMapper
+from .opts import ElementType
 
 
 def _launch_pick_event(interactor, event):
@@ -29,13 +30,46 @@ class PyVistaPickingError(RuntimeError):
     pass
 
 
-class ElementHandler:
-    """Internal picking handler for element-based picking."""
+class RectangleSelection:
+    """Internal data structure for rectangle based selections."""
 
-    def __init__(self, mode='cell', callback=None):
+    def __init__(self, frustum, viewport):
+        self._frustum = frustum
+        self._viewport = viewport
+
+    @property
+    def frustum(self) -> _vtk.vtkPlanes:
+        """Get the selected frustum through the scene."""
+        return self._frustum
+
+    @property
+    def frustum_mesh(self) -> 'pyvista.PolyData':
+        """Get the frustum as a PyVista mesh."""
+        frustum_source = _vtk.vtkFrustumSource()
+        frustum_source.ShowLinesOff()
+        frustum_source.SetPlanes(self.frustum)
+        frustum_source.Update()
+        return pyvista.wrap(frustum_source.GetOutput())
+
+    @property
+    def viewport(self) -> Tuple[float, float, float, float]:
+        """Get the selected viewport coordinates.
+
+        Coordinates are given as: x0, y0, x1, y1
+        """
+        return self._viewport
+
+
+class PointPickingElementHandler:
+    """Internal picking handler for element-based picking.
+
+    This handler is only valid for single point picking operations.
+    """
+
+    def __init__(self, mode: ElementType = ElementType.CELL, callback=None):
         self._picker_ = None
         self.callback = callback
-        self.mode = mode
+        self.mode = ElementType.from_any(mode)
 
     @property
     def picker(self):
@@ -109,17 +143,17 @@ class ElementHandler:
         if mesh is None:
             return  # No selected mesh (point not on surface of mesh)
 
-        if self.mode == 'mesh':
+        if self.mode == ElementType.MESH:
             picked = mesh
-        elif self.mode == 'cell':
+        elif self.mode == ElementType.CELL:
             picked = self.get_cell(picked_point)
             if picked is None:
                 return  # TODO: handle
-        elif self.mode == 'face':
+        elif self.mode == ElementType.FACE:
             picked = self.get_face(picked_point)
-        elif self.mode == 'edge':
+        elif self.mode == ElementType.EDGE:
             picked = self.get_edge(picked_point)
-        elif self.mode == 'point':
+        elif self.mode == ElementType.POINT:
             picked = self.get_point(picked_point)
 
         if self.callback:
@@ -127,7 +161,7 @@ class ElementHandler:
 
 
 class PickingInterface:
-    """An internal class to hold picking related features."""
+    """An internal class to hold core picking related features."""
 
     def __init__(self, *args, **kwargs):
         """Initialize the picking interface."""
@@ -378,32 +412,34 @@ class PickingInterface:
     def enable_rectangle_picking(
         self,
         callback=None,
-        mode='viewport',
         show_message=True,
         font_size=18,
         start=False,
+        show_frustum=False,
+        style='wireframe',
+        color='pink',
+        **kwargs,
     ):
         """Enable rectangle based picking at cells.
 
         Press ``"r"`` to enable retangle based selection. Press
         ``"r"`` again to turn it off.
 
-        This has two modes:
+        Picking with the rectangle selection tool provides two values that
+        are passed as the ``RectangleSelection`` object in the callback:
 
-        1. Viewport: the callback is passed the viewport coordinates of
-           the selection rectangle
-        2. Frustum: the callback is passed the full frustrum made from
-           the selection rectangle into the scene
+        1. ``RectangleSelection.viewport``: the viewport coordinates of the
+           selection rectangle.
+        2. ``RectangleSelection.frustum``: the full frustrum made from
+           the selection rectangle into the scene.
 
         Parameters
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made.
-            The picked_cells are input as the first parameter to this
-            callable.
-
-        mode : str, default: "viewport"
-            The mode of selection.
+            The ``RectangleSelection`` is the only passed argument
+            containing the viewport coordinates of the selection and the
+            projected frustum.
 
         show_message : bool | str, default: True
             Show the message about how to use the cell picking tool. If this
@@ -415,6 +451,21 @@ class PickingInterface:
         start : bool, default: True
             Automatically start the cell selection tool.
 
+        show_frustum : bool, default: False
+            Show the frustum in the scene.
+
+        style : str, default: "wireframe"
+            Visualization style of the selection frustum. One of the
+            following: ``style='surface'``, ``style='wireframe'``, or
+            ``style='points'``.
+
+        color : ColorLike, default: "pink"
+            The color of the selected frustum when shown.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the selection frustum is interactively displayed.
+
         Examples
         --------
         Add a mesh and a cube to a plot and enable cell picking.
@@ -425,38 +476,38 @@ class PickingInterface:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_cell_picking()
+        >>> _ = pl.enable_rectangle_picking()
 
         """
         self._validate_picker_not_in_use()
 
-        # self_ = weakref.ref(self)
+        self_ = weakref.ref(self)
 
-        # validate mode choice
-        if mode not in ['viewport', 'frustum']:
-            raise ValueError(f'Invalid mode choice: `{mode}`')
-
-        def _frustum_callback(picker, event_id):
-            sel = picker.GetFrustum()
-            if callback is not None:
-                try_callback(callback, sel)
-
-        def _viewport_callback(picker, event_id):
+        def _end_pick_helper(picker, *args):
             renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
             x0 = int(renderer.GetPickX1())
             x1 = int(renderer.GetPickX2())
             y0 = int(renderer.GetPickY1())
             y1 = int(renderer.GetPickY2())
 
-            if callback is not None:
-                try_callback(callback, x0, y0, x1, y1)
+            selection = RectangleSelection(frustum=picker.GetFrustum(), viewport=(x0, y0, x1, y1))
 
-        self.enable_rubber_band_style()  # TODO: better handle
+            if show_frustum:
+                with self_().iren.poked_subplot():
+                    self_().add_mesh(
+                        selection.frustum_mesh,
+                        name='_rectangle_selection_frustum',
+                        style=style,
+                        color=color,
+                        **kwargs,
+                    )
+
+            if callback is not None:
+                try_callback(callback, selection)
+
+        self.enable_rubber_band_style()  # TODO: better handle?
         self.iren.picker = 'rendered_area'
-        if mode == 'frustum':
-            self.iren.add_pick_obeserver(_frustum_callback)
-        else:
-            self.iren.add_pick_obeserver(_viewport_callback)
+        self.iren.add_pick_obeserver(_end_pick_helper)
         self._picker_in_use = True
 
         # Now add text about cell-selection
@@ -850,8 +901,11 @@ class PickingMethods(PickingInterface):
         """Enable rectangle based cell picking through the scene."""
         self_ = weakref.ref(self)
 
-        def finalize():
-            picked = self_().picked_cells
+        def finalize(picked):
+            if picked.n_cells < 1:
+                picked = None
+
+            self_().picked_cells = picked
 
             if picked is None:
                 # Inidcates invalid pick
@@ -878,7 +932,7 @@ class PickingMethods(PickingInterface):
             if callback is not None:
                 try_callback(callback, picked)
 
-        def through_pick_callback(frustum):
+        def through_pick_callback(selection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()
             for actor in renderer.actors.values():
@@ -887,7 +941,7 @@ class PickingMethods(PickingInterface):
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
-                    extract.SetImplicitFunction(frustum)
+                    extract.SetImplicitFunction(selection.frustum)
                     extract.Update()
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
@@ -903,18 +957,11 @@ class PickingMethods(PickingInterface):
                     picked = picked.combine()
                 else:
                     picked = pyvista.UnstructuredGrid()  # empty
-            # Check if valid
-            is_valid_selection = picked.n_cells > 0
-            if is_valid_selection:
-                self_().picked_cells = picked
-            else:
-                self_().picked_cells = None
 
-            return finalize()
+            finalize(picked)
 
         return self.enable_rectangle_picking(
             callback=through_pick_callback,
-            mode='frustum',
             show_message=show_message,
             font_size=font_size,
             start=start,
@@ -932,11 +979,14 @@ class PickingMethods(PickingInterface):
         start=False,
         **kwargs,
     ):
-        """Enable rectangle based cell picking through the scene."""
+        """Enable rectangle based cell picking on visible surfaces."""
         self_ = weakref.ref(self)
 
-        def finalize():
-            picked = self_().picked_cells
+        def finalize(picked):
+            if picked.n_cells < 1:
+                picked = None
+
+            self_().picked_cells = picked
 
             if picked is None:
                 # Inidcates invalid pick
@@ -963,10 +1013,11 @@ class PickingMethods(PickingInterface):
             if callback is not None:
                 try_callback(callback, picked)
 
-        def visible_pick_callback(x0, y0, x1, y1):
+        def visible_pick_callback(selection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()
             x0, y0, x1, y1 = renderer.get_pick_position()
+            # x0, y0, x1, y1 = selection.viewport
             if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
                 selector = _vtk.vtkOpenGLHardwareSelector()
                 selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
@@ -1011,18 +1062,11 @@ class PickingMethods(PickingInterface):
                     picked = picked.combine()
                 else:
                     picked = pyvista.UnstructuredGrid()  # empty
-            # Check if valid
-            is_valid_selection = picked.n_cells > 0
-            if is_valid_selection:
-                self_().picked_cells = picked
-            else:
-                self_().picked_cells = None
 
-            finalize()
+            finalize(picked)
 
         return self.enable_rectangle_picking(
             callback=visible_pick_callback,
-            mode='viewport',
             show_message=show_message,
             font_size=font_size,
             start=start,
@@ -1041,12 +1085,11 @@ class PickingMethods(PickingInterface):
         start=False,
         **kwargs,
     ):
-        """Enable picking at cells.
+        """Enable picking of cells with a rectangle selection tool.
 
         Press ``"r"`` to enable retangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
-        ``self.picked_cells``. Also press ``"p"`` to pick a single
-        cell under the mouse location.
+        ``self.picked_cells``.
 
         All meshes in the scene are available for picking by default.
         If you would like to only pick a single mesh in the scene,
@@ -1063,10 +1106,6 @@ class PickingMethods(PickingInterface):
            Visible cell picking (``through=False``) will only work if
            the mesh is displayed with a ``'surface'`` representation
            style (the default).
-
-        .. warning::
-            Cell picking can only be enabled for a single renderer
-            or subplot at a time.
 
         Parameters
         ----------
@@ -1121,16 +1160,12 @@ class PickingMethods(PickingInterface):
         >>> _ = pl.enable_cell_picking()
 
         """
-        # TODO: improve error message
-        # Deprecated on v0.39.0, estimated removal on v0.42.0
-        warnings.warn('`enable_cell_picking` has been deprecated', PyVistaDeprecationWarning)
         if through:
             method = self.enable_rectangle_through_picking
         else:
             method = self.enable_rectangle_visible_picking
         return method(
             callback=callback,
-            mode='cell',
             show=show,
             show_message=show_message,
             style=style,
@@ -1182,7 +1217,7 @@ class PickingMethods(PickingInterface):
                         **kwargs,
                     )
 
-        handler = ElementHandler(mode=mode, callback=_end_handler)
+        handler = PointPickingElementHandler(mode=mode, callback=_end_handler)
 
         self.enable_surface_picking(
             callback=handler,
