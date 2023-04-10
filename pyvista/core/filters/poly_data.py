@@ -350,18 +350,17 @@ class PolyDataFilters(DataSetFilters):
         so the in-place merge attempt will raise.
 
         """
-        try:
-            merged = self.merge(dataset, inplace=True)
-        except TypeError:
-            raise TypeError(
-                'In-place merge only possible if the other mesh '
-                'is also a PolyData.\nPlease use `mesh + other_mesh` '
-                'instead, which returns a new UnstructuredGrid.'
-            ) from None
+        merged = self.merge(dataset, inplace=True)
         return merged
 
     def merge(
-        self, dataset, merge_points=True, inplace=False, main_has_priority=True, progress_bar=False
+        self,
+        dataset,
+        merge_points=True,
+        tolerance=0.0,
+        inplace=False,
+        main_has_priority=True,
+        progress_bar=False,
     ):
         """Merge this mesh with one or more datasets.
 
@@ -384,6 +383,10 @@ class PolyDataFilters(DataSetFilters):
 
         merge_points : bool, optional
             Merge equivalent points when ``True``.
+
+        tolerance : float, default: 0.0
+            The absolute tolerance to use to find coincident points when
+            ``merge_points=True``.
 
         inplace : bool, default: False
             Updates grid inplace when ``True`` if the input type is a
@@ -417,42 +420,30 @@ class PolyDataFilters(DataSetFilters):
         """
         # check if dataset or datasets are not polydata
         if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            not_pd = any(not isinstance(data, pyvista.PolyData) for data in dataset)
+            is_pd = all(isinstance(data, pyvista.PolyData) for data in dataset)
         else:
-            not_pd = not isinstance(dataset, pyvista.PolyData)
+            is_pd = isinstance(dataset, pyvista.PolyData)
 
-        # use dataset merge if not polydata
-        if not_pd:
-            return DataSetFilters.merge(
-                self,
-                dataset,
-                merge_points=merge_points,
-                main_has_priority=main_has_priority,
-                inplace=inplace,
-            )
+        if inplace and not is_pd:
+            raise TypeError("In-place merge requires both input datasets to be PolyData.")
 
-        append_filter = pyvista._vtk.vtkAppendPolyData()
+        merged = DataSetFilters.merge(
+            self,
+            dataset,
+            merge_points=merge_points,
+            tolerance=tolerance,
+            main_has_priority=main_has_priority,
+            inplace=False,
+            progress_bar=progress_bar,
+        )
 
-        # note: unlike DataSetFilters.merge, we must put the
-        # "to be preserved" dataset last due to the call to clean()
-        if main_has_priority:
-            append_filter.AddInputData(self)
-
-        if isinstance(dataset, pyvista.DataSet):
-            append_filter.AddInputData(dataset)
-        else:
-            for data in dataset:
-                append_filter.AddInputData(data)
-
-        if not main_has_priority:
-            append_filter.AddInputData(self)
-
-        _update_alg(append_filter, progress_bar, 'Merging')
-        merged = _get_output(append_filter)
-        if merge_points:
-            merged = merged.clean(
-                lines_to_points=False, polys_to_lines=False, strips_to_polys=False
-            )
+        # convert back to a polydata if both inputs were polydata
+        if is_pd:
+            pd_merged = pyvista.PolyData(merged.points, faces=merged.cells, n_faces=merged.n_cells)
+            pd_merged.point_data.update(merged.point_data)
+            pd_merged.cell_data.update(merged.cell_data)
+            pd_merged.field_data.update(merged.field_data)
+            merged = pd_merged
 
         if inplace:
             self.deep_copy(merged)

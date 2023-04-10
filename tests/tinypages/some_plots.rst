@@ -36,7 +36,7 @@ Plot 4 defines ``a`` in a context block:
     a = 10
     import pyvista
     pyvista.Plane().plot()
-    
+
 
 Plot 5 shows that a block with context sees the new variable. It also uses
 ``:nofigs:``:

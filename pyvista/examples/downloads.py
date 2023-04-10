@@ -3904,6 +3904,60 @@ def download_cavity(load=True):  # pragma: no cover
     return pyvista.OpenFOAMReader(filename).read()
 
 
+def download_openfoam_tubes(load=True):  # pragma: no cover
+    """Download tubes OpenFOAM example.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Plot the outline of the dataset along with a cross section of the flow velocity.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_openfoam_tubes()
+    >>> y_slice = dataset.slice('y')
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     y_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Flow Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(dataset, color='w', opacity=0.25)
+    >>> pl.enable_anti_aliasing()
+    >>> pl.show()
+
+    See :ref:`openfoam_tubes_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
+        target_file='case.foam',
+    )
+    if not load:
+        return filename
+    reader = pyvista.OpenFOAMReader(filename)
+    reader.set_active_time_value(1000)
+    return reader.read()[0]
+
+
 def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 
@@ -3930,7 +3984,7 @@ def download_lucy(load=True):  # pragma: no cover
     >>> import pyvista
     >>> dataset = examples.download_lucy()
 
-    Create a light at the "flame"
+    Create a light at the "flame".
 
     >>> flame_light = pyvista.Light(
     ...     color=[0.886, 0.345, 0.133],
@@ -3941,7 +3995,7 @@ def download_lucy(load=True):  # pragma: no cover
     ...     attenuation_values=(0.001, 0.005, 0),
     ... )
 
-    Create a scene light
+    Create a scene light.
 
     >>> scene_light = pyvista.Light(intensity=0.2)
 
@@ -3956,6 +4010,85 @@ def download_lucy(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lucy.ply', load=load)
+
+
+def download_electronics_cooling(load=True):  # pragma: no cover
+    """Download the electronics cooling example datasets.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    tuple[PolyData, UnstructuredGrid] | list[str]
+        DataSets or filenames depending on ``load``.
+
+    Examples
+    --------
+    Load the datasets
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> structure, air = examples.download_electronics_cooling()
+    >>> structure, air  # doctest:+SKIP
+    (PolyData (0x7fdfe4eb24a0)
+       N Cells:    344270
+       N Points:   187992
+       N Strips:   0
+       X Bounds:   -3.000e-03, 1.530e-01
+       Y Bounds:   -3.000e-03, 2.030e-01
+       Z Bounds:   -9.000e-03, 4.200e-02
+       N Arrays:   5,
+     UnstructuredGrid (0x7fdfde4478e0)
+       N Cells:    1749992
+       N Points:   610176
+       X Bounds:   -1.388e-18, 1.500e-01
+       Y Bounds:   -3.000e-03, 2.030e-01
+       Z Bounds:   -6.000e-03, 4.400e-02
+       N Arrays:   10)
+
+    Plot the air velocity through the electronics.
+
+    >>> z_slice = air.clip('z', value=-0.005)
+    >>> pl = pv.Plotter()
+    >>> pl.enable_ssao(radius=0.01)
+    >>> _ = pl.add_mesh(
+    ...     z_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(
+    ...     structure,
+    ...     color='w',
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ... )
+    >>> pl.camera_position = 'xy'
+    >>> pl.camera.roll = 90
+    >>> pl.enable_anti_aliasing('fxaa')
+    >>> pl.show()
+
+    See :ref:`openfoam_cooling_example` for a full example using this dataset.
+
+    """
+    fnames = _download_archive('fvm/cooling_electronics/datasets.zip')
+    if load:
+        # return the structure dataset first
+        if fnames[1].endswith('structure.vtp'):
+            fnames = fnames[::-1]
+        return pyvista.read(fnames[0]), pyvista.read(fnames[1])
+    return fnames
 
 
 def download_can(partial=False, load=True):  # pragma: no cover
@@ -5101,6 +5234,93 @@ def download_cad_model_case(load=True):  # pragma: no cover
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
 
 
+def download_coil_magnetic_field(load=True):  # pragma: no cover
+    """Download the magnetic field of a coil.
+
+    These examples were generated from the following `script
+    <https://github.com/pyvista/vtk-data/tree/master/Data/magpylib/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the magnetic field dataset and generate streamlines from the field.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> grid = examples.download_coil_magnetic_field()
+    >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
+    >>> strl = grid.streamlines_from_source(
+    ...     seed,
+    ...     vectors='B',
+    ...     max_time=180,
+    ...     initial_step_length=0.1,
+    ...     integration_direction='both',
+    ... )
+    >>> strl.plot(
+    ...     cmap='plasma',
+    ...     render_lines_as_tubes=True,
+    ...     line_width=2,
+    ...     lighting=False,
+    ...     zoom=2,
+    ... )
+
+    Plot the magnet field strength in the Z direction.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> grid = examples.download_coil_magnetic_field()
+    >>> # create coils
+    >>> coils = []
+    >>> for z in np.linspace(-8, 8, 16):
+    ...     coils.append(
+    ...         pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False)
+    ...     )
+    ...
+    >>> coils = pv.MultiBlock(coils)
+    >>> # plot the magnet field strength in the Z direction
+    >>> scalars = np.abs(grid['B'][:, 2])
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     coils, render_lines_as_tubes=True, line_width=5, color='w'
+    ... )
+    >>> vol = pl.add_volume(
+    ...     grid,
+    ...     scalars=scalars,
+    ...     cmap='plasma',
+    ...     show_scalar_bar=False,
+    ...     log_scale=True,
+    ...     opacity='sigmoid_2',
+    ... )
+    >>> vol.prop.interpolation_type = 'linear'
+    >>> _ = pl.add_volume_clip_plane(
+    ...     vol,
+    ...     normal='-x',
+    ...     normal_rotation=False,
+    ...     interaction_event='always',
+    ...     widget_color=pv.Color(opacity=0.0),
+    ... )
+    >>> pl.enable_anti_aliasing()
+    >>> pl.camera.zoom(2)
+    >>> pl.show()
+
+    See the :ref:`magnetic_fields_example` for more details on how to plot with
+    this dataset.
+
+    """
+    return _download_and_read('magpylib/coil_field.vti', load=load)
+
+
 def download_meshio_xdmf(load=True):  # pragma: no cover
     """Download xdmf file created by meshio.
 
@@ -5108,7 +5328,7 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 

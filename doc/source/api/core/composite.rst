@@ -83,7 +83,7 @@ Dictionary-like Features
 
 
 ``MultiBlock`` also has some dictionary features. We can set the name
-of the blocks, and then access them 
+of the blocks, and then access them
 
 .. jupyter-execute::
 

@@ -18,7 +18,7 @@ def test_show_bounds_axes_ranges():
     bounds = (0, 1, 0, 1, 0, 1)
     plotter.show_bounds(bounds=bounds)
     cube_axes_actor = plotter.renderer.cube_axes_actor
-    assert cube_axes_actor.GetBounds() == bounds
+    assert cube_axes_actor.bounds == bounds
 
     # send bounds and axes ranges
     axes_ranges = [0, 1, 0, 2, 0, 3]

@@ -15,7 +15,7 @@ from .dataset import DataObject
 
 
 class Texture(_vtk.vtkTexture, DataObject):
-    """Wrap vtk.Texture.
+    """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
     :ref:`ref_texture_example`.
@@ -269,7 +269,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         .. deprecated:: 0.37.0
            ``flip`` is deprecated. Use :func:`Texture.flip_x` or
-           :func:`Texture.flip_x` instead.
+           :func:`Texture.flip_y` instead.
 
         """
         warnings.warn(
@@ -335,7 +335,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Notes
         -----
-        The shape of this the array's first two dimensions will be swapped. For
+        The shape of the array's first two dimensions will be swapped. For
         example, a ``(300, 200)`` image will return an array of ``(200, 300)``.
 
         Returns
@@ -447,7 +447,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     def n_components(self) -> int:
         """Return the number of components in the image.
 
-        In textures, 3 or 4 component are used for representing RGB and RGBA
+        In textures, 3 or 4 components are used for representing RGB and RGBA
         images.
 
         Examples
