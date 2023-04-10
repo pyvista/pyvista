@@ -5,7 +5,11 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista.core.errors import PointSetNotSupported
+from pyvista.core.errors import (
+    PointSetCellOperationError,
+    PointSetDimensionReductionError,
+    PointSetNotSupported,
+)
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
@@ -20,6 +24,8 @@ def test_pointset_basic():
     assert pset.n_cells == 0
     assert 'PointSet' in str(pset)
     assert 'PointSet' in repr(pset)
+    assert pset.area == 0
+    assert pset.volume == 0
 
 
 def test_pointset_from_vtk():
@@ -239,7 +245,7 @@ def test_delaunay_3d(pointset):
     assert out.n_cells > 10
 
 
-def raise_unsupported(pointset):  # PointSetNotSupported
+def test_raise_unsupported(pointset):
     with pytest.raises(PointSetNotSupported):
         pointset.contour()
 
@@ -249,43 +255,43 @@ def raise_unsupported(pointset):  # PointSetNotSupported
     with pytest.raises(PointSetNotSupported):
         pointset.point_data_to_cell_data()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.triangulate()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.decimate_boundary()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.find_cells_along_line()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.tessellate()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetDimensionReductionError):
         pointset.slice()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetDimensionReductionError):
         pointset.slice_along_axis()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetDimensionReductionError):
         pointset.slice_along_line()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetDimensionReductionError):
         pointset.slice_implicit()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetDimensionReductionError):
         pointset.slice_orthogonal()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.shrink()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.separate_cells()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.remove_cells()
 
-    with pytest.raises(PointSetNotSupported):
+    with pytest.raises(PointSetCellOperationError):
         pointset.point_is_inside_cell()
 
 

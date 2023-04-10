@@ -19,7 +19,13 @@ from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
 from .celltype import CellType
 from .dataset import DataSet
-from .errors import DeprecationError, PointSetNotSupported, VTKVersionError
+from .errors import (
+    DeprecationError,
+    PointSetCellOperationError,
+    PointSetDimensionReductionError,
+    PointSetNotSupported,
+    VTKVersionError,
+)
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
 DEFAULT_INPLACE_WARNING = (
@@ -379,65 +385,55 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     def triangulate(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def decimate_boundary(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def find_cells_along_line(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def tessellate(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def slice(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets.'
-        )
+        raise PointSetDimensionReductionError
 
     def slice_along_axis(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets.'
-        )
+        raise PointSetDimensionReductionError
 
     def slice_along_line(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets.'
-        )
+        raise PointSetDimensionReductionError
 
     def slice_implicit(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets.'
-        )
+        raise PointSetDimensionReductionError
 
     def slice_orthogonal(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Slice and other dimension reducing filters are not supported on PointSets.'
-        )
+        raise PointSetDimensionReductionError
 
     def shrink(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def separate_cells(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def remove_cells(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
     def point_is_inside_cell(self, *args, **kwargs):
         """Raise cell operations are not supported."""
-        raise PointSetNotSupported('Cell operations are not supported. PointSets contain no cells.')
+        raise PointSetCellOperationError
 
 
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):

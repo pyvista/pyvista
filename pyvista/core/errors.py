@@ -48,9 +48,27 @@ class VTKVersionError(RuntimeError):
         RuntimeError.__init__(self, message)
 
 
-class PointSetNotSupported(NotImplementedError):
+class PointSetNotSupported(TypeError):
     """Requested filter or property is not supported by the PointSet class."""
 
     def __init__(self, message='The requested operation is not supported for PointSets.'):
         """Empty init."""
-        NotImplementedError.__init__(self, message)
+        TypeError.__init__(self, message)
+
+
+class PointSetCellOperationError(PointSetNotSupported):
+    """Requested filter or property is not supported by the PointSet class."""
+
+    def __init__(self, message='Cell operations are not supported. PointSets contain no cells.'):
+        """Empty init."""
+        PointSetNotSupported.__init__(self, message)
+
+
+class PointSetDimensionReductionError(PointSetNotSupported):
+    """Requested filter or property is not supported by the PointSet class."""
+
+    def __init__(
+        self, message='Slice and other dimension reducing filters are not supported on PointSets.'
+    ):
+        """Empty init."""
+        PointSetNotSupported.__init__(self, message)
