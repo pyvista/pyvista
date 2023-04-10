@@ -46,7 +46,7 @@ pl.show()
 # Generate streamlines using :func:`streamlines_from_source()
 # <pyvista.DataSetFilters.streamlines_from_source>`.
 
-# Let's use the inlet as a source. Let's first plot it.
+# Let's use the inlet as a source. First plot it.
 inlet = block[1][2]
 pl = pv.Plotter()
 pl.add_mesh(inlet, color='b', label='inlet')
@@ -58,8 +58,7 @@ pl.show()
 
 ###############################################################################
 # Now, actually generate the streamlines. Since the original inlet contains
-# 1000 points, let's reduce this to around 200 points. First, let's remove the
-# points on the outer ring.
+# 1000 points, let's reduce this to around 200 points by using every 5th point.
 
 pset = pv.PointSet(inlet.points[::5])
 lines = air.streamlines_from_source(
