@@ -4064,7 +4064,6 @@ def download_pump_bracket(load=True):  # pragma: no cover
     ...     anti_aliasing='fxaa',
     ... )
 
-
     See :ref:`pump_bracket_example` for a full example using this dataset.
 
     """
