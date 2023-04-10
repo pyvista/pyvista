@@ -1166,6 +1166,7 @@ class PickingMethods(PickingInterface):
     def enable_element_picking(
         self,
         callback=None,
+        mode='cell',
         show=True,
         show_message=True,
         font_size=18,
@@ -1174,7 +1175,6 @@ class PickingMethods(PickingInterface):
         pickable_window=False,
         left_clicking=False,
         picker='cell',
-        mode='cell',
         **kwargs,
     ):
         """Select individual elements on a mesh."""
