@@ -2104,7 +2104,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def set_position(self, point, reset=False):
+    def set_position(self, point, reset=False, render=True):
         """Set camera position to a point.
 
         Parameters
@@ -2115,6 +2115,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset : bool, default: False
             Whether to reset the camera after setting the camera
             position.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the position.
 
         Examples
         --------
@@ -2133,11 +2137,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 point = point.ravel()
         self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
-            self.reset_camera()
+            self.reset_camera(render=render)
         self.camera_set = True
         self.Modified()
 
-    def set_viewup(self, vector, reset=True):
+    def set_viewup(self, vector, reset=True, render=True):
         """Set camera viewup vector.
 
         Parameters
@@ -2148,6 +2152,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         reset : bool, default: True
             Whether to reset the camera after setting the camera
             position.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the viewup.
 
         Examples
         --------
@@ -2166,7 +2174,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.camera.up = vector
         if reset:
-            self.reset_camera()
+            self.reset_camera(render=render)
 
         self.camera_set = True
         self.Modified()
@@ -2339,16 +2347,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._actors.pop(name, None)
         self.update_bounds_axes()
         if reset_camera:
-            self.reset_camera()
+            self.reset_camera(render=render)
         elif not self.camera_set and reset_camera is None:
-            self.reset_camera()
+            self.reset_camera(render=render)
         elif render:
             self.parent.render()
 
         self.Modified()
         return True
 
-    def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
+    def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True, render=True):
         """Scale all the actors in the scene.
 
         Scaling in performed independently on the X, Y and Z axis.
@@ -2376,6 +2384,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         reset_camera : bool, default: True
             Resets camera so all actors can be seen.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the scale.
 
         Examples
         --------
@@ -2405,7 +2417,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
-            self.reset_camera()
+            self.reset_camera(render=render)
         self.Modified()
 
     def get_default_cam_pos(self, negative=False):
@@ -2508,7 +2520,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_isometric()
 
-    def view_isometric(self, negative=False):
+    def view_isometric(self, negative=False, render=True):
         """Reset the camera to a default isometric view.
 
         The view will show all the actors in the scene.
@@ -2517,6 +2529,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ----------
         negative : bool, default: False
             View from the other isometric direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2538,9 +2554,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         position = self.get_default_cam_pos(negative=negative)
         self.camera_position = CameraPosition(*position)
         self.camera_set = negative
-        self.reset_camera()
+        self.reset_camera(render=render)
 
-    def view_vector(self, vector, viewup=None):
+    def view_vector(self, vector, viewup=None, render=True):
         """Point the camera in the direction of the given vector.
 
         Parameters
@@ -2551,21 +2567,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         viewup : sequence[float], optional
             Sequence describing the view up of the camera.
 
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
+
         """
         focal_pt = self.center
         if viewup is None:
             viewup = self._theme.camera['viewup']
         cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
-        self.reset_camera()
+        self.reset_camera(render=render)
 
-    def view_xy(self, negative=False):
+    def view_xy(self, negative=False, render=True):
         """View the XY plane.
 
         Parameters
         ----------
         negative : bool, default: False
             View from the opposite direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2580,15 +2604,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xy', negative=negative))
+        self.view_vector(*view_vectors('xy', negative=negative), render=render)
 
-    def view_yx(self, negative=False):
+    def view_yx(self, negative=False, render=True):
         """View the YX plane.
 
         Parameters
         ----------
         negative : bool, default: False
             View from the opposite direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2603,15 +2631,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yx', negative=negative))
+        self.view_vector(*view_vectors('yx', negative=negative), render=render)
 
-    def view_xz(self, negative=False):
+    def view_xz(self, negative=False, render=True):
         """View the XZ plane.
 
         Parameters
         ----------
         negative : bool, default: False
             View from the opposite direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2626,15 +2658,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xz', negative=negative))
+        self.view_vector(*view_vectors('xz', negative=negative), render=render)
 
-    def view_zx(self, negative=False):
+    def view_zx(self, negative=False, render=True):
         """View the ZX plane.
 
         Parameters
         ----------
         negative : bool, default: False
             View from the opposite direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2649,15 +2685,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zx', negative=negative))
+        self.view_vector(*view_vectors('zx', negative=negative), render=render)
 
-    def view_yz(self, negative=False):
+    def view_yz(self, negative=False, render=True):
         """View the YZ plane.
 
         Parameters
         ----------
         negative : bool, default: False
             View from the opposite direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2672,15 +2712,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yz', negative=negative))
+        self.view_vector(*view_vectors('yz', negative=negative), render=render)
 
-    def view_zy(self, negative=False):
+    def view_zy(self, negative=False, render=True):
         """View the ZY plane.
 
         Parameters
         ----------
         negative : bool, default: False
             View from the opposite direction.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
 
         Examples
         --------
@@ -2695,7 +2739,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zy', negative=negative))
+        self.view_vector(*view_vectors('zy', negative=negative), render=render)
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""

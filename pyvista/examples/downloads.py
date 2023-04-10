@@ -3984,7 +3984,7 @@ def download_lucy(load=True):  # pragma: no cover
     >>> import pyvista
     >>> dataset = examples.download_lucy()
 
-    Create a light at the "flame"
+    Create a light at the "flame".
 
     >>> flame_light = pyvista.Light(
     ...     color=[0.886, 0.345, 0.133],
@@ -3995,7 +3995,7 @@ def download_lucy(load=True):  # pragma: no cover
     ...     attenuation_values=(0.001, 0.005, 0),
     ... )
 
-    Create a scene light
+    Create a scene light.
 
     >>> scene_light = pyvista.Light(intensity=0.2)
 
@@ -4010,6 +4010,85 @@ def download_lucy(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lucy.ply', load=load)
+
+
+def download_electronics_cooling(load=True):  # pragma: no cover
+    """Download the electronics cooling example datasets.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    tuple[PolyData, UnstructuredGrid] | list[str]
+        DataSets or filenames depending on ``load``.
+
+    Examples
+    --------
+    Load the datasets
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> structure, air = examples.download_electronics_cooling()
+    >>> structure, air  # doctest:+SKIP
+    (PolyData (0x7fdfe4eb24a0)
+       N Cells:    344270
+       N Points:   187992
+       N Strips:   0
+       X Bounds:   -3.000e-03, 1.530e-01
+       Y Bounds:   -3.000e-03, 2.030e-01
+       Z Bounds:   -9.000e-03, 4.200e-02
+       N Arrays:   5,
+     UnstructuredGrid (0x7fdfde4478e0)
+       N Cells:    1749992
+       N Points:   610176
+       X Bounds:   -1.388e-18, 1.500e-01
+       Y Bounds:   -3.000e-03, 2.030e-01
+       Z Bounds:   -6.000e-03, 4.400e-02
+       N Arrays:   10)
+
+    Plot the air velocity through the electronics.
+
+    >>> z_slice = air.clip('z', value=-0.005)
+    >>> pl = pv.Plotter()
+    >>> pl.enable_ssao(radius=0.01)
+    >>> _ = pl.add_mesh(
+    ...     z_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(
+    ...     structure,
+    ...     color='w',
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ... )
+    >>> pl.camera_position = 'xy'
+    >>> pl.camera.roll = 90
+    >>> pl.enable_anti_aliasing('fxaa')
+    >>> pl.show()
+
+    See :ref:`openfoam_cooling_example` for a full example using this dataset.
+
+    """
+    fnames = _download_archive('fvm/cooling_electronics/datasets.zip')
+    if load:
+        # return the structure dataset first
+        if fnames[1].endswith('structure.vtp'):
+            fnames = fnames[::-1]
+        return pyvista.read(fnames[0]), pyvista.read(fnames[1])
+    return fnames
 
 
 def download_can(partial=False, load=True):  # pragma: no cover
