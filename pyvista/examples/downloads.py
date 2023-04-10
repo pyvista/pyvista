@@ -4012,6 +4012,55 @@ def download_lucy(load=True):  # pragma: no cover
     return _download_and_read('lucy.ply', load=load)
 
 
+def download_pump_bracket(load=True):  # pragma: no cover
+    """Download the pump bracket example dataset.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/STR/bracket/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_pump_bracket()
+    >>> dataset
+    UnstructuredGrid (0x7f46a9279120)
+      N Cells:    124806
+      N Points:   250487
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -4.000e-01, 0.000e+00
+      Z Bounds:   -2.500e-02, 2.500e-02
+      N Arrays:   10
+
+    See :ref:`pump_bracket_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fea/pump_bracket/pump_bracket.zip',
+        'pump_bracket.vtk',
+    )
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
 def download_electronics_cooling(load=True):  # pragma: no cover
     """Download the electronics cooling example datasets.
 
