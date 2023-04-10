@@ -8,6 +8,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import try_callback
+from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 from .composite_mapper import CompositePolyDataMapper
 
@@ -159,7 +160,8 @@ class PickingInterface:
             Picked position or area as ``(x0, y0, x1, y1)``.
 
         """
-        return self.renderer.get_pick_position()
+        renderer = self.iren.get_poked_renderer()
+        return renderer.get_pick_position()
 
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot.
@@ -172,7 +174,8 @@ class PickingInterface:
         """
         if self.click_position is None:
             self.store_click_position()
-        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
+        renderer = self.iren.get_poked_renderer()
+        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)
         return self.iren.picker.GetPickPosition()
 
     def pick_mouse_position(self):
@@ -186,7 +189,8 @@ class PickingInterface:
         """
         if self.mouse_position is None:
             self.store_mouse_position()
-        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
+        renderer = self.iren.get_poked_renderer()
+        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)
         return self.iren.picker.GetPickPosition()
 
     def _init_click_picking_callback(self, left_clicking=False):
@@ -378,9 +382,8 @@ class PickingInterface:
         show_message=True,
         font_size=18,
         start=False,
-        **kwargs,
     ):
-        """Enable area based picking at cells.
+        """Enable rectangle based picking at cells.
 
         Press ``"r"`` to enable retangle based selection. Press
         ``"r"`` again to turn it off.
@@ -392,7 +395,6 @@ class PickingInterface:
         2. Frustum: the callback is passed the full frustrum made from
            the selection rectangle into the scene
 
-
         Parameters
         ----------
         callback : callable, optional
@@ -400,38 +402,18 @@ class PickingInterface:
             The picked_cells are input as the first parameter to this
             callable.
 
-        through : bool, default: True
-            When ``True`` the picker will select all cells
-            through the mesh(es). When ``False``, the picker will select
-            only visible cells on the selected surface(s).
-
-        show : bool, default: True
-            Show the selection interactively.
+        mode : str, default: "viewport"
+            The mode of selection.
 
         show_message : bool | str, default: True
             Show the message about how to use the cell picking tool. If this
             is a string, that will be the message shown.
-
-        style : str, default: "wireframe"
-            Visualization style of the selection.  One of the
-            following: ``style='surface'``, ``style='wireframe'``, or
-            ``style='points'``.
-
-        line_width : float, default: 5.0
-            Thickness of selected mesh edges.
-
-        color : ColorLike, default: "pink"
-            The color of the selected mesh when shown.
 
         font_size : int, default: 18
             Sets the font size of the message.
 
         start : bool, default: True
             Automatically start the cell selection tool.
-
-        **kwargs : dict, optional
-            All remaining keyword arguments are used to control how
-            the selection is interactively displayed.
 
         Examples
         --------
@@ -450,29 +432,31 @@ class PickingInterface:
 
         # self_ = weakref.ref(self)
 
-        # TODO: validate mode choice
+        # validate mode choice
+        if mode not in ['viewport', 'frustum']:
+            raise ValueError(f'Invalid mode choice: `{mode}`')
 
-        def _end_pick_event(picker, event_id):
-            if mode == 'frustum':
-                sel = picker.GetFrustum()
-            else:
-                renderer = picker.GetRenderer()
-                x0 = int(renderer.GetPickX1())
-                x1 = int(renderer.GetPickX2())
-                y0 = int(renderer.GetPickY1())
-                y1 = int(renderer.GetPickY2())
-                sel = x0, y0, x1, y1
-
+        def _frustum_callback(picker, event_id):
+            sel = picker.GetFrustum()
             if callback is not None:
                 try_callback(callback, sel)
 
-            # HACK: Deactivate selection tool
-            # self_().iren.interactor.SetInteractorStyle(before_style)
-            return
+        def _viewport_callback(picker, event_id):
+            renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
+            x0 = int(renderer.GetPickX1())
+            x1 = int(renderer.GetPickX2())
+            y0 = int(renderer.GetPickY1())
+            y1 = int(renderer.GetPickY2())
+
+            if callback is not None:
+                try_callback(callback, x0, y0, x1, y1)
 
         self.enable_rubber_band_style()  # TODO: better handle
         self.iren.picker = 'rendered_area'
-        self.iren.add_pick_obeserver(_end_pick_event)
+        if mode == 'frustum':
+            self.iren.add_pick_obeserver(_frustum_callback)
+        else:
+            self.iren.add_pick_obeserver(_viewport_callback)
         self._picker_in_use = True
 
         # Now add text about cell-selection
@@ -851,6 +835,199 @@ class PickingMethods(PickingInterface):
             pickable_window=False,
         )
 
+    def enable_rectangle_through_picking(
+        self,
+        callback=None,
+        show=True,
+        style='wireframe',
+        line_width=5,
+        color='pink',
+        show_message=True,
+        font_size=18,
+        start=False,
+        **kwargs,
+    ):
+        """Enable rectangle based cell picking through the scene."""
+        self_ = weakref.ref(self)
+
+        def finalize():
+            picked = self_().picked_cells
+
+            if picked is None:
+                # Inidcates invalid pick
+                with self_().iren.poked_subplot():
+                    self.remove_actor('_through_picking_selection')
+                return
+
+            if show:
+                # Use try in case selection is empty
+                with self_().iren.poked_subplot():
+                    self_().add_mesh(
+                        picked,
+                        name='_through_picking_selection',
+                        style=style,
+                        color=color,
+                        line_width=line_width,
+                        pickable=False,
+                        reset_camera=False,
+                        **kwargs,
+                    )
+
+            # TODO: should callbacks be within the poked subplot context
+            # to simplify use?
+            if callback is not None:
+                try_callback(callback, picked)
+
+        def through_pick_callback(frustum):
+            picked = pyvista.MultiBlock()
+            renderer = self_().iren.get_poked_renderer()
+            for actor in renderer.actors.values():
+                if actor.GetMapper() and actor.GetPickable():
+                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
+                    extract = _vtk.vtkExtractGeometry()
+                    extract.SetInputData(input_mesh)
+                    extract.SetImplicitFunction(frustum)
+                    extract.Update()
+                    picked.append(pyvista.wrap(extract.GetOutput()))
+
+            if len(picked) == 1:
+                self_().picked_cells = picked[0]
+            else:
+                self_().picked_cells = picked
+
+            if isinstance(picked, pyvista.MultiBlock):
+                if len(picked) == 1:
+                    picked = picked[0]
+                elif picked.n_blocks > 0:
+                    picked = picked.combine()
+                else:
+                    picked = pyvista.UnstructuredGrid()  # empty
+            # Check if valid
+            is_valid_selection = picked.n_cells > 0
+            if is_valid_selection:
+                self_().picked_cells = picked
+            else:
+                self_().picked_cells = None
+
+            return finalize()
+
+        return self.enable_rectangle_picking(
+            callback=through_pick_callback,
+            mode='frustum',
+            show_message=show_message,
+            font_size=font_size,
+            start=start,
+        )
+
+    def enable_rectangle_visible_picking(
+        self,
+        callback=None,
+        show=True,
+        style='wireframe',
+        line_width=5,
+        color='pink',
+        show_message=True,
+        font_size=18,
+        start=False,
+        **kwargs,
+    ):
+        """Enable rectangle based cell picking through the scene."""
+        self_ = weakref.ref(self)
+
+        def finalize():
+            picked = self_().picked_cells
+
+            if picked is None:
+                # Inidcates invalid pick
+                with self_().iren.poked_subplot():
+                    self.remove_actor('_visible_picking_selection')
+                return
+
+            if show:
+                # Use try in case selection is empty
+                with self_().iren.poked_subplot():
+                    self_().add_mesh(
+                        picked,
+                        name='_visible_picking_selection',
+                        style=style,
+                        color=color,
+                        line_width=line_width,
+                        pickable=False,
+                        reset_camera=False,
+                        **kwargs,
+                    )
+
+            # TODO: should callbacks be within the poked subplot context
+            # to simplify use?
+            if callback is not None:
+                try_callback(callback, picked)
+
+        def visible_pick_callback(x0, y0, x1, y1):
+            picked = pyvista.MultiBlock()
+            renderer = self_().iren.get_poked_renderer()
+            x0, y0, x1, y1 = renderer.get_pick_position()
+            if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
+                selector = _vtk.vtkOpenGLHardwareSelector()
+                selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+                selector.SetRenderer(renderer)
+                selector.SetArea(x0, y0, x1, y1)
+                selection = selector.Select()
+
+                for node in range(selection.GetNumberOfNodes()):
+                    selection_node = selection.GetNode(node)
+                    if selection_node is None:  # pragma: no cover
+                        # No selection
+                        continue
+                    cids = pyvista.convert_array(selection_node.GetSelectionList())
+                    actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
+
+                    # TODO: this is too hacky - find better way to avoid non-dataset actors
+                    if not actor.GetMapper() or not hasattr(
+                        actor.GetProperty(), 'GetRepresentation'
+                    ):
+                        continue
+
+                    # if not a surface
+                    if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
+                        warnings.warn(
+                            "Display representations other than `surface` will result in incorrect results."
+                        )
+                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    smesh = smesh.copy()
+                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    tri_smesh = smesh.extract_surface().triangulate()
+                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    picked.append(smesh.extract_cells(cids_to_get))
+
+                # memory leak issues on vtk==9.0.20210612.dev0
+                # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
+                selection.UnRegister(selection)
+
+            if isinstance(picked, pyvista.MultiBlock):
+                if len(picked) == 1:
+                    picked = picked[0]
+                elif picked.n_blocks > 0:
+                    picked = picked.combine()
+                else:
+                    picked = pyvista.UnstructuredGrid()  # empty
+            # Check if valid
+            is_valid_selection = picked.n_cells > 0
+            if is_valid_selection:
+                self_().picked_cells = picked
+            else:
+                self_().picked_cells = None
+
+            finalize()
+
+        return self.enable_rectangle_picking(
+            callback=visible_pick_callback,
+            mode='viewport',
+            show_message=show_message,
+            font_size=font_size,
+            start=start,
+        )
+
     def enable_cell_picking(
         self,
         callback=None,
@@ -944,151 +1121,25 @@ class PickingMethods(PickingInterface):
         >>> _ = pl.enable_cell_picking()
 
         """
-        self_ = weakref.ref(self)
-
-        # make sure to consistently use renderer
-        renderer_ = weakref.ref(self.renderer)
-
-        def end_pick_helper(picker, event_id):
-            # Merge the selection into a single mesh
-            picked = self_().picked_cells
-            if isinstance(picked, pyvista.MultiBlock):
-                if picked.n_blocks > 0:
-                    picked = picked.combine()
-                else:
-                    picked = pyvista.UnstructuredGrid()
-            # Check if valid
-            is_valid_selection = picked.n_cells > 0
-
-            if show and is_valid_selection:
-                # Select the renderer where the mesh is added.
-                active_renderer_index = self_().renderers._active_index
-                for index in range(len(self.renderers)):
-                    renderer = self.renderers[index]
-                    for actor in renderer._actors.values():
-                        mapper = actor.GetMapper()
-                        if isinstance(mapper, _vtk.vtkDataSetMapper):
-                            loc = self_().renderers.index_to_loc(index)
-                            self_().subplot(*loc)
-                            break
-
-                # Use try in case selection is empty
-                with self_().iren.poked_subplot():
-                    self_().add_mesh(
-                        picked,
-                        name='_cell_picking_selection',
-                        style=style,
-                        color=color,
-                        line_width=line_width,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
-                    )
-
-                # Reset to the active renderer.
-                loc = self_().renderers.index_to_loc(active_renderer_index)
-                self_().subplot(*loc)
-
-                # render here prior to running the callback
-                self_().render()
-            elif not is_valid_selection:
-                self.remove_actor('_cell_picking_selection')
-                self_().picked_cells = None
-
-            if callback is not None:
-                try_callback(callback, self_().picked_cells)
-
-            # TODO: Deactivate selection tool
-            return
-
-        def through_pick_call_back(picker, event_id):
-            picked = pyvista.MultiBlock()
-            for actor in renderer_().actors.values():
-                if actor.GetMapper() and actor.GetPickable():
-                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
-                    extract = _vtk.vtkExtractGeometry()
-                    extract.SetInputData(input_mesh)
-                    extract.SetImplicitFunction(picker.GetFrustum())
-                    extract.Update()
-                    picked.append(pyvista.wrap(extract.GetOutput()))
-
-            if len(picked) == 1:
-                self_().picked_cells = picked[0]
-            else:
-                self_().picked_cells = picked
-            return end_pick_helper(picker, event_id)
-
-        def visible_pick_call_back(picker, event_id):
-            picked = pyvista.MultiBlock()
-            x0, y0, x1, y1 = renderer_().get_pick_position()
-            if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
-                selector = _vtk.vtkOpenGLHardwareSelector()
-                selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
-                selector.SetRenderer(renderer_())
-                selector.SetArea(x0, y0, x1, y1)
-                selection = selector.Select()
-
-                for node in range(selection.GetNumberOfNodes()):
-                    selection_node = selection.GetNode(node)
-                    if selection_node is None:  # pragma: no cover
-                        # No selection
-                        continue
-                    cids = pyvista.convert_array(selection_node.GetSelectionList())
-                    actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
-
-                    # TODO: this is too hacky - find better way to avoid non-dataset actors
-                    if not actor.GetMapper() or not hasattr(
-                        actor.GetProperty(), 'GetRepresentation'
-                    ):
-                        continue
-
-                    # if not a surface
-                    if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results."
-                        )
-                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    smesh = smesh.copy()
-                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
-                    tri_smesh = smesh.extract_surface().triangulate()
-                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
-                    picked.append(smesh.extract_cells(cids_to_get))
-
-                # memory leak issues on vtk==9.0.20210612.dev0
-                # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
-                selection.UnRegister(selection)
-
-            if len(picked) == 1:
-                self_().picked_cells = picked[0]
-            else:
-                self_().picked_cells = picked
-            return end_pick_helper(picker, event_id)
-
-        self.enable_rubber_band_style()
-        self.iren.picker = 'rendered_area'
+        # TODO: improve error message
+        # Deprecated on v0.39.0, estimated removal on v0.42.0
+        warnings.warn('`enable_cell_picking` has been deprecated', PyVistaDeprecationWarning)
         if through:
-            self.iren.add_pick_obeserver(through_pick_call_back)
+            method = self.enable_rectangle_through_picking
         else:
-            # NOTE: there can be issues with non-triangulated meshes
-            # Reference:
-            #     https://github.com/pyvista/pyvista/issues/277
-            #     https://github.com/pyvista/pyvista/pull/281
-            #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
-            self.iren.add_pick_obeserver(visible_pick_call_back)
-
-        # Now add text about cell-selection
-        if show_message:
-            if show_message is True:
-                show_message = "Press R to toggle selection tool"
-                if not through:
-                    show_message += "\nPress P to pick a single cell under the mouse"
-            self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_cell_picking_message'
-            )
-
-        if start:
-            self.iren._style_class.StartSelect()
+            method = self.enable_rectangle_visible_picking
+        return method(
+            callback=callback,
+            mode='cell',
+            show=show,
+            show_message=show_message,
+            style=style,
+            line_width=line_width,
+            color=color,
+            font_size=font_size,
+            start=start,
+            **kwargs,
+        )
 
     def enable_element_picking(
         self,
