@@ -59,6 +59,10 @@ pl.show()
 ###############################################################################
 # Now, actually generate the streamlines. Since the original inlet contains
 # 1000 points, let's reduce this to around 200 points by using every 5th point.
+#
+# .. note::
+#    If we wanted a uniform subsampling of the inlet, we could use
+#    `pyvista/pyacvd <https://github.com/pyvista/pyacvd>`_
 
 pset = pv.PointSet(inlet.points[::5])
 lines = air.streamlines_from_source(
