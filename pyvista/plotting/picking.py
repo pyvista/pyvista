@@ -902,11 +902,6 @@ class PickingMethods(PickingInterface):
         self_ = weakref.ref(self)
 
         def finalize(picked):
-            if picked.n_cells < 1:
-                picked = None
-
-            self_().picked_cells = picked
-
             if picked is None:
                 # Inidcates invalid pick
                 with self_().iren.poked_subplot():
@@ -930,7 +925,7 @@ class PickingMethods(PickingInterface):
             # TODO: should callbacks be within the poked subplot context
             # to simplify use?
             if callback is not None:
-                try_callback(callback, picked)
+                try_callback(callback, self_().picked_cells)
 
         def through_pick_callback(selection):
             picked = pyvista.MultiBlock()
@@ -945,20 +940,16 @@ class PickingMethods(PickingInterface):
                     extract.Update()
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
-            if len(picked) == 1:
+            if picked.n_blocks == 0:
+                self_().picked_cells = None
+            elif picked.combine().n_cells < 1:
+                self_().picked_cells = None
+            elif picked.n_blocks == 1:
                 self_().picked_cells = picked[0]
             else:
                 self_().picked_cells = picked
 
-            if isinstance(picked, pyvista.MultiBlock):
-                if len(picked) == 1:
-                    picked = picked[0]
-                elif picked.n_blocks > 0:
-                    picked = picked.combine()
-                else:
-                    picked = pyvista.UnstructuredGrid()  # empty
-
-            finalize(picked)
+            finalize(self_().picked_cells)
 
         return self.enable_rectangle_picking(
             callback=through_pick_callback,
@@ -983,11 +974,6 @@ class PickingMethods(PickingInterface):
         self_ = weakref.ref(self)
 
         def finalize(picked):
-            if picked.n_cells < 1:
-                picked = None
-
-            self_().picked_cells = picked
-
             if picked is None:
                 # Inidcates invalid pick
                 with self_().iren.poked_subplot():
@@ -1055,15 +1041,16 @@ class PickingMethods(PickingInterface):
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
                 selection.UnRegister(selection)
 
-            if isinstance(picked, pyvista.MultiBlock):
-                if len(picked) == 1:
-                    picked = picked[0]
-                elif picked.n_blocks > 0:
-                    picked = picked.combine()
-                else:
-                    picked = pyvista.UnstructuredGrid()  # empty
+            if len(picked) == 0:
+                self_().picked_cells = None
+            elif picked.combine().n_cells < 1:
+                self_().picked_cells = None
+            elif len(picked) == 1:
+                self_().picked_cells = picked[0]
+            else:
+                self_().picked_cells = picked
 
-            finalize(picked)
+            finalize(self_().picked_cells)
 
         return self.enable_rectangle_picking(
             callback=visible_pick_callback,
