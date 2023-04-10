@@ -2503,7 +2503,8 @@ class DataSetFilters:
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vectors_example` for more examples using this filter.
+        See :ref:`warp_by_vectors_example` and :ref:`eigenmodes_example` for
+        more examples using this filter.
 
         """
         if vectors is None:
