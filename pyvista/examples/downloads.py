@@ -3948,7 +3948,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
 
     """
     filename = _download_archive(
-        'fea/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
+        'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
         target_file='case.foam',
     )
     if not load:
