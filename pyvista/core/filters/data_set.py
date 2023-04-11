@@ -5588,3 +5588,23 @@ def _set_threshold_limit(alg, value, method, invert):
                 alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
+
+    def random_surface_points(self, n=1, progress_bar=False):
+        alg = _vtk.vtkMaskPoints()
+        alg.SetMaximumNumberOfPoints(n)
+        alg.RandomModeOn()
+        alg.SetRandomModeType(4)
+        alg.SetInputDataObject(self)
+        _update_alg(alg, progress_bar, 'Generating Points')
+        mesh = pyvista.wrap(alg.GetOutput())
+        return mesh
+
+    def random_volume_points(self, n=1, progress_bar=False):
+        alg = _vtk.vtkMaskPoints()
+        alg.SetMaximumNumberOfPoints(n)
+        alg.RandomModeOn()
+        alg.SetRandomModeType(5)
+        alg.SetInputDataObject(self)
+        _update_alg(alg, progress_bar, 'Generating Points')
+        mesh = pyvista.wrap(alg.GetOutput())
+        return mesh

@@ -9,6 +9,7 @@ the entire library.
 """
 # flake8: noqa: F401
 
+from vtk import vtkMaskPoints
 from vtkmodules.vtkCommonCore import vtkVersion
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
