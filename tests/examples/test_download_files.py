@@ -497,7 +497,7 @@ def test_download_openfoam_tubes():
     assert os.path.isfile(filename)
 
     dataset = examples.download_openfoam_tubes(load=True)
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert isinstance(dataset, pv.MultiBlock)
 
 
 def test_download_lucy():
