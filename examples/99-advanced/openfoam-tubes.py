@@ -18,8 +18,8 @@ from pyvista import examples
 ###############################################################################
 # Download and load the example dataset.
 
-mesh = examples.download_openfoam_tubes()
-mesh
+block = examples.download_openfoam_tubes()
+block
 
 
 ###############################################################################
@@ -27,12 +27,15 @@ mesh
 # ~~~~~~~~~~~~~~~~~~
 # Plot the outline of the dataset along with a cross section of the flow velocity.
 
+# first, get the first block representing the air within the tube.
+air = block[0]
+
 # generate a slice in the XZ plane
-y_slice = mesh.slice('y')
+y_slice = air.slice('y')
 
 pl = pv.Plotter()
 pl.add_mesh(y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'})
-pl.add_mesh(mesh, color='w', opacity=0.25)
+pl.add_mesh(air, color='w', opacity=0.25)
 pl.enable_anti_aliasing()
 pl.show()
 
@@ -40,16 +43,32 @@ pl.show()
 ###############################################################################
 # Plot Steamlines - Flow Velocity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Generate streamlines using :func:`streamlines() <pyvista.DataSetFilters.streamlines>`.
+# Generate streamlines using :func:`streamlines_from_source()
+# <pyvista.DataSetFilters.streamlines_from_source>`.
 
-lines, src = mesh.streamlines(
+# Let's use the inlet as a source. First plot it.
+inlet = block[1][2]
+pl = pv.Plotter()
+pl.add_mesh(inlet, color='b', label='inlet')
+pl.add_mesh(air, opacity=0.2, color='w', label='air')
+pl.enable_anti_aliasing()
+pl.add_legend(face=None)
+pl.show()
+
+
+###############################################################################
+# Now, actually generate the streamlines. Since the original inlet contains
+# 1000 points, let's reduce this to around 200 points by using every 5th point.
+#
+# .. note::
+#    If we wanted a uniform subsampling of the inlet, we could use
+#    `pyvista/pyacvd <https://github.com/pyvista/pyacvd>`_
+
+pset = pv.PointSet(inlet.points[::5])
+lines = air.streamlines_from_source(
+    pset,
     vectors='U',
-    source_center=(0, 0, 0),
-    source_radius=0.025,
-    return_source=True,
-    max_time=0.5,
-    integration_direction='backward',
-    n_points=40,
+    max_time=1.0,
 )
 
 pl = pv.Plotter()
@@ -62,7 +81,7 @@ pl.add_mesh(
     scalars='U',
     rng=(0, 212),
 )
-pl.add_mesh(mesh, color='w', opacity=0.25)
+pl.add_mesh(air, color='w', opacity=0.25)
 pl.enable_anti_aliasing()
 pl.camera_position = 'xz'
 pl.show()
@@ -75,12 +94,12 @@ pl.show()
 # turbulence modeling to describe the effect of turbulent motion on the
 # momentum transport within the fluid.
 #
-# For this example, we will first interpolate the results from the
+# For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.UniformGrid` using
-# :func:`interpolate() <pyvista.DataSetFilters.interpolate>`. This is so we can
-# visualize it using :func:`add_volume() <pyvista.Plotter.add_volume>`
+# :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
+# it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
-bounds = np.array(mesh.bounds) * 1.2
+bounds = np.array(air.bounds) * 1.2
 origin = (bounds[0], bounds[2], bounds[4])
 spacing = (0.003, 0.003, 0.003)
 dimensions = (
@@ -89,7 +108,7 @@ dimensions = (
     int((bounds[5] - bounds[4]) // spacing[2] + 2),
 )
 grid = pv.UniformGrid(dimensions=dimensions, spacing=spacing, origin=origin)
-grid = grid.interpolate(mesh, radius=0.005)
+grid = grid.sample(air)
 
 pl = pv.Plotter()
 vol = pl.add_volume(
@@ -99,6 +118,6 @@ vol = pl.add_volume(
     scalar_bar_args={'title': 'Turbulent Kinematic Viscosity'},
 )
 vol.prop.interpolation_type = 'linear'
-pl.add_mesh(mesh, color='w', opacity=0.1)
+pl.add_mesh(air, color='w', opacity=0.1)
 pl.camera_position = 'xz'
 pl.show()
