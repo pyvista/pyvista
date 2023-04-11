@@ -42,7 +42,7 @@ pl.show()
 
 ###############################################################################
 # Plot Streamlines - Flow Velocity
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Generate streamlines using :func:`streamlines_from_source()
 # <pyvista.DataSetFilters.streamlines_from_source>`.
 
