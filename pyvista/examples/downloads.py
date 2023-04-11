@@ -5234,6 +5234,83 @@ def download_cad_model_case(load=True):  # pragma: no cover
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
 
 
+def download_aero_bracket(load=True):  # pragma: no cover
+    """Download the finite element solution of an aero bracket.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    This project demonstrates the static stress analysis of three aircraft
+    engine bearing bracket models considering both linear and nonlinear
+    material definition. The models are tested with horizontal and vertical
+    loading conditions as provided on the `GrabCAD - Airplane Bearing Bracket
+    Challenge
+    <https://grabcad.com/challenges/airplane-bearing-bracket-challenge/entries>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download and plot equivalent cell stress.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_aero_bracket()
+    >>> dataset  # doctest:+SKIP
+    UnstructuredGrid (0x7f439aa2cac0)
+      N Cells:    117292
+      N Points:   187037
+      X Bounds:   -6.858e-03, 1.118e-01
+      Y Bounds:   -1.237e-02, 6.634e-02
+      Z Bounds:   -1.638e-02, 1.638e-02
+      N Arrays:   3
+
+    Show the available point data arrays.
+
+    >>> dataset.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays :
+        displacement            float32    (187037, 3)
+        total nonlinear strain  float32    (187037, 6)
+        von Mises stress        float32    (187037,)
+
+    Plot the von Mises stress.
+
+    >>> cpos = [
+    ...     (-0.0503, 0.132, -0.179),
+    ...     (0.0505, 0.0185, -0.00201),
+    ...     (0.275, 0.872, 0.405),
+    ... ]
+    >>> dataset.plot(
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ...     scalars='von Mises stress',
+    ...     cmap='bwr',
+    ...     cpos=cpos,
+    ...     anti_aliasing='fxaa',
+    ... )
+
+    """
+    return _download_and_read('fea/aero_bracket/aero_bracket.vtu', load=load)
+
+
 def download_coil_magnetic_field(load=True):  # pragma: no cover
     """Download the magnetic field of a coil.
 

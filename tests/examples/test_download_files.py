@@ -956,6 +956,16 @@ def test_cad_model_case():
     assert dataset.n_points == 7677
 
 
+def test_download_aero_bracket():
+    filename = examples.download_aero_bracket(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtu')
+
+    dataset = examples.download_aero_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data.keys()) == 3
+
+
 def test_coil_magnetic_field():
     filename = examples.download_coil_magnetic_field(load=False)
     assert os.path.isfile(filename)
