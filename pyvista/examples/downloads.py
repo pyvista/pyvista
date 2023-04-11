@@ -5264,7 +5264,7 @@ def download_aero_bracket(load=True):  # pragma: no cover
 
     Examples
     --------
-    Download and plot equivalent cell stress.
+    Download the aero bracket.
 
     >>> from pyvista import examples
     >>> dataset = examples.download_aero_bracket()
