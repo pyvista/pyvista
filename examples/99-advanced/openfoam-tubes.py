@@ -38,8 +38,8 @@ pl.show()
 
 
 ###############################################################################
-# Plot Steamlines - Flow Velocity
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot Streamlines - Flow Velocity
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Generate streamlines using :func:`streamlines() <pyvista.DataSetFilters.streamlines>`.
 
 lines, src = mesh.streamlines(
