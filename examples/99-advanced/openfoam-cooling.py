@@ -99,9 +99,9 @@ pl.show()
 
 
 ###############################################################################
-# Plot Steamlines - Flow Velocity
+# Plot Streamlines - Flow Velocity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Now, let's plot the steamlines of this dataset so we can see how the air is
+# Now, let's plot the streamlines of this dataset so we can see how the air is
 # flowing through the case.
 #
 # Generate streamlines using :func:`streamlines_from_source()
