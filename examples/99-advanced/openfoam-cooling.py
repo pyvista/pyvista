@@ -100,7 +100,7 @@ pl.show()
 
 ###############################################################################
 # Plot Streamlines - Flow Velocity
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, let's plot the streamlines of this dataset so we can see how the air is
 # flowing through the case.
 #
