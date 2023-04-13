@@ -13,6 +13,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements_test.txt
       - name: Run tests and collect coverage
-        run: pytest --cov app
+        run: pytest --cov tests
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
