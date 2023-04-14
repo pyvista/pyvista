@@ -279,6 +279,11 @@ intersphinx_mapping = {
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
     'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
+
+redirects = {
+    "https://docs.pyvista.org/api/index.html": "https://docs.pyvista.org/stable/api/index.html"
+}
+
 intersphinx_timeout = 10
 
 linkcheck_retries = 3
