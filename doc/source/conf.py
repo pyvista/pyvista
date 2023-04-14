@@ -1,4 +1,3 @@
-"""Sphinx configuration for PyVista."""
 import datetime
 import faulthandler
 import locale
@@ -19,12 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
-from pyvista.utilities.docs import (  # noqa: F401
-    OPTION_REDIRECTS,
-    OPTION_REDIRECTS_DEFAULT,
-    linkcode_resolve,
-    make_redirects,
-)
+from pyvista.utilities.docs import linkcode_resolve  # noqa: F401
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -74,6 +68,7 @@ extensions = [
     "pyvista.ext.plot_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    'sphinx.ext.linkcode',
     "sphinx.ext.doctest",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
@@ -81,7 +76,6 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
-    'sphinx.ext.linkcode',
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -286,7 +280,9 @@ intersphinx_mapping = {
     'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
 
-redirects = {"*": "https://docs.pyvista.org/stable/"}
+redirects = {
+    "https://docs.pyvista.org/api/index.html": "https://docs.pyvista.org/stable/api/index.html"
+}
 
 intersphinx_timeout = 10
 
@@ -623,8 +619,6 @@ copybutton_prompt_is_regexp = True
 
 
 def setup(app):
-    app.add_config_value(OPTION_REDIRECTS, OPTION_REDIRECTS_DEFAULT, "env")
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
     app.add_css_file("summary.css")
-    app.connect('build-finished', make_redirects)
