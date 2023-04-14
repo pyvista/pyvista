@@ -138,7 +138,7 @@ articles = dict(
         link="https://geemap.org/",
         image="geemap.gif",
     ),
-    entry=Example(
+    geovista=Example(
         title="GeoVista",
         description="Cartographic rendering and mesh analytics powered by PyVista",
         link="https://github.com/bjlittle/geovista",
@@ -186,7 +186,7 @@ articles = dict(
         link="https://pyfbs.readthedocs.io/en/latest/examples/examples.html",
         image="pyfbs.webp",
     ),
-    entry=Example(title="topoGenesis",
+    topogenesis=Example(title="topoGenesis",
         description="topoGenesis is an open-source python package that provides topological structures and functions for Generative Systems and Sciences for various application areas.",
         link="https://topogenesis.readthedocs.io/notebooks/boolean_marching_cubes/",
         image="boolean_marching_cubes.png"
