@@ -213,7 +213,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: np.ndarray):
+    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
