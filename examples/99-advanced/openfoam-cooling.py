@@ -10,7 +10,7 @@ Management Tutorial: CHT Analysis of an Electronics Box
 
 This example dataset was read using the :class:`pyvista.POpenFOAMReader` and
 post processed according to this `README.md
-<https://github.com/pyvista/vtk-data/blob/master/Data/fea/cooling_electronics/README.md>`_.
+<https://github.com/pyvista/vtk-data/blob/master/Data/fvm/cooling_electronics/README.md>`_.
 
 """
 
@@ -99,9 +99,9 @@ pl.show()
 
 
 ###############################################################################
-# Plot Steamlines - Flow Velocity
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Now, let's plot the steamlines of this dataset so we can see how the air is
+# Plot Streamlines - Flow Velocity
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Now, let's plot the streamlines of this dataset so we can see how the air is
 # flowing through the case.
 #
 # Generate streamlines using :func:`streamlines_from_source()

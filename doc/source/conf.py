@@ -209,6 +209,8 @@ numpydoc_validation_exclude = {  # set of regex
     # Type alias
     r'\.ColorLike$',
     r'\.Chart$',
+    # PointSet *args and **kwargs for wrapped parameters
+    r'\.PointSet(\.|$)',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',
