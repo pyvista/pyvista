@@ -186,10 +186,11 @@ articles = dict(
         link="https://pyfbs.readthedocs.io/en/latest/examples/examples.html",
         image="pyfbs.webp",
     ),
-    topogenesis=Example(title="topoGenesis",
+    topogenesis=Example(
+        title="topoGenesis",
         description="topoGenesis is an open-source python package that provides topological structures and functions for Generative Systems and Sciences for various application areas.",
         link="https://topogenesis.readthedocs.io/notebooks/boolean_marching_cubes/",
-        image="boolean_marching_cubes.png"
+        image="boolean_marching_cubes.png",
     ),
     # entry=Example(title="",
     #     description="",
