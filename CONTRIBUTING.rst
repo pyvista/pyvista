@@ -586,7 +586,8 @@ Build the documentation on Windows with:
 
 .. code:: winbatch
 
-   cd doc/source
+   cd doc
+   python -msphinx -M html source _build
    python -msphinx -M html . _build
 
 The generated documentation can be found in the ``doc/_build/html``
