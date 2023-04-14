@@ -1843,7 +1843,7 @@ class DataSet(DataSetFilters, DataObject):
     def _ipython_key_completions_(self) -> List[str]:
         return self.array_names
 
-    def __setitem__(self, name: str, scalars: np.ndarray):
+    def __setitem__(self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence]):
         """Add/set an array in the point_data, or cell_data accordingly.
 
         It depends on the array's length, or specified mode.
