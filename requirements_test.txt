@@ -2,7 +2,6 @@
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
 cmocean<3.1
-codecov<2.2.0
 colorcet<3.1.0
 hypothesis<6.71.1
 imageio-ffmpeg<0.5.0
