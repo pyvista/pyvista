@@ -121,32 +121,39 @@ class Viewer:
 
         """
         for view in self._html_views:
-            if hasattr(view, 'update_image'):
-                view.update_image()
+            view.update_image()
+
+    def update_camera(self, **kwargs):
+        """Update image and camera for all associated views.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
+        for view in self._html_views:
+            view.update_camera()
 
     def view_isometric(self):
         """View isometric."""
-        self.plotter.view_isometric()
-        self.push_camera()
-        self.update()
+        self.plotter.view_isometric(render=False)
+        self.update_camera()
 
     def view_yz(self):
         """View YZ plane."""
-        self.plotter.view_yz()
-        self.push_camera()
-        self.update()
+        self.plotter.view_yz(render=False)
+        self.update_camera()
 
     def view_xz(self):
         """View XZ plane."""
-        self.plotter.view_xz()
-        self.push_camera()
-        self.update()
+        self.plotter.view_xz(render=False)
+        self.update_camera()
 
     def view_xy(self):
         """View XY plane."""
-        self.plotter.view_xy()
-        self.push_camera()
-        self.update()
+        self.plotter.view_xy(render=False)
+        self.update_camera()
 
     def on_edge_visiblity_change(self, **kwargs):
         """Toggle edge visibility for all actors.
@@ -225,8 +232,7 @@ class Viewer:
 
         """
         if not kwargs[self.SERVER_RENDERING]:
-            self.push_camera()
-            self.update()
+            self.update_camera()
 
     @property
     def actors(self):

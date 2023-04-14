@@ -497,7 +497,7 @@ def test_download_openfoam_tubes():
     assert os.path.isfile(filename)
 
     dataset = examples.download_openfoam_tubes(load=True)
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert isinstance(dataset, pv.MultiBlock)
 
 
 def test_download_lucy():
@@ -506,6 +506,16 @@ def test_download_lucy():
 
     dataset = examples.download_lucy(load=True)
     assert isinstance(dataset, pv.PolyData)
+
+
+def test_download_electronics_cooling():
+    filenames = examples.download_electronics_cooling(load=False)
+    for filename in filenames:
+        assert os.path.isfile(filename)
+
+    structure, air = examples.download_electronics_cooling(load=True)
+    assert isinstance(structure, pv.PolyData)
+    assert isinstance(air, pv.UnstructuredGrid)
 
 
 def test_angular_sector():
