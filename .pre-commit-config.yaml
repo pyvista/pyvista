@@ -1,3 +1,9 @@
+# Integration with GitHub Actions
+# See https://pre-commit.ci/
+ci:
+    autofix_prs: false
+    autoupdate_schedule: monthly
+
 repos:
 - repo: https://github.com/psf/black
   rev: 23.3.0
