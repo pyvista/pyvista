@@ -208,8 +208,8 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 
 Details can be found here: https://docs.transifex.com/getting-started-1/translators
 
-.. _`pyvista translation page`: https://www.transifex.com/tkoyama010/pyvista-doc/
-.. _Transifex: https://www.transifex.com/
+.. _`pyvista translation page`: https://app.transifex.com/tkoyama010/pyvista-doc/
+.. _Transifex: https://app.transifex.com/
 .. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
 .. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations

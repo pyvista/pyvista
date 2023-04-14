@@ -5,6 +5,11 @@ import pytest
 import vtk
 
 import pyvista
+from pyvista.core.errors import (
+    PointSetCellOperationError,
+    PointSetDimensionReductionError,
+    PointSetNotSupported,
+)
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
@@ -19,6 +24,8 @@ def test_pointset_basic():
     assert pset.n_cells == 0
     assert 'PointSet' in str(pset)
     assert 'PointSet' in repr(pset)
+    assert pset.area == 0
+    assert pset.volume == 0
 
 
 def test_pointset_from_vtk():
@@ -208,6 +215,84 @@ def test_flip_normal():
             ],
         ),
     )
+
+
+def test_threshold(pointset):
+    pointset['scalars'] = range(pointset.n_points)
+    out = pointset.threshold(pointset.n_points // 2)
+    assert isinstance(out, pyvista.PointSet)
+    assert out.n_points == pointset.n_points // 2
+
+
+def test_threshold_percent(pointset):
+    pointset['scalars'] = range(pointset.n_points)
+    out = pointset.threshold_percent(50)
+    assert isinstance(out, pyvista.PointSet)
+    assert out.n_points == pointset.n_points // 2
+
+
+def test_explode(pointset):
+    out = pointset.explode(1)
+    assert isinstance(out, pyvista.PointSet)
+    ori_xlen = pointset.bounds[1] - pointset.bounds[0]
+    new_xlen = out.bounds[1] - out.bounds[0]
+    assert np.isclose(2 * ori_xlen, new_xlen)
+
+
+def test_delaunay_3d(pointset):
+    out = pointset.delaunay_3d()
+    assert isinstance(out, pyvista.UnstructuredGrid)
+    assert out.n_cells > 10
+
+
+def test_raise_unsupported(pointset):
+    with pytest.raises(PointSetNotSupported):
+        pointset.contour()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.cell_data_to_point_data()
+
+    with pytest.raises(PointSetNotSupported):
+        pointset.point_data_to_cell_data()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.triangulate()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.decimate_boundary()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.find_cells_along_line()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.tessellate()
+
+    with pytest.raises(PointSetDimensionReductionError):
+        pointset.slice()
+
+    with pytest.raises(PointSetDimensionReductionError):
+        pointset.slice_along_axis()
+
+    with pytest.raises(PointSetDimensionReductionError):
+        pointset.slice_along_line()
+
+    with pytest.raises(PointSetDimensionReductionError):
+        pointset.slice_implicit()
+
+    with pytest.raises(PointSetDimensionReductionError):
+        pointset.slice_orthogonal()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.shrink()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.separate_cells()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.remove_cells()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.point_is_inside_cell()
 
 
 def test_rotate_x():

@@ -3922,7 +3922,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3932,7 +3932,8 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_openfoam_tubes()
-    >>> y_slice = dataset.slice('y')
+    >>> air = dataset[0]
+    >>> y_slice = air.slice('y')
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     y_slice,
@@ -3940,7 +3941,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
     ...     lighting=False,
     ...     scalar_bar_args={'title': 'Flow Velocity'},
     ... )
-    >>> _ = pl.add_mesh(dataset, color='w', opacity=0.25)
+    >>> _ = pl.add_mesh(air, color='w', opacity=0.25)
     >>> pl.enable_anti_aliasing()
     >>> pl.show()
 
@@ -3955,7 +3956,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
         return filename
     reader = pyvista.OpenFOAMReader(filename)
     reader.set_active_time_value(1000)
-    return reader.read()[0]
+    return reader.read()
 
 
 def download_lucy(load=True):  # pragma: no cover
