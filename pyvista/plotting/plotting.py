@@ -77,7 +77,12 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .tools import (  # noqa
+    FONTS,
+    normalize,
+    opacity_transfer_function,
+    parse_font_family,
+)
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 

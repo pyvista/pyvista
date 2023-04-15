@@ -9,7 +9,12 @@ import numpy as np
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
-from pyvista.utilities import assert_empty_kwargs, check_depth_peeling, try_callback, wrap
+from pyvista.utilities import (
+    assert_empty_kwargs,
+    check_depth_peeling,
+    try_callback,
+    wrap,
+)
 from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
 
 from .._typing import BoundsLike

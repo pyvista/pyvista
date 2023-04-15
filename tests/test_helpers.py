@@ -1,7 +1,7 @@
 import os
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import trimesh
 import vtk

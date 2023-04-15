@@ -26,7 +26,12 @@ from .errors import (
     PointSetNotSupported,
     VTKVersionError,
 )
-from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
+from .filters import (
+    PolyDataFilters,
+    StructuredGridFilters,
+    UnstructuredGridFilters,
+    _get_output,
+)
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '

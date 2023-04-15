@@ -11,10 +11,10 @@ import platform
 import re
 import time
 
-from PIL import Image
 import imageio
 import matplotlib
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 
