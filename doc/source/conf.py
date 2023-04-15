@@ -279,7 +279,6 @@ intersphinx_mapping = {
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
     'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
-
 intersphinx_timeout = 10
 
 linkcheck_retries = 3
