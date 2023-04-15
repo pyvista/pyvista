@@ -8,23 +8,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  stylecheck:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-          cache: 'pip'
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run pre-commit
-        run: pre-commit run --all-files
-
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
