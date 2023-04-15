@@ -101,10 +101,9 @@ jobs:
 
       - name: Build Documentation
         run: make -C doc html
-      - name: Copy meta data
-        run: |
-          cp doc/README.md doc/_build/html/
-          cp doc/source/ads.txt doc/_build/html/
+
+      - name: Copy ads.txt
+        run: cp doc/source/ads.txt doc/_build/html/
 
       - name: Dump Sphinx Warnings and Errors
         if: always()
