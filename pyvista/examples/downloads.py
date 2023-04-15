@@ -4019,8 +4019,8 @@ def download_pump_bracket(load=True):  # pragma: no cover
     Data generated from public SimScale examples at `SimScale Project Library -
     Turbo <https://www.simscale.com/projects/STR/bracket/>`_.
 
-    Licensing for this dataset is granted to freely and without restriction
-    reproduce, distribute, publish according to the `SimScale Terms and
+    Licensing for this dataset is granted freely and without restriction
+    reproduce, distribute, and publish according to the `SimScale Terms and
     Conditions <https://www.simscale.com/terms-and-conditions/>`_.
 
     Parameters
