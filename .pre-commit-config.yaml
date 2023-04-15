@@ -2,7 +2,7 @@
 # See https://pre-commit.ci/
 ci:
     autofix_prs: false
-    autoupdate_schedule: monthly
+    autoupdate_schedule: weekly
 
 repos:
 - repo: https://github.com/psf/black
