@@ -485,6 +485,10 @@ The actual installation of the environment happens before the first commit
 following ``pre-commit install``. This will take a bit longer, but subsequent
 commits will only trigger the actual style checks.
 
+Even if you are not in a situation where you are not performing or able to
+perform the above tasks, you can comment `pre-commit.ci autofix` on a pull
+request to manually trigger auto-fixing.
+
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -587,6 +591,7 @@ Build the documentation on Windows with:
 .. code:: winbatch
 
    cd doc
+   python -msphinx -M html source _build
    python -msphinx -M html . _build
 
 The generated documentation can be found in the ``doc/_build/html``
