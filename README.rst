@@ -84,7 +84,6 @@ PyVista
 +----------------------+------------+-------------+
 
 
-
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
 
 PyVista is:
