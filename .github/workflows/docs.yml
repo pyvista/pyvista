@@ -167,8 +167,6 @@ jobs:
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
 
-
-
   publish-notebooks:
     name: Publish Notebooks for MyBinder
     runs-on: ubuntu-20.04
