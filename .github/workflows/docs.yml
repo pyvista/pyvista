@@ -153,7 +153,7 @@ jobs:
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           decompress_artifact: true
-          repository: 'pyvista/multiversion-docs-testing'
+          repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
 
@@ -163,7 +163,7 @@ jobs:
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           decompress_artifact: true
-          repository: 'pyvista/multiversion-docs-testing'
+          repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
 
