@@ -7,9 +7,7 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
-)
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples')
 
 
 @pytest.fixture()
