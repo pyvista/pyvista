@@ -489,11 +489,6 @@ Even if you are not in a situation where you are not performing or able to
 perform the above tasks, you can comment `pre-commit.ci autofix` on a pull
 request to manually trigger auto-fixing.
 
-|pre-commit.ci status|
-
-    .. |pre-commit.ci status| image:: https://results.pre-commit.ci/badge/github/pyvista/pyvista/main.svg
-       :target: https://results.pre-commit.ci/latest/github/pyvista/pyvista/main
-
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
