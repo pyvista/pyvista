@@ -1398,7 +1398,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         Parameters
         ----------
-        files : str or Iterable(str)
+        files : str | sequence[str]
             Solution file or files to add.
 
         """
@@ -1431,7 +1431,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         Parameters
         ----------
-        value : int or Plot3DFunctionEnum
+        value : int | Plot3DFunctionEnum
             The function to add.
 
         Examples
@@ -1457,7 +1457,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         Parameters
         ----------
-        value : int or Plot3DFunctionEnum
+        value : int | Plot3DFunctionEnum
             The function to remove.
         """
         if isinstance(value, enum.Enum):

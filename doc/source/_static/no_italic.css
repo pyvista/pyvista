@@ -1,0 +1,19 @@
+/* Disable italic for parameter types and remove the border from code */
+/* See https://github.com/pyvista/pyvista/pull/4155#issuecomment-1475308020 */
+
+
+span.classifier, span.classifier * {
+  font-style: normal;
+}
+
+
+code.literal, code.literal * {
+  background-color: initial;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+code, code * {
+  font-size: 1em;
+}

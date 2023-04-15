@@ -273,12 +273,13 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
-def test_add_lines():
+@pytest.mark.parametrize("connected, n_lines", [(False, 2), (True, 3)])
+def test_add_lines(connected, n_lines):
     pl = pyvista.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-    actor = pl.add_lines(points)
+    actor = pl.add_lines(points, connected=connected)
     dataset = actor.mapper.dataset
-    assert dataset.n_cells == 2
+    assert dataset.n_cells == n_lines
 
 
 def test_clear_actors(cube, sphere):

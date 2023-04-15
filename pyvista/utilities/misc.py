@@ -27,6 +27,14 @@ def _set_plot_theme_from_env():
             )
 
 
+def _check_range(value, rng, parm_name):
+    """Check if a parameter is within a range."""
+    if value < rng[0] or value > rng[1]:
+        raise ValueError(
+            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        )
+
+
 @lru_cache(maxsize=None)
 def has_module(module_name):
     """Return if a module can be imported."""
@@ -101,7 +109,7 @@ def copy_vtk_array(array, deep=True):
 
     Parameters
     ----------
-    array : vtk.vtkDataArray or vtk.vtkAbstractArray
+    array : vtk.vtkDataArray | vtk.vtkAbstractArray
         VTK array.
 
     deep : bool, optional

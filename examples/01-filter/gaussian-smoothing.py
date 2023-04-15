@@ -25,7 +25,7 @@ data = examples.download_gourds()
 cp = [(319.5, 239.5, 1053.7372980874645), (319.5, 239.5, 0.0), (0.0, 1.0, 0.0)]
 
 ###############################################################################
-# Let's apply the gaussian smoothing with different values of standard
+# Let's apply the Gaussian smoothing with different values of standard
 # deviation.
 p = pv.Plotter(shape=(2, 2))
 

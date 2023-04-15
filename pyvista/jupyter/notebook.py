@@ -137,7 +137,7 @@ def show_panel(plotter):
     # if plotter.renderer.axes_enabled:
     # pan.axes = build_panel_axes()
 
-    if hasattr(plotter.renderer, 'cube_axes_actor'):
+    if plotter.renderer.cube_axes_actor is not None:
         pan.axes = build_panel_bounds(plotter.renderer.cube_axes_actor)
 
     return pan

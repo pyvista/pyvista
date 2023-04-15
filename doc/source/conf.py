@@ -209,6 +209,8 @@ numpydoc_validation_exclude = {  # set of regex
     # Type alias
     r'\.ColorLike$',
     r'\.Chart$',
+    # PointSet *args and **kwargs for wrapped parameters
+    r'\.PointSet(\.|$)',
     # Mixin methods from collections.abc
     r'\.MultiBlock\.clear$',
     r'\.MultiBlock\.count$',
@@ -516,6 +518,7 @@ panels_add_bootstrap_css = False
 html_static_path = ["_static"]
 html_css_files = [
     'cards.css',  # used in card CSS
+    'no_italic.css',  # disable italic for span classes
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------

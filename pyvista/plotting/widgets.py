@@ -1794,8 +1794,8 @@ class WidgetHelper:
             :class:`pyvista.PolyData` object to the callback function of the
             generated spline.
 
-        bounds : tuple(float), optional
-            Length 6 tuple of the bounding box where the widget is placed.
+        bounds : sequence[float], optional
+            Length 6 sequence of the bounding box where the widget is placed.
 
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
@@ -2054,12 +2054,11 @@ class WidgetHelper:
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
-        center : tuple(float), optional
-            Length 3 array for the XYZ coordinate of the sphere's
-            center when placing it in the scene. If more than one
-            location is passed, then that many widgets will be added
-            and the callback will also be passed the integer index of
-            that widget.
+        center : sequence[float], optional
+            The cartesian coordinate of the sphere's center when placing it in
+            the scene. If more than one location is passed, then that many
+            widgets will be added and the callback will also be passed the
+            integer index of that widget.
 
         radius : float, optional
             The radius of the sphere.
@@ -2087,7 +2086,7 @@ class WidgetHelper:
         selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
 
-        indices : sequence, optional
+        indices : sequence[int], optional
             Indices to assign the sphere widgets.
 
         pass_widget : bool, optional
@@ -2199,16 +2198,16 @@ class WidgetHelper:
             The method called every time the button is clicked. This should take
             a single parameter: the bool value of the button.
 
-        value : bool, optional
+        value : bool, default: False
             The default state of the button.
 
-        position : tuple(float), optional
+        position : sequence[float], default: (10.0, 10.0)
             The absolute coordinates of the bottom left point of the button.
 
-        size : int, optional
+        size : int, default: 50
             The size of the button in number of pixels.
 
-        border_size : int, optional
+        border_size : int, default: 5
             The size of the borders of the button in pixels.
 
         color_on : ColorLike, optional
@@ -2296,9 +2295,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        animate : bool, optional
+        animate : bool, default: True
             Enable or disable jump-to-axis-view animation.
-        n_frames : int, optional
+
+        n_frames : int, default: 20
             The number of frames to animate the jump-to-axis-viewpoint feature.
 
         Returns

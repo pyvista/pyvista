@@ -124,13 +124,6 @@ def launch_server(server=None, port=None, host=None):
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
 
-    # Disable serializer errors/warnings for a cleaner output in Jupyter
-    # Do this on server launch and not at top level so that it only happens
-    # in Jupyter
-    if not pyvista.global_theme.trame.enable_vtk_warnings:
-        vtk_logger = logging.getLogger("vtkmodules.web.render_window_serializer")
-        vtk_logger.disabled = True
-
     # Must enable all used modules
     html_widgets.initialize(server)
     vtk_widgets.initialize(server)
