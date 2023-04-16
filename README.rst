@@ -57,26 +57,31 @@ PyVista
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
    :target: https://numfocus.org/sponsored-projects/affiliated-projects
 
+.. |pre-commit.ci status| image:: https://results.pre-commit.ci/badge/github/pyvista/pyvista/main.svg
+   :target: https://results.pre-commit.ci/latest/github/pyvista/pyvista/main
 
-+----------------------+------------+-------------+
-| Deployment           | |pypi|     | |conda|     |
-+----------------------+------------+-------------+
-| Build Status         | |GH-CI|    | |python|    |
-+----------------------+------------+-------------+
-| Metrics              | |codacy|   | |codecov|   |
-+----------------------+------------+-------------+
-| Activity             | |PyPIact|  | |condaact|  |
-+----------------------+------------+-------------+
-| Citation             | |joss|     | |zenodo|    |
-+----------------------+------------+-------------+
-| License              | |MIT|      |             |
-+----------------------+------------+-------------+
-| Community            | |slack|    | |discuss|   |
-+----------------------+------------+-------------+
-| Formatter            | |black|    | |isort|     |
-+----------------------+------------+-------------+
-| Affiliated           | |NumFOCUS Affiliated|    |
-+----------------------+------------+-------------+
+
++----------------------+------------------------+-------------+
+| Deployment           | |pypi|                 | |conda|     |
++----------------------+------------------------+-------------+
+| Build Status         | |GH-CI|                | |python|    |
+|                      +------------------------+-------------+
+|                      | |pre-commit.ci status| |             |
++----------------------+------------------------+-------------+
+| Metrics              | |codacy|               | |codecov|   |
++----------------------+------------------------+-------------+
+| Activity             | |PyPIact|              | |condaact|  |
++----------------------+------------------------+-------------+
+| Citation             | |joss|                 | |zenodo|    |
++----------------------+------------------------+-------------+
+| License              | |MIT|                  |             |
++----------------------+------------------------+-------------+
+| Community            | |slack|                | |discuss|   |
++----------------------+------------------------+-------------+
+| Formatter            | |black|                | |isort|     |
++----------------------+------------------------+-------------+
+| Affiliated           | |NumFOCUS Affiliated|                |
++----------------------+------------------------+-------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
