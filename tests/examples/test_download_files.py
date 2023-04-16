@@ -508,6 +508,15 @@ def test_download_lucy():
     assert isinstance(dataset, pv.PolyData)
 
 
+def test_download_pump_bracket():
+    filename = examples.download_pump_bracket(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_pump_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data) == 10
+
+
 def test_download_electronics_cooling():
     filenames = examples.download_electronics_cooling(load=False)
     for filename in filenames:
