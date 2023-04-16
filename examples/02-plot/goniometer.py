@@ -10,3 +10,8 @@ This example is inspired by [vedo's example](https://vedo.embl.es/docs/vedo/addo
 """
 
 import pyvista as pv
+
+mesh = pyvista.Cone()
+pl = pv.Plotter()
+pl.add_mesh(mesh, show_edges=True)
+pl.show()
