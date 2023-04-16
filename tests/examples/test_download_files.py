@@ -497,7 +497,7 @@ def test_download_openfoam_tubes():
     assert os.path.isfile(filename)
 
     dataset = examples.download_openfoam_tubes(load=True)
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert isinstance(dataset, pv.MultiBlock)
 
 
 def test_download_lucy():
@@ -954,6 +954,16 @@ def test_cad_model_case():
     dataset = examples.download_cad_model_case(load=True)
     assert isinstance(dataset, pv.PolyData)
     assert dataset.n_points == 7677
+
+
+def test_download_aero_bracket():
+    filename = examples.download_aero_bracket(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtu')
+
+    dataset = examples.download_aero_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data.keys()) == 3
 
 
 def test_coil_magnetic_field():

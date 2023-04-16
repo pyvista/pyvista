@@ -3216,7 +3216,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 )
-            return self.add_composite(
+            actor, _ = self.add_composite(
                 mesh,
                 color=color,
                 style=style,
@@ -3263,6 +3263,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 **kwargs,
             )
+            return actor
         elif copy_mesh and algo is None:
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
