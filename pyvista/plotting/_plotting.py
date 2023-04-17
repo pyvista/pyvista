@@ -224,6 +224,10 @@ def _common_arg_parser(
     elif culling in ['f', 'frontface']:
         culling = 'front'
 
+    if show_scalar_bar is None:
+        # use theme unless plotting RGB
+        _default = theme.show_scalar_bar or scalar_bar_args is not None
+        show_scalar_bar = False if rgb else _default
     # Avoid mutating input
     if scalar_bar_args is None:
         scalar_bar_args = {'n_colors': n_colors}
@@ -233,9 +237,6 @@ def _common_arg_parser(
     # theme based parameters
     if split_sharp_edges is None:
         split_sharp_edges = theme.split_sharp_edges
-    if show_scalar_bar is None:
-        # use theme unless plotting RGB
-        show_scalar_bar = False if rgb else theme.show_scalar_bar
     feature_angle = kwargs.pop('feature_angle', theme.sharp_edges_feature_angle)
     if render_points_as_spheres is None:
         if style == 'points_gaussian':
