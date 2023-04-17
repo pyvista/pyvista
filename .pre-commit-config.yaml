@@ -1,6 +1,12 @@
+# Integration with GitHub Actions
+# See https://pre-commit.ci/
+ci:
+    autofix_prs: false
+    autoupdate_schedule: weekly
+
 repos:
 - repo: https://github.com/psf/black
-  rev: 23.1.0
+  rev: 23.3.0
   hooks:
   - id: black
 
@@ -57,7 +63,7 @@ repos:
       ]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.1.1
+  rev: v1.2.0
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_flask/)
@@ -80,6 +86,8 @@ repos:
   - id: no-commit-to-branch
     args: [--branch, main]
   - id: requirements-txt-fixer
+  - id: trailing-whitespace
+    exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema

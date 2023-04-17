@@ -21,7 +21,7 @@
            $.ajax({
            url: "{{ url_for ('get_img') }}",
            type: "GET",
-           data: { 
+           data: {
                meshtype:  $('#meshtype option:selected').val()
            },
            success: function(response) {

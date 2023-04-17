@@ -4,7 +4,7 @@ from typing import Union
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.opts import InterpolationType
-from pyvista.utilities.misc import no_new_attr
+from pyvista.utilities.misc import _check_range, no_new_attr
 
 from .colors import Color
 
@@ -74,7 +74,7 @@ class Property(_vtk.vtkProperty):
         The specular lighting coefficient.
 
     specular_power : float, default: :attr:`pyvista.themes._LightingConfig.specular_power`
-        The specular power. Between 0.0 and 128.0.
+        The specular power. Must be between 0.0 and 128.0.
 
     show_edges : bool, default: :attr:`pyvista.themes.DefaultTheme.show_edges`
         Shows the edges.  Does not apply to a wireframe representation.
@@ -395,6 +395,7 @@ class Property(_vtk.vtkProperty):
 
     @opacity.setter
     def opacity(self, value: float):
+        _check_range(value, (0, 1), 'opacity')
         self.SetOpacity(value)
 
     @property
@@ -460,10 +461,11 @@ class Property(_vtk.vtkProperty):
     def ambient(self) -> float:
         """Return or set ambient.
 
-        When lighting is enabled, this is the amount of light in
-        the range of 0 to 1 (default 0.0) that reaches the actor
-        when not directed at the light source emitted from the
-        viewer.
+        Default :attr:`pyvista.themes._LightingConfig.ambient`.
+
+        When lighting is enabled, this is the amount of light in the range
+        of 0 to 1 that reaches the actor when not directed at the light
+        source emitted from the viewer.
 
         Examples
         --------
@@ -493,17 +495,19 @@ class Property(_vtk.vtkProperty):
 
     @ambient.setter
     def ambient(self, value: float):
+        _check_range(value, (0, 1), 'ambient')
         self.SetAmbient(value)
 
     @property
     def diffuse(self) -> float:
         """Return or set the diffuse lighting coefficient.
 
-        Default 1.0.
+        Default :attr:`pyvista.themes._LightingConfig.diffuse`.
 
-        This is the scattering of light by reflection or transmission. Diffuse
-        reflection results when light strikes an irregular surface such as a
-        frosted window or the surface of a frosted or coated light bulb.
+        This is the scattering of light by reflection or
+        transmission. Diffuse reflection results when light strikes an
+        irregular surface such as a frosted window or the surface of a
+        frosted or coated light bulb. Must be between 0 and 1.
 
         Examples
         --------
@@ -533,16 +537,17 @@ class Property(_vtk.vtkProperty):
 
     @diffuse.setter
     def diffuse(self, value: float):
+        _check_range(value, (0, 1), 'diffuse')
         self.SetDiffuse(value)
 
     @property
     def specular(self) -> float:
         """Return or set specular.
 
-        Default 0.0
+        Default :attr:`pyvista.themes._LightingConfig.specular`.
 
-        Specular lighting simulates the bright spot of a light that appears on
-        shiny objects.
+        Specular lighting simulates the bright spot of a light that appears
+        on shiny objects. Must be between 0 and 1.
 
         Examples
         --------
@@ -572,13 +577,16 @@ class Property(_vtk.vtkProperty):
 
     @specular.setter
     def specular(self, value: float):
+        _check_range(value, (0, 1), 'specular')
         self.SetSpecular(value)
 
     @property
     def specular_power(self) -> float:
         """Return or set specular power.
 
-        The specular power. Between 0.0 and 128.0. Default 1.0
+        Default :attr:`pyvista.themes._LightingConfig.specular_power`.
+
+        The specular power. Must be between 0.0 and 128.0.
 
         Examples
         --------
@@ -616,14 +624,17 @@ class Property(_vtk.vtkProperty):
 
     @specular_power.setter
     def specular_power(self, value: float):
+        _check_range(value, (0, 128), 'specular_power')
         self.SetSpecularPower(value)
 
     @property
     def metallic(self) -> float:
         """Return or set metallic.
 
+        Default :attr:`pyvista.themes._LightingConfig.metallic`.
+
         This requires that the interpolation be set to ``'Physically based
-        rendering'``
+        rendering'``. Must be between 0 and 1.
 
         Examples
         --------
@@ -657,14 +668,17 @@ class Property(_vtk.vtkProperty):
 
     @metallic.setter
     def metallic(self, value: float):
+        _check_range(value, (0, 1), 'metallic')
         self.SetMetallic(value)
 
     @property
     def roughness(self) -> float:
         """Return or set roughness.
 
+        Default :attr:`pyvista.themes._LightingConfig.roughness`.
+
         This requires that the interpolation be set to ``'Physically based
-        rendering'``
+        rendering'``. Must be between 0 and 1.
 
         Examples
         --------
@@ -699,11 +713,14 @@ class Property(_vtk.vtkProperty):
 
     @roughness.setter
     def roughness(self, value: bool):
+        _check_range(value, (0, 1), 'roughness')
         self.SetRoughness(value)
 
     @property
     def interpolation(self) -> InterpolationType:
         """Return or set the method of shading.
+
+        Defaults to :attr:`pyvista.themes._LightingConfig.interpolation`.
 
         One of the following options.
 
@@ -760,11 +777,13 @@ class Property(_vtk.vtkProperty):
     def render_points_as_spheres(self) -> bool:
         """Return or set rendering points as spheres.
 
+        Defaults to :attr:`pyvista.themes.DefaultTheme.render_points_as_spheres`.
+
         Requires representation style be set to ``'points'``.
 
         Examples
         --------
-        Enable rendering points as spheres
+        Enable rendering points as spheres.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
@@ -794,6 +813,8 @@ class Property(_vtk.vtkProperty):
     @property
     def render_lines_as_tubes(self) -> bool:
         """Return or set rendering lines as tubes.
+
+        Defaults to :attr:`pyvista.themes.DefaultTheme.render_lines_as_tubes`.
 
         Requires representation style be set to ``'wireframe'``.
 
@@ -830,6 +851,8 @@ class Property(_vtk.vtkProperty):
     def line_width(self) -> float:
         """Return or set the line width.
 
+        Defaults to :attr:`pyvista.themes.DefaultTheme.line_width`.
+
         Examples
         --------
         Change the line width to ``10``.
@@ -861,6 +884,8 @@ class Property(_vtk.vtkProperty):
     @property
     def point_size(self):
         """Return or set the point size.
+
+        Defaults to :attr:`pyvista.themes.DefaultTheme.point_size`.
 
         Examples
         --------
@@ -1095,6 +1120,7 @@ class Property(_vtk.vtkProperty):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+        _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
 
     def plot(self, **kwargs) -> None:

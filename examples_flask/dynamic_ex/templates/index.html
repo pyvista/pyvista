@@ -15,7 +15,7 @@
          <option>Vectors</option>
          <option disabled="true" value="divider">-------------</option>
          <option>Queen Nefertiti</option>
-         
+
        </select>
 
        <div class="item">
@@ -53,7 +53,7 @@
      <iframe src="" height="600" width="600" title="PyVista" id="myimg" frameBorder="0" allowtransparency=yes scrolling=no>
        <p>Your browser does not support iframes.</p>
      </iframe>
-     
+
    </body>
   <script>
     $(document).ready(function() {
@@ -61,7 +61,7 @@
            $.ajax({
            url: "{{ url_for ('get_img') }}",
            type: "GET",
-           data: { 
+           data: {
                meshtype:       $('#meshtype option:selected').val(),
                show_edges:    ($("#show_edges").is(":checked")),
                lighting:      ($("#lighting").is(":checked")),

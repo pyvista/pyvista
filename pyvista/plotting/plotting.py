@@ -3216,7 +3216,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 )
-            return self.add_composite(
+            actor, _ = self.add_composite(
                 mesh,
                 color=color,
                 style=style,
@@ -3263,6 +3263,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 **kwargs,
             )
+            return actor
         elif copy_mesh and algo is None:
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
@@ -5011,15 +5012,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color='w', width=5, label=None, name=None):
+    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False):
         """Add lines to the plotting object.
 
         Parameters
         ----------
         lines : np.ndarray
             Points representing line segments.  For example, two line
-            segments would be represented as ``np.array([[0, 0, 0],
-            [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
+            segments would be represented as ``np.array([[0, 1, 0],
+            [1, 0, 0], [1, 1, 0], [2, 0, 0]])``.
 
         color : ColorLike, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
@@ -5041,6 +5042,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+        connected : bool, default: False
+            Treat ``lines`` as points representing a series of *connected* lines.
+            For example, two connected line segments would be represented as
+            ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``. If ``False``, an *even*
+            number of points must be passed to ``lines``, and the lines need not be
+            connected.
+
+
         Returns
         -------
         vtk.vtkActor
@@ -5048,11 +5057,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
+        Plot two lines.
+
         >>> import numpy as np
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-        >>> actor = pl.add_lines(points, color='yellow', width=3)
+        >>> actor = pl.add_lines(points, color='purple', width=3)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        Adding lines with ``connected=True`` will add a series of connected
+        line segments.
+
+        >>> pl = pyvista.Plotter()
+        >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+        >>> actor = pl.add_lines(
+        ...     points, color='purple', width=3, connected=True
+        ... )
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
@@ -5060,7 +5082,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.line_segments_from_points(lines)
+        lines = (
+            pyvista.lines_from_points(lines)
+            if connected
+            else pyvista.line_segments_from_points(lines)
+        )
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
