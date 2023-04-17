@@ -986,8 +986,7 @@ def test_enable_picking_gc():
 def test_left_button_down():
     plotter = pyvista.Plotter()
     if (
-        VTK9
-        and hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
+        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
         and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
     ):
         # This only fails for VTK<9.2.3
