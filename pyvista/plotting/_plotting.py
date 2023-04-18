@@ -226,7 +226,7 @@ def _common_arg_parser(
 
     if show_scalar_bar is None:
         # use theme unless plotting RGB
-        _default = theme.show_scalar_bar or scalar_bar_args is not None
+        _default = theme.show_scalar_bar or scalar_bar_args
         show_scalar_bar = False if rgb else _default
     # Avoid mutating input
     if scalar_bar_args is None:

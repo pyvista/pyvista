@@ -3894,7 +3894,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         assert_empty_kwargs(**kwargs)
 
         if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args is not None
+            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
 
         # Avoid mutating input
         if scalar_bar_args is None:
