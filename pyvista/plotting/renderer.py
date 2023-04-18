@@ -3568,6 +3568,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         elif style == "dimension":
             ruler = _vtk.vtkActor2D()
+            ruler.GetTextMapper().SetInput("This is a test.")
+            ruler.GetTextProperty().SetFontSize(24)
+            ruler.GetTextProperty().SetFontFamilyToArial()
+            ruler.GetTextProperty().BoldOff()
+            ruler.GetTextProperty().ItalicOff()
+            ruler.GetTextProperty().ShadowOff()
+            ruler.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
+            ruler.GetPositionCoordinate().SetValue(0.0, 1.0)
 
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
