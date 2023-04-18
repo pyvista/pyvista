@@ -3566,6 +3566,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ruler.SetMinorTickLength(minor_tick_length)
             ruler.SetTickOffset(tick_label_offset)
 
+        elif style == "dimension":
+            ruler = _vtk.vtkActor2D()
+
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
