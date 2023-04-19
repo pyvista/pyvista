@@ -3565,6 +3565,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ruler.SetTickLength(tick_length)
             ruler.SetMinorTickLength(minor_tick_length)
             ruler.SetTickOffset(tick_label_offset)
+            self.add_actor(ruler, reset_camera=True, pickable=False)
 
         elif style == "dimension":
             font_size = 24
@@ -3589,12 +3590,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             tprop.SetVerticalJustificationToBottom()
             # tprop.SetColor(colors.GetColor3d('Tomato'))
 
-            ruler = _vtk.vtkActor2D()
-            ruler.SetMapper(singleLineTextB)
-            ruler.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
-            ruler.GetPositionCoordinate().SetValue(0.05, 0.85)
+            dimension = _vtk.vtkActor2D()
+            dimension.SetMapper(singleLineTextB)
+            dimension.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
+            dimension.GetPositionCoordinate().SetValue(0.05, 0.85)
+            self.add_actor(dimension, reset_camera=True, pickable=False)
+            line = _vtk.vtkActor2D()
+            mapper = _vtk.vtkPolyDataMapper2D()
+            mapper.SetInputData(pyvista.lines_from_points([[0.05 - 1.0, 0.85, 0.0], [0.05 + 1.0, 0.85, 0.0]]))
+            coordinate = _vtk.vtkCoordinate()
+            coordinate.SetCoordinateSystemToNormalizedViewport()
+            mapper.SetTransformCoordinate(coordinate)
+            line.SetMapper(mapper)
+            self.add_actor(line, reset_camera=True, pickable=False)
+            ruler = [dimension, line]
 
-        self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
     def add_legend_scale(
