@@ -602,6 +602,14 @@ def test_extract_all_edges(datasets):
         assert edges.n_lines
 
 
+def test_extract_all_edges_no_data():
+    mesh = pyvista.Wavelet()
+    edges = mesh.extract_all_edges(clear_data=True)
+    assert edges is not None
+    assert isinstance(edges, pyvista.PolyData)
+    assert edges.n_arrays == 0
+
+
 def test_wireframe_composite(composite):
     # Now test composite data structures
     output = composite.extract_all_edges(progress_bar=True)

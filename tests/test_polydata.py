@@ -507,6 +507,14 @@ def test_extract_feature_edges(sphere):
     assert more_edges.n_points
 
 
+def test_extract_feature_edges_no_data():
+    mesh = pyvista.Wavelet()
+    edges = mesh.extract_feature_edges(90, clear_data=True)
+    assert edges is not None
+    assert isinstance(edges, pyvista.PolyData)
+    assert edges.n_arrays == 0
+
+
 def test_decimate(sphere):
     mesh = sphere.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points

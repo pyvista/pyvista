@@ -1389,7 +1389,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def extract_all_edges(self, use_all_points=False, progress_bar=False):
+    def extract_all_edges(self, use_all_points=False, clear_data=False, progress_bar=False):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -1406,6 +1406,10 @@ class DataSetFilters:
             from the output.
 
             This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+
+        clear_data : bool, default: False
+            Clear any point, cell, or field data. This is useful
+            if wanting to strictly extract the edges.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1444,7 +1448,10 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting All Edges')
         # Reset vtkLogger to default verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
-        return _get_output(alg)
+        output = _get_output(alg)
+        if clear_data:
+            output.clear_data()
+        return output
 
     def elevation(
         self,
@@ -4541,6 +4548,7 @@ class DataSetFilters:
         non_manifold_edges=True,
         feature_edges=True,
         manifold_edges=True,
+        clear_data=False,
         progress_bar=False,
     ):
         """Extract edges from the surface of the mesh.
@@ -4573,6 +4581,10 @@ class DataSetFilters:
 
         manifold_edges : bool, default: True
             Extract manifold edges.
+
+        clear_data : bool, default: False
+            Clear any point, cell, or field data. This is useful
+            if wanting to strictly extract the edges.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4608,7 +4620,10 @@ class DataSetFilters:
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
-        return _get_output(featureEdges)
+        output = _get_output(featureEdges)
+        if clear_data:
+            output.clear_data()
+        return output
 
     def merge(
         self,
