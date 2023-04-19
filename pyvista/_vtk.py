@@ -513,13 +513,13 @@ from vtkmodules.vtkRenderingCore import (
     vtkSelectVisiblePoints,
     vtkSkybox,
     vtkTextActor,
+    vtkTextMapper,
+    vtkTextProperty,
     vtkTexture,
     vtkVolume,
     vtkVolumeProperty,
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
-    vtkTextProperty,
-    vtkTextMapper,
 )
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
