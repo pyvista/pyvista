@@ -3893,6 +3893,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        if show_scalar_bar is None:
+            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
+
         # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -3903,9 +3906,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Deprecated on ..., estimated removal on v0.40.0
             warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
-        if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar
 
         if culling is True:
             culling = 'backface'
