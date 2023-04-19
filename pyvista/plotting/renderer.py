@@ -3567,15 +3567,32 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ruler.SetTickOffset(tick_label_offset)
 
         elif style == "dimension":
+            font_size = 24
+        
+            # Create the text mappers and the associated Actor2Ds.
+            # The font and text properties (except justification) are the same for
+            # each single line mapper. Let's create a common text property object
+            singleLineTextProp = _vtk.vtkTextProperty()
+            singleLineTextProp.SetFontSize(font_size)
+            singleLineTextProp.SetFontFamilyToArial()
+            singleLineTextProp.BoldOff()
+            singleLineTextProp.ItalicOff()
+            singleLineTextProp.ShadowOff()
+        
+            # colors = _vtk.vtkNamedColors()
+        
+            # The text is on a single line and bottom-justified.
+            singleLineTextB = _vtk.vtkTextMapper()
+            singleLineTextB.SetInput('Single line (bottom)')
+            tprop = singleLineTextB.GetTextProperty()
+            tprop.ShallowCopy(singleLineTextProp)
+            tprop.SetVerticalJustificationToBottom()
+            # tprop.SetColor(colors.GetColor3d('Tomato'))
+        
             ruler = _vtk.vtkActor2D()
-            ruler.GetTextMapper().SetInput("This is a test.")
-            ruler.GetTextProperty().SetFontSize(24)
-            ruler.GetTextProperty().SetFontFamilyToArial()
-            ruler.GetTextProperty().BoldOff()
-            ruler.GetTextProperty().ItalicOff()
-            ruler.GetTextProperty().ShadowOff()
+            ruler.SetMapper(singleLineTextB)
             ruler.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
-            ruler.GetPositionCoordinate().SetValue(0.0, 1.0)
+            ruler.GetPositionCoordinate().SetValue(0.05, 0.85)
 
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler

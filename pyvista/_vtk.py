@@ -518,6 +518,8 @@ from vtkmodules.vtkRenderingCore import (
     vtkVolumeProperty,
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
+    vtkTextProperty,
+    vtkTextMapper,
 )
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
