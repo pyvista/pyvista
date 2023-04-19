@@ -1,7 +1,7 @@
 # Simple makefile to simplify repetitive build env management tasks under posix
 
 # Directories to run style checks against
-CODE_DIRS ?= doc examples examples_flask pyvista tests
+CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
