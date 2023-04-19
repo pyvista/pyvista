@@ -138,7 +138,8 @@ jobs:
     name: Publish Documentation
     runs-on: ubuntu-20.04
     needs: doc
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    # TODO: add this conditional back in before merging
+    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -151,7 +152,7 @@ jobs:
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          decompress_artifact: true
+          decompress-artifact: true
           repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
@@ -161,7 +162,7 @@ jobs:
         uses: pyansys/actions/doc-deploy-stable@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          decompress_artifact: true
+          decompress-artifact: true
           repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
