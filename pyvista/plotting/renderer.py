@@ -3597,7 +3597,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_actor(dimension, reset_camera=True, pickable=False)
             line = _vtk.vtkActor2D()
             mapper = _vtk.vtkPolyDataMapper2D()
-            mapper.SetInputData(pyvista.lines_from_points([[0.05 - 1.0, 0.85, 0.0], [0.05 + 1.0, 0.85, 0.0]]))
+            mapper.SetInputData(
+                pyvista.lines_from_points([[0.05 - 1.0, 0.85, 0.0], [0.05 + 1.0, 0.85, 0.0]])
+            )
             coordinate = _vtk.vtkCoordinate()
             coordinate.SetCoordinateSystemToNormalizedViewport()
             mapper.SetTransformCoordinate(coordinate)
