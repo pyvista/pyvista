@@ -18,6 +18,7 @@ class RectilinearGridFilters:
         tetra_per_cell: int = 5,
         mixed: Union[Sequence[int], bool] = False,
         pass_cell_ids: bool = False,
+        pass_cell_data: bool = False,
         progress_bar: bool = False,
     ):
         """Create a tetrahedral mesh structured grid.
@@ -43,6 +44,11 @@ class RectilinearGridFilters:
             Set to ``True`` to make the tetrahedra have scalar data indicating
             which cell they came from in the original
             :class:`pyvista.RectilinearGrid`.
+
+        pass_cell_data : bool, default: False
+            Set to ``True`` to make the tetradera mesh have the cell data from
+            the original :class:`pyvista.RectilinearGrid`.  This uses
+            ``pass_cell_ids=True`` internally.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -80,7 +86,7 @@ class RectilinearGridFilters:
 
         """
         alg = _vtk.vtkRectilinearGridToTetrahedra()
-        alg.SetRememberVoxelId(pass_cell_ids)
+        alg.SetRememberVoxelId(pass_cell_ids or pass_cell_data)
         if mixed is not False:
             if isinstance(mixed, str):
                 self.cell_data.active_scalars_name = mixed
@@ -107,4 +113,10 @@ class RectilinearGridFilters:
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Converting to tetrahedra')
-        return _get_output(alg)
+        out = _get_output(alg)
+        if pass_cell_data:
+            # algorithm stores original cell ids in active scalars
+            for name in self.cell_data:  # type: ignore
+                if name != out.cell_data.active_scalars_name:
+                    out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore
+        return out

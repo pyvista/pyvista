@@ -45,3 +45,22 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
 def test_to_tetrahedral_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.UniformGrid(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
+
+
+def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False)
+    assert not tet_grid.cell_data
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=True)
+    assert tet_grid.cell_data
+    assert np.issubdtype(tet_grid.cell_data.active_scalars.dtype, np.integer)
+
+
+def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
+    tiny_rectilinear["cell_data"] = np.ones(tiny_rectilinear.n_cells)
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_data=False)
+    assert not tet_grid.cell_data
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_data=True)
+    assert tet_grid.cell_data
+    assert "cell_data" in tet_grid.cell_data
