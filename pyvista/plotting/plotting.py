@@ -3216,7 +3216,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 )
-            return self.add_composite(
+            actor, _ = self.add_composite(
                 mesh,
                 color=color,
                 style=style,
@@ -3263,6 +3263,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 **kwargs,
             )
+            return actor
         elif copy_mesh and algo is None:
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
@@ -3892,6 +3893,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        if show_scalar_bar is None:
+            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
+
         # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -3902,9 +3906,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Deprecated on ..., estimated removal on v0.40.0
             warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
-        if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar
 
         if culling is True:
             culling = 'backface'

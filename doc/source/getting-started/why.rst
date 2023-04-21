@@ -45,30 +45,32 @@ requires a few lines of code.
    ...               (-0.01684, 0.110154, -0.0015369),
    ...               (-0.15446, 0.939031, -0.3071841)]
 
-+-------------------------------------------+-------------------------------------+
-| Read and plot STL file using `vtk`_       | Read an STL file using PyVista      |
-+===========================================+=====================================+
-| .. code:: python                          | .. code:: python                    |
-|                                           |                                     |
-|    import vtk                             |    import pyvista                   |
-|    reader = vtk.vtkSTLReader()            |    mesh = pyvista.read('bunny.stl') |
-|    reader.SetFileName("bunny.stl")        |    mesh.plot()                      |
-|    mapper = vtk.vtkPolyDataMapper()       |                                     |
-|    output_port = reader.GetOutputPort()   | .. pyvista-plot::                   |
-|    mapper.SetInputConnection(output_port) |    :include-source: False           |
-|    actor = vtk.vtkActor()                 |    :context:                        |
-|    actor.SetMapper(mapper)                |                                     |
-|    ren = vtk.vtkRenderer()                |    from pyvista import examples     |
-|    renWin = vtk.vtkRenderWindow()         |    mesh = examples.download_bunny() |
-|    renWin.AddRenderer(ren)                |    mesh.plot(cpos=bunny_cpos)       |
-|    iren = vtk.vtkRenderWindowInteractor() |                                     |
-|    iren.SetRenderWindow(renWin)           |                                     |
-|    ren.AddActor(actor)                    |                                     |
-|    iren.Initialize()                      |                                     |
-|    renWin.Render()                        |                                     |
-|    iren.Start()                           |                                     |
-|    del iren, renWin                       |                                     |
-+-------------------------------------------+-------------------------------------+
++----------------------------------------------------+-------------------------------------+
+| Read and plot STL file using `vtk`_                | Read an STL file using PyVista      |
++====================================================+=====================================+
+| .. code:: python                                   | .. code:: python                    |
+|                                                    |                                     |
+|    import vtk                                      |    import pyvista                   |
+|    reader = vtk.vtkSTLReader()                     |    mesh = pyvista.read('bunny.stl') |
+|    reader.SetFileName("bunny.stl")                 |    mesh.plot()                      |
+|    mapper = vtk.vtkDataSetMapper()                 |                                     |
+|    output_port = reader.GetOutputPort()            | .. pyvista-plot::                   |
+|    mapper.SetInputConnection(output_port)          |    :include-source: False           |
+|    actor = vtk.vtkActor()                          |    :context:                        |
+|    actor.SetMapper(mapper)                         |                                     |
+|    ren = vtk.vtkRenderer()                         |    from pyvista import examples     |
+|    renWin = vtk.vtkRenderWindow()                  |    mesh = examples.download_bunny() |
+|    renWin.AddRenderer(ren)                         |    mesh.plot(cpos=bunny_cpos)       |
+|    iren = vtk.vtkRenderWindowInteractor()          |                                     |
+|    style = vtk.vtkInteractorStyleTrackballCamera() |                                     |
+|    iren.SetRenderWindow(renWin)                    |                                     |
+|    iren.SetInteractorStyle(style)                  |                                     |
+|    ren.AddActor(actor)                             |                                     |
+|    iren.Initialize()                               |                                     |
+|    renWin.Render()                                 |                                     |
+|    iren.Start()                                    |                                     |
+|    del iren, renWin                                |                                     |
++----------------------------------------------------+-------------------------------------+
 
 
 The PyVista data model and API allows you to rapidly load meshes and

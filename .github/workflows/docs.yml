@@ -22,28 +22,28 @@ concurrency:
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
+  DOCUMENTATION_CNAME: 'docs.pyvista.org'
 
 jobs:
-#  comment out until #4193 is fixed.
-#  doc-check:
-#    name: Check Documentation (Vale)
-#    runs-on: ubuntu-22.04
-#    steps:
-#    - uses: actions/checkout@v3
-#
-#    # this is equivalent to
-#    vale --config doc/.vale.ini doc pyvista examples
-#    - name: "Run Vale"
-#      uses: errata-ai/vale-action@reviewdog
-#      with:
-#        files: '["doc", "pyvista", "examples"]'
-#        vale_flags: "--config=doc/.vale.ini"
-#        reporter: github-pr-check
-#        level: error
-#        filter_mode: nofilter
-#        fail_on_error: true
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  doc-check:
+    name: Check Documentation (Vale)
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    # this is equivalent to
+    # vale --config doc/.vale.ini doc pyvista examples
+    - name: "Run Vale"
+      uses: errata-ai/vale-action@reviewdog
+      with:
+        files: '["doc", "pyvista", "examples"]'
+        vale_flags: "--config=doc/.vale.ini"
+        reporter: github-pr-check
+        level: error
+        filter_mode: nofilter
+        fail_on_error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   doc:
     name: Build Documentation
@@ -101,6 +101,9 @@ jobs:
       - name: Build Documentation
         run: make -C doc html
 
+      - name: Copy ads.txt
+        run: cp doc/source/ads.txt doc/_build/html/
+
       - name: Dump Sphinx Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
@@ -109,16 +112,12 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Tar build
-        if: always()
-        run: tar -zcvf docs-build.tar.gz doc/_build/html/
-
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: docs-build
-          path: docs-build.tar.gz
+          path: doc/_build/html/
 
       - uses: actions/upload-artifact@v3
         with:
@@ -146,30 +145,26 @@ jobs:
         with:
           name: docs-build
           path: .
-      - name: Untar build
-        run: tar -xzvf docs-build.tar.gz
-      - name: Copy meta data
-        run: |
-          cp doc/README.md doc/_build/html/
-          cp doc/source/ads.txt doc/_build/html/
 
-      - name: Deploy on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Deploy Dev Docs
+        if: github.event_name == 'push'
+        uses: pyansys/actions/doc-deploy-dev@v4
         with:
-          external_repository: pyvista/pyvista-docs-dev
-          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          publish_dir: doc/_build/html/
-          cname: dev.pyvista.org
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          decompress_artifact: true
+          repository: 'pyvista/pyvista-docs'
+          doc-artifact-name: docs-build
+          cname: ${{ env.DOCUMENTATION_CNAME }}
 
-      - name: Deploy on release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Deploy Stable Docs
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+        uses: pyansys/actions/doc-deploy-stable@v4
         with:
-          external_repository: pyvista/pyvista-docs
-          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          publish_dir: doc/_build/html/
-          cname: docs.pyvista.org
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          decompress_artifact: true
+          repository: 'pyvista/pyvista-docs'
+          doc-artifact-name: docs-build
+          cname: ${{ env.DOCUMENTATION_CNAME }}
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder

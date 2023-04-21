@@ -461,7 +461,7 @@ class Property(_vtk.vtkProperty):
     def ambient(self) -> float:
         """Return or set ambient.
 
-        Default Default :attr:`pyvista.themes._LightingConfig.ambient`.
+        Default :attr:`pyvista.themes._LightingConfig.ambient`.
 
         When lighting is enabled, this is the amount of light in the range
         of 0 to 1 that reaches the actor when not directed at the light
@@ -544,7 +544,7 @@ class Property(_vtk.vtkProperty):
     def specular(self) -> float:
         """Return or set specular.
 
-        Default Default :attr:`pyvista.themes._LightingConfig.specular`.
+        Default :attr:`pyvista.themes._LightingConfig.specular`.
 
         Specular lighting simulates the bright spot of a light that appears
         on shiny objects. Must be between 0 and 1.

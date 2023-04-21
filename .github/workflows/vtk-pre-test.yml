@@ -1,0 +1,66 @@
+name: VTK Master Testing
+
+on:
+  push:
+    branches:
+      # To resolve issues on VTK master and test, use this branch name pattern
+      - 'maint/vtk-master*'
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ALLOW_PLOTTING: true
+  SHELLOPTS: 'errexit:pipefail'
+
+jobs:
+  VTK-master:
+    name: Linux VTK Master Testing
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: requirements_test.txt
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-1-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-1-
+
+      - name: Install pyvista
+        run: pip install . --no-deps
+
+      - name: Install Testing Requirements
+        run: pip install -r requirements_test.txt
+
+      - name: Set up VTK with OSMesa
+        run: |
+          pip uninstall vtk -y
+          pip install vtk_osmesa --pre --no-cache --extra-index-url https://wheels.vtk.org
+
+      - name: Software Report
+        run: |
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
+          pip show vtk_osmesa
+
+      - name: Unit Testing
+        run: pytest -v tests/ --fail_extra_image_cache
