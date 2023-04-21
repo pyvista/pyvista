@@ -17,8 +17,8 @@ class RectilinearGridFilters:
         self,
         tetra_per_cell: int = 5,
         mixed: Union[Sequence[int], bool] = False,
-        pass_cell_ids: bool = False,
-        pass_cell_data: bool = False,
+        pass_cell_ids: bool = True,
+        pass_cell_data: bool = True,
         progress_bar: bool = False,
     ):
         """Create a tetrahedral mesh structured grid.
@@ -40,15 +40,17 @@ class RectilinearGridFilters:
             string uses a cell array rather than the active array to determine
             the number of tetrahedra to generate per cell.
 
-        pass_cell_ids : bool, default: False
+        pass_cell_ids : bool, default: True
             Set to ``True`` to make the tetrahedra have scalar data indicating
             which cell they came from in the original
-            :class:`pyvista.RectilinearGrid`.
+            :class:`pyvista.RectilinearGrid`. The name of this array is
+            ``'vtkOriginalCellIds'`` within the ``cell_data``.
 
-        pass_cell_data : bool, default: False
+        pass_cell_data : bool, default: True
             Set to ``True`` to make the tetradera mesh have the cell data from
             the original :class:`pyvista.RectilinearGrid`.  This uses
-            ``pass_cell_ids=True`` internally.
+            ``pass_cell_ids=True`` internally. If ``True``, ``pass_cell_ids``
+            will also be set to ``True``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -119,4 +121,11 @@ class RectilinearGridFilters:
             for name in self.cell_data:  # type: ignore
                 if name != out.cell_data.active_scalars_name:
                     out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore
+
+        if alg.GetRememberVoxelId():
+            # original cell_ids are not named
+            if 'Unnamed_0' in out.cell_data:
+                # out.cell_data['vtkOriginalCellIds'] = out.cell_data.pop('Unnamed_0')
+                out.cell_data.set_array(out.cell_data.pop('Unnamed_0'), 'vtkOriginalCellIds')
+
         return out
