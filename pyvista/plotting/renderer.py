@@ -3569,7 +3569,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_actor(ruler, reset_camera=True, pickable=False)
 
         elif style == "dimension":
-            font_size = 24
             text = _vtk.vtkVectorText()
             text.SetText("Origin")
             text_mapper = _vtk.vtkPolyDataMapper()
