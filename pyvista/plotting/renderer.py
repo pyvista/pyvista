@@ -3575,8 +3575,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             text_mapper.SetInputConnection(text.GetOutputPort())
             dimension = _vtk.vtkFollower()
             dimension.SetMapper(text_mapper)
-            dimension.SetScale(0.2, 0.2, 0.2)
+            dimension.SetScale(0.1, 0.1, 0.1)
             dimension.SetPosition(1.0, 1.0, 1.0)
+            dimension.GetProperty().SetColor(Color("black").float_rgb)
             self.add_actor(dimension, reset_camera=True, pickable=False)
 
             lines = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
