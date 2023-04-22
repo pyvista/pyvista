@@ -494,7 +494,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkCompositeDataDisplayAttributes,
     vtkCoordinate,
     vtkDataSetMapper,
-    vtkFollower,
     vtkImageActor,
     vtkLight,
     vtkLightActor,
