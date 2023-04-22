@@ -20,6 +20,7 @@ from .colors import Color, get_cycler
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
+from .mapper import DataSetMapper
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -3579,7 +3580,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             dimension.SetPosition(1.0, 1.0, 1.0)
             self.add_actor(dimension, reset_camera=True, pickable=False)
 
-            # self.add_actor(line, reset_camera=True, pickable=False)
+            lines = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+
+            lines = (
+                pyvista.lines_from_points(lines)
+            )
+
+            actor = Actor(mapper=DataSetMapper(lines))
+            actor.prop.line_width = 1.0
+            actor.prop.show_edges = True
+            actor.prop.edge_color = "black"
+            actor.prop.color = "black"
+            actor.prop.lighting = False
+
+            self.add_actor(actor, reset_camera=True)
 
             # ruler = [dimension, line]
             ruler = dimension
