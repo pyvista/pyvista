@@ -3570,21 +3570,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif style == "dimension":
             font_size = 24
 
-            # The text is on a single line and bottom-justified.
-            singleLineTextB = _vtk.vtkTextMapper()
-            singleLineTextB.SetInput('Single line (bottom)')
-            singleLineTextB.GetTextProperty().SetFontSize(font_size)
-            singleLineTextB.GetTextProperty().SetFontFamilyToArial()
-            singleLineTextB.GetTextProperty().BoldOff()
-            singleLineTextB.GetTextProperty().ItalicOff()
-            singleLineTextB.GetTextProperty().ShadowOff()
-            singleLineTextB.GetTextProperty().SetVerticalJustificationToBottom()
+            text = _vtk.vtkTextMapper()
+            text.SetInput('Single line (bottom)')
+            text.GetTextProperty().SetFontSize(font_size)
+            text.GetTextProperty().SetFontFamilyToArial()
+            text.GetTextProperty().BoldOff()
+            text.GetTextProperty().ItalicOff()
+            text.GetTextProperty().ShadowOff()
+            text.GetTextProperty().SetVerticalJustificationToBottom()
 
             dimension = _vtk.vtkActor2D()
-            dimension.SetMapper(singleLineTextB)
+            dimension.SetMapper(text)
             dimension.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
             dimension.GetPositionCoordinate().SetValue(0.05, 0.85)
             self.add_actor(dimension, reset_camera=True, pickable=False)
+
             line = _vtk.vtkActor2D()
             mapper = _vtk.vtkPolyDataMapper2D()
             mapper.SetInputData(
@@ -3595,6 +3595,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             mapper.SetTransformCoordinate(coordinate)
             line.SetMapper(mapper)
             self.add_actor(line, reset_camera=True, pickable=False)
+
             ruler = [dimension, line]
 
         return ruler
