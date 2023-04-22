@@ -123,8 +123,9 @@ class RectilinearGridFilters:
                     out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore
 
         if alg.GetRememberVoxelId():
-            # original cell_ids are not named
-            if 'Unnamed_0' in out.cell_data:
-                out.cell_data.set_array(out.cell_data.pop(out.cell_data.active_scalars_name), 'vtkOriginalCellIds')
+            # original cell_ids are not named and are the active scalars
+            out.cell_data.set_array(
+                out.cell_data.pop(out.cell_data.active_scalars_name), 'vtkOriginalCellIds'
+            )
 
         return out
