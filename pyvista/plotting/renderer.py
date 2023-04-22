@@ -18,10 +18,8 @@ from .camera import Camera
 from .charts import Charts
 from .colors import Color, get_cycler
 from .helpers import view_vectors
-from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
-from pyvista.utilities.algorithms import algorithm_to_mesh_handler
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -3422,7 +3420,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         tick_label_offset=2,
         label_color=None,
         tick_color=None,
-        style="axis",
     ):
         """Add ruler.
 
@@ -3493,10 +3490,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Either a string, rgb list, or hex color string for
             tick line colors.
 
-        style : str, optional, default: "axis"
-            * `axis`
-            * `dimension`
-
         Returns
         -------
         vtk.vtkActor
@@ -3566,8 +3559,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTickLength(tick_length)
         ruler.SetMinorTickLength(minor_tick_length)
         ruler.SetTickOffset(tick_label_offset)
-        self.add_actor(ruler, reset_camera=True, pickable=False)
 
+        self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
     def add_legend_scale(

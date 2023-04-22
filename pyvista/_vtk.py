@@ -337,7 +337,6 @@ from vtkmodules.vtkFiltersSources import (
     vtkSphereSource,
     vtkSuperquadricSource,
     vtkTessellatedBoxSource,
-    vtkTextSource,
 )
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere

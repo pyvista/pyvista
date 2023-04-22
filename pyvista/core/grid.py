@@ -135,23 +135,30 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
                     self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
-            elif isinstance(args[0], np.ndarray):
-                self._from_arrays(args[0], None, None, check_duplicates)
+            elif isinstance(args[0], (np.ndarray, Sequence)):
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
+            arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
             if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
+                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
             else:
                 arg2_is_arr = False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]),
+                    np.asanyarray(args[1]),
+                    np.asanyarray(args[2]),
+                    check_duplicates,
+                )
             elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], None, check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
+                )
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
