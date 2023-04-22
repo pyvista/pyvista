@@ -18,10 +18,8 @@ from .camera import Camera
 from .charts import Charts
 from .colors import Color, get_cycler
 from .helpers import view_vectors
-from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
-from pyvista.utilities.algorithms import algorithm_to_mesh_handler
 
 ACTOR_LOC_MAP = [
     'upper right',
