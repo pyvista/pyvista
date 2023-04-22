@@ -3569,15 +3569,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_actor(ruler, reset_camera=True, pickable=False)
 
         elif style == "dimension":
-            text = _vtk.vtkVectorText()
-            text.SetText("Origin")
-            text_mapper = _vtk.vtkPolyDataMapper()
-            text_mapper.SetInputConnection(text.GetOutputPort())
-            dimension = _vtk.vtkFollower()
-            dimension.SetMapper(text_mapper)
-            dimension.SetScale(0.1, 0.1, 0.1)
-            dimension.SetPosition(1.0, 1.0, 1.0)
-            dimension.GetProperty().SetColor(Color("black").float_rgb)
+            textSource = _vtk.vtkTextSource()
+            textSource.SetText("Hello")
+            textSource.SetForegroundColor(*Color('DarkSlateGray').int_rgb)
+            textSource.SetBackgroundColor(*Color('NavajoWhite').int_rgb)
+            # Turn off if you don't want the background drawn with the text.
+            textSource.BackingOn()
+            textSource.Update()
+        
+            # Create a mapper and actor
+            mapper = _vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(textSource.GetOutputPort())
+        
+            dimension = _vtk.vtkActor()
+            dimension.SetMapper(mapper)
+
             self.add_actor(dimension, reset_camera=True, pickable=False)
 
             lines = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
