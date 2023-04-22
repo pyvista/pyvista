@@ -6821,13 +6821,18 @@ class Plotter(BasePlotter):
 
         return actor
 
-
-    def add_dimension_lines(self, pointa=np.array([0.0, 0.0, 0.0]), pointb=np.array([1.0, 1.0, 1.0])):
+    def add_dimension_lines(
+        self, pointa=np.array([0.0, 0.0, 0.0]), pointb=np.array([1.0, 1.0, 1.0])
+    ):
         """Add dimension lines to the plotting object."""
         points = np.array([pointb, pointa])
         pointc = (pointa + pointb) / 2.0
-        labels = self.add_point_labels(points = (pointa + pointb) / 2.0, labels=np.array([str(np.linalg.norm(pointc))]))
-        lines = self.add_lines(np.array([[pointa[0], pointa[1], pointa[2]], [pointb[0], pointb[1], pointb[2]]]))
+        labels = self.add_point_labels(
+            points=(pointa + pointb) / 2.0, labels=np.array([str(np.linalg.norm(pointc))])
+        )
+        lines = self.add_lines(
+            np.array([[pointa[0], pointa[1], pointa[2]], [pointb[0], pointb[1], pointb[2]]])
+        )
         return [labels, lines]
 
 
