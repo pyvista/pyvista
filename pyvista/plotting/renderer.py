@@ -3575,10 +3575,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             text.SetBackgroundColor(*Color('NavajoWhite').int_rgb)
             text.BackingOn()
             text.Update()
-        
+
             mapper = _vtk.vtkPolyDataMapper()
             mapper.SetInputConnection(text.GetOutputPort())
-        
+
             dimension = _vtk.vtkActor()
             dimension.SetMapper(mapper)
 
