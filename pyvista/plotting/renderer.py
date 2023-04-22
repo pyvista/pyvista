@@ -3422,7 +3422,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         tick_label_offset=2,
         label_color=None,
         tick_color=None,
-        style="axis",
     ):
         """Add ruler.
 
@@ -3493,10 +3492,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Either a string, rgb list, or hex color string for
             tick line colors.
 
-        style : str, optional, default: "axis"
-            * `axis`
-            * `dimension`
-
         Returns
         -------
         vtk.vtkActor
@@ -3566,8 +3561,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTickLength(tick_length)
         ruler.SetMinorTickLength(minor_tick_length)
         ruler.SetTickOffset(tick_label_offset)
-        self.add_actor(ruler, reset_camera=True, pickable=False)
 
+        self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
     def add_legend_scale(
