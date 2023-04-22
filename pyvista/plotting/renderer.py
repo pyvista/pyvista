@@ -3570,24 +3570,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif style == "dimension":
             font_size = 24
 
-            # Create the text mappers and the associated Actor2Ds.
-            # The font and text properties (except justification) are the same for
-            # each single line mapper. Let's create a common text property object
-            singleLineTextProp = _vtk.vtkTextProperty()
-            singleLineTextProp.SetFontSize(font_size)
-            singleLineTextProp.SetFontFamilyToArial()
-            singleLineTextProp.BoldOff()
-            singleLineTextProp.ItalicOff()
-            singleLineTextProp.ShadowOff()
-
-            # colors = _vtk.vtkNamedColors()
-
             # The text is on a single line and bottom-justified.
             singleLineTextB = _vtk.vtkTextMapper()
             singleLineTextB.SetInput('Single line (bottom)')
-            singleLineTextB.GetTextProperty().ShallowCopy(singleLineTextProp)
+            singleLineTextB.GetTextProperty().SetFontSize(font_size)
+            singleLineTextB.GetTextProperty().SetFontFamilyToArial()
+            singleLineTextB.GetTextProperty().BoldOff()
+            singleLineTextB.GetTextProperty().ItalicOff()
+            singleLineTextB.GetTextProperty().ShadowOff()
             singleLineTextB.GetTextProperty().SetVerticalJustificationToBottom()
-            # singleLineTextB.GetTextProperty().SetColor(colors.GetColor3d('Tomato'))
 
             dimension = _vtk.vtkActor2D()
             dimension.SetMapper(singleLineTextB)
