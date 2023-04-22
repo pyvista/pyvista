@@ -3585,10 +3585,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # The text is on a single line and bottom-justified.
             singleLineTextB = _vtk.vtkTextMapper()
             singleLineTextB.SetInput('Single line (bottom)')
-            tprop = singleLineTextB.GetTextProperty()
-            tprop.ShallowCopy(singleLineTextProp)
-            tprop.SetVerticalJustificationToBottom()
-            # tprop.SetColor(colors.GetColor3d('Tomato'))
+            singleLineTextB.GetTextProperty().ShallowCopy(singleLineTextProp)
+            singleLineTextB.GetTextProperty().SetVerticalJustificationToBottom()
+            # singleLineTextB.GetTextProperty().SetColor(colors.GetColor3d('Tomato'))
 
             dimension = _vtk.vtkActor2D()
             dimension.SetMapper(singleLineTextB)
