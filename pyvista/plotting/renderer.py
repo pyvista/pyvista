@@ -18,9 +18,9 @@ from .camera import Camera
 from .charts import Charts
 from .colors import Color, get_cycler
 from .helpers import view_vectors
+from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
-from .mapper import DataSetMapper
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -3581,9 +3581,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             lines = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
 
-            lines = (
-                pyvista.lines_from_points(lines)
-            )
+            lines = pyvista.lines_from_points(lines)
 
             actor = Actor(mapper=DataSetMapper(lines))
             actor.prop.line_width = 1.0
