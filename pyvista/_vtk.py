@@ -493,6 +493,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkCompositeDataDisplayAttributes,
     vtkCoordinate,
     vtkDataSetMapper,
+    vtkFollower,
     vtkImageActor,
     vtkLight,
     vtkLightActor,
@@ -520,7 +521,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkVolumeProperty,
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
-    vtkFollower,
 )
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
