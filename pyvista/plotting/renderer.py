@@ -3570,9 +3570,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         elif style == "dimension":
             text = _vtk.vtkTextSource()
-            text.SetText("Hello")
-            text.SetForegroundColor(*Color('DarkSlateGray').int_rgb)
-            text.SetBackgroundColor(*Color('NavajoWhite').int_rgb)
+            text.SetText("1234")
+            text.SetForegroundColor(*Color('white').int_rgb)
+            text.SetBackgroundColor(*Color('gray').int_rgb)
             text.BackingOn()
             text.Update()
         
