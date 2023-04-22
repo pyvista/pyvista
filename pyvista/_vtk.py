@@ -514,8 +514,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkSelectVisiblePoints,
     vtkSkybox,
     vtkTextActor,
-    vtkTextMapper,
-    vtkTextProperty,
     vtkTexture,
     vtkVolume,
     vtkVolumeProperty,
