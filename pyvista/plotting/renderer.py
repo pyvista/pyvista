@@ -21,6 +21,7 @@ from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
+from pyvista.utilities.algorithms import algorithm_to_mesh_handler
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -3534,71 +3535,38 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         label_color = Color(label_color, default_color=self._theme.font.color)
         tick_color = Color(tick_color, default_color=self._theme.font.color)
 
-        if style == "axis":
-            ruler = _vtk.vtkAxisActor2D()
+        ruler = _vtk.vtkAxisActor2D()
 
-            ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
-            ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
-            ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
-            ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
-            ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+        ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
+        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
 
-            distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
-            if flip_range:
-                ruler.SetRange(distance, 0)
-            else:
-                ruler.SetRange(0, distance)
+        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        if flip_range:
+            ruler.SetRange(distance, 0)
+        else:
+            ruler.SetRange(0, distance)
 
-            ruler.SetTitle(title)
-            ruler.SetFontFactor(font_size_factor)
-            ruler.SetLabelFactor(label_size_factor)
-            ruler.SetNumberOfLabels(number_labels)
-            ruler.SetLabelVisibility(show_labels)
-            if label_format:
-                ruler.SetLabelFormat(label_format)
-            ruler.GetProperty().SetColor(*tick_color.int_rgb)
-            if label_color != Color('white'):
-                # This property turns black if set
-                ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
-                ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
-            ruler.SetNumberOfMinorTicks(number_minor_ticks)
-            ruler.SetTickVisibility(show_ticks)
-            ruler.SetTickLength(tick_length)
-            ruler.SetMinorTickLength(minor_tick_length)
-            ruler.SetTickOffset(tick_label_offset)
-            self.add_actor(ruler, reset_camera=True, pickable=False)
-
-        elif style == "dimension":
-            text = _vtk.vtkTextSource()
-            text.SetText("1234")
-            text.SetForegroundColor(*Color('white').int_rgb)
-            text.SetBackgroundColor(*Color('gray').int_rgb)
-            text.BackingOn()
-            text.Update()
-
-            mapper = _vtk.vtkPolyDataMapper()
-            mapper.SetInputConnection(text.GetOutputPort())
-
-            dimension = _vtk.vtkActor()
-            dimension.SetMapper(mapper)
-
-            self.add_actor(dimension, reset_camera=True, pickable=False)
-
-            lines = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-
-            lines = pyvista.lines_from_points(lines)
-
-            actor = Actor(mapper=DataSetMapper(lines))
-            actor.prop.line_width = 1.0
-            actor.prop.show_edges = True
-            actor.prop.edge_color = "black"
-            actor.prop.color = "black"
-            actor.prop.lighting = False
-
-            self.add_actor(actor, reset_camera=True)
-
-            # ruler = [dimension, line]
-            ruler = dimension
+        ruler.SetTitle(title)
+        ruler.SetFontFactor(font_size_factor)
+        ruler.SetLabelFactor(label_size_factor)
+        ruler.SetNumberOfLabels(number_labels)
+        ruler.SetLabelVisibility(show_labels)
+        if label_format:
+            ruler.SetLabelFormat(label_format)
+        ruler.GetProperty().SetColor(*tick_color.int_rgb)
+        if label_color != Color('white'):
+            # This property turns black if set
+            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
+            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
+        ruler.SetNumberOfMinorTicks(number_minor_ticks)
+        ruler.SetTickVisibility(show_ticks)
+        ruler.SetTickLength(tick_length)
+        ruler.SetMinorTickLength(minor_tick_length)
+        ruler.SetTickOffset(tick_label_offset)
+        self.add_actor(ruler, reset_camera=True, pickable=False)
 
         return ruler
 
