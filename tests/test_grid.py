@@ -735,6 +735,21 @@ def test_create_rectilinear_grid_from_specs():
     assert grid.n_cells == 9 * 3 * 19
     assert grid.n_points == 10 * 4 * 20
     assert grid.bounds == (-10.0, 8.0, -10.0, 5.0, -10.0, 9.0)
+
+    # with Sequence
+    xrng = [0, 1]
+    yrng = [0, 1, 2]
+    zrng = [0, 1, 2, 3]
+    grid = pyvista.RectilinearGrid(xrng)
+    assert grid.n_cells == 1
+    assert grid.n_points == 2
+    grid = pyvista.RectilinearGrid(xrng, yrng)
+    assert grid.n_cells == 2
+    assert grid.n_points == 6
+    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    assert grid.n_cells == 6
+    assert grid.n_points == 24
+
     # 2D example
     cell_spacings = np.array([1.0, 1.0, 2.0, 2.0, 5.0, 10.0])
     x_coordinates = np.cumsum(cell_spacings)
