@@ -3569,34 +3569,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         elif style == "dimension":
             font_size = 24
-
-            text = _vtk.vtkTextMapper()
-            text.SetInput('Single line (bottom)')
-            text.GetTextProperty().SetFontSize(font_size)
-            text.GetTextProperty().SetFontFamilyToArial()
-            text.GetTextProperty().BoldOff()
-            text.GetTextProperty().ItalicOff()
-            text.GetTextProperty().ShadowOff()
-            text.GetTextProperty().SetVerticalJustificationToBottom()
-
-            dimension = _vtk.vtkActor2D()
-            dimension.SetMapper(text)
-            dimension.GetPositionCoordinate().SetCoordinateSystemToNormalizedDisplay()
-            dimension.GetPositionCoordinate().SetValue(0.05, 0.85)
+            text = _vtk.vtkVectorText()
+            text.SetText("Origin")
+            text_mapper = _vtk.vtkPolyDataMapper()
+            text_mapper.SetInputConnection(text.GetOutputPort())
+            dimension = _vtk.vtkFollower()
+            dimension.SetMapper(text_mapper)
+            dimension.SetScale(0.2, 0.2, 0.2)
+            dimension.SetPosition(1.0, 1.0, 1.0)
             self.add_actor(dimension, reset_camera=True, pickable=False)
 
-            line = _vtk.vtkActor2D()
-            mapper = _vtk.vtkPolyDataMapper2D()
-            mapper.SetInputData(
-                pyvista.lines_from_points([[0.05 - 1.0, 0.85, 0.0], [0.05 + 1.0, 0.85, 0.0]])
-            )
-            coordinate = _vtk.vtkCoordinate()
-            coordinate.SetCoordinateSystemToNormalizedViewport()
-            mapper.SetTransformCoordinate(coordinate)
-            line.SetMapper(mapper)
-            self.add_actor(line, reset_camera=True, pickable=False)
+            # self.add_actor(line, reset_camera=True, pickable=False)
 
-            ruler = [dimension, line]
+            # ruler = [dimension, line]
+            ruler = dimension
 
         return ruler
 

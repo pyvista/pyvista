@@ -520,6 +520,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkVolumeProperty,
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
+    vtkFollower,
 )
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
