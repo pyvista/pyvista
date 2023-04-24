@@ -1072,7 +1072,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if self.GetScalars() is not None:
-            return str(self.GetScalars().GetName())
+            name = self.GetScalars().GetName()
+            if name is None:
+                # Getting the keys has the side effect of naming "unnamed" arrays
+                self.keys()
+                name = self.GetScalars().GetName()
+            return str(name)
         return None
 
     @active_scalars_name.setter
