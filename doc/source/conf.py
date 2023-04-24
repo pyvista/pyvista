@@ -68,7 +68,7 @@ extensions = [
     "pyvista.ext.plot_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.linkcode", # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
+    "sphinx.ext.linkcode",  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     "sphinx.ext.doctest",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
