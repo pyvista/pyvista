@@ -146,6 +146,14 @@ def test_init_from_arrays(specify_offset):
     assert np.allclose(cells, grid.cells)
     assert np.allclose(grid.cell_connectivity, np.arange(16))
 
+    # grid.cells is not mutable
+    assert not grid.cells.flags['WRITEABLE']
+
+    # but attribute can be set
+    new_cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+    grid.cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+    assert np.allclose(grid.cells, new_cells)
+
 
 @pytest.mark.parametrize('multiple_cell_types', [False, True])
 @pytest.mark.parametrize('flat_cells', [False, True])
@@ -178,7 +186,6 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     assert np.all(grid.offset == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
     assert np.all(grid.cells == vtk_cell_format)
-    assert not grid.cells.flags['WRITEABLE']
     assert np.allclose(
         grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16))
     )
