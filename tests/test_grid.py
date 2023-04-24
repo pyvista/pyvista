@@ -178,6 +178,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     assert np.all(grid.offset == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
     assert np.all(grid.cells == vtk_cell_format)
+    assert not grid.cells.flags['WRITEABLE']
     assert np.allclose(
         grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16))
     )

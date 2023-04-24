@@ -1582,25 +1582,26 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where n0 is the number of points in cell 0, and pX_Y is the Y'th point in cell X.
+        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is the
+        Y'th point in cell X.
 
-        For example, a triangle and a line might be represented as:
+        For example, a triangle and a line might be represented as::
 
            [3, 0, 1, 2, 2, 0, 1]
 
         Where the two individual cells would be ``[3, 0, 1, 2]`` and ``[2, 0, 1]``.
 
-        Notes
-        -----
-        This is provided for legacy purposes. Any modifications made here will
-        not affect the underlying data. Use :func:`DataSet.cell_connectivity`
-        and :func:`pyvista.DataSet.offset` to modify the underlying cell data.
-
         See Also
         --------
         pyvista.DataSet.get_cell
+        pyvista.UnstructuredGrid.cell_connectivity
+        pyvista.UnstructuredGrid.offset
 
-        pyvista.DataSet.cell_connectivity
+        Notes
+        -----
+        This is provided for legacy purposes. Any modifications made here will
+        not affect the underlying data. Use :func:`UnstructuredGrid.cell_connectivity`
+        and :func:`UnstructuredGrid.offset` to modify the underlying cell data.
 
         Examples
         --------
