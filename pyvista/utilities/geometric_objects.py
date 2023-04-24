@@ -347,6 +347,10 @@ def Sphere(
     pyvista.PolyData
         Sphere mesh.
 
+    See Also
+    --------
+    pyvista.Icosphere
+
     Examples
     --------
     Create a sphere using default parameters.
@@ -1730,3 +1734,76 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)
+
+
+def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
+    """Create an icosphere.
+
+    An icosphere is a `geodesic polyhedron
+    <https://en.wikipedia.org/wiki/Geodesic_polyhedron>`_, which is a
+    convex polyhedron made from triangles.
+
+    Geodesic polyhedra are constructed by subdividing faces of simpler
+    polyhedra, and then projecting the new vertices onto the surface of
+    a sphere. A geodesic polyhedron has straight edges and flat faces
+    that approximate a sphere,
+
+    Parameters
+    ----------
+    radius : float, default: 1.0
+        Radius of the icosphere.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center of the icosphere.
+
+    nsub : int, default: 3
+        This is the number of times each triangle of the original
+        :func:`pyvista.Icosahedron` is subdivided.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of the icosphere.
+
+    See Also
+    --------
+    pyvista.Sphere
+
+    Examples
+    --------
+    Create the icosphere and plot it with edges.
+
+    >>> import pyvista as pv
+    >>> icosphere = pv.Icosphere()
+    >>> icosphere.plot(show_edges=True)
+
+    Show how this icosphere was created.
+
+    >>> import numpy as np
+    >>> icosahedron = pv.Icosahedron()
+    >>> icosahedron.clear_data()  # remove extra scalars
+    >>> icosahedron_sub = icosahedron.subdivide(nsub=3)
+    >>> pl = pv.Plotter(shape=(1, 3))
+    >>> _ = pl.add_mesh(icosahedron, show_edges=True)
+    >>> pl.subplot(0, 1)
+    >>> _ = pl.add_mesh(icosahedron_sub, show_edges=True)
+    >>> pl.subplot(0, 2)
+    >>> _ = pl.add_mesh(icosphere, show_edges=True)
+    >>> pl.show()
+
+    Show how the triangles are not uniform in area. This is because the
+    ones farther from the edges from the original triangles have farther
+    to travel to the sphere.
+
+    >>> icosphere = pv.Icosphere(nsub=4)
+    >>> icosphere.compute_cell_sizes().plot(scalars='Area')
+
+    """
+    mesh = Icosahedron()
+    mesh.clear_data()
+    mesh = mesh.subdivide(nsub=nsub)
+
+    # scale to desired radius and translate origin
+    dist = np.linalg.norm(mesh.points, axis=1, keepdims=True)  # distance from origin
+    mesh.points[:] = mesh.points * (radius / dist) + center
+    return mesh
