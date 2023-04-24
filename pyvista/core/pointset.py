@@ -1576,11 +1576,31 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     @property
     def cells(self) -> np.ndarray:
-        """Return a pointer to the cells as a numpy object.
+        """Return the cell data as a numpy object.
+
+        This is the old style VTK data layout::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where n0 is the number of points in cell 0, and pX_Y is the Y'th point in cell X.
+
+        For example, a triangle and a line might be represented as:
+
+           [3, 0, 1, 2, 2, 0, 1]
+
+        Where the two individual cells would be ``[3, 0, 1, 2]`` and ``[2, 0, 1]``.
+
+        Notes
+        -----
+        This is provided for legacy purposes. Any modifications made here will
+        not affect the underlying data. Use :func:`DataSet.cell_connectivity`
+        and :func:`pyvista.DataSet.offset` to modify the underlying cell data.
 
         See Also
         --------
         pyvista.DataSet.get_cell
+
+        pyvista.DataSet.cell_connectivity
 
         Examples
         --------
@@ -1596,7 +1616,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 8, 36, 18, 54, 90])
 
         """
-        return _vtk.vtk_to_numpy(self.GetCells().GetData())
+        # Flag this array as read only to ensure users do not attempt to write to it.
+        array = _vtk.vtk_to_numpy(self.GetCells().GetData())
+        array.flags['WRITEABLE'] = False
+        return array
 
     @property
     def cells_dict(self) -> dict:
