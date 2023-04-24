@@ -751,12 +751,32 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @property
     def faces(self) -> np.ndarray:
-        """Return a pointer to the faces as a numpy array.
+        """Return the connectivity array of the faces of this PolyData.
+
+        The faces array is organized as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
+        Y'th point in face X.
+
+        For example, a triangle and a quadrilateral might be represented as::
+
+           [3, 0, 1, 2, 4, 0, 1, 3, 4]
+
+        Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
         Returns
         -------
         numpy.ndarray
-            Array of face indices.
+            Array of face connectivity.
+
+        Notes
+        -----
+        The array returned cannot be modified in place and will raise a
+        ``ValueError`` if attempted.
+
+        You can, however, set the faces directly. See the example.
 
         Examples
         --------
@@ -773,8 +793,21 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                [4, 1, 2, 5, 4],
                [4, 3, 4, 7, 6],
                [4, 4, 5, 8, 7]])
+
+        Set the faces directly. The following example creates a simple plane
+        with a single square faces and modifies it to have two triangles
+        instead.
+
+        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
+        >>> mesh.faces = [3, 0, 1, 2, 3, 3, 2, 1]
+        >>> mesh.faces
+        array([3, 0, 1, 2, 3, 3, 2, 1])
+
         """
-        return _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        # Flag this array as read only to ensure users do not attempt to write to it.
+        array.flags['WRITEABLE'] = False
+        return array
 
     @faces.setter
     def faces(self, faces):
