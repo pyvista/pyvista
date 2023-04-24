@@ -1328,7 +1328,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     - Creating an empty grid
     - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
-    - From cell, offset, and node arrays
+    - From cell, cell types, and point arrays
     - From a file
 
     Parameters
@@ -1416,19 +1416,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
-                self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
-                self._check_for_consistency()
-            else:
-                raise TypeError('All input types must be sequences.')
-
-        elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
-            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
-            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
-            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.abc.Sequence))
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], args[3], deep)
+                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
                 raise TypeError('All input types must be sequences.')
@@ -1452,11 +1440,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         nr_points = points.shape[0]
         cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-        self._from_arrays(None, cells, cell_types, points, deep=deep)
+        self._from_arrays(cells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
-        offset,
         cells,
         cell_type,
         points,
@@ -1467,9 +1454,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Parameters
         ----------
-        offset : any, default None
-            Ignored (this is a pre-VTK9 legacy).
-
         cells : sequence[int]
             Array of cells.  Each cell contains the number of points in the
             cell and the node numbers of the cell.
@@ -1537,8 +1521,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
 
         """
-        if offset is not None:
-            warnings.warn('VTK 9 no longer accepts an offset array', stacklevel=3)
         # convert to arrays upfront
         cells = np.asarray(cells)
         cell_type = np.asarray(cell_type)
@@ -1813,11 +1795,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         numpy.ndarray
             Array of cell offsets indicating the start of each cell.
 
+        Notes
+        -----
+        The array returned is immutable and cannot be written to. If you
+        need to modify this array, create a copy of it using
+        :func:`numpy.copy`.
+
         Examples
         --------
-        Return the cell offset array within ``vtk==9``.  Since this
-        mesh is composed of all hexahedral cells, note how each cell
-        starts at 8 greater than the prior cell.
+        Return the cell offset array.  Since this mesh is composed of
+        all hexahedral cells, note how each cell starts at 8 greater
+        than the prior cell.
 
         >>> import pyvista
         >>> from pyvista import examples
@@ -1831,7 +1819,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         """
         carr = self.GetCells()
         # This will be the number of cells + 1.
-        return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
+        array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
+        array.flags['WRITEABLE'] = False
+        return array
 
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
