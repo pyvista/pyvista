@@ -4848,7 +4848,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
             raise ModuleNotFoundError(
-                'Install imageio to use `open_movie` with:\n\n' '   pip install imageio'
+                'Install imageio to use `open_movie` with:\n\n   pip install imageio'
             ) from None
 
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -4912,7 +4912,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
             raise ModuleNotFoundError(
-                'Install imageio to use `open_gif` with:\n\n' '   pip install imageio'
+                'Install imageio to use `open_gif` with:\n\n   pip install imageio'
             ) from None
 
         if filename[-3:] != 'gif':

@@ -43,16 +43,16 @@ def try_imageio_imread(filename):
     filename : str
         Name of the file to read using ``imageio``.
 
+    Returns
+    -------
+    imageio.core.util.Array
+        Image read from ``imageio``.
+
     Raises
     ------
     ModuleNotFoundError
         Raised when ``imageio`` is not installed when attempting to read
         ``filename``.
-
-    Returns
-    -------
-    imageio.core.util.Array
-        Image read from ``imageio``.
 
     """
     try:
