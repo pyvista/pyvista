@@ -1,10 +1,10 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
-imageio<2.28.0
 cmocean<3.1
 colorcet<3.1.0
 hypothesis<6.72.2
+imageio<2.28.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0
 ipython<9.0.0
