@@ -5286,8 +5286,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise VTKVersionError(
                     'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
                 )
+
+            from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
+
             # Extract points filter
-            pc_algo = _vtk.vtkConvertToPointCloud()
+            pc_algo = vtkConvertToPointCloud()
             set_algorithm_input(pc_algo, algo)
             algo = pc_algo
 

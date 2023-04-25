@@ -1433,7 +1433,14 @@ class DataSetFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
-        alg = _vtk.vtkExtractEdges()
+        # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
+        # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
+        try:
+            from vtkmodules.vtkFiltersCore import vtkExtractEdges
+        except ImportError:
+            from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+
+        alg = vtkExtractEdges()
         alg.SetInputDataObject(self)
         if use_all_points:
             try:

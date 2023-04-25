@@ -2,6 +2,7 @@
 import traceback
 
 import numpy as np
+from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 import pyvista
 from pyvista import _vtk
@@ -84,12 +85,12 @@ def set_algorithm_input(alg, inp, port=0):
         alg.SetInputDataObject(port, inp)
 
 
-class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
+class PreserveTypeAlgorithmBase(VTKPythonAlgorithmBase):
     """Base algorithm to preserve type."""
 
     def __init__(self, nInputPorts=1, nOutputPorts=1):
         """Initialize algorithm."""
-        _vtk.VTKPythonAlgorithmBase.__init__(
+        VTKPythonAlgorithmBase.__init__(
             self,
             nInputPorts=nInputPorts,
             nOutputPorts=nOutputPorts,
@@ -100,7 +101,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
 
         This will convert ``vtkPointSet`` to ``vtkPolyData``.
         """
-        inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
+        inp = wrap(VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
         if isinstance(inp, pyvista.PointSet):
             return inp.cast_to_polydata()
         return inp
@@ -161,7 +162,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class PointSetToPolyDataAlgorithm(VTKPythonAlgorithmBase):
     """Algorithm to cast PointSet to PolyData.
 
     This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
@@ -169,7 +170,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
 
     def __init__(self):
         """Initialize algorithm."""
-        _vtk.VTKPythonAlgorithmBase.__init__(
+        VTKPythonAlgorithmBase.__init__(
             self,
             nInputPorts=1,
             nOutputPorts=1,
@@ -224,7 +225,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class CrinkleAlgorithm(VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
     def __init__(self):

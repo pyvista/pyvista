@@ -28,6 +28,8 @@ class RenderWindowInteractor:
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
+        from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
         self.interactor = interactor
@@ -53,7 +55,7 @@ class RenderWindowInteractor:
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
-        self._context_style = _vtk.vtkContextInteractorStyle()
+        self._context_style = vtkContextInteractorStyle()
         self.track_click_position(
             self._toggle_chart_interaction, side="left", double=True, viewport=True
         )

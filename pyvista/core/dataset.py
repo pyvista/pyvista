@@ -2495,9 +2495,16 @@ class DataSet(DataSetFilters, DataObject):
         ... )
 
         """
+        # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
+        # VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
+        try:
+            from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
+        except ImportError:
+            from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
+
         if np.array(bounds).size != 6:
             raise TypeError("Bounds must be a length three tuple of floats.")
-        locator = _vtk.vtkCellTreeLocator()
+        locator = vtkCellTreeLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
