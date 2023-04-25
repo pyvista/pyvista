@@ -35,7 +35,7 @@ def _check_range(value, rng, parm_name):
         )
 
 
-def try_imageio_imread(filename):
+def _try_imageio_imread(filename):
     """Attempt to read a file using ``imageio.imread``.
 
     Parameters

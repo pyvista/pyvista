@@ -3,7 +3,7 @@ import os
 import pytest
 
 from pyvista import examples
-from pyvista.utilities.misc import _set_plot_theme_from_env, has_module, try_imageio_imread
+from pyvista.utilities.misc import _set_plot_theme_from_env, _try_imageio_imread, has_module
 
 HAS_IMAGEIO = True
 try:
@@ -28,5 +28,5 @@ def test_has_module():
 
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_try_imageio_imread():
-    img = try_imageio_imread(examples.mapfile)
+    img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, imageio.core.util.Array)
