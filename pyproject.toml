@@ -40,7 +40,6 @@ all = [
     'imageio',
     'cmocean',
     'colorcet',
-    'imageio',
     'ipyvtklink',
     'ipywidgets',
     'jupyter-server-proxy',
