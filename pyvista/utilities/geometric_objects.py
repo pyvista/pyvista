@@ -1805,5 +1805,5 @@ def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
 
     # scale to desired radius and translate origin
     dist = np.linalg.norm(mesh.points, axis=1, keepdims=True)  # distance from origin
-    mesh.points[:] = mesh.points * (radius / dist) + center
+    mesh.points = mesh.points * (radius / dist) + center
     return mesh
