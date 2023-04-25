@@ -280,7 +280,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
         # Otherwise, use the imageio reader
         pass
 
-    return pyvista.Texture(try_imageio_imread(filename))
+    return pyvista.Texture(try_imageio_imread(filename))  # pragma: no cover
 
 
 def read_exodus(

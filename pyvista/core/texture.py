@@ -148,8 +148,8 @@ class Texture(_vtk.vtkTexture, DataObject):
             if image.n_points < 2:
                 raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
             self._from_image_data(image)
-        except (KeyError, ValueError):
-            self._from_array(try_imageio_imread(filename))
+        except (KeyError, ValueError, OSError):
+            self._from_array(try_imageio_imread(filename))  # pragma: no cover
 
     def _from_texture(self, texture):
         image = texture.GetInput()
