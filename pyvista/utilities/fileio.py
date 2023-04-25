@@ -34,7 +34,11 @@ def get_ext(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
+    from vtkmodules.vtkIOGeometry import vtkSTLWriter
+    from vtkmodules.vtkIOLegacy import vtkDataWriter
+    from vtkmodules.vtkIOPLY import vtkPLYWriter
+
+    if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
