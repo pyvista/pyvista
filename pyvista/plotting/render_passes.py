@@ -1,7 +1,18 @@
 """Render passes module for PyVista."""
 import weakref
 
-from pyvista import _vtk
+from vtkmodules.vtkRenderingOpenGL2 import (
+    vtkCameraPass,
+    vtkDepthOfFieldPass,
+    vtkEDLShading,
+    vtkGaussianBlurPass,
+    vtkRenderPassCollection,
+    vtkRenderStepsPass,
+    vtkSequencePass,
+    vtkShadowMapPass,
+    vtkSSAAPass,
+    vtkSSAOPass,
+)
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
@@ -87,14 +98,14 @@ class RenderPasses:
     def _init_passes(self):
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
-        self.__pass_collection = _vtk.vtkRenderPassCollection()
-        self.__pass_collection.AddItem(_vtk.vtkRenderStepsPass())
+        self.__pass_collection = vtkRenderPassCollection()
+        self.__pass_collection.AddItem(vtkRenderStepsPass())
 
-        self.__seq_pass = _vtk.vtkSequencePass()
+        self.__seq_pass = vtkSequencePass()
         self.__seq_pass.SetPasses(self._pass_collection)
 
         # Make the sequence the delegate of a camera pass.
-        self.__camera_pass = _vtk.vtkCameraPass()
+        self.__camera_pass = vtkCameraPass()
         self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
@@ -125,7 +136,7 @@ class RenderPasses:
         """Enable the EDL pass."""
         if self._edl_pass is not None:
             return
-        self._edl_pass = _vtk.vtkEDLShading()
+        self._edl_pass = vtkEDLShading()
         self._add_pass(self._edl_pass)
         return self._edl_pass
 
@@ -142,7 +153,7 @@ class RenderPasses:
         This is a vtkImageProcessingPass and delegates to the last pass.
 
         """
-        blur_pass = _vtk.vtkGaussianBlurPass()
+        blur_pass = vtkGaussianBlurPass()
         self._add_pass(blur_pass)
         self._blur_passes.append(blur_pass)
         return blur_pass
@@ -158,7 +169,7 @@ class RenderPasses:
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
             return
-        self._shadow_map_pass = _vtk.vtkShadowMapPass()
+        self._shadow_map_pass = vtkShadowMapPass()
         self._pass_collection.AddItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.AddItem(self._shadow_map_pass)
         self._update_passes()
@@ -180,7 +191,7 @@ class RenderPasses:
         if self._ssao_pass is not None:
             raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
 
-        self._dof_pass = _vtk.vtkDepthOfFieldPass()
+        self._dof_pass = vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
         self._add_pass(self._dof_pass)
         return self._dof_pass
@@ -199,7 +210,7 @@ class RenderPasses:
 
         if self._ssao_pass is not None:
             return
-        self._ssao_pass = _vtk.vtkSSAOPass()
+        self._ssao_pass = vtkSSAOPass()
         self._ssao_pass.SetRadius(radius)
         self._ssao_pass.SetBias(bias)
         self._ssao_pass.SetKernelSize(kernel_size)
@@ -218,7 +229,7 @@ class RenderPasses:
         """Enable super-sample anti-aliasing pass."""
         if self._ssaa_pass is not None:
             return
-        self._ssaa_pass = _vtk.vtkSSAAPass()
+        self._ssaa_pass = vtkSSAAPass()
         self._add_pass(self._ssaa_pass)
         return self._ssaa_pass
 

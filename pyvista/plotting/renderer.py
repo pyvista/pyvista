@@ -6,6 +6,7 @@ from typing import Sequence, cast
 import warnings
 
 import numpy as np
+from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLRenderer
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS, _vtk
@@ -201,7 +202,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkOpenGLRenderer):
+class Renderer(vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute

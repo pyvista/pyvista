@@ -1,13 +1,13 @@
 import pytest
+import vtk
 
-from pyvista import _vtk
 from pyvista.plotting.render_passes import RenderPasses
 
 
 # this ideally would be a fixture, but if it's a fixture the renderer object
 # collects immediately since RenderPasses only holds a weakref
 def make_passes():
-    ren = _vtk.vtkRenderer()
+    ren = vtk.vtkRenderer()
     passes = RenderPasses(ren)
     return ren, passes
 
@@ -25,7 +25,7 @@ def test_blur_pass():
     ren, passes = make_passes()
     assert not passes._blur_passes
     blur_pass = passes.add_blur_pass()
-    assert isinstance(blur_pass, _vtk.vtkGaussianBlurPass)
+    assert isinstance(blur_pass, vtk.vtkGaussianBlurPass)
     assert len(passes._blur_passes) == 1
 
     passes.remove_blur_pass()
@@ -41,7 +41,7 @@ def test_ssaa_pass():
     ren, passes = make_passes()
     assert not passes._passes
     ssaa_pass = passes.enable_ssaa_pass()
-    assert isinstance(ssaa_pass, _vtk.vtkSSAAPass)
+    assert isinstance(ssaa_pass, vtk.vtkSSAAPass)
     assert list(passes._passes.keys()).count('vtkSSAAPass') == 1
 
     # enabling again should not add the pass again
@@ -60,7 +60,7 @@ def test_depth_of_field_pass():
     ren, passes = make_passes()
     assert not passes._passes
     ren_pass = passes.enable_depth_of_field_pass()
-    assert isinstance(ren_pass, _vtk.vtkDepthOfFieldPass)
+    assert isinstance(ren_pass, vtk.vtkDepthOfFieldPass)
     assert list(passes._passes.keys()).count('vtkDepthOfFieldPass') == 1
 
     # enabling again should not add the pass again
@@ -92,7 +92,7 @@ def test_ssao_raise_no_depth_of_field():
 def test_shadow_pass():
     ren, passes = make_passes()
     ren_pass = passes.enable_shadow_pass()
-    assert isinstance(ren_pass, _vtk.vtkShadowMapPass)
+    assert isinstance(ren_pass, vtk.vtkShadowMapPass)
 
     assert passes._pass_collection.IsItemPresent(ren_pass)
 
@@ -104,7 +104,7 @@ def test_edl_pass():
     ren, passes = make_passes()
     assert not passes._passes
     ren_pass = passes.enable_edl_pass()
-    assert isinstance(ren_pass, _vtk.vtkEDLShading)
+    assert isinstance(ren_pass, vtk.vtkEDLShading)
     assert list(passes._passes.keys()).count('vtkEDLShading') == 1
 
     # enabling again should just not add the pass again
@@ -124,7 +124,7 @@ def test_ssao_pass():
     assert not passes._passes
 
     ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
-    assert isinstance(ren_pass, _vtk.vtkSSAOPass)
+    assert isinstance(ren_pass, vtk.vtkSSAOPass)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     # enabling again should just not add the pass again

@@ -477,30 +477,3 @@ from vtkmodules.vtkRenderingCore import (
 )
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
-from vtkmodules.vtkRenderingOpenGL2 import (
-    vtkCameraPass,
-    vtkCompositePolyDataMapper2,
-    vtkDepthOfFieldPass,
-    vtkEDLShading,
-    vtkGaussianBlurPass,
-    vtkOpenGLFXAAPass,
-    vtkOpenGLHardwareSelector,
-    vtkOpenGLRenderer,
-    vtkOpenGLTexture,
-    vtkRenderPassCollection,
-    vtkRenderStepsPass,
-    vtkSequencePass,
-    vtkShadowMapPass,
-    vtkSSAAPass,
-    vtkSSAOPass,
-)
-from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
-from vtkmodules.vtkRenderingVolume import (
-    vtkFixedPointVolumeRayCastMapper,
-    vtkGPUVolumeRayCastMapper,
-    vtkUnstructuredGridVolumeRayCastMapper,
-)
-from vtkmodules.vtkRenderingVolumeOpenGL2 import (
-    vtkOpenGLGPUVolumeRayCastMapper,
-    vtkSmartVolumeMapper,
-)

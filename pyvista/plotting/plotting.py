@@ -20,6 +20,7 @@ import weakref
 import matplotlib
 import numpy as np
 import scooby
+from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLTexture
 
 import pyvista
 from pyvista import _vtk
@@ -3412,7 +3413,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
-            if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
+            if not isinstance(texture, (_vtk.vtkTexture, vtkOpenGLTexture)):
                 raise TypeError(f'Invalid texture type ({type(texture)})')
             if mesh.GetPointData().GetTCoords() is None:
                 raise ValueError(
@@ -6357,7 +6358,10 @@ class Plotter(BasePlotter):
             # off_screen.  We still want an interactor for off screen
             # plotting since there are some widgets (like the axes
             # widget) that need an interactor
-            interactor = _vtk.vtkGenericRenderWindowInteractor()
+
+            from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
+
+            interactor = vtkGenericRenderWindowInteractor()
         else:
             interactor = None
 
