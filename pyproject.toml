@@ -26,7 +26,6 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    'imageio',
     'matplotlib>=3.0.1',
     'numpy',
     'pillow',
@@ -38,6 +37,7 @@ dynamic = ['version']
 
 [project.optional-dependencies]
 all = [
+    'imageio',
     'cmocean',
     'colorcet',
     'ipyvtklink',

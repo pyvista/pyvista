@@ -4811,6 +4811,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.
 
+        Requires ``imageio`` to be installed.
+
         Parameters
         ----------
         filename : str
@@ -4850,6 +4852,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
         """Open a gif file.
+
+        Requires `imageio` to be installed.
 
         Parameters
         ----------

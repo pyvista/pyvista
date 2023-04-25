@@ -232,6 +232,9 @@ def _apply_attrs_to_reader(reader, attrs):
 def read_texture(filename, attrs=None, progress_bar=False):
     """Load a texture from an image file.
 
+    Will attempt to read any file type supported by ``vtk``, however
+    if it fails, it will attempt to use ``imageio`` to read the file.
+
     Parameters
     ----------
     filename : str
