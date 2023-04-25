@@ -9,7 +9,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.opts import AnnotatedIntEnum
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning, try_imageio_imread
 
 from .dataset import DataObject
 
@@ -149,9 +149,7 @@ class Texture(_vtk.vtkTexture, DataObject):
                 raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
             self._from_image_data(image)
         except (KeyError, ValueError):
-            from imageio import imread
-
-            self._from_array(imread(filename))
+            self._from_array(try_imageio_imread(filename))
 
     def _from_texture(self, texture):
         image = texture.GetInput()

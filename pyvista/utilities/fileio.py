@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning, try_imageio_imread
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -279,9 +279,8 @@ def read_texture(filename, attrs=None, progress_bar=False):
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
-    import imageio
 
-    return pyvista.Texture(imageio.imread(filename))
+    return pyvista.Texture(try_imageio_imread(filename))
 
 
 def read_exodus(

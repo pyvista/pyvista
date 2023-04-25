@@ -35,6 +35,38 @@ def _check_range(value, rng, parm_name):
         )
 
 
+def try_imageio_imread(filename):
+    """Attempt to read a file using ``imageio.imread``.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to read using ``imageio``.
+
+    Raises
+    ------
+    ModuleNotFoundError
+        Raised when ``imageio`` is not installed when attempting to read
+        ``filename``.
+
+    Returns
+    -------
+    imageio.core.util.Array
+        Image read from ``imageio``.
+
+    """
+    try:
+        from imageio import imread
+    except ModuleNotFoundError:  # pragma: no cover
+        raise ModuleNotFoundError(
+            'Problem reading the image with VTK. Install imageio to try to read the '
+            'file using imageio with:\n\n'
+            '   pip install imageio'
+        ) from None
+
+    return imread(filename)
+
+
 @lru_cache(maxsize=None)
 def has_module(module_name):
     """Return if a module can be imported."""

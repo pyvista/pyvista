@@ -4844,7 +4844,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
 
         """
-        from imageio import get_writer
+        try:
+            from imageio import get_writer
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                'Install imageio to use `open_movie` with:\n\n' '   pip install imageio'
+            ) from None
 
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
@@ -4853,7 +4858,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
         """Open a gif file.
 
-        Requires `imageio` to be installed.
+        Requires ``imageio`` to be installed.
 
         Parameters
         ----------
@@ -4903,7 +4908,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`gif_movie_example` for a full example using this method.
 
         """
-        from imageio import get_writer
+        try:
+            from imageio import get_writer
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                'Install imageio to use `open_gif` with:\n\n' '   pip install imageio'
+            ) from None
 
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
