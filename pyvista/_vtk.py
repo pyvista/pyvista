@@ -368,7 +368,6 @@ from vtkmodules.vtkIOImage import (
     vtkPNGReader,
     vtkPNMReader,
     vtkSLCReader,
-    vtkTIFFReader,
 )
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (

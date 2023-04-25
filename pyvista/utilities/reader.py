@@ -2177,7 +2177,13 @@ class TIFFReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkTIFFReader
+    def lazy_vtkTIFFReader(*args):
+        """Lazy import of the vtkTIFFReader."""
+        from vtkmodules.vtkIOImage import vtkTIFFReader
+
+        return vtkTIFFReader()
+
+    _class_reader = lazy_vtkTIFFReader
 
 
 class HDRReader(BaseReader):
