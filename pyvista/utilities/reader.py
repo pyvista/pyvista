@@ -1144,6 +1144,8 @@ class POpenFOAMReader(OpenFOAMReader):
     """
 
     _class_reader = staticmethod(lazy_vtkPOpenFOAMReader)
+    _vtk_module_name = ''
+    _vtk_class_name = ''
 
     @property
     def case_type(self):
