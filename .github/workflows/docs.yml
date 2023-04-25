@@ -138,8 +138,7 @@ jobs:
     name: Publish Documentation
     runs-on: ubuntu-20.04
     needs: doc
-    # TODO: add this conditional back in before merging
-    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
