@@ -1199,6 +1199,7 @@ class PolyDataFilters(DataSetFilters):
             )
 
         # Subdivide
+        sfilter.SetCheckForTriangles(False)  # we already check for this
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(self)
         _update_alg(sfilter, progress_bar, 'Subdividing Mesh')
