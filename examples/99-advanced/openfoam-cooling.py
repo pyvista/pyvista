@@ -168,6 +168,5 @@ vol = pl.add_volume(
     scalar_bar_args={'title': 'Temperature'},
 )
 vol.prop.interpolation_type = 'linear'
-pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.camera.zoom(2)
 pl.show()
