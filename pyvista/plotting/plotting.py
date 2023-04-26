@@ -20,7 +20,6 @@ import weakref
 import matplotlib
 import numpy as np
 import scooby
-from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLTexture
 
 import pyvista
 from pyvista import _vtk
@@ -3413,7 +3412,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
-            if not isinstance(texture, (_vtk.vtkTexture, vtkOpenGLTexture)):
+            if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
                 raise TypeError(f'Invalid texture type ({type(texture)})')
             if mesh.GetPointData().GetTCoords() is None:
                 raise ValueError(
@@ -5287,11 +5286,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise VTKVersionError(
                     'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
                 )
-
-            from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
-
             # Extract points filter
-            pc_algo = vtkConvertToPointCloud()
+            pc_algo = _vtk.vtkConvertToPointCloud()
             set_algorithm_input(pc_algo, algo)
             algo = pc_algo
 
@@ -6358,10 +6354,7 @@ class Plotter(BasePlotter):
             # off_screen.  We still want an interactor for off screen
             # plotting since there are some widgets (like the axes
             # widget) that need an interactor
-
-            from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
-
-            interactor = vtkGenericRenderWindowInteractor()
+            interactor = _vtk.vtkGenericRenderWindowInteractor()
         else:
             interactor = None
 

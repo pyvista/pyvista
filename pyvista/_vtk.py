@@ -9,6 +9,22 @@ the entire library.
 """
 # flake8: noqa: F401
 
+from vtkmodules.vtkCommonCore import vtkVersion
+
+# vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
+# VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
+try:
+    from vtkmodules.vtkFiltersCore import vtkExtractEdges
+except ImportError:
+    from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+
+# vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
+# VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
+try:
+    from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
+except ImportError:
+    from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
+
 from vtkmodules.numpy_interface.dataset_adapter import (
     VTKArray,
     VTKObjectWrapper,
@@ -20,6 +36,7 @@ from vtkmodules.util.numpy_support import (
     numpy_to_vtkIdTypeArray,
     vtk_to_numpy,
 )
+from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkChartsCore import (
     vtkAxis,
     vtkChart,
@@ -94,7 +111,6 @@ from vtkmodules.vtkCommonCore import (
     vtkTypeInt64Array,
     vtkTypeUInt32Array,
     vtkUnsignedCharArray,
-    vtkVersion,
     vtkWeakReference,
 )
 from vtkmodules.vtkCommonDataModel import (
@@ -477,3 +493,37 @@ from vtkmodules.vtkRenderingCore import (
 )
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
+from vtkmodules.vtkRenderingOpenGL2 import (
+    vtkCameraPass,
+    vtkCompositePolyDataMapper2,
+    vtkDepthOfFieldPass,
+    vtkEDLShading,
+    vtkGaussianBlurPass,
+    vtkOpenGLFXAAPass,
+    vtkOpenGLHardwareSelector,
+    vtkOpenGLRenderer,
+    vtkOpenGLTexture,
+    vtkRenderPassCollection,
+    vtkRenderStepsPass,
+    vtkSequencePass,
+    vtkShadowMapPass,
+    vtkSSAAPass,
+    vtkSSAOPass,
+)
+from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
+from vtkmodules.vtkRenderingVolume import (
+    vtkFixedPointVolumeRayCastMapper,
+    vtkGPUVolumeRayCastMapper,
+    vtkUnstructuredGridVolumeRayCastMapper,
+)
+from vtkmodules.vtkRenderingVolumeOpenGL2 import (
+    vtkOpenGLGPUVolumeRayCastMapper,
+    vtkSmartVolumeMapper,
+)
+from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+
+# 9.1+ imports
+try:
+    from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
+except ImportError:  # pragma: no cover
+    pass

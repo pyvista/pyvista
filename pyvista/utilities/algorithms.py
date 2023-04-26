@@ -2,7 +2,6 @@
 import traceback
 
 import numpy as np
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 import pyvista
 from pyvista import _vtk
@@ -85,12 +84,12 @@ def set_algorithm_input(alg, inp, port=0):
         alg.SetInputDataObject(port, inp)
 
 
-class PreserveTypeAlgorithmBase(VTKPythonAlgorithmBase):
+class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type."""
 
     def __init__(self, nInputPorts=1, nOutputPorts=1):
         """Initialize algorithm."""
-        VTKPythonAlgorithmBase.__init__(
+        _vtk.VTKPythonAlgorithmBase.__init__(
             self,
             nInputPorts=nInputPorts,
             nOutputPorts=nOutputPorts,
@@ -101,7 +100,7 @@ class PreserveTypeAlgorithmBase(VTKPythonAlgorithmBase):
 
         This will convert ``vtkPointSet`` to ``vtkPolyData``.
         """
-        inp = wrap(VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
+        inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
         if isinstance(inp, pyvista.PointSet):
             return inp.cast_to_polydata()
         return inp
@@ -162,7 +161,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class PointSetToPolyDataAlgorithm(VTKPythonAlgorithmBase):
+class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
     """Algorithm to cast PointSet to PolyData.
 
     This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
@@ -170,7 +169,7 @@ class PointSetToPolyDataAlgorithm(VTKPythonAlgorithmBase):
 
     def __init__(self):
         """Initialize algorithm."""
-        VTKPythonAlgorithmBase.__init__(
+        _vtk.VTKPythonAlgorithmBase.__init__(
             self,
             nInputPorts=1,
             nOutputPorts=1,
@@ -225,7 +224,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class CrinkleAlgorithm(VTKPythonAlgorithmBase):
+class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
     def __init__(self):

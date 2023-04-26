@@ -5,7 +5,6 @@ import warnings
 import weakref
 
 import numpy as np
-from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLHardwareSelector
 
 import pyvista
 from pyvista import _vtk
@@ -388,7 +387,7 @@ class PickingHelper:
             picked = pyvista.MultiBlock()
             x0, y0, x1, y1 = renderer_().get_pick_position()
             if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
-                selector = vtkOpenGLHardwareSelector()
+                selector = _vtk.vtkOpenGLHardwareSelector()
                 selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
                 selector.SetRenderer(renderer_())
                 selector.SetArea(x0, y0, x1, y1)
@@ -1165,7 +1164,7 @@ class PickingHelper:
         def get_picked_block(*args, **kwargs):
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position
-            selector = vtkOpenGLHardwareSelector()
+            selector = _vtk.vtkOpenGLHardwareSelector()
             selector.SetRenderer(renderer_())
             selector.SetArea(x, y, x, y)  # single pixel
             selection = selector.Select()

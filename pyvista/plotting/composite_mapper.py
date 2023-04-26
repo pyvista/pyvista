@@ -6,7 +6,6 @@ import weakref
 
 import matplotlib
 import numpy as np
-from vtkmodules.vtkRenderingOpenGL2 import vtkCompositePolyDataMapper2
 
 import pyvista as pv
 from pyvista import _vtk
@@ -517,7 +516,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             yield self[ii]
 
 
-class CompositePolyDataMapper(vtkCompositePolyDataMapper2, _BaseMapper):
+class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     """Composite PolyData mapper.
 
     Parameters

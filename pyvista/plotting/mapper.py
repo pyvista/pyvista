@@ -3,15 +3,6 @@ import sys
 from typing import Optional, Union
 
 import numpy as np
-from vtkmodules.vtkRenderingVolume import (
-    vtkFixedPointVolumeRayCastMapper,
-    vtkGPUVolumeRayCastMapper,
-    vtkUnstructuredGridVolumeRayCastMapper,
-)
-from vtkmodules.vtkRenderingVolumeOpenGL2 import (
-    vtkOpenGLGPUVolumeRayCastMapper,
-    vtkSmartVolumeMapper,
-)
 
 import pyvista as pv
 from pyvista import _vtk
@@ -1026,32 +1017,32 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = None
 
 
-class FixedPointVolumeRayCastMapper(vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
-    """Wrap vtkFixedPointVolumeRayCastMapper."""
+class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
     pass
 
 
-class GPUVolumeRayCastMapper(vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
-    """Wrap vtkGPUVolumeRayCastMapper."""
+class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
     pass
 
 
-class OpenGLGPUVolumeRayCastMapper(vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
-    """Wrap vtkOpenGLGPUVolumeRayCastMapper."""
+class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
     pass
 
 
-class SmartVolumeMapper(vtkSmartVolumeMapper, _BaseVolumeMapper):
-    """Wrap vtkSmartVolumeMapper."""
+class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
+    """Wrap _vtk.vtkSmartVolumeMapper."""
 
     pass
 
 
 class UnstructuredGridVolumeRayCastMapper(
-    vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
+    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
 
