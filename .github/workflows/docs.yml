@@ -151,7 +151,7 @@ jobs:
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          decompress_artifact: true
+          decompress-artifact: true
           repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
@@ -161,7 +161,7 @@ jobs:
         uses: pyansys/actions/doc-deploy-stable@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          decompress_artifact: true
+          decompress-artifact: true
           repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
