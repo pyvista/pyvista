@@ -4,6 +4,7 @@
 cmocean<3.1
 colorcet<3.1.0
 hypothesis<6.74.1
+imageio<2.28.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0
 ipython<9.0.0
