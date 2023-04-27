@@ -467,12 +467,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        importer = _vtk.lazy_vtkVRMLImporter()
+        importer = vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -726,10 +728,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml("sample")  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
         if self.render_window is None:
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        exporter = _vtk.lazy_vtkVRMLExporter()
+        exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
@@ -5617,6 +5621,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+
         if self.render_window is None:
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5624,7 +5630,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename = os.path.abspath(os.path.expanduser(filename))
         extension = pyvista.fileio.get_ext(filename)
 
-        writer = _vtk.lazy_vtkGL2PSExporter()
+        writer = vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -5971,6 +5977,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExport import vtkOBJExporter
+
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5981,7 +5989,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not filename.endswith('.obj'):
             raise ValueError('`filename` must end with ".obj"')
 
-        exporter = _vtk.lazy_vtkOBJExporter()
+        exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
         exporter.SetFilePrefix(filename[:-4])
         exporter.SetRenderWindow(self.render_window)

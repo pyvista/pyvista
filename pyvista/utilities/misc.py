@@ -11,6 +11,12 @@ import pyvista
 from pyvista import _vtk
 
 
+def _lazy_vtk_instantiation(module_name, class_name):
+    """Lazy import and instantiation of a class from vtkmodules."""
+    module = importlib.import_module(f"vtkmodules.{module_name}")
+    return getattr(module, class_name)()
+
+
 def _set_plot_theme_from_env():
     """Set plot theme from an environment variable."""
     from pyvista.themes import _NATIVE_THEMES, set_plot_theme
