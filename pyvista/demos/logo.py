@@ -148,7 +148,7 @@ def plot_logo(
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
     v_grid_atom_surf = v_grid_atom.extract_surface()
-    faces = v_grid_atom_surf.faces.reshape(-1, 5)
+    faces = v_grid_atom_surf.faces.reshape(-1, 5).copy()
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
     plotter.add_mesh(

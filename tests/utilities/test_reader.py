@@ -9,6 +9,13 @@ import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import download_file
 
+HAS_IMAGEIO = True
+try:
+    import imageio  # noqa: F401
+except ModuleNotFoundError:
+    HAS_IMAGEIO = False
+
+
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
@@ -924,6 +931,7 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_gif_reader(gif_file):
     reader = pyvista.get_reader(gif_file)
     assert isinstance(reader, pyvista.GIFReader)
