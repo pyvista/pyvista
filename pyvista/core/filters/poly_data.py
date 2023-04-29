@@ -866,6 +866,33 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_text('Smoothed Mesh')
         >>> pl.show()
 
+        Create a structured cylinder and smooth the edges.
+
+        >>> cyl = pv.CylinderStructured(
+        ...     radius=[0.0, 0.0025, 0.005, 0.0075, 0.01],
+        ...     height=0.1,
+        ...     center=(0.0, 0.0, 0.25),
+        ...     direction=(0.0, 0.0, 1.0),
+        ...     theta_resolution=100,
+        ...     z_resolution=100,
+        ... )
+        >>> cyl_surf = cyl.merge_points(tolerance=1e-5).extract_surface()
+        >>> cyl_smooth = cyl_surf.smooth_taubin(
+        ...     n_iter=50,
+        ...     pass_band=1e-3,
+        ... )
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(
+        ...     cyl_surf, smooth_shading=True, split_sharp_edges=True
+        ... )
+        >>> _ = pl.add_text('Original Mesh')
+        >>> pl.camera.zoom(1.3)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(cyl_smooth, smooth_shading=True)
+        >>> _ = pl.add_text('Smoothed Mesh')
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
+
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
