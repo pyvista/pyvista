@@ -18,7 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
-from pyvista.utilities.docs import linkcode_resolve  # noqa: F401
+from pyvista.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -465,12 +465,12 @@ SphinxDocString._str_examples = _str_examples
 import pydata_sphinx_theme  # noqa
 
 html_theme = "pydata_sphinx_theme"
-# html_theme_path = [pydata_sphinx_theme.get_html_theme_path()]
 html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
     "github_version": "main",
-    "doc_path": "doc",
+    "doc_path": "doc/source",
+    "examples_path": "examples",
 }
 html_show_sourcelink = False
 html_copy_source = False
@@ -614,6 +614,7 @@ copybutton_prompt_is_regexp = True
 
 
 def setup(app):
+    app.connect("html-page-context", pv_html_page_context)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
     app.add_css_file("summary.css")
