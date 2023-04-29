@@ -3201,7 +3201,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if render_lines_as_tubes and show_edges:
             warnings.warn(
-                '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring show_edges',
+                '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring `show_edges`.',
                 UserWarning,
             )
             show_edges = False
