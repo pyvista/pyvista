@@ -4722,6 +4722,43 @@ class DataSetFilters:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
         return merged
 
+    def merge_points(self, tolerance=0.0, progress_bar=False):
+        """Merge points of this dataset.
+
+        Parameters
+        ----------
+        tolerance : float, default: 0.0
+            The absolute tolerance to use to find coincident points.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        UnstructuredGrid
+            Dataset with merged points.
+
+        See Also
+        --------
+        PolyDataFilters.clean : Preferable with :class:`pyvista.PolyData`.
+
+        Examples
+        --------
+        Create a structured cylinder and merge interior faces. This prevents
+        additional "internal" faces when extracting the surface of the
+        cylinder.
+
+        >>> import pyvista as pv
+        >>> cyl = pv.CylinderStructured(radius=[0, 0.1, 0.2])
+        >>> cyl.n_points
+        990
+        >>> cyl_merged = cyl.merge_points()
+        >>> cyl_merged.n_points
+        670
+
+        """
+        return self.merge(tolerance=tolerance, progress_bar=progress_bar)
+
     def __add__(self, dataset):
         """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(self, dataset)
