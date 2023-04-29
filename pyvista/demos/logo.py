@@ -174,7 +174,6 @@ def plot_logo(
         mesh,
         scalars='scalars',
         style='wireframe',
-        show_edges=True,
         line_width=2,
         cmap='gist_heat',
         backface_culling=True,
