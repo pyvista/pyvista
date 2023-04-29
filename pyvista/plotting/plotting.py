@@ -3199,6 +3199,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
+        if render_lines_as_tubes and show_edges:
+            warnings.warn(
+                '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring show_edges',
+                UserWarning,
+            )
+            show_edges = False
+
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
