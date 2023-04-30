@@ -86,7 +86,7 @@ class DataSetFilters:
         Parameters
         ----------
         target : pyvista.DataSet
-            The target mesh to align the input mesh.
+            The target dataset to align to.
 
         max_landmarks : int, default: 100
             The maximum number of landmarks.
@@ -109,10 +109,10 @@ class DataSetFilters:
         Returns
         -------
         aligned : pyvista.DataSet
-            The input mesh aligned to the target mesh.
+            The dataset aligned to the target mesh.
 
         matrix : numpy.ndarray
-            Transform matrix to transform the input mesh to the target.
+            Transform matrix to transform the input dataset to the target dataset.
 
         Examples
         --------
