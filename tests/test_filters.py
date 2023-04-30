@@ -2647,6 +2647,22 @@ def test_integrate_data():
     assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
 
 
+def test_iterative_closest_point():
+    # Create a simple mesh
+    source = pyvista.Cylinder(resolution=30).triangulate().subdivide(1)
+    transformed = source.rotate_y(20).rotate_z(25).translate([-0.75, -0.5, 0.5])
+
+    # Perform ICP registration
+    aligned = transformed.iterative_closest_point(source)
+
+    # Check if the number of points in the aligned mesh is the same as the original mesh
+    assert source.n_points == aligned.n_points
+
+    _, closest_points = aligned.find_closest_cell(source.points, return_closest_point=True)
+    dist = np.linalg.norm(source.points - closest_points, axis=1)
+    assert np.abs(dist).mean() < 1e-3
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
