@@ -58,7 +58,7 @@ class UnstructuredGridFilters(DataSetFilters):
         merging_array_name=None,
         progress_bar=False,
     ):
-        """Merge duplicate points and remove unused points, in an UnstructuredGrid.
+        """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
         This filter, merging coincident points as defined by a merging
         tolerance and optionally removes unused points. The filter does not
@@ -79,7 +79,7 @@ class UnstructuredGridFilters(DataSetFilters):
             process datasets with no cells (and just points). If on in this
             case, and there are no cells, the output will be empty.
 
-        produce_merge_map : bool, default, False
+        produce_merge_map : bool, default: False
             Indicate whether a merge map should be produced on output.
             The merge map, if requested, maps each input point to its
             output point id, or provides a value of -1 if the input point
@@ -97,8 +97,7 @@ class UnstructuredGridFilters(DataSetFilters):
             If a ``merging_array_name`` is specified and exists in the
             ``point_data``, then point merging will switch into a mode where
             merged points must be both geometrically coincident and have
-            matching point data (i.e., an exact match of position and data -
-            tolerances have no effect).
+            matching point data. When set, ``tolerance`` has no effect.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -121,14 +120,8 @@ class UnstructuredGridFilters(DataSetFilters):
         >>> hexbeam_shifted.point_data['data'] = [1] * hexbeam.n_points
         >>> merged = hexbeam.merge(hexbeam_shifted, merge_points=False)
         >>> cleaned = merged.clean(average_point_data=True)
-        >>> cleaned  # doctest:+SKIP
-        UnstructuredGrid (0x7f02930257e0)
-          N Cells:    80
-          N Points:   165
-          X Bounds:   0.000e+00, 2.000e+00
-          Y Bounds:   0.000e+00, 1.000e+00
-          Z Bounds:   0.000e+00, 5.000e+00
-          N Arrays:   5
+        >>> cleaned.n_points < merged.n_points
+        True
 
         Show how point averaging using the ``clean`` method with
         ``average_point_data=True`` results in averaged point data for merged
