@@ -1,10 +1,16 @@
 """Tests for UnstructuredGridFilters."""
 
 import numpy as np
+import pytest
 
 import pyvista as pv
 
+skip_lesser_9_2_2 = pytest.mark.skipif(
+    pv.vtk_version_info <= (9, 2, 2), reason='Requires VTK>=9.2.2'
+)
 
+
+@skip_lesser_9_2_2
 def test_clean_points():
     """Test on a set of points."""
     n_unique_points = 100
@@ -36,6 +42,7 @@ def test_clean_points():
     assert cleaned.n_points == points.shape[0]
 
 
+@skip_lesser_9_2_2
 def test_clean_grid(hexbeam):
     hexbeam_shifted = hexbeam.translate([1, 0, 0])
 
