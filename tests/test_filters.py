@@ -2655,6 +2655,9 @@ def test_iterative_closest_point():
     # Perform ICP registration
     aligned = transformed.iterative_closest_point(source)
 
+    _, matrix = transformed.iterative_closest_point(source, return_matrix=True)
+    assert isinstance(matrix, np.ndarray)
+
     # Check if the number of points in the aligned mesh is the same as the original mesh
     assert source.n_points == aligned.n_points
 
