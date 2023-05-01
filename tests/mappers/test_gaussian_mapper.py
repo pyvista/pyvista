@@ -32,6 +32,13 @@ def test_scale_factor(mapper):
     mapper.scale_factor = scale_factor
     assert mapper.scale_factor == scale_factor
 
+def test_scale_array(mapper):
+    assert mapper.scale_array is None
+
+    scale_array = 'array'
+    mapper.scale_array = scale_array
+    assert mapper.scale_array == scale_array
+
 
 def test_use_circular_splat(mapper):
     mapper.use_circular_splat()

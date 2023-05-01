@@ -853,6 +853,15 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     @scale_factor.setter
     def scale_factor(self, value: float):
         return self.SetScaleFactor(value)
+    
+    @property
+    def scale_array(self) -> str:
+        """Set or return the name of the array used to scale the splats."""
+        return self.GetScaleArray()
+    
+    @scale_array.setter
+    def scale_array(self, name: str):
+        return self.SetScaleArray(name)
 
     def use_circular_splat(self, opacity: float = 1.0):
         """Set the fragment shader code to create a circular splat.

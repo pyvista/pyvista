@@ -3253,6 +3253,16 @@ def test_plot_points_gaussian_as_spheres(sphere):
         opacity=0.5,
     )
 
+@skip_windows
+def test_plot_points_gaussian_scale(sphere):
+    sphere["z"] = sphere.points[:, 2]
+    sphere.plot(
+        scale="z",
+        style='points_gaussian',
+        render_points_as_spheres=True,
+        emissive=False,
+    )
+
 
 @skip_windows_mesa  # due to opacity
 def test_plot_show_vertices(sphere, hexbeam, multiblock_all):
