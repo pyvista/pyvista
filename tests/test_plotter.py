@@ -28,6 +28,14 @@ def test_has_render_window_fail():
         pl._make_render_window_current()
 
 
+def test_render_lines_as_tubes_show_edges_warning(sphere):
+    pl = pyvista.Plotter()
+    with pytest.warns(UserWarning, match='not supported'):
+        actor = pl.add_mesh(sphere, render_lines_as_tubes=True, show_edges=True)
+    assert not actor.prop.show_edges
+    assert actor.prop.render_lines_as_tubes
+
+
 def test_screenshot_fail_suppressed_rendering():
     plotter = pyvista.Plotter()
     plotter.suppress_rendering = True
