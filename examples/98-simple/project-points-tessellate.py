@@ -16,6 +16,8 @@ import pyvista as pv
 ###############################################################################
 # Project Points
 # ~~~~~~~~~~~~~~
+# Create a point cloud and project it to a plane.
+
 num_points = 100
 point_cloud = np.random.random((num_points, 3))
 
@@ -27,10 +29,9 @@ plane = pv.Plane(center=origin, direction=normal)
 
 def project_points_to_plane(points, plane_origin, plane_normal):
     """Project points to a plane."""
-    w = points - plane_origin
-    dist = np.dot(w, plane_normal)
-    projected_points = points - (np.outer(dist, plane_normal))
-    return projected_points
+    vec = points - plane_origin
+    dist = np.dot(vec, plane_normal)
+    return points - np.outer(dist, plane_normal)
 
 
 projected_points = project_points_to_plane(point_cloud, origin, normal)
@@ -41,16 +42,17 @@ polydata = pv.PolyData(projected_points)
 # Mesh using delaunay_2d and pyvista
 mesh = polydata.delaunay_2d()
 
+
+###############################################################################
+# Visualize the Result
+# ~~~~~~~~~~~~~~~~~~~~
+
 # Create a plane for visualization
 plane_vis = pv.Plane(
     center=origin, direction=normal, i_size=2, j_size=2, i_resolution=10, j_resolution=10
 )
 
-
-###############################################################################
-# Visualize the result
-# ~~~~~~~~~~~~~~
-
+# plot it
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True, color='white', opacity=0.5, label='Tessellated mesh')
 pl.add_mesh(
@@ -60,6 +62,6 @@ pl.add_mesh(
     point_size=10,
     label='Points to project',
 )
-pl.add_mesh(plane_vis, color='blue', opacity=0.2, label='Projection Plane')
+pl.add_mesh(plane_vis, color='blue', opacity=0.1, label='Projection Plane')
 pl.add_legend()
 pl.show()
