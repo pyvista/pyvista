@@ -8,6 +8,7 @@ Create a dimension line along 2d structured mesh.
 """
 
 import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 
