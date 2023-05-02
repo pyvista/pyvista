@@ -2117,10 +2117,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.dimensions
-        (10, 20, 4)
+        (20, 10, 4)
 
         """
         return tuple(self.GetDimensions())
@@ -2147,10 +2147,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.x.shape
-        (10, 20, 4)
+        (20, 10, 4)
 
         """
         return self._reshape_point_array(self.points[:, 0])
