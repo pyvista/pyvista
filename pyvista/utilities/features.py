@@ -69,6 +69,8 @@ def voxelize(mesh, density=None, check_surface=True):
     y = np.arange(y_min, y_max, density_y)
     z = np.arange(z_min, z_max, density_z)
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
+    # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
+    # see https://github.com/pyvista/pyvista/pull/4365
 
     # Create unstructured grid from the structured grid
     grid = pyvista.StructuredGrid(x, y, z)
