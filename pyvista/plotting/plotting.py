@@ -4873,7 +4873,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         fps=10,
         palettesize=256,
         subrectangles=False,
-        duration=None,
         **kwargs,
     ):
         """Open a gif file.
