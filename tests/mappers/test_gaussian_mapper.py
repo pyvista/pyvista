@@ -32,6 +32,7 @@ def test_scale_factor(mapper):
     mapper.scale_factor = scale_factor
     assert mapper.scale_factor == scale_factor
 
+
 def test_scale_array(mapper):
     assert mapper.scale_array is None
 
