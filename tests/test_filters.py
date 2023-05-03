@@ -2647,15 +2647,15 @@ def test_integrate_data():
     assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
 
 
-def test_iterative_closest_point():
+def test_align():
     # Create a simple mesh
     source = pyvista.Cylinder(resolution=30).triangulate().subdivide(1)
     transformed = source.rotate_y(20).rotate_z(25).translate([-0.75, -0.5, 0.5])
 
     # Perform ICP registration
-    aligned = transformed.iterative_closest_point(source)
+    aligned = transformed.align(source)
 
-    _, matrix = transformed.iterative_closest_point(source, return_matrix=True)
+    _, matrix = transformed.align(source, return_matrix=True)
     assert isinstance(matrix, np.ndarray)
 
     # Check if the number of points in the aligned mesh is the same as the original mesh

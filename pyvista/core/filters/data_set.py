@@ -68,7 +68,7 @@ class DataSetFilters:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
 
-    def iterative_closest_point(
+    def align(
         self,
         target,
         max_landmarks=100,
@@ -78,9 +78,10 @@ class DataSetFilters:
         start_by_matching_centroids=True,
         return_matrix=False,
     ):
-        """Perform iterative closest point registration between two datasets.
+        """Align a dataset to another.
 
-        Uses the VTK class `vtkIterativeClosestPointTransform
+        Uses the iterative closest point algorithm to align the points of the
+        two meshes.  See the VTK class `vtkIterativeClosestPointTransform
         <https://vtk.org/doc/nightly/html/classvtkIterativeClosestPointTransform.html>`_
 
         Parameters
@@ -123,7 +124,7 @@ class DataSetFilters:
         >>> import numpy as np
         >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
         >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
-        >>> aligned = transformed.iterative_closest_point(source)
+        >>> aligned = transformed.align(source)
         >>> _, closest_points = aligned.find_closest_cell(
         ...     source.points, return_closest_point=True
         ... )
@@ -165,7 +166,7 @@ class DataSetFilters:
         icp.SetCheckMeanDistance(check_mean_distance)
         icp.SetStartByMatchingCentroids(start_by_matching_centroids)
         icp.Update()
-        matrix = icp.GetMatrix()
+        matrix = pyvista.array_from_vtkmatrix(icp.GetMatrix())
         if return_matrix:
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
