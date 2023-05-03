@@ -4781,15 +4781,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(
-        self,
-        filename,
-        loop=0,
-        fps=10,
-        palettesize=256,
-        subrectangles=False,
-        **kwargs,
-    ):
+    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
         """Open a gif file.
 
         Parameters
