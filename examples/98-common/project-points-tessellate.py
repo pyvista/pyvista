@@ -1,5 +1,6 @@
 """
-Project points to a plane and Tessellate.
+Project points to a plane and Tessellate
+----------------------------------------
 
 Using pyvista and numpy, generate a 3D point cloud, project it to a plane, and
 tessellate it.
