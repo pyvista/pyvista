@@ -606,8 +606,8 @@ def check_matplotlib_vtk_compatibility():
     elif pyvista.vtk_version_info > (9, 2, 2):
         if mpl_vers >= (3, 6):
             return True
-        return False
-    raise RuntimeError('Uncheckable versions.')
+        return False  # pragma: no cover
+    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
 
 
 def check_math_text_support():

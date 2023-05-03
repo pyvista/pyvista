@@ -12,8 +12,6 @@ import re
 import time
 
 from PIL import Image
-import imageio
-import matplotlib
 import numpy as np
 import pytest
 import vtk
