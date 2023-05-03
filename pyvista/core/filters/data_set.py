@@ -68,6 +68,109 @@ class DataSetFilters:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
 
+    def align(
+        self,
+        target,
+        max_landmarks=100,
+        max_mean_distance=1e-5,
+        max_iterations=500,
+        check_mean_distance=True,
+        start_by_matching_centroids=True,
+        return_matrix=False,
+    ):
+        """Align a dataset to another.
+
+        Uses the iterative closest point algorithm to align the points of the
+        two meshes.  See the VTK class `vtkIterativeClosestPointTransform
+        <https://vtk.org/doc/nightly/html/classvtkIterativeClosestPointTransform.html>`_
+
+        Parameters
+        ----------
+        target : pyvista.DataSet
+            The target dataset to align to.
+
+        max_landmarks : int, default: 100
+            The maximum number of landmarks.
+
+        max_mean_distance : float, default: 1e-5
+            The maximum mean distance for convergence.
+
+        max_iterations : int, default: 500
+            The maximum number of iterations.
+
+        check_mean_distance : bool, default: True
+            Whether to check the mean distance for convergence.
+
+        start_by_matching_centroids : bool, default: True
+            Whether to start the alignment by matching centroids. Default is True.
+
+        return_matrix : bool, default: False
+            Return the transform matrix as well as the aligned mesh.
+
+        Returns
+        -------
+        aligned : pyvista.DataSet
+            The dataset aligned to the target mesh.
+
+        matrix : numpy.ndarray
+            Transform matrix to transform the input dataset to the target dataset.
+
+        Examples
+        --------
+        Create a cylinder, translate it, and use iterative closest point to
+        align mesh to its original position.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
+        >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
+        >>> aligned = transformed.align(source)
+        >>> _, closest_points = aligned.find_closest_cell(
+        ...     source.points, return_closest_point=True
+        ... )
+        >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
+        >>> np.abs(dist).mean()  # doctest:+SKIP
+        9.997635192915073e-05
+
+        Visualize the source, transformed, and aligned meshes.
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Before Alignment')
+        >>> _ = pl.add_mesh(
+        ...     source, style='wireframe', opacity=0.5, line_width=2
+        ... )
+        >>> _ = pl.add_mesh(transformed)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('After Alignment')
+        >>> _ = pl.add_mesh(
+        ...     source, style='wireframe', opacity=0.5, line_width=2
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     aligned,
+        ...     scalars=dist,
+        ...     scalar_bar_args={
+        ...         'title': 'Distance to Source',
+        ...         'fmt': '%.1E',
+        ...     },
+        ... )
+        >>> pl.show()
+
+        """
+        icp = _vtk.vtkIterativeClosestPointTransform()
+        icp.SetSource(self)
+        icp.SetTarget(target)
+        icp.GetLandmarkTransform().SetModeToRigidBody()
+        icp.SetMaximumNumberOfLandmarks(max_landmarks)
+        icp.SetMaximumMeanDistance(max_mean_distance)
+        icp.SetMaximumNumberOfIterations(max_iterations)
+        icp.SetCheckMeanDistance(check_mean_distance)
+        icp.SetStartByMatchingCentroids(start_by_matching_centroids)
+        icp.Update()
+        matrix = pyvista.array_from_vtkmatrix(icp.GetMatrix())
+        if return_matrix:
+            return self.transform(matrix, inplace=False), matrix
+        return self.transform(matrix, inplace=False)
+
     def clip(
         self,
         normal='x',

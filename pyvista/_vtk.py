@@ -190,6 +190,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkGenericCell,
     vtkImageData,
     vtkImplicitFunction,
+    vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPerlinNoise,
