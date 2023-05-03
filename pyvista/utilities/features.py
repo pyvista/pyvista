@@ -10,6 +10,9 @@ import pyvista
 def voxelize(mesh, density=None, check_surface=True):
     """Voxelize mesh to UnstructuredGrid.
 
+    Prior to version 0.39.0, this method improperly handled the order of
+    structured coordinates.
+
     Parameters
     ----------
     density : float | array_like[float]
