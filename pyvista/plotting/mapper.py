@@ -853,12 +853,47 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     @scale_factor.setter
     def scale_factor(self, value: float):
         return self.SetScaleFactor(value)
-    
+
     @property
     def scale_array(self) -> str:
-        """Set or return the name of the array used to scale the splats."""
+        """Set or return the name of the array used to scale the splats.
+
+        Scalars used to scale the gaussian points. Accepts a string
+        name of an array that is present on the mesh.
+
+        Parameters
+        ----------
+        name : str
+            Name of the array used to scale the points.
+
+        Notes
+        -----
+        Setting this automatically sets ``scale_factor=1.0``.
+
+        Examples
+        --------
+        Plot spheres using `style='points_gaussian'` style and scale them by
+        radius.
+
+        >>> n_spheres = 1_000
+        >>> pos = np.random.random((n_spheres, 3))
+        >>> rad = np.random.random(n_spheres) * 0.01
+        >>> pdata = pv.PolyData(pos)
+        >>> pdata['radius'] = rad
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(
+        ...     pdata,
+        ...     style='points_gaussian',
+        ...     emissive=False,
+        ...     render_points_as_spheres=True,
+        ... )
+        >>> actor.mapper.scale_array = 'radius'
+        >>> pl.show()
+
+        """
+        self.scale_factor = 1.0
         return self.GetScaleArray()
-    
+
     @scale_array.setter
     def scale_array(self, name: str):
         return self.SetScaleArray(name)
@@ -888,7 +923,6 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             "}\n"
         )
         # maintain consistency with the default style
-        self.emissive = True
         self.scale_factor *= 1.5
 
     def use_default_splat(self):

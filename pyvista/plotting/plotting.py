@@ -2725,7 +2725,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color=None,
         style=None,
         scalars=None,
-        scale=None,
         clim=None,
         show_edges=None,
         edge_color=None,
@@ -2821,10 +2820,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh.  Array should be sized as a single vector. If both
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
-
-        scale : str, optional
-            Scalars used to scale the gaussian points. Accepts a string 
-            name of an array that is present on the mesh.
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
@@ -3206,10 +3201,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pdata = pv.PolyData(pos)
         >>> pdata['radius'] = rad
         >>> pdata.plot(
-        ...     scale="radius",
         ...     style='points_gaussian',
         ...     emissive=False,
-        ...     render_points_as_spheres=True
+        ...     render_points_as_spheres=True,
         ... )
 
         """
@@ -3404,7 +3398,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif field == FieldAssociation.CELL:
                     mesh.cell_data.active_scalars_name = original_scalar_name
 
-
         # Compute surface normals if using smooth shading
         if smooth_shading:
             if algo is not None:
@@ -3533,13 +3526,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
-
-        if scale is not None and style == 'points_gaussian':
-            if isinstance(scale, str):
-                self.mapper.scale_array = scale
-                self.mapper.emissive = emissive
-                self.mapper.scale_factor = 1.0
-
 
         if backface_params is not None:
             if isinstance(backface_params, Property):

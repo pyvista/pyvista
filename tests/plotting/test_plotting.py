@@ -3249,19 +3249,24 @@ def test_plot_points_gaussian_as_spheres(sphere):
         color='b',
         style='points_gaussian',
         render_points_as_spheres=True,
+        emissive=True,
         point_size=20,
         opacity=0.5,
     )
 
+
 @skip_windows
 def test_plot_points_gaussian_scale(sphere):
     sphere["z"] = sphere.points[:, 2]
-    sphere.plot(
-        scale="z",
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(
+        sphere,
         style='points_gaussian',
         render_points_as_spheres=True,
         emissive=False,
     )
+    actor.mapper.scale_array = 'radius'
+    pl.show()
 
 
 @skip_windows_mesa  # due to opacity
