@@ -1,7 +1,7 @@
 name: Maintenance Request
 description: Request general maintenance to code, CI, deployment, or otherwise
 labels: ["maintenance"]
-body: 
+body:
   - type: markdown
     attributes:
       value: |

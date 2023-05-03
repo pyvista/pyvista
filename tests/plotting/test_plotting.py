@@ -13,6 +13,7 @@ import time
 
 from PIL import Image
 import imageio
+import matplotlib
 import numpy as np
 import pytest
 import vtk
@@ -32,6 +33,12 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
+HAS_IMAGEIO = True
+try:
+    import imageio
+except ModuleNotFoundError:
+    HAS_IMAGEIO = False
+
 
 ffmpeg_failed = False
 try:
@@ -39,10 +46,14 @@ try:
         import imageio_ffmpeg
 
         imageio_ffmpeg.get_ffmpeg_exe()
-    except ImportError:
-        imageio.plugins.ffmpeg.download()
+    except ImportError as err:
+        if HAS_IMAGEIO:
+            imageio.plugins.ffmpeg.download()
+        else:
+            raise err
 except:  # noqa: E722
     ffmpeg_failed = True
+
 
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
 
@@ -527,16 +538,17 @@ def test_plot_show_grid(sphere):
         plotter.show_grid(location='foo')
     with pytest.raises(TypeError, match='location must be a string'):
         plotter.show_grid(location=10)
-    with pytest.raises(ValueError, match='Value of ticks'):
+    with pytest.raises(ValueError, match='Value of tick'):
         plotter.show_grid(ticks='foo')
-    with pytest.raises(TypeError, match='ticks must be a string'):
+    with pytest.raises(TypeError, match='must be a string'):
         plotter.show_grid(ticks=10)
 
-    plotter.show_grid()
+    plotter.show_grid()  # Add mesh after to make sure bounds update
     plotter.add_mesh(sphere)
     plotter.show()
 
 
+@skip_mesa
 def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     """Show the grid bounds for a specific mesh."""
     verify_image_cache.macos_skip_image_cache = True
@@ -632,7 +644,7 @@ def test_plot_show_bounds(sphere):
 def test_plot_label_fmt(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
+    plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
     plotter.show()
 
 
@@ -640,7 +652,7 @@ def test_plot_label_fmt(sphere):
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
     plotter = pyvista.Plotter()
-    plotter.add_mesh(pyvista.Cube())
+    plotter.add_mesh(pyvista.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
     plotter.show_bounds(grid=grid, ticks='outside', location=location)
     plotter.show_bounds(grid=grid, ticks='both', location=location)
@@ -761,6 +773,7 @@ def test_add_lines_invalid():
         plotter.add_lines(range(10))
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_open_gif_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(ValueError):
@@ -768,6 +781,7 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
 
@@ -983,7 +997,14 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pyvista.Plotter()
-    with pytest.raises(ValueError):
+    if (
+        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
+        and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
+    ):
+        # This only fails for VTK<9.2.3
+        with pytest.raises(ValueError):
+            plotter.left_button_down(None, None)
+    else:
         plotter.left_button_down(None, None)
     plotter.close()
 
@@ -1211,17 +1232,6 @@ def test_plot_texture():
     plotter.show()
 
 
-def test_plot_texture_alone(tmpdir):
-    """Test adding a texture to a plot"""
-    path = str(tmpdir.mkdir("tmpdir"))
-    image = Image.new('RGB', (10, 10), color='blue')
-    filename = os.path.join(path, 'tmp.jpg')
-    image.save(filename)
-
-    texture = pyvista.read_texture(filename)
-    texture.plot(rgba=True)
-
-
 def test_plot_texture_associated():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -1230,6 +1240,7 @@ def test_plot_texture_associated():
     plotter.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -2175,17 +2186,6 @@ def test_set_viewup(verify_image_cache):
     p.show()
 
 
-def test_plot_remove_scalar_bar(sphere):
-    sphere['z'] = sphere.points[:, 2]
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere, show_scalar_bar=False)
-    plotter.add_scalar_bar(interactive=True)
-    assert len(plotter.scalar_bars) == 1
-    plotter.remove_scalar_bar()
-    assert len(plotter.scalar_bars) == 0
-    plotter.show()
-
-
 def test_plot_shadows():
     plotter = pyvista.Plotter(lighting=None)
 
@@ -2522,6 +2522,7 @@ def test_pointset_plot_as_points_vtk():
     pl.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))
@@ -3182,6 +3183,18 @@ def test_plotter_volume_add_scalars(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars_log_scale(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+
+    # for below zero to trigger the edge case
+    scalars = uniform.z - 0.01
+    assert any(scalars < 0), 'need negative values to test log_scale entrirely'
+    pl.add_volume(uniform, scalars=scalars, show_scalar_bar=True, log_scale=True)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
@@ -3515,6 +3528,28 @@ def test_plotter_render_callback():
     assert len(pl._on_render_callbacks) == 0
 
 
+def test_plot_texture_alone(texture):
+    """Test plotting directly from the Texture class."""
+    texture.plot()
+
+
+def test_plot_texture_flip_x(texture):
+    """Test Texture.flip_x."""
+    texture.flip_x().plot()
+
+
+def test_plot_texture_flip_y(texture):
+    """Test Texture.flip_y."""
+    texture.flip_y().plot()
+
+
+@pytest.mark.needs_vtk_version(9, 2, 0)
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
+def test_plot_cubemap_alone(cubemap):
+    """Test plotting directly from the Texture class."""
+    cubemap.plot()
+
+
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -3541,6 +3576,49 @@ def test_color_cycler_names(name):
     assert a1.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a2.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
     assert a3.prop.color.hex_rgb != pyvista.global_theme.color.hex_rgb
+
+
+def test_scalar_bar_actor_removal(sphere):
+    # verify that when removing an actor we also remove the
+    # corresponding scalar bar
+
+    sphere['scalars'] = sphere.points[:, 2]
+
+    pl = pyvista.Plotter()
+    actor = pl.add_mesh(sphere, show_scalar_bar=True)
+    assert list(pl.scalar_bars.keys()) == ['scalars']
+    pl.remove_actor(actor)
+    assert len(pl.scalar_bars) == 0
+    pl.show()
+
+
+def test_update_scalar_bar_range(sphere):
+    sphere['z'] = sphere.points[:, 2]
+    minmax = sphere.bounds[2:4]  # ymin, ymax
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars='z')
+
+    # automatic mapper lookup works
+    pl.update_scalar_bar_range(minmax)
+    # named mapper lookup works
+    pl.update_scalar_bar_range(minmax, name='z')
+    # missing name raises
+    with pytest.raises(ValueError, match='not valid/not found in this plotter'):
+        pl.update_scalar_bar_range(minmax, name='invalid')
+    pl.show()
+
+
+def test_add_remove_scalar_bar(sphere):
+    """Verify a scalar bar can be added and removed."""
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
+
+    # verify that the number of slots is restored
+    init_slots = len(pl._scalar_bar_slots)
+    pl.add_scalar_bar(interactive=True)
+    pl.remove_scalar_bar()
+    assert len(pl._scalar_bar_slots) == init_slots
+    pl.show()
 
 
 @skip_lesser_9_0_X
@@ -3578,3 +3656,39 @@ def test_axes_actor_properties():
     pl = pyvista.Plotter()
     pl.add_actor(axes_actor)
     pl.show()
+
+
+def test_show_bounds_no_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        show_xlabels=False,
+        show_ylabels=False,
+        show_zlabels=False,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.show()
+
+
+def test_show_bounds_n_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        n_xlabels=2,
+        n_ylabels=2,
+        n_zlabels=2,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.show()

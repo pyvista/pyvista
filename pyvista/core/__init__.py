@@ -11,7 +11,8 @@ from .filters import (
     UniformGridFilters,
 )
 from .grid import Grid, RectilinearGrid, UniformGrid
-from .objects import Table, Texture
+from .objects import Table
+from .texture import Texture
 from .pointset import (
     PointGrid,
     PointSet,

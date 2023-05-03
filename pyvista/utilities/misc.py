@@ -11,6 +11,12 @@ import pyvista
 from pyvista import _vtk
 
 
+def _lazy_vtk_instantiation(module_name, class_name):
+    """Lazy import and instantiation of a class from vtkmodules."""
+    module = importlib.import_module(f"vtkmodules.{module_name}")
+    return getattr(module, class_name)()
+
+
 def _set_plot_theme_from_env():
     """Set plot theme from an environment variable."""
     from pyvista.themes import _NATIVE_THEMES, set_plot_theme
@@ -25,6 +31,46 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
+
+
+def _check_range(value, rng, parm_name):
+    """Check if a parameter is within a range."""
+    if value < rng[0] or value > rng[1]:
+        raise ValueError(
+            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        )
+
+
+def _try_imageio_imread(filename):
+    """Attempt to read a file using ``imageio.imread``.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to read using ``imageio``.
+
+    Returns
+    -------
+    imageio.core.util.Array
+        Image read from ``imageio``.
+
+    Raises
+    ------
+    ModuleNotFoundError
+        Raised when ``imageio`` is not installed when attempting to read
+        ``filename``.
+
+    """
+    try:
+        from imageio import imread
+    except ModuleNotFoundError:  # pragma: no cover
+        raise ModuleNotFoundError(
+            'Problem reading the image with VTK. Install imageio to try to read the '
+            'file using imageio with:\n\n'
+            '   pip install imageio'
+        ) from None
+
+    return imread(filename)
 
 
 @lru_cache(maxsize=None)
@@ -101,7 +147,7 @@ def copy_vtk_array(array, deep=True):
 
     Parameters
     ----------
-    array : vtk.vtkDataArray or vtk.vtkAbstractArray
+    array : vtk.vtkDataArray | vtk.vtkAbstractArray
         VTK array.
 
     deep : bool, optional

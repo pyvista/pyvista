@@ -26,23 +26,21 @@ class StructuredGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        voi : tuple(int)
+        voi : sequence[int]
             Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
-        rate : tuple(int), optional
+        rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
-            Default: ``(1, 1, 1)``.
 
-        boundary : bool, optional
+        boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
             is output in the subsampling process. (This only has
             effect when the rate in any direction is not equal to
             1). When this is on, the subsampling will always include
             the boundary of the grid even if the sample rate is
-            not an even multiple of the grid dimensions.  By default
-            this is ``False``.
+            not an even multiple of the grid dimensions.
 
         Returns
         -------
@@ -95,7 +93,7 @@ class StructuredGridFilters(DataSetFilters):
         axis : int
             Axis along which to concatenate.
 
-        tolerance : float, optional
+        tolerance : float, default: 0.0
             Tolerance for point coincidence along joining seam.
 
         Returns

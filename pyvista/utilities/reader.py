@@ -11,12 +11,23 @@ from xml.etree import ElementTree
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 from pyvista.utilities import abstract_class, wrap
+from pyvista.utilities.misc import _lazy_vtk_instantiation
 
 from .fileio import _get_ext_force, _process_filename
 
 HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
+
+
+def lazy_vtkPOpenFOAMReader():
+    """Lazy import of the vtkPOpenFOAMReader."""
+    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+    from vtkmodules.vtkParallelCore import vtkDummyController
+
+    # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
+    reader = vtkPOpenFOAMReader()
+    reader.SetController(vtkDummyController())
+    return reader
 
 
 def get_reader(filename, force_ext=None):
@@ -234,10 +245,16 @@ class BaseReader:
     """
 
     _class_reader: Any = None
+    _vtk_module_name: str = ''
+    _vtk_class_name: str = ''
 
     def __init__(self, path):
         """Initialize Reader by setting path."""
-        self._reader = self._class_reader()
+        if self._vtk_class_name:
+            self._reader = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
+        else:
+            # edge case where some class customization is needed on instantiation
+            self._reader = self._class_reader()
         self._filename = None
         self._progress_bar = False
         self._progress_msg = None
@@ -643,13 +660,15 @@ class TimeReader(ABC):
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
     """XML Image Data Reader for .vti files."""
 
-    _class_reader = _vtk.vtkXMLImageDataReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLImageDataReader"
 
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
     """Parallel XML Image Data Reader for .pvti files."""
 
-    _class_reader = _vtk.vtkXMLPImageDataReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLPImageDataReader"
 
 
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
@@ -673,13 +692,15 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _class_reader = _vtk.vtkXMLRectilinearGridReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLRectilinearGridReader"
 
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
     """Parallel XML RectilinearGrid Reader for .pvtr files."""
 
-    _class_reader = _vtk.vtkXMLPRectilinearGridReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLPRectilinearGridReader"
 
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
@@ -703,13 +724,15 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _class_reader = _vtk.vtkXMLUnstructuredGridReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLUnstructuredGridReader"
 
 
 class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """Parallel XML UnstructuredGrid Reader for .pvtu files."""
 
-    _class_reader = _vtk.vtkXMLPUnstructuredGridReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLPUnstructuredGridReader"
 
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
@@ -732,7 +755,8 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _class_reader = _vtk.vtkXMLPolyDataReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLPolyDataReader"
 
 
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
@@ -751,13 +775,15 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _class_reader = _vtk.vtkXMLStructuredGridReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLStructuredGridReader"
 
 
 class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     """XML MultiBlock Data Reader for .vtm or .vtmb files."""
 
-    _class_reader = _vtk.vtkXMLMultiBlockDataReader
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLMultiBlockDataReader"
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -786,7 +812,8 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
     """
 
-    _class_reader = _vtk.vtkGenericEnSightReader
+    _vtk_module_name = "vtkIOEnSight"
+    _vtk_class_name = "vtkGenericEnSightReader"
 
     def _set_filename(self, filename):
         """Set filename and update reader."""
@@ -827,7 +854,8 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     """
 
-    _class_reader = _vtk.vtkOpenFOAMReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkOpenFOAMReader"
 
     def _set_defaults_post(self):
         self.enable_all_patch_arrays()
@@ -1115,7 +1143,9 @@ class POpenFOAMReader(OpenFOAMReader):
     parallel reconstructed data, and decomposed data.
     """
 
-    _class_reader = staticmethod(_vtk.lazy_vtkPOpenFOAMReader)
+    _class_reader = staticmethod(lazy_vtkPOpenFOAMReader)
+    _vtk_module_name = ''
+    _vtk_class_name = ''
 
     @property
     def case_type(self):
@@ -1172,7 +1202,8 @@ class PLYReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkPLYReader
+    _vtk_module_name = "vtkIOPLY"
+    _vtk_class_name = "vtkPLYReader"
 
 
 class OBJReader(BaseReader):
@@ -1191,7 +1222,8 @@ class OBJReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkOBJReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkOBJReader"
 
 
 class STLReader(BaseReader):
@@ -1210,7 +1242,8 @@ class STLReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkSTLReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkSTLReader"
 
 
 class TecplotReader(BaseReader):
@@ -1227,7 +1260,8 @@ class TecplotReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkTecplotReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkTecplotReader"
 
 
 class VTKDataSetReader(BaseReader):
@@ -1253,7 +1287,8 @@ class VTKDataSetReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkDataSetReader
+    _vtk_module_name = "vtkIOLegacy"
+    _vtk_class_name = "vtkDataSetReader"
 
     def _set_defaults_post(self):
         self.reader.ReadAllScalarsOn()
@@ -1268,7 +1303,8 @@ class VTKDataSetReader(BaseReader):
 class VTKPDataSetReader(BaseReader):
     """Parallel VTK Data Set Reader for .pvtk files."""
 
-    _class_reader = staticmethod(_vtk.lazy_vtkPDataSetReader)
+    _vtk_module_name = "vtkIOParallel"
+    _vtk_class_name = "vtkPDataSetReader"
 
 
 class BYUReader(BaseReader):
@@ -1287,7 +1323,8 @@ class BYUReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkBYUReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkBYUReader"
 
 
 class FacetReader(BaseReader):
@@ -1306,13 +1343,15 @@ class FacetReader(BaseReader):
 
     """
 
-    _class_reader = staticmethod(_vtk.lazy_vtkFacetReader)
+    _vtk_module_name = "vtkFiltersHybrid"
+    _vtk_class_name = "vtkFacetReader"
 
 
 class Plot3DMetaReader(BaseReader):
     """Plot3DMeta Reader for .p3d files."""
 
-    _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
+    _vtk_module_name = "vtkIOParallel"
+    _vtk_class_name = "vtkPlot3DMetaReader"
 
 
 class Plot3DFunctionEnum(enum.IntEnum):
@@ -1367,7 +1406,8 @@ class MultiBlockPlot3DReader(BaseReader):
         - ``MultiBlockPlot3DReader.VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE``
     """
 
-    _class_reader = staticmethod(_vtk.lazy_vtkMultiBlockPLOT3DReader)
+    _vtk_module_name = "vtkIOParallel"
+    _vtk_class_name = "vtkMultiBlockPLOT3DReader"
 
     # pull in function name enum values as class constants
     DENSITY = Plot3DFunctionEnum.DENSITY
@@ -1398,7 +1438,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         Parameters
         ----------
-        files : str or Iterable(str)
+        files : str | sequence[str]
             Solution file or files to add.
 
         """
@@ -1431,7 +1471,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         Parameters
         ----------
-        value : int or Plot3DFunctionEnum
+        value : int | Plot3DFunctionEnum
             The function to add.
 
         Examples
@@ -1457,7 +1497,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         Parameters
         ----------
-        value : int or Plot3DFunctionEnum
+        value : int | Plot3DFunctionEnum
             The function to remove.
         """
         if isinstance(value, enum.Enum):
@@ -1541,7 +1581,8 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
+    _vtk_module_name = "vtkIOCGNSReader"
+    _vtk_class_name = "vtkCGNSReader"
 
     def _set_defaults_post(self):
         self.enable_all_point_arrays()
@@ -1816,7 +1857,8 @@ class BinaryMarchingCubesReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkMCubesReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkMCubesReader"
 
 
 @dataclass(order=True)
@@ -1987,7 +2029,8 @@ class DICOMReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkDICOMImageReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkDICOMImageReader"
 
 
 class BMPReader(BaseReader):
@@ -2006,7 +2049,8 @@ class BMPReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkBMPReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkBMPReader"
 
 
 class DEMReader(BaseReader):
@@ -2025,7 +2069,8 @@ class DEMReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkDEMReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkDEMReader"
 
 
 class JPEGReader(BaseReader):
@@ -2044,7 +2089,8 @@ class JPEGReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkJPEGReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkJPEGReader"
 
 
 class MetaImageReader(BaseReader):
@@ -2063,7 +2109,8 @@ class MetaImageReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkMetaImageReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkMetaImageReader"
 
 
 class NIFTIReader(BaseReader):
@@ -2082,7 +2129,8 @@ class NIFTIReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkNIFTIImageReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkNIFTIImageReader"
 
 
 class NRRDReader(BaseReader):
@@ -2101,7 +2149,8 @@ class NRRDReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkNrrdReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkNrrdReader"
 
 
 class PNGReader(BaseReader):
@@ -2120,7 +2169,8 @@ class PNGReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkPNGReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkPNGReader"
 
 
 class PNMReader(BaseReader):
@@ -2139,7 +2189,8 @@ class PNMReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkPNMReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkPNMReader"
 
 
 class SLCReader(BaseReader):
@@ -2158,7 +2209,8 @@ class SLCReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkSLCReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkSLCReader"
 
 
 class TIFFReader(BaseReader):
@@ -2177,7 +2229,8 @@ class TIFFReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkTIFFReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkTIFFReader"
 
 
 class HDRReader(BaseReader):
@@ -2196,13 +2249,15 @@ class HDRReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkHDRReader
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkHDRReader"
 
 
 class PTSReader(BaseReader):
     """PTSReader for .pts files."""
 
-    _class_reader = _vtk.vtkPTSReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkPTSReader"
 
 
 class AVSucdReader(BaseReader):
@@ -2221,7 +2276,8 @@ class AVSucdReader(BaseReader):
 
     """
 
-    _class_reader = _vtk.vtkAVSucdReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkAVSucdReader"
 
 
 class HDFReader(BaseReader):
@@ -2240,7 +2296,8 @@ class HDFReader(BaseReader):
 
     """
 
-    _class_reader = staticmethod(_vtk.lazy_vtkHDFReader)
+    _vtk_module_name = "vtkIOHDF"
+    _vtk_class_name = "vtkHDFReader"
 
     @wraps(BaseReader.read)
     def read(self):
@@ -2262,25 +2319,29 @@ class HDFReader(BaseReader):
 class GLTFReader(BaseReader):
     """GLTFeader for .gltf and .glb files."""
 
-    _class_reader = _vtk.vtkGLTFReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkGLTFReader"
 
 
 class FluentReader(BaseReader):
     """FluentReader for .cas files."""
 
-    _class_reader = _vtk.vtkFLUENTReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkFLUENTReader"
 
 
 class MFIXReader(BaseReader):
     """MFIXReader for .res files."""
 
-    _class_reader = _vtk.vtkMFIXReader
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkMFIXReader"
 
 
 class SegYReader(BaseReader):
     """SegYReader for .sgy and .segy files."""
 
-    _class_reader = staticmethod(_vtk.lazy_vtkSegYReader)
+    _vtk_module_name = "vtkIOSegY"
+    _vtk_class_name = "vtkSegYReader"
 
 
 class _GIFReader(BaseVTKReader):
@@ -2362,7 +2423,8 @@ class XdmfReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _class_reader = staticmethod(_vtk.lazy_vtkXdmfReader)
+    _vtk_module_name = "vtkIOXdmf2"
+    _vtk_class_name = "vtkXdmfReader"
 
     @property
     def number_grids(self):

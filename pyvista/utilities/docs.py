@@ -5,7 +5,7 @@ import os.path as op
 import sys
 
 
-def linkcode_resolve(domain, info):
+def linkcode_resolve(domain, info, edit=False):
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -16,6 +16,9 @@ def linkcode_resolve(domain, info):
     info : dict
         With keys "module" and "fullname".
 
+    edit : bool, default=False
+        Jump right to the edit page.
+
     Returns
     -------
     url : str
@@ -23,6 +26,9 @@ def linkcode_resolve(domain, info):
 
     Notes
     -----
+    This function is used by the `sphinx.ext.linkcode` extension to create the "[Source]"
+    button whose link is edited in this function.
+
     This has been adapted to deal with our "verbose" decorator.
 
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
@@ -70,7 +76,7 @@ def linkcode_resolve(domain, info):
     except Exception:  # pragma: no cover
         lineno = None
 
-    if lineno:
+    if lineno and not edit:
         linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
     else:
         linespec = ""
@@ -80,4 +86,56 @@ def linkcode_resolve(domain, info):
     else:  # pragma: no cover
         kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))
 
-    return f"http://github.com/pyvista/pyvista/blob/{kind}/pyvista/{fn}{linespec}"
+    blob_or_edit = 'edit' if edit else 'blob'
+
+    return f"http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}"
+
+
+def pv_html_page_context(
+    app, pagename: str, templatename: str, context, doctree
+) -> None:  # pragma: no cover
+    """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
+
+    This is specific to PyVista to ensure that the "edit this page" link always
+    goes to the right page, specifically for:
+
+    - Gallery examples
+    - Autosummary examples (using _autosummary)
+
+    """
+
+    def fix_edit_link_button(link: str) -> str:
+        """Transform "edit on github" links to the correct url.
+
+        This is specific to PyVista to ensure that the "edit this page" link
+        always goes to the right page, specifically for:
+
+        - Gallery examples
+        - Autosummary examples (using _autosummary)
+
+        Parameters
+        ----------
+        link : str
+            The link to the github edit interface.
+
+        Returns
+        -------
+        str
+            The link to the tip of the main branch for the same file.
+
+        """
+        if pagename.startswith('examples') and 'index' not in pagename:
+            # This is a gallery example.
+
+            # We can get away with directly using the pagename since "examples"
+            # in the pagename is the same as the "examples" directory in the
+            # repo
+            return f"http://github.com/pyvista/pyvista/edit/main/{pagename}.py"
+        elif "_autosummary" in pagename:
+            # This is an API example
+            fullname = pagename.split('_autosummary')[1][1:]
+            return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
+        else:
+            return link
+
+    context["fix_edit_link_button"] = fix_edit_link_button

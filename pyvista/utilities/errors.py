@@ -279,7 +279,7 @@ class Report(scooby.Report):
 
     Parameters
     ----------
-    additional : list(types.ModuleType), list(str)
+    additional : sequence[types.ModuleType], sequence[str]
         List of packages or package names to add to output information.
 
     ncol : int, default: 3
@@ -338,10 +338,11 @@ class Report(scooby.Report):
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'imageio', 'scooby', 'pooch']
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch']
 
         # Optional packages.
         optional = [
+            'imageio',
             'pyvistaqt',
             'PyQt5',
             'IPython',

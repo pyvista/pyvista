@@ -28,6 +28,14 @@ def test_has_render_window_fail():
         pl._make_render_window_current()
 
 
+def test_render_lines_as_tubes_show_edges_warning(sphere):
+    pl = pyvista.Plotter()
+    with pytest.warns(UserWarning, match='not supported'):
+        actor = pl.add_mesh(sphere, render_lines_as_tubes=True, show_edges=True)
+    assert not actor.prop.show_edges
+    assert actor.prop.render_lines_as_tubes
+
+
 def test_screenshot_fail_suppressed_rendering():
     plotter = pyvista.Plotter()
     plotter.suppress_rendering = True
@@ -273,12 +281,13 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
-def test_add_lines():
+@pytest.mark.parametrize("connected, n_lines", [(False, 2), (True, 3)])
+def test_add_lines(connected, n_lines):
     pl = pyvista.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-    actor = pl.add_lines(points)
+    actor = pl.add_lines(points, connected=connected)
     dataset = actor.mapper.dataset
-    assert dataset.n_cells == 2
+    assert dataset.n_cells == n_lines
 
 
 def test_clear_actors(cube, sphere):

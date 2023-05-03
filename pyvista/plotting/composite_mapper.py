@@ -11,7 +11,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array
 
-from ..utilities.misc import vtk_version_info
+from ..utilities.misc import _check_range, vtk_version_info
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -205,6 +205,7 @@ class BlockAttributes:
             self._attr.Modified()
             return
 
+        _check_range(new_opacity, (0, 1), 'opacity')
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property

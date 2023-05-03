@@ -21,9 +21,9 @@ additional details see :ref:`ref_geometric_example` example.
    Disc
    Dodecahedron
    Icosahedron
+   Icosphere
    Line
    MultipleLines
-   Tube
    Octahedron
    Plane
    PlatonicSolid
@@ -36,4 +36,5 @@ additional details see :ref:`ref_geometric_example` example.
    Tetrahedron
    Text3D
    Triangle
+   Tube
    Wavelet

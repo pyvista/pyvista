@@ -13,13 +13,19 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells
+from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells, numpy_to_idarr
 
 from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
 from .celltype import CellType
 from .dataset import DataSet
-from .errors import DeprecationError, VTKVersionError
+from .errors import (
+    DeprecationError,
+    PointSetCellOperationError,
+    PointSetDimensionReductionError,
+    PointSetNotSupported,
+    VTKVersionError,
+)
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
 DEFAULT_INPLACE_WARNING = (
@@ -43,8 +49,8 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        scalars_weight : bool, optional
-            Flag for using the mesh scalars as weights. Defaults to ``False``.
+        scalars_weight : bool, default: False
+            Flag for using the mesh scalars as weights.
 
         Returns
         -------
@@ -90,7 +96,7 @@ class _PointSet(DataSet):
             Cell indices to be removed.  The array can also be a
             boolean array of the same size as the number of cells.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Whether to update the mesh in-place.
 
         Returns
@@ -164,10 +170,10 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        xyz : list or tuple or numpy.ndarray
-            Cartesian values to displace with. Length 3 list, tuple or array.
+        xyz : array_like[float]
+            Cartesian values to displace with. Length 3 array-like.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
             the points, normals and active vectors are transformed. This is
             only valid when not updating in place.
@@ -222,17 +228,16 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         List, numpy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
-    deep : bool, optional
+    deep : bool, default: False
         Whether to copy the input ``points``, or to create a PointSet from them
         without copying them.  Setting ``deep=True`` ensures that the original
         arrays can be modified outside the mesh without affecting the
-        mesh. Default is ``False``.
+        mesh.
 
-    force_float : bool, optional
-        Casts the datatype to ``float32`` if points datatype is non-float.
-        Default ``True``. Set this to ``False`` to allow non-float types,
-        though this may lead to truncation of intermediate floats when
-        transforming datasets.
+    force_float : bool, default: True
+        Casts the datatype to ``float32`` if points datatype is non-float.  Set
+        this to ``False`` to allow non-float types, though this may lead to
+        truncation of intermediate floats when transforming datasets.
 
     Notes
     -----
@@ -297,11 +302,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, deep: True
             Whether to copy the pointset points, or to create a PolyData
             without copying them.  Setting ``deep=True`` ensures that the
             original arrays can be modified outside the PolyData without
-            affecting the PolyData. Default is ``True``.
+            affecting the PolyData.
 
         Returns
         -------
@@ -323,6 +328,112 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
+
+    @wraps(PolyDataFilters.threshold)
+    def threshold(self, *args, **kwargs):
+        """Cast to PolyData and threshold.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.threshold_percent)
+    def threshold_percent(self, *args, **kwargs):
+        """Cast to PolyData and threshold.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.explode)
+    def explode(self, *args, **kwargs):
+        """Cast to PolyData and explode.
+
+        The explode filter relies on cells.
+
+        """
+        return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.delaunay_3d)
+    def delaunay_3d(self, *args, **kwargs):
+        """Cast to PolyData and run delaunay_3d."""
+        return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
+
+    @property
+    def area(self) -> float:
+        """Return 0.0 since a PointSet has no area."""
+        return 0.0
+
+    @property
+    def volume(self) -> float:
+        """Return 0.0 since a PointSet has no volume."""
+        return 0.0
+
+    def contour(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Contour and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def cell_data_to_point_data(self, *args, **kwargs):
+        """Raise PointSets do not have cells."""
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+
+    def point_data_to_cell_data(self, *args, **kwargs):
+        """Raise PointSets do not have cells."""
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+
+    def triangulate(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def decimate_boundary(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def find_cells_along_line(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def tessellate(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def slice(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_along_axis(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_along_line(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_implicit(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_orthogonal(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def shrink(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def separate_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def remove_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def point_is_inside_cell(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
 
 
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
@@ -640,12 +751,32 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @property
     def faces(self) -> np.ndarray:
-        """Return a pointer to the faces as a numpy array.
+        """Return the connectivity array of the faces of this PolyData.
+
+        The faces array is organized as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
+        Y'th point in face X.
+
+        For example, a triangle and a quadrilateral might be represented as::
+
+           [3, 0, 1, 2, 4, 0, 1, 3, 4]
+
+        Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
         Returns
         -------
         numpy.ndarray
-            Array of face indices.
+            Array of face connectivity.
+
+        Notes
+        -----
+        The array returned cannot be modified in place and will raise a
+        ``ValueError`` if attempted.
+
+        You can, however, set the faces directly. See the example.
 
         Examples
         --------
@@ -662,8 +793,21 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                [4, 1, 2, 5, 4],
                [4, 3, 4, 7, 6],
                [4, 4, 5, 8, 7]])
+
+        Set the faces directly. The following example creates a simple plane
+        with a single square faces and modifies it to have two triangles
+        instead.
+
+        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
+        >>> mesh.faces = [3, 0, 1, 2, 3, 3, 2, 1]
+        >>> mesh.faces
+        array([3, 0, 1, 2, 3, 3, 2, 1])
+
         """
-        return _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        # Flag this array as read only to ensure users do not attempt to write to it.
+        array.flags['WRITEABLE'] = False
+        return array
 
     @faces.setter
     def faces(self, faces):
@@ -891,7 +1035,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             ftype.  Can be one of many of the supported  the following
             types (``'.ply'``, ``'.stl'``, ``'.vtk``).
 
-        binary : bool, optional
+        binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
 
         texture : str, numpy.ndarray, optional
@@ -1189,7 +1333,7 @@ class PointGrid(_PointSet):
 
         Parameters
         ----------
-        curv_type : str, optional
+        curv_type : str, default: "mean"
             One of the following strings indicating curvature types.
             - ``'mean'``
             - ``'gaussian'``
@@ -1217,7 +1361,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     - Creating an empty grid
     - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
-    - From cell, offset, and node arrays
+    - From cell, cell types, and point arrays
     - From a file
 
     Parameters
@@ -1305,19 +1449,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
-                self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
-                self._check_for_consistency()
-            else:
-                raise TypeError('All input types must be sequences.')
-
-        elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
-            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
-            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
-            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.abc.Sequence))
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], args[3], deep)
+                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
                 raise TypeError('All input types must be sequences.')
@@ -1341,11 +1473,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         nr_points = points.shape[0]
         cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-        self._from_arrays(None, cells, cell_types, points, deep=deep)
+        self._from_arrays(cells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
-        offset,
         cells,
         cell_type,
         points,
@@ -1356,29 +1487,27 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Parameters
         ----------
-        offset : any, default None
-            Ignored (this is a pre-VTK9 legacy).
-
-        cells : sequence or numpy.ndarray dtype=np.int64
+        cells : sequence[int]
             Array of cells.  Each cell contains the number of points in the
             cell and the node numbers of the cell.
 
-        cell_type : sequence or numpy.ndarray np.uint8
+        cell_type : sequence[int]
             Cell types of each cell.  Each cell type numbers can be found from
-            vtk documentation.  See example below.
+            vtk documentation.  More efficient if using ``np.uint8``. See
+            example below.
 
-        points : sequence or numpy.ndarray
+        points : sequence[float]
             Numpy array containing point locations.
 
-        deep : bool, optional
+        deep : bool, default: True
             When ``True``, makes a copy of the points array.  Default
             ``False``.  Cells and cell types are always copied.
 
-        force_float : bool, optional
+        force_float : bool, default: True
             Casts the datatype to ``float32`` if points datatype is
-            non-float.  Default ``True``. Set this to ``False`` to allow
-            non-float types, though this may lead to truncation of
-            intermediate floats when transforming datasets.
+            non-float.  Set this to ``False`` to allow non-float types,
+            though this may lead to truncation of intermediate floats when
+            transforming datasets.
 
         Examples
         --------
@@ -1425,8 +1554,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
 
         """
-        if offset is not None:
-            warnings.warn('VTK 9 no longer accepts an offset array', stacklevel=3)
         # convert to arrays upfront
         cells = np.asarray(cells)
         cell_type = np.asarray(cell_type)
@@ -1464,11 +1591,33 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     @property
     def cells(self) -> np.ndarray:
-        """Return a pointer to the cells as a numpy object.
+        """Return the cell data as a numpy object.
+
+        This is the old style VTK data layout::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is the
+        Y'th point in cell X.
+
+        For example, a triangle and a line might be represented as::
+
+           [3, 0, 1, 2, 2, 0, 1]
+
+        Where the two individual cells would be ``[3, 0, 1, 2]`` and ``[2, 0, 1]``.
 
         See Also
         --------
         pyvista.DataSet.get_cell
+        pyvista.UnstructuredGrid.cell_connectivity
+        pyvista.UnstructuredGrid.offset
+
+        Notes
+        -----
+        The array returned cannot be modified in place and will raise a
+        ``ValueError`` if attempted.
+
+        You can, however, set the cells directly. See the example.
 
         Examples
         --------
@@ -1478,13 +1627,25 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         >>> import pyvista
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.cells[:18]  # doctest:+SKIP
-        array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,
-                8, 36, 18, 54, 90])
+        >>> grid = examples.load_hexbeam()
+        >>> grid.cells[:18]
+        array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,  8, 36, 18, 54,
+               90])
+
+        While you cannot change the array inplace, you can overwrite it. For example:
+
+        >>> grid.cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
 
         """
-        return _vtk.vtk_to_numpy(self.GetCells().GetData())
+        # Flag this array as read only to ensure users do not attempt to write to it.
+        array = _vtk.vtk_to_numpy(self.GetCells().GetData())
+        array.flags['WRITEABLE'] = False
+        return array
+
+    @cells.setter
+    def cells(self, cells):
+        vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
+        self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
     def cells_dict(self) -> dict:
@@ -1701,11 +1862,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         numpy.ndarray
             Array of cell offsets indicating the start of each cell.
 
+        Notes
+        -----
+        The array returned is immutable and cannot be written to. If you
+        need to modify this array, create a copy of it using
+        :func:`numpy.copy`.
+
         Examples
         --------
-        Return the cell offset array within ``vtk==9``.  Since this
-        mesh is composed of all hexahedral cells, note how each cell
-        starts at 8 greater than the prior cell.
+        Return the cell offset array.  Since this mesh is composed of
+        all hexahedral cells, note how each cell starts at 8 greater
+        than the prior cell.
 
         >>> import pyvista
         >>> from pyvista import examples
@@ -1719,7 +1886,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         """
         carr = self.GetCells()
         # This will be the number of cells + 1.
-        return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
+        array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
+        array.flags['WRITEABLE'] = False
+        return array
 
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
@@ -2040,12 +2209,12 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : sequence
+        ind : sequence[int]
             List or array of cell indices to be hidden.  The array can
             also be a boolean array of the same size as the number of
             cells.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -2094,8 +2263,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : sequence
-            List or array of point indices to be hidden.  The array
+        ind : sequence[int]
+            Sequence of point indices to be hidden.  The array
             can also be a boolean array of the same size as the number
             of points.
 
@@ -2237,11 +2406,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        dims : Sequence
+        dims : sequence[int]
             A sequence of integers with shape (3,) containing the
             topological dimensions of the grid.
 
-        corners : Sequence
+        corners : array_like[floats]
             A sequence of floats with shape (number of corners, 3)
             containing the coordinates of the corner points.
 
@@ -2333,8 +2502,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         ----------
         filename : str
             Output file name. VTU and VTK extensions are supported.
-        binary : bool, optional
-            If ``True`` (default), write as binary, else ASCII.
+
+        binary : bool, default: True
+            If ``True``, write as binary, else ASCII.
 
         Notes
         -----
@@ -2371,12 +2541,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : sequence(int)
+        ind : sequence[int]
             Cell indices to be hidden. A boolean array of the same
             size as the number of cells also is acceptable.
 
-        inplace : bool, optional
-            This method is applied to this grid if ``True`` (default)
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
             or to a copy otherwise.
 
         Returns
@@ -2415,8 +2585,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        inplace : bool, optional
-            This method is applied to this grid if ``True`` (default)
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
             or to a copy otherwise.
 
         Returns
@@ -2465,7 +2635,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple(int)
+        tuple[int, int, int]
             Number of sampling points in the I, J and Z directions respectively.
 
         Examples
@@ -2489,7 +2659,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple(float)
+        tuple[float, float, float]
             The limits of the visible grid in the X, Y and Z
             directions respectively.
 
@@ -2518,7 +2688,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        coords : tuple(int), list(tuple(int)) or numpy.ndarray
+        coords : array_like[int]
             Cell structured coordinates.
 
         Returns
@@ -2564,7 +2734,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : int or iterable(int)
+        ind : int | sequence[int]
             Cell IDs.
 
         Returns
@@ -2606,10 +2776,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : int or iterable(int)
+        ind : int | sequence[int]
             Cell IDs.
 
-        rel : str, optional
+        rel : str, default: "connectivity"
             Defines the neighborhood relationship. If
             ``'topological'``, returns the ``(i-1, j, k)``, ``(i+1, j,
             k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)``
@@ -2750,8 +2920,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        inplace : bool, optional
-            This method is applied to this grid if ``True`` (default)
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
             or to a copy otherwise.
 
         Returns
@@ -2790,7 +2960,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        inplace : bool, optional
+        inplace : bool, default: False
             This method is applied to this grid if ``True`` or to a copy
             otherwise.
 
