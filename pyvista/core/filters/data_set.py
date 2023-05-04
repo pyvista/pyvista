@@ -5535,40 +5535,62 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
-    def extract_cells_by_type(self, cell_types=True, progress_bar=False):
+    def extract_cells_by_type(self, cell_types, progress_bar=False):
         """Extract cells of a specified type.
 
-        Given an input vtkDataSet and a list of cell types, produce an output
-        dataset containing only cells of the specified type(s). Note that if the
-        input dataset is homogeneous (e.g., all cells are of the same type) and
-        the cell type is one of the cells specified, then the input dataset is
-        shallow copied to the output.
+        Given an input dataset and a list of cell types, produce an output
+        dataset containing only cells of the specified type(s). Note that if
+        the input dataset is homogeneous (e.g., all cells are of the same type)
+        and the cell type is one of the cells specified, then the input dataset
+        is shallow copied to the output.
 
         The type of output dataset is always the same as the input type. Since
-        structured types of data (i.e., vtkImageData, vtkStructuredGrid,
-        vtkRectilnearGrid, vtkUniformGrid) are all composed of a cell of the
-        same type, the output is either empty, or a shallow copy of the input.
-        Unstructured data (vtkUnstructuredGrid, vtkPolyData) input may produce a
-        subset of the input data (depending on the selected cell types).
+        structured types of data (i.e., :class:`pyvista.UniformGrid`,
+        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
+        :class:`pyvista.UniformGrid`) are all composed of a cell of the same
+        type, the output is either empty, or a shallow copy of the input.
+        Unstructured data (:class:`pyvista.UnstructuredGrid`,
+        :class:`pyvista.PolyData`) input may produce a subset of the input data
+        (depending on the selected cell types).
 
-        Note this filter can be used in a pipeline with composite datasets to
-        extract blocks of (a) particular cell type(s).
-
-        .. warning::
-            Unlike the filter vtkExtractCells which always produces
-            vtkUnstructuredGrid output, this filter produces the same output
-            type as input type (i.e., it is a vtkDataSetAlgorithm). Also,
-            vtkExtractCells extracts cells based on their ids.
+        .. notes::
+            Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
+            produces a :class:`pyvista.UnstructuredGrid` output, this filter
+            produces the same output type as input type.
 
         Parameters
         ----------
-        cell_types : bool | int | list[int]
-            The cell types to extract. If string value is ``True``, all
-            cell types will be extracted. Otherwise, pass a single or
-            list of integer cell types.
+        cell_types :  int | sequence[int]
+            The cell types to extract. Must be a single or list of integer cell
+            types. See :class:`pyvista.CellType`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the extracted cells. Type is the same as the input.
+
+        Examples
+        --------
+        Create an unstructured grid with both hexahedral and tetrahedral
+        cells and then extract each individual cell type.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> beam = examples.load_hexbeam()
+        >>> beam = beam.translate([1, 0, 0])
+        >>> ugrid = beam + examples.load_tetbeam()
+        >>> hex_cells = ugrid.extract_cells_by_type(pv.CellType.HEXAHEDRON)
+        >>> tet_cells = ugrid.extract_cells_by_type(pv.CellType.TETRA)
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Extracted Hexahedron cells')
+        >>> _ = pl.add_mesh(hex_cells, show_edges=True)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('Extracted Tetrahedron cells')
+        >>> _ = pl.add_mesh(tet_cells, show_edges=True)
+        >>> pl.show()
 
         """
         alg = _vtk.vtkExtractCellsByType()
@@ -5577,11 +5599,13 @@ class DataSetFilters:
             alg.AddAllCellTypes()
         elif isinstance(cell_types, int):
             alg.AddCellType(cell_types)
-        elif isinstance(cell_types, collections.abc.Iterable):
+        elif isinstance(cell_types, (np.ndarray, collections.abc.Sequence)):
             for cell_type in cell_types:
                 alg.AddCellType(cell_type)
         else:
-            raise ValueError('`cell_types` not understood.')
+            raise TypeError(
+                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
+            )
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 

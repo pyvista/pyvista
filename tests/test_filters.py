@@ -2644,6 +2644,19 @@ def test_subdivide_tetra(tetbeam):
     assert grid.n_cells == tetbeam.n_cells * 12
 
 
+def test_extract_cells_by_type(tetbeam, hexbeam):
+    combined = tetbeam + hexbeam
+
+    hex_cells = combined.extract_cells_by_type(pyvista.CellType.HEXAHEDRON)
+    assert np.alltrue(hex_cells.celltypes == pyvista.CellType.HEXAHEDRON)
+
+    tet_cells = combined.extract_cells_by_type(pyvista.CellType.TETRA)
+    assert np.alltrue(tet_cells.celltypes == pyvista.CellType.TETRA)
+
+    should_be_empty = combined.extract_cells_by_type(pyvista.CellType.BEZIER_CURVE)
+    assert should_be_empty.n_cells == 0
+
+
 def test_merge_points():
     cells = [2, 0, 1]
     celltypes = [pyvista.CellType.LINE]
