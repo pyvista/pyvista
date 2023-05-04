@@ -4879,7 +4879,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
+    def open_gif(
+        self,
+        filename,
+        loop=0,
+        fps=10,
+        palettesize=256,
+        subrectangles=False,
+        **kwargs,
+    ):
         """Open a gif file.
 
         Requires ``imageio`` to be installed.
@@ -4933,7 +4941,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from imageio import get_writer
+            from imageio import __version__, get_writer
         except ModuleNotFoundError:  # pragma: no cover
             raise ModuleNotFoundError(
                 'Install imageio to use `open_gif` with:\n\n   pip install imageio'
@@ -4944,15 +4952,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = get_writer(
-            filename,
-            mode='I',
-            loop=loop,
-            fps=fps,
-            palettesize=palettesize,
-            subrectangles=subrectangles,
-            **kwargs,
-        )
+
+        kwargs['mode'] = 'I'
+        kwargs['loop'] = loop
+        kwargs['palettesize'] = palettesize
+        kwargs['subrectangles'] = subrectangles
+        if scooby.meets_version(__version__, '2.28.1'):
+            kwargs['duration'] = 1000 * 1 / fps
+        else:  # pragma: no cover
+            kwargs['fps'] = fps
+
+        self.mwriter = get_writer(filename, **kwargs)
 
     def write_frame(self):
         """Write a single frame to the movie file.
