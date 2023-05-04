@@ -3257,7 +3257,7 @@ def test_plot_points_gaussian_as_spheres(sphere):
 
 @skip_windows
 def test_plot_points_gaussian_scale(sphere):
-    sphere["z"] = sphere.points[:, 2]
+    sphere["z"] = sphere.points[:, 2] * 0.01
     pl = pyvista.Plotter()
     actor = pl.add_mesh(
         sphere,
@@ -3265,7 +3265,7 @@ def test_plot_points_gaussian_scale(sphere):
         render_points_as_spheres=True,
         emissive=False,
     )
-    actor.mapper.scale_array = 'radius'
+    actor.mapper.scale_array = 'z'
     pl.show()
 
 
