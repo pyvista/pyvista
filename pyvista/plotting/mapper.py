@@ -868,7 +868,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
         Notes
         -----
-        Setting this automatically sets ``scale_factor=1.0``.
+        Setting this automatically sets ``scale_factor = 1.0``.
 
         Examples
         --------
@@ -898,6 +898,14 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @scale_array.setter
     def scale_array(self, name: str):
+        if not self.dataset:  # pragma: no cover
+            raise RuntimeError('Missing dataset.')
+        if name not in self.dataset.point_data:
+            available_arrays = ", ".join(self.dataset.point_data.keys())
+            raise KeyError(
+                f'Point array "{name}" does not exist. '
+                f'Available point arrays are: {available_arrays}'
+            )
         return self.SetScaleArray(name)
 
     def use_circular_splat(self, opacity: float = 1.0):
