@@ -213,7 +213,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: np.ndarray):
+    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -1072,7 +1072,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if self.GetScalars() is not None:
-            return str(self.GetScalars().GetName())
+            name = self.GetScalars().GetName()
+            if name is None:
+                # Getting the keys has the side effect of naming "unnamed" arrays
+                self.keys()
+                name = self.GetScalars().GetName()
+            return str(name)
         return None
 
     @active_scalars_name.setter

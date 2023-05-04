@@ -13,7 +13,7 @@ requires-python = '>=3.8'
 keywords = ['vtk', 'numpy', 'plotting', 'mesh']
 license = {text = 'MIT'}
 classifiers = [
-    'Development Status :: 4 - Beta',
+    'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
     'Topic :: Scientific/Engineering :: Information Analysis',
     'License :: OSI Approved :: MIT License',
@@ -26,7 +26,6 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    'imageio',
     'matplotlib>=3.0.1',
     'numpy',
     'pillow',
@@ -38,18 +37,29 @@ dynamic = ['version']
 
 [project.optional-dependencies]
 all = [
+    'imageio',
     'cmocean',
     'colorcet',
     'ipyvtklink',
+    'ipywidgets',
+    'jupyter-server-proxy',
     'meshio>=5.2',
+    'nest_asyncio',
     'panel',
     'pythreejs',
+    'trame-client>=2.4.2',
+    'trame-server>=2.8.0',
+    'trame-vtk>=2.4.0',
+    'trame>=2.2.6',
 ]
 colormaps = [
     'cmocean',
     'colorcet',
 ]
-io = ['meshio>=5.2']
+io = [
+    'imageio',
+    'meshio>=5.2'
+]
 jupyter = [
     'ipyvtklink',
     'ipywidgets',

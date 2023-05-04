@@ -82,6 +82,15 @@ def test_init_from_arrays():
     with pytest.warns(Warning):
         mesh = pyvista.PolyData(vertices.astype(np.int32), faces)
 
+    # array must be immutable
+    with pytest.raises(ValueError):
+        mesh.faces[0] += 1
+
+    # attribute is mutable
+    faces = [4, 0, 1, 2, 3]
+    mesh.faces = faces
+    assert np.allclose(faces, mesh.faces)
+
 
 def test_init_from_arrays_with_vert():
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]])
@@ -505,6 +514,14 @@ def test_extract_feature_edges(sphere):
     mesh = pyvista.Cube()  # use a mesh that actually has strongly defined edges
     more_edges = mesh.extract_feature_edges(10)
     assert more_edges.n_points
+
+
+def test_extract_feature_edges_no_data():
+    mesh = pyvista.Wavelet()
+    edges = mesh.extract_feature_edges(90, clear_data=True)
+    assert edges is not None
+    assert isinstance(edges, pyvista.PolyData)
+    assert edges.n_arrays == 0
 
 
 def test_decimate(sphere):

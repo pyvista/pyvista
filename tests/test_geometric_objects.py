@@ -449,3 +449,15 @@ def test_icosahedron():
 
     doubled_solid = pyvista.Icosahedron(radius=2 * radius, center=center)
     assert np.isclose(doubled_solid.length, 2 * solid.length)
+
+
+def test_icosphere():
+    center = (1.0, 2.0, 3.0)
+    radius = 2.4
+    nsub = 2
+    icosphere = pyvista.Icosphere(radius=radius, center=center, nsub=nsub)
+    assert np.allclose(icosphere.center, center)
+    assert np.allclose(np.linalg.norm(icosphere.points - icosphere.center, axis=1), radius)
+
+    icosahedron = pyvista.Icosahedron()
+    assert icosahedron.n_faces * 4**nsub == icosphere.n_faces

@@ -12,7 +12,6 @@ import re
 import time
 
 from PIL import Image
-import imageio
 import matplotlib
 import numpy as np
 import pytest
@@ -33,6 +32,12 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
+HAS_IMAGEIO = True
+try:
+    import imageio
+except ModuleNotFoundError:
+    HAS_IMAGEIO = False
+
 
 ffmpeg_failed = False
 try:
@@ -40,10 +45,14 @@ try:
         import imageio_ffmpeg
 
         imageio_ffmpeg.get_ffmpeg_exe()
-    except ImportError:
-        imageio.plugins.ffmpeg.download()
+    except ImportError as err:
+        if HAS_IMAGEIO:
+            imageio.plugins.ffmpeg.download()
+        else:
+            raise err
 except:  # noqa: E722
     ffmpeg_failed = True
+
 
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
 
@@ -763,6 +772,7 @@ def test_add_lines_invalid():
         plotter.add_lines(range(10))
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_open_gif_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(ValueError):
@@ -770,6 +780,7 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
 
@@ -985,7 +996,14 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pyvista.Plotter()
-    with pytest.raises(ValueError):
+    if (
+        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
+        and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
+    ):
+        # This only fails for VTK<9.2.3
+        with pytest.raises(ValueError):
+            plotter.left_button_down(None, None)
+    else:
         plotter.left_button_down(None, None)
     plotter.close()
 
@@ -1221,6 +1239,7 @@ def test_plot_texture_associated():
     plotter.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -2502,6 +2521,7 @@ def test_pointset_plot_as_points_vtk():
     pl.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))

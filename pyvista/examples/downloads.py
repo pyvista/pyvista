@@ -3904,6 +3904,61 @@ def download_cavity(load=True):  # pragma: no cover
     return pyvista.OpenFOAMReader(filename).read()
 
 
+def download_openfoam_tubes(load=True):  # pragma: no cover
+    """Download tubes OpenFOAM example.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Plot the outline of the dataset along with a cross section of the flow velocity.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_openfoam_tubes()
+    >>> air = dataset[0]
+    >>> y_slice = air.slice('y')
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     y_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Flow Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(air, color='w', opacity=0.25)
+    >>> pl.enable_anti_aliasing()
+    >>> pl.show()
+
+    See :ref:`openfoam_tubes_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
+        target_file='case.foam',
+    )
+    if not load:
+        return filename
+    reader = pyvista.OpenFOAMReader(filename)
+    reader.set_active_time_value(1000)
+    return reader.read()
+
+
 def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 
@@ -3930,7 +3985,7 @@ def download_lucy(load=True):  # pragma: no cover
     >>> import pyvista
     >>> dataset = examples.download_lucy()
 
-    Create a light at the "flame"
+    Create a light at the "flame".
 
     >>> flame_light = pyvista.Light(
     ...     color=[0.886, 0.345, 0.133],
@@ -3941,7 +3996,7 @@ def download_lucy(load=True):  # pragma: no cover
     ...     attenuation_values=(0.001, 0.005, 0),
     ... )
 
-    Create a scene light
+    Create a scene light.
 
     >>> scene_light = pyvista.Light(intensity=0.2)
 
@@ -3956,6 +4011,149 @@ def download_lucy(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lucy.ply', load=load)
+
+
+def download_pump_bracket(load=True):  # pragma: no cover
+    """Download the pump bracket example dataset.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/STR/bracket/>`_.
+
+    Licensing for this dataset is granted freely and without restriction to
+    reproduce, distribute, and publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_pump_bracket()
+    >>> dataset  # doctest:+SKIP
+    UnstructuredGrid (0x7f46a9279120)
+      N Cells:    124806
+      N Points:   250487
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -4.000e-01, 0.000e+00
+      Z Bounds:   -2.500e-02, 2.500e-02
+      N Arrays:   10
+
+    Plot the displacement of the 4th mode shape as scalars.
+
+    >>> cpos = [
+    ...     (0.744, -0.502, -0.830),
+    ...     (0.0520, -0.160, 0.0743),
+    ...     (-0.180, -0.958, 0.224),
+    ... ]
+    >>> dataset.plot(
+    ...     scalars='disp_3',
+    ...     cpos=cpos,
+    ...     show_scalar_bar=False,
+    ...     ambient=0.2,
+    ...     anti_aliasing='fxaa',
+    ... )
+
+    See :ref:`pump_bracket_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fea/pump_bracket/pump_bracket.zip',
+        'pump_bracket.vtk',
+    )
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_electronics_cooling(load=True):  # pragma: no cover
+    """Download the electronics cooling example datasets.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    tuple[PolyData, UnstructuredGrid] | list[str]
+        DataSets or filenames depending on ``load``.
+
+    Examples
+    --------
+    Load the datasets
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> structure, air = examples.download_electronics_cooling()
+    >>> structure, air  # doctest:+SKIP
+    (PolyData (0x7fdfe4eb24a0)
+       N Cells:    344270
+       N Points:   187992
+       N Strips:   0
+       X Bounds:   -3.000e-03, 1.530e-01
+       Y Bounds:   -3.000e-03, 2.030e-01
+       Z Bounds:   -9.000e-03, 4.200e-02
+       N Arrays:   5,
+     UnstructuredGrid (0x7fdfde4478e0)
+       N Cells:    1749992
+       N Points:   610176
+       X Bounds:   -1.388e-18, 1.500e-01
+       Y Bounds:   -3.000e-03, 2.030e-01
+       Z Bounds:   -6.000e-03, 4.400e-02
+       N Arrays:   10)
+
+    Plot the air velocity through the electronics.
+
+    >>> z_slice = air.clip('z', value=-0.005)
+    >>> pl = pv.Plotter()
+    >>> pl.enable_ssao(radius=0.01)
+    >>> _ = pl.add_mesh(
+    ...     z_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(
+    ...     structure,
+    ...     color='w',
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ... )
+    >>> pl.camera_position = 'xy'
+    >>> pl.camera.roll = 90
+    >>> pl.enable_anti_aliasing('fxaa')
+    >>> pl.show()
+
+    See :ref:`openfoam_cooling_example` for a full example using this dataset.
+
+    """
+    fnames = _download_archive('fvm/cooling_electronics/datasets.zip')
+    if load:
+        # return the structure dataset first
+        if fnames[1].endswith('structure.vtp'):
+            fnames = fnames[::-1]
+        return pyvista.read(fnames[0]), pyvista.read(fnames[1])
+    return fnames
 
 
 def download_can(partial=False, load=True):  # pragma: no cover
@@ -5099,6 +5297,83 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     """
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
+
+
+def download_aero_bracket(load=True):  # pragma: no cover
+    """Download the finite element solution of an aero bracket.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    This project demonstrates the static stress analysis of three aircraft
+    engine bearing bracket models considering both linear and nonlinear
+    material definition. The models are tested with horizontal and vertical
+    loading conditions as provided on the `GrabCAD - Airplane Bearing Bracket
+    Challenge
+    <https://grabcad.com/challenges/airplane-bearing-bracket-challenge/entries>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the aero bracket.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_aero_bracket()
+    >>> dataset  # doctest:+SKIP
+    UnstructuredGrid (0x7f439aa2cac0)
+      N Cells:    117292
+      N Points:   187037
+      X Bounds:   -6.858e-03, 1.118e-01
+      Y Bounds:   -1.237e-02, 6.634e-02
+      Z Bounds:   -1.638e-02, 1.638e-02
+      N Arrays:   3
+
+    Show the available point data arrays.
+
+    >>> dataset.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays :
+        displacement            float32    (187037, 3)
+        total nonlinear strain  float32    (187037, 6)
+        von Mises stress        float32    (187037,)
+
+    Plot the von Mises stress.
+
+    >>> cpos = [
+    ...     (-0.0503, 0.132, -0.179),
+    ...     (0.0505, 0.0185, -0.00201),
+    ...     (0.275, 0.872, 0.405),
+    ... ]
+    >>> dataset.plot(
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ...     scalars='von Mises stress',
+    ...     cmap='bwr',
+    ...     cpos=cpos,
+    ...     anti_aliasing='fxaa',
+    ... )
+
+    """
+    return _download_and_read('fea/aero_bracket/aero_bracket.vtu', load=load)
 
 
 def download_coil_magnetic_field(load=True):  # pragma: no cover

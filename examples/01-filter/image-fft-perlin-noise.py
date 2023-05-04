@@ -75,9 +75,9 @@ pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
     axes_ranges=(0, max_freq, 0, max_freq, 0, warped_subset.bounds[-1]),
-    xlabel='X Frequency',
-    ylabel='Y Frequency',
-    zlabel='Amplitude',
+    xtitle='X Frequency',
+    ytitle='Y Frequency',
+    ztitle='Amplitude',
     show_zlabels=False,
     color='k',
     font_size=26,

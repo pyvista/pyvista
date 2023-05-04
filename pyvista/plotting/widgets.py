@@ -2320,7 +2320,14 @@ class WidgetHelper:
         >>> plotter.show()
 
         """
-        widget = _vtk.lazy_vtkCameraOrientationWidget()
+        try:
+            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+        except ImportError:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+
+        widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)

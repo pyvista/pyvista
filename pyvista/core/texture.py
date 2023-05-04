@@ -9,13 +9,13 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.opts import AnnotatedIntEnum
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning, _try_imageio_imread
 
 from .dataset import DataObject
 
 
 class Texture(_vtk.vtkTexture, DataObject):
-    """Wrap vtk.Texture.
+    """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
     :ref:`ref_texture_example`.
@@ -148,10 +148,8 @@ class Texture(_vtk.vtkTexture, DataObject):
             if image.n_points < 2:
                 raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
             self._from_image_data(image)
-        except (KeyError, ValueError):
-            from imageio import imread
-
-            self._from_array(imread(filename))
+        except (KeyError, ValueError, OSError):
+            self._from_array(_try_imageio_imread(filename))  # pragma: no cover
 
     def _from_texture(self, texture):
         image = texture.GetInput()
@@ -269,7 +267,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         .. deprecated:: 0.37.0
            ``flip`` is deprecated. Use :func:`Texture.flip_x` or
-           :func:`Texture.flip_x` instead.
+           :func:`Texture.flip_y` instead.
 
         """
         warnings.warn(
@@ -335,7 +333,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Notes
         -----
-        The shape of this the array's first two dimensions will be swapped. For
+        The shape of the array's first two dimensions will be swapped. For
         example, a ``(300, 200)`` image will return an array of ``(200, 300)``.
 
         Returns
@@ -447,7 +445,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     def n_components(self) -> int:
         """Return the number of components in the image.
 
-        In textures, 3 or 4 component are used for representing RGB and RGBA
+        In textures, 3 or 4 components are used for representing RGB and RGBA
         images.
 
         Examples

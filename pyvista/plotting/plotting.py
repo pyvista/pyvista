@@ -467,12 +467,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        importer = _vtk.lazy_vtkVRMLImporter()
+        importer = vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -726,10 +728,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml("sample")  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
         if self.render_window is None:
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        exporter = _vtk.lazy_vtkVRMLExporter()
+        exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
@@ -3195,6 +3199,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
+        if render_lines_as_tubes and show_edges:
+            warnings.warn(
+                '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring `show_edges`.',
+                UserWarning,
+            )
+            show_edges = False
+
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
@@ -3216,7 +3227,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 )
-            return self.add_composite(
+            actor, _ = self.add_composite(
                 mesh,
                 color=color,
                 style=style,
@@ -3263,6 +3274,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 **kwargs,
             )
+            return actor
         elif copy_mesh and algo is None:
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
@@ -3892,6 +3904,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        if show_scalar_bar is None:
+            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
+
         # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -3902,9 +3917,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Deprecated on ..., estimated removal on v0.40.0
             warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
-        if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar
 
         if culling is True:
             culling = 'backface'
@@ -4810,6 +4822,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.
 
+        Requires ``imageio`` to be installed.
+
         Parameters
         ----------
         filename : str
@@ -4841,14 +4855,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
 
         """
-        from imageio import get_writer
+        try:
+            from imageio import get_writer
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                'Install imageio to use `open_movie` with:\n\n   pip install imageio'
+            ) from None
 
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
+    def open_gif(
+        self,
+        filename,
+        loop=0,
+        fps=10,
+        palettesize=256,
+        subrectangles=False,
+        **kwargs,
+    ):
         """Open a gif file.
+
+        Requires ``imageio`` to be installed.
 
         Parameters
         ----------
@@ -4898,22 +4927,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`gif_movie_example` for a full example using this method.
 
         """
-        from imageio import get_writer
+        try:
+            from imageio import __version__, get_writer
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                'Install imageio to use `open_gif` with:\n\n   pip install imageio'
+            ) from None
 
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = get_writer(
-            filename,
-            mode='I',
-            loop=loop,
-            fps=fps,
-            palettesize=palettesize,
-            subrectangles=subrectangles,
-            **kwargs,
-        )
+
+        kwargs['mode'] = 'I'
+        kwargs['loop'] = loop
+        kwargs['palettesize'] = palettesize
+        kwargs['subrectangles'] = subrectangles
+        if scooby.meets_version(__version__, '2.28.1'):
+            kwargs['duration'] = 1000 * 1 / fps
+        else:  # pragma: no cover
+            kwargs['fps'] = fps
+
+        self.mwriter = get_writer(filename, **kwargs)
 
     def write_frame(self):
         """Write a single frame to the movie file.
@@ -5011,15 +5047,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color='w', width=5, label=None, name=None):
+    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False):
         """Add lines to the plotting object.
 
         Parameters
         ----------
         lines : np.ndarray
             Points representing line segments.  For example, two line
-            segments would be represented as ``np.array([[0, 0, 0],
-            [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
+            segments would be represented as ``np.array([[0, 1, 0],
+            [1, 0, 0], [1, 1, 0], [2, 0, 0]])``.
 
         color : ColorLike, default: 'w'
             Either a string, rgb list, or hex color string.  For example:
@@ -5041,6 +5077,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+        connected : bool, default: False
+            Treat ``lines`` as points representing a series of *connected* lines.
+            For example, two connected line segments would be represented as
+            ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``. If ``False``, an *even*
+            number of points must be passed to ``lines``, and the lines need not be
+            connected.
+
+
         Returns
         -------
         vtk.vtkActor
@@ -5048,11 +5092,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
+        Plot two lines.
+
         >>> import numpy as np
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-        >>> actor = pl.add_lines(points, color='yellow', width=3)
+        >>> actor = pl.add_lines(points, color='purple', width=3)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+
+        Adding lines with ``connected=True`` will add a series of connected
+        line segments.
+
+        >>> pl = pyvista.Plotter()
+        >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+        >>> actor = pl.add_lines(
+        ...     points, color='purple', width=3, connected=True
+        ... )
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
@@ -5060,7 +5117,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pyvista.line_segments_from_points(lines)
+        lines = (
+            pyvista.lines_from_points(lines)
+            if connected
+            else pyvista.line_segments_from_points(lines)
+        )
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
@@ -5577,6 +5638,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+
         if self.render_window is None:
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5584,7 +5647,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename = os.path.abspath(os.path.expanduser(filename))
         extension = pyvista.fileio.get_ext(filename)
 
-        writer = _vtk.lazy_vtkGL2PSExporter()
+        writer = vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -5931,6 +5994,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExport import vtkOBJExporter
+
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5941,7 +6006,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not filename.endswith('.obj'):
             raise ValueError('`filename` must end with ".obj"')
 
-        exporter = _vtk.lazy_vtkOBJExporter()
+        exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
         exporter.SetFilePrefix(filename[:-4])
         exporter.SetRenderWindow(self.render_window)
