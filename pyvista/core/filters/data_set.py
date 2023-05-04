@@ -5672,11 +5672,6 @@ class DataSetFilters:
         :class:`pyvista.PolyData`) input may produce a subset of the input data
         (depending on the selected cell types).
 
-        .. notes::
-            Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
-            produces a :class:`pyvista.UnstructuredGrid` output, this filter
-            produces the same output type as input type.
-
         Parameters
         ----------
         cell_types :  int | sequence[int]
@@ -5690,6 +5685,12 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Dataset with the extracted cells. Type is the same as the input.
+
+        Notes
+        -----
+        Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
+        produces a :class:`pyvista.UnstructuredGrid` output, this filter
+        produces the same output type as input type.
 
         Examples
         --------
