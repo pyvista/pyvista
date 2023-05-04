@@ -129,8 +129,6 @@ class DataSetFilters:
         ...     source.points, return_closest_point=True
         ... )
         >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
-        >>> np.abs(dist).mean()  # doctest:+SKIP
-        9.997635192915073e-05
 
         Visualize the source, transformed, and aligned meshes.
 
@@ -154,6 +152,9 @@ class DataSetFilters:
         ...     },
         ... )
         >>> pl.show()
+
+        >>> np.abs(dist).mean()  # doctest:+SKIP
+        9.997635192915073e-05
 
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
