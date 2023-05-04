@@ -5714,9 +5714,7 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
-        if cell_types is True:
-            alg.AddAllCellTypes()
-        elif isinstance(cell_types, int):
+        if isinstance(cell_types, int):
             alg.AddCellType(cell_types)
         elif isinstance(cell_types, (np.ndarray, collections.abc.Sequence)):
             for cell_type in cell_types:

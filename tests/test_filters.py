@@ -2674,7 +2674,9 @@ def test_subdivide_tetra(tetbeam):
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
-    hex_cells = combined.extract_cells_by_type(pyvista.CellType.HEXAHEDRON)
+    hex_cells = combined.extract_cells_by_type(
+        [pyvista.CellType.HEXAHEDRON, pyvista.CellType.BEZIER_PYRAMID]
+    )
     assert np.alltrue(hex_cells.celltypes == pyvista.CellType.HEXAHEDRON)
 
     tet_cells = combined.extract_cells_by_type(pyvista.CellType.TETRA)
@@ -2682,6 +2684,9 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
 
     should_be_empty = combined.extract_cells_by_type(pyvista.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
+
+    with pytest.raises(TypeError, match='Invalid type'):
+        combined.extract_cells_by_type(1.0)
 
 
 def test_merge_points():
