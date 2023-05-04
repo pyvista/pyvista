@@ -190,6 +190,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkGenericCell,
     vtkImageData,
     vtkImplicitFunction,
+    vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPerlinNoise,
@@ -491,7 +492,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
 )
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
+from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer, vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
 from vtkmodules.vtkRenderingOpenGL2 import (
     vtkCameraPass,
