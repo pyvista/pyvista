@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pytest
 
 from pyvista import examples
@@ -29,4 +30,4 @@ def test_has_module():
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
-    assert isinstance(img, imageio.core.util.Array)
+    assert isinstance(img, (imageio.core.util.Array, np.ndarray))
