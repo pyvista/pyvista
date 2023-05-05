@@ -68,6 +68,113 @@ class DataSetFilters:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
 
+    def align(
+        self,
+        target,
+        max_landmarks=100,
+        max_mean_distance=1e-5,
+        max_iterations=500,
+        check_mean_distance=True,
+        start_by_matching_centroids=True,
+        return_matrix=False,
+    ):
+        """Align a dataset to another.
+
+        Uses the iterative closest point algorithm to align the points of the
+        two meshes.  See the VTK class `vtkIterativeClosestPointTransform
+        <https://vtk.org/doc/nightly/html/classvtkIterativeClosestPointTransform.html>`_
+
+        Parameters
+        ----------
+        target : pyvista.DataSet
+            The target dataset to align to.
+
+        max_landmarks : int, default: 100
+            The maximum number of landmarks.
+
+        max_mean_distance : float, default: 1e-5
+            The maximum mean distance for convergence.
+
+        max_iterations : int, default: 500
+            The maximum number of iterations.
+
+        check_mean_distance : bool, default: True
+            Whether to check the mean distance for convergence.
+
+        start_by_matching_centroids : bool, default: True
+            Whether to start the alignment by matching centroids. Default is True.
+
+        return_matrix : bool, default: False
+            Return the transform matrix as well as the aligned mesh.
+
+        Returns
+        -------
+        aligned : pyvista.DataSet
+            The dataset aligned to the target mesh.
+
+        matrix : numpy.ndarray
+            Transform matrix to transform the input dataset to the target dataset.
+
+        Examples
+        --------
+        Create a cylinder, translate it, and use iterative closest point to
+        align mesh to its original position.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
+        >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
+        >>> aligned = transformed.align(source)
+        >>> _, closest_points = aligned.find_closest_cell(
+        ...     source.points, return_closest_point=True
+        ... )
+        >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
+
+        Visualize the source, transformed, and aligned meshes.
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Before Alignment')
+        >>> _ = pl.add_mesh(
+        ...     source, style='wireframe', opacity=0.5, line_width=2
+        ... )
+        >>> _ = pl.add_mesh(transformed)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('After Alignment')
+        >>> _ = pl.add_mesh(
+        ...     source, style='wireframe', opacity=0.5, line_width=2
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     aligned,
+        ...     scalars=dist,
+        ...     scalar_bar_args={
+        ...         'title': 'Distance to Source',
+        ...         'fmt': '%.1E',
+        ...     },
+        ... )
+        >>> pl.show()
+
+        Show that the mean distance between the source and the target is
+        nearly zero.
+
+        >>> np.abs(dist).mean()  # doctest:+SKIP
+        9.997635192915073e-05
+
+        """
+        icp = _vtk.vtkIterativeClosestPointTransform()
+        icp.SetSource(self)
+        icp.SetTarget(target)
+        icp.GetLandmarkTransform().SetModeToRigidBody()
+        icp.SetMaximumNumberOfLandmarks(max_landmarks)
+        icp.SetMaximumMeanDistance(max_mean_distance)
+        icp.SetMaximumNumberOfIterations(max_iterations)
+        icp.SetCheckMeanDistance(check_mean_distance)
+        icp.SetStartByMatchingCentroids(start_by_matching_centroids)
+        icp.Update()
+        matrix = pyvista.array_from_vtkmatrix(icp.GetMatrix())
+        if return_matrix:
+            return self.transform(matrix, inplace=False), matrix
+        return self.transform(matrix, inplace=False)
+
     def clip(
         self,
         normal='x',
@@ -5550,6 +5657,79 @@ class DataSetFilters:
 
         """
         return self.shrink(1.0)
+
+    def extract_cells_by_type(self, cell_types, progress_bar=False):
+        """Extract cells of a specified type.
+
+        Given an input dataset and a list of cell types, produce an output
+        dataset containing only cells of the specified type(s). Note that if
+        the input dataset is homogeneous (e.g., all cells are of the same type)
+        and the cell type is one of the cells specified, then the input dataset
+        is shallow copied to the output.
+
+        The type of output dataset is always the same as the input type. Since
+        structured types of data (i.e., :class:`pyvista.UniformGrid`,
+        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
+        :class:`pyvista.UniformGrid`) are all composed of a cell of the same
+        type, the output is either empty, or a shallow copy of the input.
+        Unstructured data (:class:`pyvista.UnstructuredGrid`,
+        :class:`pyvista.PolyData`) input may produce a subset of the input data
+        (depending on the selected cell types).
+
+        Parameters
+        ----------
+        cell_types :  int | sequence[int]
+            The cell types to extract. Must be a single or list of integer cell
+            types. See :class:`pyvista.CellType`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the extracted cells. Type is the same as the input.
+
+        Notes
+        -----
+        Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
+        produces a :class:`pyvista.UnstructuredGrid` output, this filter
+        produces the same output type as input type.
+
+        Examples
+        --------
+        Create an unstructured grid with both hexahedral and tetrahedral
+        cells and then extract each individual cell type.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> beam = examples.load_hexbeam()
+        >>> beam = beam.translate([1, 0, 0])
+        >>> ugrid = beam + examples.load_tetbeam()
+        >>> hex_cells = ugrid.extract_cells_by_type(pv.CellType.HEXAHEDRON)
+        >>> tet_cells = ugrid.extract_cells_by_type(pv.CellType.TETRA)
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Extracted Hexahedron cells')
+        >>> _ = pl.add_mesh(hex_cells, show_edges=True)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('Extracted Tetrahedron cells')
+        >>> _ = pl.add_mesh(tet_cells, show_edges=True)
+        >>> pl.show()
+
+        """
+        alg = _vtk.vtkExtractCellsByType()
+        alg.SetInputDataObject(self)
+        if isinstance(cell_types, int):
+            alg.AddCellType(cell_types)
+        elif isinstance(cell_types, (np.ndarray, collections.abc.Sequence)):
+            for cell_type in cell_types:
+                alg.AddCellType(cell_type)
+        else:
+            raise TypeError(
+                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
+            )
+        _update_alg(alg, progress_bar, 'Extracting cell types')
+        return _get_output(alg)
 
 
 def _set_threshold_limit(alg, value, method, invert):

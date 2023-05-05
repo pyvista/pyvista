@@ -190,6 +190,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkGenericCell,
     vtkImageData,
     vtkImplicitFunction,
+    vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPerlinNoise,
@@ -263,7 +264,12 @@ from vtkmodules.vtkFiltersCore import (
     vtkUnstructuredGridToExplicitStructuredGrid,
     vtkWindowedSincPolyDataFilter,
 )
-from vtkmodules.vtkFiltersExtraction import vtkExtractGeometry, vtkExtractGrid, vtkExtractSelection
+from vtkmodules.vtkFiltersExtraction import (
+    vtkExtractCellsByType,
+    vtkExtractGeometry,
+    vtkExtractGrid,
+    vtkExtractSelection,
+)
 from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
 from vtkmodules.vtkFiltersGeneral import (
     vtkAxes,
@@ -491,7 +497,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
 )
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
+from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer, vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
 from vtkmodules.vtkRenderingOpenGL2 import (
     vtkCameraPass,

@@ -580,3 +580,39 @@ def parse_font_family(font_family):
     if font_family not in fonts:
         raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
     return FONTS[font_family].value
+
+
+def check_matplotlib_vtk_compatibility():
+    """Check if VTK and Matplotlib versions are compatible.
+
+    This is primarily geared towards checking if MathText rendering is
+    supported. These are the version constraints for VTK and Matplotlib:
+
+    * VTK <= 9.2.2 requires Matplotlib < 3.6
+    * VTK > 9.2.2 requires Matplotlib >= 3.6
+
+    Other version combinations of VTK and Matplotlib will work without
+    errors, but some features (like MathText/LaTeX rendering) may
+    silently fail.
+
+    """
+    import matplotlib
+
+    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    if pyvista.vtk_version_info <= (9, 2, 2):
+        if mpl_vers >= (3, 6):
+            return False
+        return True
+    elif pyvista.vtk_version_info > (9, 2, 2):
+        if mpl_vers >= (3, 6):
+            return True
+        return False  # pragma: no cover
+    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
+
+
+def check_math_text_support():
+    """Check if MathText and LaTeX symbols are supported."""
+    return (
+        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+        and check_matplotlib_vtk_compatibility()
+    )
