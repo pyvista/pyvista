@@ -23,6 +23,9 @@ plotter.add_mesh(grid, show_edges=True, color='tan')
 plotter.enable_parallel_projection()
 
 lines = np.array([[xrng[0], yrng[-1], 0.0], [xrng[-1], yrng[-1], 0.0]])
+mlines = pv.MultipleLines(lines)
+mlines["Normal"] = np.array([[0.0, 3.0, 0.0], [0.0, 3.0, 0.0]])
+arrows = mlines.glyph(geom=pv.Line(), scale="Normal", factor=3.0, orient="Normal")
 lines += np.array([[0.0, 3.0, 0.0], [0.0, 3.0, 0.0]])
 
 pointa = lines[0:-1]
@@ -32,16 +35,5 @@ labels = np.array([str(np.linalg.norm(pointb - pointa))])
 
 plotter.add_point_labels(points=pointc, labels=labels, shape_color="white")
 plotter.add_lines(lines, color="black", width=2)
-
-lines = np.array([[xrng[0], yrng[0], 0.0], [xrng[0], yrng[-1], 0.0]])
-lines += np.array([[-3.0, 0.0, 0.0], [-3.0, 0.0, 0.0]])
-
-pointa = lines[0:-1]
-pointb = lines[1:]
-pointc = (pointa + pointb) / 2.0
-labels = np.array([str(np.linalg.norm(pointb - pointa))])
-
-plotter.add_point_labels(points=pointc, labels=labels, shape_color="white")
-plotter.add_lines(lines, color="black", width=2)
-
+plotter.add_mesh(arrows, color="black")
 plotter.show(cpos="xy")
