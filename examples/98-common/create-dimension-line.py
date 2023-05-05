@@ -3,33 +3,45 @@
 Create Dimension Line
 ~~~~~~~~~~~~~~~~~~~~~
 
-Create a dimension line along 3d structured mesh.
+Create a 2d dimension line along 2d structured mesh.
 
 """
 
 import numpy as np
 
 import pyvista as pv
-from pyvista import examples
 
-grid = pv.UnstructuredGrid(examples.hexbeamfile)
+pv.set_plot_theme("document")
 
+xrng = np.arange(-10, 10, 2)
+yrng = np.arange(-10, 10, 5)
+grid = pv.RectilinearGrid(xrng, yrng)
 
 plotter = pv.Plotter()
 plotter.add_mesh(grid, show_edges=True, color='tan')
 
 plotter.enable_parallel_projection()
 
-xmin, xmax, ymin, ymax, zmin, zmax = grid.bounds
-
-lines = np.array([[xmax, ymax, zmin], [xmax, ymax, zmax]])
+lines = np.array([[xrng[0], yrng[-1], 0.0], [xrng[-1], yrng[-1], 0.0]])
+lines += np.array([[0.0, 3.0, 0.0], [0.0, 3.0, 0.0]])
 
 pointa = lines[0:-1]
 pointb = lines[1:]
 pointc = (pointa + pointb) / 2.0
 labels = np.array([str(np.linalg.norm(pointb - pointa))])
 
-plotter.add_point_labels(points=pointc, labels=labels)
-plotter.add_lines(lines)
+plotter.add_point_labels(points=pointc, labels=labels, shape_color="white")
+plotter.add_lines(lines, color="black", width=2)
 
-plotter.show()
+lines = np.array([[xrng[0], yrng[0], 0.0], [xrng[0], yrng[-1], 0.0]])
+lines += np.array([[-3.0, 0.0, 0.0], [-3.0, 0.0, 0.0]])
+
+pointa = lines[0:-1]
+pointb = lines[1:]
+pointc = (pointa + pointb) / 2.0
+labels = np.array([str(np.linalg.norm(pointb - pointa))])
+
+plotter.add_point_labels(points=pointc, labels=labels, shape_color="white")
+plotter.add_lines(lines, color="black", width=2)
+
+plotter.show(cpos="xy")
