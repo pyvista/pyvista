@@ -6860,25 +6860,6 @@ class Plotter(BasePlotter):
 
         return actor
 
-    def add_dimension_lines(
-        self, pointa=np.array([0.0, 0.0, 0.0]), pointb=np.array([1.0, 1.0, 1.0])
-    ):
-        """Add dimension lines to the plotting object."""
-        if isinstance(pointa, (list, tuple)):
-            pointa = np.array(pointa)
-
-        if isinstance(pointb, (list, tuple)):
-            pointb = np.array(pointb)
-
-        pointc = (pointa + pointb) / 2.0
-        labels = self.add_point_labels(
-            points=pointc, labels=np.array([str(np.linalg.norm(pointb - pointa))])
-        )
-        lines = self.add_lines(
-            np.array([[pointa[0], pointa[1], pointa[2]], [pointb[0], pointb[1], pointb[2]]])
-        )
-        return [labels, lines]
-
 
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
