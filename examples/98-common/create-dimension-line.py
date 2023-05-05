@@ -30,8 +30,6 @@ plotter.add_mesh(grid, show_edges=True, color='tan')
 plotter.enable_parallel_projection()
 
 ###############################################################################
-# Define function
-# ~~~~~~~~~~~~~~
 # Define a function to create a dimension line.
 
 
