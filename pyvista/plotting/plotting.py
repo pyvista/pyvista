@@ -52,12 +52,7 @@ from pyvista.utilities.regression import run_image_filter
 from .._typing import BoundsLike
 from ..utilities.misc import PyVistaDeprecationWarning, uses_egl
 from ..utilities.regression import image_from_window
-from ._plotting import (
-    USE_SCALAR_BAR_ARGS,
-    _common_arg_parser,
-    prepare_smooth_shading,
-    process_opacity,
-)
+from ._plotting import _common_arg_parser, prepare_smooth_shading, process_opacity
 from ._property import Property
 from .actor import Actor
 from .colors import Color, get_cmap_safe
@@ -3912,11 +3907,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = {}
         else:
             scalar_bar_args = scalar_bar_args.copy()
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            # Deprecated on ..., estimated removal on v0.40.0
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if culling is True:
             culling = 'backface'
@@ -4204,7 +4194,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
-        params=None,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -4236,13 +4225,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try ``0.9``  first and decrease until the desired rendering
             performance is achieved.
 
-        params : dict, optional
-            Optional silhouette parameters.
-
-            .. deprecated:: 0.38.0
-               This keyword argument is no longer used. Instead, input the
-               parameters to this function directly.
-
         Returns
         -------
         pyvista.Actor
@@ -4266,15 +4248,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         silhouette_params = self._theme.silhouette.to_dict()
-
-        if params is not None:
-            # Deprecated on 0.38.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`params` is deprecated. Set the arguments directly.',
-                PyVistaDeprecationWarning,
-                stacklevel=3,
-            )
-            silhouette_params.update(params)
 
         if color is None:
             color = silhouette_params["color"]

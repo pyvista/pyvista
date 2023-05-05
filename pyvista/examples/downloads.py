@@ -30,7 +30,6 @@ from pooch.utils import get_logger
 import pyvista
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -3502,40 +3501,6 @@ def download_action_figure(load=True):  # pragma: no cover
 
     """
     return _download_and_read('tigerfighter.obj', load=load)
-
-
-def download_mars_jpg():
-    """Download and return the path of ``'mars.jpg'``.
-
-    Returns
-    -------
-    str
-        Filename of the JPEG.
-    """
-    # Deprecated on v0.37.0, estimated removal on v0.40.0
-    warnings.warn(
-        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with"
-        " load=False",
-        PyVistaDeprecationWarning,
-    )
-    return pyvista.examples.planets.download_mars_surface(load=False)
-
-
-def download_stars_jpg():
-    """Download and return the path of ``'stars.jpg'``.
-
-    Returns
-    -------
-    str
-        Filename of the JPEG.
-    """
-    # Deprecated on v0.37.0, estimated removal on v0.40.0
-    warnings.warn(
-        "examples.download_stars_jpg is deprecated.  Use"
-        " examples.planets.download_stars_sky_background with load=False",
-        PyVistaDeprecationWarning,
-    )
-    return pyvista.examples.planets.download_stars_sky_background(load=False)
 
 
 def download_notch_stress(load=True):  # pragma: no cover

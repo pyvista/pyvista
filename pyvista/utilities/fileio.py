@@ -51,44 +51,6 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def read_legacy(filename, progress_bar=False):
-    """Use VTK's legacy reader to read a file.
-
-    .. deprecated:: 0.35.0
-       This function is deprecated. Use :func:`pyvista.read` instead.
-
-    This uses ``vtk.vtkDataSetReader`` to read the data.
-
-    Parameters
-    ----------
-    filename : str
-        The string path to the file to read.
-
-    progress_bar : bool, default: False
-        Optionally show a progress bar.
-
-    Returns
-    -------
-    pyvista.DataSet
-        Wrapped pyvista mesh.
-
-    Examples
-    --------
-    Load an example mesh using the legacy reader.
-
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
-
-    """
-    # Deprecated on v0.35.0, estimated removal on v0.40.0
-    warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
-    )
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    return read(filename, progress_bar=progress_bar)
-
-
 def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -373,59 +335,6 @@ def read_exodus(
 
     reader.Update()
     return pyvista.wrap(reader.GetOutput())
-
-
-def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress_bar=False):
-    """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
-
-    .. deprecated:: 0.35.0
-        This function is deprecated and will be removed in a future version.
-        Use :class:`pyvista.MultiBlockPlot3DReader`.
-
-    Parameters
-    ----------
-    filename : str
-        The string filename to the data file to read.
-
-    q_filenames : str or sequence[str], default: ()
-        The string filename of the q-file, or iterable of such
-        filenames.
-
-    auto_detect : bool, default: True
-        When this option is turned on, the reader will try to figure
-        out the values of various options such as byte order, byte
-        count etc.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
-
-    progress_bar : bool, default: False
-        Optionally show a progress bar.
-
-    Returns
-    -------
-    pyvista.MultiBlock
-        Data read from the file.
-
-    """
-    # Deprecated on v0.35.0, estimated removal on v0.40.0
-    warnings.warn(
-        "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
-        PyVistaDeprecationWarning,
-    )
-
-    filename = _process_filename(filename)
-    reader = pyvista.MultiBlockPlot3DReader(filename)
-    reader.add_q_files(q_filenames)
-    reader.auto_detect_format = auto_detect
-    if attrs is not None:
-        _apply_attrs_to_reader(reader, attrs)
-    if progress_bar:
-        reader.show_progress()
-    return reader.read()
 
 
 def from_meshio(mesh):

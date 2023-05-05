@@ -2,7 +2,6 @@
 from functools import wraps
 import pathlib
 from typing import Sequence, Tuple, Union
-import warnings
 
 import numpy as np
 
@@ -10,9 +9,9 @@ import pyvista
 from pyvista import _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class, assert_empty_kwargs
+from pyvista.utilities import abstract_class
 import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
+from pyvista.utilities.misc import raise_has_duplicates
 
 
 @abstract_class
@@ -485,70 +484,29 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
 
     def __init__(
         self,
-        uinput=None,
+        image=None,
         *args,
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep=False,
-        **kwargs,
     ):
         """Initialize the uniform grid."""
         super().__init__()
 
-        # permit old behavior
-        if isinstance(uinput, Sequence) and not isinstance(uinput, str):
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                "Behavior of pyvista.UniformGrid has changed. First argument must be "
-                "either a ``vtk.vtkImageData`` or path.",
-                PyVistaDeprecationWarning,
-            )
-            dimensions = uinput
-            uinput = None
-
-        if dimensions is None and 'dims' in kwargs:
-            dimensions = kwargs.pop('dims')
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
-            )
-        assert_empty_kwargs(**kwargs)
-
-        if args:
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                "Behavior of pyvista.UniformGrid has changed. Use keyword arguments "
-                "to specify dimensions, spacing, and origin. For example:\n\n"
-                "    >>> grid = pyvista.UniformGrid(\n"
-                "    ...     dimensions=(10, 10, 10),\n"
-                "    ...     spacing=(2, 1, 5),\n"
-                "    ...     origin=(10, 35, 50),\n"
-                "    ... )\n",
-                PyVistaDeprecationWarning,
-            )
-            origin = args[0]
-            if len(args) > 1:
-                spacing = args[1]
-            if len(args) > 2:
-                raise ValueError(
-                    "Too many additional arguments specified for UniformGrid. "
-                    f"Accepts at most 2, and {len(args)} have been input."
-                )
-
         # first argument must be either vtkImageData or a path
-        if uinput is not None:
-            if isinstance(uinput, _vtk.vtkImageData):
+        if image is not None:
+            if isinstance(image, _vtk.vtkImageData):
                 if deep:
-                    self.deep_copy(uinput)
+                    self.deep_copy(image)
                 else:
-                    self.shallow_copy(uinput)
-            elif isinstance(uinput, (str, pathlib.Path)):
-                self._from_file(uinput)
+                    self.shallow_copy(image)
+            elif isinstance(image, (str, pathlib.Path)):
+                self._from_file(image)
             else:
                 raise TypeError(
-                    "First argument, ``uinput`` must be either ``vtk.vtkImageData`` "
-                    f"or a path, not {type(uinput)}.  Use keyword arguments to "
+                    "First argument, ``image`` must be either ``vtk.vtkImageData`` "
+                    f"or a path, not {type(image)}.  Use keyword arguments to "
                     "specify dimensions, spacing, and origin. For example:\n\n"
                     "    >>> grid = pyvista.UniformGrid(\n"
                     "    ...     dimensions=(10, 10, 10),\n"

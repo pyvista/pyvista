@@ -39,12 +39,6 @@ def test_invalid_overwrite(grid):
         grid.copy_from(pyvista.Plane())
 
 
-def test_overwrite_deprecation(grid):
-    mesh = type(grid)()
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.overwrite(grid)
-
-
 @composite
 def n_numbers(draw, n):
     numbers = []

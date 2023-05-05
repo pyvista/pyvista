@@ -2012,25 +2012,6 @@ class DataSet(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):
-        """Overwrite this dataset inplace with the new dataset's geometries and data.
-
-        .. deprecated:: 0.37.0
-            Use :func:`DataSet.copy_from` instead.
-
-        Parameters
-        ----------
-        mesh : vtk.vtkDataSet
-            The overwriting mesh.
-
-        """
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(
-            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.copy_from(mesh)
-
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 

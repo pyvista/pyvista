@@ -10,7 +10,6 @@ import pyvista
 from pyvista import examples
 from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -851,30 +850,6 @@ def test_create_uniform_grid_from_specs():
     with pytest.raises(ValueError, match="Spacing must be non-negative"):
         grid = pyvista.UniformGrid(dimensions=dims, spacing=(-1, 1, 1))
 
-    # all args (deprecated)
-    with pytest.warns(
-        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
-    ):
-        grid = pyvista.UniformGrid(dims, origin, spacing)
-        assert grid.dimensions == dims
-        assert grid.origin == origin
-        assert grid.spacing == spacing
-
-    # just dims (deprecated)
-    with pytest.warns(
-        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
-    ):
-        grid = pyvista.UniformGrid(dims)
-        assert grid.dimensions == dims
-
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='`dims` argument is deprecated. Please use `dimensions`.',
-    ):
-        grid = pyvista.UniformGrid(dims=dims)
-    with pytest.raises(TypeError):
-        grid = pyvista.UniformGrid(dimensions=dims, dims=dims)
-
     # uniform grid from a uniform grid
     grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
     grid_from_grid = pyvista.UniformGrid(grid)
@@ -886,11 +861,6 @@ def test_create_uniform_grid_from_specs():
 
 
 def test_uniform_grid_invald_args():
-    with pytest.warns(
-        PyVistaDeprecationWarning, match="Behavior of pyvista.UniformGrid has changed"
-    ):
-        pyvista.UniformGrid((1, 1, 1))
-
     with pytest.raises(TypeError):
         pyvista.UniformGrid(1)
 

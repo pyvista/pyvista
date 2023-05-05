@@ -197,13 +197,6 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.utilities.fileio.read')
-def test_read_legacy(read_mock):
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read_legacy(ex.globefile, progress_bar=False)
-    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
-
-
 @mock.patch('pyvista.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
@@ -212,22 +205,6 @@ def test_pyvista_read_exodus(read_exodus_mock):
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == ex.globefile
-
-
-@pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.utilities.reader.BaseReader.read')
-@mock.patch('pyvista.utilities.reader.BaseReader.path')
-def test_read_plot3d(path_mock, read_mock, auto_detect):
-    # with grid only
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    read_mock.assert_called_once()
-
-    # with grid and q
-    read_mock.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    read_mock.assert_called_once()
 
 
 def test_get_array_cell(hexbeam):
