@@ -153,6 +153,9 @@ class DataSetFilters:
         ... )
         >>> pl.show()
 
+        Show that the mean distance between the source and the target is
+        nearly zero.
+
         >>> np.abs(dist).mean()  # doctest:+SKIP
         9.997635192915073e-05
 
