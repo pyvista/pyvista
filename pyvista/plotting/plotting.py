@@ -6860,6 +6860,43 @@ class Plotter(BasePlotter):
 
         return actor
 
+    def add_dimension_line(self, pointa, pointb, normal):
+        """Create a dimension line with labels and arrows for the given points and normal vector."""
+        # Define the lines
+        pointa += normal
+        pointb += normal
+        lines = np.array([pointa, pointb])
+
+        # Create multiple lines and set the normal vector
+        mlines = pyvista.MultipleLines(lines)
+        mlines["Normal"] = np.array([normal, normal])
+
+        # Create arrows for the lines
+        arrows = mlines.glyph(geom=pyvista.Line(), scale="Normal", factor=1.0, orient="Normal")
+
+        # Define the midpoints between pointa and pointb
+        pointc = (pointa + pointb) / 2.0
+
+        # Define the label for the line
+        labels = np.array([str(np.linalg.norm(pointb - pointa))])
+
+        # Add the label and line to the plot
+        # text = self.add_point_labels(points=pointc, labels=labels, shape_color="white")
+        _ = self.add_point_labels(points=pointc, labels=labels, shape_color="white")
+        # lines = self.add_lines(lines, color="black", width=2)
+        _ = self.add_lines(lines, color="black", width=2)
+
+        # Add the arrow to the plot
+        # mesh = self.add_mesh(arrows, color="black")
+        _ = self.add_mesh(arrows, color="black")
+
+        # blocks = pyvista.MultiBlock([text, lines, mesh])
+        # blocks = pyvista.MultiBlock([lines, mesh])
+        # blocks = pyvista.MultiBlock([mesh])
+        # actor = blocks.combine()
+
+        return None
+
 
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
