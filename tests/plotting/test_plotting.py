@@ -2552,10 +2552,10 @@ def test_dimension_line():
     plotter.set_background("white")
     plotter.add_mesh(rectangle, show_edges=True, line_width=5, color="tan")
     plotter.add_dimension_line(
-        pointa, pointb, [0.1, 0.0, 0.0], text_color="black", shape_color="white"
+        pointa, pointb, [0.1, 0.0, 0.0], text_color="black", shape_color="white", font_size=8
     )
     plotter.add_dimension_line(
-        pointb, pointc, [0.0, 0.1, 0.0], text_color="black", shape_color="white"
+        pointb, pointc, [0.0, 0.1, 0.0], text_color="black", shape_color="white", font_size=8
     )
     plotter.show()
 
