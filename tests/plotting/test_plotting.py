@@ -2543,6 +2543,8 @@ def test_ruler():
     plotter.show()
 
 
+@skip_windows  # due to opacity
+@skip_9_0_X
 def test_dimension_line():
     pointa = [1.0, 0.0, 0.0]
     pointb = [1.0, 1.0, 0.0]
