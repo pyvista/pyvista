@@ -20,6 +20,9 @@ yrng = np.arange(-10, 10, 5)
 # Create the structured mesh
 grid = pv.RectilinearGrid(xrng, yrng)
 
+###############################################################################
+# Plot mesh with dimension line
+
 # Create a plotter object
 plotter = pv.Plotter()
 
@@ -29,7 +32,6 @@ plotter.add_mesh(grid, show_edges=True, color='tan')
 # Enable parallel projection for the plot
 plotter.enable_parallel_projection()
 
-###############################################################################
 # Define the points and direction vectors for the dimension lines
 
 plotter.add_dimension_line(
@@ -81,8 +83,5 @@ plotter.add_dimension_line(
     direction=np.array([1.0, 0.0, 0.0]),
     shape_color="white",
 )
-
-###############################################################################
-# Plot mesh with dimension line
 
 plotter.show(cpos="xy")
