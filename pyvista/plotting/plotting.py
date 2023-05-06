@@ -6874,6 +6874,18 @@ class Plotter(BasePlotter):
         direction : array_like[float]
             Direction vector for dimension line.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> pointa = [1.0, 0.0, 0.0]
+        >>> pointb = [1.0, 1.0, 0.0]
+        >>> pointc = [0.0, 1.0, 0.0]
+        >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc])
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(rectangle, show_edges=True, line_width=5)
+        >>> _ = plotter.add_dimension_line(pointa, pointb, [0.1, 0.0, 0.0])
+        >>> _ = plotter.add_dimension_line(pointb, pointc, [0.0, 0.1, 0.0])
+        >>> plotter.show()
         """
         # Define the lines
         pointa = np.asarray(pointa)
