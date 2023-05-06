@@ -6890,9 +6890,8 @@ class Plotter(BasePlotter):
         # mesh = self.add_mesh(arrows, color="black")
         _ = self.add_mesh(arrows, color="black")
 
+        # TODO Once each Actor corresponds to a MultiBlock, return the merged Actor.
         # blocks = pyvista.MultiBlock([text, lines, mesh])
-        # blocks = pyvista.MultiBlock([lines, mesh])
-        # blocks = pyvista.MultiBlock([mesh])
         # actor = blocks.combine()
 
         return None
