@@ -6860,7 +6860,7 @@ class Plotter(BasePlotter):
 
         return actor
 
-    def add_dimension_line(self, pointa, pointb, direction):
+    def add_dimension_line(self, pointa, pointb, direction, **kwargs):
         """Add a dimension line of a PyVista or VTK dataset to the scene.
 
         Parameters
@@ -6874,6 +6874,9 @@ class Plotter(BasePlotter):
         direction : array_like[float]
             Direction vector for dimension line.
 
+        **kwargs : dict, optional
+            Optional keyword arguments.
+
         Examples
         --------
         >>> import pyvista
@@ -6883,8 +6886,12 @@ class Plotter(BasePlotter):
         >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc])
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(rectangle, show_edges=True, line_width=5)
-        >>> _ = plotter.add_dimension_line(pointa, pointb, [0.1, 0.0, 0.0])
-        >>> _ = plotter.add_dimension_line(pointb, pointc, [0.0, 0.1, 0.0])
+        >>> _ = plotter.add_dimension_line(
+        ...     pointa, pointb, [0.1, 0.0, 0.0], shape_color="white"
+        ... )
+        >>> _ = plotter.add_dimension_line(
+        ...     pointb, pointc, [0.0, 0.1, 0.0], shape_color="white"
+        ... )
         >>> plotter.show()
         """
         # Define the lines
@@ -6909,8 +6916,8 @@ class Plotter(BasePlotter):
         labels = np.array([str(np.linalg.norm(pointb - pointa))])
 
         # Add the label and line to the plot
-        # text = self.add_point_labels(points=pointc, labels=labels, shape_color="white")
-        _ = self.add_point_labels(points=pointc, labels=labels, shape_color="white")
+        # text = self.add_point_labels(points=pointc, labels=labels, **kwargs)
+        _ = self.add_point_labels(points=pointc, labels=labels, **kwargs)
         # lines = self.add_lines(lines, color="black", width=2)
         _ = self.add_lines(lines, color="black", width=2)
 
