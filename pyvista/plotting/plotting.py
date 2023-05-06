@@ -6861,7 +6861,20 @@ class Plotter(BasePlotter):
         return actor
 
     def add_dimension_line(self, pointa, pointb, normal):
-        """Create a dimension line with labels and arrows for the given points and normal vector."""
+        """Add a dimension line of a PyVista or VTK dataset to the scene.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Length 3 coordinate of the start of the line.
+
+        pointb : sequence[float]
+            Length 3 coordinate of the end of the line.
+
+        normal : tuple
+           Normal vector to make a dimension line.
+
+        """
         # Define the lines
         pointa += normal
         pointb += normal
@@ -6893,8 +6906,6 @@ class Plotter(BasePlotter):
         # TODO Once each Actor corresponds to a MultiBlock, return the merged Actor.
         # blocks = pyvista.MultiBlock([text, lines, mesh])
         # actor = blocks.combine()
-
-        return None
 
 
 # Tracks created plotters.  This is the end of the module as we need to
