@@ -2543,6 +2543,18 @@ def test_ruler():
     plotter.show()
 
 
+def test_dimension_line():
+    pointa = [1.0, 0.0, 0.0]
+    pointb = [1.0, 1.0, 0.0]
+    pointc = [0.0, 1.0, 0.0]
+    rectangle = pyvista.Rectangle([pointa, pointb, pointc])
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(rectangle, show_edges=True, line_width=5)
+    plotter.add_dimension_line(pointa, pointb, [0.1, 0.0, 0.0])
+    plotter.add_dimension_line(pointb, pointc, [0.0, 0.1, 0.0])
+    plotter.show()
+
+
 def test_legend_scale(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
