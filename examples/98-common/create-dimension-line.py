@@ -30,6 +30,38 @@ plotter.add_mesh(grid, show_edges=True, color='tan')
 plotter.enable_parallel_projection()
 
 ###############################################################################
+# Define a function to create a dimension line.
+
+
+def create_dimension_line(pointa, pointb, normal):
+    """Create a dimension line with labels and arrows for the given points and normal vector"""
+    # Define the lines
+    pointa += normal
+    pointb += normal
+    lines = np.array([pointa, pointb])
+
+    # Create multiple lines and set the normal vector
+    mlines = pv.MultipleLines(lines)
+    mlines["Normal"] = np.array([normal, normal])
+
+    # Create arrows for the lines
+    arrows = mlines.glyph(geom=pv.Line(), scale="Normal", factor=1.0, orient="Normal")
+
+    # Define the midpoints between pointa and pointb
+    pointc = (pointa + pointb) / 2.0
+
+    # Define the label for the line
+    labels = np.array([str(np.linalg.norm(pointb - pointa))])
+
+    # Add the label and line to the plot
+    plotter.add_point_labels(points=pointc, labels=labels, shape_color="white")
+    plotter.add_lines(lines, color="black", width=2)
+
+    # Add the arrow to the plot
+    plotter.add_mesh(arrows, color="black")
+
+
+###############################################################################
 # Define the points and normal vectors for the dimension lines
 
 plotter.add_dimension_line(
