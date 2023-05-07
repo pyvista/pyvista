@@ -1,5 +1,4 @@
 """
-.. _create_dimension_line_example:
 Create Dimension Line
 ---------------------
 
