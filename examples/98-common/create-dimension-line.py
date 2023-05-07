@@ -20,8 +20,10 @@ yrng = np.arange(-10, 10, 5)
 # Create the structured mesh
 grid = pv.RectilinearGrid(xrng, yrng)
 
+
 ###############################################################################
 # Plot mesh with dimension line
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Create a plotter object
 plotter = pv.Plotter()
