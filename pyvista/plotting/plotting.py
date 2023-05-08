@@ -472,12 +472,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
+
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
-        importer = _vtk.lazy_vtkVRMLImporter()
+        importer = vtkVRMLImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -731,10 +733,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml("sample")  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
+
         if self.render_window is None:
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        exporter = _vtk.lazy_vtkVRMLExporter()
+        exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
@@ -3200,6 +3204,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.mapper = DataSetMapper(theme=self.theme)
 
+        if render_lines_as_tubes and show_edges:
+            warnings.warn(
+                '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring `show_edges`.',
+                UserWarning,
+            )
+            show_edges = False
+
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
@@ -3898,6 +3909,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         assert_empty_kwargs(**kwargs)
 
+        if show_scalar_bar is None:
+            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
+
         # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -3908,9 +3922,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Deprecated on ..., estimated removal on v0.40.0
             warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
-        if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar
 
         if culling is True:
             culling = 'backface'
@@ -4816,6 +4827,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.
 
+        Requires ``imageio`` to be installed.
+
         Parameters
         ----------
         filename : str
@@ -4847,14 +4860,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
 
         """
-        from imageio import get_writer
+        try:
+            from imageio import get_writer
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                'Install imageio to use `open_movie` with:\n\n   pip install imageio'
+            ) from None
 
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(self, filename, loop=0, fps=10, palettesize=256, subrectangles=False, **kwargs):
+    def open_gif(
+        self,
+        filename,
+        loop=0,
+        fps=10,
+        palettesize=256,
+        subrectangles=False,
+        **kwargs,
+    ):
         """Open a gif file.
+
+        Requires ``imageio`` to be installed.
 
         Parameters
         ----------
@@ -4904,22 +4932,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`gif_movie_example` for a full example using this method.
 
         """
-        from imageio import get_writer
+        try:
+            from imageio import __version__, get_writer
+        except ModuleNotFoundError:  # pragma: no cover
+            raise ModuleNotFoundError(
+                'Install imageio to use `open_gif` with:\n\n   pip install imageio'
+            ) from None
 
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = get_writer(
-            filename,
-            mode='I',
-            loop=loop,
-            fps=fps,
-            palettesize=palettesize,
-            subrectangles=subrectangles,
-            **kwargs,
-        )
+
+        kwargs['mode'] = 'I'
+        kwargs['loop'] = loop
+        kwargs['palettesize'] = palettesize
+        kwargs['subrectangles'] = subrectangles
+        if scooby.meets_version(__version__, '2.28.1'):
+            kwargs['duration'] = 1000 * 1 / fps
+        else:  # pragma: no cover
+            kwargs['fps'] = fps
+
+        self.mwriter = get_writer(filename, **kwargs)
 
     def write_frame(self):
         """Write a single frame to the movie file.
@@ -5608,6 +5643,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+
         if self.render_window is None:
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5615,7 +5652,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename = os.path.abspath(os.path.expanduser(filename))
         extension = pyvista.fileio.get_ext(filename)
 
-        writer = _vtk.lazy_vtkGL2PSExporter()
+        writer = vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -5962,6 +5999,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
+        from vtkmodules.vtkIOExport import vtkOBJExporter
+
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -5972,7 +6011,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not filename.endswith('.obj'):
             raise ValueError('`filename` must end with ".obj"')
 
-        exporter = _vtk.lazy_vtkOBJExporter()
+        exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
         exporter.SetFilePrefix(filename[:-4])
         exporter.SetRenderWindow(self.render_window)

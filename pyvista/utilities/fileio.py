@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning, _try_imageio_imread
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -34,7 +34,11 @@ def get_ext(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
+    from vtkmodules.vtkIOGeometry import vtkSTLWriter
+    from vtkmodules.vtkIOLegacy import vtkDataWriter
+    from vtkmodules.vtkIOPLY import vtkPLYWriter
+
+    if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
@@ -232,6 +236,9 @@ def _apply_attrs_to_reader(reader, attrs):
 def read_texture(filename, attrs=None, progress_bar=False):
     """Load a texture from an image file.
 
+    Will attempt to read any file type supported by ``vtk``, however
+    if it fails, it will attempt to use ``imageio`` to read the file.
+
     Parameters
     ----------
     filename : str
@@ -276,9 +283,8 @@ def read_texture(filename, attrs=None, progress_bar=False):
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
-    import imageio
 
-    return pyvista.Texture(imageio.imread(filename))
+    return pyvista.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
 def read_exodus(

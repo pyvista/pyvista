@@ -12,6 +12,7 @@ import traceback
 import scooby
 
 from pyvista import _vtk
+from pyvista.plotting.tools import check_math_text_support
 
 
 def set_error_output_file(filename):
@@ -249,11 +250,11 @@ class GPUInfo:
 
     def get_info(self):
         """All GPU information as tuple pairs."""
-        return (
+        return [
             ("GPU Vendor", self.vendor),
             ("GPU Renderer", self.renderer),
             ("GPU Version", self.version),
-        )
+        ]
 
     def _repr_html_(self):
         """HTML table representation."""
@@ -337,10 +338,11 @@ class Report(scooby.Report):
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'imageio', 'scooby', 'pooch']
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch']
 
         # Optional packages.
         optional = [
+            'imageio',
             'pyvistaqt',
             'PyQt5',
             'IPython',
@@ -368,9 +370,15 @@ class Report(scooby.Report):
             try:
                 extra_meta = GPUInfo().get_info()
             except:
-                extra_meta = ("GPU Details", "error")
+                extra_meta = [
+                    ("GPU Details", "error"),
+                ]
         else:
-            extra_meta = ("GPU Details", "None")
+            extra_meta = [
+                ("GPU Details", "None"),
+            ]
+
+        extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
             self,

@@ -13,7 +13,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells
+from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells, numpy_to_idarr
 
 from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
@@ -756,12 +756,32 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @property
     def faces(self) -> np.ndarray:
-        """Return a pointer to the faces as a numpy array.
+        """Return the connectivity array of the faces of this PolyData.
+
+        The faces array is organized as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
+        Y'th point in face X.
+
+        For example, a triangle and a quadrilateral might be represented as::
+
+           [3, 0, 1, 2, 4, 0, 1, 3, 4]
+
+        Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
         Returns
         -------
         numpy.ndarray
-            Array of face indices.
+            Array of face connectivity.
+
+        Notes
+        -----
+        The array returned cannot be modified in place and will raise a
+        ``ValueError`` if attempted.
+
+        You can, however, set the faces directly. See the example.
 
         Examples
         --------
@@ -778,8 +798,21 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                [4, 1, 2, 5, 4],
                [4, 3, 4, 7, 6],
                [4, 4, 5, 8, 7]])
+
+        Set the faces directly. The following example creates a simple plane
+        with a single square faces and modifies it to have two triangles
+        instead.
+
+        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
+        >>> mesh.faces = [3, 0, 1, 2, 3, 3, 2, 1]
+        >>> mesh.faces
+        array([3, 0, 1, 2, 3, 3, 2, 1])
+
         """
-        return _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        # Flag this array as read only to ensure users do not attempt to write to it.
+        array.flags['WRITEABLE'] = False
+        return array
 
     @faces.setter
     def faces(self, faces):
@@ -1333,7 +1366,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     - Creating an empty grid
     - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
-    - From cell, offset, and node arrays
+    - From cell, cell types, and point arrays
     - From a file
 
     Parameters
@@ -1421,19 +1454,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
-                self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
-                self._check_for_consistency()
-            else:
-                raise TypeError('All input types must be sequences.')
-
-        elif len(args) == 4:  # pragma: no cover
-            arg0_is_arr = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
-            arg1_is_arr = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
-            arg2_is_arr = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
-            arg3_is_arr = isinstance(args[3], (np.ndarray, collections.abc.Sequence))
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], args[3], deep)
+                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
                 raise TypeError('All input types must be sequences.')
@@ -1457,11 +1478,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         nr_points = points.shape[0]
         cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-        self._from_arrays(None, cells, cell_types, points, deep=deep)
+        self._from_arrays(cells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
-        offset,
         cells,
         cell_type,
         points,
@@ -1472,9 +1492,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Parameters
         ----------
-        offset : any, default None
-            Ignored (this is a pre-VTK9 legacy).
-
         cells : sequence[int]
             Array of cells.  Each cell contains the number of points in the
             cell and the node numbers of the cell.
@@ -1542,8 +1559,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
 
         """
-        if offset is not None:
-            warnings.warn('VTK 9 no longer accepts an offset array', stacklevel=3)
         # convert to arrays upfront
         cells = np.asarray(cells)
         cell_type = np.asarray(cell_type)
@@ -1581,11 +1596,33 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     @property
     def cells(self) -> np.ndarray:
-        """Return a pointer to the cells as a numpy object.
+        """Return the cell data as a numpy object.
+
+        This is the old style VTK data layout::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is the
+        Y'th point in cell X.
+
+        For example, a triangle and a line might be represented as::
+
+           [3, 0, 1, 2, 2, 0, 1]
+
+        Where the two individual cells would be ``[3, 0, 1, 2]`` and ``[2, 0, 1]``.
 
         See Also
         --------
         pyvista.DataSet.get_cell
+        pyvista.UnstructuredGrid.cell_connectivity
+        pyvista.UnstructuredGrid.offset
+
+        Notes
+        -----
+        The array returned cannot be modified in place and will raise a
+        ``ValueError`` if attempted.
+
+        You can, however, set the cells directly. See the example.
 
         Examples
         --------
@@ -1595,13 +1632,25 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         >>> import pyvista
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.cells[:18]  # doctest:+SKIP
-        array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,
-                8, 36, 18, 54, 90])
+        >>> grid = examples.load_hexbeam()
+        >>> grid.cells[:18]
+        array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,  8, 36, 18, 54,
+               90])
+
+        While you cannot change the array inplace, you can overwrite it. For example:
+
+        >>> grid.cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
 
         """
-        return _vtk.vtk_to_numpy(self.GetCells().GetData())
+        # Flag this array as read only to ensure users do not attempt to write to it.
+        array = _vtk.vtk_to_numpy(self.GetCells().GetData())
+        array.flags['WRITEABLE'] = False
+        return array
+
+    @cells.setter
+    def cells(self, cells):
+        vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
+        self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
     def cells_dict(self) -> dict:
@@ -1818,11 +1867,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         numpy.ndarray
             Array of cell offsets indicating the start of each cell.
 
+        Notes
+        -----
+        The array returned is immutable and cannot be written to. If you
+        need to modify this array, create a copy of it using
+        :func:`numpy.copy`.
+
         Examples
         --------
-        Return the cell offset array within ``vtk==9``.  Since this
-        mesh is composed of all hexahedral cells, note how each cell
-        starts at 8 greater than the prior cell.
+        Return the cell offset array.  Since this mesh is composed of
+        all hexahedral cells, note how each cell starts at 8 greater
+        than the prior cell.
 
         >>> import pyvista
         >>> from pyvista import examples
@@ -1836,7 +1891,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         """
         carr = self.GetCells()
         # This will be the number of cells + 1.
-        return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
+        array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
+        array.flags['WRITEABLE'] = False
+        return array
 
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
@@ -1949,18 +2006,18 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     Create from NumPy arrays.
 
     >>> xrng = np.arange(-10, 10, 2, dtype=np.float32)
-    >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
-    >>> zrng = np.arange(-10, 10, 2, dtype=np.float32)
-    >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+    >>> yrng = np.arange(-10, 10, 5, dtype=np.float32)
+    >>> zrng = np.arange(-10, 10, 1, dtype=np.float32)
+    >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
     >>> grid = pyvista.StructuredGrid(x, y, z)
     >>> grid  # doctest:+SKIP
     StructuredGrid (0x7fb18f2a8580)
-    N Cells:    729
-    N Points:   1000
+    N Cells:    513
+    N Points:   800
     X Bounds:   -1.000e+01, 8.000e+00
-    Y Bounds:   -1.000e+01, 8.000e+00
-    Z Bounds:   -1.000e+01, 8.000e+00
-    Dimensions: 10, 10, 10
+    Y Bounds:   -1.000e+01, 5.000e+00
+    Z Bounds:   -1.000e+01, 9.000e+00
+    Dimensions: 10, 4, 20
     N Arrays:   0
 
     """
@@ -2065,10 +2122,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.dimensions
-        (10, 20, 4)
+        (20, 10, 4)
 
         """
         return tuple(self.GetDimensions())
@@ -2095,10 +2152,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.x.shape
-        (10, 20, 4)
+        (20, 10, 4)
 
         """
         return self._reshape_point_array(self.points[:, 0])

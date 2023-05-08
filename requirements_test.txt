@@ -3,7 +3,8 @@
 -r requirements.txt
 cmocean<3.1
 colorcet<3.1.0
-hypothesis<6.71.1
+hypothesis<6.75.3
+imageio<2.29.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0
 ipython<9.0.0
@@ -20,12 +21,12 @@ pytest-memprof<0.3.0
 pytest-xdist<3.3.0
 pytest_pyvista==0.1.8
 pythreejs<2.5.0
-Sphinx<5.4.0
-sphinx-gallery<0.13.0
+Sphinx<6.3.0
+sphinx-gallery<0.14.0
 sympy<1.12.0
 tqdm<4.66.0
-trame>=2.2.6,<2.4
+trame>=2.2.6,<2.5
 trame-client>=2.5.1,<2.8
-trame-server>=2.8.0,<2.11
+trame-server>=2.8.0,<2.12
 trame-vtk>=2.4.0,<2.5
 trimesh<3.22.0

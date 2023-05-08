@@ -190,6 +190,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkGenericCell,
     vtkImageData,
     vtkImplicitFunction,
+    vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPerlinNoise,
@@ -263,7 +264,12 @@ from vtkmodules.vtkFiltersCore import (
     vtkUnstructuredGridToExplicitStructuredGrid,
     vtkWindowedSincPolyDataFilter,
 )
-from vtkmodules.vtkFiltersExtraction import vtkExtractGeometry, vtkExtractGrid, vtkExtractSelection
+from vtkmodules.vtkFiltersExtraction import (
+    vtkExtractCellsByType,
+    vtkExtractGeometry,
+    vtkExtractGrid,
+    vtkExtractSelection,
+)
 from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
 from vtkmodules.vtkFiltersGeneral import (
     vtkAxes,
@@ -341,35 +347,7 @@ from vtkmodules.vtkFiltersSources import (
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
-from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader
-from vtkmodules.vtkIOGeometry import (
-    vtkAVSucdReader,
-    vtkBYUReader,
-    vtkFLUENTReader,
-    vtkGLTFReader,
-    vtkMCubesReader,
-    vtkMFIXReader,
-    vtkOBJReader,
-    vtkOpenFOAMReader,
-    vtkPTSReader,
-    vtkSTLReader,
-    vtkSTLWriter,
-    vtkTecplotReader,
-)
-from vtkmodules.vtkIOImage import (
-    vtkBMPReader,
-    vtkDEMReader,
-    vtkDICOMImageReader,
-    vtkHDRReader,
-    vtkJPEGReader,
-    vtkMetaImageReader,
-    vtkNIFTIImageReader,
-    vtkNrrdReader,
-    vtkPNGReader,
-    vtkPNMReader,
-    vtkSLCReader,
-    vtkTIFFReader,
-)
+from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
     vtkDataReader,
@@ -519,7 +497,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkWindowToImageFilter,
     vtkWorldPointPicker,
 )
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
+from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer, vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
 from vtkmodules.vtkRenderingOpenGL2 import (
     vtkCameraPass,
@@ -555,111 +533,3 @@ try:
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
 except ImportError:  # pragma: no cover
     pass
-
-
-def lazy_vtkXdmfReader():
-    """Lazy import of the vtkXdmfReader."""
-    from vtkmodules.vtkIOXdmf2 import vtkXdmfReader
-
-    return vtkXdmfReader()
-
-
-# lazy import for some of the less used readers
-def lazy_vtkOBJExporter():
-    """Lazy import of the vtkOBJExporter."""
-    from vtkmodules.vtkIOExport import vtkOBJExporter
-
-    return vtkOBJExporter()
-
-
-def lazy_vtkVRMLImporter():
-    """Lazy import of the vtkVRMLImporter."""
-    from vtkmodules.vtkIOImport import vtkVRMLImporter
-
-    return vtkVRMLImporter()
-
-
-def lazy_vtkVRMLExporter():
-    """Lazy import of the vtkVRMLExporter."""
-    from vtkmodules.vtkIOExport import vtkVRMLExporter
-
-    return vtkVRMLExporter()
-
-
-def lazy_vtkGL2PSExporter():
-    """Lazy import of the vtkGL2PSExporter."""
-    from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
-
-    return vtkGL2PSExporter()
-
-
-def lazy_vtkFacetReader():
-    """Lazy import of the vtkFacetReader."""
-    from vtkmodules.vtkFiltersHybrid import vtkFacetReader
-
-    return vtkFacetReader()
-
-
-def lazy_vtkPDataSetReader():
-    """Lazy import of the vtkPDataSetReader."""
-    from vtkmodules.vtkIOParallel import vtkPDataSetReader
-
-    return vtkPDataSetReader()
-
-
-def lazy_vtkMultiBlockPLOT3DReader():
-    """Lazy import of the vtkMultiBlockPLOT3DReader."""
-    from vtkmodules.vtkIOParallel import vtkMultiBlockPLOT3DReader
-
-    return vtkMultiBlockPLOT3DReader()
-
-
-def lazy_vtkPlot3DMetaReader():
-    """Lazy import of the vtkPlot3DMetaReader."""
-    from vtkmodules.vtkIOParallel import vtkPlot3DMetaReader
-
-    return vtkPlot3DMetaReader()
-
-
-def lazy_vtkSegYReader():
-    """Lazy import of the vtkSegYReader."""
-    from vtkmodules.vtkIOSegY import vtkSegYReader
-
-    return vtkSegYReader()
-
-
-def lazy_vtkHDFReader():
-    """Lazy import of the vtkHDFReader."""
-    from vtkmodules.vtkIOHDF import vtkHDFReader
-
-    return vtkHDFReader()
-
-
-def lazy_vtkCGNSReader():
-    """Lazy import of the vtkCGNSReader."""
-    from vtkmodules.vtkIOCGNSReader import vtkCGNSReader
-
-    return vtkCGNSReader()
-
-
-def lazy_vtkPOpenFOAMReader():
-    """Lazy import of the vtkPOpenFOAMReader."""
-    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
-    from vtkmodules.vtkParallelCore import vtkDummyController
-
-    # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
-    reader = vtkPOpenFOAMReader()
-    reader.SetController(vtkDummyController())
-    return reader
-
-
-# lazy import as this was added in 9.1.0
-def lazy_vtkCameraOrientationWidget():
-    """Lazy import of the vtkCameraOrientationWidget."""
-    try:
-        from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
-    except ImportError:  # pragma: no cover
-        from pyvista.core.errors import VTKVersionError
-
-        raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
-    return vtkCameraOrientationWidget()

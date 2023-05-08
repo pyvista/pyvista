@@ -602,6 +602,14 @@ def test_extract_all_edges(datasets):
         assert edges.n_lines
 
 
+def test_extract_all_edges_no_data():
+    mesh = pyvista.Wavelet()
+    edges = mesh.extract_all_edges(clear_data=True)
+    assert edges is not None
+    assert isinstance(edges, pyvista.PolyData)
+    assert edges.n_arrays == 0
+
+
 def test_wireframe_composite(composite):
     # Now test composite data structures
     output = composite.extract_all_edges(progress_bar=True)
@@ -2639,9 +2647,46 @@ def test_integrate_data():
     assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
 
 
+def test_align():
+    # Create a simple mesh
+    source = pyvista.Cylinder(resolution=30).triangulate().subdivide(1)
+    transformed = source.rotate_y(20).rotate_z(25).translate([-0.75, -0.5, 0.5])
+
+    # Perform ICP registration
+    aligned = transformed.align(source)
+
+    _, matrix = transformed.align(source, return_matrix=True)
+    assert isinstance(matrix, np.ndarray)
+
+    # Check if the number of points in the aligned mesh is the same as the original mesh
+    assert source.n_points == aligned.n_points
+
+    _, closest_points = aligned.find_closest_cell(source.points, return_closest_point=True)
+    dist = np.linalg.norm(source.points - closest_points, axis=1)
+    assert np.abs(dist).mean() < 1e-3
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
+
+
+def test_extract_cells_by_type(tetbeam, hexbeam):
+    combined = tetbeam + hexbeam
+
+    hex_cells = combined.extract_cells_by_type(
+        [pyvista.CellType.HEXAHEDRON, pyvista.CellType.BEZIER_PYRAMID]
+    )
+    assert np.alltrue(hex_cells.celltypes == pyvista.CellType.HEXAHEDRON)
+
+    tet_cells = combined.extract_cells_by_type(pyvista.CellType.TETRA)
+    assert np.alltrue(tet_cells.celltypes == pyvista.CellType.TETRA)
+
+    should_be_empty = combined.extract_cells_by_type(pyvista.CellType.BEZIER_CURVE)
+    assert should_be_empty.n_cells == 0
+
+    with pytest.raises(TypeError, match='Invalid type'):
+        combined.extract_cells_by_type(1.0)
 
 
 def test_merge_points():

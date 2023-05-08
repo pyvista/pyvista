@@ -74,7 +74,7 @@ update-intersphinx:
 
 # nitpicky linkcheck
 linkcheck:
-	@$(SPHINXBUILD) -b linkcheck -D nitpicky=1 -d _build/doctrees . _build/linkcheck
+	@$(SPHINXBUILD) -b linkcheck "$(SOURCEDIR)" -D nitpicky=1 -d _build/doctrees . _build/linkcheck
 
 linkcheck-grep:
 	@! grep -h "^.*:.*: \[\(\(local\)\|\(broken\)\)\]" _build/linkcheck/output.txt
