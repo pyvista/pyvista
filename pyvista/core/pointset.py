@@ -13,7 +13,12 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from pyvista.utilities.cells import (
+    CellArray,
+    create_mixed_cells,
+    get_mixed_cells,
+    numpy_to_idarr,
+)
 
 from .._typing import BoundsLike
 from ..utilities.fileio import get_ext
