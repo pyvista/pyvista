@@ -13,9 +13,11 @@ maintenance:
 - ignore_words.txt
 - mypy.ini
 - pyproject.toml
+- .pre-commit-config.yaml
 dependencies:
 - requirements*
 - environment.yml
+- .pre-commit-config.yaml
 docker:
 - docker/**/*
 - .dockerignore
