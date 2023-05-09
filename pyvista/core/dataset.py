@@ -2438,7 +2438,7 @@ class DataSet(DataSetFilters, DataObject):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: False
+        tolerance : float, default: 0.0
             The absolute tolerance to use to find cells along line.
 
         Returns
@@ -2492,7 +2492,7 @@ class DataSet(DataSetFilters, DataObject):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: False
+        tolerance : float, default: 0.0
             The absolute tolerance to use to find cells along line.
 
         Returns
