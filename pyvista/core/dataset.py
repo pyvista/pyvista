@@ -2529,7 +2529,7 @@ class DataSet(DataSetFilters, DataObject):
         cell = _vtk.vtkGenericCell()
         t = _vtk.mutable(0.0)
         x = [0.0, 0.0, 0.0]
-        sub_id = _vtk.mutable(0.0)
+        sub_id = _vtk.mutable(0)
         pcoords = [0.0, 0.0, 0.0]
         if pyvista.vtk_version_info >= (9, 2, 0):
             locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
