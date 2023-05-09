@@ -2527,7 +2527,16 @@ class DataSet(DataSetFilters, DataObject):
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         cell = _vtk.vtkGenericCell()
-        locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
+        t = _vtk.mutable(0.0)
+        x = [0.0, 0.0, 0.0]
+        sub_id = _vtk.mutable(0.0)
+        pcoords = [0.0, 0.0, 0.0]
+        if pyvista.vtk_version_info >= (9, 2, 0):
+            locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
+        else:
+            locator.IntersectWithLine(
+                (pointa, pointb, tolerance, t, x, pcoords, sub_id, points, id_list, cell)
+            )
         return vtk_id_list_to_array(id_list)
 
     def find_cells_within_bounds(self, bounds: Iterable[float]) -> np.ndarray:
