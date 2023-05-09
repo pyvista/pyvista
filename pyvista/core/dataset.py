@@ -2459,7 +2459,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.find_cells_along_line([0, 0, 0], [1.0, 0])
+        >>> mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
         array([842, 843, 896, 897])
 
         """
@@ -2513,7 +2513,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.find_cells_intersecting_line([0, 0, 0], [1.0, 0, 0])
+        >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
         array([896])
 
         """
