@@ -2419,7 +2419,68 @@ class DataSet(DataSetFilters, DataObject):
         pointb: Iterable[float],
         tolerance=0.0,
     ) -> np.ndarray:
-        """Find the index of cells in this mesh along a line.
+        """Find the index of cells whose bounds intersect a line.
+
+        Line is defined from ``pointa`` to ``pointb``.
+
+        Warnings
+        --------
+        This method returns cells whose bounds intersect the line.
+        This means that the line may not intersect the cell itself.
+        To obtain cells that intersect the line, use
+        :func:`pyvista.DataSet.find_cells_intersecting_line`.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Length 3 coordinate of the start of the line.
+
+        pointb : sequence[float]
+            Length 3 coordinate of the end of the line.
+
+        tolerance : float, default: False
+            The absolute tolerance to use to find cells along line.
+
+        Returns
+        -------
+        numpy.ndarray
+            Index or indices of the cell(s) whose bounds intersect
+            the line.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
+        DataSet.find_cells_intersecting_line
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.find_cells_along_line([0, 0, 0], [1.0, 0])
+        array([842, 843, 896, 897])
+
+        """
+        if np.array(pointa).size != 3:
+            raise TypeError("Point A must be a length three tuple of floats.")
+        if np.array(pointb).size != 3:
+            raise TypeError("Point B must be a length three tuple of floats.")
+        locator = _vtk.vtkCellLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        id_list = _vtk.vtkIdList()
+        locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
+        return vtk_id_list_to_array(id_list)
+
+    def find_cells_intersecting_line(
+        self,
+        pointa: Iterable[float],
+        pointb: Iterable[float],
+        tolerance=0.0,
+    ) -> np.ndarray:
+        """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
 
@@ -2437,8 +2498,8 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         numpy.ndarray
-            Index or indices of the cell in this mesh that are closest
-            to the given point.
+            Index or indices of the cell(s) that intersect
+            the line.
 
         See Also
         --------
@@ -2446,12 +2507,14 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
+        DataSet.find_cells_along_line
 
         Examples
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> index = mesh.find_cells_along_line([0, 0, 0], [0, 0, 1.0])
+        >>> mesh.find_cells_intersecting_line([0, 0, 0], [1.0, 0, 0])
+        array([896])
 
         """
         if np.array(pointa).size != 3:
@@ -2462,7 +2525,9 @@ class DataSet(DataSetFilters, DataObject):
         locator.SetDataSet(self)
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
-        locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
+        points = _vtk.vtkPoints()
+        cell = _vtk.vtkGenericCell()
+        locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
         return vtk_id_list_to_array(id_list)
 
     def find_cells_within_bounds(self, bounds: Iterable[float]) -> np.ndarray:
