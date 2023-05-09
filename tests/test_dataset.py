@@ -976,12 +976,18 @@ def test_find_cells_along_line():
 
 
 def test_find_cells_intersecting_line():
-    mesh = pyvista.Sphere()
-    indices = mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0, 0.0])
-    assert len(indices) == 1
+    if pyvista.vtk_version_info >= (9, 2, 0):
+        mesh = pyvista.Sphere()
+        indices = mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0, 0.0])
+        assert len(indices) == 1
 
-    indices = mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0, 0.0], tolerance=0.01)
-    assert len(indices) == 2
+        indices = mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0, 0.0], tolerance=0.01)
+        assert len(indices) == 2
+    else:
+        with pytest.raises(VTKVersionError):
+            mesh = pyvista.Sphere()
+            indices = mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0, 0.0])
+            assert len(indices) == 1
 
 
 def test_find_cells_within_bounds():

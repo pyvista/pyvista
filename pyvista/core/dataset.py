@@ -25,6 +25,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 from pyvista.utilities import (
     FieldAssociation,
     abstract_class,
@@ -2482,7 +2483,8 @@ class DataSet(DataSetFilters, DataObject):
     ) -> np.ndarray:
         """Find the index of cells that intersect a line.
 
-        Line is defined from ``pointa`` to ``pointb``.
+        Line is defined from ``pointa`` to ``pointb``.  This
+        method requires vtk version >=9.2.0.
 
         Parameters
         ----------
@@ -2517,6 +2519,9 @@ class DataSet(DataSetFilters, DataObject):
         array([896])
 
         """
+        if pyvista.vtk_version_info < (9, 2, 0):
+            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.2.0")
+
         if np.array(pointa).size != 3:
             raise TypeError("Point A must be a length three tuple of floats.")
         if np.array(pointb).size != 3:
@@ -2527,14 +2532,7 @@ class DataSet(DataSetFilters, DataObject):
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         cell = _vtk.vtkGenericCell()
-        # t = _vtk.mutable(0.0)
-        # x = [0.0, 0.0, 0.0]
-        # sub_id = _vtk.mutable(0)
-        # pcoords = [0.0, 0.0, 0.0]
-        if pyvista.vtk_version_info >= (9, 2, 0):
-            locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
-        else:
-            locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list)
+        locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
         return vtk_id_list_to_array(id_list)
 
     def find_cells_within_bounds(self, bounds: Iterable[float]) -> np.ndarray:
