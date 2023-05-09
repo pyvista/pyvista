@@ -293,6 +293,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkWarpVector,
 )
 from vtkmodules.vtkFiltersGeometry import (
+    vtkAttributeSmoothingFilter,
     vtkCompositeDataGeometryFilter,
     vtkDataSetSurfaceFilter,
     vtkGeometryFilter,

@@ -5784,3 +5784,39 @@ def _set_threshold_limit(alg, value, method, invert):
                 alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
+
+    def smooth_attributes(
+        self,
+        strategy="all",
+        weights="distance2",
+        max_iter=5,
+        relaxation_factor=0.1,
+        excluded_arrays=None,
+    ):
+        alg = _vtk.vtkAttributeSmoothingFilter()
+
+        # smoothing mask not yet implemented
+        strategy_map = {"all": 0, "all_but_boundary": 1, "adjacent_to_boundary": 2}
+        weights_map = {"average": 0, "distance": 1, "distance2": 2}
+
+        try:
+            alg.SetSmoothingStrategy(strategy_map[strategy])
+        except KeyError:
+            raise ValueError(
+                f"Unknown strategy supplied, got {strategy}\n"
+                f"    Supported values: {strategy_map.keys()}"
+            )
+
+        try:
+            alg.SetWeightsType(weights_map[weights])
+        except KeyError:
+            raise ValueError(
+                f"Unknown weights supplied, got {weights}\n"
+                f"    Supported values: {weights_map.keys()}"
+            )
+
+        if isinstance(excluded_arrays, str):
+            excluded_arrays = [excluded_arrays]
+
+        # for ex_array in excluded_arrays:
+        #    if excluded_arrays not in self.array_names:
