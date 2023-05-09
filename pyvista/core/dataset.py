@@ -2424,13 +2424,6 @@ class DataSet(DataSetFilters, DataObject):
 
         Line is defined from ``pointa`` to ``pointb``.
 
-        Warnings
-        --------
-        This method returns cells whose bounds intersect the line.
-        This means that the line may not intersect the cell itself.
-        To obtain cells that intersect the line, use
-        :func:`pyvista.DataSet.find_cells_intersecting_line`.
-
         Parameters
         ----------
         pointa : sequence[float]
@@ -2447,6 +2440,13 @@ class DataSet(DataSetFilters, DataObject):
         numpy.ndarray
             Index or indices of the cell(s) whose bounds intersect
             the line.
+
+        Warnings
+        --------
+        This method returns cells whose bounds intersect the line.
+        This means that the line may not intersect the cell itself.
+        To obtain cells that intersect the line, use
+        :func:`pyvista.DataSet.find_cells_intersecting_line`.
 
         See Also
         --------
