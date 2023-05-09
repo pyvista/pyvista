@@ -17,6 +17,7 @@ maintenance:
 dependencies:
 - requirements*
 - environment.yml
+- .pre-commit-config.yaml
 docker:
 - docker/**/*
 - .dockerignore
