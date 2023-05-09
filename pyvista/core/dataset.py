@@ -2535,7 +2535,7 @@ class DataSet(DataSetFilters, DataObject):
             locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
         else:
             locator.IntersectWithLine(
-                pointa, pointb, tolerance, t, x, pcoords, sub_id, points, id_list, cell
+                pointa, pointb, tolerance, t, x, pcoords, sub_id, id_list, cell
             )
         return vtk_id_list_to_array(id_list)
 
