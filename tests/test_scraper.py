@@ -28,9 +28,11 @@ def test_scraper(tmpdir, monkeypatch, n_win):
         op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
     ]
 
-    gif_path = op.join(src_dir, 'auto_examples', 'images', 'sg_img_0.gif')
+    # create and save GIF to tmpdir
+    gif_path = op.abspath(tmpdir + 'sg_img_0.gif')
     plotter_gif.open_gif(gif_path)
-    img_fnames.append(gif_path)
+    plotter_gif.write_frame()
+    plotter_gif.close()
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
@@ -40,16 +42,19 @@ def test_scraper(tmpdir, monkeypatch, n_win):
         example_globals=dict(a=1),
         target_file=target_file,
     )
+
     os.makedirs(op.dirname(img_fnames[0]))
     for img_fname in img_fnames:
         assert not os.path.isfile(img_fname)
+
+    # add gif to list after checking other filenames are empty
+    img_fnames.append(gif_path)
     os.makedirs(out_dir)
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
         assert os.path.isfile(img_fname)
     for plotter in plotters:
         plotter.close()
-    plotter_gif.close()
 
 
 def test_scraper_raise(tmpdir):
