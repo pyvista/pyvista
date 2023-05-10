@@ -60,6 +60,9 @@ class RectilinearGridFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Deprecated keyword argument ``pass_cell_data``.
+
         Returns
         -------
         pyvista.UnstructuredGrid
