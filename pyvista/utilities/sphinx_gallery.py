@@ -55,6 +55,7 @@ class Scraper:
             fname = next(image_path_iterator)
             if hasattr(plotter, '_gif_filename'):
                 # move gif to fname
+                fname = fname[:-3] + "gif"
                 shutil.move(plotter._gif_filename, fname)
             else:
                 plotter.screenshot(fname)
