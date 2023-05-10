@@ -57,13 +57,14 @@ def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
 
 def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
     tiny_rectilinear["cell_data"] = np.ones(tiny_rectilinear.n_cells)
-
+    assert tiny_rectilinear.active_scalars_name == "cell_data"
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_cell_data=False)
     assert not tet_grid.cell_data
 
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_cell_data=True)
     assert tet_grid.cell_data
     assert "cell_data" in tet_grid.cell_data
+    assert tet_grid.active_scalars_name == "cell_data"
 
     # automatically added
     assert 'vtkOriginalCellIds' in tet_grid.cell_data
