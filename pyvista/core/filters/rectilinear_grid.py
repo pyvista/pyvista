@@ -116,8 +116,11 @@ class RectilinearGridFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Converting to tetrahedra')
         out = _get_output(alg)
+
         if pass_cell_data:
             # algorithm stores original cell ids in active scalars
+            # this does not preserve active scalars, but we need to
+            # keep active scalars until they are renamed
             for name in self.cell_data:  # type: ignore
                 if name != out.cell_data.active_scalars_name:
                     out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore
@@ -127,5 +130,10 @@ class RectilinearGridFilters:
             out.cell_data.set_array(
                 out.cell_data.pop(out.cell_data.active_scalars_name), 'vtkOriginalCellIds'
             )
+
+        if pass_cell_data:
+            # Now reset active scalars in cast the original mesh had data with active scalars
+            association, name = self.active_scalars_info  # type: ignore
+            out.set_active_scalars(name, preference=association)
 
         return out
