@@ -18,12 +18,20 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     monkeypatch.setattr(pyvista, 'BUILDING_GALLERY', True)
     pyvista.close_all()
     plotters = [pyvista.Plotter(off_screen=True) for _ in range(n_win)]
+    plotter_gif = pyvista.Plotter()
+
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = op.join(str(tmpdir), '_build', 'html')
+
     img_fnames = [
         op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
     ]
+
+    gif_path = op.join(src_dir, 'auto_examples', 'images', 'sg_img_0.gif')
+    plotter_gif.open_gif(gif_path)
+    img_fnames.append(gif_path)
+
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
     block = None
@@ -41,6 +49,7 @@ def test_scraper(tmpdir, monkeypatch, n_win):
         assert os.path.isfile(img_fname)
     for plotter in plotters:
         plotter.close()
+    plotter_gif.close()
 
 
 def test_scraper_raise(tmpdir):
