@@ -338,3 +338,11 @@ def test_plot_pointset_widgets(pointset):
     pl = pyvista.Plotter()
     pl.add_mesh_slice_spline(pointset)
     pl.close()
+
+
+def test_widget_playback_widgets(uniform):
+    p = pyvista.Plotter()
+    func = lambda value: value  # Does nothing
+    p.add_mesh(uniform)
+    p.add_slider_widget(callback=func)
+    p.close()
