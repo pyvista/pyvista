@@ -36,22 +36,7 @@ dependencies = [
 dynamic = ['version']
 
 [project.optional-dependencies]
-all = [
-    'imageio',
-    'cmocean',
-    'colorcet',
-    'ipyvtklink',
-    'ipywidgets',
-    'jupyter-server-proxy',
-    'meshio>=5.2',
-    'nest_asyncio',
-    'panel',
-    'pythreejs',
-    'trame-client>=2.4.2',
-    'trame-server>=2.8.0',
-    'trame-vtk>=2.4.0',
-    'trame>=2.2.6',
-]
+all = ['pyvista[colormaps,io,jupyter,trame]']
 colormaps = [
     'cmocean',
     'colorcet',
