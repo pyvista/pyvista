@@ -18,12 +18,22 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     monkeypatch.setattr(pyvista, 'BUILDING_GALLERY', True)
     pyvista.close_all()
     plotters = [pyvista.Plotter(off_screen=True) for _ in range(n_win)]
+    plotter_gif = pyvista.Plotter()
+
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = op.join(str(tmpdir), '_build', 'html')
+
     img_fnames = [
         op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
     ]
+
+    # create and save GIF to tmpdir
+    gif_path = op.abspath(tmpdir + 'sg_img_0.gif')
+    plotter_gif.open_gif(gif_path)
+    plotter_gif.write_frame()
+    plotter_gif.close()
+
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
     block = None
@@ -32,9 +42,13 @@ def test_scraper(tmpdir, monkeypatch, n_win):
         example_globals=dict(a=1),
         target_file=target_file,
     )
+
     os.makedirs(op.dirname(img_fnames[0]))
     for img_fname in img_fnames:
         assert not os.path.isfile(img_fname)
+
+    # add gif to list after checking other filenames are empty
+    img_fnames.append(gif_path)
     os.makedirs(out_dir)
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
