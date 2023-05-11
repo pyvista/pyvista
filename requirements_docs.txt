@@ -31,7 +31,7 @@ sphinx-toolbox==3.4.0
 sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.4
 sympy==1.11.1
-trame==2.4.0
+trame==2.4.1
 trame-client==2.7.5
 trame-server==2.11.0
 trame-vtk==2.4.4
