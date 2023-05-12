@@ -753,11 +753,13 @@ def test_set_active_scalars_mixed(multiblock_poly):
 
 
 def test_to_polydata(multiblock_all):
-    multiblock_all.append(pyvista.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    if pyvista.vtk_version_info >= (9, 1, 0):
+        multiblock_all.append(pyvista.PointSet([0.0, 0.0, 1.0]))  # missing pointset
     assert not multiblock_all.is_all_polydata
 
     dataset_a = multiblock_all.as_polydata_blocks()
-    assert dataset_a[-1].n_points == 1
+    if pyvista.vtk_version_info >= (9, 1, 0):
+        assert dataset_a[-1].n_points == 1
     assert not multiblock_all.is_all_polydata
     assert dataset_a.is_all_polydata
 
