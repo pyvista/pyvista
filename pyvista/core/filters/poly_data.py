@@ -420,11 +420,11 @@ class PolyDataFilters(DataSetFilters):
         """
         # check if dataset or datasets are not polydata
         if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            is_pd = all(isinstance(data, pyvista.PolyData) for data in dataset)
+            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
         else:
-            is_pd = isinstance(dataset, pyvista.PolyData)
+            is_polydata = isinstance(dataset, pyvista.PolyData)
 
-        if inplace and not is_pd:
+        if inplace and not is_polydata:
             raise TypeError("In-place merge requires both input datasets to be PolyData.")
 
         merged = DataSetFilters.merge(
@@ -438,7 +438,7 @@ class PolyDataFilters(DataSetFilters):
         )
 
         # convert back to a polydata if both inputs were polydata
-        if is_pd:
+        if is_polydata:
             merged = merged.extract_geometry()
 
         if inplace:
