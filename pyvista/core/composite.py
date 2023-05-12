@@ -929,13 +929,14 @@ class MultiBlock(
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        return fmt
+        return fmt.strip()
 
     def __str__(self) -> str:
         """Return the str representation of the multi block."""

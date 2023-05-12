@@ -2005,15 +2005,15 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> zrng = np.arange(-10, 10, 1, dtype=np.float32)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
     >>> grid = pyvista.StructuredGrid(x, y, z)
-    >>> grid  # doctest:+SKIP
-    StructuredGrid (0x7fb18f2a8580)
-    N Cells:    513
-    N Points:   800
-    X Bounds:   -1.000e+01, 8.000e+00
-    Y Bounds:   -1.000e+01, 5.000e+00
-    Z Bounds:   -1.000e+01, 9.000e+00
-    Dimensions: 10, 4, 20
-    N Arrays:   0
+    >>> grid
+    StructuredGrid (...)
+      N Cells:      513
+      N Points:     800
+      X Bounds:     -1.000e+01, 8.000e+00
+      Y Bounds:     -1.000e+01, 5.000e+00
+      Z Bounds:     -1.000e+01, 9.000e+00
+      Dimensions:   10, 4, 20
+      N Arrays:     0
 
     """
 
@@ -2464,25 +2464,17 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.cast_to_unstructured_grid()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = grid.cast_to_unstructured_grid()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = grid.cast_to_explicit_structured_grid()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         grid = ExplicitStructuredGrid()
@@ -2641,8 +2633,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.dimensions  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.dimensions
         (5, 6, 7)
 
         """
@@ -2666,13 +2658,13 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.bounds  # doctest:+SKIP
-        [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.bounds
+        (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
 
-        >>> grid.visible_bounds  # doctest:+SKIP
-        [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
+        >>> grid.visible_bounds
+        (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
         """
         name = _vtk.vtkDataSetAttributes.GhostArrayName()
@@ -2703,12 +2695,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.cell_id((3, 4, 0))  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.cell_id((3, 4, 0))
         19
 
         >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
-        >>> grid.cell_id(coords)  # doctest:+SKIP
+        >>> grid.cell_id(coords)
         array([19, 31, 41, 54])
 
         """
@@ -2750,11 +2742,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.cell_coords(19)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.cell_coords(19)
         (3, 4, 0)
 
-        >>> grid.cell_coords((19, 31, 41, 54))  # doctest:+SKIP
+        >>> grid.cell_coords((19, 31, 41, 54))
         array([[3, 4, 0],
                [3, 2, 1],
                [1, 0, 2],

@@ -345,7 +345,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         --------
         >>> from pyvista import examples
         >>> texture = examples.download_puppy_texture()
-        >>> texture  # doctest:+SKIP
+        >>> texture
         Texture (...)
           Components:   3
           Cube Map:     False
@@ -636,8 +636,8 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
         >>> bw_texture = texture.to_grayscale()
-        >>> bw_texture  # doctest:+SKIP
-        Texture (0x7f711fc6a740)
+        >>> bw_texture
+        Texture (...)
           Components:   1
           Cube Map:     False
           Dimensions:   256, 256

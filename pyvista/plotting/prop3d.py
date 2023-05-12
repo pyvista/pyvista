@@ -168,22 +168,6 @@ class Prop3D(_vtk.vtkProp3D):
 
         Examples
         --------
-        Show that the orientation changes with rotation.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh)
-        >>> actor.rotate_x(90)
-        >>> actor.orientation  # doctest:+SKIP
-        (90, 0, 0)
-
-        Set the orientation directly.
-
-        >>> actor.orientation = (0, 45, 45)
-        >>> actor.orientation  # doctest:+SKIP
-        (0, 45, 45)
-
         Reorient just the actor and plot it. Note how the actor is rotated
         about its own axes as defined by its position.
 
@@ -202,6 +186,22 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor.orientation = (45, 0, 0)
         >>> pl.show_axes()
         >>> pl.show()
+
+        Show that the orientation changes with rotation.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor.rotate_x(90)
+        >>> actor.orientation  # doctest:+SKIP
+        (90, 0, 0)
+
+        Set the orientation directly.
+
+        >>> actor.orientation = (0, 45, 45)
+        >>> actor.orientation  # doctest:+SKIP
+        (0, 45, 45)
 
         """
         return self.GetOrientation()

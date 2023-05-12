@@ -4041,8 +4041,8 @@ def download_pump_bracket(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_pump_bracket()
-    >>> dataset  # doctest:+SKIP
-    UnstructuredGrid (0x7f46a9279120)
+    >>> dataset
+    UnstructuredGrid (...)
       N Cells:    124806
       N Points:   250487
       X Bounds:   -5.000e-01, 5.000e-01
@@ -4663,14 +4663,14 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter()
-    >>> pc  # doctest:+SKIP
-    PointSet (0x7f97f718d460)
-      N Cells:      0
-      N Points:     32314
-      X Bounds:     7.451e+01, 7.892e+01
-      Y Bounds:     1.616e+01, 2.275e+01
-      Z Bounds:     8.900e+01, 9.319e+01
-      N Arrays:     0
+    >>> pc
+    PointSet (...)
+      N Cells:    0
+      N Points:   32314
+      X Bounds:   7.451e+01, 7.892e+01
+      Y Bounds:   1.616e+01, 2.275e+01
+      Z Bounds:   8.900e+01, 9.319e+01
+      N Arrays:   0
 
     Plot the point cloud. Color based on the distance from the center of the
     cloud.
@@ -4717,14 +4717,14 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter_dense()
-    >>> pc  # doctest:+SKIP
-    PointSet (0x7fd79493a340)
-    N Cells:      0
-    N Points:     2062256
-    X Bounds:     7.462e+01, 7.863e+01
-    Y Bounds:     1.604e+01, 2.244e+01
-    Z Bounds:     8.893e+01, 9.337e+01
-    N Arrays:     0
+    >>> pc
+    PointSet (...)
+      N Cells:    0
+      N Points:   2062256
+      X Bounds:   7.462e+01, 7.863e+01
+      Y Bounds:   1.604e+01, 2.244e+01
+      Z Bounds:   8.893e+01, 9.337e+01
+      N Arrays:   0
 
     Plot the point cloud. Color based on the distance from the center of the
     cloud.
@@ -4793,15 +4793,15 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
     ...     zoom=3.0,
     ... )
 
-    >>> stars  # doctest:+SKIP
-    PolyData (0x7fe5851ac0a0)
-      N Cells:      107857
-      N Points:     107857
-      N Strips:     0
-      X Bounds:     -9.755e+02, 9.774e+02
-      Y Bounds:     -9.620e+02, 9.662e+02
-      Z Bounds:     -9.788e+02, 9.702e+02
-      N Arrays:     4
+    >>> stars
+    PolyData (...)
+      N Cells:    107857
+      N Points:   107857
+      N Strips:   0
+      X Bounds:   -9.755e+02, 9.774e+02
+      Y Bounds:   -9.620e+02, 9.662e+02
+      Z Bounds:   -9.788e+02, 9.702e+02
+      N Arrays:   3
 
     See the :ref:`plotting_point_clouds` for more details on how to plot point
     clouds.
@@ -4937,14 +4937,16 @@ def download_black_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe489493520)
-      N Cells:      3136652
-      N Points:     1611789
-      X Bounds:     -1.092e+02, 1.533e+02
-      Y Bounds:     -1.200e+02, 1.415e+02
-      Z Bounds:     1.666e+01, 4.077e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3136652
+      N Points:   1611789
+      N Strips:   0
+      X Bounds:   -1.092e+02, 1.533e+02
+      Y Bounds:   -1.200e+02, 1.415e+02
+      Z Bounds:   1.666e+01, 4.077e+02
+      N Arrays:   0
+
 
     """
     filename = _download_archive(
@@ -4994,14 +4996,15 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7f6ed1345520)
-      N Cells:      4547716
-      N Points:     2297089
-      X Bounds:     -1.147e+02, 8.468e+01
-      Y Bounds:     -7.103e+01, 9.247e+01
-      Z Bounds:     -1.198e+02, 2.052e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3580454
+      N Points:   1811531
+      N Strips:   0
+      X Bounds:   -1.147e+02, 8.468e+01
+      Y Bounds:   -6.996e+01, 9.247e+01
+      Z Bounds:   -1.171e+02, 2.052e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5046,14 +5049,15 @@ def download_bird_bath(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8caf2ba00)
-    N Cells:      3507935
-    N Points:     1831383
-    X Bounds:     -1.601e+02, 1.483e+02
-    Y Bounds:     -1.521e+02, 1.547e+02
-    Z Bounds:     -4.241e+00, 1.409e+02
-    N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3507935
+      N Points:   1831383
+      N Strips:   0
+      X Bounds:   -1.601e+02, 1.483e+02
+      Y Bounds:   -1.521e+02, 1.547e+02
+      Z Bounds:   -4.241e+00, 1.409e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5103,14 +5107,15 @@ def download_owl(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8caeeaee0)
-      N Cells:      2440707
-      N Points:     1221756
-      X Bounds:     -5.834e+01, 7.047e+01
-      Y Bounds:     -7.006e+01, 6.658e+01
-      Z Bounds:     1.676e+00, 2.013e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    2440707
+      N Points:   1221756
+      N Strips:   0
+      X Bounds:   -5.834e+01, 7.047e+01
+      Y Bounds:   -7.006e+01, 6.658e+01
+      Z Bounds:   1.676e+00, 2.013e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5155,14 +5160,15 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8cadc14c0)
-      N Cells:      3570967
-      N Points:     1796805
-      X Bounds:     -1.364e+02, 1.929e+02
-      Y Bounds:     -1.677e+02, 1.603e+02
-      Z Bounds:     1.209e+02, 4.090e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3570967
+      N Points:   1796805
+      N Strips:   0
+      X Bounds:   -1.364e+02, 1.929e+02
+      Y Bounds:   -1.677e+02, 1.603e+02
+      Z Bounds:   1.209e+02, 4.090e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5207,14 +5213,15 @@ def download_sea_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8b3862460)
-      N Cells:      3548473
-      N Points:     1810012
-      X Bounds:     -1.666e+02, 1.465e+02
-      Y Bounds:     -1.742e+02, 1.384e+02
-      Z Bounds:     -1.500e+02, 2.992e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3548473
+      N Points:   1810012
+      N Strips:   0
+      X Bounds:   -1.666e+02, 1.465e+02
+      Y Bounds:   -1.742e+02, 1.384e+02
+      Z Bounds:   -1.500e+02, 2.992e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5285,14 +5292,15 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fd08f1faf40)
-      N Cells:      13702
-      N Points:     6801
-      X Bounds:     -6.460e-31, 9.000e+01
-      Y Bounds:     -3.535e-32, 1.480e+02
-      Z Bounds:     -7.287e-13, 2.000e+01
-      N Arrays:     1
+    >>> mesh
+    PolyData (...)
+      N Cells:    15446
+      N Points:   7677
+      N Strips:   0
+      X Bounds:   -6.460e-31, 9.000e+01
+      Y Bounds:   -3.535e-32, 1.480e+02
+      Z Bounds:   0.000e+00, 2.000e+01
+      N Arrays:   2
 
     """
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
@@ -5332,8 +5340,8 @@ def download_aero_bracket(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> dataset = examples.download_aero_bracket()
-    >>> dataset  # doctest:+SKIP
-    UnstructuredGrid (0x7f439aa2cac0)
+    >>> dataset
+    UnstructuredGrid (...)
       N Cells:    117292
       N Points:   187037
       X Bounds:   -6.858e-03, 1.118e-01
