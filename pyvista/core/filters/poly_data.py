@@ -444,11 +444,13 @@ class PolyDataFilters(DataSetFilters):
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-                ds_has_lines_strips = any([ds.n_lines or ds.n_strips for ds in dataset])
+                ds_has_lines_strips = any(
+                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                )
             else:
-                ds_has_lines_strips = dataset.n_lines or dataset.n_strips
+                ds_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
-            if self.n_lines or self.n_strips or ds_has_lines_strips:
+            if self.n_lines or self.n_strips or self.n_verts or ds_has_lines_strips:
                 merged = merged.extract_geometry()
             else:
                 pd_merged = pyvista.PolyData(
