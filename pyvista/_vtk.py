@@ -410,6 +410,7 @@ from vtkmodules.vtkInteractionWidgets import (
     vtkSphereWidget,
     vtkSplineWidget,
     vtkTexturedButtonRepresentation2D,
+    vtkPlaybackWidget,
 )
 
 try:

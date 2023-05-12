@@ -344,5 +344,5 @@ def test_widget_playback_widgets(uniform):
     p = pyvista.Plotter()
     func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_playback_widgets(callback=func)
+    p.add_playback_widget(callback=func)
     p.close()

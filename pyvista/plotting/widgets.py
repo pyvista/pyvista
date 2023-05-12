@@ -84,6 +84,7 @@ class WidgetHelper:
         self.spline_sliced_meshes = []
         self.sphere_widgets = []
         self.button_widgets = []
+        self.playback_widgets = []
 
     def add_box_widget(
         self,
@@ -2343,6 +2344,69 @@ class WidgetHelper:
         """Remove all of the button widgets."""
         self.button_widgets.clear()
 
+    def add_playback_widget(self, callback, pass_widget=False, interaction_event='end'):
+        """Add a playback widget.
+
+        This is useless without a callback function. You can pass a
+        callable function that takes a single argument, the value of
+        this  playback widget, and performs a task with that value.
+
+        Parameters
+        ----------
+        callback : callable
+            Called every time the playback is updated. This should take a single
+            parameter: the float value of the playback.
+
+        interaction_event : vtk.vtkCommand.EventIds, str, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
+
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last
+            argument of the callback.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> def create_mesh(value):
+        ...     res = int(value)
+        ...     sphere = pv.Sphere(
+        ...         phi_resolution=res, theta_resolution=res
+        ...     )
+        ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
+        ...
+        >>> slider = pl.add_playback_widget(create_mesh)
+        >>> pl.show()
+        """
+        if self.iren is None:
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
+        widget = _vtk.vtkPlaybackWidget()
+        widget.SetInteractor(self.iren.interactor)
+        widget.SetCurrentRenderer(self.renderer)
+
+        def _the_callback(widget, event):
+            value = widget.GetRepresentation().GetPosition()
+            if callable(callback):
+                if pass_widget:
+                    try_callback(callback, value, widget)
+                else:
+                    try_callback(callback, value)
+            return
+        widget.On()
+        widget.AddObserver(_parse_interaction_event(interaction_event), _the_callback)
+        _the_callback(widget, None)
+
+        self.playback_widgets.append(widget)
+        return widget
+
+    def clear_playback_widgets(self):
+        """Remove all of the playback widgets."""
+        self.playback_widgets.clear()
+
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -2353,3 +2417,4 @@ class WidgetHelper:
         self.clear_spline_widgets()
         self.clear_button_widgets()
         self.clear_camera_widgets()
+        self.clear_playback_widgets()
