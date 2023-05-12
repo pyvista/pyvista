@@ -439,11 +439,7 @@ class PolyDataFilters(DataSetFilters):
 
         # convert back to a polydata if both inputs were polydata
         if is_pd:
-            pd_merged = pyvista.PolyData(merged.points, faces=merged.cells, n_faces=merged.n_cells)
-            pd_merged.point_data.update(merged.point_data)
-            pd_merged.cell_data.update(merged.cell_data)
-            pd_merged.field_data.update(merged.field_data)
-            merged = pd_merged
+            merged = merged.extract_geometry()
 
         if inplace:
             self.deep_copy(merged)
