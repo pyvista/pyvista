@@ -2356,7 +2356,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> dims = np.array([ni, nj, nk]) + 1
     >>> grid = pv.ExplicitStructuredGrid(dims, corners)
     >>> grid = grid.compute_connectivity()
-    >>> grid.plot(show_edges=True)  # doctest:+SKIP
+    >>> grid.plot(show_edges=True)
 
     """
 
@@ -2799,20 +2799,15 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> cell = grid.extract_cells(31)  # doctest:+SKIP
-        >>> ind = grid.neighbors(31)  # doctest:+SKIP
-        >>> neighbors = grid.extract_cells(ind)  # doctest:+SKIP
-        >>>
+        >>> grid = examples.load_explicit_structured()
+        >>> cell = grid.extract_cells(31)
+        >>> ind = grid.neighbors(31)
+        >>> neighbors = grid.extract_cells(ind)
         >>> plotter = pv.Plotter()
-        >>> plotter.add_axes()  # doctest:+SKIP
-        >>> plotter.add_mesh(
-        ...     cell, color='r', show_edges=True
-        ... )  # doctest:+SKIP
-        >>> plotter.add_mesh(
-        ...     neighbors, color='w', show_edges=True
-        ... )  # doctest:+SKIP
-        >>> plotter.show()  # doctest:+SKIP
+        >>> _ = plotter.add_axes()
+        >>> _ = plotter.add_mesh(cell, color='r', show_edges=True)
+        >>> _ = plotter.add_mesh(neighbors, color='w', show_edges=True)
+        >>> plotter.show()
 
         """
 
@@ -2938,9 +2933,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> from pyvista import examples
         >>>
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid = grid.compute_connectivity()  # doctest:+SKIP
-        >>> grid.plot(show_edges=True)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.compute_connectivity()
+        >>> grid.plot(show_edges=True)
 
         """
         if inplace:
@@ -2977,9 +2972,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid = grid.compute_connections()  # doctest:+SKIP
-        >>> grid.plot(show_edges=True)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.compute_connections()
+        >>> grid.plot(show_edges=True)
 
         """
         if inplace:

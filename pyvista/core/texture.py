@@ -52,7 +52,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     >>> os.path.basename(path)
     'masonry.bmp'
     >>> texture = pv.Texture(path)
-    >>> texture  # doctest:+SKIP
+    >>> texture
     Texture (...)
       Components:   3
       Cube Map:     False

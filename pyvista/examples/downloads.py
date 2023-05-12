@@ -4100,29 +4100,26 @@ def download_electronics_cooling(load=True):  # pragma: no cover
 
     Examples
     --------
-    Load the datasets
+    Load the datasets and plot the air velocity through the electronics.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> structure, air = examples.download_electronics_cooling()
-    >>> structure, air  # doctest:+SKIP
-    (PolyData (0x7fdfe4eb24a0)
-       N Cells:    344270
-       N Points:   187992
-       N Strips:   0
-       X Bounds:   -3.000e-03, 1.530e-01
-       Y Bounds:   -3.000e-03, 2.030e-01
-       Z Bounds:   -9.000e-03, 4.200e-02
-       N Arrays:   5,
-     UnstructuredGrid (0x7fdfde4478e0)
-       N Cells:    1749992
-       N Points:   610176
-       X Bounds:   -1.388e-18, 1.500e-01
-       Y Bounds:   -3.000e-03, 2.030e-01
-       Z Bounds:   -6.000e-03, 4.400e-02
-       N Arrays:   10)
-
-    Plot the air velocity through the electronics.
+    >>> structure, air
+    (PolyData (...)
+      N Cells:    344270
+      N Points:   187992
+      N Strips:   0
+      X Bounds:   -3.000e-03, 1.530e-01
+      Y Bounds:   -3.000e-03, 2.030e-01
+      Z Bounds:   -9.000e-03, 4.200e-02
+      N Arrays:   4, UnstructuredGrid (...)
+      N Cells:    1749992
+      N Points:   610176
+      X Bounds:   -1.388e-18, 1.500e-01
+      Y Bounds:   -3.000e-03, 2.030e-01
+      Z Bounds:   -6.000e-03, 4.400e-02
+      N Arrays:   10)
 
     >>> z_slice = air.clip('z', value=-0.005)
     >>> pl = pv.Plotter()
@@ -4143,6 +4140,8 @@ def download_electronics_cooling(load=True):  # pragma: no cover
     >>> pl.camera.roll = 90
     >>> pl.enable_anti_aliasing('fxaa')
     >>> pl.show()
+
+    Show the type and bounds of the datasets.
 
     See :ref:`openfoam_cooling_example` for a full example using this dataset.
 
