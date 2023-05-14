@@ -156,34 +156,33 @@ class LookupTable(_vtk.vtkLookupTable):
 
     >>> import pyvista as pv
     >>> lut = pv.LookupTable()
-    >>> lut  # doctest:+SKIP
-    LookupTable (0x7ff3de60d580)
+    >>> lut
+    LookupTable (...)
       Table Range:                (0.0, 1.0)
       N Values:                   256
       Above Range Color:          None
       Below Range Color:          None
-      NAN Color:                  Color(name='maroon', hex='#800000ff')
+      NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
       Log Scale:                  False
-      Color Map:                  "VTK lookup table"
+      Color Map:                  "PyVista Lookup Table"
         Alpha Range:              (1.0, 1.0)
         Hue Range:                (0.0, 0.66667)
         Saturation Range          (1.0, 1.0)
         Value Range               (1.0, 1.0)
         Ramp                      s-curve
-        Is Opaque                 True
     >>> lut.plot()
 
     Plot the lookup table with the ``'inferno'`` color map.
 
     >>> import pyvista as pv
     >>> lut = pv.LookupTable('inferno', n_values=32)
-    >>> lut  # doctest:+SKIP
-    LookupTable (0x7ff3c053f3a0)
+    >>> lut
+    LookupTable (...)
       Table Range:                (0.0, 1.0)
       N Values:                   32
       Above Range Color:          None
       Below Range Color:          None
-      NAN Color:                  Color(name='maroon', hex='#800000ff')
+      NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
       Log Scale:                  False
       Color Map:                  "inferno"
     >>> lut.plot()
@@ -1030,8 +1029,8 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista
         >>> lut = pyvista.LookupTable()
         >>> tf = lut.to_color_tf()
-        >>> tf  # doctest:+SKIP
-        <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(0x339bd40) at 0x7ffabf634700>
+        >>> tf
+        <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(...) at ...>
 
         """
         color_tf = _vtk.vtkColorTransferFunction()
@@ -1053,8 +1052,8 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista
         >>> lut = pyvista.LookupTable()
         >>> tf = lut.to_opacity_tf()
-        >>> tf  # doctest:+SKIP
-        <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(0x32fa410) at 0x7fe963d6d5e0>
+        >>> tf
+        <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(...) at ...>
 
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()

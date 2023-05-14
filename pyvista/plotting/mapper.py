@@ -130,15 +130,15 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> actor = pl.add_mesh(
         ...     mesh, scalars=mesh.points[:, 2], cmap='bwr'
         ... )
-        >>> actor.mapper.lookup_table  # doctest:+SKIP
-        LookupTable (0x7ff3be8d8c40)
+        >>> actor.mapper.lookup_table
+        LookupTable (...)
           Table Range:                (-0.5, 0.5)
           N Values:                   256
           Above Range Color:          None
           Below Range Color:          None
-          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff')
+          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff', opacity=255)
           Log Scale:                  False
-          Color Map:                  "From values array"
+          Color Map:                  "bwr"
 
         Return the lookup table of a composite dataset mapper.
 
@@ -149,7 +149,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.lookup_table  # doctest:+SKIP
-        <vtkmodules.vtkCommonCore.vtkLookupTable(0x2d4c6e0) at 0x7fce74a89fa0>
+        <vtkmodules.vtkCommonCore.vtkLookupTable(...) at ...>
 
         """
         return self.GetLookupTable()
