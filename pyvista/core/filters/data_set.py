@@ -1155,14 +1155,14 @@ class DataSetFilters:
         >>> volume[:3] = 1
         >>> vol = pyvista.wrap(volume)
         >>> threshed = vol.threshold(0.1)
-        >>> threshed  # doctest:+SKIP
-        UnstructuredGrid (0x7f00f9983fa0)
-          N Cells:	243
-          N Points:	400
-          X Bounds:	0.000e+00, 3.000e+00
-          Y Bounds:	0.000e+00, 9.000e+00
-          Z Bounds:	0.000e+00, 9.000e+00
-          N Arrays:	1
+        >>> threshed
+        UnstructuredGrid (...)
+          N Cells:    243
+          N Points:   400
+          X Bounds:   0.000e+00, 3.000e+00
+          Y Bounds:   0.000e+00, 9.000e+00
+          Z Bounds:   0.000e+00, 9.000e+00
+          N Arrays:   1
 
         Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
@@ -1476,14 +1476,15 @@ class DataSetFilters:
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.extract_geometry()  # doctest:+SKIP
-        PolyData (0x7f2f8c132040)
-          N Cells:	88
-          N Points:	90
-          X Bounds:	0.000e+00, 1.000e+00
-          Y Bounds:	0.000e+00, 1.000e+00
-          Z Bounds:	0.000e+00, 5.000e+00
-          N Arrays:	3
+        >>> hex_beam.extract_geometry()
+        PolyData (...)
+          N Cells:    88
+          N Points:   90
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 5.000e+00
+          N Arrays:   3
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
 

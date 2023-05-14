@@ -29,7 +29,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
     >>> _ = pl.add_mesh(pv.Sphere())
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     Or you can use this as a custom orientation widget with
     :func:`add_orientation_widget() <pyvista.Renderer.add_orientation_widget>`:
@@ -54,7 +54,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     ...     axes_actor,
     ...     viewport=(0, 0, 0.5, 0.5),
     ... )
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     """
 

@@ -49,9 +49,12 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> mesh = pyvista.Cube().triangulate().subdivide(4)
         >>> mask = mesh.edge_mask(45)
+        >>> mesh.plot(scalars=mask)
+
+        Show the array of masked points.
+
         >>> mask  # doctest:+SKIP
         array([ True,  True,  True, ..., False, False, False])
-        >>> mesh.plot(scalars=mask)
 
         """
         poly_data = self
@@ -552,17 +555,17 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Calculate the mean curvature of the hills example mesh.
+        Calculate the mean curvature of the hills example mesh and plot it.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> curv = hills.curvature()
+        >>> hills.plot(scalars=curv)
+
+        Show the curvature array.
+
         >>> curv  # doctest:+SKIP
         array([0.20587616, 0.06747695, ..., 0.11781171, 0.15988467])
-
-        Plot it.
-
-        >>> hills.plot(scalars=curv)
 
         """
         curv_type = curv_type.lower()
