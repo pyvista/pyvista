@@ -192,6 +192,12 @@ articles = dict(
         link="https://topogenesis.readthedocs.io/notebooks/boolean_marching_cubes/",
         image="boolean_marching_cubes.png",
     ),
+    entry=Example(
+        title="PyHyperbolic3D",
+        description="Python stuff for drawing 3D hyperbolic polyhedra with 'PyVista'.",
+        link="https://github.com/stla/PyHyperbolic3D/tree/main",
+        image="griddip.gif",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",
