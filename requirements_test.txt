@@ -21,7 +21,7 @@ pytest-memprof<0.3.0
 pytest-xdist<3.3.0
 pytest_pyvista==0.1.8
 pythreejs<2.5.0
-Sphinx<6.3.0
+Sphinx<7.1.0
 sphinx-gallery<0.14.0
 sympy<1.13.0
 tqdm<4.66.0
