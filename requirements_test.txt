@@ -18,7 +18,7 @@ param<1.14.0
 pytest<7.4.0
 pytest-cov<4.1.0
 pytest-memprof<0.3.0
-pytest-xdist<3.3.0
+pytest-xdist<3.4.0
 pytest_pyvista==0.1.8
 pythreejs<2.5.0
 Sphinx<6.3.0
