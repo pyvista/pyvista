@@ -1111,6 +1111,8 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     dataset.replace(i, block.as_polydata_blocks(copy=copy))
+                elif isinstance(block, pyvista.PointSet):
+                    dataset.replace(i, block.cast_to_polydata(deep=True))
                 elif not isinstance(block, pyvista.PolyData):
                     dataset.replace(i, block.extract_surface())
                 elif copy:
