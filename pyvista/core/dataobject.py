@@ -241,7 +241,7 @@ class DataObject:
                 fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
             fmt += row.format('N Arrays:', self.n_arrays)
-        return fmt
+        return fmt.strip()
 
     def _repr_html_(self):  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.

@@ -49,9 +49,12 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> mesh = pyvista.Cube().triangulate().subdivide(4)
         >>> mask = mesh.edge_mask(45)
+        >>> mesh.plot(scalars=mask)
+
+        Show the array of masked points.
+
         >>> mask  # doctest:+SKIP
         array([ True,  True,  True, ..., False, False, False])
-        >>> mesh.plot(scalars=mask)
 
         """
         poly_data = self
@@ -420,11 +423,11 @@ class PolyDataFilters(DataSetFilters):
         """
         # check if dataset or datasets are not polydata
         if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            is_pd = all(isinstance(data, pyvista.PolyData) for data in dataset)
+            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
         else:
-            is_pd = isinstance(dataset, pyvista.PolyData)
+            is_polydata = isinstance(dataset, pyvista.PolyData)
 
-        if inplace and not is_pd:
+        if inplace and not is_polydata:
             raise TypeError("In-place merge requires both input datasets to be PolyData.")
 
         merged = DataSetFilters.merge(
@@ -438,12 +441,28 @@ class PolyDataFilters(DataSetFilters):
         )
 
         # convert back to a polydata if both inputs were polydata
-        if is_pd:
-            pd_merged = pyvista.PolyData(merged.points, faces=merged.cells, n_faces=merged.n_cells)
-            pd_merged.point_data.update(merged.point_data)
-            pd_merged.cell_data.update(merged.cell_data)
-            pd_merged.field_data.update(merged.field_data)
-            merged = pd_merged
+        if is_polydata:
+            # if either of the input datasets contained lines or strips, we
+            # must use extract_geometry to ensure they get converted back
+            # correctly. This incurrs a performance penalty, but is needed to
+            # maintain data consistency.
+            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+                dataset_has_lines_strips = any(
+                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                )
+            else:
+                dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
+
+            if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
+                merged = merged.extract_geometry()
+            else:
+                polydata_merged = pyvista.PolyData(
+                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                )
+                polydata_merged.point_data.update(merged.point_data)
+                polydata_merged.cell_data.update(merged.cell_data)
+                polydata_merged.field_data.update(merged.field_data)
+                merged = polydata_merged
 
         if inplace:
             self.deep_copy(merged)
@@ -552,17 +571,17 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Calculate the mean curvature of the hills example mesh.
+        Calculate the mean curvature of the hills example mesh and plot it.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> curv = hills.curvature()
+        >>> hills.plot(scalars=curv)
+
+        Show the curvature array.
+
         >>> curv  # doctest:+SKIP
         array([0.20587616, 0.06747695, ..., 0.11781171, 0.15988467])
-
-        Plot it.
-
-        >>> hills.plot(scalars=curv)
 
         """
         curv_type = curv_type.lower()

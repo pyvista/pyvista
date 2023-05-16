@@ -37,8 +37,8 @@ class CellType(IntEnum):
     ...     dtype=np.float32,
     ... )
     >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
-    >>> grid  # doctest:+SKIP
-    UnstructuredGrid (0x7f5b0a55e1a0)
+    >>> grid
+    UnstructuredGrid (...)
       N Cells:    1
       N Points:   8
       X Bounds:   0.000e+00, 1.000e+00

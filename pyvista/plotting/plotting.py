@@ -828,8 +828,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Select a scalar bar actor based on the title of the bar.
 
-        >>> plotter.scalar_bars['Data']  # doctest:+SKIP
-        (vtkmodules.vtkRenderingAnnotation.vtkScalarBarActor)0x7fcd3567ca00
+        >>> plotter.scalar_bars['Data']
+        <vtkmodules.vtkRenderingAnnotation.vtkScalarBarActor(...) at ...>
 
         """
         return self._scalar_bars
@@ -871,8 +871,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.renderer  # doctest:+SKIP
-        (Renderer)0x7f916129bfa0
+        >>> pl.renderer
+        <Renderer(...) at ...>
 
         """
         return self.renderers.active_renderer
