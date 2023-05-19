@@ -19,7 +19,6 @@ from ..utilities.fileio import get_ext
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
-    DeprecationError,
     PointSetCellOperationError,
     PointSetDimensionReductionError,
     PointSetNotSupported,
@@ -968,11 +967,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         """
         return self.n_cells
-
-    @property
-    def number_of_faces(self):  # pragma: no cover
-        """Return the number of cells."""
-        raise DeprecationError('``number_of_faces`` has been deprecated.  Please use ``n_faces``')
 
     def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.
