@@ -6,7 +6,6 @@ import os
 import pathlib
 from textwrap import dedent
 from typing import Sequence, Tuple, Union
-import warnings
 
 import numpy as np
 
@@ -849,23 +848,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def is_all_triangles(self):
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
-        .. versionchanged:: 0.32.0
-           ``is_all_triangles`` is now a property.  Calling this value
-           will warn the user that this should not be called.
-           Additionally, the ``is`` operator will not work the return
-           value of this property since it is not a ``bool``
-
         Returns
         -------
-        CallableBool
+        bool
             ``True`` if all the faces of the :class:`pyvista.PolyData`
             are triangles and does not contain any vertices or lines.
-
-        Notes
-        -----
-        The return value is not a ``bool`` for compatibility
-        reasons, though this behavior will change in a future
-        release.  Future versions will simply return a ``bool``.
 
         Examples
         --------
@@ -875,60 +862,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import pyvista
         >>> plane = pyvista.Plane()
         >>> plane.is_all_triangles
-        False <CallableBool>
+        False
 
         Show that the mesh from :func:`pyvista.Sphere` contains only
         triangles.
 
         >>> sphere = pyvista.Sphere()
         >>> sphere.is_all_triangles
-        True <CallableBool>
+        True
 
         """
-
-        class CallableBool(int):  # pragma: no cover
-            """Boolean that can be called.
-
-            Programmer note: We must subclass int and not bool
-            https://stackoverflow.com/questions/2172189/why-i-cant-extend-bool-in-python
-
-            Implemented for backwards compatibility as
-            ``is_all_triangles`` was changed to be a property in
-            ``0.32.0``.
-
-            """
-
-            def __new__(cls, value):
-                """Use new instead of __init__.
-
-                See:
-                https://jfine-python-classes.readthedocs.io/en/latest/subclass-int.html#emulating-bool-using-new
-
-                """
-                return int.__new__(cls, bool(value))
-
-            def __call__(self):
-                """Return a ``bool`` of self."""
-                warnings.warn(
-                    '``is_all_triangles`` is now property as of 0.32.0 and does not need ()',
-                    DeprecationWarning,
-                )
-                return bool(self)
-
-            def __repr__(self):
-                """Return the string of bool."""
-                return f'{bool(self)} <CallableBool>'
-
         # Need to make sure there are only face cells and no lines/verts
         if not self.n_faces or self.n_lines or self.n_verts:
-            return CallableBool(False)
+            return False
 
         # early return if not all triangular
         if self._connectivity_array.size % 3:
-            return CallableBool(False)
+            return False
 
         # next, check if there are three points per face
-        return CallableBool((np.diff(self._offset_array) == 3).all())
+        return (np.diff(self._offset_array) == 3).all()
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""

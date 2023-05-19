@@ -888,8 +888,6 @@ def test_is_all_triangles():
     assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
-    # for backwards compatibility, check if we can call this
-    assert mesh.is_all_triangles()
 
 
 def test_extrude():
