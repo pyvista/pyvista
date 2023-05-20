@@ -13,7 +13,6 @@ from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import trame, vtk as vtk_widgets, vuetify
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as np2da
-from vtkmodules.util import vtkConstants
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray
 from vtkmodules.vtkFiltersCore import vtkThreshold
@@ -104,15 +103,15 @@ def update_grid(nodes_file, elems_file, field_file, **kwargs):
 
     # mapping specific to Ansys Mechanical data
     vtk_shape_id_map = {
-        "Tet4": vtkConstants.VTK_TETRA,
-        "Tet10": vtkConstants.VTK_QUADRATIC_TETRA,
-        "Hex8": vtkConstants.VTK_HEXAHEDRON,
-        "Hex20": vtkConstants.VTK_QUADRATIC_HEXAHEDRON,
-        "Tri6": vtkConstants.VTK_QUADRATIC_TRIANGLE,
-        "Quad8": vtkConstants.VTK_QUADRATIC_QUAD,
-        "Tri3": vtkConstants.VTK_TRIANGLE,
-        "Quad4": vtkConstants.VTK_QUAD,
-        "Wed15": vtkConstants.VTK_QUADRATIC_WEDGE,
+        "Tet4": pv.CellType.TETRA,
+        "Tet10": pv.CellType.QUADRATIC_TETRA,
+        "Hex8": pv.CellType.HEXAHEDRON,
+        "Hex20": pv.CellType.QUADRATIC_HEXAHEDRON,
+        "Tri6": pv.CellType.QUADRATIC_TRIANGLE,
+        "Quad8": pv.CellType.QUADRATIC_QUAD,
+        "Tri3": pv.CellType.TRIANGLE,
+        "Quad4": pv.CellType.QUAD,
+        "Wed15": pv.CellType.QUADRATIC_WEDGE,
     }
     df_elems["cell_types"] = np.nan
     df_elems.loc[df_elems.loc[:, 0] > 0, "cell_types"] = df_elems.loc[
@@ -140,8 +139,8 @@ def update_grid(nodes_file, elems_file, field_file, **kwargs):
     vtk_grid.SetPoints(vtk_pts)
 
     vtk_cells = vtkCellArray()
-    vtk_cells.SetCells(cell_types.shape[0], np2da(cells, array_type=vtkConstants.VTK_ID_TYPE))
-    vtk_grid.SetCells(np2da(cell_types, array_type=vtkConstants.VTK_UNSIGNED_CHAR), vtk_cells)
+    vtk_cells.SetCells(cell_types.shape[0], np2da(cells, array_type=12))
+    vtk_grid.SetCells(np2da(cell_types, array_type=3), vtk_cells)
 
     # Add field if any
     if field_file:
