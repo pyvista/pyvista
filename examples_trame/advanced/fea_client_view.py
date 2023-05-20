@@ -45,9 +45,9 @@ state, ctrl = server.state, server.controller
 # -----------------------------------------------------------------------------
 
 vtk_idlist = vtkIdList()
-vtk_grid = pv.UnstructuredGrid()
+grid = pv.UnstructuredGrid()
 vtk_filter = vtkThreshold()
-vtk_filter.SetInputData(vtk_grid)
+vtk_filter.SetInputData(grid)
 field_to_keep = "my_array"
 
 
@@ -134,11 +134,11 @@ def update_grid(nodes_file, elems_file, field_file, **kwargs):
     cells = cells.astype(int)
 
     # update grid
-    vtk_grid.points = points
+    grid.points = points
 
     vtk_cells = vtkCellArray()
     vtk_cells.SetCells(cell_types.shape[0], np2da(cells, array_type=12))
-    vtk_grid.SetCells(np2da(cell_types, array_type=3), vtk_cells)
+    grid.SetCells(np2da(cell_types, array_type=3), vtk_cells)
 
     # Add field if any
     if field_file:
@@ -160,7 +160,7 @@ def update_grid(nodes_file, elems_file, field_file, **kwargs):
         np_val = df_elem_data["val"].to_numpy()
         # assign data to grid with the name 'my_array'
         vtk_array = np2da(np_val, name=field_to_keep)
-        vtk_grid.GetCellData().SetScalars(vtk_array)
+        grid.GetCellData().SetScalars(vtk_array)
         state.full_range = vtk_array.GetRange()
         state.threshold_range = list(vtk_array.GetRange())
         state.picking_modes = ["hover"]
@@ -195,11 +195,11 @@ def update_tooltip(pick_data, pixel_ratio, **kwargs):
 
     if data:
         xyx = data["worldPosition"]
-        idx = vtk_grid.FindPoint(xyx)
-        field = vtk_grid.GetCellData().GetArray(0)
+        idx = grid.FindPoint(xyx)
+        field = grid.GetCellData().GetArray(0)
         if idx > -1 and field:
             messages = []
-            vtk_grid.GetPointCells(idx, vtk_idlist)
+            grid.GetPointCells(idx, vtk_idlist)
             for i in range(vtk_idlist.GetNumberOfIds()):
                 cell_idx = vtk_idlist.GetId(i)
                 value = field.GetValue(cell_idx)
@@ -312,7 +312,7 @@ with SinglePageLayout(server) as layout:
                             }""",
                     ),
                 ):
-                    mesh = vtk_widgets.VtkMesh("mesh", dataset=vtk_grid)
+                    mesh = vtk_widgets.VtkMesh("mesh", dataset=grid)
                     ctrl.mesh_update = mesh.update
 
                 with vtk_widgets.VtkGeometryRepresentation(
@@ -354,7 +354,7 @@ if args.data:
     reader.SetFileName(os.path.abspath(args.data))
     reader.Update()
     vtu = reader.GetOutput()
-    vtk_grid.ShallowCopy(vtu)
+    grid.ShallowCopy(vtu)
 
     vtk_array = vtu.GetCellData().GetScalars()
     full_min, full_max = vtk_array.GetRange()
