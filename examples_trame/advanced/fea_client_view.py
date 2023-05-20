@@ -13,7 +13,7 @@ from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import trame, vtk as vtk_widgets, vuetify
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as np2da
-from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
+from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import vtkCellArray
 from vtkmodules.vtkFiltersCore import vtkThreshold
 
@@ -134,9 +134,7 @@ def update_grid(nodes_file, elems_file, field_file, **kwargs):
     cells = cells.astype(int)
 
     # update grid
-    vtk_pts = vtkPoints()
-    vtk_pts.SetData(np2da(points))
-    vtk_grid.SetPoints(vtk_pts)
+    vtk_grid.points = points
 
     vtk_cells = vtkCellArray()
     vtk_cells.SetCells(cell_types.shape[0], np2da(cells, array_type=12))
