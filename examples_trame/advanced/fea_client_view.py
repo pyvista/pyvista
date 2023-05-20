@@ -1,6 +1,7 @@
-r"""
-Version for trame 1.x - https://github.com/Kitware/trame/blob/release-v1/examples/VTK/Applications/FiniteElementAnalysis/app_client_view.py
-Delta v1..v2          - https://github.com/Kitware/trame/commit/03f28bb0084490acabf218264b96a1dbb3a17f19
+"""PyVista FEA
+
+This example is a translation from a `dash-vtk` code described in that [repository](https://github.com/shkiefer/dash_vtk_unstructured) using trame and pyvista.
+The data files can be found [here in the original project](https://github.com/shkiefer/dash_vtk_unstructured/tree/main/data).
 """
 
 import io
@@ -14,8 +15,10 @@ from trame.widgets import trame, vtk as vtk_widgets, vuetify
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as np2da
 from vtkmodules.util import vtkConstants
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkCellArray
 from vtkmodules.vtkFiltersCore import vtkThreshold
+
+import pyvista as pv
 
 # -----------------------------------------------------------------------------
 # Constants
@@ -39,11 +42,11 @@ server = get_server()
 state, ctrl = server.state, server.controller
 
 # -----------------------------------------------------------------------------
-# VTK pipeline
+# PyVista pipeline
 # -----------------------------------------------------------------------------
 
 vtk_idlist = vtkIdList()
-vtk_grid = vtkUnstructuredGrid()
+vtk_grid = pv.UnstructuredGrid()
 vtk_filter = vtkThreshold()
 vtk_filter.SetInputData(vtk_grid)
 field_to_keep = "my_array"
