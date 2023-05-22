@@ -231,7 +231,6 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*ColorLike'),
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'ActiveArrayInfo'),
-    (r'py:.*', 'CallableBool'),
     (r'py:.*', 'FieldAssociation'),
     (r'py:.*', 'VTK'),
     (r'py:.*', 'colors.Colormap'),
