@@ -2,7 +2,7 @@
 cmocean==3.0.3
 colorcet==3.0.1
 enum-tools==0.9.0.post1
-imageio==2.27.0
+imageio==2.29.0
 imageio-ffmpeg==0.4.8
 ipygany==0.5.0
 ipyvtklink==0.2.3
