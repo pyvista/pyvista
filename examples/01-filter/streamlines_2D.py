@@ -90,7 +90,7 @@ p.add_mesh(line_streamlines.tube(radius=0.02), scalars="vorticity_mag", clim=cli
 p.view_xy()
 p.show(cpos=camera_position)
 
-###############################################################################
+##############################################################################
 # The streamlines are only approximately evenly spaced and capture the
 # vortex pair downstream of the cylinder with appropriate choice of
 # ``start_position``.
