@@ -108,7 +108,7 @@ def test_texture_repr(texture):
     tex_repr = repr(texture)
     assert 'Components:   3' in tex_repr
     assert 'Cube Map:     False' in tex_repr
-    assert 'Dimensions:   300, 200\n' in tex_repr
+    assert 'Dimensions:   300, 200' in tex_repr
 
 
 def test_interpolate(texture):

@@ -69,7 +69,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
-    "sphinx.ext.doctest",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
@@ -232,7 +231,6 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*ColorLike'),
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'ActiveArrayInfo'),
-    (r'py:.*', 'CallableBool'),
     (r'py:.*', 'FieldAssociation'),
     (r'py:.*', 'VTK'),
     (r'py:.*', 'colors.Colormap'),

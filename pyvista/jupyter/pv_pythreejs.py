@@ -189,7 +189,7 @@ def to_surf_mesh(
     if add_attr is None:
         add_attr = {}
     # convert to an all-triangular surface
-    if surf.is_all_triangles():
+    if surf.is_all_triangles:
         trimesh = surf
     else:
         trimesh = surf.triangulate()

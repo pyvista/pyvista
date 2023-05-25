@@ -340,6 +340,16 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     merged = mesh.merge(sphere_shifted, inplace=True)
     assert merged is mesh
 
+    # test merge with lines
+    arc_1 = pyvista.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
+    arc_2 = pyvista.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
+    merged = arc_1 + arc_2
+    assert merged.n_lines == 2
+
+    # test merge with lines as iterable
+    merged = arc_1.merge((arc_2, arc_2))
+    assert merged.n_lines == 3
+
     # test main_has_priority
     mesh = sphere.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
@@ -878,8 +888,6 @@ def test_is_all_triangles():
     assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
-    # for backwards compatibility, check if we can call this
-    assert mesh.is_all_triangles()
 
 
 def test_extrude():
