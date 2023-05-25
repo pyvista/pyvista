@@ -9,9 +9,6 @@ import numpy as np
 
 import pyvista as pv
 
-# Set plot theme to "document"
-pv.set_plot_theme("document")
-
 # Define x and y ranges for the structured mesh
 xrng = np.arange(-10, 10, 2)
 yrng = np.arange(-10, 10, 5)
