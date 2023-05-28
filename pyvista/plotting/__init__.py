@@ -36,6 +36,7 @@ from .actor_properties import ActorProperties
 from .mapper import DataSetMapper, _BaseMapper
 from .lookup_table import LookupTable
 from .cube_axes_actor import CubeAxesActor
+from .scalar_bars import ScalarBars
 
 
 class QtDeprecationError(Exception):
