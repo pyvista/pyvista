@@ -37,7 +37,6 @@ all plotting functionality in PyVista.
    Plotter
    Property
    Renderer
-   ScalarBars
    plotting._BaseMapper
    plotting.opts.InterpolationType
    plotting.volume.Volume
