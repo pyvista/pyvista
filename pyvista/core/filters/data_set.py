@@ -1506,9 +1506,9 @@ class DataSetFilters:
         ----------
         use_all_points : bool, default: False
             Indicates whether all of the points of the input mesh should exist
-            in the output. When ``True`` enables point renumbering.  If set to
-            ``True``, then a threaded approach is used which avoids the use of
-            a point locator and is quicker.
+            in the output. When ``True``, point numbering does not change and
+            a threaded approach is used, which avoids the use of a point locator
+            and is quicker.
 
             By default this is set to ``False``, and unused points are omitted
             from the output.
