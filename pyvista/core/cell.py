@@ -1,7 +1,7 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 import numpy as np
 
@@ -44,8 +44,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     --------
     Get the 0-th cell from a :class:`pyvista.PolyData`.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Sphere()
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
     >>> cell = mesh.get_cell(0)
     >>> cell  # doctest: +SKIP
     Cell (0x7fa760075a10)
@@ -101,8 +101,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).type
         <CellType.TRIANGLE: 5>
         """
@@ -114,8 +114,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).is_linear
         True
 
@@ -180,8 +180,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).dimension
         2
         """
@@ -193,8 +193,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).n_points
         3
         """
@@ -219,8 +219,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).n_edges
         3
         """
@@ -246,8 +246,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).points
         array([[-5.40595092e-02,  0.00000000e+00, -4.97068971e-01],
                [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
@@ -273,8 +273,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         Extract a single edge from a face and output the IDs of the edge
         points.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> cell = mesh.get_cell(0)
         >>> edge = cell.get_edge(0)
         >>> edge.point_ids
@@ -356,12 +356,33 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
         (-0.05405950918793678, -5.551115123125783e-17, 0.0, 0.011239604093134403, -0.5, -0.49706897139549255)
+
         """
         return self.GetBounds()
+
+    @property
+    def center(self) -> Tuple[float, float, float]:
+        """Get the center of the cell.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).center
+        (-0.0356, 0.00375, -0.498)
+
+        """
+        para_center = [0.0, 0.0, 0.0]
+        sub_id = self.GetParametricCenter(para_center)
+        sub_id = _vtk.mutable(0)
+        center = [0.0, 0.0, 0.0]
+        weights = [0.0] * self.n_points
+        self.EvaluateLocation(sub_id, para_center, center, weights)
+        return cast(Tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
