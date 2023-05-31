@@ -8,10 +8,9 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.plotting.opts import AnnotatedIntEnum
+from pyvista.core.dataset import DataObject
+from pyvista.utilities.helpers import AnnotatedIntEnum
 from pyvista.utilities.misc import PyVistaDeprecationWarning, _try_imageio_imread
-
-from .dataset import DataObject
 
 
 class Texture(_vtk.vtkTexture, DataObject):

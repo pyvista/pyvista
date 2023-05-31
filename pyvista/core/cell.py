@@ -6,7 +6,7 @@ from typing import List, Tuple
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 
 from .celltype import CellType
 from .dataset import DataObject

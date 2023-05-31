@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.utilities import abstract_class, assert_empty_kwargs

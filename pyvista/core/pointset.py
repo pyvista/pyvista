@@ -10,7 +10,7 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells, numpy_to_idarr
 

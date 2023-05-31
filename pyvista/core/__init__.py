@@ -12,7 +12,6 @@ from .filters import (
 )
 from .grid import Grid, RectilinearGrid, UniformGrid
 from .objects import Table
-from .texture import Texture
 from .pointset import (
     PointGrid,
     PointSet,
@@ -22,5 +21,5 @@ from .pointset import (
     ExplicitStructuredGrid,
 )
 from .pyvista_ndarray import pyvista_ndarray
-from .celltype import CellType
 from .cell import Cell
+from .celltype import CellType

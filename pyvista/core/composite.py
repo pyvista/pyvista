@@ -11,7 +11,7 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
 from .._typing import BoundsLike
@@ -90,8 +90,9 @@ class MultiBlock(
 
     """
 
-    # Bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
+    def plot(self, *args, **kwargs):
+        return pyvista.plot(self, *args, **kwargs)
+
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:

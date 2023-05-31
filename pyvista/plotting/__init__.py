@@ -16,6 +16,7 @@ from .helpers import plot, plot_arrows, plot_compare_four
 from .plotting import BasePlotter, Plotter, close_all
 from ._property import Property
 from .renderer import CameraPosition, Renderer, scale_point
+from .texture import Texture
 from .tools import (
     check_matplotlib_vtk_compatibility,
     check_math_text_support,

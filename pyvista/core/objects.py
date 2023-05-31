@@ -6,7 +6,7 @@ The data objects does not have any sort of spatial reference.
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 from pyvista.utilities import FieldAssociation, get_array, row_array
 
 from .dataset import DataObject

@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.utilities import (
     FieldAssociation,
@@ -116,8 +116,8 @@ class ActiveArrayInfo:
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
-    # Simply bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
+    def plot(self, *args, **kwargs):
+        return pyvista.plot(self, *args, **kwargs)
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -126,7 +126,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: Dict[str, _vtk.vtkTexture] = {}
+        self._textures: Dict[str, '_vtk.vtkTexture'] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -504,7 +504,7 @@ class DataSet(DataSetFilters, DataObject):
         self.point_data.active_t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> Dict[str, _vtk.vtkTexture]:
+    def textures(self) -> Dict[str, '_vtk.vtkTexture']:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset,
@@ -540,7 +540,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str) -> _vtk.vtkTexture:
+    def _activate_texture(mesh, name: str) -> '_vtk.vtkTexture':
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.

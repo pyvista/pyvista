@@ -4,7 +4,7 @@ from typing import Union
 
 import numpy as np
 
-from pyvista import _vtk
+import pyvista._vtk_core as _vtk
 from pyvista.utilities.helpers import FieldAssociation, convert_array
 
 
