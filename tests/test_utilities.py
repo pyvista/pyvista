@@ -21,6 +21,7 @@ from pyvista.core.utilities.arrays import (
     raise_has_duplicates,
     vtk_id_list_to_array,
 )
+from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector
@@ -29,7 +30,6 @@ from pyvista.core.utilities.points import vector_poly_data
 from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.plotting import system_supports_plotting
 from pyvista.report import GPUInfo
-from pyvista.utilities.docs import linkcode_resolve
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"

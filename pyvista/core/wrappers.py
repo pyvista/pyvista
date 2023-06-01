@@ -20,19 +20,27 @@ A user-defined Foo class is defined that extends the functionality of
 >>> assert isinstance(surface, Foo)
 
 """
-
-import pyvista
+from .composite import MultiBlock
+from .grid import RectilinearGrid, UniformGrid
+from .objects import Table
+from .pointset import (
+    ExplicitStructuredGrid,
+    PointSet,
+    PolyData,
+    StructuredGrid,
+    UnstructuredGrid,
+)
 
 _wrappers = {
-    'vtkExplicitStructuredGrid': pyvista.ExplicitStructuredGrid,
-    'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
-    'vtkRectilinearGrid': pyvista.RectilinearGrid,
-    'vtkStructuredGrid': pyvista.StructuredGrid,
-    'vtkPolyData': pyvista.PolyData,
-    'vtkImageData': pyvista.UniformGrid,
-    'vtkStructuredPoints': pyvista.UniformGrid,
-    'vtkMultiBlockDataSet': pyvista.MultiBlock,
-    'vtkTable': pyvista.Table,
-    'vtkPointSet': pyvista.PointSet,
+    'vtkExplicitStructuredGrid': ExplicitStructuredGrid,
+    'vtkUnstructuredGrid': UnstructuredGrid,
+    'vtkRectilinearGrid': RectilinearGrid,
+    'vtkStructuredGrid': StructuredGrid,
+    'vtkPolyData': PolyData,
+    'vtkImageData': UniformGrid,
+    'vtkStructuredPoints': UniformGrid,
+    'vtkMultiBlockDataSet': MultiBlock,
+    'vtkTable': Table,
+    'vtkPointSet': PointSet,
     # 'vtkParametricSpline': pyvista.Spline,
 }

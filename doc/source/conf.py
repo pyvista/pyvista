@@ -18,7 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
-from pyvista.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
+from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")

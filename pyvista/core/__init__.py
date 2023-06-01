@@ -40,3 +40,4 @@ from .pointset import (
 )
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import *
+from .wrappers import _wrappers

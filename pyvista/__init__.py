@@ -11,6 +11,7 @@ from pyvista._version import __version__
 from pyvista.core import *
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
+from pyvista.core.wrappers import _wrappers
 from pyvista.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.jupyter import set_jupyter_backend
 from pyvista.plotting import *
@@ -23,7 +24,6 @@ from pyvista.themes import (
     load_theme,
     set_plot_theme,
 )
-from pyvista.utilities.wrappers import _wrappers
 
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
