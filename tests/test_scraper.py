@@ -81,3 +81,7 @@ def test_scraper_raise(tmpdir):
         scraper(block, block_vars, gallery_conf)
 
     plotter.close()
+
+
+def test_namespace_contract():
+    assert hasattr(pyvista, '_get_sg_image_scraper')

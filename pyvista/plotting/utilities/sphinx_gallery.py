@@ -12,6 +12,8 @@ def _get_sg_image_scraper():
     'matplotlib' and 'mayavi'. Details on this implementation can be found in
     `sphinx-gallery/sphinx-gallery/494`_
 
+    This must be at the top level namespace of PyVista.
+
     .. _sphinx-gallery/sphinx-gallery/494: https://github.com/sphinx-gallery/sphinx-gallery/pull/494
     """
     return Scraper()
