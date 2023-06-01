@@ -368,6 +368,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def center(self) -> Tuple[float, float, float]:
         """Get the center of the cell.
 
+        Uses parametric coordinate center to determine x-y-z center.
+
         Examples
         --------
         >>> import pyvista as pv
