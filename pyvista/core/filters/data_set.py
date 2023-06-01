@@ -2723,7 +2723,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_cell_arrays``.
+            Deprecated keyword argument ``pass_cell_arrays``.
 
         Returns
         -------
@@ -2810,7 +2810,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_point_arrays``.
+            Deprecated keyword argument ``pass_point_arrays``.
 
         Returns
         -------

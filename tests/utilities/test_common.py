@@ -1,4 +1,4 @@
-""" Tests for pyvista.utilities.common."""
+""" Tests for pyvista.core.utilities."""
 
 import numpy as np
 import pytest

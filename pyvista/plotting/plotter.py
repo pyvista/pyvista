@@ -1017,7 +1017,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
 
     def disable_3_lights(self):
-        """Please use ``enable_lightkit``, this method has been depreciated."""
+        """Please use ``enable_lightkit``, this method has been deprecated."""
         from pyvista.core.errors import DeprecationError
 
         raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')
@@ -4022,7 +4022,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Override mapper choice for UnstructuredGrid
         if isinstance(volume, pyvista.UnstructuredGrid):
             # Unstructured grid must be all tetrahedrals
-            if not (volume.celltypes == pyvista.celltype.CellType.TETRA).all():
+            if not (volume.celltypes == pyvista.CellType.TETRA).all():
                 volume = volume.triangulate()
             mapper = 'ugrid'
 

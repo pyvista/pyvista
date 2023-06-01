@@ -283,7 +283,6 @@ parametric_objects, <module 'pyvista.utilities.parametric_objects' from 'pyvista
 parse_field_choice, <function parse_field_choice at 0x163f401f0>
 parse_font_family, <function parse_font_family at 0x1641af8b0>
 perlin_noise, <function perlin_noise at 0x163f434c0>
-pi, 3.141592653589793
 # picking, <module 'pyvista.plotting.picking' from 'pyvista/pyvista/plotting/picking.py'>
 plot, <function plot at 0x16427cca0>
 plot_arrows, <function plot_arrows at 0x16427cd30>

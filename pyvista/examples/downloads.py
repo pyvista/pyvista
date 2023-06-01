@@ -2559,7 +2559,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = pyvista.filters._get_output(alg)
+        result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
 

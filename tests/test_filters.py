@@ -31,7 +31,7 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
 
 
 class GetOutput:
-    """Helper class to patch ``pyvista.filters._get_output`` which captures the raw VTK algorithm objects at the time
+    """Helper class to patch ``pyvista.core.filters._get_output`` which captures the raw VTK algorithm objects at the time
     ``_get_output`` is invoked.
     """
 
