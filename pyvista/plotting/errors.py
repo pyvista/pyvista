@@ -1,3 +1,5 @@
+"""Core and plotting errors."""
+
 CAMERA_ERROR_MESSAGE = """Invalid camera description
 Camera description must be one of the following:
 
