@@ -11,7 +11,6 @@ like this:
     Examples
     --------
     >>> import numpy
-    >>> import vtk
     >>> import pyvista
     >>> from pyvista import CellType
     >>> offset = np.array([0, 9])
