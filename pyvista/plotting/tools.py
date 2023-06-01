@@ -138,34 +138,34 @@ def create_axes_marker(
     z_color : ColorLike, optional
         Color of the z axis text.
 
-    xlabel : str, optional
+    xlabel : str, default: "X"
         Text used for the x axis.
 
-    ylabel : str, optional
+    ylabel : str, default: "Y"
         Text used for the y axis.
 
-    zlabel : str, optional
+    zlabel : str, default: "Z"
         Text used for the z axis.
 
-    labels_off : bool, optional
+    labels_off : bool, default: False
         Enable or disable the text labels for the axes.
 
-    line_width : float, optional
+    line_width : float, default: 2
         The width of the marker lines.
 
-    cone_radius : float, optional
+    cone_radius : float, default: 0.4
         The radius of the axes arrow tips.
 
-    shaft_length : float, optional
+    shaft_length : float, default: 0.8
         The length of the axes arrow shafts.
 
-    tip_length : float, optional
+    tip_length : float, default: 0.2
         Length of the tip.
 
-    ambient : float, optional
+    ambient : float, default: 0.5
         The ambient of the axes arrows. Value should be between 0 and 1.
 
-    label_size : sequence, optional
+    label_size : sequence[float], default: (0.25, 0.1)
         The width and height of the axes label actors. Values should be between
         0 and 1. For example ``(0.2, 0.1)``.
 
@@ -512,6 +512,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
         'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_1': sigmoid(np.linspace(-1.0, 1.0, n_colors)),
+        'sigmoid_2': sigmoid(np.linspace(-2.0, 2.0, n_colors)),
         'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
         'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
         'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
@@ -578,3 +580,39 @@ def parse_font_family(font_family):
     if font_family not in fonts:
         raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
     return FONTS[font_family].value
+
+
+def check_matplotlib_vtk_compatibility():
+    """Check if VTK and Matplotlib versions are compatible.
+
+    This is primarily geared towards checking if MathText rendering is
+    supported. These are the version constraints for VTK and Matplotlib:
+
+    * VTK <= 9.2.2 requires Matplotlib < 3.6
+    * VTK > 9.2.2 requires Matplotlib >= 3.6
+
+    Other version combinations of VTK and Matplotlib will work without
+    errors, but some features (like MathText/LaTeX rendering) may
+    silently fail.
+
+    """
+    import matplotlib
+
+    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    if pyvista.vtk_version_info <= (9, 2, 2):
+        if mpl_vers >= (3, 6):
+            return False
+        return True
+    elif pyvista.vtk_version_info > (9, 2, 2):
+        if mpl_vers >= (3, 6):
+            return True
+        return False  # pragma: no cover
+    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
+
+
+def check_math_text_support():
+    """Check if MathText and LaTeX symbols are supported."""
+    return (
+        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+        and check_matplotlib_vtk_compatibility()
+    )

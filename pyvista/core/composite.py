@@ -147,7 +147,7 @@ class MultiBlock(
 
         Returns
         -------
-        tuple(float)
+        tuple[float, float, float, float, float, float]
             length 6 tuple of floats containing min/max along each axis
 
         Examples
@@ -277,7 +277,7 @@ class MultiBlock(
         name : str
             Name of the array.
 
-        allow_missing : bool, optional
+        allow_missing : bool, default: False
             Allow a block to be missing the named array.
 
         Returns
@@ -379,7 +379,7 @@ class MultiBlock(
 
         name : str, optional
             Block name to give to dataset.  A default name is given
-            depending on the block index as 'Block-{i:02}'.
+            depending on the block index as ``'Block-{i:02}'``.
 
         Examples
         --------
@@ -494,8 +494,9 @@ class MultiBlock(
         index : int
             Index or the dataset within the multiblock.
 
-        name : str
-            Name to assign to the block at ``index``.
+        name : str, optional
+            Name to assign to the block at ``index``. If ``None``, no name is
+            assigned to the block.
 
         Examples
         --------
@@ -511,9 +512,9 @@ class MultiBlock(
         ['cube', 'sphere', 'cone']
 
         """
-        index = range(self.n_blocks)[index]
         if name is None:
             return
+        index = range(self.n_blocks)[index]
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
@@ -782,7 +783,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        index : int or str, optional
+        index : int or str, default: -1
             Index or name of the dataset within the multiblock.  Defaults to
             last dataset.
 
@@ -928,13 +929,14 @@ class MultiBlock(
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        return fmt
+        return fmt.strip()
 
     def __str__(self) -> str:
         """Return the str representation of the multi block."""
@@ -956,7 +958,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             When ``True``, make a full copy of the object.
 
         Returns
@@ -1002,12 +1004,12 @@ class MultiBlock(
             ``None``, deactivates active scalars for both point and
             cell data.
 
-        preference : str, optional
+        preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
             type.  Can be either ``'cell'`` or ``'point'``.
 
-        allow_missing : bool, optional
+        allow_missing : bool, default: False
             Allow missing scalars in part of the composite dataset. If all
             blocks are missing the array, it will raise a ``KeyError``.
 
@@ -1084,7 +1086,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        copy : bool, optional
+        copy : bool, default: False
             Option to create a shallow copy of any datasets that are already a
             :class:`pyvista.PolyData`. When ``False``, any datasets that are
             already PolyData will not be copied.
@@ -1109,6 +1111,8 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     dataset.replace(i, block.as_polydata_blocks(copy=copy))
+                elif isinstance(block, pyvista.PointSet):
+                    dataset.replace(i, block.cast_to_polydata(deep=True))
                 elif not isinstance(block, pyvista.PolyData):
                     dataset.replace(i, block.extract_surface())
                 elif copy:

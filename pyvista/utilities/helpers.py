@@ -142,7 +142,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     Parameters
     ----------
-    arr : np.ndarray or vtkDataArray
+    arr : np.ndarray | vtkDataArray
         A numpy array or vtkDataArry to convert.
     name : str, optional
         The name of the data array for VTK.
@@ -233,10 +233,10 @@ def point_array(obj, name):
 
     Parameters
     ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
+    obj : pyvista.DataSet | vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str or int
+    name : str | int
         Name or index of the array.
 
     Returns
@@ -256,7 +256,7 @@ def field_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str or int
+    name : str | int
         Name or index of the array.
 
     Returns
@@ -276,7 +276,7 @@ def cell_array(obj, name):
     obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
-    name : str or int
+    name : str | int
         Name or index of the array.
 
     Returns
@@ -556,7 +556,7 @@ def line_segments_from_points(points):
 
     Parameters
     ----------
-    points : numpy.ndarray
+    points : array_like[float]
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
@@ -601,7 +601,7 @@ def lines_from_points(points, close=False):
 
     Parameters
     ----------
-    points : np.ndarray
+    points : array_like[float]
         Points representing the vertices of the connected
         segments. For example, two line segments would be represented
         as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
@@ -708,10 +708,10 @@ def vector_poly_data(orig, vec):
 
     Parameters
     ----------
-    orig : numpy.ndarray
+    orig : array_like[float]
         Array of vector origins.
 
-    vec : numpy.ndarray
+    vec : array_like[float]
         Array of vectors.
 
     Returns
@@ -811,7 +811,7 @@ def array_from_vtkmatrix(matrix):
 
     Parameters
     ----------
-    matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
+    matrix : vtk.vtkMatrix3x3 | vtk.vtkMatrix4x4
         The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
@@ -842,7 +842,7 @@ def vtkmatrix_from_array(array):
 
     Parameters
     ----------
-    array : numpy.ndarray or array-like
+    array : array_like[float]
         The array or array-like to be converted to a vtk matrix.
         Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
         gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
@@ -906,7 +906,7 @@ def wrap(dataset):
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray`, :class:`trimesh.Trimesh`, or VTK object
+    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
         Dataset to wrap.
 
     Returns
@@ -922,31 +922,15 @@ def wrap(dataset):
     >>> import pyvista
     >>> points = np.random.random((10, 3))
     >>> cloud = pyvista.wrap(points)
-    >>> cloud  # doctest:+SKIP
-    PolyData (0x7fc52db83d70)
-      N Cells:  10
-      N Points: 10
-      X Bounds: 1.123e-01, 7.457e-01
-      Y Bounds: 1.009e-01, 9.877e-01
-      Z Bounds: 2.346e-03, 9.640e-01
-      N Arrays: 0
-
-    Wrap a Trimesh object.
-
-    >>> import trimesh
-    >>> import pyvista
-    >>> points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
-    >>> faces = [[0, 1, 2]]
-    >>> tmesh = trimesh.Trimesh(points, faces=faces, process=False)
-    >>> mesh = pyvista.wrap(tmesh)
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fc55ff27ad0)
-      N Cells:  1
-      N Points: 3
-      X Bounds: 0.000e+00, 0.000e+00
-      Y Bounds: 0.000e+00, 1.000e+00
-      Z Bounds: 0.000e+00, 1.000e+00
-      N Arrays: 0
+    >>> cloud
+    PolyData (...)
+      N Cells:    10
+      N Points:   10
+      N Strips:   0
+      X Bounds:   ...
+      Y Bounds:   ...
+      Z Bounds:   ...
+      N Arrays:   0
 
     Wrap a VTK object.
 
@@ -962,6 +946,24 @@ def wrap(dataset):
     >>> _ = point.SetPoints(points)
     >>> _ = point.SetVerts(vertices)
     >>> mesh = pyvista.wrap(point)
+    >>> mesh
+    PolyData (...)
+      N Cells:    1
+      N Points:   1
+      N Strips:   0
+      X Bounds:   1.000e+00, 1.000e+00
+      Y Bounds:   2.000e+00, 2.000e+00
+      Z Bounds:   3.000e+00, 3.000e+00
+      N Arrays:   0
+
+    Wrap a Trimesh object.
+
+    >>> import trimesh
+    >>> import pyvista
+    >>> points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
+    >>> faces = [[0, 1, 2]]
+    >>> tmesh = trimesh.Trimesh(points, faces=faces, process=False)
+    >>> mesh = pyvista.wrap(tmesh)
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fc55ff27ad0)
       N Cells:  1
@@ -1038,7 +1040,7 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : pyvista.UniformGrid or vtkImageData
+    image : pyvista.UniformGrid | vtkImageData
         Image to convert.
 
     Returns
@@ -1091,10 +1093,10 @@ def is_inside_bounds(point, bounds):
 
     Parameters
     ----------
-    point : sequence
+    point : sequence[float]
         Three item cartesian point (i.e. ``[x, y, z]``).
 
-    bounds : sequence
+    bounds : sequence[float]
         Six item bounds in the form of ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     Returns
@@ -1129,7 +1131,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     Parameters
     ----------
-    points : sequence
+    points : array_like[float]
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool, default: False
@@ -1216,10 +1218,10 @@ def generate_plane(normal, origin):
 
     Parameters
     ----------
-    normal : sequence
+    normal : sequence[float]
         Three item sequence representing the normal of the plane.
 
-    origin : sequence
+    origin : sequence[float]
         Three item sequence representing the origin of the plane.
 
     Returns
@@ -1570,7 +1572,7 @@ def cubemap_from_filenames(image_paths):
 
     Parameters
     ----------
-    image_paths : list
+    image_paths : sequence[str]
         Paths of the individual cubemap images.
 
     Returns

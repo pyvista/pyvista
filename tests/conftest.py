@@ -1,3 +1,6 @@
+from importlib import metadata
+import re
+
 # see https://github.com/jupyter-widgets/ipywidgets/issues/3729
 import ipykernel.ipkernel  # noqa: F401
 import numpy as np
@@ -239,3 +242,51 @@ def pytest_runtest_setup(item):
         if pyvista.vtk_version_info < version_needed:
             version_str = '.'.join(map(str, version_needed))
             skip(f'Test needs VTK {version_str} or newer.')
+
+
+def pytest_report_header(config):
+    """Header for pytest to show versions of required and optional packages."""
+
+    required = []
+    extra = {}
+    for item in metadata.requires("pyvista"):
+        pkg_name = re.findall(r"[a-z0-9_\-]+", item, re.IGNORECASE)[0]
+        if pkg_name == "pyvista":
+            continue
+        elif res := re.findall("extra == ['\"](.+)['\"]", item):
+            assert len(res) == 1, item
+            pkg_extra = res[0]
+            if pkg_extra not in extra:
+                extra[pkg_extra] = []
+            extra[pkg_extra].append(pkg_name)
+        else:
+            required.append(pkg_name)
+
+    lines = []
+    items = []
+    for name in required:
+        try:
+            version = metadata.version(name)
+            items.append(f"{name}-{version}")
+        except metadata.PackageNotFoundError:
+            items.append(f"{name} (not found)")
+    lines.append("required packages: " + ", ".join(items))
+
+    not_found = []
+    for pkg_extra in extra.keys():
+        installed = []
+        for name in extra[pkg_extra]:
+            try:
+                version = metadata.version(name)
+                installed.append(f"{name}-{version}")
+            except metadata.PackageNotFoundError:
+                not_found.append(name)
+        if installed:
+            plrl = "s" if len(installed) != 1 else ""
+            comma_lst = ", ".join(installed)
+            lines.append(f"optional {pkg_extra!r} package{plrl}: {comma_lst}")
+    if not_found:
+        plrl = "s" if len(not_found) != 1 else ""
+        comma_lst = ", ".join(not_found)
+        lines.append(f"optional package{plrl} not found: {comma_lst}")
+    return "\n".join(lines)

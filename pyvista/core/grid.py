@@ -135,23 +135,30 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
                     self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
-            elif isinstance(args[0], np.ndarray):
-                self._from_arrays(args[0], None, None, check_duplicates)
+            elif isinstance(args[0], (np.ndarray, Sequence)):
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
+            arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
             if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
+                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
             else:
                 arg2_is_arr = False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]),
+                    np.asanyarray(args[1]),
+                    np.asanyarray(args[2]),
+                    check_duplicates,
+                )
             elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], None, check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
+                )
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
@@ -416,19 +423,17 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
-    dimensions : iterable, optional
+    dimensions : sequence[int], optional
         Dimensions of the uniform grid.
 
-    spacing : iterable, optional
-        Spacing of the uniform in each dimension.  Defaults to
-        ``(1.0, 1.0, 1.0)``. Must be positive.
+    spacing : sequence[float], default: (1.0, 1.0, 1.0)
+        Spacing of the uniform grid in each dimension. Must be positive.
 
-    origin : iterable, optional
-        Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
+    origin : sequence[float], default: (0.0, 0.0, 0.0)
+        Origin of the uniform grid.
 
-    deep : bool, optional
-        Whether to deep copy a ``vtk.vtkImageData`` object.
-        Default is ``False``.  Keyword only.
+    deep : bool, default: False
+        Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
     Examples
     --------
@@ -574,11 +579,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         dims : tuple(int)
             Length 3 tuple of ints specifying how many points along each axis.
 
-        spacing : tuple(float)
+        spacing : sequence[float], default: (1.0, 1.0, 1.0)
             Length 3 tuple of floats/ints specifying the point spacings
             for each axis. Must be positive.
 
-        origin : tuple(float)
+        origin : sequence[float], default: (0.0, 0.0, 0.0)
             Length 3 tuple of floats/ints specifying minimum value for each axis.
 
         """

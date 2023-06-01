@@ -213,7 +213,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: np.ndarray):
+    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -434,7 +434,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        key : str, int
+        key : str | int
             The name or index of the array to return.  Arrays are
             ordered within VTK DataSetAttributes, and this feature is
             mirrored here.
@@ -516,9 +516,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        data : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
-            ``tuple`` or scalar value.
+        data : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
+            ``list``, ``tuple`` or scalar value.
 
         name : str
             Name to assign to the data.  If this name already exists,
@@ -581,14 +581,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        scalars : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
+        scalars : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`, ``list``,
             ``tuple`` or scalar value.
 
         name : str, default: 'scalars'
             Name to assign the scalars.
 
-        deep_copy : bool, optional
+        deep_copy : bool, default: False
             When ``True`` makes a full copy of the array.
 
         Notes
@@ -635,15 +635,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        vectors : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``, or
-            ``tuple``.  Must match the number of cells or points of
-            the dataset.
+        vectors : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
+            ``list``, or ``tuple``.  Must match the number of cells or points
+            of the dataset.
 
         name : str
             Name of the vectors.
 
-        deep_copy : bool, optional
+        deep_copy : bool, default: False
             When ``True`` makes a full copy of the array.  When
             ``False``, the data references the original array
             without copying it.
@@ -1072,7 +1072,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if self.GetScalars() is not None:
-            return str(self.GetScalars().GetName())
+            name = self.GetScalars().GetName()
+            if name is None:
+                # Getting the keys has the side effect of naming "unnamed" arrays
+                self.keys()
+                name = self.GetScalars().GetName()
+            return str(name)
         return None
 
     @active_scalars_name.setter

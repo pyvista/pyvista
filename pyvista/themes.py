@@ -41,7 +41,7 @@ from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.opts import InterpolationType
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
-from .utilities.misc import PyVistaDeprecationWarning
+from .utilities.misc import PyVistaDeprecationWarning, _check_range
 
 
 class _rcParams(dict):  # pragma: no cover
@@ -71,12 +71,6 @@ class _rcParams(dict):  # pragma: no cover
             'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning
         )
         return repr(pyvista.global_theme)
-
-
-def _check_between_zero_and_one(value: float, value_name: str = 'value'):
-    """Check if a value is between zero and one."""
-    if value < 0 or value > 1:
-        raise ValueError(f'{value_name} must be between 0 and 1.')
 
 
 def load_theme(filename):
@@ -273,6 +267,9 @@ class _LightingConfig(_ThemeConfig):
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.interpolation = 'Phong'
+        >>> pv.global_theme.lighting_params.interpolation
+        <InterpolationType.PHONG: 2>
+
 
         """
         return InterpolationType.from_any(self._interpolation)
@@ -285,73 +282,165 @@ class _LightingConfig(_ThemeConfig):
     def metallic(self) -> float:
         """Return or set the metallic value.
 
+        This requires that the interpolation be set to ``'Physically based
+        rendering'``. Must be between 0 and 1.
+
         Examples
         --------
+        Set the global metallic value used in physically based rendering to
+        ``0.5``.
+
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.metallic = 0.5
+        >>> pv.global_theme.lighting_params.metallic
+        0.5
 
         """
         return self._metallic
 
     @metallic.setter
     def metallic(self, metallic: float):
+        _check_range(metallic, (0, 1), 'metallic')
         self._metallic = metallic
 
     @property
     def roughness(self) -> float:
         """Return or set the roughness value.
 
+        This value has to be between 0 (glossy) and 1 (rough). A glossy
+        material has reflections and a high specular part. This parameter is
+        only used by PBR interpolation.
+
         Examples
         --------
+        Set the global roughness value used in physically based rendering to
+        ``0.25``.
+
         >>> import pyvista as pv
         >>> pv.global_theme.lighting_params.roughness = 0.25
+        >>> pv.global_theme.lighting_params.roughness
+        0.25
 
         """
         return self._roughness
 
     @roughness.setter
     def roughness(self, roughness: float):
+        _check_range(roughness, (0, 1), 'roughness')
         self._roughness = roughness
 
     @property
     def ambient(self) -> float:
-        """Return or set the ambient value."""
+        """Return or set the ambient value.
+
+        When lighting is enabled, this is the amount of light in the range of 0
+        to 1 that reaches the actor when not directed at the light source
+        emitted from the viewer.
+
+        Examples
+        --------
+        Set the global ambient lighting value to ``0.2``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.ambient = 0.2
+        >>> pv.global_theme.lighting_params.ambient
+        0.2
+
+        """
         return self._ambient
 
     @ambient.setter
     def ambient(self, ambient: float):
+        _check_range(ambient, (0, 1), 'ambient')
         self._ambient = ambient
 
     @property
     def diffuse(self) -> float:
-        """Return or set the diffuse value."""
+        """Return or set the diffuse value.
+
+        This is the scattering of light by reflection or
+        transmission. Diffuse reflection results when light strikes an
+        irregular surface such as a frosted window or the surface of a
+        frosted or coated light bulb. Must be between 0 and 1.
+
+        Examples
+        --------
+        Set the global diffuse lighting value to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.diffuse = 0.5
+        >>> pv.global_theme.lighting_params.diffuse
+        0.5
+
+        """
         return self._diffuse
 
     @diffuse.setter
     def diffuse(self, diffuse: float):
+        _check_range(diffuse, (0, 1), 'diffuse')
         self._diffuse = diffuse
 
     @property
     def specular(self) -> float:
-        """Return or set the specular value."""
+        """Return or set the specular value.
+
+        Specular lighting simulates the bright spot of a light that appears
+        on shiny objects. Must be between 0 and 1.
+
+        Examples
+        --------
+        Set the global specular value to ``0.1``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.specular = 0.1
+        >>> pv.global_theme.lighting_params.specular
+        0.1
+
+        """
         return self._specular
 
     @specular.setter
     def specular(self, specular: float):
+        _check_range(specular, (0, 1), 'specular')
         self._specular = specular
 
     @property
     def specular_power(self) -> float:
-        """Return or set the specular power value."""
+        """Return or set the specular power value.
+
+        Must be between 0.0 and 128.0.
+
+        Examples
+        --------
+        Set the global specular power value to ``50``.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.specular_power = 50
+        >>> pv.global_theme.lighting_params.specular_power
+        50
+
+        """
         return self._specular_power
 
     @specular_power.setter
     def specular_power(self, specular_power: float):
+        _check_range(specular_power, (0, 128), 'specular_power')
         self._specular_power = specular_power
 
     @property
     def emissive(self) -> bool:
-        """Return or set if emissive is used with point gaussian style."""
+        """Return or set if emissive is used with point Gaussian style.
+
+        Examples
+        --------
+        Globally enable emissive lighting when using the point Gaussian style.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.lighting_params.emissive = True
+        >>> pv.global_theme.lighting_params.emissive
+        True
+
+        """
         return self._emissive
 
     @emissive.setter
@@ -521,7 +610,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_between_zero_and_one(opacity, 'opacity')
+        _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
 
     @property
@@ -559,7 +648,7 @@ class _SilhouetteConfig(_ThemeConfig):
         if decimate is None:
             self._decimate = None
         else:
-            _check_between_zero_and_one(decimate, 'decimate')
+            _check_range(decimate, (0, 1), 'decimate')
             self._decimate = float(decimate)
 
     def __repr__(self):
@@ -1056,6 +1145,7 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
+        _check_range(cap_opacity, (0, 1), 'cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -1282,7 +1372,7 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service:  # pragma: no cover
+        if service and not prefix.startswith('http'):  # pragma: no cover
             self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
         else:
             self._server_proxy_prefix = prefix
@@ -1641,7 +1731,7 @@ class DefaultTheme(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_between_zero_and_one(opacity, 'opacity')
+        _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
 
     @property

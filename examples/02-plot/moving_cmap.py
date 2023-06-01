@@ -62,7 +62,7 @@ pltr.add_mesh(
     mesh,
     scalars=np.sin(dists),
     smooth_shading=True,
-    specular=10,
+    specular=1,
     cmap="nipy_spectral",
     show_scalar_bar=False,
 )

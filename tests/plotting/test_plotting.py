@@ -12,8 +12,6 @@ import re
 import time
 
 from PIL import Image
-import imageio
-import matplotlib
 import numpy as np
 import pytest
 import vtk
@@ -22,7 +20,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.errors import RenderWindowUnavailable
-from pyvista.plotting import system_supports_plotting
+from pyvista.plotting import check_math_text_support, system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
@@ -33,6 +31,12 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
+HAS_IMAGEIO = True
+try:
+    import imageio
+except ModuleNotFoundError:
+    HAS_IMAGEIO = False
+
 
 ffmpeg_failed = False
 try:
@@ -40,10 +44,14 @@ try:
         import imageio_ffmpeg
 
         imageio_ffmpeg.get_ffmpeg_exe()
-    except ImportError:
-        imageio.plugins.ffmpeg.download()
+    except ImportError as err:
+        if HAS_IMAGEIO:
+            imageio.plugins.ffmpeg.download()
+        else:
+            raise err
 except:  # noqa: E722
     ffmpeg_failed = True
+
 
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
 
@@ -528,16 +536,17 @@ def test_plot_show_grid(sphere):
         plotter.show_grid(location='foo')
     with pytest.raises(TypeError, match='location must be a string'):
         plotter.show_grid(location=10)
-    with pytest.raises(ValueError, match='Value of ticks'):
+    with pytest.raises(ValueError, match='Value of tick'):
         plotter.show_grid(ticks='foo')
-    with pytest.raises(TypeError, match='ticks must be a string'):
+    with pytest.raises(TypeError, match='must be a string'):
         plotter.show_grid(ticks=10)
 
-    plotter.show_grid()
+    plotter.show_grid()  # Add mesh after to make sure bounds update
     plotter.add_mesh(sphere)
     plotter.show()
 
 
+@skip_mesa
 def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     """Show the grid bounds for a specific mesh."""
     verify_image_cache.macos_skip_image_cache = True
@@ -633,7 +642,7 @@ def test_plot_show_bounds(sphere):
 def test_plot_label_fmt(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
+    plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
     plotter.show()
 
 
@@ -641,7 +650,7 @@ def test_plot_label_fmt(sphere):
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
     plotter = pyvista.Plotter()
-    plotter.add_mesh(pyvista.Cube())
+    plotter.add_mesh(pyvista.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
     plotter.show_bounds(grid=grid, ticks='outside', location=location)
     plotter.show_bounds(grid=grid, ticks='both', location=location)
@@ -762,6 +771,7 @@ def test_add_lines_invalid():
         plotter.add_lines(range(10))
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_open_gif_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(ValueError):
@@ -769,6 +779,7 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
 
@@ -984,7 +995,14 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pyvista.Plotter()
-    with pytest.raises(ValueError):
+    if (
+        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
+        and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
+    ):
+        # This only fails for VTK<9.2.3
+        with pytest.raises(ValueError):
+            plotter.left_button_down(None, None)
+    else:
         plotter.left_button_down(None, None)
     plotter.close()
 
@@ -1220,6 +1238,7 @@ def test_plot_texture_associated():
     plotter.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -2501,6 +2520,7 @@ def test_pointset_plot_as_points_vtk():
     pl.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))
@@ -2588,11 +2608,7 @@ def test_add_text():
 
 
 @pytest.mark.skipif(
-    not vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-    or (
-        tuple(map(int, matplotlib.__version__.split('.')[:2])) >= (3, 6)
-        and pyvista.vtk_version_info <= (9, 2, 2)
-    ),
+    not check_math_text_support(),
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
 )
 def test_add_text_latex():
@@ -3165,6 +3181,18 @@ def test_plotter_volume_add_scalars(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_add_scalars_log_scale(uniform):
+    uniform.clear_data()
+    pl = pyvista.Plotter()
+
+    # for below zero to trigger the edge case
+    scalars = uniform.z - 0.01
+    assert any(scalars < 0), 'need negative values to test log_scale entrirely'
+    pl.add_volume(uniform, scalars=scalars, show_scalar_bar=True, log_scale=True)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pyvista.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
@@ -3626,3 +3654,39 @@ def test_axes_actor_properties():
     pl = pyvista.Plotter()
     pl.add_actor(axes_actor)
     pl.show()
+
+
+def test_show_bounds_no_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        show_xlabels=False,
+        show_ylabels=False,
+        show_zlabels=False,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.show()
+
+
+def test_show_bounds_n_labels():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        n_xlabels=2,
+        n_ylabels=2,
+        n_zlabels=2,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+    )
+    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.show()

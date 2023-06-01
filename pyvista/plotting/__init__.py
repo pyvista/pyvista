@@ -17,6 +17,8 @@ from .plotting import BasePlotter, Plotter, close_all
 from ._property import Property
 from .renderer import CameraPosition, Renderer, scale_point
 from .tools import (
+    check_matplotlib_vtk_compatibility,
+    check_math_text_support,
     create_axes_marker,
     create_axes_orientation_box,
     opacity_transfer_function,
@@ -33,6 +35,7 @@ from .actor import Actor
 from .actor_properties import ActorProperties
 from .mapper import DataSetMapper, _BaseMapper
 from .lookup_table import LookupTable
+from .cube_axes_actor import CubeAxesActor
 
 
 class QtDeprecationError(Exception):

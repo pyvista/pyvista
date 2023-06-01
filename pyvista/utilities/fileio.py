@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.utilities.misc import PyVistaDeprecationWarning, _try_imageio_imread
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -34,7 +34,11 @@ def get_ext(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
+    from vtkmodules.vtkIOGeometry import vtkSTLWriter
+    from vtkmodules.vtkIOLegacy import vtkDataWriter
+    from vtkmodules.vtkIOPLY import vtkPLYWriter
+
+    if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
@@ -232,6 +236,9 @@ def _apply_attrs_to_reader(reader, attrs):
 def read_texture(filename, attrs=None, progress_bar=False):
     """Load a texture from an image file.
 
+    Will attempt to read any file type supported by ``vtk``, however
+    if it fails, it will attempt to use ``imageio`` to read the file.
+
     Parameters
     ----------
     filename : str
@@ -276,9 +283,8 @@ def read_texture(filename, attrs=None, progress_bar=False):
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
-    import imageio
 
-    return pyvista.Texture(imageio.imread(filename))
+    return pyvista.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
 def read_exodus(
@@ -318,7 +324,7 @@ def read_exodus(
     read_cell_data : bool, default: True
         Read in data associated with cells.
 
-    enabled_sidesets : str or int, optional
+    enabled_sidesets : str | int, optional
         The name of the array that store the mapping from side set
         cells back to the global id of the elements they bound.
 
@@ -381,7 +387,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     filename : str
         The string filename to the data file to read.
 
-    q_filenames : str or tuple(str), default: ()
+    q_filenames : str or sequence[str], default: ()
         The string filename of the q-file, or iterable of such
         filenames.
 
@@ -396,7 +402,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
-    progress_bar : bool, default: True
+    progress_bar : bool, default: False
         Optionally show a progress bar.
 
     Returns
