@@ -282,7 +282,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
     '2k_earth_daymap.jpg'
     >>> texture = pyvista.read_texture(examples.mapfile)
     >>> type(texture)
-    <class 'pyvista.core.texture.Texture'>
+    <class 'pyvista.plotting.texture.Texture'>
 
     """
     filename = os.path.abspath(os.path.expanduser(filename))

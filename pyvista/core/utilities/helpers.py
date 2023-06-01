@@ -40,9 +40,9 @@ def wrap(dataset):
     Wrap a numpy array representing a random point cloud.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> points = np.random.random((10, 3))
-    >>> cloud = wrap(points)
+    >>> cloud = pv.wrap(points)
     >>> cloud
     PolyData (...)
       N Cells:    10
@@ -55,7 +55,7 @@ def wrap(dataset):
 
     Wrap a VTK object.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import vtk
     >>> points = vtk.vtkPoints()
     >>> p = [1.0, 2.0, 3.0]
@@ -66,7 +66,7 @@ def wrap(dataset):
     >>> point = vtk.vtkPolyData()
     >>> _ = point.SetPoints(points)
     >>> _ = point.SetVerts(vertices)
-    >>> mesh = wrap(point)
+    >>> mesh = pv.wrap(point)
     >>> mesh
     PolyData (...)
       N Cells:    1
@@ -80,11 +80,11 @@ def wrap(dataset):
     Wrap a Trimesh object.
 
     >>> import trimesh
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
     >>> faces = [[0, 1, 2]]
     >>> tmesh = trimesh.Trimesh(points, faces=faces, process=False)
-    >>> mesh = wrap(tmesh)
+    >>> mesh = pv.wrap(tmesh)
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fc55ff27ad0)
       N Cells:  1

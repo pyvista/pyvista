@@ -1149,11 +1149,11 @@ class DataSetFilters:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> vol = wrap(volume)
+        >>> vol = pv.wrap(volume)
         >>> threshed = vol.threshold(0.1)
         >>> threshed
         UnstructuredGrid (...)
@@ -1167,9 +1167,9 @@ class DataSetFilters:
         Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> grid.plot(
@@ -1180,9 +1180,9 @@ class DataSetFilters:
 
         Next, apply the threshold.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> threshed = grid.threshold(value=0.02)
