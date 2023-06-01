@@ -2,6 +2,7 @@
 # flake8: noqa: F401
 
 from pyvista import MAX_N_COLOR_BARS
+from pyvista._plot import plot
 
 from . import _vtk
 from ._property import Property
@@ -22,7 +23,7 @@ from .colors import (
 from .composite_mapper import BlockAttributes, CompositeAttributes, CompositePolyDataMapper
 from .cube_axes_actor import CubeAxesActor
 from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
-from .helpers import plot, plot_arrows, plot_compare_four
+from .helpers import plot_arrows, plot_compare_four
 from .lights import Light
 from .lookup_table import LookupTable
 from .mapper import DataSetMapper, _BaseMapper

@@ -92,8 +92,7 @@ class MultiBlock(
 
     """
 
-    def plot(self, *args, **kwargs):
-        return pyvista.plot(self, *args, **kwargs)
+    plot = pyvista._plot.plot
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 

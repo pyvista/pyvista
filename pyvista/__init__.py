@@ -7,6 +7,7 @@ import os
 import warnings
 
 from pyvista import _vtk
+from pyvista._plot import plot
 from pyvista._version import __version__
 from pyvista.core import *
 from pyvista.core.cell import _get_vtk_id_type

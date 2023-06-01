@@ -116,8 +116,7 @@ class ActiveArrayInfo:
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
-    def plot(self, *args, **kwargs):
-        return pyvista.plot(self, *args, **kwargs)
+    plot = pyvista._plot.plot
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
