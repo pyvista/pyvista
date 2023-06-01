@@ -22,7 +22,16 @@ from .arrays import (
     vtk_id_list_to_array,
     vtkmatrix_from_array,
 )
-from .features import *
+from .features import (
+    cartesian_to_spherical,
+    create_grid,
+    grid_from_sph_coords,
+    merge,
+    perlin_noise,
+    sample_function,
+    transform_vectors_sph_to_cart,
+    voxelize,
+)
 from .fileio import (
     from_meshio,
     get_ext,

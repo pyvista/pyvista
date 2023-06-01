@@ -8,9 +8,9 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core.dataset import DataObject
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
-from pyvista.errors import PyVistaDeprecationWarning
 
 from . import _vtk
 

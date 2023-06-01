@@ -11,9 +11,9 @@ from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
 from pyvista.core.utilities.arrays import convert_array, raise_has_duplicates
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
-from pyvista.errors import PyVistaDeprecationWarning
 
 from . import _vtk_core as _vtk
+from .errors import PyVistaDeprecationWarning
 
 
 @abstract_class

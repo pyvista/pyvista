@@ -11,6 +11,7 @@ from pyvista._version import __version__
 from pyvista.core import *
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
+from pyvista.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.jupyter import set_jupyter_backend
 from pyvista.plotting import *
 from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper

@@ -7,9 +7,9 @@ import warnings
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
-from pyvista.errors import PyVistaDeprecationWarning
 
 
 @abstract_class

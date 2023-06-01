@@ -9,9 +9,9 @@ import numpy as np
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
-from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 from . import _vtk
@@ -20,6 +20,7 @@ from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color, get_cycler
+from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
@@ -348,8 +349,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
             if camera_location not in self.CAMERA_STR_ATTR_MAP:
-                err = pyvista.core.errors.InvalidCameraError
-                raise err(
+                raise InvalidCameraError(
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
                     f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
@@ -359,15 +359,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         elif isinstance(camera_location[0], (int, float)):
             if len(camera_location) != 3:
-                raise pyvista.core.errors.InvalidCameraError
+                raise InvalidCameraError
             self.view_vector(camera_location)
         else:
             # check if a valid camera position
             if not isinstance(camera_location, CameraPosition):
                 if not len(camera_location) == 3:
-                    raise pyvista.core.errors.InvalidCameraError
+                    raise InvalidCameraError
                 elif any([len(item) != 3 for item in camera_location]):
-                    raise pyvista.core.errors.InvalidCameraError
+                    raise InvalidCameraError
 
             # everything is set explicitly
             self.camera.position = scale_point(self.camera, camera_location[0], invert=False)

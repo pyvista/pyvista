@@ -581,7 +581,7 @@ def test_set_camera_position(cpos, sphere):
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(pyvista.core.errors.InvalidCameraError):
+    with pytest.raises(pyvista.errors.InvalidCameraError):
         plotter.camera_position = cpos
 
 

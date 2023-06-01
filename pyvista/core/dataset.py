@@ -38,11 +38,11 @@ from pyvista.core.utilities.arrays import (
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.misc import abstract_class, check_valid_vector
 from pyvista.core.utilities.points import vtk_points
-from pyvista.errors import PyVistaDeprecationWarning
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
 

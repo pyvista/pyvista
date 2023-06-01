@@ -24,7 +24,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
