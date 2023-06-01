@@ -7,7 +7,7 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import examples
+from pyvista import CellType, examples
 from pyvista.errors import AmbiguousDataError, MissingDataError
 from pyvista.plotting import system_supports_plotting
 from pyvista.utilities.misc import PyVistaDeprecationWarning
@@ -62,7 +62,7 @@ def test_init_from_unstructured(hexbeam):
 def test_init_from_numpy_arrays():
     cells = [[8, 0, 1, 2, 3, 4, 5, 6, 7], [8, 8, 9, 10, 11, 12, 13, 14, 15]]
     cells = np.array(cells).ravel()
-    cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON])
+    cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON])
     cell1 = np.array(
         [
             [0, 0, 0],
@@ -114,7 +114,7 @@ def test_init_bad_input():
 
 def create_hex_example():
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-    cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
+    cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int32)
 
     cell1 = np.array(
         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
@@ -155,7 +155,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     offsets = np.array([0, 8, 16])
     cells_hex = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
-    input_cells_dict = {vtk.VTK_HEXAHEDRON: cells_hex}
+    input_cells_dict = {CellType.HEXAHEDRON: cells_hex}
 
     if multiple_cell_types:
         cells_quad = np.array([[16, 17, 18, 19]])
@@ -163,12 +163,12 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
         cell3 = np.array([[0, 0, -1], [1, 0, -1], [1, 1, -1], [0, 1, -1]])
 
         points = np.vstack((points, cell3))
-        input_cells_dict[vtk.VTK_QUAD] = cells_quad
+        input_cells_dict[CellType.QUAD] = cells_quad
 
         # Update expected vtk cell arrays
         vtk_cell_format = np.concatenate([vtk_cell_format, [4], np.squeeze(cells_quad)])
         offsets = np.concatenate([offsets, [20]])
-        cell_type = np.concatenate([cell_type, [vtk.VTK_QUAD]])
+        cell_type = np.concatenate([cell_type, [CellType.QUAD]])
 
     if flat_cells:
         input_cells_dict = {k: v.reshape([-1]) for k, v in input_cells_dict.items()}
@@ -186,38 +186,38 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     output_cells_dict = grid.cells_dict
 
     assert np.all(
-        output_cells_dict[vtk.VTK_HEXAHEDRON].reshape([-1])
-        == input_cells_dict[vtk.VTK_HEXAHEDRON].reshape([-1])
+        output_cells_dict[CellType.HEXAHEDRON].reshape([-1])
+        == input_cells_dict[CellType.HEXAHEDRON].reshape([-1])
     )
 
     if multiple_cell_types:
         assert np.all(
-            output_cells_dict[vtk.VTK_QUAD].reshape([-1])
-            == input_cells_dict[vtk.VTK_QUAD].reshape([-1])
+            output_cells_dict[CellType.QUAD].reshape([-1])
+            == input_cells_dict[CellType.QUAD].reshape([-1])
         )
 
     # Test for some errors
     # Invalid index (<0)
-    input_cells_dict[vtk.VTK_HEXAHEDRON] -= 1
+    input_cells_dict[CellType.HEXAHEDRON] -= 1
 
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
 
     # Restore
-    input_cells_dict[vtk.VTK_HEXAHEDRON] += 1
+    input_cells_dict[CellType.HEXAHEDRON] += 1
 
     # Invalid index (>= nr_points)
-    input_cells_dict[vtk.VTK_HEXAHEDRON].flat[0] = points.shape[0]
+    input_cells_dict[CellType.HEXAHEDRON].flat[0] = points.shape[0]
 
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
 
-    input_cells_dict[vtk.VTK_HEXAHEDRON] -= 1
+    input_cells_dict[CellType.HEXAHEDRON] -= 1
 
     # Incorrect size
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(
-            {vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False
+            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False
         )
 
     # Unknown cell type
@@ -226,12 +226,12 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     # Dynamic sizes cell type
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid({vtk.VTK_POLYGON: cells_hex.reshape([-1])}, points, deep=False)
+        pyvista.UnstructuredGrid({CellType.POLYGON: cells_hex.reshape([-1])}, points, deep=False)
 
     # Non-integer arrays
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid(
-            {vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points
+            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points
         )
 
     # Invalid point dimensions
@@ -267,12 +267,12 @@ def test_cells_dict_hexbeam_file():
     grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
     cells = np.delete(grid.cells, np.arange(0, grid.cells.size, 9)).reshape([-1, 8])
 
-    assert np.all(grid.cells_dict[vtk.VTK_HEXAHEDRON] == cells)
+    assert np.all(grid.cells_dict[CellType.HEXAHEDRON] == cells)
 
 
 def test_cells_dict_variable_length():
     cells_poly = np.concatenate([[5], np.arange(5)])
-    cells_types = np.array([vtk.VTK_POLYGON])
+    cells_types = np.array([CellType.POLYGON])
     points = np.random.normal(size=(5, 3))
     grid = pyvista.UnstructuredGrid(cells_poly, cells_types, points)
 
@@ -293,15 +293,15 @@ def test_cells_dict_empty_grid():
 
 def test_cells_dict_alternating_cells():
     cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])
-    cells_types = np.array([vtk.VTK_QUAD, vtk.VTK_TRIANGLE, vtk.VTK_QUAD])
+    cells_types = np.array([CellType.QUAD, CellType.TRIANGLE, CellType.QUAD])
     points = np.random.normal(size=(3 + 2 * 2, 3))
     grid = pyvista.UnstructuredGrid(cells, cells_types, points)
 
     cells_dict = grid.cells_dict
 
     assert np.all(grid.offset == np.array([0, 4, 7, 11]))
-    assert np.all(cells_dict[vtk.VTK_QUAD] == np.array([cells[1:5], cells[-4:]]))
-    assert np.all(cells_dict[vtk.VTK_TRIANGLE] == [0, 1, 2])
+    assert np.all(cells_dict[CellType.QUAD] == np.array([cells[1:5], cells[-4:]]))
+    assert np.all(cells_dict[CellType.TRIANGLE] == [0, 1, 2])
 
 
 def test_destructor():
@@ -327,7 +327,7 @@ def test_extract_feature_edges(hexbeam):
 
 def test_triangulate_inplace(hexbeam):
     hexbeam.triangulate(inplace=True)
-    assert (hexbeam.celltypes == vtk.VTK_TETRA).all()
+    assert (hexbeam.celltypes == CellType.TETRA).all()
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -384,7 +384,7 @@ def test_linear_copy(hexbeam):
 
 def test_linear_copy_surf_elem():
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 6, 8, 9, 10, 11, 12, 13], np.int32)
-    celltypes = np.array([vtk.VTK_QUADRATIC_QUAD, vtk.VTK_QUADRATIC_TRIANGLE], np.uint8)
+    celltypes = np.array([CellType.QUADRATIC_QUAD, CellType.QUADRATIC_TRIANGLE], np.uint8)
 
     cell0 = [
         [0.0, 0.0, 0.0],
