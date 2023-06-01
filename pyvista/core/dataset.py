@@ -24,23 +24,23 @@ import warnings
 import numpy as np
 
 import pyvista
-import pyvista._vtk_core as _vtk
+from pyvista._typing import BoundsLike, Number, NumericArray, Vector, VectorArray
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities import (
+from pyvista.core.utilities import transformations
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
+    _coerce_pointslike_arg,
     get_array,
     get_array_association,
-    is_pyvista_dataset,
     raise_not_matching,
-    transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.arrays import _coerce_pointslike_arg
-from pyvista.utilities.errors import check_valid_vector
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.core.utilities.helpers import is_pyvista_dataset
+from pyvista.core.utilities.misc import abstract_class, check_valid_vector
+from pyvista.core.utilities.points import vtk_points
+from pyvista.errors import PyVistaDeprecationWarning
 
-from .._typing import BoundsLike, Number, NumericArray, Vector, VectorArray
+from . import _vtk_core as _vtk
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -126,7 +126,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: Dict[str, '_vtk.vtkTexture'] = {}
+        self._textures: Dict[str, pyvista.Texture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -407,8 +407,8 @@ class DataSet(DataSetFilters, DataObject):
             _points = _points.GetData()
         except AttributeError:
             # create an empty array
-            vtk_points = pyvista.vtk_points(np.empty((0, 3)), False)
-            self.SetPoints(vtk_points)
+            vtkpts = vtk_points(np.empty((0, 3)), False)
+            self.SetPoints(vtkpts)
             _points = self.GetPoints().GetData()
         return pyvista_ndarray(_points, dataset=self)
 
@@ -431,11 +431,11 @@ class DataSet(DataSetFilters, DataObject):
             return
         # otherwise, wrap and use the array
         points, _ = _coerce_pointslike_arg(points, copy=False)
-        vtk_points = pyvista.vtk_points(points, False)
+        vtkpts = vtk_points(points, False)
         if not pdata:
-            self.SetPoints(vtk_points)
+            self.SetPoints(vtkpts)
         else:
-            pdata.SetData(vtk_points.GetData())
+            pdata.SetData(vtkpts.GetData())
         self.GetPoints().Modified()
         self.Modified()
 
@@ -504,8 +504,8 @@ class DataSet(DataSetFilters, DataObject):
         self.point_data.active_t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> Dict[str, '_vtk.vtkTexture']:
-        """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
+    def textures(self) -> Dict[str, pyvista.Texture]:
+        """Return a dictionary to hold compatible ``pyvista.Texture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset,
         these textures will not be passed.
@@ -540,7 +540,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str) -> '_vtk.vtkTexture':
+    def _activate_texture(mesh, name: str) -> Optional[pyvista.Texture]:
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.
@@ -552,7 +552,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        vtk.vtkTexture
+        pyvista.Texture
             The active texture
 
         """
@@ -602,7 +602,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Association of the scalars matching ``name``.
 
         numpy.ndarray
@@ -1793,7 +1793,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the array.
 
         Examples

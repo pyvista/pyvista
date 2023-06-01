@@ -2242,7 +2242,7 @@ def test_tessellate():
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
@@ -2281,7 +2281,7 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         # rotate about x-axis by 90 degrees
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
@@ -2330,7 +2330,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 @pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f"C{i}"] = np.random.randint(
@@ -2354,7 +2354,7 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
 )
 def test_transform_inplace_bad_types(dataset):
     # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation(
+    tf = pyvista.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0), 90
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):

@@ -8,9 +8,8 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista.errors import AmbiguousDataError, MissingDataError
+from pyvista.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 

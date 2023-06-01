@@ -4,9 +4,9 @@ from typing import List, Tuple
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_string_array
+from pyvista.core.utilities.arrays import convert_string_array
 
+from . import _vtk
 from .._typing import BoundsLike
 
 

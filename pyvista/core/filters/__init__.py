@@ -24,7 +24,8 @@ Example
 """
 
 import pyvista
-from pyvista.utilities import wrap, ProgressMonitor
+from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.helpers import wrap
 
 
 def _update_alg(alg, progress_bar=False, message=''):

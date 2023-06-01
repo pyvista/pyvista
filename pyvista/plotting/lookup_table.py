@@ -4,10 +4,10 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.helpers import convert_array
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.misc import no_new_attr
 
+from . import _vtk
 from .._typing import ColorLike
 from .colors import Color, get_cmap_safe
 from .tools import opacity_transfer_function

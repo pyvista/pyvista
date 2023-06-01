@@ -4,8 +4,9 @@ from typing import Union
 
 import numpy as np
 
-import pyvista._vtk_core as _vtk
-from pyvista.utilities.helpers import FieldAssociation, convert_array
+from pyvista.core.utilities.arrays import FieldAssociation, convert_array
+
+from . import _vtk_core as _vtk
 
 
 class pyvista_ndarray(np.ndarray):
@@ -21,7 +22,7 @@ class pyvista_ndarray(np.ndarray):
     dataset : pyvista.DataSet
         Input dataset.
 
-    association : pyvista.utilities.helpers.FieldAssociation
+    association : pyvista.core.utilities.arrays.FieldAssociation
         Field association.
 
     Examples

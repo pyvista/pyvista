@@ -9,7 +9,10 @@ from vtk.util import numpy_support
 
 import pyvista
 from pyvista import _vtk
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.errors import AmbiguousDataError, MissingDataError
+from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_wrap_none():
@@ -72,13 +75,13 @@ def test_wrap_trimesh():
 
 def test_make_tri_mesh(sphere):
     with pytest.raises(ValueError):
-        pyvista.make_tri_mesh(sphere.points, sphere.faces)
+        make_tri_mesh(sphere.points, sphere.faces)
 
     with pytest.raises(ValueError):
-        pyvista.make_tri_mesh(sphere.points[:, :1], sphere.faces)
+        make_tri_mesh(sphere.points[:, :1], sphere.faces)
 
     faces = sphere.faces.reshape(-1, 4)[:, 1:]
-    mesh = pyvista.make_tri_mesh(sphere.points, faces)
+    mesh = make_tri_mesh(sphere.points, faces)
 
     assert np.allclose(sphere.points, mesh.points)
     assert np.allclose(sphere.faces, mesh.faces)
@@ -180,7 +183,7 @@ def test_skybox(tmpdir):
 def test_numpy_to_texture():
     tex_im = np.ones((1024, 1024, 3), dtype=np.float64) * 255
     with pytest.warns(UserWarning, match='np.uint8'):
-        tex = pyvista.numpy_to_texture(tex_im)
+        tex = numpy_to_texture(tex_im)
     assert isinstance(tex, pyvista.Texture)
     assert tex.to_array().dtype == np.uint8
 
@@ -291,34 +294,34 @@ def test_set_default_active_scalarrs():
     # Point data scalars
     mesh["scalar_point"] = np.ones(mesh.n_points)
     mesh.set_active_scalars(None)
-    pyvista.set_default_active_scalars(mesh)
+    set_default_active_scalars(mesh)
     assert mesh.active_scalars_name == "scalar_point"
     mesh.clear_data()
 
     # Cell data scalars
     mesh["scalar_cell"] = np.ones(mesh.n_cells)
     mesh.set_active_scalars(None)
-    pyvista.set_default_active_scalars(mesh)
+    set_default_active_scalars(mesh)
     assert mesh.active_scalars_name == "scalar_cell"
     mesh.clear_data()
 
     # Point data scalars multidimensional
     mesh["scalar_point"] = np.ones((mesh.n_points, 3))
     mesh.set_active_scalars(None)
-    pyvista.set_default_active_scalars(mesh)
+    set_default_active_scalars(mesh)
     assert mesh.active_scalars_name == "scalar_point"
     mesh.clear_data()
 
     # Cell data scalars multidimensional
     mesh["scalar_cell"] = np.ones((mesh.n_cells, 3))
     mesh.set_active_scalars(None)
-    pyvista.set_default_active_scalars(mesh)
+    set_default_active_scalars(mesh)
     assert mesh.active_scalars_name == "scalar_cell"
     mesh.clear_data()
 
     # Raises if no data is present
     with pytest.raises(MissingDataError):
-        pyvista.set_default_active_scalars(mesh)
+        set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
 
     # Raises if multiple scalar-like data is present
@@ -326,7 +329,7 @@ def test_set_default_active_scalarrs():
     mesh["scalar_data2"] = np.ones(mesh.n_points)
     mesh.set_active_scalars(None)
     with pytest.raises(AmbiguousDataError):
-        pyvista.set_default_active_scalars(mesh)
+        set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
     mesh.clear_data()
 
@@ -335,7 +338,7 @@ def test_set_default_active_scalarrs():
     mesh["scalar_data2"] = np.ones(mesh.n_cells)
     mesh.set_active_scalars(None)
     with pytest.raises(AmbiguousDataError):
-        pyvista.set_default_active_scalars(mesh)
+        set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
 
     # Raises if multiple scalar-like data with same name
@@ -343,7 +346,7 @@ def test_set_default_active_scalarrs():
     mesh["scalar_data"] = np.ones(mesh.n_cells)
     mesh.set_active_scalars(None)
     with pytest.raises(AmbiguousDataError):
-        pyvista.set_default_active_scalars(mesh)
+        set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
 
 

@@ -11,10 +11,12 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 import numpy as np
 
 import pyvista
-import pyvista._vtk_core as _vtk
-from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
+from pyvista._typing import BoundsLike
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.geometric_objects import Box
+from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
 
-from .._typing import BoundsLike
+from . import _vtk_core as _vtk
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
@@ -140,7 +142,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, pyvista.wrap(block))
+                self.SetBlock(i, wrap(block))
 
     @property
     def bounds(self) -> BoundsLike:
@@ -219,7 +221,7 @@ class MultiBlock(
         4.3584
 
         """
-        return pyvista.Box(self.bounds).length
+        return Box(self.bounds).length
 
     @property
     def n_blocks(self) -> int:
@@ -405,8 +407,8 @@ class MultiBlock(
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
-        if not pyvista.is_pyvista_dataset(dataset):
-            dataset = pyvista.wrap(dataset)
+        if not is_pyvista_dataset(dataset):
+            dataset = wrap(dataset)
         self.n_blocks += 1
         self[index] = dataset
         # No overwrite if name is None
@@ -1016,7 +1018,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray

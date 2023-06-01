@@ -4,7 +4,7 @@ from typing import Awaitable
 import warnings
 
 import pyvista
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.errors import PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [
     'ipyvtklink',

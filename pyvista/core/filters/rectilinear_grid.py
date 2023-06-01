@@ -6,10 +6,10 @@ import warnings
 
 import numpy as np
 
-import pyvista._vtk_core as _vtk
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.utilities import abstract_class, assert_empty_kwargs
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.errors import PyVistaDeprecationWarning
 
 
 @abstract_class

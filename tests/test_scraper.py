@@ -5,7 +5,7 @@ import pytest
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities import Scraper
+from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
 if not system_supports_plotting():

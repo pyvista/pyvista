@@ -4,12 +4,10 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-import pyvista._vtk_core as _vtk
-import pyvista.utilities.helpers as helpers
-from pyvista.utilities.helpers import FieldAssociation
-from pyvista.utilities.misc import copy_vtk_array
+from pyvista._typing import Number
+from pyvista.core.utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
 
-from .._typing import Number
+from . import _vtk_core as _vtk
 from .pyvista_ndarray import pyvista_ndarray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
@@ -812,7 +810,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # referring to the input dataset.
         copy = pyvista_ndarray(data)
 
-        return helpers.convert_array(copy, name, deep=deep_copy)
+        return convert_array(copy, name, deep=deep_copy)
 
     def remove(self, key: str) -> None:
         """Remove an array.

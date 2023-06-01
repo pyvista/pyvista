@@ -8,10 +8,13 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS, _vtk
-from pyvista.utilities import assert_empty_kwargs, check_depth_peeling, try_callback, wrap
-from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
+from pyvista import MAX_N_COLOR_BARS
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
+from . import _vtk
 from .._typing import BoundsLike
 from .actor import Actor
 from .camera import Camera
@@ -20,6 +23,7 @@ from .colors import Color, get_cycler
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
+from .utilities.gl_checks import uses_egl
 
 ACTOR_LOC_MAP = [
     'upper right',

@@ -1,6 +1,7 @@
 """Module containing pyvista implementation of vtkProperty."""
-import pyvista as pv
 from pyvista.plotting.opts import InterpolationType, RepresentationType
+
+from . import _vtk
 
 
 class ActorProperties:
@@ -10,7 +11,7 @@ class ActorProperties:
 
     Parameters
     ----------
-    properties : pv._vtk.vtkProperty
+    properties : vtk.vtkProperty
         VTK properties of the current object.
 
     Examples
@@ -32,7 +33,7 @@ class ActorProperties:
 
     """
 
-    def __init__(self, properties: pv._vtk.vtkProperty) -> None:
+    def __init__(self, properties: _vtk.vtkProperty) -> None:
         super().__init__()
         self.properties = properties
 

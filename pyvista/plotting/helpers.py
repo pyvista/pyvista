@@ -5,7 +5,7 @@ from typing import Tuple
 import numpy as np
 
 import pyvista
-from pyvista.utilities import is_pyvista_dataset
+from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 
 def plot(

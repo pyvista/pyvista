@@ -5,18 +5,17 @@ from typing import Optional, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import (
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
     convert_array,
     convert_string_array,
     raise_not_matching,
-    set_algorithm_input,
-    wrap,
 )
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class, no_new_attr
+from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
+from . import _vtk
 from .._typing import BoundsLike
 from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable

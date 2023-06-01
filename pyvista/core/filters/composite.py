@@ -3,11 +3,11 @@
 import numpy as np
 
 import pyvista
-from pyvista import wrap
-import pyvista._vtk_core as _vtk
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.utilities import abstract_class
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class

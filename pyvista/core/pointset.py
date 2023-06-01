@@ -10,12 +10,13 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
-import pyvista._vtk_core as _vtk
-from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from pyvista._typing import BoundsLike
+from pyvista.core.cell import CellArray
+from pyvista.core.utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.points import vtk_points
 
-from .._typing import BoundsLike
-from ..utilities.fileio import get_ext
+from . import _vtk_core as _vtk
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -25,6 +26,7 @@ from .errors import (
     VTKVersionError,
 )
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
+from .utilities.fileio import get_ext
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -285,7 +287,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             else:
                 self.shallow_copy(var_inp)
         else:
-            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
+            self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
     def __repr__(self):
         """Return the standard representation."""
@@ -619,7 +621,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # First parameter is points
         if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
-            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
+            self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
         else:
             msg = f"""
@@ -1512,7 +1514,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
-        points = pyvista.vtk_points(points, deep, force_float)
+        points = vtk_points(points, deep, force_float)
         self.SetPoints(points)
 
         self.SetCells(cell_type, vtkcells)
@@ -2046,7 +2048,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         # Create structured grid
         self.SetDimensions(dim)
-        self.SetPoints(pyvista.vtk_points(points, force_float=force_float))
+        self.SetPoints(vtk_points(points, force_float=force_float))
 
     @property
     def dimensions(self):
@@ -2376,7 +2378,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore
             cells[c, 1:] = indices[cinds]
         cells = cells.flatten()
-        points = pyvista.vtk_points(points)
+        points = vtk_points(points)
         cells = CellArray(cells, ncells)
         self.SetDimensions(dims)
         self.SetPoints(points)

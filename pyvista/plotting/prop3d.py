@@ -1,8 +1,7 @@
 """Prop3D module."""
 from typing import Tuple
 
-from pyvista import _vtk
-
+from . import _vtk
 from .._typing import BoundsLike, Vector
 
 

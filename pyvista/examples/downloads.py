@@ -28,9 +28,11 @@ from pooch import Unzip
 from pooch.utils import get_logger
 
 import pyvista
-from pyvista import _vtk
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.core.utilities.fileio import get_ext, read, read_texture
+from pyvista.core.utilities.reader import DICOMReader
+from pyvista.errors import PyVistaDeprecationWarning
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -248,15 +250,15 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
-    if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
+    if get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
     saved_file = download_file(filename)
     if not load:
         return saved_file
     if texture:
-        return pyvista.read_texture(saved_file)
-    return pyvista.read(saved_file, file_format=file_format)
+        return read_texture(saved_file)
+    return read(saved_file, file_format=file_format)
 
 
 def download_masonry_texture(load=True):  # pragma: no cover
@@ -4411,7 +4413,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
     fnames = _download_archive('DICOM_Stack/data.zip')
     path = os.path.dirname(fnames[0])
     if load:
-        reader = pyvista.DICOMReader(path)
+        reader = DICOMReader(path)
         return reader.read()
     return path
 

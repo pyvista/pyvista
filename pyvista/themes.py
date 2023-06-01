@@ -36,12 +36,28 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
+from pyvista.core.utilities.misc import _check_range
+
 from ._typing import ColorLike, Number
+from .errors import PyVistaDeprecationWarning
 from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.opts import InterpolationType
 from .plotting.plotting import Plotter
 from .plotting.tools import parse_font_family
-from .utilities.misc import PyVistaDeprecationWarning, _check_range
+
+
+def _set_plot_theme_from_env():
+    """Set plot theme from an environment variable."""
+    if 'PYVISTA_PLOT_THEME' in os.environ:
+        try:
+            theme = os.environ['PYVISTA_PLOT_THEME']
+            set_plot_theme(theme.lower())
+        except ValueError:
+            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            warnings.warn(
+                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
+                f'Should be one of the following: {allowed}'
+            )
 
 
 class _rcParams(dict):  # pragma: no cover

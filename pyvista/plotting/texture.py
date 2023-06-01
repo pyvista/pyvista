@@ -7,10 +7,12 @@ import warnings
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
 from pyvista.core.dataset import DataObject
-from pyvista.utilities.helpers import AnnotatedIntEnum
-from pyvista.utilities.misc import PyVistaDeprecationWarning, _try_imageio_imread
+from pyvista.core.utilities.fileio import _try_imageio_imread
+from pyvista.core.utilities.misc import AnnotatedIntEnum
+from pyvista.errors import PyVistaDeprecationWarning
+
+from . import _vtk
 
 
 class Texture(_vtk.vtkTexture, DataObject):
@@ -650,3 +652,54 @@ class Texture(_vtk.vtkTexture, DataObject):
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         data = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
         return Texture(data)
+
+
+def image_to_texture(image):
+    """Convert ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``.
+
+    Parameters
+    ----------
+    image : pyvista.UniformGrid | vtkImageData
+        Image to convert.
+
+    Returns
+    -------
+    vtkTexture
+        VTK texture.
+
+    """
+    return Texture(image)
+
+
+def numpy_to_texture(image):
+    """Convert a NumPy image array to a vtk.vtkTexture.
+
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Numpy image array. Texture datatype expected to be ``np.uint8``.
+
+    Returns
+    -------
+    pyvista.Texture
+        PyVista texture.
+
+    Examples
+    --------
+    Create an all white texture.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> tex_arr = np.ones((1024, 1024, 3), dtype=np.uint8) * 255
+    >>> tex = pv.numpy_to_texture(tex_arr)
+
+    """
+    if image.dtype != np.uint8:
+        image = image.astype(np.uint8)
+        warnings.warn(
+            'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
+            'and converted to np.uint8.',
+            UserWarning,
+        )
+
+    return Texture(image)

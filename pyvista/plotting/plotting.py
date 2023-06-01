@@ -22,36 +22,31 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista import _vtk
-from pyvista.errors import MissingDataError, RenderWindowUnavailable
-from pyvista.plotting.volume import Volume
-from pyvista.utilities import (
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
-    assert_empty_kwargs,
+    _coerce_pointslike_arg,
     convert_array,
     get_array,
     get_array_association,
-    is_pyvista_dataset,
-    numpy_to_texture,
     raise_not_matching,
-    set_algorithm_input,
-    wrap,
 )
-from pyvista.utilities.algorithms import (
+from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.errors import MissingDataError, PyVistaDeprecationWarning, RenderWindowUnavailable
+from pyvista.plotting.utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
     decimation_algorithm,
     extract_surface_algorithm,
     pointset_to_polydata_algorithm,
+    set_algorithm_input,
     triangulate_algorithm,
 )
-from pyvista.utilities.arrays import _coerce_pointslike_arg
-from pyvista.utilities.regression import run_image_filter
+from pyvista.plotting.utilities.regression import run_image_filter
+from pyvista.plotting.volume import Volume
 
+from . import _vtk
 from .._typing import BoundsLike
-from ..utilities.misc import PyVistaDeprecationWarning, uses_egl
-from ..utilities.regression import image_from_window
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
     _common_arg_parser,
@@ -77,7 +72,10 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .texture import numpy_to_texture
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .utilities.gl_checks import uses_egl
+from .utilities.regression import image_from_window
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
@@ -5645,7 +5643,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))
-        extension = pyvista.fileio.get_ext(filename)
+        extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
         modes = {

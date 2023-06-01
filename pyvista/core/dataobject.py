@@ -8,9 +8,12 @@ from typing import Any, DefaultDict, Dict, Type, Union
 import numpy as np
 
 import pyvista
-import pyvista._vtk_core as _vtk
-from pyvista.utilities import FieldAssociation, abstract_class, fileio
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.fileio import read, set_vtkwriter_mode
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
 
+from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 
 # vector array names
@@ -60,7 +63,7 @@ class DataObject:
         self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
-        data = pyvista.read(filename, **kwargs)
+        data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
                 f'Reading file returned data of `{type(data).__name__}`, '
@@ -125,7 +128,7 @@ class DataObject:
         self._store_metadata()
 
         writer = self._WRITERS[file_ext]()
-        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         if file_ext == '.ply' and texture is not None:
@@ -605,7 +608,7 @@ class DataObject:
                 reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        mesh = pyvista.wrap(reader.GetOutput())
+        mesh = wrap(reader.GetOutput())
 
         # copy data
         self.copy_structure(mesh)

@@ -6,6 +6,7 @@ import weakref
 
 import numpy as np
 import pytest
+from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista
 from pyvista import examples
@@ -165,13 +166,13 @@ def test_pen():
 def test_wrapping():
     width = 5
     # Test wrapping of VTK Pen object
-    vtkPen = pyvista._vtk.vtkPen()
-    wrappedPen = charts.Pen(_wrap=vtkPen)
-    assert wrappedPen.__this__ == vtkPen.__this__
-    assert wrappedPen.width == vtkPen.GetWidth()
+    pen = vtkPen()
+    wrappedPen = charts.Pen(_wrap=pen)
+    assert wrappedPen.__this__ == pen.__this__
+    assert wrappedPen.width == pen.GetWidth()
     wrappedPen.width = width
-    assert wrappedPen.width == vtkPen.GetWidth()
-    assert vtkPen.GetWidth() == width
+    assert wrappedPen.width == pen.GetWidth()
+    assert pen.GetWidth() == width
 
 
 @skip_mac

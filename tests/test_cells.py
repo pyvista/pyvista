@@ -7,6 +7,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Cell, CellType
+from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import (
     cells as example_cells,
     load_airplane,
@@ -239,14 +240,14 @@ FCONTIG_ARR = np.array(np.vstack(([3, 0, 1, 2], [3, 3, 4, 5])), order='F')
     ],
 )
 def test_init_cell_array(cells, n_cells, deep):
-    cell_array = pyvista.utilities.cells.CellArray(cells, n_cells, deep)
+    cell_array = pyvista.core.cell.CellArray(cells, n_cells, deep)
     assert np.allclose(np.array(cells).ravel(), cell_array.cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == NCELLS
 
 
 def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
-    idarr = pyvista.utilities.cells.numpy_to_idarr(mask)
+    idarr = numpy_to_idarr(mask)
     assert np.allclose(mask.nonzero()[0], vtk_to_numpy(idarr))
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import vtk
 
 import pyvista as pv
+from pyvista.core._vtk_core import vtk_to_numpy
 
 
 def test_pyvistandarray_assign(sphere):
@@ -73,7 +74,7 @@ def test_vtk_points_slice():
 
     del mesh
     gc.collect()
-    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
+    assert np.allclose(vtk_to_numpy(pts.GetData()), orig_points)
 
 
 def test_vtk_points():
@@ -81,8 +82,8 @@ def test_vtk_points():
     orig_points = np.array(mesh.points)
     pts = pv.vtk_points(mesh.points, deep=False)
     assert isinstance(pts, vtk.vtkPoints)
-    assert np.shares_memory(mesh.points, pv._vtk.vtk_to_numpy(pts.GetData()))
+    assert np.shares_memory(mesh.points, vtk_to_numpy(pts.GetData()))
 
     del mesh
     gc.collect()
-    assert np.allclose(pv._vtk.vtk_to_numpy(pts.GetData()), orig_points)
+    assert np.allclose(vtk_to_numpy(pts.GetData()), orig_points)

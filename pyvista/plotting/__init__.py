@@ -1,5 +1,6 @@
 """Plotting routines."""
-
+from . import _vtk
+from .utilities import *
 from pyvista import MAX_N_COLOR_BARS
 from .charts import Chart, Chart2D, ChartMPL, ChartBox, ChartPie
 from .colors import (
@@ -16,7 +17,7 @@ from .helpers import plot, plot_arrows, plot_compare_four
 from .plotting import BasePlotter, Plotter, close_all
 from ._property import Property
 from .renderer import CameraPosition, Renderer, scale_point
-from .texture import Texture
+from .texture import Texture, image_to_texture, numpy_to_texture
 from .tools import (
     check_matplotlib_vtk_compatibility,
     check_math_text_support,

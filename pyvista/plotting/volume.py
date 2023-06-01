@@ -1,6 +1,5 @@
 """PyVista volume module."""
-from pyvista import _vtk
-
+from . import _vtk
 from ._property import Property
 from .mapper import _BaseMapper
 from .prop3d import Prop3D

@@ -3,16 +3,11 @@
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import (
-    NORMALS,
-    assert_empty_kwargs,
-    generate_plane,
-    get_array,
-    get_array_association,
-    try_callback,
-)
-from pyvista.utilities.algorithms import (
+from pyvista.core.utilities.arrays import get_array, get_array_association
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.plotting.utilities.algorithms import (
     add_ids_algorithm,
     algorithm_to_mesh_handler,
     crinkle_algorithm,
@@ -21,6 +16,7 @@ from pyvista.utilities.algorithms import (
     set_algorithm_input,
 )
 
+from . import _vtk
 from .colors import Color
 
 

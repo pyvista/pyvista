@@ -1,7 +1,7 @@
 """Define types of cells."""
 from enum import IntEnum
 
-import pyvista._vtk_core as _vtk
+from . import _vtk_core as _vtk
 
 
 class CellType(IntEnum):

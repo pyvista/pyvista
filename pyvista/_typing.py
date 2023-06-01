@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 
-from . import _vtk
-
 if TYPE_CHECKING:  # pragma: no cover
     from .plotting.charts import Chart2D, ChartBox, ChartMPL, ChartPie
     from .plotting.colors import Color
@@ -27,7 +25,7 @@ ColorLike = Union[
     Dict[str, Union[int, float, str]],
     str,
     "Color",
-    _vtk.vtkColor3ub,
+    # _vtk.vtkColor3ub,
 ]
 # Overwrite default docstring, as sphinx is not able to capture the docstring
 # when it is put beneath the definition somehow?

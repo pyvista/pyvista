@@ -7,12 +7,13 @@ import warnings
 import numpy as np
 
 import pyvista
-import pyvista._vtk_core as _vtk
 from pyvista.core.dataset import DataSet
 from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class, assert_empty_kwargs
-import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
+from pyvista.core.utilities.arrays import convert_array, raise_has_duplicates
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.errors import PyVistaDeprecationWarning
+
+from . import _vtk_core as _vtk
 
 
 @abstract_class
@@ -206,19 +207,19 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         # edges are shown as triangles if x is not floating point
         if not np.issubdtype(x.dtype, np.floating):
             x = x.astype(float)
-        self.SetXCoordinates(helpers.convert_array(x.ravel()))
+        self.SetXCoordinates(convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:
                 raise_has_duplicates(y)
             if not np.issubdtype(y.dtype, np.floating):
                 y = y.astype(float)
-            self.SetYCoordinates(helpers.convert_array(y.ravel()))
+            self.SetYCoordinates(convert_array(y.ravel()))
         if z is not None:
             if check_duplicates:
                 raise_has_duplicates(z)
             if not np.issubdtype(z.dtype, np.floating):
                 z = z.astype(float)
-            self.SetZCoordinates(helpers.convert_array(z.ravel()))
+            self.SetZCoordinates(convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
 
@@ -302,12 +303,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetXCoordinates())
+        return convert_array(self.GetXCoordinates())
 
     @x.setter
     def x(self, coords: Sequence):
         """Set the coordinates along the X-direction."""
-        self.SetXCoordinates(helpers.convert_array(coords))
+        self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -335,12 +336,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetYCoordinates())
+        return convert_array(self.GetYCoordinates())
 
     @y.setter
     def y(self, coords: Sequence):
         """Set the coordinates along the Y-direction."""
-        self.SetYCoordinates(helpers.convert_array(coords))
+        self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -368,12 +369,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetZCoordinates())
+        return convert_array(self.GetZCoordinates())
 
     @z.setter
     def z(self, coords: Sequence):
         """Set the coordinates along the Z-direction."""
-        self.SetZCoordinates(helpers.convert_array(coords))
+        self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 

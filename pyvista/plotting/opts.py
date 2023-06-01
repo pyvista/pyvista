@@ -1,5 +1,5 @@
 """Module with enum options classes for plotting."""
-from pyvista.utilities.helpers import AnnotatedIntEnum
+from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 
 class InterpolationType(AnnotatedIntEnum):
