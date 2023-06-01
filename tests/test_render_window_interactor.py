@@ -147,7 +147,7 @@ def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)
     pl = pyvista.Plotter()
-    iren = pyvista.plotting.RenderWindowInteractor(pl)
+    iren = pyvista.plotting.render_window_interactor.RenderWindowInteractor(pl)
     iren.set_render_window(pl.render_window)
 
     duration = 50  # Duration of created timers

@@ -801,7 +801,7 @@ class WidgetHelper:
         """
         if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
-        elif not isinstance(volume, pyvista.plotting.Volume):
+        elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.UniformGrid, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '

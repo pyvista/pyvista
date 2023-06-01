@@ -23,7 +23,7 @@ from pyvista.errors import PyVistaDeprecationWarning, RenderWindowUnavailable
 from pyvista.plotting import check_math_text_support, system_supports_plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
-from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 
@@ -564,7 +564,7 @@ cpos_param = [
     [-1, 2, -5],  # trigger view vector
     [1.0, 2.0, 3.0],
 ]
-cpos_param.extend(pyvista.plotting.Renderer.CAMERA_STR_ATTR_MAP)
+cpos_param.extend(pyvista.plotting.renderer.Renderer.CAMERA_STR_ATTR_MAP)
 
 
 @pytest.mark.parametrize('cpos', cpos_param)

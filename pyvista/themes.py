@@ -42,7 +42,7 @@ from ._typing import ColorLike, Number
 from .errors import PyVistaDeprecationWarning
 from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.opts import InterpolationType
-from .plotting.plotting import Plotter
+from .plotting.plotter import Plotter
 from .plotting.tools import parse_font_family
 
 
