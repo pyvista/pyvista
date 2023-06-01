@@ -380,7 +380,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """
         para_center = [0.0, 0.0, 0.0]
         sub_id = self.GetParametricCenter(para_center)
+        # EvaluateLocation requires mutable sub_id
         sub_id = _vtk.mutable(sub_id)
+        # center and weights are returned from EvaluateLocation
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
