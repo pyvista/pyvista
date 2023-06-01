@@ -7,6 +7,8 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+# flake8: noqa: F401
+
 from vtkmodules.vtkCommonColor import vtkColorSeries
 from vtkmodules.vtkRenderingAnnotation import (
     vtkAnnotatedCubeActor,
@@ -28,7 +30,6 @@ from vtkmodules.vtkRenderingContext2D import (
     vtkPen,
 )
 
-# flake8: noqa: F401
 from pyvista.core._vtk_core import *
 
 try:

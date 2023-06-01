@@ -1,4 +1,6 @@
 """Jupyter notebook plotting module."""
+# flake8: noqa: F401
+
 import warnings
 
 import pyvista

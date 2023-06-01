@@ -1,4 +1,6 @@
 """PyVista Demos."""
+# flake8: noqa: F401
+
 from pyvista.demos.demos import (
     glyphs,
     orientation_cube,

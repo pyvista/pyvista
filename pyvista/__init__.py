@@ -1,4 +1,5 @@
 """PyVista package for 3D plotting and mesh analysis."""
+# flake8: noqa: F401
 
 MAX_N_COLOR_BARS = 10
 
@@ -12,6 +13,7 @@ from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.jupyter import set_jupyter_backend
 from pyvista.plotting import *
+from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
 from pyvista.themes import (
     DefaultTheme as _GlobalTheme,
@@ -21,8 +23,6 @@ from pyvista.themes import (
     set_plot_theme,
 )
 from pyvista.utilities.wrappers import _wrappers
-
-from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used

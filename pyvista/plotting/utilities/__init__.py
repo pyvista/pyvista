@@ -1,4 +1,6 @@
 """Plotting utilities."""
+# flake8: noqa: F401
+
 from . import algorithms
 from .algorithms import algorithm_to_mesh_handler, set_algorithm_input
 from .cubemap import cubemap, cubemap_from_filenames

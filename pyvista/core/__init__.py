@@ -1,28 +1,29 @@
 """Core routines."""
+# flake8: noqa: F401
 
 from . import _vtk_core
-from .errors import *
-from .utilities import *
-from .dataset import DataSet, DataObject
+from .cell import Cell, CellArray
+from .celltype import CellType
 from .composite import MultiBlock
+from .dataset import DataObject, DataSet
 from .datasetattributes import DataSetAttributes
+from .errors import *
 from .filters import (
     CompositeFilters,
     DataSetFilters,
     PolyDataFilters,
-    UnstructuredGridFilters,
     UniformGridFilters,
+    UnstructuredGridFilters,
 )
 from .grid import Grid, RectilinearGrid, UniformGrid
 from .objects import Table
 from .pointset import (
+    ExplicitStructuredGrid,
     PointGrid,
     PointSet,
     PolyData,
     StructuredGrid,
     UnstructuredGrid,
-    ExplicitStructuredGrid,
 )
 from .pyvista_ndarray import pyvista_ndarray
-from .cell import Cell, CellArray
-from .celltype import CellType
+from .utilities import *

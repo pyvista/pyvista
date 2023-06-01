@@ -1,4 +1,6 @@
 """Utilities routines."""
+# flake8: noqa: F401
+
 from .arrays import (
     FieldAssociation,
     array_from_vtkmatrix,

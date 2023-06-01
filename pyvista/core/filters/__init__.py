@@ -22,10 +22,11 @@ Example
 >>> iso = dataset.contour()
 
 """
+# flake8: noqa: F401
 
 import pyvista
-from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.observers import ProgressMonitor
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -55,15 +56,15 @@ def _get_output(
     return data
 
 
+from .composite import CompositeFilters
+
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
 from .data_set import DataSetFilters
-from .composite import CompositeFilters
 from .poly_data import PolyDataFilters
-from .unstructured_grid import UnstructuredGridFilters
 from .rectilinear_grid import RectilinearGridFilters
 from .structured_grid import StructuredGridFilters
 from .uniform_grid import UniformGridFilters
-
+from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
     '_update_alg',
