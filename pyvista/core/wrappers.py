@@ -23,13 +23,7 @@ A user-defined Foo class is defined that extends the functionality of
 from .composite import MultiBlock
 from .grid import RectilinearGrid, UniformGrid
 from .objects import Table
-from .pointset import (
-    ExplicitStructuredGrid,
-    PointSet,
-    PolyData,
-    StructuredGrid,
-    UnstructuredGrid,
-)
+from .pointset import ExplicitStructuredGrid, PointSet, PolyData, StructuredGrid, UnstructuredGrid
 
 _wrappers = {
     'vtkExplicitStructuredGrid': ExplicitStructuredGrid,
