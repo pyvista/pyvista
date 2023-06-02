@@ -356,6 +356,28 @@ class PolyDataFilters(DataSetFilters):
         merged = self.merge(dataset, inplace=True)
         return merged
 
+    def append_polydata(
+        self,
+        *meshes: list[pyvista.PolyData],
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
+            raise TypeError("All mesh need to be of PolyData type")
+
+        append_filter = _vtk.vtkAppendPolyData()
+        for mesh in meshes:
+            append_filter.AddInputData(mesh)
+
+        _update_alg(append_filter, progress_bar, 'Append PolyData')
+        merged = _get_output(append_filter)
+
+        if inplace:
+            self.deep_copy(merged)  # type: ignore
+            return self
+
+        return merged
+
     def merge(
         self,
         dataset,
