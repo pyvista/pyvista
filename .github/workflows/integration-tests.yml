@@ -52,7 +52,7 @@ jobs:
           path: ~/mne_data
       - run: ./tools/github_actions_download.sh
         working-directory: mne-python
-      - run: pytest mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends -W ignore::PyVistaPlottingDeprecationWarning
+      - run: pytest mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends -W ignore::pyvista.plotting.plotting.PyVistaPlottingDeprecationWarning
         working-directory: mne-python
 
   pyvistaqt:

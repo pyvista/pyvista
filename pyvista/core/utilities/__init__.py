@@ -86,7 +86,9 @@ from .misc import (
     abstract_class,
     assert_empty_kwargs,
     check_valid_vector,
+    conditional_decorator,
     has_module,
+    threaded,
 )
 from .observers import Observer, ProgressMonitor, VtkErrorCatcher, set_error_output_file
 from .parametric_objects import (

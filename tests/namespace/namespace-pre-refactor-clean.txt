@@ -223,7 +223,7 @@ colors, <module 'pyvista.plotting.colors' from 'pyvista/pyvista/plotting/colors.
 compare_images, <function compare_images at 0x1641c8b80>
 # composite, <module 'pyvista.core.composite' from 'pyvista/pyvista/core/composite.py'>
 # composite_mapper, <module 'pyvista.plotting.composite_mapper' from 'pyvista/pyvista/plotting/composite_mapper.py'>
-# conditional_decorator, <class 'pyvista.utilities.helpers.conditional_decorator'>
+conditional_decorator, <class 'pyvista.utilities.helpers.conditional_decorator'>
 convert_array, <function convert_array at 0x163f3edc0>
 convert_string_array, <function convert_string_array at 0x163f3ed30>
 core, <module 'pyvista.core' from 'pyvista/pyvista/core/__init__.py'>
@@ -327,6 +327,7 @@ surface_from_para, <function surface_from_para at 0x1641c8670>
 system_supports_plotting, <function system_supports_plotting at 0x1641af550>
 # texture, <module 'pyvista.core.texture' from 'pyvista/pyvista/core/texture.py'>
 themes, <module 'pyvista.themes' from 'pyvista/pyvista/themes.py'>
+threaded, <function threaded at 0x163f40dc0>
 # tools, <module 'pyvista.plotting.tools' from 'pyvista/pyvista/plotting/tools.py'>
 # trans_from_matrix, <function trans_from_matrix at 0x163f40670>
 transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x1641b38b0>  # DEPRECATED
