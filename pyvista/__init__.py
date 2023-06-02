@@ -6,7 +6,6 @@ MAX_N_COLOR_BARS = 10
 import os
 import warnings
 
-from pyvista import _vtk
 from pyvista._plot import plot
 from pyvista._version import __version__
 from pyvista.core import *
@@ -16,6 +15,7 @@ from pyvista.core.wrappers import _wrappers
 from pyvista.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.jupyter import set_jupyter_backend
 from pyvista.plotting import *
+from pyvista.plotting import _typing, _vtk
 from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
 from pyvista.themes import (

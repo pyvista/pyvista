@@ -5,6 +5,7 @@ from typing import Optional, Union
 import numpy as np
 
 import pyvista as pv
+from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
     convert_array,
@@ -16,7 +17,6 @@ from pyvista.core.utilities.misc import abstract_class, no_new_attr
 from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
 from . import _vtk
-from .._typing import BoundsLike
 from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize

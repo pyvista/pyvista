@@ -185,10 +185,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista._typing import ColorLike
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
+from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',

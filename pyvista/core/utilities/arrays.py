@@ -6,8 +6,8 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 import pyvista
-from pyvista._typing import NumericArray, VectorArray
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import NumericArray, VectorArray
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 

@@ -11,7 +11,7 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 import numpy as np
 
 import pyvista
-from pyvista._typing import BoundsLike
+from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.geometric_objects import Box
 from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap

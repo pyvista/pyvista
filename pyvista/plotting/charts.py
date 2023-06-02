@@ -15,7 +15,7 @@ import pyvista
 from pyvista.report import vtk_version_info
 
 from . import _vtk
-from .._typing import Chart
+from ._typing import Chart
 from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
 
 

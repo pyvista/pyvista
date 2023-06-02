@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-from pyvista._typing import Number
+from pyvista.core._typing_core import Number
 from pyvista.core.utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
 
 from . import _vtk_core as _vtk

@@ -36,10 +36,11 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
+from pyvista.core._typing_core import Number
 from pyvista.core.utilities.misc import _check_range
 
-from ._typing import ColorLike, Number
 from .errors import PyVistaDeprecationWarning
+from .plotting._typing import ColorLike
 from .plotting.colors import Color, get_cmap_safe, get_cycler
 from .plotting.opts import InterpolationType
 from .plotting.plotter import Plotter

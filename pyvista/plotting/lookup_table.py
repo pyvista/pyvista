@@ -8,7 +8,7 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
-from .._typing import ColorLike
+from ._typing import ColorLike
 from .colors import Color, get_cmap_safe
 from .tools import opacity_transfer_function
 

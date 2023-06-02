@@ -10,7 +10,7 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
-from pyvista._typing import BoundsLike
+from pyvista.core._typing_core import BoundsLike
 from pyvista.core.cell import CellArray
 from pyvista.core.utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
 from pyvista.core.utilities.misc import abstract_class

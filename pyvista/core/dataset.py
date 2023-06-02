@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista._typing import BoundsLike, Number, NumericArray, Vector, VectorArray
+from pyvista.core._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import (

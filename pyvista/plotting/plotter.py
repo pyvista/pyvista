@@ -22,6 +22,7 @@ import numpy as np
 import scooby
 
 import pyvista
+from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
@@ -33,20 +34,9 @@ from pyvista.core.utilities.arrays import (
 )
 from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
-from pyvista.plotting.utilities.algorithms import (
-    active_scalars_algorithm,
-    algorithm_to_mesh_handler,
-    decimation_algorithm,
-    extract_surface_algorithm,
-    pointset_to_polydata_algorithm,
-    set_algorithm_input,
-    triangulate_algorithm,
-)
-from pyvista.plotting.utilities.regression import run_image_filter
 from pyvista.plotting.volume import Volume
 
 from . import _vtk
-from .._typing import BoundsLike
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
     _common_arg_parser,
@@ -75,8 +65,17 @@ from .renderers import Renderers
 from .scalar_bars import ScalarBars
 from .texture import numpy_to_texture
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .utilities.algorithms import (
+    active_scalars_algorithm,
+    algorithm_to_mesh_handler,
+    decimation_algorithm,
+    extract_surface_algorithm,
+    pointset_to_polydata_algorithm,
+    set_algorithm_input,
+    triangulate_algorithm,
+)
 from .utilities.gl_checks import uses_egl
-from .utilities.regression import image_from_window
+from .utilities.regression import image_from_window, run_image_filter
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 

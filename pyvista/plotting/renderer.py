@@ -9,13 +9,13 @@ import numpy as np
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
+from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 from . import _vtk
-from .._typing import BoundsLike
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
