@@ -358,14 +358,15 @@ class PolyDataFilters(DataSetFilters):
 
     def append_polydata(
         self,
-        *meshes: list[pyvista.PolyData],
-        inplace: bool = False,
-        progress_bar: bool = False,
+        *meshes,
+        inplace=False,
+        progress_bar=False,
     ):
         if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
-            raise TypeError("All mesh need to be of PolyData type")
+            raise TypeError("All meshes need to be of PolyData type")
 
         append_filter = _vtk.vtkAppendPolyData()
+        append_filter.AddInputData(self)
         for mesh in meshes:
             append_filter.AddInputData(mesh)
 
