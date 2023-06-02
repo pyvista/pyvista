@@ -2,8 +2,7 @@
 import os
 
 import pyvista
-
-from .. import _vtk
+from pyvista.plotting import _vtk
 
 
 def cubemap(path='', prefix='', ext='.jpg'):

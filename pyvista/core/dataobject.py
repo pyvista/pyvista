@@ -8,13 +8,13 @@ from typing import Any, DefaultDict, Dict, Type, Union
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.arrays import FieldAssociation
-from pyvista.core.utilities.fileio import read, set_vtkwriter_mode
-from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
+from .utilities.arrays import FieldAssociation
+from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.helpers import wrap
+from .utilities.misc import abstract_class
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'

@@ -10,13 +10,10 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
-from pyvista.core.cell import CellArray
-from pyvista.core.utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
-from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.points import vtk_points
 
 from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike
+from .cell import CellArray
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -26,7 +23,10 @@ from .errors import (
     VTKVersionError,
 )
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
+from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
 from .utilities.fileio import get_ext
+from .utilities.misc import abstract_class
+from .utilities.points import vtk_points
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '

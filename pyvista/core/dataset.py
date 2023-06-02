@@ -24,10 +24,16 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
-from pyvista.core.errors import VTKVersionError
-from pyvista.core.utilities import transformations
-from pyvista.core.utilities.arrays import (
+
+from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
+from .dataobject import DataObject
+from .datasetattributes import DataSetAttributes
+from .errors import PyVistaDeprecationWarning, VTKVersionError
+from .filters import DataSetFilters, _get_output
+from .pyvista_ndarray import pyvista_ndarray
+from .utilities import transformations
+from .utilities.arrays import (
     FieldAssociation,
     _coerce_pointslike_arg,
     get_array,
@@ -35,16 +41,9 @@ from pyvista.core.utilities.arrays import (
     raise_not_matching,
     vtk_id_list_to_array,
 )
-from pyvista.core.utilities.helpers import is_pyvista_dataset
-from pyvista.core.utilities.misc import abstract_class, check_valid_vector
-from pyvista.core.utilities.points import vtk_points
-
-from . import _vtk_core as _vtk
-from .dataobject import DataObject
-from .datasetattributes import DataSetAttributes
-from .errors import PyVistaDeprecationWarning
-from .filters import DataSetFilters, _get_output
-from .pyvista_ndarray import pyvista_ndarray
+from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import abstract_class, check_valid_vector
+from .utilities.points import vtk_points
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'

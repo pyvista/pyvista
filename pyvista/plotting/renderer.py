@@ -13,7 +13,6 @@ from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
-from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 from . import _vtk
 from .actor import Actor
@@ -24,7 +23,7 @@ from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
-from .utilities.gl_checks import uses_egl
+from .utilities.gl_checks import check_depth_peeling, uses_egl
 
 ACTOR_LOC_MAP = [
     'upper right',

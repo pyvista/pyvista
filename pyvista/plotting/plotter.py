@@ -34,7 +34,6 @@ from pyvista.core.utilities.arrays import (
 )
 from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
-from pyvista.plotting.volume import Volume
 
 from . import _vtk
 from ._plotting import (
@@ -76,6 +75,7 @@ from .utilities.algorithms import (
 )
 from .utilities.gl_checks import uses_egl
 from .utilities.regression import image_from_window, run_image_filter
+from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
@@ -561,7 +561,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Path to export the plotter as a panel scene to.
 
         """
-        from ..jupyter.notebook import handle_plotter
+        from pyvista.jupyter.notebook import handle_plotter
 
         pane = handle_plotter(self, backend='panel', title=self.title)
         pane.save(filename)
@@ -6644,7 +6644,7 @@ class Plotter(BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from ..jupyter.notebook import handle_plotter
+            from pyvista.jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend

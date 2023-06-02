@@ -4,8 +4,7 @@ import warnings
 import numpy as np
 
 import pyvista
-
-from .. import _vtk_core as _vtk
+from pyvista.core import _vtk_core as _vtk
 
 
 def vtk_points(points, deep=True, force_float=False):

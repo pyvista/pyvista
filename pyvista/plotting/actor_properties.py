@@ -1,7 +1,6 @@
 """Module containing pyvista implementation of vtkProperty."""
-from pyvista.plotting.opts import InterpolationType, RepresentationType
-
 from . import _vtk
+from .opts import InterpolationType, RepresentationType
 
 
 class ActorProperties:

@@ -7,13 +7,13 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core.dataset import DataSet
-from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.core.utilities.arrays import convert_array, raise_has_duplicates
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 from . import _vtk_core as _vtk
+from .dataset import DataSet
 from .errors import PyVistaDeprecationWarning
+from .filters import RectilinearGridFilters, UniformGridFilters, _get_output
+from .utilities.arrays import convert_array, raise_has_duplicates
+from .utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class

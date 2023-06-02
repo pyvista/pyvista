@@ -4,8 +4,7 @@ import numpy as np
 import pyvista
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
-
-from .. import _vtk
+from pyvista.plotting import _vtk
 
 
 def remove_alpha(img):

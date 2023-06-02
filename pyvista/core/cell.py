@@ -6,12 +6,11 @@ from typing import List, Tuple
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.cells import numpy_to_idarr
 
 from . import _vtk_core as _vtk
 from .celltype import CellType
 from .dataset import DataObject
-from .utilities.cells import ncells_from_cells
+from .utilities.cells import ncells_from_cells, numpy_to_idarr
 
 
 def _get_vtk_id_type():

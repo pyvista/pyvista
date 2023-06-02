@@ -3,10 +3,10 @@ from typing import Union
 
 import pyvista as pv
 from pyvista.core.utilities.misc import _check_range, no_new_attr
-from pyvista.plotting.opts import InterpolationType
 
 from . import _vtk
 from .colors import Color
+from .opts import InterpolationType
 
 
 @no_new_attr

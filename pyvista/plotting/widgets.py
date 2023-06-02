@@ -7,7 +7,10 @@ from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
-from pyvista.plotting.utilities.algorithms import (
+
+from . import _vtk
+from .colors import Color
+from .utilities.algorithms import (
     add_ids_algorithm,
     algorithm_to_mesh_handler,
     crinkle_algorithm,
@@ -15,9 +18,6 @@ from pyvista.plotting.utilities.algorithms import (
     pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
-
-from . import _vtk
-from .colors import Color
 
 
 def _parse_interaction_event(interaction_event):
@@ -1559,7 +1559,7 @@ class WidgetHelper:
 
         """
         # avoid circular import
-        from ..core.filters.data_set import _set_threshold_limit
+        from pyvista.core.filters.data_set import _set_threshold_limit
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 

@@ -11,15 +11,15 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
-from pyvista.core.utilities.arrays import FieldAssociation
-from pyvista.core.utilities.geometric_objects import Box
-from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
 
 from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import FieldAssociation
+from .utilities.geometric_objects import Box
+from .utilities.helpers import is_pyvista_dataset, wrap
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
