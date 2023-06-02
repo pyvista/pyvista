@@ -10,14 +10,16 @@ A user-defined Foo class is defined that extends the functionality of
 :class:`pyvista.PolyData`.  This class is set as the default wrapper for
 ``vtkPolyData`` objects.
 
->>> import pyvista
->>> class Foo(pyvista.PolyData):
+>>> import pyvista as pv
+>>> default_wrappers = pv._wrappers.copy()
+>>> class Foo(pv.PolyData):
 ...     pass  # Extend PolyData here
 ...
->>> pyvista._wrappers['vtkPolyData'] = Foo
->>> uniform_grid = pyvista.UniformGrid()
+>>> pv._wrappers['vtkPolyData'] = Foo
+>>> uniform_grid = pv.UniformGrid()
 >>> surface = uniform_grid.extract_surface()
 >>> assert isinstance(surface, Foo)
+>>> pv._wrappers = default_wrappers  # reset back to default
 
 """
 from .composite import MultiBlock
