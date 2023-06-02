@@ -7,6 +7,8 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 class PyVistaPlottingDeprecationWarning(PyVistaDeprecationWarning):
+    """Deprecation warning specific to `pyvista.plotting.plotting`."""
+
     pass
 
 
