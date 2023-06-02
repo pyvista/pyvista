@@ -6,6 +6,10 @@ import warnings
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 
+class PyVistaPlottingDeprecationWarning(PyVistaDeprecationWarning):
+    pass
+
+
 def __getattr__(name):
     module = importlib.import_module('pyvista.plotting.plotter')
     try:
@@ -25,6 +29,6 @@ def __getattr__(name):
 
     warnings.warn(
         message,
-        PyVistaDeprecationWarning,
+        PyVistaPlottingDeprecationWarning,
     )
     return value
