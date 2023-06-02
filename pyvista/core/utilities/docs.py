@@ -41,6 +41,10 @@ def linkcode_resolve(domain, info, edit=False):
     modname = info['module']
     fullname = info['fullname']
 
+    # Little clean up to avoid pyvista.pyvista
+    if fullname.startswith(modname):
+        fullname = fullname.lstrip(f"{modname}.")
+
     submod = sys.modules.get(modname)
     if submod is None:
         return None
