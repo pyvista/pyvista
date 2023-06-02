@@ -52,7 +52,7 @@ jobs:
           path: ~/mne_data
       - run: ./tools/github_actions_download.sh
         working-directory: mne-python
-      - run: pytest mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends -W ignore::pyvista.plotting.plotting.PyVistaPlottingDeprecationWarning
+      - run: pytest mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends -W ignore::pyvista.core.errors.PyVistaDeprecationWarning
         working-directory: mne-python
 
   pyvistaqt:
@@ -70,5 +70,5 @@ jobs:
           pyvista: false
       - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt PyQt6
       - run: pip install -ve .
-      - run: pytest ./tests -W ignore::pyvista.plotting.plotting.PyVistaPlottingDeprecationWarning
+      - run: pytest ./tests -W ignore::pyvista.core.errors.PyVistaDeprecationWarning
         working-directory: pyvistaqt
