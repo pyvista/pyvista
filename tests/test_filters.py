@@ -8,8 +8,7 @@ import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
-from pyvista import examples
-from pyvista._vtk import vtkStaticCellLocator
+from pyvista import _vtk, examples
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 
@@ -849,7 +848,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 class InterrogateVTKGlyph3D:
-    def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
+    def __init__(self, alg: _vtk.vtkGlyph3D):
         self.alg = alg
 
     @property
@@ -1160,7 +1159,7 @@ def test_resample():
 
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
+@pytest.mark.parametrize('locator', [None, _vtk.vtkStaticCellLocator()])
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
