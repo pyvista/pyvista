@@ -456,7 +456,7 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.39.0
             Before version ``0.39.0``, if all input datasets were of type :class:`pyvista.PolyData`,
             the VTK ``vtkAppendPolyDataFilter`` and ``vtkCleanPolyData`` filters were used to perform merging.
-            Otherwise, :func:`DataSetFilters.merge`, which uses the VTK ``tkAppendFilter`` filter,
+            Otherwise, :func:`DataSetFilters.merge`, which uses the VTK ``vtkAppendFilter`` filter,
             was called.
             To enhance performances and coherence with merging operations available for other
             datasets, the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
