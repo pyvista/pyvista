@@ -362,6 +362,57 @@ class PolyDataFilters(DataSetFilters):
         inplace=False,
         progress_bar=False,
     ):
+        """Append one or more PolyData into this one.
+
+        Under the hood, the VTK `vtkAppendPolyDataFilter
+        <https://vtk.org/doc/nightly/html/classvtkAppendPolyData.html#details>`_ filter is used to perform the
+        append operation.
+
+        .. versionadded:: 0.40.0
+
+        .. note::
+            Despite being slower than :func:`pyvista.PolyDataFilters.merge` for large meshes, points ordering is kept
+            during the append operation.
+
+        .. note::
+            As stated in the VTK documentation of `vtkAppendPolyDataFilter
+            <https://vtk.org/doc/nightly/html/classvtkAppendPolyData.html#details>`_,
+            point and cell data are added to the output PolyData **only** if they are present across **all**
+            input PolyData.
+
+        .. seealso::
+            :func:`pyvista.PolyDataFilters.merge`
+
+        Parameters
+        ----------
+        *meshes : list[pyvista.PolyData]
+            The PolyData(s) to append with the current one.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+            pyvista.PolyData
+                Appended PolyData(s).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> sp0 = pv.Sphere()
+        >>> sp1 = sp0.translate((1, 0, 0))
+        >>> appended = sp0.append_polydata(sp1)
+        >>> appended.plot()
+
+        Append more than one PolyData
+
+        >>> sp2 = sp0.translate((-1, 0, 0))
+        >>> appended = sp0.append_polydata(sp1, sp2)
+        >>> appended.plot()
+        """
         if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
             raise TypeError("All meshes need to be of PolyData type")
 
@@ -401,6 +452,22 @@ class PolyDataFilters(DataSetFilters):
            the default parameters. When the other mesh is also a
            :class:`pyvista.PolyData`, in-place merging via ``+=`` is
            similarly possible.
+
+        .. versionchanged:: 0.39.0
+            Before version ``0.39.0``, if all input datasets were of type :class:`pyvista.PolyData`,
+            the VTK ``vtkAppendPolyDataFilter`` and ``vtkCleanPolyData`` filters were used to perform merging.
+            Otherwise, :func:`DataSetFilters.merge`, which uses the VTK ``tkAppendFilter`` filter,
+            was called.
+            To enhance performances and coherence with merging operations available for other
+            datasets, the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
+            irrespectively of input datasets types
+            This induced that points ordering can be altered compared to previous pyvista versions when
+            merging only PolyData together.
+            To obtain similar results as before ``0.39.0`` for multiple PolyData, combine
+            :func:`PolyDataFilters.append_polydata` and :func:`PolyDataFilters.clean`.
+
+        .. seealso::
+            :func:`PolyDataFilters.append_polydata`
 
         Parameters
         ----------
