@@ -21,7 +21,7 @@ Engineering
 * AeroSandbox_: Plug-and-play analysis tools for aerodynamics, propulsion, structures, trajectory design, and much more.
 * Ptera_: Software for analyzing flapping-wing flight.
 * PyViewFactor_: A tool for the numerical computation of radiation view factors, with applications in building physics, thermal comfort and heat transfer.
-* vision6D_: An open-source software for 6D pose estimation (3D rotation and 3D translation in the camera coordinate frame) related pojects. Create the ground truth labels of 2D-3D dense correspondence.
+* vision6D_: An open-source software for 6D pose estimation (3D rotation and 3D translation in the camera coordinate frame) related projects. Create the ground truth labels of 2D-3D dense correspondence.
 
 Geosciences
 -----------
