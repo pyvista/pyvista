@@ -371,10 +371,6 @@ class PolyDataFilters(DataSetFilters):
         .. versionadded:: 0.40.0
 
         .. note::
-            Despite being slower than :func:`pyvista.PolyDataFilters.merge` for large meshes, points ordering is kept
-            during the append operation.
-
-        .. note::
             As stated in the VTK documentation of `vtkAppendPolyDataFilter
             <https://vtk.org/doc/nightly/html/classvtkAppendPolyData.html#details>`_,
             point and cell data are added to the output PolyData **only** if they are present across **all**
@@ -458,8 +454,8 @@ class PolyDataFilters(DataSetFilters):
             the VTK ``vtkAppendPolyDataFilter`` and ``vtkCleanPolyData`` filters were used to perform merging.
             Otherwise, :func:`DataSetFilters.merge`, which uses the VTK ``vtkAppendFilter`` filter,
             was called.
-            To enhance performances and coherence with merging operations available for other
-            datasets, the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
+            To enhance performances and coherence with merging operations available for other dataset in pyvista,
+            the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
             irrespectively of input datasets types
             This induced that points ordering can be altered compared to previous pyvista versions when
             merging only PolyData together.
