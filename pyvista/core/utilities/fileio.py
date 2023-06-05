@@ -454,7 +454,7 @@ def is_meshio_mesh(obj):
     Returns
     -------
     bool
-        ``True`` if ``obj`` is an ``meshio.Mesh``.
+        ``True`` if ``obj`` is a ``meshio.Mesh``.
 
     """
     try:
