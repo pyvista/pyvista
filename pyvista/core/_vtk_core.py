@@ -1,8 +1,8 @@
 """
-Import from vtk.
+Limited imports from VTK (excludes any GL-dependent).
 
-These are the modules within vtk that must be loaded across pyvista.
-Here, we attempt to import modules using the ``vtkmodules``
+These are the modules within VTK that must be loaded across pyvista's
+core API. Here, we attempt to import modules using the ``vtkmodules``
 package, which lets us only have to import from select modules and not
 the entire library.
 

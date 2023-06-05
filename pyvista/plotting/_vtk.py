@@ -1,8 +1,8 @@
 """
-Import from vtk.
+All imports from VTK (including GL-dependent).
 
-These are the modules within vtk that must be loaded across pyvista.
-Here, we attempt to import modules using the ``vtkmodules``
+These are the modules within VTK that must be loaded across pyvista's
+plotting API. Here, we attempt to import modules using the ``vtkmodules``
 package, which lets us only have to import from select modules and not
 the entire library.
 
