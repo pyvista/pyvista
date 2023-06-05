@@ -211,7 +211,7 @@ to learn more about the developers of PyVista.
 
 |contrib.rocks|
 
-Made with `contrib rocks`_ .
+Made with `contrib rocks`_.
 
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
