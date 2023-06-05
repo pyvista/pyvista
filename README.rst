@@ -202,11 +202,20 @@ by a diverse community of users on our `Connections page`_.
 Authors
 =======
 
+.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/graphs/contributors
+   :alt: contrib.rocks
+
 Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
+|contrib.rocks|
+
+Made with `contrib rocks`_ .
+
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
+.. _contrib rocks: https://contrib.rocks
 
 
 Contributing
@@ -233,18 +242,6 @@ their ideas. To learn more about contributing to PyVista, please see the
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
-Contributors
-============
-
-.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
-   :target: https://github.com/pyvista/pyvista/graphs/contributors
-   :alt: contrib.rocks
-
-|contrib.rocks|
-
-Made with `contrib rocks`_ .
-
-.. _contrib rocks: https://contrib.rocks
 
 
 Citing PyVista
