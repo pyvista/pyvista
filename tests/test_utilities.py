@@ -1,4 +1,4 @@
-""" test pyvista utilities """
+"""Test pyvista core utilities."""
 import itertools
 import os
 import pathlib
