@@ -70,5 +70,5 @@ jobs:
           pyvista: false
       - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt PyQt6
       - run: pip install -ve .
-      - run: pytest ./tests -W ignore::pyvista.core.errors.PyVistaDeprecationWarning
+      - run: pytest ./tests
         working-directory: pyvistaqt
