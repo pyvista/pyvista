@@ -219,10 +219,6 @@ Contributing
    :target: https://www.codetriage.com/pyvista/pyvista
    :alt: Code Triage
 
-.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
-   :target: https://github.com/pyvista/pyvista/graphs/contributors
-   :alt: contrib.rocks
-
 |Contributor Covenant|
 |codetriage|
 
@@ -234,12 +230,20 @@ tool for all users while encouraging every member of the community to share
 their ideas. To learn more about contributing to PyVista, please see the
 `Contributing Guide`_ and our `Code of Conduct`_.
 
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
+.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
+
+Contributors
+============
+
+.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/graphs/contributors
+   :alt: contrib.rocks
+
 |contrib.rocks|
 
 Made with `contrib rocks`_ .
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
-.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 .. _contrib rocks: https://contrib.rocks
 
 
