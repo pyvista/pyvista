@@ -236,11 +236,11 @@ their ideas. To learn more about contributing to PyVista, please see the
 
 |contrib.rocks|
 
-Made with `contrib.rocks`.
+Made with `contrib rocks`_ .
 
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
-.. _contrib.rocks: https://contrib.rocks
+.. _contrib rocks: https://contrib.rocks
 
 
 Citing PyVista
