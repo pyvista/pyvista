@@ -4,7 +4,13 @@ from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import *  # noqa: F403, F401
+from pyvista.core._typing_core import (  # noqa: F401
+    BoundsLike,
+    Number,
+    NumericArray,
+    Vector,
+    VectorArray,
+)
 
 from . import _vtk
 
