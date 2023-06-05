@@ -243,7 +243,6 @@ their ideas. To learn more about contributing to PyVista, please see the
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
 
-
 Citing PyVista
 ==============
 
