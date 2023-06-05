@@ -3,7 +3,7 @@
 This method is placed at the top-level to allow us to easily bind
 the method to all of the core datatypes before importing the
 ``pyvista.plotting`` module and libGL dependent VTK modules.
-This is necessry for future versions of PyVista that will fully
+This is necessary for future versions of PyVista that will fully
 decouple the ``core`` and ``plotting`` APIs.
 
 """
