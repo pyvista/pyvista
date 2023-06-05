@@ -18,8 +18,8 @@ class InvalidCameraError(ValueError):
     """Exception when passed an invalid camera."""
 
     def __init__(self, message=CAMERA_ERROR_MESSAGE):
-        """Empty init."""
-        ValueError.__init__(self, message)
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
 
 
 class RenderWindowUnavailable(RuntimeError):
