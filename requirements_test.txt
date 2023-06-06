@@ -29,4 +29,4 @@ trame>=2.2.6,<2.6
 trame-client>=2.5.1,<2.9
 trame-server>=2.8.0,<2.12
 trame-vtk>=2.4.0,<2.5
-trimesh<3.22.0
+trimesh<3.23.0
