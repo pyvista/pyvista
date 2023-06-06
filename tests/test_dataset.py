@@ -29,9 +29,17 @@ from pyvista.utilities.misc import PyVistaDeprecationWarning
 HYPOTHESIS_MAX_EXAMPLES = 20
 
 
-@pytest.fixture()
+@pytest.fixture
 def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
+
+
+@pytest.fixture
+def clean_up_type_overrides():
+    """Reset type overrides on teardown."""
+    yield
+    for cls in pyvista._overrides.OVERRIDABLES:
+        cls.type_override = None
 
 
 def test_invalid_overwrite(grid):
@@ -1822,3 +1830,21 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert all([0 <= id < grid.n_points for id in ids])
             assert len(ids) > 0
         assert i == n_levels - 1
+
+
+def test_type_override(clean_up_type_overrides):
+    class NotPolyData(pyvista.PolyData):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.additional_state = 42
+
+    poly = pyvista.Sphere()
+    assert type(poly) == pyvista.PolyData
+
+    pyvista.PolyData.type_override = NotPolyData
+    not_poly = pyvista.Sphere()
+    # check correct type
+    assert type(not_poly) == NotPolyData
+    # check inherited and additional state
+    assert not_poly == poly
+    assert not_poly.additional_state == 42

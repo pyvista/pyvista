@@ -26,6 +26,12 @@ from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 from pyvista.utilities.wrappers import _wrappers
 
+# set up overrides once we're done with all the other imports
+from pyvista._overrides import set_up_overrides
+
+set_up_overrides()
+del set_up_overrides  # no longer necessary
+
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
 
