@@ -1,3 +1,5 @@
+"""Type aliases for type hints."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
