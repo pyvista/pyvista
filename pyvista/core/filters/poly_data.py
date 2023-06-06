@@ -392,8 +392,8 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-            pyvista.PolyData
-                Appended PolyData(s).
+        pyvista.PolyData
+            Appended PolyData(s).
 
         Examples
         --------
@@ -403,7 +403,7 @@ class PolyDataFilters(DataSetFilters):
         >>> appended = sp0.append_polydata(sp1)
         >>> appended.plot()
 
-        Append more than one PolyData
+        Append more than one PolyData.
 
         >>> sp2 = sp0.translate((-1, 0, 0))
         >>> appended = sp0.append_polydata(sp1, sp2)
@@ -454,9 +454,9 @@ class PolyDataFilters(DataSetFilters):
             the VTK ``vtkAppendPolyDataFilter`` and ``vtkCleanPolyData`` filters were used to perform merging.
             Otherwise, :func:`DataSetFilters.merge`, which uses the VTK ``vtkAppendFilter`` filter,
             was called.
-            To enhance performances and coherence with merging operations available for other dataset in pyvista,
+            To enhance performance and coherence with merging operations available for other datasets in pyvista,
             the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
-            irrespectively of input datasets types
+            irrespectively of input datasets types.
             This induced that points ordering can be altered compared to previous pyvista versions when
             merging only PolyData together.
             To obtain similar results as before ``0.39.0`` for multiple PolyData, combine
