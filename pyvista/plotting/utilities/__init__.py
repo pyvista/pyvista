@@ -1,8 +1,20 @@
 """Plotting utilities."""
 # flake8: noqa: F401
 
-from . import algorithms
-from .algorithms import algorithm_to_mesh_handler, set_algorithm_input
+from .algorithms import (
+    active_scalars_algorithm,
+    add_ids_algorithm,
+    algorithm_to_mesh_handler,
+    cell_data_to_point_data_algorithm,
+    crinkle_algorithm,
+    decimation_algorithm,
+    extract_surface_algorithm,
+    outline_algorithm,
+    point_data_to_cell_data_algorithm,
+    pointset_to_polydata_algorithm,
+    set_algorithm_input,
+    triangulate_algorithm,
+)
 from .cubemap import cubemap, cubemap_from_filenames
 from .gl_checks import check_depth_peeling
 from .regression import (

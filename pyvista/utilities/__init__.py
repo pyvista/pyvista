@@ -11,7 +11,6 @@ def __dir__():
 
 
 def __getattr__(name):
-    # TODO: for some reason this runs twice
     utils = importlib.import_module('pyvista.core.utilities')
     try:
         value = inspect.getattr_static(utils, name)
@@ -24,7 +23,7 @@ def __getattr__(name):
         except AttributeError:
             raise AttributeError(
                 f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}` in `pyvista.core.utilities` or `pyvista.plotting.utilities`.'
-            )
+            ) from None
 
     message = f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
     if inspect.ismodule(value):

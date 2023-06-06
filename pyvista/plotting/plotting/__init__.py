@@ -17,7 +17,7 @@ def __getattr__(name):
         except AttributeError:
             raise AttributeError(
                 f'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `{name}`.'
-            )
+            ) from None
     import_path = f'from pyvista.plotting import {name}'
     message = f'The `pyvista.plotting.plotting` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
     warnings.warn(

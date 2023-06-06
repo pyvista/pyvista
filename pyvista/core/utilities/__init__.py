@@ -89,6 +89,7 @@ from .misc import (
     conditional_decorator,
     has_module,
     threaded,
+    try_callback,
 )
 from .observers import Observer, ProgressMonitor, VtkErrorCatcher, set_error_output_file
 from .parametric_objects import (
