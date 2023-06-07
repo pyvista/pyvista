@@ -9,13 +9,8 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.errors import PyVistaFutureWarning
-from pyvista.plotting import system_supports_plotting
 
 radius = 0.5
-
-skip_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 
 @pytest.fixture
@@ -244,15 +239,6 @@ def test_ray_trace(sphere):
     assert np.any(ind)
 
 
-@skip_plotting
-def test_ray_trace_plot(sphere):
-    points, ind = sphere.ray_trace(
-        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
-    )
-    assert np.any(points)
-    assert np.any(ind)
-
-
 def test_multi_ray_trace(sphere):
     pytest.importorskip('rtree')
     pytest.importorskip('pyembree')
@@ -268,11 +254,6 @@ def test_multi_ray_trace(sphere):
     mesh = pyvista.Cylinder()
     with pytest.raises(NotAllTrianglesError):
         mesh.multi_ray_trace(origins, directions)
-
-
-@skip_plotting
-def test_plot_curvature(sphere):
-    sphere.plot_curvature(off_screen=True)
 
 
 def test_edge_mask(sphere):
@@ -681,19 +662,6 @@ def test_area(sphere_dense, cube_dense):
 def test_volume(sphere_dense):
     ideal_volume = (4 / 3.0) * pi * radius**3
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
-
-
-@skip_plotting
-def test_plot_boundaries():
-    # make sure to plot an object that has boundaries
-    pyvista.Cube().plot_boundaries(off_screen=True)
-
-
-@skip_plotting
-@pytest.mark.parametrize('flip', [True, False])
-@pytest.mark.parametrize('faces', [True, False])
-def test_plot_normals(sphere, flip, faces):
-    sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
 
 
 def test_remove_points_any(sphere):

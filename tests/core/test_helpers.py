@@ -12,7 +12,6 @@ from pyvista import _vtk
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.errors import AmbiguousDataError, MissingDataError
-from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_wrap_none():
@@ -178,14 +177,6 @@ def test_skybox(tmpdir):
 
     with pytest.raises(ValueError, match='must contain 6 paths'):
         pyvista.cubemap_from_filenames(image_paths=['/path'])
-
-
-def test_numpy_to_texture():
-    tex_im = np.ones((1024, 1024, 3), dtype=np.float64) * 255
-    with pytest.warns(UserWarning, match='np.uint8'):
-        tex = numpy_to_texture(tex_im)
-    assert isinstance(tex, pyvista.Texture)
-    assert tex.to_array().dtype == np.uint8
 
 
 def test_array_association():

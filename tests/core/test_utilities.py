@@ -28,12 +28,6 @@ from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.errors import PyVistaDeprecationWarning
-from pyvista.plotting import system_supports_plotting
-from pyvista.report import GPUInfo
-
-skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 
 def test_version():
@@ -489,21 +483,6 @@ def test_observer():
     obs.observe(alg)
     with pytest.raises(RuntimeError, match="algorithm"):
         obs.observe(alg)
-
-
-@skip_no_plotting
-def test_gpuinfo():
-    gpuinfo = GPUInfo()
-    _repr = gpuinfo.__repr__()
-    _repr_html = gpuinfo._repr_html_()
-    assert isinstance(_repr, str) and len(_repr) > 1
-    assert isinstance(_repr_html, str) and len(_repr_html) > 1
-
-    # test corrupted internal infos
-    gpuinfo._gpu_info = 'foo'
-    for func_name in ['renderer', 'version', 'vendor']:
-        with pytest.raises(RuntimeError, match=func_name):
-            getattr(gpuinfo, func_name)()
 
 
 def test_check_valid_vector():

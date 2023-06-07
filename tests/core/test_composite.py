@@ -788,7 +788,7 @@ def test_compute_normals(multiblock_poly):
         multiblock_poly._compute_normals()
 
 
-def test_activate_plotting_scalars(multiblock_poly):
+def test_activate_scalars(multiblock_poly):
     for block in multiblock_poly:
         data = np.array(['a'] * block.n_points)
         block.point_data.set_array(data, 'data')

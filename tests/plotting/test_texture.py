@@ -6,6 +6,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_texture():
@@ -155,3 +156,11 @@ def test_grayscale(texture):
     gray_again = grayscale.to_grayscale()
     assert gray_again == grayscale
     assert gray_again is not grayscale  # equal and copy
+
+
+def test_numpy_to_texture():
+    tex_im = np.ones((1024, 1024, 3), dtype=np.float64) * 255
+    with pytest.warns(UserWarning, match='np.uint8'):
+        tex = numpy_to_texture(tex_im)
+    assert isinstance(tex, pv.Texture)
+    assert tex.to_array().dtype == np.uint8
