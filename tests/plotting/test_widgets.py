@@ -10,6 +10,11 @@ if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
 
+@pytest.fixture(autouse=True)
+def validate_gc(check_gc):
+    pass
+
+
 def test_widget_box(uniform):
     p = pyvista.Plotter()
     func = lambda box: box  # Does nothing

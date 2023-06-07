@@ -20,7 +20,7 @@ def _is_vtk(obj):
         return False
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
     gc.collect()

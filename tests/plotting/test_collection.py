@@ -3,10 +3,16 @@ import gc
 import weakref
 
 import numpy as np
+import pytest
 import vtk
 
 import pyvista as pv
 from pyvista.core._vtk_core import vtk_to_numpy
+
+
+@pytest.fixture(autouse=True)
+def validate_gc(check_gc):
+    pass
 
 
 def test_pyvistandarray_assign(sphere):
