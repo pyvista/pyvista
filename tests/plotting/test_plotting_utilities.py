@@ -31,7 +31,8 @@ def test_gpuinfo():
 
 
 @pytest.mark.skip_plotting
-def test_ray_trace_plot(sphere):
+def test_ray_trace_plot():
+    sphere = pyvista.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
         [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
     )
@@ -40,7 +41,8 @@ def test_ray_trace_plot(sphere):
 
 
 @pytest.mark.skip_plotting
-def test_plot_curvature(sphere):
+def test_plot_curvature():
+    sphere = pyvista.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
@@ -53,7 +55,8 @@ def test_plot_boundaries():
 @pytest.mark.skip_plotting
 @pytest.mark.parametrize('flip', [True, False])
 @pytest.mark.parametrize('faces', [True, False])
-def test_plot_normals(sphere, flip, faces):
+def test_plot_normals(flip, faces):
+    sphere = pyvista.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
 
 
