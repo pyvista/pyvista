@@ -6896,9 +6896,9 @@ class Plotter(BasePlotter):
         pointa = np.asarray(pointa)
         pointb = np.asarray(pointb)
         direction = np.asarray(direction)
-        pointa += direction
-        pointb += direction
-        lines = np.array([pointa, pointb])
+        pointc = pointa + direction
+        pointd = pointb + direction
+        lines = np.array([pointc, pointd])
 
         # Create multiple lines and set the direction vector
         mlines = pyvista.MultipleLines(lines)
@@ -6908,14 +6908,14 @@ class Plotter(BasePlotter):
         arrows = mlines.glyph(geom=pyvista.Line(), scale="Normal", factor=1.0, orient="Normal")
 
         # Define the midpoints between pointa and pointb
-        pointc = (pointa + pointb) / 2.0
+        pointe = (pointc + pointd) / 2.0
 
         # Define the label for the line
         labels = np.array([str(np.linalg.norm(pointb - pointa))])
 
         # Add the label and line to the plot
-        # text = self.add_point_labels(points=pointc, labels=labels, **kwargs)
-        _ = self.add_point_labels(points=pointc, labels=labels, **kwargs)
+        # text = self.add_point_labels(points=pointe, labels=labels, **kwargs)
+        _ = self.add_point_labels(points=pointe, labels=labels, **kwargs)
         # lines = self.add_lines(lines, color="black", width=2)
         _ = self.add_lines(lines, color="black", width=2)
 
