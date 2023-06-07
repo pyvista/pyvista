@@ -6,6 +6,7 @@ import pytest
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 
 skip_no_plotting = pytest.mark.skipif(
@@ -82,3 +83,17 @@ def test_skybox(tmpdir):
 
     with pytest.raises(ValueError, match='must contain 6 paths'):
         pyvista.cubemap_from_filenames(image_paths=['/path'])
+
+
+def test_view_vectors():
+    views = ('xy', 'yx', 'xz', 'zx', 'yz', 'zy')
+
+    for view in views:
+        vec, viewup = view_vectors(view)
+        assert isinstance(vec, np.ndarray)
+        assert np.array_equal(vec.shape, (3,))
+        assert isinstance(viewup, np.ndarray)
+        assert np.array_equal(viewup.shape, (3,))
+
+    with pytest.raises(ValueError, match="Unexpected value for direction"):
+        view_vectors('invalid')
