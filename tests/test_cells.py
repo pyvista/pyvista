@@ -203,6 +203,24 @@ def test_cell_bounds(grid):
     assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
 
 
+@pytest.mark.parametrize("grid", grids, ids=ids)
+def test_cell_center(grid):
+    center = grid.get_cell(0).center
+    bounds = grid.get_cell(0).bounds
+
+    assert isinstance(center, tuple)
+    assert bounds[0] <= center[0] <= bounds[1]
+    assert bounds[2] <= center[1] <= bounds[3]
+    assert bounds[4] <= center[2] <= bounds[5]
+
+
+def test_cell_center_value():
+    points = [[0, 0, 0], [1, 0, 0], [0.5, np.sqrt(3) / 2, 0]]
+    cell = [3, 0, 1, 2]
+    mesh = pyvista.PolyData(points, cell)
+    assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
+
+
 @pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))
 def test_str(cell, type_):
     assert str(type_) in str(cell)
