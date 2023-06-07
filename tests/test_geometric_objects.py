@@ -277,7 +277,7 @@ def test_rectangle_4points_deprecation():
     points = np.array([pointa, pointb, pointc, pointd])
 
     with pytest.warns(
-        pyvista.utilities.misc.PyVistaDeprecationWarning,
+        pyvista.core.errors.PyVistaDeprecationWarning,
         match='Please use ``pyvista.Quadrilateral``.',
     ):
         mesh = pyvista.Rectangle(points)
@@ -293,8 +293,8 @@ def test_rectangle():
     pointd = [1.0, 1.0, 1.0]
 
     # Do a rotation to be in full 3D space with floating point coordinates
-    trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
-    rotated = pyvista.transformations.apply_transformation_to_points(
+    trans = pyvista.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
+    rotated = pyvista.core.utilities.transformations.apply_transformation_to_points(
         trans, np.array([pointa, pointb, pointc, pointd])
     )
 
@@ -312,8 +312,8 @@ def test_rectangle_not_orthognal_entries():
     pointc = [1.0, 1.0, 1.0]
 
     # Do a rotation to be in full 3D space with floating point coordinates
-    trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
-    rotated = pyvista.transformations.apply_transformation_to_points(
+    trans = pyvista.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
+    rotated = pyvista.core.utilities.transformations.apply_transformation_to_points(
         trans, np.array([pointa, pointb, pointc])
     )
 
@@ -327,8 +327,8 @@ def test_rectangle_two_identical_points():
     pointc = [3.0, 1.0, 1.0]
 
     # Do a rotation to be in full 3D space with floating point coordinates
-    trans = pyvista.transformations.axis_angle_rotation([1, 1, 1], 30)
-    rotated = pyvista.transformations.apply_transformation_to_points(
+    trans = pyvista.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
+    rotated = pyvista.core.utilities.transformations.apply_transformation_to_points(
         trans, np.array([pointa, pointb, pointc])
     )
 

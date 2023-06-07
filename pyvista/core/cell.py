@@ -6,10 +6,21 @@ from typing import List, Tuple, cast
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 
+from . import _vtk_core as _vtk
 from .celltype import CellType
 from .dataset import DataObject
+from .utilities.cells import ncells_from_cells, numpy_to_idarr
+
+
+def _get_vtk_id_type():
+    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
+    VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
+    if VTK_ID_TYPE_SIZE == 4:
+        return np.int32
+    elif VTK_ID_TYPE_SIZE == 8:
+        return np.int64
+    return np.int32
 
 
 class Cell(_vtk.vtkGenericCell, DataObject):
@@ -449,3 +460,53 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         """
         return type(self)(self, deep=deep)
+
+
+class CellArray(_vtk.vtkCellArray):
+    """pyvista wrapping of vtkCellArray.
+
+    Provides convenience functions to simplify creating a CellArray from
+    a numpy array or list.
+
+    Import an array of data with the legacy vtkCellArray layout, e.g.
+
+    ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
+    Where n0 is the number of points in cell 0, and pX_Y is the Y'th
+    point in cell X.
+
+    Examples
+    --------
+    Create a cell array containing two triangles.
+
+    >>> from pyvista.core.cell import CellArray
+    >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
+    """
+
+    def __init__(self, cells=None, n_cells=None, deep=False):
+        """Initialize a vtkCellArray."""
+        if cells is not None:
+            self._set_cells(cells, n_cells, deep)
+
+    def _set_cells(self, cells, n_cells, deep):
+        vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
+
+        # Get number of cells if None.  This is quite a performance
+        # bottleneck and we can consider adding a warning.  Good
+        # candidate for Cython or JIT compilation
+        if n_cells is None:
+            if cells.ndim == 1:
+                n_cells = ncells_from_cells(cells)
+            else:
+                n_cells = cells.shape[0]
+
+        self.SetCells(n_cells, vtk_idarr)
+
+    @property
+    def cells(self):
+        """Return a numpy array of the cells."""
+        return _vtk.vtk_to_numpy(self.GetData()).ravel()
+
+    @property
+    def n_cells(self):
+        """Return the number of cells."""
+        return self.GetNumberOfCells()

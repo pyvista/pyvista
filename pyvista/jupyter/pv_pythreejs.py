@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover
 from ipywidgets import GridspecLayout
 
 import pyvista as pv
+from pyvista.core._vtk_core import numpy_to_vtk
 
 
 def segment_poly_cells(mesh):
@@ -118,7 +119,7 @@ def map_scalars(lookup_table, scalars):
         if hasattr(scalars, 'VTKObject') and scalars.VTKObject is not None:
             scalars = scalars.VTKObject
         else:
-            scalars = pv._vtk.numpy_to_vtk(scalars)
+            scalars = numpy_to_vtk(scalars)
     return pv.wrap(lookup_table.MapScalars(scalars, 0, 0))[:, :3] / 255
 
 

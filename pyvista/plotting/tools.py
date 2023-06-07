@@ -8,8 +8,8 @@ from subprocess import PIPE, Popen, TimeoutExpired
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 
+from . import _vtk
 from .colors import Color
 
 

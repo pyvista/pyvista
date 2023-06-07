@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.errors import PyVistaDeprecationWarning
 
 
 @pytest.fixture

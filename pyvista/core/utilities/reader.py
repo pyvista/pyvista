@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import enum
 from functools import wraps
+import importlib
 import os
 import pathlib
 from typing import Any, Callable, List, Union
@@ -11,12 +12,18 @@ from xml.etree import ElementTree
 import numpy as np
 
 import pyvista
-from pyvista.utilities import abstract_class, wrap
-from pyvista.utilities.misc import _lazy_vtk_instantiation
 
 from .fileio import _get_ext_force, _process_filename
+from .helpers import wrap
+from .misc import abstract_class
 
 HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
+
+
+def _lazy_vtk_instantiation(module_name, class_name):
+    """Lazy import and instantiation of a class from vtkmodules."""
+    module = importlib.import_module(f"vtkmodules.{module_name}")
+    return getattr(module, class_name)()
 
 
 def lazy_vtkPOpenFOAMReader():

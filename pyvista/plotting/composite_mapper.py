@@ -8,10 +8,11 @@ import matplotlib
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.misc import _check_range
+from pyvista.report import vtk_version_info
 
-from ..utilities.misc import _check_range, vtk_version_info
+from . import _vtk
 from .colors import Color
 from .mapper import _BaseMapper
 

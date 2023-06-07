@@ -37,7 +37,7 @@ from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 # Add scalar array with range (0, 100) that correlates with elevation
-mesh['values'] = pv.plotting.normalize(mesh['Elevation']) * 100
+mesh['values'] = pv.plotting.tools.normalize(mesh['Elevation']) * 100
 
 ###############################################################################
 # Build a custom colormap - here we make a colormap with 5 discrete colors

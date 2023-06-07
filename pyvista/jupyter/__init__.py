@@ -1,10 +1,10 @@
 """Jupyter notebook plotting module."""
-import asyncio
-from typing import Awaitable
+# flake8: noqa: F401
+
 import warnings
 
 import pyvista
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.errors import PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [
     'ipyvtklink',

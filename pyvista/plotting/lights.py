@@ -11,7 +11,8 @@ try:
 except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
-from ..utilities.helpers import vtkmatrix_from_array
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
+
 from .colors import Color, ColorLike
 
 

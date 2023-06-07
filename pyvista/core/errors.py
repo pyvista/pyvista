@@ -1,18 +1,5 @@
 """PyVista specific errors."""
 
-CAMERA_ERROR_MESSAGE = """Invalid camera description
-Camera description must be one of the following:
-
-Iterable containing position, focal_point, and view up.  For example:
-[(2.0, 5.0, 13.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)]
-
-Iterable containing a view vector.  For example:
-[-1.0, 2.0, -5.0]
-
-A string containing the plane orthogonal to the view direction.  For example:
-'xy'
-"""
-
 
 class NotAllTrianglesError(ValueError):
     """Exception when a mesh does not contain all triangles."""
@@ -22,18 +9,10 @@ class NotAllTrianglesError(ValueError):
         ValueError.__init__(self, message)
 
 
-class InvalidCameraError(ValueError):
-    """Exception when passed an invalid camera."""
-
-    def __init__(self, message=CAMERA_ERROR_MESSAGE):
-        """Empty init."""
-        ValueError.__init__(self, message)
-
-
 class DeprecationError(RuntimeError):
-    """Used for depreciated methods and functions."""
+    """Used for deprecated methods and functions."""
 
-    def __init__(self, message='This feature has been depreciated'):
+    def __init__(self, message='This feature has been deprecated'):
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -72,3 +51,45 @@ class PointSetDimensionReductionError(PointSetNotSupported):
     ):
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
+
+
+class MissingDataError(ValueError):
+    """Exception when data is missing, e.g. no active scalars can be set."""
+
+    def __init__(self, message='No data available.'):
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
+class AmbiguousDataError(ValueError):
+    """Exception when data is ambiguous, e.g. multiple active scalars can be set."""
+
+    def __init__(self, message="Multiple data available."):
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
+class PyVistaPipelineError(RuntimeError):
+    """Exception when a VTK pipeline runs into an issue."""
+
+    def __init__(self, message="VTK pipeline issue detected by PyVista."):
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
+class PyVistaDeprecationWarning(Warning):
+    """Non-supressed Deprecation Warning."""
+
+    pass
+
+
+class PyVistaFutureWarning(Warning):
+    """Non-supressed Future Warning."""
+
+    pass
+
+
+class PyVistaEfficiencyWarning(Warning):
+    """Efficiency warning."""
+
+    pass

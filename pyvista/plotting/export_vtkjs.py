@@ -118,7 +118,7 @@ def get_object_id(obj):
 def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     """Dump vtkjs data array."""
     # import here to avoid circular imports
-    from pyvista import _vtk
+    from . import _vtk
 
     if root is None:
         root = {}
@@ -436,7 +436,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     arrays = []  # assist in cleaning up references
 
     # import here to avoid circular imports
-    from pyvista import _vtk
+    from . import _vtk
 
     sceneName = os.path.split(filename)[1]
     doCompressArrays = compress_arrays
