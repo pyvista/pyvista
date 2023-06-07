@@ -369,7 +369,7 @@ def render_figures(
             )
 
             images = []
-            figures = pyvista.plotting._ALL_PLOTTERS
+            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):

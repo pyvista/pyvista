@@ -9,8 +9,8 @@ except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
+from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.jupyter import pv_pythreejs
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def test_set_jupyter_backend_threejs():

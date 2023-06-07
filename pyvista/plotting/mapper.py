@@ -5,22 +5,21 @@ from typing import Optional, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import (
+from pyvista.core._typing_core import BoundsLike
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
     convert_array,
     convert_string_array,
     raise_not_matching,
-    set_algorithm_input,
-    wrap,
 )
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class, no_new_attr
 
-from .._typing import BoundsLike
+from . import _vtk
 from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
+from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
@@ -698,7 +697,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             else:
                 jupyter_backend = self._theme.jupyter_backend
             if jupyter_backend == 'ipygany':  # pragma: no cover
-                from ..jupyter.pv_ipygany import check_colormap
+                from pyvista.jupyter.pv_ipygany import check_colormap
 
                 check_colormap(cmap)
             else:

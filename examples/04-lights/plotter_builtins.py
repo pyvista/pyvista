@@ -31,7 +31,7 @@ plotter = pv.Plotter()
 light_types = [light.light_type for light in plotter.renderer.lights]
 
 # Remove from plotters so output is not produced in docs
-pv.plotting._ALL_PLOTTERS.clear()
+pv.plotting.plotter._ALL_PLOTTERS.clear()
 
 light_types
 
@@ -65,7 +65,7 @@ plotter = pv.Plotter(lighting='three lights')
 light_types = [light.light_type for light in plotter.renderer.lights]
 
 # Remove from plotters so output is not produced in docs
-pv.plotting._ALL_PLOTTERS.clear()
+pv.plotting.plotter._ALL_PLOTTERS.clear()
 
 light_types
 

@@ -1,11 +1,12 @@
 """Filters module with a class to manage filters/algorithms for unstructured grid datasets."""
 from functools import wraps
 
-from pyvista import _vtk, abstract_class
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
+from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class

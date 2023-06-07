@@ -2,7 +2,9 @@
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista.core.utilities.arrays import point_array
+from pyvista.core.utilities.helpers import wrap
+from pyvista.plotting import _vtk
 
 
 def remove_alpha(img):
@@ -43,9 +45,9 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = pyvista.wrap(imfilter.GetOutput())
+    image = wrap(imfilter.GetOutput())
     img_size = image.dimensions
-    img_array = pyvista.utilities.point_array(image, 'ImageScalars')
+    img_array = point_array(image, 'ImageScalars')
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]

@@ -15,6 +15,7 @@ import pyvista
 from pyvista import Texture, examples
 from pyvista.core.dataset import DataSet
 from pyvista.core.errors import VTKVersionError
+from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.examples import (
     load_airplane,
     load_explicit_structured,
@@ -24,7 +25,6 @@ from pyvista.examples import (
     load_tetbeam,
     load_uniform,
 )
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -272,7 +272,7 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     grid_d = grid.copy()
     grid_d.transform(trans_rotate_only)
 
-    from pyvista.utilities.transformations import apply_transformation_to_points
+    from pyvista.core.utilities.transformations import apply_transformation_to_points
 
     trans_arr = pyvista.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
     trans_pts = apply_transformation_to_points(trans_arr, grid.points)
@@ -296,10 +296,10 @@ def test_translate_should_fail_bad_points_or_transform(grid):
     trans = np.random.random((4, 4))
     bad_trans = np.random.random((2, 4))
     with pytest.raises(ValueError):
-        pyvista.utilities.transformations.apply_transformation_to_points(trans, bad_points)
+        pyvista.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
 
     with pytest.raises(ValueError):
-        pyvista.utilities.transformations.apply_transformation_to_points(bad_trans, points)
+        pyvista.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 
 @settings(
@@ -771,12 +771,12 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.utilities.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.utilities.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
@@ -1371,7 +1371,7 @@ def test_transform_integers_vtkbug_present():
     poly.SetPoints(pyvista.vtk_points(points))
 
     # manually put together a rotate_x(10) transform
-    trans_arr = pyvista.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
+    trans_arr = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
     trans_mat = pyvista.vtkmatrix_from_array(trans_arr)
     trans = vtk.vtkTransform()
     trans.SetMatrix(trans_mat)
