@@ -1,8 +1,8 @@
 """
-Import from vtk.
+Limited imports from VTK (excludes any GL-dependent).
 
-These are the modules within vtk that must be loaded across pyvista.
-Here, we attempt to import modules using the ``vtkmodules``
+These are the modules within VTK that must be loaded across pyvista's
+core API. Here, we attempt to import modules using the ``vtkmodules``
 package, which lets us only have to import from select modules and not
 the entire library.
 
@@ -55,7 +55,6 @@ from vtkmodules.vtkChartsCore import (
     vtkPlotStacked,
     vtkPlotSurface,
 )
-from vtkmodules.vtkCommonColor import vtkColorSeries
 from vtkmodules.vtkCommonComputationalGeometry import (
     vtkKochanekSpline,
     vtkParametricBohemianDome,
@@ -427,106 +426,12 @@ except ImportError:  # pragma: no cover
             raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
 
 
-from vtkmodules.vtkRenderingAnnotation import (
-    vtkAnnotatedCubeActor,
-    vtkAxesActor,
-    vtkAxisActor2D,
-    vtkCornerAnnotation,
-    vtkCubeAxesActor,
-    vtkLegendBoxActor,
-    vtkLegendScaleActor,
-    vtkScalarBarActor,
-)
-from vtkmodules.vtkRenderingContext2D import (
-    vtkBlockItem,
-    vtkBrush,
-    vtkContext2D,
-    vtkContextActor,
-    vtkContextScene,
-    vtkImageItem,
-    vtkPen,
-)
-
-try:
-    # Necessary for displaying charts, otherwise crashes on rendering
-    import vtkmodules.vtkRenderingContextOpenGL2
-
-    _has_vtkRenderingContextOpenGL2 = True
-except ImportError:  # pragma: no cover
-    _has_vtkRenderingContextOpenGL2 = False
-
 from vtkmodules.vtkImagingFourier import (
     vtkImageButterworthHighPass,
     vtkImageButterworthLowPass,
     vtkImageFFT,
     vtkImageRFFT,
 )
-from vtkmodules.vtkRenderingCore import (
-    vtkAbstractMapper,
-    vtkActor,
-    vtkActor2D,
-    vtkCamera,
-    vtkCellPicker,
-    vtkColorTransferFunction,
-    vtkCompositeDataDisplayAttributes,
-    vtkCoordinate,
-    vtkDataSetMapper,
-    vtkImageActor,
-    vtkLight,
-    vtkLightActor,
-    vtkLightKit,
-    vtkMapper,
-    vtkPointGaussianMapper,
-    vtkPointPicker,
-    vtkPolyDataMapper,
-    vtkPolyDataMapper2D,
-    vtkProp3D,
-    vtkPropAssembly,
-    vtkProperty,
-    vtkPropPicker,
-    vtkRenderedAreaPicker,
-    vtkRenderer,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
-    vtkSelectVisiblePoints,
-    vtkSkybox,
-    vtkTextActor,
-    vtkTexture,
-    vtkVolume,
-    vtkVolumeProperty,
-    vtkWindowToImageFilter,
-    vtkWorldPointPicker,
-)
-from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer, vtkVectorText
-from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
-from vtkmodules.vtkRenderingOpenGL2 import (
-    vtkCameraPass,
-    vtkCompositePolyDataMapper2,
-    vtkDepthOfFieldPass,
-    vtkEDLShading,
-    vtkGaussianBlurPass,
-    vtkOpenGLFXAAPass,
-    vtkOpenGLHardwareSelector,
-    vtkOpenGLRenderer,
-    vtkOpenGLTexture,
-    vtkRenderPassCollection,
-    vtkRenderStepsPass,
-    vtkSequencePass,
-    vtkShadowMapPass,
-    vtkSSAAPass,
-    vtkSSAOPass,
-)
-from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
-from vtkmodules.vtkRenderingVolume import (
-    vtkFixedPointVolumeRayCastMapper,
-    vtkGPUVolumeRayCastMapper,
-    vtkUnstructuredGridVolumeRayCastMapper,
-)
-from vtkmodules.vtkRenderingVolumeOpenGL2 import (
-    vtkOpenGLGPUVolumeRayCastMapper,
-    vtkSmartVolumeMapper,
-)
-from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
 # 9.1+ imports
 try:

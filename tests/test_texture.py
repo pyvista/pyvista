@@ -5,7 +5,7 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.errors import PyVistaDeprecationWarning
 
 
 def test_texture():

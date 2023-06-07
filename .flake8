@@ -1,5 +1,5 @@
 [flake8]
-exclude = .git,__pycache__,build,dist,doc/examples,doc/_build,pyvista/**/__init__.py,pyvista/__init__.py
+exclude = .git,__pycache__,build,dist,doc/examples,doc/_build
 ignore =
     # whitespace before ':'
     E203,

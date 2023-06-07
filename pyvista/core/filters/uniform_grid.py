@@ -4,10 +4,13 @@ import collections.abc
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, abstract_class
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import AmbiguousDataError, MissingDataError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class
@@ -46,7 +49,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.core.utilities.features.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -68,7 +71,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
@@ -137,7 +140,7 @@ class UniformGridFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.utilities.common.perlin_noise>`
+        :func:`pyvista.perlin_noise() <pyvista.core.utilities.features.perlin_noise>`
         to create meaningful data.
 
         >>> import numpy as np
@@ -157,7 +160,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
@@ -296,7 +299,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
@@ -384,7 +387,7 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
@@ -479,7 +482,7 @@ class UniformGridFilters(DataSetFilters):
         # check for active scalars, otherwise risk of segfault
         if self.point_data.active_scalars_name is None:
             try:
-                pyvista.set_default_active_scalars(self)
+                set_default_active_scalars(self)
             except MissingDataError:
                 raise MissingDataError('FFT filter requires point scalars.') from None
 
@@ -768,4 +771,4 @@ class UniformGridFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return pyvista.wrap(alg.GetOutput())
+        return wrap(alg.GetOutput())

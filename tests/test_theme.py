@@ -3,8 +3,8 @@ import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.themes import DefaultTheme
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 @pytest.fixture

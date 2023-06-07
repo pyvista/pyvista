@@ -1,7 +1,7 @@
 """Render passes module for PyVista."""
 import weakref
 
-from pyvista import _vtk
+from . import _vtk
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
