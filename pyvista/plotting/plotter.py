@@ -6858,7 +6858,7 @@ class Plotter(BasePlotter):
 
         return actor
 
-    def add_dimension_line(self, pointa, pointb, offset, shape_color='grey'):
+    def add_dimension_line(self, pointa, pointb, offset, shape_color='grey', text_color=None):
         """Add a dimension line of a PyVista or VTK dataset to the scene.
 
         Parameters
@@ -6875,6 +6875,14 @@ class Plotter(BasePlotter):
         shape_color : ColorLike, default: "grey"
             Color of label shape.  Either a string, rgb
             sequence, or hex color string.
+
+        text_color : ColorLike, optional
+            Color of text. Either a string, RGB sequence, or hex color string.
+
+            * ``text_color='white'``
+            * ``text_color='w'``
+            * ``text_color=[1.0, 1.0, 1.0]``
+            * ``text_color='#FFFFFF'``
 
         Examples
         --------
@@ -6915,8 +6923,12 @@ class Plotter(BasePlotter):
         labels = np.array([str(np.linalg.norm(pointb - pointa))])
 
         # Add the label and line to the plot
-        # text = self.add_point_labels(points=pointe, labels=labels, shape_color=shape_color)
-        _ = self.add_point_labels(points=pointe, labels=labels, shape_color=shape_color)
+        # text = self.add_point_labels(
+        #     points=pointe, labels=labels, shape_color=shape_color, text_color=text_color
+        # )
+        _ = self.add_point_labels(
+            points=pointe, labels=labels, shape_color=shape_color, text_color=text_color
+        )
         # lines = self.add_lines(lines, color="black", width=2)
         _ = self.add_lines(lines, color="black", width=2)
 
