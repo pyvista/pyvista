@@ -3,7 +3,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.errors import PyVistaDeprecationWarning
 
 has_ipygany = True
 try:

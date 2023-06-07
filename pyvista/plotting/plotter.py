@@ -22,36 +22,20 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista import _vtk
-from pyvista.errors import MissingDataError, RenderWindowUnavailable
-from pyvista.plotting.volume import Volume
-from pyvista.utilities import (
+from pyvista.core._typing_core import BoundsLike
+from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
-    assert_empty_kwargs,
+    _coerce_pointslike_arg,
     convert_array,
     get_array,
     get_array_association,
-    is_pyvista_dataset,
-    numpy_to_texture,
     raise_not_matching,
-    set_algorithm_input,
-    wrap,
 )
-from pyvista.utilities.algorithms import (
-    active_scalars_algorithm,
-    algorithm_to_mesh_handler,
-    decimation_algorithm,
-    extract_surface_algorithm,
-    pointset_to_polydata_algorithm,
-    triangulate_algorithm,
-)
-from pyvista.utilities.arrays import _coerce_pointslike_arg
-from pyvista.utilities.regression import run_image_filter
+from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
-from .._typing import BoundsLike
-from ..utilities.misc import PyVistaDeprecationWarning, uses_egl
-from ..utilities.regression import image_from_window
+from . import _vtk
 from ._plotting import (
     USE_SCALAR_BAR_ARGS,
     _common_arg_parser,
@@ -62,6 +46,7 @@ from ._property import Property
 from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
+from .errors import RenderWindowUnavailable
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import (
     DataSetMapper,
@@ -77,7 +62,20 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .texture import numpy_to_texture
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .utilities.algorithms import (
+    active_scalars_algorithm,
+    algorithm_to_mesh_handler,
+    decimation_algorithm,
+    extract_surface_algorithm,
+    pointset_to_polydata_algorithm,
+    set_algorithm_input,
+    triangulate_algorithm,
+)
+from .utilities.gl_checks import uses_egl
+from .utilities.regression import image_from_window, run_image_filter
+from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
@@ -563,7 +561,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Path to export the plotter as a panel scene to.
 
         """
-        from ..jupyter.notebook import handle_plotter
+        from pyvista.jupyter.notebook import handle_plotter
 
         pane = handle_plotter(self, backend='panel', title=self.title)
         pane.save(filename)
@@ -1018,7 +1016,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
 
     def disable_3_lights(self):
-        """Please use ``enable_lightkit``, this method has been depreciated."""
+        """Please use ``enable_lightkit``, this method has been deprecated."""
         from pyvista.core.errors import DeprecationError
 
         raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')
@@ -4023,7 +4021,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Override mapper choice for UnstructuredGrid
         if isinstance(volume, pyvista.UnstructuredGrid):
             # Unstructured grid must be all tetrahedrals
-            if not (volume.celltypes == pyvista.celltype.CellType.TETRA).all():
+            if not (volume.celltypes == pyvista.CellType.TETRA).all():
                 volume = volume.triangulate()
             mapper = 'ugrid'
 
@@ -5645,7 +5643,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))
-        extension = pyvista.fileio.get_ext(filename)
+        extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
         modes = {
@@ -6646,7 +6644,7 @@ class Plotter(BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from ..jupyter.notebook import handle_plotter
+            from pyvista.jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend

@@ -8,9 +8,8 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista.errors import AmbiguousDataError, MissingDataError
+from pyvista.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -328,7 +327,7 @@ def test_triangulate_inplace(hexbeam):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
+@pytest.mark.parametrize('extension', pyvista.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
@@ -660,7 +659,7 @@ def test_invalid_init_structured():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._WRITERS)
+@pytest.mark.parametrize('extension', pyvista.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)

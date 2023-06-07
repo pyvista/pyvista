@@ -5,10 +5,11 @@ from typing import Union
 
 import pyvista as pv
 
+from . import _vtk
 from .actor_properties import ActorProperties
 
 
-class AxesActor(pv._vtk.vtkAxesActor):
+class AxesActor(_vtk.vtkAxesActor):
     """Axes actor wrapper for vtkAxesActor.
 
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user

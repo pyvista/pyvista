@@ -1,6 +1,7 @@
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import vuetify
+from vtkmodules.vtkFiltersSources import vtkConeSource
 
 import pyvista as pv
 from pyvista.trame.ui import plotter_ui
@@ -22,7 +23,7 @@ ctrl.on_server_ready.add(ctrl.view_update)
 # Plotting
 # -----------------------------------------------------------------------------
 
-source = pv._vtk.vtkConeSource()
+source = vtkConeSource()
 
 pl = pv.Plotter()
 pl.add_mesh(source, color='seagreen')

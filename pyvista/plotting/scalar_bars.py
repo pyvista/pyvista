@@ -4,8 +4,9 @@ import weakref
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS, _vtk
+from pyvista import MAX_N_COLOR_BARS
 
+from . import _vtk
 from .colors import Color
 from .tools import parse_font_family
 

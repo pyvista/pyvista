@@ -8,8 +8,7 @@ import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
-from pyvista import examples
-from pyvista._vtk import vtkStaticCellLocator
+from pyvista import _vtk, examples
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 
@@ -31,7 +30,7 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
 
 
 class GetOutput:
-    """Helper class to patch ``pyvista.filters._get_output`` which captures the raw VTK algorithm objects at the time
+    """Helper class to patch ``pyvista.core.filters._get_output`` which captures the raw VTK algorithm objects at the time
     ``_get_output`` is invoked.
     """
 
@@ -849,7 +848,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 class InterrogateVTKGlyph3D:
-    def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
+    def __init__(self, alg: _vtk.vtkGlyph3D):
         self.alg = alg
 
     @property
@@ -1160,7 +1159,7 @@ def test_resample():
 
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
+@pytest.mark.parametrize('locator', [None, _vtk.vtkStaticCellLocator()])
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
@@ -2242,7 +2241,7 @@ def test_tessellate():
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
@@ -2281,7 +2280,7 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         # rotate about x-axis by 90 degrees
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
@@ -2330,7 +2329,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 @pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f"C{i}"] = np.random.randint(
@@ -2354,7 +2353,7 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
 )
 def test_transform_inplace_bad_types(dataset):
     # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation(
+    tf = pyvista.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0), 90
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):

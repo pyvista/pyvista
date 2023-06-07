@@ -1,4 +1,5 @@
 import pytest
+from vtkmodules.vtkCommonCore import vtkLookupTable
 
 import pyvista as pv
 from pyvista.plotting.composite_mapper import BlockAttributes, CompositePolyDataMapper
@@ -35,9 +36,9 @@ def test_color_missing_with_nan(composite_mapper):
 
 
 def test_lookup_table(composite_mapper):
-    isinstance(composite_mapper.lookup_table, pv._vtk.vtkLookupTable)
+    isinstance(composite_mapper.lookup_table, vtkLookupTable)
 
-    table = pv._vtk.vtkLookupTable()
+    table = vtkLookupTable()
     composite_mapper.lookup_table = table
     assert composite_mapper.lookup_table is table
 

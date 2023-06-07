@@ -16,8 +16,8 @@ import warnings
 
 import numpy as np
 
-from pyvista import _vtk
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.core import _vtk_core as _vtk
+from pyvista.errors import PyVistaDeprecationWarning
 
 PANEL_EXTENSION_SET = [False]
 
