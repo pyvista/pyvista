@@ -6858,7 +6858,7 @@ class Plotter(BasePlotter):
 
         return actor
 
-    def add_dimension_line(self, pointa, pointb, direction, **kwargs):
+    def add_dimension_line(self, pointa, pointb, offset, **kwargs):
         """Add a dimension line of a PyVista or VTK dataset to the scene.
 
         Parameters
@@ -6869,8 +6869,8 @@ class Plotter(BasePlotter):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        direction : sequence[float]
-            Direction vector for dimension line.
+        offset : sequence[float]
+            Offset vector for dimension line.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -6895,14 +6895,14 @@ class Plotter(BasePlotter):
         # Define the lines
         pointa = np.asarray(pointa)
         pointb = np.asarray(pointb)
-        direction = np.asarray(direction)
-        pointc = pointa + direction
-        pointd = pointb + direction
+        offset = np.asarray(offset)
+        pointc = pointa + offset
+        pointd = pointb + offset
         lines = np.array([pointc, pointd])
 
-        # Create multiple lines and set the direction vector
+        # Create multiple lines and set the offset vector
         mlines = pyvista.MultipleLines(lines)
-        mlines["Normal"] = np.array([direction, direction])
+        mlines["Normal"] = np.array([offset, offset])
 
         # Create arrows for the lines
         arrows = mlines.glyph(geom=pyvista.Line(), scale="Normal", factor=1.0, orient="Normal")
