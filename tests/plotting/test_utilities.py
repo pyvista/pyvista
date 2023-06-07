@@ -50,3 +50,9 @@ def test_plot_boundaries():
 @pytest.mark.parametrize('faces', [True, False])
 def test_plot_normals(sphere, flip, faces):
     sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
+
+
+def test_get_sg_image_scraper():
+    scraper = pyvista._get_sg_image_scraper()
+    assert isinstance(scraper, pyvista.Scraper)
+    assert callable(scraper)
