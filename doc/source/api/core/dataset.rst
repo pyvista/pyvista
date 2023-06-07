@@ -38,6 +38,6 @@ arrays associated with cells, points, and the DataSet in general (fields).
    pyvista.DataSet
    pyvista.DataSetAttributes
    pyvista.core.dataset.ActiveArrayInfo
-   pyvista.utilities.helpers.FieldAssociation
+   pyvista.core.utilities.arrays.FieldAssociation
 
 .. _vtk.vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html

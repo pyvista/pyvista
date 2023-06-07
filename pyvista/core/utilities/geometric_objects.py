@@ -23,11 +23,12 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import check_valid_vector
-from pyvista.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 
-from .misc import PyVistaDeprecationWarning
+from .arrays import _coerce_pointslike_arg
+from .helpers import wrap
+from .misc import check_valid_vector
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -114,7 +115,7 @@ def Cylinder(
     cylinderSource.SetCapping(capping)
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
-    surf = pyvista.wrap(cylinderSource.GetOutput())
+    surf = wrap(cylinderSource.GetOutput())
     surf.rotate_z(-90, inplace=True)
     translate(surf, center, direction)
     return surf
@@ -285,7 +286,7 @@ def Arrow(
     arrow.SetShaftRadius(shaft_radius)
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
-    surf = pyvista.wrap(arrow.GetOutput())
+    surf = wrap(arrow.GetOutput())
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
@@ -374,7 +375,7 @@ def Sphere(
     sphere.SetStartPhi(start_phi)
     sphere.SetEndPhi(end_phi)
     sphere.Update()
-    surf = pyvista.wrap(sphere.GetOutput())
+    surf = wrap(sphere.GetOutput())
     surf.rotate_y(-90, inplace=True)
     translate(surf, center, direction)
     return surf
@@ -429,7 +430,7 @@ def Plane(
     planeSource.SetYResolution(j_resolution)
     planeSource.Update()
 
-    surf = pyvista.wrap(planeSource.GetOutput())
+    surf = wrap(planeSource.GetOutput())
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
@@ -477,7 +478,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     src.SetPoint2(*pointb)
     src.SetResolution(resolution)
     src.Update()
-    line = pyvista.wrap(src.GetOutput())
+    line = wrap(src.GetOutput())
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
@@ -514,7 +515,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
         raise ValueError('>=2 points need to define multiple lines.')
     src.SetPoints(pyvista.vtk_points(points))
     src.Update()
-    multiple_lines = pyvista.wrap(src.GetOutput())
+    multiple_lines = wrap(src.GetOutput())
     return multiple_lines
 
 
@@ -572,7 +573,7 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     tube_filter.SetNumberOfSides(n_sides)
     tube_filter.Update()
 
-    return pyvista.wrap(tube_filter.GetOutput())
+    return wrap(tube_filter.GetOutput())
 
 
 def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
@@ -644,7 +645,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
         src.SetYLength(y_length)
         src.SetZLength(z_length)
     src.Update()
-    cube = pyvista.wrap(src.GetOutput())
+    cube = wrap(src.GetOutput())
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
@@ -696,7 +697,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     src.SetQuads(quads)
     src.SetBounds(bounds)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    return wrap(src.GetOutput())
 
 
 def Cone(
@@ -765,7 +766,7 @@ def Cone(
         src.SetRadius(0.5)
     src.SetResolution(resolution)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    return wrap(src.GetOutput())
 
 
 def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True):
@@ -810,7 +811,7 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=
     src.SetRadius(radius)
     src.SetNormal(normal)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    return wrap(src.GetOutput())
 
 
 def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
@@ -862,7 +863,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     src.Update()
     normal = np.array(normal)
     center = np.array(center)
-    surf = pyvista.wrap(src.GetOutput())
+    surf = wrap(src.GetOutput())
     surf.rotate_y(90, inplace=True)
     translate(surf, center, normal)
     return surf
@@ -890,7 +891,9 @@ def Text3D(string, depth=0.5):
     >>> text_mesh = pyvista.Text3D('PyVista')
     >>> text_mesh.plot(cpos='xy')
     """
-    vec_text = _vtk.vtkVectorText()
+    from vtkmodules.vtkRenderingFreeType import vtkVectorText
+
+    vec_text = vtkVectorText()
     vec_text.SetText(string)
 
     extrude = _vtk.vtkLinearExtrusionFilter()
@@ -902,7 +905,7 @@ def Text3D(string, depth=0.5):
     tri_filter = _vtk.vtkTriangleFilter()
     tri_filter.SetInputConnection(extrude.GetOutputPort())
     tri_filter.Update()
-    return pyvista.wrap(tri_filter.GetOutput())
+    return wrap(tri_filter.GetOutput())
 
 
 def Wavelet(
@@ -1003,7 +1006,7 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return pyvista.wrap(wavelet_source.GetOutput())
+    return wrap(wavelet_source.GetOutput())
 
 
 def CircularArc(pointa, pointb, center, resolution=100, negative=False):
@@ -1076,7 +1079,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     arc.Update()
     angle = np.deg2rad(arc.GetAngle())
-    arc = pyvista.wrap(arc.GetOutput())
+    arc = wrap(arc.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
@@ -1152,7 +1155,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     arc.SetAngle(angle)
     arc.Update()
     angle = np.deg2rad(arc.GetAngle())
-    arc = pyvista.wrap(arc.GetOutput())
+    arc = wrap(arc.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center)
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
@@ -1218,7 +1221,7 @@ def Pyramid(points=None):
     ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
-    return pyvista.wrap(ug)
+    return wrap(ug)
 
 
 def Triangle(points=None):
@@ -1255,7 +1258,7 @@ def Triangle(points=None):
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Rectangle(points=None):
@@ -1367,7 +1370,7 @@ def Quadrilateral(points=None):
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius=0.5, resolution=100):
@@ -1405,7 +1408,7 @@ def Circle(radius=0.5, resolution=100):
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
@@ -1444,7 +1447,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return pyvista.wrap(pyvista.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Superquadric(
@@ -1529,7 +1532,7 @@ def Superquadric(
     superquadricSource.SetToroidal(toroidal)
     superquadricSource.SetThickness(thickness)
     superquadricSource.Update()
-    return pyvista.wrap(superquadricSource.GetOutput())
+    return wrap(superquadricSource.GetOutput())
 
 
 def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
@@ -1591,7 +1594,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     solid = _vtk.vtkPlatonicSolidSource()
     solid.SetSolidType(kind)
     solid.Update()
-    solid = pyvista.wrap(solid.GetOutput())
+    solid = wrap(solid.GetOutput())
     # rename and activate cell scalars
     cell_data = solid.cell_data.get_array(0)
     solid.clear_data()

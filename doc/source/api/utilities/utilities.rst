@@ -5,10 +5,10 @@ General Utilities
 .. autosummary::
    :toctree: _autosummary
 
-   utilities.VtkErrorCatcher
-   utilities.axis_rotation
-   utilities.is_inside_bounds
-   utilities.set_error_output_file
+   core.utilities.VtkErrorCatcher
+   core.utilities.axis_rotation
+   core.utilities.is_inside_bounds
+   core.utilities.set_error_output_file
 
 
 Object Conversions or Wrapping

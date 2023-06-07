@@ -5,21 +5,26 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import (
-    NORMALS,
-    _vtk,
-    abstract_class,
-    assert_empty_kwargs,
-    generate_plane,
-    get_array_association,
-    vtk_id_list_to_array,
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import (
+    DeprecationError,
+    MissingDataError,
+    NotAllTrianglesError,
+    PyVistaFutureWarning,
+    VTKVersionError,
 )
-from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.errors import MissingDataError
-from pyvista.utilities import FieldAssociation, get_array
-from pyvista.utilities.misc import PyVistaFutureWarning
+from pyvista.core.utilities.arrays import (
+    FieldAssociation,
+    get_array,
+    get_array_association,
+    set_default_active_scalars,
+    vtk_id_list_to_array,
+)
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -3110,7 +3115,7 @@ class PolyDataFilters(DataSetFilters):
                 )
 
         _update_alg(alg, progress_bar, 'Extruding')
-        output = pyvista.wrap(alg.GetOutput())
+        output = wrap(alg.GetOutput())
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -3216,7 +3221,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetExtrusionStrategy(extrusion)
         alg.SetCappingStrategy(capping)
         _update_alg(alg, progress_bar, 'Extruding with trimming')
-        output = pyvista.wrap(alg.GetOutput())
+        output = wrap(alg.GetOutput())
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -3593,7 +3598,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
@@ -3642,7 +3647,7 @@ class PolyDataFilters(DataSetFilters):
                 array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
-            return mesh, pyvista.wrap(alg.GetContourEdgesOutput())
+            return mesh, wrap(alg.GetContourEdgesOutput())
         return mesh
 
     def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar=False):
@@ -3720,5 +3725,5 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar, 'Reconstructing surface')
-        surf = pyvista.wrap(mc.GetOutput())
+        surf = wrap(mc.GetOutput())
         return surf

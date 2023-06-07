@@ -1,4 +1,4 @@
-""" test pyvista.utilities """
+"""Test pyvista core utilities."""
 import itertools
 import os
 import pathlib
@@ -13,20 +13,23 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.plotting import system_supports_plotting
-from pyvista.utilities import (
-    GPUInfo,
-    Observer,
-    cells,
-    check_valid_vector,
-    errors,
-    fileio,
-    get_ext,
-    helpers,
-    transformations,
+from pyvista.core.utilities import cells, fileio, transformations
+from pyvista.core.utilities.arrays import (
+    copy_vtk_array,
+    get_array,
+    has_duplicates,
+    raise_has_duplicates,
+    vtk_id_list_to_array,
 )
-from pyvista.utilities.docs import linkcode_resolve
-from pyvista.utilities.misc import PyVistaDeprecationWarning, has_duplicates, raise_has_duplicates
+from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.fileio import get_ext
+from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector
+from pyvista.core.utilities.observers import Observer
+from pyvista.core.utilities.points import vector_poly_data
+from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.plotting import system_supports_plotting
+from pyvista.report import GPUInfo
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Requires system to support plotting"
@@ -52,13 +55,13 @@ def test_createvectorpolydata_error():
     orig = np.random.random((3, 1))
     vec = np.random.random((3, 1))
     with pytest.raises(ValueError):
-        helpers.vector_poly_data(orig, vec)
+        vector_poly_data(orig, vec)
 
 
 def test_createvectorpolydata_1D():
     orig = np.random.random(3)
     vec = np.random.random(3)
-    vdata = helpers.vector_poly_data(orig, vec)
+    vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
 
@@ -66,7 +69,7 @@ def test_createvectorpolydata_1D():
 def test_createvectorpolydata():
     orig = np.random.random((100, 3))
     vec = np.random.random((100, 3))
-    vdata = helpers.vector_poly_data(orig, vec)
+    vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
 
@@ -197,14 +200,14 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.utilities.fileio.read')
+@mock.patch('pyvista.core.utilities.fileio.read')
 def test_read_legacy(read_mock):
     with pytest.warns(PyVistaDeprecationWarning):
         pyvista.read_legacy(ex.globefile, progress_bar=False)
     read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
 
 
-@mock.patch('pyvista.utilities.fileio.read_exodus')
+@mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
     # use the globefile as a dummy because pv.read() checks for the existence of the file
@@ -215,8 +218,8 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 
 @pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.utilities.reader.BaseReader.read')
-@mock.patch('pyvista.utilities.reader.BaseReader.path')
+@mock.patch('pyvista.core.utilities.reader.BaseReader.read')
+@mock.patch('pyvista.core.utilities.reader.BaseReader.path')
 def test_read_plot3d(path_mock, read_mock, auto_detect):
     # with grid only
     with pytest.warns(PyVistaDeprecationWarning):
@@ -234,7 +237,7 @@ def test_get_array_cell(hexbeam):
     carr = np.random.rand(hexbeam.n_cells)
     hexbeam.cell_data.set_array(carr, 'test_data')
 
-    data = helpers.get_array(hexbeam, 'test_data', preference='cell')
+    data = get_array(hexbeam, 'test_data', preference='cell')
     assert np.allclose(carr, data)
 
 
@@ -242,13 +245,13 @@ def test_get_array_point(hexbeam):
     parr = np.random.rand(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
-    data = helpers.get_array(hexbeam, 'test_data', preference='point')
+    data = get_array(hexbeam, 'test_data', preference='point')
     assert np.allclose(parr, data)
 
     oarr = np.random.rand(hexbeam.n_points)
     hexbeam.point_data.set_array(oarr, 'other')
 
-    data = helpers.get_array(hexbeam, 'other')
+    data = get_array(hexbeam, 'other')
     assert np.allclose(oarr, data)
 
 
@@ -257,13 +260,13 @@ def test_get_array_field(hexbeam):
     # no preference
     farr = np.random.rand(hexbeam.n_points * hexbeam.n_cells)
     hexbeam.field_data.set_array(farr, 'data')
-    data = helpers.get_array(hexbeam, 'data')
+    data = get_array(hexbeam, 'data')
     assert np.allclose(farr, data)
 
     # preference and multiple data
     hexbeam.point_data.set_array(np.random.rand(hexbeam.n_points), 'data')
 
-    data = helpers.get_array(hexbeam, 'data', preference='field')
+    data = get_array(hexbeam, 'data', preference='field')
     assert np.allclose(farr, data)
 
 
@@ -273,15 +276,15 @@ def test_get_array_error(hexbeam):
 
     # invalid inputs
     with pytest.raises(TypeError):
-        helpers.get_array(hexbeam, 'test_data', preference={'invalid'})
+        get_array(hexbeam, 'test_data', preference={'invalid'})
     with pytest.raises(ValueError):
-        helpers.get_array(hexbeam, 'test_data', preference='invalid')
+        get_array(hexbeam, 'test_data', preference='invalid')
     with pytest.raises(ValueError, match='`preference` must be'):
-        helpers.get_array(hexbeam, 'test_data', preference='row')
+        get_array(hexbeam, 'test_data', preference='row')
 
 
 def test_get_array_none(hexbeam):
-    arr = helpers.get_array(hexbeam, 'foo')
+    arr = get_array(hexbeam, 'foo')
     assert arr is None
 
 
@@ -289,18 +292,18 @@ def get_array_vtk(hexbeam):
     # test raw VTK input
     grid_vtk = vtk.vtkUnstructuredGrid()
     grid_vtk.DeepCopy(hexbeam)
-    helpers.get_array(grid_vtk, 'test_data')
-    helpers.get_array(grid_vtk, 'foo')
+    get_array(grid_vtk, 'test_data')
+    get_array(grid_vtk, 'foo')
 
 
 def test_is_inside_bounds():
     data = ex.load_uniform()
     bnds = data.bounds
-    assert helpers.is_inside_bounds((0.5, 0.5, 0.5), bnds)
-    assert not helpers.is_inside_bounds((12, 5, 5), bnds)
-    assert not helpers.is_inside_bounds((5, 12, 5), bnds)
-    assert not helpers.is_inside_bounds((5, 5, 12), bnds)
-    assert not helpers.is_inside_bounds((12, 12, 12), bnds)
+    assert is_inside_bounds((0.5, 0.5, 0.5), bnds)
+    assert not is_inside_bounds((12, 5, 5), bnds)
+    assert not is_inside_bounds((5, 12, 5), bnds)
+    assert not is_inside_bounds((5, 5, 12), bnds)
+    assert not is_inside_bounds((12, 12, 12), bnds)
 
 
 def test_get_sg_image_scraper():
@@ -442,13 +445,13 @@ def test_vtkmatrix_to_from_array():
 
 def test_assert_empty_kwargs():
     kwargs = {}
-    assert errors.assert_empty_kwargs(**kwargs)
+    assert assert_empty_kwargs(**kwargs)
     with pytest.raises(TypeError):
         kwargs = {"foo": 6}
-        errors.assert_empty_kwargs(**kwargs)
+        assert_empty_kwargs(**kwargs)
     with pytest.raises(TypeError):
         kwargs = {"foo": 6, "goo": "bad"}
-        errors.assert_empty_kwargs(**kwargs)
+        assert_empty_kwargs(**kwargs)
 
 
 def test_convert_id_list():
@@ -457,7 +460,7 @@ def test_convert_id_list():
     id_list.SetNumberOfIds(len(ids))
     for i, v in enumerate(ids):
         id_list.SetId(i, v)
-    converted = helpers.vtk_id_list_to_array(id_list)
+    converted = vtk_id_list_to_array(id_list)
     assert np.allclose(converted, ids)
 
 
@@ -558,26 +561,26 @@ def _generate_vtk_err():
 
 def test_vtk_error_catcher():
     # raise_errors: False
-    error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
+    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher()
     with error_catcher:
         _generate_vtk_err()
         _generate_vtk_err()
     assert len(error_catcher.events) == 2
 
     # raise_errors: False, no error
-    error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
+    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher()
     with error_catcher:
         pass
 
     # raise_errors: True
-    error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
+    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
     with pytest.raises(RuntimeError):
         with error_catcher:
             _generate_vtk_err()
     assert len(error_catcher.events) == 1
 
     # raise_errors: True, no error
-    error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
+    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
 
@@ -796,18 +799,18 @@ def test_color_opacity():
 
 def test_convert_array():
     arr = np.arange(4).astype('O')
-    arr2 = pyvista.utilities.convert_array(arr, array_type=np.dtype('O'))
+    arr2 = pyvista.core.utilities.arrays.convert_array(arr, array_type=np.dtype('O'))
     assert arr2.GetNumberOfValues() == 4
 
     # https://github.com/pyvista/pyvista/issues/2370
-    arr3 = pyvista.utilities.convert_array(
+    arr3 = pyvista.core.utilities.arrays.convert_array(
         pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
     )
     assert arr3.GetNumberOfValues() == 4
 
     # check lists work
     my_list = [1, 2, 3]
-    arr4 = pyvista.utilities.convert_array(my_list)
+    arr4 = pyvista.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
 
@@ -822,7 +825,7 @@ def test_has_duplicates():
 
 def test_copy_vtk_array():
     with pytest.raises(TypeError, match='Invalid type'):
-        pyvista.utilities.misc.copy_vtk_array([1, 2, 3])
+        copy_vtk_array([1, 2, 3])
 
     value_0 = 10
     value_1 = 10
@@ -830,11 +833,11 @@ def test_copy_vtk_array():
     arr.SetNumberOfValues(2)
     arr.SetValue(0, value_0)
     arr.SetValue(1, value_1)
-    arr_copy = pyvista.utilities.misc.copy_vtk_array(arr, deep=True)
+    arr_copy = copy_vtk_array(arr, deep=True)
     assert arr_copy.GetNumberOfValues()
     assert value_0 == arr_copy.GetValue(0)
 
-    arr_copy_shallow = pyvista.utilities.misc.copy_vtk_array(arr, deep=False)
+    arr_copy_shallow = copy_vtk_array(arr, deep=False)
     new_value = 5
     arr.SetValue(1, new_value)
     assert value_1 == arr_copy.GetValue(1)

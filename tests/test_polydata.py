@@ -8,8 +8,8 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.errors import PyVistaFutureWarning
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyVistaFutureWarning
 
 radius = 0.5
 

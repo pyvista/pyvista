@@ -4,10 +4,9 @@ import traceback
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.errors import PyVistaPipelineError
-
-from .helpers import wrap
+from pyvista.core.errors import PyVistaPipelineError
+from pyvista.core.utilities.helpers import wrap
+from pyvista.plotting import _vtk
 
 
 def algorithm_to_mesh_handler(mesh_or_algo, port=0):

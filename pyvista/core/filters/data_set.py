@@ -7,21 +7,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import FieldAssociation, _vtk
-from pyvista.core.errors import VTKVersionError
+import pyvista.core._vtk_core as _vtk
+from pyvista.core.errors import AmbiguousDataError, MissingDataError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.errors import AmbiguousDataError, MissingDataError
-from pyvista.utilities import (
-    NORMALS,
-    abstract_class,
-    assert_empty_kwargs,
-    generate_plane,
+from pyvista.core.utilities import transformations
+from pyvista.core.utilities.arrays import (
+    FieldAssociation,
     get_array,
     get_array_association,
-    transformations,
-    wrap,
+    set_default_active_scalars,
+    vtkmatrix_from_array,
 )
-from pyvista.utilities.cells import numpy_to_idarr
+from pyvista.core.utilities.cells import numpy_to_idarr
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -527,7 +527,7 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         alg.SetValue(value)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
         else:
             self.set_active_scalars(scalars)
 
@@ -1149,11 +1149,11 @@ class DataSetFilters:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> vol = pyvista.wrap(volume)
+        >>> vol = pv.wrap(volume)
         >>> threshed = vol.threshold(0.1)
         >>> threshed
         UnstructuredGrid (...)
@@ -1167,9 +1167,9 @@ class DataSetFilters:
         Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> grid.plot(
@@ -1180,9 +1180,9 @@ class DataSetFilters:
 
         Next, apply the threshold.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> threshed = grid.threshold(value=0.02)
@@ -1197,7 +1197,7 @@ class DataSetFilters:
         """
         # set the scalars to threshold on
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
@@ -1335,7 +1335,7 @@ class DataSetFilters:
 
         """
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             _, tscalars = self.active_scalars_info
         else:
             tscalars = scalars
@@ -1826,7 +1826,7 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars_name = self.active_scalars_info
         else:
             field = get_array_association(self, scalars_name, preference=preference)
@@ -2259,7 +2259,7 @@ class DataSetFilters:
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
-                pyvista.set_default_active_scalars(self)
+                set_default_active_scalars(self)
             except MissingDataError:
                 warnings.warn("No data to use for scale. scale will be set to False.")
                 scale = False
@@ -2546,7 +2546,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
@@ -2723,7 +2723,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_cell_arrays``.
+            Deprecated keyword argument ``pass_cell_arrays``.
 
         Returns
         -------
@@ -2810,7 +2810,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_point_arrays``.
+            Deprecated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -3030,7 +3030,7 @@ class DataSetFilters:
         ----------
         points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
-            or something :func:`pyvista.wrap` can handle.
+            or something :func:`wrap` can handle.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
@@ -3074,7 +3074,7 @@ class DataSetFilters:
 
         """
         if not pyvista.is_pyvista_dataset(points):
-            points = pyvista.wrap(points)
+            points = wrap(points)
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(self)
@@ -3405,7 +3405,7 @@ class DataSetFilters:
             source.SetRadius(source_radius)
             source.SetNumberOfPoints(n_points)
         source.Update()
-        input_source = pyvista.wrap(source.GetOutput())
+        input_source = wrap(source.GetOutput())
         output = self.streamlines_from_source(
             input_source, vectors, progress_bar=progress_bar, **kwargs
         )
@@ -3943,7 +3943,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4274,7 +4274,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4400,7 +4400,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -5067,7 +5067,7 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
@@ -5305,7 +5305,7 @@ class DataSetFilters:
         elif isinstance(trans, np.ndarray):
             if trans.shape != (4, 4):
                 raise ValueError('Transformation array must be 4x4')
-            m = pyvista.vtkmatrix_from_array(trans)
+            m = vtkmatrix_from_array(trans)
             t = _vtk.vtkTransform()
             t.SetMatrix(m)
         else:

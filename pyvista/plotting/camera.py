@@ -10,8 +10,8 @@ from xml.etree import ElementTree
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 
+from . import _vtk
 from .helpers import view_vectors
 
 

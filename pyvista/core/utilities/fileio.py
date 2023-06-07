@@ -7,8 +7,21 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities.misc import PyVistaDeprecationWarning, _try_imageio_imread
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
+
+from .observers import Observer
+
+
+def set_pickle_format(format: str):
+    """Set the format used to serialize :class:`pyvista.DataObject` when pickled."""
+    supported = {'xml', 'legacy'}
+    format = format.lower()
+    if format not in supported:
+        raise ValueError(
+            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+        )
+    pyvista.PICKLE_FORMAT = format
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -191,7 +204,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         except ReadError:
             raise OSError("This file was not able to be automatically read by pyvista.")
     else:
-        observer = pyvista.utilities.errors.Observer()
+        observer = Observer()
         observer.observe(reader.reader)
         if attrs is not None:
             _apply_attrs_to_reader(reader, attrs)
@@ -269,7 +282,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
     '2k_earth_daymap.jpg'
     >>> texture = pyvista.read_texture(examples.mapfile)
     >>> type(texture)
-    <class 'pyvista.core.texture.Texture'>
+    <class 'pyvista.plotting.texture.Texture'>
 
     """
     filename = os.path.abspath(os.path.expanduser(filename))
@@ -339,6 +352,8 @@ def read_exodus(
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
+    from .helpers import wrap
+
     # lazy import here to avoid loading module on import pyvista
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
@@ -372,7 +387,7 @@ def read_exodus(
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return pyvista.wrap(reader.GetOutput())
+    return wrap(reader.GetOutput())
 
 
 def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress_bar=False):
@@ -426,6 +441,28 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     if progress_bar:
         reader.show_progress()
     return reader.read()
+
+
+def is_meshio_mesh(obj):
+    """Test if passed object is instance of ``meshio.Mesh``.
+
+    Parameters
+    ----------
+    obj
+        Any object.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``obj`` is a ``meshio.Mesh``.
+
+    """
+    try:
+        import meshio
+
+        return isinstance(obj, meshio.Mesh)
+    except ImportError:
+        return False
 
 
 def from_meshio(mesh):
@@ -597,3 +634,35 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
 def _process_filename(filename):
     return os.path.abspath(os.path.expanduser(str(filename)))
+
+
+def _try_imageio_imread(filename):
+    """Attempt to read a file using ``imageio.imread``.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to read using ``imageio``.
+
+    Returns
+    -------
+    imageio.core.util.Array
+        Image read from ``imageio``.
+
+    Raises
+    ------
+    ModuleNotFoundError
+        Raised when ``imageio`` is not installed when attempting to read
+        ``filename``.
+
+    """
+    try:
+        from imageio import imread
+    except ModuleNotFoundError:  # pragma: no cover
+        raise ModuleNotFoundError(
+            'Problem reading the image with VTK. Install imageio to try to read the '
+            'file using imageio with:\n\n'
+            '   pip install imageio'
+        ) from None
+
+    return imread(filename)

@@ -5,9 +5,10 @@ from typing import Optional, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core.utilities.misc import no_new_attr
 
+from . import _vtk
 from ._property import Property
 from .mapper import _BaseMapper
 from .prop3d import Prop3D
@@ -379,13 +380,13 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         mat = self.GetUserMatrix()
         if mat is not None:
-            mat = pv.array_from_vtkmatrix(mat)
+            mat = array_from_vtkmatrix(mat)
         return mat
 
     @user_matrix.setter
-    def user_matrix(self, value: Union[pv._vtk.vtkMatrix4x4, np.ndarray]):
+    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):
         if isinstance(value, np.ndarray):
-            value = pv.vtkmatrix_from_array(value)
+            value = vtkmatrix_from_array(value)
         self.SetUserMatrix(value)
 
     @property
