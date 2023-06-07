@@ -6869,7 +6869,7 @@ class Plotter(BasePlotter):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        direction : array_like[float]
+        direction : sequence[float]
             Direction vector for dimension line.
 
         **kwargs : dict, optional
