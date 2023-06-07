@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from pyvista import examples
-from pyvista.utilities.misc import _set_plot_theme_from_env, _try_imageio_imread, has_module
+from pyvista.core.utilities.fileio import _try_imageio_imread
+from pyvista.core.utilities.misc import has_module
+from pyvista.themes import _set_plot_theme_from_env
 
 HAS_IMAGEIO = True
 try:

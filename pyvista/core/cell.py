@@ -1,15 +1,26 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 
+from . import _vtk_core as _vtk
 from .celltype import CellType
 from .dataset import DataObject
+from .utilities.cells import ncells_from_cells, numpy_to_idarr
+
+
+def _get_vtk_id_type():
+    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
+    VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
+    if VTK_ID_TYPE_SIZE == 4:
+        return np.int32
+    elif VTK_ID_TYPE_SIZE == 8:
+        return np.int64
+    return np.int32
 
 
 class Cell(_vtk.vtkGenericCell, DataObject):
@@ -44,8 +55,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     --------
     Get the 0-th cell from a :class:`pyvista.PolyData`.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Sphere()
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
     >>> cell = mesh.get_cell(0)
     >>> cell  # doctest: +SKIP
     Cell (0x7fa760075a10)
@@ -101,8 +112,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).type
         <CellType.TRIANGLE: 5>
         """
@@ -114,8 +125,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).is_linear
         True
 
@@ -180,8 +191,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).dimension
         2
         """
@@ -193,8 +204,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).n_points
         3
         """
@@ -219,8 +230,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).n_edges
         3
         """
@@ -246,8 +257,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).points
         array([[-5.40595092e-02,  0.00000000e+00, -4.97068971e-01],
                [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
@@ -273,8 +284,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         Extract a single edge from a face and output the IDs of the edge
         points.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> cell = mesh.get_cell(0)
         >>> edge = cell.get_edge(0)
         >>> edge.point_ids
@@ -356,12 +367,37 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
         (-0.05405950918793678, -5.551115123125783e-17, 0.0, 0.011239604093134403, -0.5, -0.49706897139549255)
+
         """
         return self.GetBounds()
+
+    @property
+    def center(self) -> Tuple[float, float, float]:
+        """Get the center of the cell.
+
+        Uses parametric coordinate center to determine x-y-z center.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).center
+        (-0.0356, 0.00375, -0.498)
+
+        """
+        para_center = [0.0, 0.0, 0.0]
+        sub_id = self.GetParametricCenter(para_center)
+        # EvaluateLocation requires mutable sub_id
+        sub_id = _vtk.mutable(sub_id)
+        # center and weights are returned from EvaluateLocation
+        center = [0.0, 0.0, 0.0]
+        weights = [0.0] * self.n_points
+        self.EvaluateLocation(sub_id, para_center, center, weights)
+        return cast(Tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -424,3 +460,53 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         """
         return type(self)(self, deep=deep)
+
+
+class CellArray(_vtk.vtkCellArray):
+    """pyvista wrapping of vtkCellArray.
+
+    Provides convenience functions to simplify creating a CellArray from
+    a numpy array or list.
+
+    Import an array of data with the legacy vtkCellArray layout, e.g.
+
+    ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
+    Where n0 is the number of points in cell 0, and pX_Y is the Y'th
+    point in cell X.
+
+    Examples
+    --------
+    Create a cell array containing two triangles.
+
+    >>> from pyvista.core.cell import CellArray
+    >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
+    """
+
+    def __init__(self, cells=None, n_cells=None, deep=False):
+        """Initialize a vtkCellArray."""
+        if cells is not None:
+            self._set_cells(cells, n_cells, deep)
+
+    def _set_cells(self, cells, n_cells, deep):
+        vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
+
+        # Get number of cells if None.  This is quite a performance
+        # bottleneck and we can consider adding a warning.  Good
+        # candidate for Cython or JIT compilation
+        if n_cells is None:
+            if cells.ndim == 1:
+                n_cells = ncells_from_cells(cells)
+            else:
+                n_cells = cells.shape[0]
+
+        self.SetCells(n_cells, vtk_idarr)
+
+    @property
+    def cells(self):
+        """Return a numpy array of the cells."""
+        return _vtk.vtk_to_numpy(self.GetData()).ravel()
+
+    @property
+    def n_cells(self):
+        """Return the number of cells."""
+        return self.GetNumberOfCells()

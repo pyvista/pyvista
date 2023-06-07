@@ -1,7 +1,8 @@
 """This module contains the VolumeProperty class."""
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import no_new_attr
+
+from . import _vtk
 
 
 @no_new_attr

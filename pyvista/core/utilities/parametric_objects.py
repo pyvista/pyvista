@@ -5,10 +5,11 @@ from math import pi
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities.errors import check_valid_vector
+from pyvista.core import _vtk_core as _vtk
 
 from .geometric_objects import translate
+from .helpers import wrap
+from .misc import check_valid_vector
 
 
 def Spline(points, n_points=None):
@@ -1304,7 +1305,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
     para_source.Update()
-    surf = pyvista.wrap(para_source.GetOutput())
+    surf = wrap(para_source.GetOutput())
     if clean:
         surf = surf.clean(
             tolerance=1e-7,  # determined experimentally

@@ -18,7 +18,8 @@ import os
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, examples
+from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 
 THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -41,7 +42,9 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
 
 def text_3d(string, depth=0.5):
     """Create 3D text."""
-    vec_text = _vtk.vtkVectorText()
+    from vtkmodules.vtkRenderingFreeType import vtkVectorText
+
+    vec_text = vtkVectorText()
     vec_text.SetText(string)
 
     extrude = _vtk.vtkLinearExtrusionFilter()

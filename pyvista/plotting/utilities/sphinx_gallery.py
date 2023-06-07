@@ -12,6 +12,8 @@ def _get_sg_image_scraper():
     'matplotlib' and 'mayavi'. Details on this implementation can be found in
     `sphinx-gallery/sphinx-gallery/494`_
 
+    This must be imported into the top level namespace of PyVista.
+
     .. _sphinx-gallery/sphinx-gallery/494: https://github.com/sphinx-gallery/sphinx-gallery/pull/494
     """
     return Scraper()
@@ -50,7 +52,7 @@ class Scraper:
 
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
-        figures = pyvista.plotting._ALL_PLOTTERS
+        figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for _, plotter in figures.items():
             fname = next(image_path_iterator)
             if hasattr(plotter, '_gif_filename'):
