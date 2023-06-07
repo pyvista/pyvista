@@ -4,18 +4,12 @@ import pytest
 
 import pyvista as pv
 from pyvista.errors import PyVistaDeprecationWarning
-from pyvista.plotting import system_supports_plotting
 
 has_ipyvtklink = True
 try:
     from ipyvtklink.viewer import ViewInteractiveWidget
 except:  # noqa: E722
     has_ipyvtklink = False
-
-
-skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtklink, reason="Requires IPython package")
 
@@ -31,7 +25,7 @@ def test_set_jupyter_backend_ipyvtklink():
 
 
 @skip_no_ipyvtk
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_ipyvtk(sphere):
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(sphere)
@@ -41,7 +35,7 @@ def test_ipyvtk(sphere):
 
 
 @skip_no_ipyvtk
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_ipyvtk_warn(sphere):
     os.environ['SPYDER'] = 'exists'
     with pytest.warns(UserWarning, match='incompatible with Spyder'):

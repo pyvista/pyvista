@@ -2,7 +2,6 @@ import pytest
 from pytest import raises
 
 import pyvista
-from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
@@ -60,7 +59,7 @@ def test_show_bounds_invalid_axes_ranges():
         plotter.show_bounds(axes_ranges=axes_ranges)
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_camera_position():
     plotter = pyvista.Plotter()
     plotter.add_mesh(pyvista.Sphere())
@@ -68,7 +67,7 @@ def test_camera_position():
     assert isinstance(plotter.camera_position, pyvista.CameraPosition)
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_plotter_camera_position():
     plotter = pyvista.Plotter()
     plotter.set_position([1, 1, 1], render=True)

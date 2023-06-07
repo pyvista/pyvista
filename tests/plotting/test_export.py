@@ -5,10 +5,9 @@ import pytest
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.plotting import system_supports_plotting
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_export_single(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
     data = ex.load_airplane()
@@ -20,7 +19,7 @@ def test_export_single(tmpdir):
     assert os.path.isfile(f'{filename}.vtkjs')
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_export_multi(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
     multi = pyvista.MultiBlock()
@@ -38,7 +37,7 @@ def test_export_multi(tmpdir):
     assert os.path.isfile(f'{filename}.vtkjs')
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_export_texture(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = ex.load_globe()
@@ -50,7 +49,7 @@ def test_export_texture(tmpdir):
     assert os.path.isfile(f'{filename}.vtkjs')
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_export_verts(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
     data = pyvista.PolyData(np.random.rand(100, 3))
@@ -62,7 +61,7 @@ def test_export_verts(tmpdir):
     assert os.path.isfile(f'{filename}.vtkjs')
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skip_plotting
 def test_export_color(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
     data = ex.load_airplane()
