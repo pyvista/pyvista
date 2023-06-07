@@ -30,7 +30,7 @@ plotter.add_mesh(grid, show_edges=True, color='tan')
 # Enable parallel projection for the plot
 plotter.enable_parallel_projection()
 
-# Define the points and direction vectors for the dimension lines
+# If pointa and pointb are specified, the dimension between them is drawn; if the direction is specified, the dimension line is shifted in that direction.
 
 plotter.add_dimension_line(
     pointa=np.array([xrng[0], yrng[-1], 0.0]),
