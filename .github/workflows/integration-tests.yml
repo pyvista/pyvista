@@ -39,7 +39,7 @@ jobs:
       - name: Install PyVista
         run: pip install -ve .  # pyvista
       - name: Install PyVistaQt main
-        run: pip install -v https://github.com/pyvista/pyvistaqt/archive/main.zip
+        run: pip install -v git+https://github.com/pyvista/pyvistaqt.git
       - name: Install MNE
         run: pip install -ve .  # mne
         working-directory: mne-python
