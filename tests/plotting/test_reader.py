@@ -1,6 +1,6 @@
-import pytest
 from PIL import Image, ImageSequence
 import numpy as np
+import pytest
 
 import pyvista
 

@@ -1,3 +1,6 @@
+import os
+
+from PIL import Image
 import numpy as np
 import pytest
 
@@ -56,3 +59,26 @@ def test_get_sg_image_scraper():
     scraper = pyvista._get_sg_image_scraper()
     assert isinstance(scraper, pyvista.Scraper)
     assert callable(scraper)
+
+
+def test_skybox(tmpdir):
+    path = str(tmpdir.mkdir("tmpdir"))
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    filenames = []
+    for suffix in sets:
+        image = Image.new('RGB', (10, 10))
+        filename = os.path.join(path, suffix + '.jpg')
+        image.save(filename)
+        filenames.append(filename)
+
+    skybox = pyvista.cubemap(path)
+    assert isinstance(skybox, pyvista.Texture)
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pyvista.cubemap('')
+
+    skybox = pyvista.cubemap_from_filenames(filenames)
+    assert isinstance(skybox, pyvista.Texture)
+
+    with pytest.raises(ValueError, match='must contain 6 paths'):
+        pyvista.cubemap_from_filenames(image_paths=['/path'])

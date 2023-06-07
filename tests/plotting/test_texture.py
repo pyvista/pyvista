@@ -76,7 +76,7 @@ def test_texture_from_images(image):
         pv.Texture(['foo'] * 6)
 
 
-def test_skybox():
+def test_skybox_example():
     texture = examples.load_globe_texture()
     texture.cube_map = False
     assert texture.cube_map is False

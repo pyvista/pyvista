@@ -1,6 +1,3 @@
-import os
-
-from PIL import Image
 import numpy as np
 import pytest
 import trimesh
@@ -8,7 +5,7 @@ import vtk
 from vtk.util import numpy_support
 
 import pyvista
-from pyvista import _vtk
+from pyvista.core import _vtk_core
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.errors import AmbiguousDataError, MissingDataError
@@ -29,12 +26,12 @@ def test_wrap_pyvista_ndarray(sphere):
 @pytest.mark.parametrize(
     'dtypes',
     [
-        (np.float64, _vtk.vtkDoubleArray),
-        (np.float32, _vtk.vtkFloatArray),
-        (np.int64, _vtk.vtkTypeInt64Array),
-        (np.int32, _vtk.vtkTypeInt32Array),
-        (np.int8, _vtk.vtkSignedCharArray),
-        (np.uint8, _vtk.vtkUnsignedCharArray),
+        (np.float64, _vtk_core.vtkDoubleArray),
+        (np.float32, _vtk_core.vtkFloatArray),
+        (np.int64, _vtk_core.vtkTypeInt64Array),
+        (np.int32, _vtk_core.vtkTypeInt32Array),
+        (np.int8, _vtk_core.vtkSignedCharArray),
+        (np.uint8, _vtk_core.vtkUnsignedCharArray),
     ],
 )
 def test_wrap_pyvista_ndarray_vtk(dtypes):
@@ -154,29 +151,6 @@ def test_inheritance_no_wrappers():
     assert isinstance(new_mesh, pyvista.PolyData)
     foo_new_mesh = Foo(new_mesh)
     assert isinstance(foo_new_mesh, Foo)
-
-
-def test_skybox(tmpdir):
-    path = str(tmpdir.mkdir("tmpdir"))
-    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-    filenames = []
-    for suffix in sets:
-        image = Image.new('RGB', (10, 10))
-        filename = os.path.join(path, suffix + '.jpg')
-        image.save(filename)
-        filenames.append(filename)
-
-    skybox = pyvista.cubemap(path)
-    assert isinstance(skybox, pyvista.Texture)
-
-    with pytest.raises(FileNotFoundError, match='Unable to locate'):
-        pyvista.cubemap('')
-
-    skybox = pyvista.cubemap_from_filenames(filenames)
-    assert isinstance(skybox, pyvista.Texture)
-
-    with pytest.raises(ValueError, match='must contain 6 paths'):
-        pyvista.cubemap_from_filenames(image_paths=['/path'])
 
 
 def test_array_association():
