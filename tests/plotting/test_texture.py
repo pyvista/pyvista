@@ -259,9 +259,9 @@ def test_inplace_no_overwrite_texture_coordinates():
     assert np.allclose(truth.active_t_coords, test.active_t_coords)
 
 
-def test_activate_texture_none(grid):
+def test_activate_texture_none():
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
     with pytest.warns(UserWarning, match=r'not a key'):
         assert grid._activate_texture('not a key') is None
-
     with pytest.warns(UserWarning, match=r'No textures associated'):
         assert grid._activate_texture(True) is None
