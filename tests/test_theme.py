@@ -3,8 +3,8 @@ import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.themes import DefaultTheme
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 @pytest.fixture
@@ -308,8 +308,11 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(KeyError, match='not a color map'):
+    with pytest.raises(ValueError, match='not a color map'):
         default_theme.cmap = 'not a color map'
+
+    with pytest.raises(ValueError, match='Invalid color map'):
+        default_theme.cmap = None
 
 
 def test_volume_mapper(default_theme):

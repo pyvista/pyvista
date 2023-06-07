@@ -1,6 +1,6 @@
 .. _trame_jupyter:
 
-Trame Jupyter backend for PyVista
+Trame Jupyter Backend for PyVista
 ---------------------------------
 
 PyVista has the ability to display fully featured plots within a
@@ -118,12 +118,8 @@ The prefix will need to be modified for JupyterHub deployments.
 
 On MyBinder, the ``JUPYTERHUB_SERVICE_PREFIX`` string often needs to prefix
 ``'/proxy/'``. This makes it so the prefix includes the users ID in the URL.
-This can be done however you like but in bash looks like:
-
-.. code::
-
-    export PYVISTA_TRAME_SERVER_PROXY_PREFIX="$JUPYTERHUB_SERVICE_PREFIX/proxy/"
-
+In PyVista, we automatically check for the presence of this variable and
+prepend it to the ``server_proxy_prefix``.
 
 Other Considerations
 ++++++++++++++++++++

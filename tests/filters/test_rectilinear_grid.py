@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.errors import PyVistaDeprecationWarning
 
 
 @pytest.fixture
@@ -45,3 +46,42 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
 def test_to_tetrahedral_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.UniformGrid(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
+
+
+def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=False)
+    assert not tet_grid.cell_data
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=True, pass_data=False)
+    assert 'vtkOriginalCellIds' in tet_grid.cell_data
+    assert np.issubdtype(tet_grid.cell_data['vtkOriginalCellIds'].dtype, np.integer)
+
+
+def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
+    # test that data isn't passed
+    tiny_rectilinear["cell_data"] = np.ones(tiny_rectilinear.n_cells)
+    tiny_rectilinear["point_data"] = np.arange(tiny_rectilinear.n_points)
+    tiny_rectilinear.set_active_scalars("cell_data")
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=False)
+    assert not tet_grid.cell_data
+    assert not tet_grid.point_data
+
+    # test with cell data
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=True)
+    assert tet_grid.cell_data
+    assert "cell_data" in tet_grid.cell_data
+    assert "point_data" in tet_grid.point_data
+    assert tet_grid.active_scalars_name == "cell_data"
+
+    # automatically added
+    assert 'vtkOriginalCellIds' in tet_grid.cell_data
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        tiny_rectilinear.to_tetrahedra(pass_cell_data=True)
+        if pv._version.version_info >= (0, 43, 0):
+            raise RuntimeError('Remove this deprecated kwarg')
+
+    # Test point data active
+    tiny_rectilinear.set_active_scalars("point_data")
+    assert tiny_rectilinear.active_scalars_name == "point_data"
+    tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=True)
+    assert tet_grid.active_scalars_name == "point_data"

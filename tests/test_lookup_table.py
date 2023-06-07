@@ -181,7 +181,7 @@ def test_repr(lut):
     assert 'viridis' in repr(lut)
 
     # try a colorcet
-    lut.cmap = 'cet_fire'
+    lut.cmap = 'fire'
     assert 'fire' in repr(lut)
 
 

@@ -39,7 +39,7 @@ streamlines, src = mesh.streamlines(
 )
 
 ###############################################################################
-# Display the results! Please note that because this dataset's velocity field
+# Display the results. Please note that because this dataset's velocity field
 # was measured with low resolution, many streamlines travel outside the artery.
 
 p = pv.Plotter()

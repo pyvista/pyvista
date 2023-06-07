@@ -8,18 +8,13 @@ import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
-from pyvista import examples
-from pyvista._vtk import vtkStaticCellLocator
+from pyvista import _vtk, examples
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
-from pyvista.utilities.misc import can_create_mpl_figure
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
-)
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -35,7 +30,7 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
 
 
 class GetOutput:
-    """Helper class to patch ``pyvista.filters._get_output`` which captures the raw VTK algorithm objects at the time
+    """Helper class to patch ``pyvista.core.filters._get_output`` which captures the raw VTK algorithm objects at the time
     ``_get_output`` is invoked.
     """
 
@@ -606,6 +601,14 @@ def test_extract_all_edges(datasets):
         assert edges.n_lines
 
 
+def test_extract_all_edges_no_data():
+    mesh = pyvista.Wavelet()
+    edges = mesh.extract_all_edges(clear_data=True)
+    assert edges is not None
+    assert isinstance(edges, pyvista.PolyData)
+    assert edges.n_arrays == 0
+
+
 def test_wireframe_composite(composite):
     # Now test composite data structures
     output = composite.extract_all_edges(progress_bar=True)
@@ -845,7 +848,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 class InterrogateVTKGlyph3D:
-    def __init__(self, alg: pyvista._vtk.vtkGlyph3D):
+    def __init__(self, alg: _vtk.vtkGlyph3D):
         self.alg = alg
 
     @property
@@ -1156,7 +1159,7 @@ def test_resample():
 
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
+@pytest.mark.parametrize('locator', [None, _vtk.vtkStaticCellLocator()])
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
@@ -1349,9 +1352,7 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@skip_no_mpl_figure
 def test_plot_over_line(tmpdir):
-    """This test requires matplotlib."""
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
@@ -1473,9 +1474,7 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@skip_no_mpl_figure
 def test_plot_over_circular_arc(tmpdir):
-    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -1517,9 +1516,7 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
-@skip_no_mpl_figure
 def test_plot_over_circular_arc_normal(tmpdir):
-    """This test requires matplotlib."""
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir("tmpdir")
     filename = str(tmp_dir.join('tmp.png'))
@@ -2244,7 +2241,7 @@ def test_tessellate():
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
@@ -2283,7 +2280,7 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         # rotate about x-axis by 90 degrees
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
@@ -2332,7 +2329,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 @pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
-        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+        tf = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f"C{i}"] = np.random.randint(
@@ -2356,7 +2353,7 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
 )
 def test_transform_inplace_bad_types(dataset):
     # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation(
+    tf = pyvista.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0), 90
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
@@ -2649,9 +2646,46 @@ def test_integrate_data():
     assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
 
 
+def test_align():
+    # Create a simple mesh
+    source = pyvista.Cylinder(resolution=30).triangulate().subdivide(1)
+    transformed = source.rotate_y(20).rotate_z(25).translate([-0.75, -0.5, 0.5])
+
+    # Perform ICP registration
+    aligned = transformed.align(source)
+
+    _, matrix = transformed.align(source, return_matrix=True)
+    assert isinstance(matrix, np.ndarray)
+
+    # Check if the number of points in the aligned mesh is the same as the original mesh
+    assert source.n_points == aligned.n_points
+
+    _, closest_points = aligned.find_closest_cell(source.points, return_closest_point=True)
+    dist = np.linalg.norm(source.points - closest_points, axis=1)
+    assert np.abs(dist).mean() < 1e-3
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
+
+
+def test_extract_cells_by_type(tetbeam, hexbeam):
+    combined = tetbeam + hexbeam
+
+    hex_cells = combined.extract_cells_by_type(
+        [pyvista.CellType.HEXAHEDRON, pyvista.CellType.BEZIER_PYRAMID]
+    )
+    assert np.alltrue(hex_cells.celltypes == pyvista.CellType.HEXAHEDRON)
+
+    tet_cells = combined.extract_cells_by_type(pyvista.CellType.TETRA)
+    assert np.alltrue(tet_cells.celltypes == pyvista.CellType.TETRA)
+
+    should_be_empty = combined.extract_cells_by_type(pyvista.CellType.BEZIER_CURVE)
+    assert should_be_empty.n_cells == 0
+
+    with pytest.raises(TypeError, match='Invalid type'):
+        combined.extract_cells_by_type(1.0)
 
 
 def test_merge_points():

@@ -31,7 +31,7 @@ shortcuts are available:
 +-------------------------------------+-----------------+-----------------------------------------------------+
 | ``mouse-wheel`` or ``right-click``  | ``ctl+click``   | Continuously zoom the rendering scene               |
 +-------------------------------------+-----------------+-----------------------------------------------------+
-| ``shift+s``                                           | Save a screenhsot (only on ``BackgroundPlotter``)   |
+| ``shift+s``                                           | Save a screenshot (only on ``BackgroundPlotter``)   |
 +-------------------------------------+-----------------+-----------------------------------------------------+
 | ``shift+c``                                           | Enable interactive cell selection/picking           |
 +-------------------------------------+-----------------+-----------------------------------------------------+
@@ -44,7 +44,7 @@ shortcuts are available:
 Plotting in a Jupyter Notebook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Static and interactive inline plots are possible using a Jupyter
-notebook.  The code snippet below will create a static screenshot of
+notebook. The code snippet below will create a static screenshot of
 the rendering and display it in the Jupyter notebook:
 
 

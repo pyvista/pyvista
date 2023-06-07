@@ -1,11 +1,20 @@
 import pytest
 
 import pyvista as pv
+from pyvista.plotting._property import _check_range
 
 
 @pytest.fixture()
 def prop():
     return pv.Property()
+
+
+def test_check_range():
+    with pytest.raises(ValueError, match="outside the acceptable"):
+        _check_range(-1, (0, 1), 'parm')
+    with pytest.raises(ValueError, match="outside the acceptable"):
+        _check_range(2, (0, 1), 'parm')
+    assert _check_range(0, (0, 1), 'parm') is None
 
 
 def test_property_init():
@@ -31,6 +40,8 @@ def test_property_opacity(prop):
     opacity = 0.5
     prop.opacity = opacity
     assert prop.opacity == opacity
+    with pytest.raises(ValueError):
+        prop.opacity = 2
 
 
 def test_property_show_edges(prop):
@@ -49,30 +60,40 @@ def test_property_ambient(prop):
     value = 0.45
     prop.ambient = value
     assert prop.ambient == value
+    with pytest.raises(ValueError):
+        prop.ambient = -1
 
 
 def test_property_diffuse(prop):
     value = 0.5
     prop.diffuse = value
     assert prop.diffuse == value
+    with pytest.raises(ValueError):
+        prop.diffuse = 2
 
 
 def test_property_specular(prop):
     value = 0.5
     prop.specular = value
     assert prop.specular == value
+    with pytest.raises(ValueError):
+        prop.specular = 2
 
 
 def test_property_specular_power(prop):
     value = 0.5
     prop.specular_power = value
     assert prop.specular_power == value
+    with pytest.raises(ValueError):
+        prop.specular = 200
 
 
 def test_property_metallic(prop):
     value = 0.1
     prop.metallic = value
     assert prop.metallic == value
+    with pytest.raises(ValueError):
+        prop.metallic = -1
 
 
 def test_property_roughness(prop):

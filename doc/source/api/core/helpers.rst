@@ -7,29 +7,29 @@ creation and manipulation of meshes or interfacing with VTK datasets.
 
 Wrap a VTK Dataset
 ~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.helpers.wrap
+.. automethod:: pyvista.core.utilities.helpers.wrap
 
 
 Simplified Triangular Mesh Construction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.helpers.make_tri_mesh
+.. automethod:: pyvista.core.utilities.points.make_tri_mesh
 
 
 Lines from Points
 ~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.helpers.lines_from_points
+.. automethod:: pyvista.core.utilities.points.lines_from_points
 
 
 Line Segments from Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.helpers.line_segments_from_points
+.. automethod:: pyvista.core.utilities.points.line_segments_from_points
 
 
-Convert to and from VTK Datatypes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.helpers.convert_array
+Convert to and from VTK Data Types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automethod:: pyvista.core.utilities.arrays.convert_array
 
 
 Fit Plane to Points
 ~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.helpers.fit_plane_to_points
+.. automethod:: pyvista.core.utilities.points.fit_plane_to_points

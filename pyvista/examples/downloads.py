@@ -28,9 +28,11 @@ from pooch import Unzip
 from pooch.utils import get_logger
 
 import pyvista
-from pyvista import _vtk
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.core.utilities.fileio import get_ext, read, read_texture
+from pyvista.core.utilities.reader import DICOMReader
+from pyvista.errors import PyVistaDeprecationWarning
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -152,7 +154,7 @@ def download_file(filename):
 
     Returns
     -------
-    str or list
+    str | list
         A single path if the file is not an archive. A ``list`` of paths if the
         file is an archive.
 
@@ -198,7 +200,7 @@ def _download_archive(filename, target_file=None):  # pragma: no cover
 
     Returns
     -------
-    list or str
+    list | str
         List of files when ``target_file`` is ``None``. Otherwise, a single path.
 
     """
@@ -232,31 +234,31 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
     filename : str
         Path to the filename. This cannot be a zip file.
 
-    texture : bool, optional
+    texture : bool, default: False
         ``True`` when file being read is a texture.
 
     file_format : str, optional
         Override the file format with a different extension.
 
-    load : bool, optional
-        Read the file. Default ``True``, when ``False``, return the path to the
+    load : bool, default: True
+        Read the file. When ``False``, return the path to the
         file.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
-    if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
+    if get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
     saved_file = download_file(filename)
     if not load:
         return saved_file
     if texture:
-        return pyvista.read_texture(saved_file)
-    return pyvista.read(saved_file, file_format=file_format)
+        return read_texture(saved_file)
+    return read(saved_file, file_format=file_format)
 
 
 def download_masonry_texture(load=True):  # pragma: no cover
@@ -264,13 +266,13 @@ def download_masonry_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -295,13 +297,13 @@ def download_usa_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -320,13 +322,13 @@ def download_puppy_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -347,13 +349,13 @@ def download_puppy(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -371,13 +373,13 @@ def download_usa(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -395,13 +397,13 @@ def download_st_helens(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -429,13 +431,13 @@ def download_bunny(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     See Also
@@ -466,13 +468,13 @@ def download_bunny_coarse(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     See Also
@@ -501,13 +503,13 @@ def download_cow(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -533,13 +535,13 @@ def download_cow_head(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -557,13 +559,13 @@ def download_faults(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -581,13 +583,13 @@ def download_tensors(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -605,13 +607,13 @@ def download_head(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -641,13 +643,13 @@ def download_head_2(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -669,7 +671,7 @@ def download_bolt_nut(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
@@ -714,13 +716,13 @@ def download_clown(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -738,13 +740,13 @@ def download_topo_global(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -767,13 +769,13 @@ def download_topo_land(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -798,13 +800,13 @@ def download_coastlines(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -822,13 +824,13 @@ def download_knee(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -852,13 +854,13 @@ def download_knee_full(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -888,13 +890,13 @@ def download_lidar(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -917,13 +919,13 @@ def download_exodus(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -941,13 +943,13 @@ def download_nefertiti(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -978,13 +980,13 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1016,13 +1018,13 @@ def download_iron_protein(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1040,13 +1042,13 @@ def download_tetrahedron(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1067,13 +1069,13 @@ def download_saddle_surface(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1096,13 +1098,13 @@ def download_sparse_points(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1139,13 +1141,13 @@ def download_foot_bones(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1166,13 +1168,13 @@ def download_guitar(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1190,13 +1192,13 @@ def download_quadratic_pyramid(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1217,13 +1219,13 @@ def download_bird(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1241,13 +1243,13 @@ def download_bird_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1265,13 +1267,13 @@ def download_office(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.StructuredGrid or str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1292,13 +1294,13 @@ def download_horse_points(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1316,13 +1318,13 @@ def download_horse(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1343,13 +1345,13 @@ def download_cake_easy(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1367,13 +1369,13 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1391,13 +1393,13 @@ def download_rectilinear_grid(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.RectilinearGrid or str
+    pyvista.RectilinearGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1417,16 +1419,16 @@ def download_gourds(zoom=False, load=True):  # pragma: no cover
 
     Parameters
     ----------
-    zoom : bool, optional
+    zoom : bool, default: False
         When ``True``, return the zoomed picture of the gourds.
 
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1449,16 +1451,16 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 
     Parameters
     ----------
-    zoom : bool, optional
+    zoom : bool, default: False
         When ``True``, return the zoomed picture of the gourds.
 
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1478,13 +1480,13 @@ def download_gourds_pnm(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1502,13 +1504,13 @@ def download_unstructured_grid(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1526,13 +1528,13 @@ def download_letter_k(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1550,13 +1552,13 @@ def download_letter_a(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1577,13 +1579,13 @@ def download_poly_line(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1601,13 +1603,13 @@ def download_cad_model(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1628,13 +1630,13 @@ def download_frog(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1662,13 +1664,13 @@ def download_chest(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1689,13 +1691,13 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1713,13 +1715,13 @@ def download_prostate(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1737,13 +1739,13 @@ def download_filled_contours(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1761,13 +1763,13 @@ def download_doorman(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1789,13 +1791,13 @@ def download_mug(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1813,13 +1815,13 @@ def download_oblique_cone(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1837,13 +1839,13 @@ def download_emoji(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1861,13 +1863,13 @@ def download_emoji_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1885,13 +1887,13 @@ def download_teapot(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1914,13 +1916,13 @@ def download_brain(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1946,13 +1948,13 @@ def download_structured_grid(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.StructuredGrid or str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1970,13 +1972,13 @@ def download_structured_grid_two(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.StructuredGrid or str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1994,13 +1996,13 @@ def download_trumpet(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2018,13 +2020,13 @@ def download_face(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2047,13 +2049,13 @@ def download_sky_box_nz(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2071,13 +2073,13 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2095,13 +2097,13 @@ def download_disc_quads(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2119,13 +2121,13 @@ def download_honolulu(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2148,13 +2150,13 @@ def download_motor(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2172,13 +2174,13 @@ def download_tri_quadratic_hexahedron(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2204,13 +2206,13 @@ def download_human(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2228,13 +2230,13 @@ def download_vtk(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2252,13 +2254,13 @@ def download_spider(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2276,13 +2278,13 @@ def download_carotid(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2317,13 +2319,13 @@ def download_blow(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2352,13 +2354,13 @@ def download_shark(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2381,13 +2383,13 @@ def download_dragon(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2412,13 +2414,13 @@ def download_armadillo(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2443,13 +2445,13 @@ def download_gears(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2475,13 +2477,13 @@ def download_torso(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2502,17 +2504,17 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
 
     Parameters
     ----------
-    split : bool, optional
+    split : bool, default: False
         Optionally split the furniture and return a
         :class:`pyvista.MultiBlock`.
 
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.StructuredGrid or str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2557,7 +2559,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = pyvista.filters._get_output(alg)
+        result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -2594,13 +2596,13 @@ def download_model_with_variance(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2620,13 +2622,13 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2651,13 +2653,13 @@ def download_carburator(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     """
@@ -2669,13 +2671,13 @@ def download_carburetor(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2693,13 +2695,13 @@ def download_turbine_blade(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2717,13 +2719,13 @@ def download_pine_roots(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2743,13 +2745,13 @@ def download_crater_topo(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2772,13 +2774,13 @@ def download_crater_imagery(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2789,8 +2791,8 @@ def download_crater_imagery(load=True):  # pragma: no cover
     ...     [66.0, 73.0, 0.0],
     ...     [-0.0, -1.0, 0.0],
     ... ]
-    >>> dataset = examples.download_crater_imagery()
-    >>> dataset.plot(cpos=cpos)
+    >>> texture = examples.download_crater_imagery()
+    >>> texture.plot(cpos=cpos)
 
     See :ref:`ref_topo_map_example` for an example using this dataset.
 
@@ -2803,13 +2805,13 @@ def download_dolfin(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2827,13 +2829,13 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2864,13 +2866,13 @@ def download_delaunay_example(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2888,13 +2890,13 @@ def download_embryo(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2926,13 +2928,13 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2959,13 +2961,13 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2985,13 +2987,13 @@ def download_beach(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3009,13 +3011,13 @@ def download_rgba_texture(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3035,13 +3037,13 @@ def download_vtk_logo(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3203,13 +3205,13 @@ def download_backward_facing_step(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3230,13 +3232,13 @@ def download_gpr_data_array(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    numpy.ndarray or str
+    numpy.ndarray | str
         Array or filename depending on ``load``.
 
     Examples
@@ -3266,13 +3268,13 @@ def download_gpr_path(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3298,13 +3300,13 @@ def download_woman(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3329,13 +3331,13 @@ def download_lobster(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3355,13 +3357,13 @@ def download_face2(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3381,13 +3383,13 @@ def download_urn(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3412,13 +3414,13 @@ def download_pepper(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3438,13 +3440,13 @@ def download_drill(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3464,13 +3466,13 @@ def download_action_figure(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3543,13 +3545,13 @@ def download_notch_stress(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3567,13 +3569,13 @@ def download_notch_displacement(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3597,13 +3599,13 @@ def download_louis_louvre(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3634,13 +3636,13 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3667,13 +3669,13 @@ def download_naca(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3703,13 +3705,13 @@ def download_wavy(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3732,13 +3734,13 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3784,13 +3786,13 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3881,13 +3883,13 @@ def download_cavity(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3904,6 +3906,61 @@ def download_cavity(load=True):  # pragma: no cover
     return pyvista.OpenFOAMReader(filename).read()
 
 
+def download_openfoam_tubes(load=True):  # pragma: no cover
+    """Download tubes OpenFOAM example.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Plot the outline of the dataset along with a cross section of the flow velocity.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_openfoam_tubes()
+    >>> air = dataset[0]
+    >>> y_slice = air.slice('y')
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     y_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Flow Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(air, color='w', opacity=0.25)
+    >>> pl.enable_anti_aliasing()
+    >>> pl.show()
+
+    See :ref:`openfoam_tubes_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
+        target_file='case.foam',
+    )
+    if not load:
+        return filename
+    reader = pyvista.OpenFOAMReader(filename)
+    reader.set_active_time_value(1000)
+    return reader.read()
+
+
 def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 
@@ -3913,13 +3970,13 @@ def download_lucy(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3930,7 +3987,7 @@ def download_lucy(load=True):  # pragma: no cover
     >>> import pyvista
     >>> dataset = examples.download_lucy()
 
-    Create a light at the "flame"
+    Create a light at the "flame".
 
     >>> flame_light = pyvista.Light(
     ...     color=[0.886, 0.345, 0.133],
@@ -3941,7 +3998,7 @@ def download_lucy(load=True):  # pragma: no cover
     ...     attenuation_values=(0.001, 0.005, 0),
     ... )
 
-    Create a scene light
+    Create a scene light.
 
     >>> scene_light = pyvista.Light(intensity=0.2)
 
@@ -3958,6 +4015,148 @@ def download_lucy(load=True):  # pragma: no cover
     return _download_and_read('lucy.ply', load=load)
 
 
+def download_pump_bracket(load=True):  # pragma: no cover
+    """Download the pump bracket example dataset.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/STR/bracket/>`_.
+
+    Licensing for this dataset is granted freely and without restriction to
+    reproduce, distribute, and publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_pump_bracket()
+    >>> dataset
+    UnstructuredGrid (...)
+      N Cells:    124806
+      N Points:   250487
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -4.000e-01, 0.000e+00
+      Z Bounds:   -2.500e-02, 2.500e-02
+      N Arrays:   10
+
+    Plot the displacement of the 4th mode shape as scalars.
+
+    >>> cpos = [
+    ...     (0.744, -0.502, -0.830),
+    ...     (0.0520, -0.160, 0.0743),
+    ...     (-0.180, -0.958, 0.224),
+    ... ]
+    >>> dataset.plot(
+    ...     scalars='disp_3',
+    ...     cpos=cpos,
+    ...     show_scalar_bar=False,
+    ...     ambient=0.2,
+    ...     anti_aliasing='fxaa',
+    ... )
+
+    See :ref:`pump_bracket_example` for a full example using this dataset.
+
+    """
+    filename = _download_archive(
+        'fea/pump_bracket/pump_bracket.zip',
+        'pump_bracket.vtk',
+    )
+    if load:
+        return pyvista.read(filename)
+    return filename
+
+
+def download_electronics_cooling(load=True):  # pragma: no cover
+    """Download the electronics cooling example datasets.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    tuple[PolyData, UnstructuredGrid] | list[str]
+        DataSets or filenames depending on ``load``.
+
+    Examples
+    --------
+    Load the datasets and plot the air velocity through the electronics.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> structure, air = examples.download_electronics_cooling()
+    >>> structure, air
+    (PolyData (...)
+      N Cells:    344270
+      N Points:   187992
+      N Strips:   0
+      X Bounds:   -3.000e-03, 1.530e-01
+      Y Bounds:   -3.000e-03, 2.030e-01
+      Z Bounds:   -9.000e-03, 4.200e-02
+      N Arrays:   4, UnstructuredGrid (...)
+      N Cells:    1749992
+      N Points:   610176
+      X Bounds:   -1.388e-18, 1.500e-01
+      Y Bounds:   -3.000e-03, 2.030e-01
+      Z Bounds:   -6.000e-03, 4.400e-02
+      N Arrays:   10)
+
+    >>> z_slice = air.clip('z', value=-0.005)
+    >>> pl = pv.Plotter()
+    >>> pl.enable_ssao(radius=0.01)
+    >>> _ = pl.add_mesh(
+    ...     z_slice,
+    ...     scalars='U',
+    ...     lighting=False,
+    ...     scalar_bar_args={'title': 'Velocity'},
+    ... )
+    >>> _ = pl.add_mesh(
+    ...     structure,
+    ...     color='w',
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ... )
+    >>> pl.camera_position = 'xy'
+    >>> pl.camera.roll = 90
+    >>> pl.enable_anti_aliasing('fxaa')
+    >>> pl.show()
+
+    Show the type and bounds of the datasets.
+
+    See :ref:`openfoam_cooling_example` for a full example using this dataset.
+
+    """
+    fnames = _download_archive('fvm/cooling_electronics/datasets.zip')
+    if load:
+        # return the structure dataset first
+        if fnames[1].endswith('structure.vtp'):
+            fnames = fnames[::-1]
+        return pyvista.read(fnames[0]), pyvista.read(fnames[1])
+    return fnames
+
+
 def download_can(partial=False, load=True):  # pragma: no cover
     """Download the can dataset mesh.
 
@@ -3966,10 +4165,10 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Parameters
     ----------
-    partial : bool, optional
-        Load part of the dataset. Defaults to ``False``.
+    partial : bool, default: False
+        Load part of the dataset.
 
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
@@ -4021,13 +4220,13 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         Crushed can dataset or path depending on the value of ``load``.
 
     Examples
@@ -4051,13 +4250,13 @@ def download_cgns_structured(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         Structured, 12 block, 3-D constricting channel, with example use of
         Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
@@ -4086,13 +4285,13 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         Multiblock format with only 1 data block, simple geometric shape.
         If ``load`` is ``False``, then the path of the example Tecplot file
         is returned.
@@ -4121,13 +4320,13 @@ def download_cgns_multi(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    pyvista.MultiBlock | str
         Structured, 4 blocks, 2D (2 planes in third dimension) multielement
         airfoil, with cell centered solution. If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
@@ -4174,13 +4373,13 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or path depending on ``load``.
 
     References
@@ -4214,7 +4413,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
     fnames = _download_archive('DICOM_Stack/data.zip')
     path = os.path.dirname(fnames[0])
     if load:
-        reader = pyvista.DICOMReader(path)
+        reader = DICOMReader(path)
         return reader.read()
     return path
 
@@ -4224,13 +4423,13 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.Texture or str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4248,13 +4447,13 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4280,13 +4479,13 @@ def download_moonlanding_image(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         ``DataSet`` or filename depending on ``load``.
 
     Examples
@@ -4311,13 +4510,13 @@ def download_angular_sector(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4342,13 +4541,13 @@ def download_mount_damavand(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4373,13 +4572,13 @@ def download_particles_lethe(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4406,13 +4605,13 @@ def download_gif_simple(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.UniformGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4450,13 +4649,13 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PointSet
+    pyvista.PointSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4466,14 +4665,14 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter()
-    >>> pc  # doctest:+SKIP
-    PointSet (0x7f97f718d460)
-      N Cells:      0
-      N Points:     32314
-      X Bounds:     7.451e+01, 7.892e+01
-      Y Bounds:     1.616e+01, 2.275e+01
-      Z Bounds:     8.900e+01, 9.319e+01
-      N Arrays:     0
+    >>> pc
+    PointSet (...)
+      N Cells:    0
+      N Points:   32314
+      X Bounds:   7.451e+01, 7.892e+01
+      Y Bounds:   1.616e+01, 2.275e+01
+      Z Bounds:   8.900e+01, 9.319e+01
+      N Arrays:   0
 
     Plot the point cloud. Color based on the distance from the center of the
     cloud.
@@ -4504,13 +4703,13 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PointSet
+    pyvista.PointSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4520,14 +4719,14 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter_dense()
-    >>> pc  # doctest:+SKIP
-    PointSet (0x7fd79493a340)
-    N Cells:      0
-    N Points:     2062256
-    X Bounds:     7.462e+01, 7.863e+01
-    Y Bounds:     1.604e+01, 2.244e+01
-    Z Bounds:     8.893e+01, 9.337e+01
-    N Arrays:     0
+    >>> pc
+    PointSet (...)
+      N Cells:    0
+      N Points:   2062256
+      X Bounds:   7.462e+01, 7.863e+01
+      Y Bounds:   1.604e+01, 2.244e+01
+      Z Bounds:   8.893e+01, 9.337e+01
+      N Arrays:   0
 
     Plot the point cloud. Color based on the distance from the center of the
     cloud.
@@ -4570,13 +4769,13 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.PolyData
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4596,15 +4795,15 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
     ...     zoom=3.0,
     ... )
 
-    >>> stars  # doctest:+SKIP
-    PolyData (0x7fe5851ac0a0)
-      N Cells:      107857
-      N Points:     107857
-      N Strips:     0
-      X Bounds:     -9.755e+02, 9.774e+02
-      Y Bounds:     -9.620e+02, 9.662e+02
-      Z Bounds:     -9.788e+02, 9.702e+02
-      N Arrays:     4
+    >>> stars
+    PolyData (...)
+      N Cells:    107857
+      N Points:   107857
+      N Strips:   0
+      X Bounds:   -9.755e+02, 9.774e+02
+      Y Bounds:   -9.620e+02, 9.662e+02
+      Z Bounds:   -9.788e+02, 9.702e+02
+      N Arrays:   3
 
     See the :ref:`plotting_point_clouds` for more details on how to plot point
     clouds.
@@ -4620,13 +4819,13 @@ def download_fea_bracket(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4659,13 +4858,13 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
 
     Parameters
     ----------
-    load : bool, optional
+    load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4676,7 +4875,9 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> grid = examples.download_fea_hertzian_contact_cylinder()
-    >>> grid.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
+    >>> grid.plot(
+    ...     scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False
+    ... )
 
     Plot the absolute value of the component stress in the Z direction.
 
@@ -4685,7 +4886,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     >>> _ = pl.add_mesh(
     ...     grid,
     ...     scalars=z_stress,
-    ...     clim=[0, 1.2E9],
+    ...     clim=[0, 1.2e9],
     ...     cmap='jet',
     ...     lighting=True,
     ...     show_edges=False,
@@ -4725,7 +4926,7 @@ def download_black_vase(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4738,14 +4939,16 @@ def download_black_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe489493520)
-      N Cells:      3136652
-      N Points:     1611789
-      X Bounds:     -1.092e+02, 1.533e+02
-      Y Bounds:     -1.200e+02, 1.415e+02
-      Z Bounds:     1.666e+01, 4.077e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3136652
+      N Points:   1611789
+      N Strips:   0
+      X Bounds:   -1.092e+02, 1.533e+02
+      Y Bounds:   -1.200e+02, 1.415e+02
+      Z Bounds:   1.666e+01, 4.077e+02
+      N Arrays:   0
+
 
     """
     filename = _download_archive(
@@ -4777,7 +4980,7 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4795,14 +4998,15 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7f6ed1345520)
-      N Cells:      4547716
-      N Points:     2297089
-      X Bounds:     -1.147e+02, 8.468e+01
-      Y Bounds:     -7.103e+01, 9.247e+01
-      Z Bounds:     -1.198e+02, 2.052e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3580454
+      N Points:   1811531
+      N Strips:   0
+      X Bounds:   -1.147e+02, 8.468e+01
+      Y Bounds:   -6.996e+01, 9.247e+01
+      Z Bounds:   -1.171e+02, 2.052e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -4834,7 +5038,7 @@ def download_bird_bath(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4847,14 +5051,15 @@ def download_bird_bath(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8caf2ba00)
-    N Cells:      3507935
-    N Points:     1831383
-    X Bounds:     -1.601e+02, 1.483e+02
-    Y Bounds:     -1.521e+02, 1.547e+02
-    Z Bounds:     -4.241e+00, 1.409e+02
-    N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3507935
+      N Points:   1831383
+      N Strips:   0
+      X Bounds:   -1.601e+02, 1.483e+02
+      Y Bounds:   -1.521e+02, 1.547e+02
+      Z Bounds:   -4.241e+00, 1.409e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -4886,7 +5091,7 @@ def download_owl(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4904,14 +5109,15 @@ def download_owl(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8caeeaee0)
-      N Cells:      2440707
-      N Points:     1221756
-      X Bounds:     -5.834e+01, 7.047e+01
-      Y Bounds:     -7.006e+01, 6.658e+01
-      Z Bounds:     1.676e+00, 2.013e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    2440707
+      N Points:   1221756
+      N Strips:   0
+      X Bounds:   -5.834e+01, 7.047e+01
+      Y Bounds:   -7.006e+01, 6.658e+01
+      Z Bounds:   1.676e+00, 2.013e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -4943,7 +5149,7 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4956,14 +5162,15 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8cadc14c0)
-      N Cells:      3570967
-      N Points:     1796805
-      X Bounds:     -1.364e+02, 1.929e+02
-      Y Bounds:     -1.677e+02, 1.603e+02
-      Z Bounds:     1.209e+02, 4.090e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3570967
+      N Points:   1796805
+      N Strips:   0
+      X Bounds:   -1.364e+02, 1.929e+02
+      Y Bounds:   -1.677e+02, 1.603e+02
+      Z Bounds:   1.209e+02, 4.090e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -4995,7 +5202,7 @@ def download_sea_vase(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5008,14 +5215,15 @@ def download_sea_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8b3862460)
-      N Cells:      3548473
-      N Points:     1810012
-      X Bounds:     -1.666e+02, 1.465e+02
-      Y Bounds:     -1.742e+02, 1.384e+02
-      Z Bounds:     -1.500e+02, 2.992e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3548473
+      N Points:   1810012
+      N Strips:   0
+      X Bounds:   -1.666e+02, 1.465e+02
+      Y Bounds:   -1.742e+02, 1.384e+02
+      Z Bounds:   -1.500e+02, 2.992e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5073,7 +5281,7 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData or str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5086,14 +5294,206 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fd08f1faf40)
-      N Cells:      13702
-      N Points:     6801
-      X Bounds:     -6.460e-31, 9.000e+01
-      Y Bounds:     -3.535e-32, 1.480e+02
-      Z Bounds:     -7.287e-13, 2.000e+01
-      N Arrays:     1
+    >>> mesh
+    PolyData (...)
+      N Cells:    15446
+      N Points:   7677
+      N Strips:   0
+      X Bounds:   -6.460e-31, 9.000e+01
+      Y Bounds:   -3.535e-32, 1.480e+02
+      Z Bounds:   0.000e+00, 2.000e+01
+      N Arrays:   2
 
     """
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
+
+
+def download_aero_bracket(load=True):  # pragma: no cover
+    """Download the finite element solution of an aero bracket.
+
+    Data generated from public SimScale examples at `SimScale Project Library -
+    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+
+    Licensing for this dataset is granted to freely and without restriction
+    reproduce, distribute, publish according to the `SimScale Terms and
+    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
+
+    This project demonstrates the static stress analysis of three aircraft
+    engine bearing bracket models considering both linear and nonlinear
+    material definition. The models are tested with horizontal and vertical
+    loading conditions as provided on the `GrabCAD - Airplane Bearing Bracket
+    Challenge
+    <https://grabcad.com/challenges/airplane-bearing-bracket-challenge/entries>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the aero bracket.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_aero_bracket()
+    >>> dataset
+    UnstructuredGrid (...)
+      N Cells:    117292
+      N Points:   187037
+      X Bounds:   -6.858e-03, 1.118e-01
+      Y Bounds:   -1.237e-02, 6.634e-02
+      Z Bounds:   -1.638e-02, 1.638e-02
+      N Arrays:   3
+
+    Show the available point data arrays.
+
+    >>> dataset.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays :
+        displacement            float32    (187037, 3)
+        total nonlinear strain  float32    (187037, 6)
+        von Mises stress        float32    (187037,)
+
+    Plot the von Mises stress.
+
+    >>> cpos = [
+    ...     (-0.0503, 0.132, -0.179),
+    ...     (0.0505, 0.0185, -0.00201),
+    ...     (0.275, 0.872, 0.405),
+    ... ]
+    >>> dataset.plot(
+    ...     smooth_shading=True,
+    ...     split_sharp_edges=True,
+    ...     scalars='von Mises stress',
+    ...     cmap='bwr',
+    ...     cpos=cpos,
+    ...     anti_aliasing='fxaa',
+    ... )
+
+    """
+    return _download_and_read('fea/aero_bracket/aero_bracket.vtu', load=load)
+
+
+def download_coil_magnetic_field(load=True):  # pragma: no cover
+    """Download the magnetic field of a coil.
+
+    These examples were generated from the following `script
+    <https://github.com/pyvista/vtk-data/tree/master/Data/magpylib/>`_.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Download the magnetic field dataset and generate streamlines from the field.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> grid = examples.download_coil_magnetic_field()
+    >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
+    >>> strl = grid.streamlines_from_source(
+    ...     seed,
+    ...     vectors='B',
+    ...     max_time=180,
+    ...     initial_step_length=0.1,
+    ...     integration_direction='both',
+    ... )
+    >>> strl.plot(
+    ...     cmap='plasma',
+    ...     render_lines_as_tubes=True,
+    ...     line_width=2,
+    ...     lighting=False,
+    ...     zoom=2,
+    ... )
+
+    Plot the magnet field strength in the Z direction.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> grid = examples.download_coil_magnetic_field()
+    >>> # create coils
+    >>> coils = []
+    >>> for z in np.linspace(-8, 8, 16):
+    ...     coils.append(
+    ...         pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False)
+    ...     )
+    ...
+    >>> coils = pv.MultiBlock(coils)
+    >>> # plot the magnet field strength in the Z direction
+    >>> scalars = np.abs(grid['B'][:, 2])
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     coils, render_lines_as_tubes=True, line_width=5, color='w'
+    ... )
+    >>> vol = pl.add_volume(
+    ...     grid,
+    ...     scalars=scalars,
+    ...     cmap='plasma',
+    ...     show_scalar_bar=False,
+    ...     log_scale=True,
+    ...     opacity='sigmoid_2',
+    ... )
+    >>> vol.prop.interpolation_type = 'linear'
+    >>> _ = pl.add_volume_clip_plane(
+    ...     vol,
+    ...     normal='-x',
+    ...     normal_rotation=False,
+    ...     interaction_event='always',
+    ...     widget_color=pv.Color(opacity=0.0),
+    ... )
+    >>> pl.enable_anti_aliasing()
+    >>> pl.camera.zoom(2)
+    >>> pl.show()
+
+    See the :ref:`magnetic_fields_example` for more details on how to plot with
+    this dataset.
+
+    """
+    return _download_and_read('magpylib/coil_field.vti', load=load)
+
+
+def download_meshio_xdmf(load=True):  # pragma: no cover
+    """Download xdmf file created by meshio.
+
+    The dataset was created by ``test_time_series`` test function in meshio.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_meshio_xdmf()
+    >>> dataset.plot()
+
+    """
+    _ = download_file("meshio/out.h5")
+    return _download_and_read("meshio/out.xdmf", load=load)

@@ -120,7 +120,7 @@ mesh.points = points
 # set the dimensions
 mesh.dimensions = [29, 32, 1]
 
-# and then inspect it!
+# and then inspect it
 mesh.plot(show_edges=True, show_grid=True, cpos="xy")
 
 

@@ -10,8 +10,8 @@ Using ``ipygany`` with PyVista
 The `ipygany <https://github.com/QuantStack/ipygany>`_ jupyterlab
 plotting backend is a powerful module that enables pure plotting that
 leverages `threejs <https://threejs.org/>`_ through the `pythreejs
-widget <https://github.com/jupyter-widgets/pythreejs>`_.  It allows
-for embedded html documentation (as shown here), rapid plotting (as
+widget <https://github.com/jupyter-widgets/pythreejs>`_. It allows
+for embedded HTML documentation (as shown here), rapid plotting (as
 compared to the other client jupyterlab plotting modules like
 ``panel``).
 
@@ -20,14 +20,14 @@ and without repeating too much here, ``ipygany`` includes the
 following features:
 
 - IsoColor: apply color-mapping to your mesh.
-- Warp: deform your mesh given a 3-D input data (e.g. displacement
+- Warp: deform your mesh given a 3-D input data (for example the displacement
   data on a beam)
-- WarpByScalar: deform your mesh given a 1-D input data (e.g. terrain
+- WarpByScalar: deform your mesh given a 1-D input data (for example terrain
   elevation)
 - Threshold: only visualize mesh parts inside a range of data
-  (e.g. 222 K≤ temperature ≤ 240 K)
+  (for example, 222 K ≤ temperature ≤ 240 K)
 - IsoSurface: only visualize the surface where the mesh respects a
-  data value (e.g. pressure == 3 bar)
+  data value (for example, pressure == 3 bar)
 - Glyph effects like PointCloud
 - Water visualization
 
@@ -64,7 +64,7 @@ existing code and change the backend depending on the type of plotting
 backend you wish to use.
 
 Note that there are many missing features, including all vtk widgets,
-but many of these can be replaced with jupyterlab widgets.  If you
+but many of these can be replaced with jupyterlab widgets. If you
 wish to assemble your own scene, change the jupyter_backend while
 returning the "viewer" with:
 
@@ -79,7 +79,7 @@ returning the "viewer" with:
     ipygany.ipygany.Scene
 
 This scene can then be added to any number of jupyterlab widgets and
-then shown as a complete widget.  For example, you could even display
+then shown as a complete widget. For example, you could even display
 two side by side using ``ipywidgets.AppLayout``.
 
 
@@ -87,7 +87,7 @@ Examples: Large Models
 ~~~~~~~~~~~~~~~~~~~~~~
 This example shows a large mesh and demonstrates how even fairly large
 meshes, like the carburetor example which contains 500,000 faces and
-250,000 points, can be quickly loaded.  This is, of course, bandwidth
+250,000 points, can be quickly loaded. This is, of course, bandwidth
 dependent, as this mesh is around 6 MB.
 
 .. jupyter-execute::
@@ -108,7 +108,7 @@ dependent, as this mesh is around 6 MB.
 Returning Scenes
 ~~~~~~~~~~~~~~~~
 Show several widgets simultaneously using
-``ipywidgets.TwoByTwoLayout``.  This is similar to the
+``ipywidgets.TwoByTwoLayout``. This is similar to the
 :ref:`ref_parametric_example`, except with interactive widgets.
 
 .. jupyter-execute::
@@ -144,7 +144,7 @@ Scalar Bars
 ~~~~~~~~~~~
 Scalar bars are automatically shown when a plot has active scalars.
 For example, the St. Helens ``mesh`` from ``active_scalar_name`` is
-``'Elevation'``.  Scalar bars, scalar bar title, and the colormap
+``'Elevation'``. Scalar bars, scalar bar title, and the colormap
 dropdown menu are automatically added to the scene.
 
 .. jupyter-execute::

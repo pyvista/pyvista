@@ -9,6 +9,13 @@ import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import download_file
 
+HAS_IMAGEIO = True
+try:
+    import imageio  # noqa: F401
+except ModuleNotFoundError:
+    HAS_IMAGEIO = False
+
+
 pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
@@ -464,7 +471,7 @@ def test_pvdreader():
     filename = examples.download_wavy(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PVDReader)
-    assert isinstance(reader.reader, pyvista.utilities.reader._PVDReader)
+    assert isinstance(reader.reader, pyvista.core.utilities.reader._PVDReader)
     assert reader.path == filename
 
     assert reader.number_time_points == 15
@@ -924,6 +931,7 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_gif_reader(gif_file):
     reader = pyvista.get_reader(gif_file)
     assert isinstance(reader, pyvista.GIFReader)
@@ -942,3 +950,32 @@ def test_gif_reader(gif_file):
         data_name = f'frame{i}'
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])
+
+
+def test_xdmf_reader():
+    filename = examples.download_meshio_xdmf(load=False)
+
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.XdmfReader)
+    assert reader.path == filename
+
+    assert reader.number_grids == 6
+    assert reader.number_point_arrays == 2
+
+    assert reader.point_array_names == ['phi', 'u']
+    assert reader.cell_array_names == ['a']
+
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
+    reader.set_active_time_value(0.25)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.25, 0.25, 0.25, 0.25]))
+    reader.set_active_time_value(0.5)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.5, 0.5, 0.5, 0.5]))
+    reader.set_active_time_value(0.75)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.75, 0.75, 0.75, 0.75]))
+    reader.set_active_time_value(1.0)
+    blocks = reader.read()
+    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))

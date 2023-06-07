@@ -174,10 +174,10 @@ The project support team can be reached at `info@pyvista.org`_.
 Citing PyVista
 ==============
 
-There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_!
+There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_.
 
 If you are using PyVista in your scientific research, please help our scientific
-visibility by citing our work! Head over to :ref:`citation_ref` to learn more
+visibility by citing our work. Head over to :ref:`citation_ref` to learn more
 about citing PyVista.
 
 .. _JOSS Publication: https://joss.theoj.org/papers/10.21105/joss.01450

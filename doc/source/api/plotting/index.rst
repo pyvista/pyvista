@@ -19,7 +19,7 @@ Plotting
 
 Plotting API Reference
 ----------------------
-Plotting module API reference.  These plotting modules are the basis for
+Plotting module API reference. These plotting modules are the basis for
 all plotting functionality in PyVista.
 
 .. currentmodule:: pyvista
@@ -29,6 +29,7 @@ all plotting functionality in PyVista.
 
    Actor
    CameraPosition
+   CubeAxesActor
    DataSetMapper
    LookupTable
    Plotter

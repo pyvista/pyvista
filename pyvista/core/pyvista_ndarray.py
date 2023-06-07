@@ -4,12 +4,12 @@ from typing import Union
 
 import numpy as np
 
-from pyvista import _vtk
-from pyvista.utilities.helpers import FieldAssociation, convert_array
+from . import _vtk_core as _vtk
+from .utilities.arrays import FieldAssociation, convert_array
 
 
 class pyvista_ndarray(np.ndarray):
-    """An ndarray which references the owning dataset and the underlying vtkArray.
+    """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
@@ -21,7 +21,7 @@ class pyvista_ndarray(np.ndarray):
     dataset : pyvista.DataSet
         Input dataset.
 
-    association : pyvista.utilities.helpers.FieldAssociation
+    association : pyvista.core.utilities.arrays.FieldAssociation
         Field association.
 
     Examples

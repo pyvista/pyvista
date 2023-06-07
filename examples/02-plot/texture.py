@@ -57,7 +57,7 @@ elevated.plot(scalars='Elevation', cmap='terrain', texture=tex, interpolate_befo
 
 
 ###############################################################################
-# Note that this process can be completed with any image texture!
+# Note that this process can be completed with any image texture.
 
 # use the puppy image
 tex = examples.download_puppy_texture()
@@ -102,7 +102,7 @@ image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
 # Convert 3D numpy array to texture
 tex = pv.numpy_to_texture(image)
 
-# Render it!
+# Render it
 curvsurf.plot(texture=tex)
 
 ###############################################################################
@@ -161,7 +161,7 @@ rgba.n_components
 
 ###############################################################################
 
-# Render it!
+# Render it
 curvsurf.plot(texture=rgba, show_grid=True)
 
 
@@ -193,7 +193,7 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 curvsurf.active_t_coords = puppy_coords
 
 ###############################################################################
-# Now display all the puppies!
+# Now display all the puppies.
 
 # use the puppy image
 tex = examples.download_puppy_texture()

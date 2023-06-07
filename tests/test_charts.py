@@ -6,12 +6,12 @@ import weakref
 
 import numpy as np
 import pytest
+from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
 from pyvista.plotting.colors import COLOR_SCHEMES
-from pyvista.utilities.misc import can_create_mpl_figure
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
@@ -19,10 +19,6 @@ skip_mac = pytest.mark.skipif(
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(), reason="Test requires system to support plotting"
-)
-
-skip_no_mpl_figure = pytest.mark.skipif(
-    not can_create_mpl_figure(), reason="Cannot create a figure using matplotlib"
 )
 
 # skip all tests if VTK<9.2.0
@@ -170,13 +166,13 @@ def test_pen():
 def test_wrapping():
     width = 5
     # Test wrapping of VTK Pen object
-    vtkPen = pyvista._vtk.vtkPen()
-    wrappedPen = charts.Pen(_wrap=vtkPen)
-    assert wrappedPen.__this__ == vtkPen.__this__
-    assert wrappedPen.width == vtkPen.GetWidth()
+    pen = vtkPen()
+    wrappedPen = charts.Pen(_wrap=pen)
+    assert wrappedPen.__this__ == pen.__this__
+    assert wrappedPen.width == pen.GetWidth()
     wrappedPen.width = width
-    assert wrappedPen.width == vtkPen.GetWidth()
-    assert vtkPen.GetWidth() == width
+    assert wrappedPen.width == pen.GetWidth()
+    assert pen.GetWidth() == width
 
 
 @skip_mac
@@ -390,7 +386,6 @@ def test_axis_label_font_size(chart_2d):
 
 
 @skip_no_plotting
-@skip_no_mpl_figure
 @pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
@@ -787,7 +782,9 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ["#fa09b6", "0xa53a8d", "#b02239f0", "0xcee6927f"]
-    colors = itertools.chain(pyvista.hexcolors, pyvista.colors.color_synonyms, [*hex_colors, ""])
+    colors = itertools.chain(
+        pyvista.hexcolors, pyvista.plotting.colors.color_synonyms, [*hex_colors, ""]
+    )
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
@@ -981,7 +978,6 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @skip_no_plotting
-@skip_no_mpl_figure
 def test_chart_mpl(pl, chart_mpl):
     import matplotlib.pyplot as plt
 
@@ -1015,7 +1011,6 @@ def test_chart_mpl(pl, chart_mpl):
 
 
 @skip_no_plotting
-@skip_no_mpl_figure
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 

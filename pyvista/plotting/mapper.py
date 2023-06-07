@@ -5,22 +5,21 @@ from typing import Optional, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import (
+from pyvista.core._typing_core import BoundsLike
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
     convert_array,
     convert_string_array,
     raise_not_matching,
-    set_algorithm_input,
-    wrap,
 )
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class, no_new_attr
 
-from .._typing import BoundsLike
+from . import _vtk
 from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
+from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
@@ -130,15 +129,15 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> actor = pl.add_mesh(
         ...     mesh, scalars=mesh.points[:, 2], cmap='bwr'
         ... )
-        >>> actor.mapper.lookup_table  # doctest:+SKIP
-        LookupTable (0x7ff3be8d8c40)
+        >>> actor.mapper.lookup_table
+        LookupTable (...)
           Table Range:                (-0.5, 0.5)
           N Values:                   256
           Above Range Color:          None
           Below Range Color:          None
-          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff')
+          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff', opacity=255)
           Log Scale:                  False
-          Color Map:                  "From values array"
+          Color Map:                  "bwr"
 
         Return the lookup table of a composite dataset mapper.
 
@@ -149,7 +148,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.lookup_table  # doctest:+SKIP
-        <vtkmodules.vtkCommonCore.vtkLookupTable(0x2d4c6e0) at 0x7fce74a89fa0>
+        <vtkmodules.vtkCommonCore.vtkLookupTable(...) at ...>
 
         """
         return self.GetLookupTable()
@@ -547,7 +546,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
@@ -571,8 +570,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
-            for when displaying ``scalars``. Requires Matplotlib to be
-            installed.  ``colormap`` is also an accepted alias for this. If
+            for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
@@ -682,13 +681,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.scalar_range = self.lookup_table.scalar_range
         else:
             self.lookup_table.scalar_range = self.scalar_range
-            # Set default map if matplotlib is available
+            # Set default map
             if cmap is None:
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -699,7 +697,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             else:
                 jupyter_backend = self._theme.jupyter_backend
             if jupyter_backend == 'ipygany':  # pragma: no cover
-                from ..jupyter.pv_ipygany import check_colormap
+                from pyvista.jupyter.pv_ipygany import check_colormap
 
                 check_colormap(cmap)
             else:
@@ -709,16 +707,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     elif isinstance(categories, int):
                         n_colors = categories
 
-                if cmap is not None:
-                    self.lookup_table.apply_cmap(cmap, n_colors)
-                else:  # pragma: no cover
-                    # should be impossible to get to this point as VTK package
-                    # no requires matplotlib
-                    self.lookup_table.n_values = n_colors
-                    if flip_scalars:
-                        self.lookup_table.hue_range = (0.0, 0.66667)
-                    else:
-                        self.lookup_table.hue_range = (0.66667, 0.0)
+                self.lookup_table.apply_cmap(cmap, n_colors)
 
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
@@ -727,7 +716,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 if flip_scalars:
                     self.lookup_table.values[:] = self.lookup_table.values[::-1]
 
-                if custom_opac and cmap is not None:
+                if custom_opac:
                     # need to round the colors here since we're
                     # directly displaying the colors
                     hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
@@ -898,7 +887,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.scale_factor /= 1.5
 
     def __repr__(self):
-        """Representation of the gaussian mapper."""
+        """Representation of the Gaussian mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
             f'  Scalar visibility:           {self.scalar_visibility}',

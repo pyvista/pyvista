@@ -3,8 +3,8 @@
 Readers
 =======
 PyVista provides class based readers to have more control over reading
-data files.  These classes allows for more fine-grained control over
-reading datasets from files.  See :func:`pyvista.get_reader` for a
+data files. These classes allows for more fine-grained control over
+reading datasets from files. See :func:`pyvista.get_reader` for a
 list of file types supported.
 
 Also, see :ref:`reader_example` for a full example using reader classes.
@@ -67,11 +67,12 @@ Reader Classes
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
+    XdmfReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
 
-The :class:`pyvista.BaseReader` is inherited by all subreaders.  It
+The :class:`pyvista.BaseReader` is inherited by all sub-readers. It
 has the basic functionality of all readers to set filename and read
 the data.
 

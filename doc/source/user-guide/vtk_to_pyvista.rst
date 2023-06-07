@@ -150,7 +150,7 @@ However, with PyVista you only need:
 .. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 
 
-PointSet construction
+PointSet Construction
 ---------------------
 PyVista heavily relies on NumPy to efficiently allocate and access
 VTK's C arrays. For example, to create an array of points within VTK
@@ -231,7 +231,7 @@ access it (or change it) from the :attr:`faces
 
 .. _vtk_vs_pyvista_object_repr:
 
-Object representation
+Object Representation
 ---------------------
 Both VTK and PyVista provide representations for their objects.
 

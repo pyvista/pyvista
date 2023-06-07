@@ -10,10 +10,17 @@ Generate a moving gif from an active plotter.
    "jittery" GIFs, especially for the scalar bar.
 
 """
+# sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
 
 import pyvista as pv
+
+###############################################################################
+# Create a structured grid
+# ~~~~~~~~~~~~~~~~~~~~~~~~
+# Create a structured grid and make a "wave" my shifting the Z position based
+# on the cartesian distance from the origin.
 
 x = np.arange(-10, 10, 0.5)
 y = np.arange(-10, 10, 0.5)
@@ -23,6 +30,13 @@ z = np.sin(r)
 
 # Create and structured surface
 grid = pv.StructuredGrid(x, y, z)
+grid.plot()
+
+
+###############################################################################
+# Generate a GIF
+# ~~~~~~~~~~~~~~
+# Generate a GIF using ``off_screen=True`` parameter.
 
 # Create a plotter object and set the scalars to the Z height
 plotter = pv.Plotter(notebook=False, off_screen=True)

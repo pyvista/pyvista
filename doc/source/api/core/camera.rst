@@ -87,7 +87,7 @@ directly control the :py:attr:`pyvista.Camera.roll`,
 
 .. image:: ../../images/user-generated/TestCameraModel1.png
 
-For example, you can modify the roll.  First, generate a plot of an
+For example, you can modify the roll. First, generate a plot of an
 orientation cube while initially setting the camera position to look
 at the ``'yz'``.
 
@@ -136,7 +136,7 @@ degrees to see the ``X+`` and ``Z+`` faces.
    pl.show()
 
 
-API reference
+API Reference
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary

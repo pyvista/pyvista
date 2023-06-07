@@ -3,16 +3,14 @@
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import (
-    NORMALS,
-    assert_empty_kwargs,
-    generate_plane,
-    get_array,
-    get_array_association,
-    try_callback,
-)
-from pyvista.utilities.algorithms import (
+from pyvista.core.utilities.arrays import get_array, get_array_association
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+
+from . import _vtk
+from .colors import Color
+from .utilities.algorithms import (
     add_ids_algorithm,
     algorithm_to_mesh_handler,
     crinkle_algorithm,
@@ -20,8 +18,6 @@ from pyvista.utilities.algorithms import (
     pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
-
-from .colors import Color
 
 
 def _parse_interaction_event(interaction_event):
@@ -167,6 +163,8 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if bounds is None:
             bounds = self.bounds
 
@@ -803,7 +801,7 @@ class WidgetHelper:
         """
         if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
-        elif not isinstance(volume, pyvista.plotting.Volume):
+        elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.UniformGrid, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
@@ -1561,7 +1559,7 @@ class WidgetHelper:
 
         """
         # avoid circular import
-        from ..core.filters.data_set import _set_threshold_limit
+        from pyvista.core.filters.data_set import _set_threshold_limit
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -1792,8 +1790,8 @@ class WidgetHelper:
             :class:`pyvista.PolyData` object to the callback function of the
             generated spline.
 
-        bounds : tuple(float), optional
-            Length 6 tuple of the bounding box where the widget is placed.
+        bounds : sequence[float], optional
+            Length 6 sequence of the bounding box where the widget is placed.
 
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
@@ -2052,12 +2050,11 @@ class WidgetHelper:
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
-        center : tuple(float), optional
-            Length 3 array for the XYZ coordinate of the sphere's
-            center when placing it in the scene. If more than one
-            location is passed, then that many widgets will be added
-            and the callback will also be passed the integer index of
-            that widget.
+        center : sequence[float], optional
+            The cartesian coordinate of the sphere's center when placing it in
+            the scene. If more than one location is passed, then that many
+            widgets will be added and the callback will also be passed the
+            integer index of that widget.
 
         radius : float, optional
             The radius of the sphere.
@@ -2085,7 +2082,7 @@ class WidgetHelper:
         selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
 
-        indices : sequence, optional
+        indices : sequence[int], optional
             Indices to assign the sphere widgets.
 
         pass_widget : bool, optional
@@ -2197,16 +2194,16 @@ class WidgetHelper:
             The method called every time the button is clicked. This should take
             a single parameter: the bool value of the button.
 
-        value : bool, optional
+        value : bool, default: False
             The default state of the button.
 
-        position : tuple(float), optional
+        position : sequence[float], default: (10.0, 10.0)
             The absolute coordinates of the bottom left point of the button.
 
-        size : int, optional
+        size : int, default: 50
             The size of the button in number of pixels.
 
-        border_size : int, optional
+        border_size : int, default: 5
             The size of the borders of the button in pixels.
 
         color_on : ColorLike, optional
@@ -2294,9 +2291,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        animate : bool, optional
+        animate : bool, default: True
             Enable or disable jump-to-axis-view animation.
-        n_frames : int, optional
+
+        n_frames : int, default: 20
             The number of frames to animate the jump-to-axis-viewpoint feature.
 
         Returns
@@ -2318,7 +2316,14 @@ class WidgetHelper:
         >>> plotter.show()
 
         """
-        widget = _vtk.lazy_vtkCameraOrientationWidget()
+        try:
+            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+        except ImportError:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+
+        widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)

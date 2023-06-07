@@ -1,7 +1,8 @@
 """This module contains the VolumeProperty class."""
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import no_new_attr
+
+from . import _vtk
 
 
 @no_new_attr
@@ -29,10 +30,10 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         viewer.
 
     diffuse : float, optional
-        The diffuse lighting coefficient. Default 1.0.
+        The diffuse lighting coefficient.
 
     specular : float, optional
-        The specular lighting coefficient. Default 0.0.
+        The specular lighting coefficient.
 
     specular_power : float, optional
         The specular power. Between 0.0 and 128.0.
@@ -282,8 +283,6 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     @property
     def diffuse(self) -> float:
         """Return or set the diffuse lighting coefficient.
-
-        Default 1.0.
 
         This is the scattering of light by reflection or transmission. Diffuse
         reflection results when light strikes an irregular surface such as a

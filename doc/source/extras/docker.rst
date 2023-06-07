@@ -1,9 +1,9 @@
-
+!
 
 PyVista within a Docker Container
 =================================
 You can use ``pyvista`` from within a docker container with
-jupyterlab.  To launch a local docker container, install ``docker``, then
+jupyterlab. To launch a local docker container, install ``docker``, then
 pull and run the image with:
 
 .. code-block:: bash
@@ -11,7 +11,7 @@ pull and run the image with:
   docker run -p 8888:8888 ghcr.io/pyvista/pyvista:latest
 
 Finally, open the link that shows up from the terminal output and
-start playing around with pyvista in jupyterlab!  For example:
+start playing around with pyvista in jupyterlab. For example:
 
 .. code::
 
@@ -35,9 +35,9 @@ start playing around with pyvista in jupyterlab!  For example:
     `Working with the Docker registry <https://docs.github.com/en/enterprise-server@3.0/packages/working-with-a-github-packages-registry/working-with-the-docker-registry>`_)
 
 
-Create your own Docker Container with `pyvista`
------------------------------------------------
-Clone pyvista and cd into this directory to create your own customized docker image.
+Create your own Docker Container with PyVista
+---------------------------------------------
+Clone PyVista and cd into this directory to create your own customized docker image.
 
 .. code-block:: bash
 
@@ -48,7 +48,7 @@ Clone pyvista and cd into this directory to create your own customized docker im
   docker push $IMAGE
 
 If you wish to have off-screen GPU support when rending on jupyterlab,
-see the the notes about building with EGL at :ref:`ref_building_vtk`,
+see the notes about building with EGL at :ref:`ref_building_vtk`,
 or use the custom, pre-built wheels at
 `Release 0.27.0 <https://github.com/pyvista/pyvista/releases/tag/0.27.0>`_.
 Install that customized vtk wheel onto your docker image by modifying
@@ -60,10 +60,10 @@ the docker image at ``pyvista/docker/jupyter.Dockerfile`` with:
   RUN pip install /tmp/vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl
 
 Additionally, you must install GPU drivers on the docker image of the
-same version running on the host machine.  For example, if you are
+same version running on the host machine. For example, if you are
 running on Azure Kubernetes Service and the GPU nodes on the
 kubernetes cluster are running ``450.51.06``, you must install the same
-version on your image.  Since you will be using the underlying kernel
+version on your image. Since you will be using the underlying kernel
 module, there's no reason to build it on the container (and trying
 will only result in an error).
 
@@ -74,7 +74,7 @@ will only result in an error).
   RUN ./NVIDIA-Linux-x86_64-450.51.06.run -s --no-kernel-module
 
 To verify that you're rendering on a GPU, first check the output of
-``nvidia-smi``.  You should get something like:
+``nvidia-smi``. You should get something like:
 
 .. code::
 

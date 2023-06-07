@@ -8,8 +8,8 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.errors import PyVistaFutureWarning
 from pyvista.plotting import system_supports_plotting
-from pyvista.utilities.misc import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -81,6 +81,15 @@ def test_init_from_arrays():
     # ensure that polydata raises a warning when inputting non-float dtype
     with pytest.warns(Warning):
         mesh = pyvista.PolyData(vertices.astype(np.int32), faces)
+
+    # array must be immutable
+    with pytest.raises(ValueError):
+        mesh.faces[0] += 1
+
+    # attribute is mutable
+    faces = [4, 0, 1, 2, 3]
+    mesh.faces = faces
+    assert np.allclose(faces, mesh.faces)
 
 
 def test_init_from_arrays_with_vert():
@@ -331,6 +340,16 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     merged = mesh.merge(sphere_shifted, inplace=True)
     assert merged is mesh
 
+    # test merge with lines
+    arc_1 = pyvista.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
+    arc_2 = pyvista.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
+    merged = arc_1 + arc_2
+    assert merged.n_lines == 2
+
+    # test merge with lines as iterable
+    merged = arc_1.merge((arc_2, arc_2))
+    assert merged.n_lines == 3
+
     # test main_has_priority
     mesh = sphere.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
@@ -505,6 +524,14 @@ def test_extract_feature_edges(sphere):
     mesh = pyvista.Cube()  # use a mesh that actually has strongly defined edges
     more_edges = mesh.extract_feature_edges(10)
     assert more_edges.n_points
+
+
+def test_extract_feature_edges_no_data():
+    mesh = pyvista.Wavelet()
+    edges = mesh.extract_feature_edges(90, clear_data=True)
+    assert edges is not None
+    assert isinstance(edges, pyvista.PolyData)
+    assert edges.n_arrays == 0
 
 
 def test_decimate(sphere):
@@ -861,8 +888,6 @@ def test_is_all_triangles():
     assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
-    # for backwards compatibility, check if we can call this
-    assert mesh.is_all_triangles()
 
 
 def test_extrude():

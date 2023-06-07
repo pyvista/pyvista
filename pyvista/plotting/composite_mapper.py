@@ -2,16 +2,17 @@
 from itertools import cycle
 import sys
 from typing import Optional
-import warnings
 import weakref
 
+import matplotlib
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.misc import _check_range
+from pyvista.report import vtk_version_info
 
-from ..utilities.misc import has_module, vtk_version_info
+from . import _vtk
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -205,6 +206,7 @@ class BlockAttributes:
             self._attr.Modified()
             return
 
+        _check_range(new_opacity, (0, 1), 'opacity')
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
@@ -459,21 +461,21 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.block_attr.get_block(0)  # doctest:+SKIP
+        >>> mapper.block_attr.get_block(0)
         MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         Note this is the same as using ``__getitem__``
 
-        >>> mapper.block_attr[0]  # doctest:+SKIP
-        MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+        >>> mapper.block_attr[0]
+        Composite Block Addr=... Attributes
+        Visible:   None
+        Opacity:   None
+        Color:     None
+        Pickable   None
 
         """
         try:
@@ -568,12 +570,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.dataset  # doctest:+SKIP
+        >>> mapper.dataset
         MultiBlock (...)
-          N Blocks:     2
-          X Bounds:     -0.500, 0.500
-          Y Bounds:     -0.500, 0.500
-          Z Bounds:     -0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         """
         return self._dataset
@@ -672,15 +674,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
-        if has_module('matplotlib'):
-            import matplotlib
-
-            colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
-            for attr in self.block_attr:
-                attr.color = next(colors)['color']
-
-        else:  # pragma: no cover
-            warnings.warn('Please install matplotlib for color cycles.')
+        colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+        for attr in self.block_attr:
+            attr.color = next(colors)['color']
 
     def set_scalars(
         self,
@@ -722,7 +718,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         annotations : dict
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         rgb : bool
             If the ``scalars_name`` corresponds to a 2 dimensional array, plot
@@ -758,8 +754,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
-            for when displaying ``scalars``. Requires Matplotlib to be
-            installed.  ``colormap`` is also an accepted alias for this. If
+            for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
@@ -836,12 +832,11 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
 
-            if cmap is None:  # Set default map if matplotlib is available
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+            if cmap is None:
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)

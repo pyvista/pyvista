@@ -169,7 +169,7 @@ for theta in np.arange(0, np.pi, increment):
 slices
 
 ###############################################################################
-# And now display it!
+# And now display it.
 p = pv.Plotter()
 p.add_mesh(slices, cmap=cmap)
 p.add_mesh(model.outline())

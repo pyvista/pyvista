@@ -7,12 +7,13 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.core.dataset import DataSet
-from pyvista.core.filters import RectilinearGridFilters, UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class, assert_empty_kwargs
-import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyVistaDeprecationWarning, raise_has_duplicates
+
+from . import _vtk_core as _vtk
+from .dataset import DataSet
+from .errors import PyVistaDeprecationWarning
+from .filters import RectilinearGridFilters, UniformGridFilters, _get_output
+from .utilities.arrays import convert_array, raise_has_duplicates
+from .utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -135,23 +136,30 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
                     self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
-            elif isinstance(args[0], np.ndarray):
-                self._from_arrays(args[0], None, None, check_duplicates)
+            elif isinstance(args[0], (np.ndarray, Sequence)):
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
+            arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
             if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
+                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
             else:
                 arg2_is_arr = False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]),
+                    np.asanyarray(args[1]),
+                    np.asanyarray(args[2]),
+                    check_duplicates,
+                )
             elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], None, check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
+                )
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
@@ -199,19 +207,19 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         # edges are shown as triangles if x is not floating point
         if not np.issubdtype(x.dtype, np.floating):
             x = x.astype(float)
-        self.SetXCoordinates(helpers.convert_array(x.ravel()))
+        self.SetXCoordinates(convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:
                 raise_has_duplicates(y)
             if not np.issubdtype(y.dtype, np.floating):
                 y = y.astype(float)
-            self.SetYCoordinates(helpers.convert_array(y.ravel()))
+            self.SetYCoordinates(convert_array(y.ravel()))
         if z is not None:
             if check_duplicates:
                 raise_has_duplicates(z)
             if not np.issubdtype(z.dtype, np.floating):
                 z = z.astype(float)
-            self.SetZCoordinates(helpers.convert_array(z.ravel()))
+            self.SetZCoordinates(convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
 
@@ -295,12 +303,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetXCoordinates())
+        return convert_array(self.GetXCoordinates())
 
     @x.setter
     def x(self, coords: Sequence):
         """Set the coordinates along the X-direction."""
-        self.SetXCoordinates(helpers.convert_array(coords))
+        self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -328,12 +336,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetYCoordinates())
+        return convert_array(self.GetYCoordinates())
 
     @y.setter
     def y(self, coords: Sequence):
         """Set the coordinates along the Y-direction."""
-        self.SetYCoordinates(helpers.convert_array(coords))
+        self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -361,12 +369,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetZCoordinates())
+        return convert_array(self.GetZCoordinates())
 
     @z.setter
     def z(self, coords: Sequence):
         """Set the coordinates along the Z-direction."""
-        self.SetZCoordinates(helpers.convert_array(coords))
+        self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -416,19 +424,17 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
-    dimensions : iterable, optional
+    dimensions : sequence[int], optional
         Dimensions of the uniform grid.
 
-    spacing : iterable, optional
-        Spacing of the uniform in each dimension.  Defaults to
-        ``(1.0, 1.0, 1.0)``. Must be positive.
+    spacing : sequence[float], default: (1.0, 1.0, 1.0)
+        Spacing of the uniform grid in each dimension. Must be positive.
 
-    origin : iterable, optional
-        Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
+    origin : sequence[float], default: (0.0, 0.0, 0.0)
+        Origin of the uniform grid.
 
-    deep : bool, optional
-        Whether to deep copy a ``vtk.vtkImageData`` object.
-        Default is ``False``.  Keyword only.
+    deep : bool, default: False
+        Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
     Examples
     --------
@@ -443,7 +449,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     >>> vtkgrid = vtk.vtkImageData()
     >>> grid = pyvista.UniformGrid(vtkgrid)
 
-    Initialize using using just the grid dimensions and default
+    Initialize using just the grid dimensions and default
     spacing and origin. These must be keyword arguments.
 
     >>> grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
@@ -574,11 +580,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         dims : tuple(int)
             Length 3 tuple of ints specifying how many points along each axis.
 
-        spacing : tuple(float)
+        spacing : sequence[float], default: (1.0, 1.0, 1.0)
             Length 3 tuple of floats/ints specifying the point spacings
             for each axis. Must be positive.
 
-        origin : tuple(float)
+        origin : sequence[float], default: (0.0, 0.0, 0.0)
             Length 3 tuple of floats/ints specifying minimum value for each axis.
 
         """

@@ -1,7 +1,7 @@
 name: Bug Report
 description: Create a report to help us fix broken features
 labels: ["bug"]
-body: 
+body:
   - type: markdown
     attributes:
       value: |
@@ -16,7 +16,7 @@ body:
       placeholder: Tell us what you see!
       value: "I found a bug!"
     validations:
-      required: true  
+      required: true
   - type: textarea
     id: reproduce
     attributes:
@@ -41,11 +41,11 @@ body:
         import pyvista as pv
         print(pv.Report())
         ```
-      render: shell      
+      render: shell
     validations:
       required: true
   - type: textarea
     id: screenshots
     attributes:
       label: Screenshots
-      description: If applicable, please add screenshots to the text box below 
+      description: If applicable, please add screenshots to the text box below

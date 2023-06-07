@@ -10,7 +10,7 @@ import numpy as np
 from pytest import fixture, mark, raises
 
 import pyvista
-from pyvista.utilities import FieldAssociation
+from pyvista.core.utilities.arrays import FieldAssociation
 
 skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = mark.skipif(

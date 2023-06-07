@@ -4,8 +4,8 @@ Building VTK
 ============
 Kitware provides Python wheels for VTK at `PyPI VTK
 <https://pypi.org/project/vtk/>`_, but there are situations where you
-may need to build VTK from source (e.g. new release of Python, EGL
-rendering, additional features, etc).  As ``pyvista`` does not provide
+may need to build VTK from source (for example, a new release of Python, EGL
+rendering, additional features, etc). As ``pyvista`` does not provide
 ``vtk``, you will have to either build it manually or install the default
 wheel from PyPI.
 
@@ -23,10 +23,10 @@ situations like EGL.
 
 Building Wheels
 ~~~~~~~~~~~~~~~
-Building VTK from source is fairly straightforward.  Using the default build
+Building VTK from source is fairly straightforward. Using the default build
 settings, build a Python wheel of VTK using ``ninja`` using the following
-script.  This script uses system python3, but you can use any modern Python
-version.  For some additional useful options, see the `conda-forge recipe
+script. This script uses system python3, but you can use any modern Python
+version. For some additional useful options, see the `conda-forge recipe
 <https://github.com/conda-forge/vtk-feedstock/blob/master/recipe/build.sh>`__.
 Most of the ones below are designed to reduce the build time and resulting
 wheel size.
@@ -89,7 +89,7 @@ Off-Screen Plotting GPU Support
 +++++++++++++++++++++++++++++++
 VTK supports rendering with EGL, enabling rapid off-screen rendering
 using GPU hardware acceleration without installing a virtual
-framebuffer.  The default VTK wheels are not built with this feature,
+framebuffer. The default VTK wheels are not built with this feature,
 but you can build VTK for off-screen plotting using GPU support by
 modifying the above ``cmake`` command with:
 
@@ -186,7 +186,7 @@ Building ManyLinux Wheels
 The above directions are great for building a local build of VTK, but
 these wheels are difficult to share outside your local install given
 issues with ABI compatibility due to the version of Linux they were
-built on.  You can work around this by building your wheels using a
+built on. You can work around this by building your wheels using a
 `manylinux <https://github.com/pypa/manylinux>`_ docker image.
 
 To do this, create a ``build_wheels.sh`` with the following contents in the
@@ -262,7 +262,7 @@ You should end up with a ``build/wheelhouse/vtk-*.whl``.
 
 .. note::
    To build the EGL version of the wheel, follow the directions in the
-   previous section.  Add ``mesa-libEGL-devel`` to the installation
+   previous section. Add ``mesa-libEGL-devel`` to the installation
    dependencies.
 
 
@@ -271,13 +271,13 @@ Building Python VTK Wheel on Raspberry Pi (64-bit)
 While it's possible to build on 32-bit Raspberry Pi (ARMv7), there are
 several issues that crop up when building wheels for the 32-bit
 version (see `manylinux issue 84
-<https://github.com/pypa/manylinux/issues/84>`_).  Should you attempt
+<https://github.com/pypa/manylinux/issues/84>`_). Should you attempt
 to build on 32-bit, try building the wheel using `dockcross
 <https://github.com/dockcross/dockcross>`_ as you may run into memory
 limitations otherwise (especially with only 1 GB RAM).
 
 Building the ``aarch64`` manylinux wheel can be done via docker with
-the ``quay.io/pypa/manylinux2014_aarch64`` image.  Run the following:
+the ``quay.io/pypa/manylinux2014_aarch64`` image. Run the following:
 
 .. code-block:: bash
 

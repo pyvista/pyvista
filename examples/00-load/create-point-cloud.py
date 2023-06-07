@@ -22,7 +22,7 @@ from pyvista import examples
 # than creating a PyVista mesh with your own NumPy arrays of vertice locations.
 
 
-# Define some helpers - ignore these and use your own data!
+# Define some helpers - ignore these and use your own data.
 def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
     dataset = examples.download_lidar()

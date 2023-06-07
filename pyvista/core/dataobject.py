@@ -8,10 +8,13 @@ from typing import Any, DefaultDict, Dict, Type, Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, abstract_class, fileio
 
+from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
+from .utilities.arrays import FieldAssociation
+from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.helpers import wrap
+from .utilities.misc import abstract_class
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -60,7 +63,7 @@ class DataObject:
         self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
-        data = pyvista.read(filename, **kwargs)
+        data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
                 f'Reading file returned data of `{type(data).__name__}`, '
@@ -82,7 +85,7 @@ class DataObject:
             Filename of output file. Writer type is inferred from
             the extension of the filename.
 
-        binary : bool, optional
+        binary : bool, default: True
             If ``True``, write as binary.  Otherwise, write as ASCII.
 
         texture : str, np.ndarray, optional
@@ -125,7 +128,7 @@ class DataObject:
         self._store_metadata()
 
         writer = self._WRITERS[file_ext]()
-        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         if file_ext == '.ply' and texture is not None:
@@ -189,7 +192,7 @@ class DataObject:
 
         Parameters
         ----------
-        display : bool, optional
+        display : bool, default: True
             Display this header in iPython.
 
         html : bool, optional
@@ -241,7 +244,7 @@ class DataObject:
                 fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
             fmt += row.format('N Arrays:', self.n_arrays)
-        return fmt
+        return fmt.strip()
 
     def _repr_html_(self):  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.
@@ -272,7 +275,7 @@ class DataObject:
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             When ``True`` makes a full copy of the object.  When
             ``False``, performs a shallow copy where the points, cell,
             and data arrays are references to the original object.
@@ -350,9 +353,9 @@ class DataObject:
         name : str
             Name to assign the field array.
 
-        deep : bool, optional
+        deep : bool, default: True
             Perform a deep copy of the data when adding it to the
-            dataset.  Default ``True``.
+            dataset.
 
         Examples
         --------
@@ -605,7 +608,7 @@ class DataObject:
                 reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        mesh = pyvista.wrap(reader.GetOutput())
+        mesh = wrap(reader.GetOutput())
 
         # copy data
         self.copy_structure(mesh)

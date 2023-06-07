@@ -492,12 +492,39 @@ def test_download_cavity():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+def test_download_openfoam_tubes():
+    filename = examples.download_openfoam_tubes(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_openfoam_tubes(load=True)
+    assert isinstance(dataset, pv.MultiBlock)
+
+
 def test_download_lucy():
     filename = examples.download_lucy(load=False)
     assert os.path.isfile(filename)
 
     dataset = examples.download_lucy(load=True)
     assert isinstance(dataset, pv.PolyData)
+
+
+def test_download_pump_bracket():
+    filename = examples.download_pump_bracket(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_pump_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data) == 10
+
+
+def test_download_electronics_cooling():
+    filenames = examples.download_electronics_cooling(load=False)
+    for filename in filenames:
+        assert os.path.isfile(filename)
+
+    structure, air = examples.download_electronics_cooling(load=True)
+    assert isinstance(structure, pv.PolyData)
+    assert isinstance(air, pv.UnstructuredGrid)
 
 
 def test_angular_sector():
@@ -662,6 +689,11 @@ def test_download_crater_imagery():
 
 def test_download_dolfin():
     dataset = examples.download_dolfin()
+    assert isinstance(dataset, pv.UnstructuredGrid)
+
+
+def test_download_meshio_xdmf():
+    dataset = examples.download_meshio_xdmf()
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
@@ -931,6 +963,26 @@ def test_cad_model_case():
     dataset = examples.download_cad_model_case(load=True)
     assert isinstance(dataset, pv.PolyData)
     assert dataset.n_points == 7677
+
+
+def test_download_aero_bracket():
+    filename = examples.download_aero_bracket(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtu')
+
+    dataset = examples.download_aero_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data.keys()) == 3
+
+
+def test_coil_magnetic_field():
+    filename = examples.download_coil_magnetic_field(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vti')
+
+    dataset = examples.download_coil_magnetic_field(load=True)
+    assert isinstance(dataset, pv.UniformGrid)
+    assert dataset.n_points == 531441
 
 
 def test_load_sun():

@@ -2,7 +2,7 @@ User Guide
 **********
 This section details the general usage of PyVista for users who may or
 may not have used VTK in the past, but are looking to leverage it in a
-Pythonic manner for 3D plotting.  See the table of contents below or
+Pythonic manner for 3D plotting. See the table of contents below or
 the in the side panel for the individual sections demonstrating the
 key concepts of PyVista.
 
@@ -32,7 +32,7 @@ This basic example demonstrates three key features of PyVista:
 
 Here, we download the `Stanford dragon mesh
 <http://graphics.stanford.edu/data/3Dscanrep/>`_, color it according
-to height, and plot it using a web-viewer.  This same example will run
+to height, and plot it using a web-viewer. This same example will run
 identically locally.
 
 .. jupyter-execute::
@@ -44,7 +44,7 @@ identically locally.
     ...           zoom=1.7)
 
 .. note::
-   This example (and many others) is interactive!
+   This example (and many others) is interactive.
 
 With just a few lines of code we downloaded a sample mesh from the
 web, added scalars to it based on the points of the mesh, and plotted
