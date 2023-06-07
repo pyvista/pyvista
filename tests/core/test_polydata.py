@@ -411,40 +411,6 @@ def test_save(sphere, extension, binary, tmpdir):
     assert mesh.points.shape == sphere.points.shape
 
 
-@pytest.mark.parametrize('as_str', [True, False])
-@pytest.mark.parametrize('ndim', [3, 4])
-def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
-
-    texture = np.ones((sphere.n_points, ndim), np.uint8)
-    texture[:, 2] = np.arange(sphere.n_points)[::-1]
-    if as_str:
-        sphere.point_data['texture'] = texture
-        sphere.save(filename, texture='texture')
-    else:
-        sphere.save(filename, texture=texture)
-
-    mesh = pyvista.PolyData(filename)
-    color_array_name = 'RGB' if ndim == 3 else 'RGBA'
-    assert np.allclose(mesh[color_array_name], texture)
-
-
-@pytest.mark.parametrize('as_str', [True, False])
-def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
-
-    texture = np.ones((sphere.n_points, 3), np.float32)
-    with pytest.raises(ValueError, match='Invalid datatype'):
-        if as_str:
-            sphere.point_data['texture'] = texture
-            sphere.save(filename, texture='texture')
-        else:
-            sphere.save(filename, texture=texture)
-
-    with pytest.raises(TypeError):
-        sphere.save(filename, texture=[1, 2, 3])
-
-
 def test_pathlib_read_write(tmpdir, sphere):
     path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
     sphere.save(path)

@@ -12,7 +12,7 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import Texture, examples
+from pyvista import examples
 from pyvista.core.dataset import DataSet
 from pyvista.core.errors import VTKVersionError
 from pyvista.errors import PyVistaDeprecationWarning
@@ -472,65 +472,6 @@ def test_print_repr(grid, display, html):
         assert result is not None
 
 
-def test_texture():
-    """Test adding texture coordinates"""
-    # create a rectangle vertices
-    vertices = np.array(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [1, 0.5, 0],
-            [0, 0.5, 0],
-        ]
-    )
-
-    # mesh faces
-    faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
-
-    # Create simple texture coordinates
-    t_coords = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
-    # Create the poly data
-    mesh = pyvista.PolyData(vertices, faces)
-    # Attempt setting the texture coordinates
-    mesh.active_t_coords = t_coords
-    # now grab the texture coordinates
-    foo = mesh.active_t_coords
-    assert np.allclose(foo, t_coords)
-    texture = Texture(examples.mapfile)
-    mesh.textures['map'] = texture
-    assert mesh.textures['map'] is not None
-    mesh.clear_textures()
-    assert len(mesh.textures) == 0
-
-
-def test_multiple_texture_coordinates():
-    mesh = examples.load_airplane()
-    mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
-    mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
-    assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
-    texture = Texture(examples.mapfile)
-    mesh.textures["tex_a"] = texture.copy()
-    mesh.textures["tex_b"] = texture.copy()
-    mesh._activate_texture("tex_a")
-    assert np.allclose(mesh.active_t_coords, mesh["tex_a"])
-    mesh._activate_texture("tex_b")
-    assert np.allclose(mesh.active_t_coords, mesh["tex_b"])
-
-    # Now test copying
-    cmesh = mesh.copy()
-    assert len(cmesh.textures) == 2
-    assert "tex_a" in cmesh.textures
-    assert "tex_b" in cmesh.textures
-
-
-def test_inplace_no_overwrite_texture_coordinates():
-    mesh = pyvista.Box()
-    truth = mesh.texture_map_to_plane(inplace=False)
-    mesh.texture_map_to_sphere(inplace=True)
-    test = mesh.texture_map_to_plane(inplace=True)
-    assert np.allclose(truth.active_t_coords, test.active_t_coords)
-
-
 def test_invalid_vector(grid):
     with pytest.raises(ValueError):
         grid["vectors"] = np.empty(10)
@@ -627,14 +568,6 @@ def test_set_t_coords(grid):
 
     with pytest.raises(ValueError):
         grid.active_t_coords = np.empty((grid.n_points, 1))
-
-
-def test_activate_texture_none(grid):
-    with pytest.warns(UserWarning, match=r'not a key'):
-        assert grid._activate_texture('not a key') is None
-
-    with pytest.warns(UserWarning, match=r'No textures associated'):
-        assert grid._activate_texture(True) is None
 
 
 def test_set_active_vectors_fail(grid):
