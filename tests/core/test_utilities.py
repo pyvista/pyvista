@@ -25,10 +25,16 @@ from pyvista.core.utilities.arrays import (
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
-from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector
+from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.errors import PyVistaDeprecationWarning
+
+HAS_IMAGEIO = True
+try:
+    import imageio  # noqa
+except ModuleNotFoundError:
+    HAS_IMAGEIO = False
 
 
 def test_version():
@@ -964,3 +970,8 @@ def test_coerce_points_like_args_does_not_copy():
     output /= 2
     assert np.array_equal(output, source)
     assert np.may_share_memory(output, source)
+
+
+def test_has_module():
+    assert has_module('pytest')
+    assert not has_module('not_a_module')

@@ -7,6 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.examples.downloads import download_file
 
 HAS_IMAGEIO = True
@@ -979,3 +980,9 @@ def test_xdmf_reader():
     reader.set_active_time_value(1.0)
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))
+
+
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
+def test_try_imageio_imread():
+    img = _try_imageio_imread(examples.mapfile)
+    assert isinstance(img, (imageio.core.util.Array, np.ndarray))
