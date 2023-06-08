@@ -23,7 +23,7 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    skip = 'skip_plotting' in [mark.name for mark in item.iter_markers()]
+    skip = any(mark.name == 'skip_plotting' for mark in item.iter_markers())
     if skip and SKIP_PLOTTING:
         pytest.skip('Test requires system to support plotting')
 
