@@ -181,3 +181,17 @@ visibility by citing our work. Head over to :ref:`citation_ref` to learn more
 about citing PyVista.
 
 .. _JOSS Publication: https://joss.theoj.org/papers/10.21105/joss.01450
+
+Poster
+======
+
+.. |poster| image:: https://github.com/pyvista/pyvista-posters/raw/gh-pages/main-1.png
+   :target: https://pyvista.github.io/pyvista-posters/main.pdf
+   :alt: poster
+
+There is a `poster about PyVista <https://github.com/pyvista/pyvista-posters>`_.
+
+If you want to share PyVista in your community,
+you can use our poster under a `Creative Commons "Attribute 3.0 Unported" license <https://creativecommons.org/licenses/by/3.0/deed.en>`_ .
+
+|poster|

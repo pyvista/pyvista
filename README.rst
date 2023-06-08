@@ -272,3 +272,17 @@ BibTex:
       title = {{PyVista}: {3D} plotting and mesh analysis through a streamlined interface for the {Visualization Toolkit} ({VTK})},
       journal = {Journal of Open Source Software}
     }
+
+Poster
+======
+
+.. |poster| image:: https://github.com/pyvista/pyvista-posters/raw/gh-pages/main-1.png
+   :target: https://pyvista.github.io/pyvista-posters/main.pdf
+   :alt: poster
+
+There is a `poster about PyVista <https://github.com/pyvista/pyvista-posters>`_.
+
+If you want to share PyVista in your community,
+you can use our poster under a `Creative Commons "Attribute 3.0 Unported" license <https://creativecommons.org/licenses/by/3.0/deed.en>`_ .
+
+|poster|
