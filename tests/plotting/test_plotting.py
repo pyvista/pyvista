@@ -91,6 +91,7 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 
 @pytest.fixture(autouse=True)
 def validate_gc(check_gc):
+    """Autouse garbage collection validation fixture for this module."""
     pass
 
 

@@ -12,6 +12,7 @@ from pyvista.core._vtk_core import vtk_to_numpy
 
 @pytest.fixture(autouse=True)
 def validate_gc(check_gc):
+    """Autouse garbage collection validation fixture for this module."""
     pass
 
 
