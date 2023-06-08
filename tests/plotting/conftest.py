@@ -12,11 +12,20 @@ from pyvista.plotting import system_supports_plotting
 # these are set here because we only need them for plotting tests
 pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
+SKIP_PLOTTING = not system_supports_plotting()
+
 
 # Configure skip_plotting marker
-pytest.mark.skip_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Test requires system to support plotting"
-)
+def pytest_configure(config):
+    config.addinivalue_line(
+        'markers', 'skip_plotting: skip the test if system does not support plotting'
+    )
+
+
+def pytest_runtest_setup(item):
+    skip = 'skip_plotting' in [mark.name for mark in item.iter_markers()]
+    if skip and SKIP_PLOTTING:
+        pytest.skip('Test requires system to support plotting')
 
 
 def _is_vtk(obj):
