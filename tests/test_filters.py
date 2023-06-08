@@ -5,10 +5,9 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from vtk import VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_TRIANGLE
 
 import pyvista
-from pyvista import _vtk, examples
+from pyvista import CellType, _vtk, examples
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 
@@ -1735,7 +1734,7 @@ def test_extract_surface():
     pts = np.vstack((lin_pts, quad_pts))
 
     cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
-    celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
+    celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
     grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
 
     # expect each face to be divided 6 times since it has a midside node
@@ -2225,7 +2224,7 @@ def test_tessellate():
         ]
     )
     cells = np.array([6, 0, 1, 2, 3, 4, 5])
-    cell_types = np.array([VTK_QUADRATIC_TRIANGLE])
+    cell_types = np.array([CellType.QUADRATIC_TRIANGLE])
     ugrid = pyvista.UnstructuredGrid(cells, cell_types, points)
     tessellated = ugrid.tessellate(progress_bar=True)
     assert tessellated.n_cells > ugrid.n_cells
