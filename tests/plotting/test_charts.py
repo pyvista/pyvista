@@ -654,7 +654,6 @@ def test_areaplot(chart_2d, area_plot):
     assert np.allclose(area_plot.y2, y2)
 
 
-@pytest.mark.noautofixt
 def test_barplot(chart_2d, bar_plot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
