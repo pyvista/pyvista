@@ -28,6 +28,8 @@ all plotting functionality in PyVista.
    :toctree: _autosummary
 
    Actor
+   Axes
+   AxesActor
    CameraPosition
    CubeAxesActor
    DataSetMapper
@@ -72,6 +74,10 @@ The :class:`pyvista.Plotter` class inherits all of the widget methods described
 by the ``pyvista.WidgetHelper`` class. For additional details, see the
 :ref:`widgets` examples.
 
+.. autosummary::
+   :toctree: _autosummary
+
+   WidgetHelper
 
 Convenience Functions
 ~~~~~~~~~~~~~~~~~~~~~
