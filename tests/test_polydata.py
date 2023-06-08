@@ -310,6 +310,40 @@ def test_subtract(sphere, sphere_shifted):
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
+def test_append(
+    sphere: pyvista.PolyData,
+    sphere_shifted: pyvista.PolyData,
+    sphere_dense: pyvista.PolyData,
+):
+    # 1/ Single argument
+    merged = sphere.append_polydata(sphere_shifted)
+    assert merged.n_points == (sphere.n_points + sphere_shifted.n_points)
+    assert isinstance(merged, pyvista.PolyData)
+    # test point order is kept
+    np.testing.assert_array_equal(merged.points[: sphere.n_points], sphere.points)
+    np.testing.assert_array_equal(merged.points[sphere.n_points :], sphere_shifted.points)
+
+    # 2/ Multiple arguments
+    merged = sphere.append_polydata(sphere_shifted, sphere_dense)
+    assert merged.n_points == (sphere.n_points + sphere_shifted.n_points + sphere_dense.n_points)
+    assert isinstance(merged, pyvista.PolyData)
+    # test point order is kept
+    np.testing.assert_array_equal(merged.points[: sphere.n_points], sphere.points)
+    mid = sphere.n_points + sphere_shifted.n_points
+    np.testing.assert_array_equal(merged.points[sphere.n_points : mid], sphere_shifted.points)
+    np.testing.assert_array_equal(merged.points[mid:], sphere_dense.points)
+
+    # 3/ test in-place merge
+    mesh = sphere.copy()
+    merged = mesh.append_polydata(sphere_shifted, inplace=True)
+    assert merged is mesh
+
+
+def test_append_raises(sphere: pyvista.PolyData):
+    with pytest.raises(TypeError, match="All meshes need to be of PolyData type"):
+        sphere.append_polydata(sphere.cast_to_unstructured_grid())
+
+
 def test_merge(sphere, sphere_shifted, hexbeam):
     merged = sphere.merge(hexbeam, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
