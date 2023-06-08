@@ -29,12 +29,6 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.errors import PyVistaDeprecationWarning
 
-HAS_IMAGEIO = True
-try:
-    import imageio  # noqa: F401
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
-
 
 def test_version():
     assert "major" in str(pyvista.vtk_version_info)
