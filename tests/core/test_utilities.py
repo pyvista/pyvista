@@ -1,5 +1,4 @@
 """Test pyvista core utilities."""
-import itertools
 import os
 import pathlib
 import pickle
@@ -15,6 +14,7 @@ import pyvista
 from pyvista import examples as ex
 from pyvista.core.utilities import cells, fileio, transformations
 from pyvista.core.utilities.arrays import (
+    _coerce_pointslike_arg,
     copy_vtk_array,
     get_array,
     has_duplicates,
@@ -24,16 +24,10 @@ from pyvista.core.utilities.arrays import (
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
-from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector
+from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.errors import PyVistaDeprecationWarning
-from pyvista.plotting import system_supports_plotting
-from pyvista.report import GPUInfo
-
-skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 
 def test_version():
@@ -306,12 +300,6 @@ def test_is_inside_bounds():
     assert not is_inside_bounds((12, 12, 12), bnds)
 
 
-def test_get_sg_image_scraper():
-    scraper = pyvista._get_sg_image_scraper()
-    assert isinstance(scraper, pyvista.Scraper)
-    assert callable(scraper)
-
-
 def test_voxelize(uniform):
     vox = pyvista.voxelize(uniform, 0.5)
     assert vox.n_cells
@@ -489,21 +477,6 @@ def test_observer():
     obs.observe(alg)
     with pytest.raises(RuntimeError, match="algorithm"):
         obs.observe(alg)
-
-
-@skip_no_plotting
-def test_gpuinfo():
-    gpuinfo = GPUInfo()
-    _repr = gpuinfo.__repr__()
-    _repr_html = gpuinfo._repr_html_()
-    assert isinstance(_repr, str) and len(_repr) > 1
-    assert isinstance(_repr_html, str) and len(_repr_html) > 1
-
-    # test corrupted internal infos
-    gpuinfo._gpu_info = 'foo'
-    for func_name in ['renderer', 'version', 'vendor']:
-        with pytest.raises(RuntimeError, match=func_name):
-            getattr(gpuinfo, func_name)()
 
 
 def test_check_valid_vector():
@@ -706,97 +679,6 @@ def test_merge(sphere, cube, datasets):
     assert np.allclose(merged['data'], 0)
 
 
-def test_color():
-    name, name2 = "blue", "b"
-    i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
-    h = "0000ffff"
-    i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
-    invalid_colors = (
-        (300, 0, 0),
-        (0, -10, 0),
-        (0, 0, 1.5),
-        (-0.5, 0, 0),
-        (0, 0),
-        "#hh0000",
-        "invalid_name",
-        {"invalid_name": 100},
-    )
-    invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
-    i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
-    f_types = (float, np.float16, np.float32, np.float64)
-    h_prefixes = ("", "0x", "#")
-    assert pyvista.Color(name) == i_rgba
-    assert pyvista.Color(name2) == i_rgba
-    # Check integer types
-    for i_type in i_types:
-        i_color = [i_type(c) for c in i_rgba]
-        # Check list, tuple and numpy array
-        assert pyvista.Color(i_color) == i_rgba
-        assert pyvista.Color(tuple(i_color)) == i_rgba
-        assert pyvista.Color(np.asarray(i_color, dtype=i_type)) == i_rgba
-    # Check float types
-    for f_type in f_types:
-        f_color = [f_type(c) for c in f_rgba]
-        # Check list, tuple and numpy array
-        assert pyvista.Color(f_color) == i_rgba
-        assert pyvista.Color(tuple(f_color)) == i_rgba
-        assert pyvista.Color(np.asarray(f_color, dtype=f_type)) == i_rgba
-    # Check hex
-    for h_prefix in h_prefixes:
-        assert pyvista.Color(h_prefix + h) == i_rgba
-    # Check dict
-    for channels in itertools.product(*pyvista.Color.CHANNEL_NAMES):
-        dct = dict(zip(channels, i_rgba))
-        assert pyvista.Color(dct) == i_rgba
-    # Check opacity
-    for opacity in (i_opacity, f_opacity, h_opacity):
-        # No opacity in color provided => use opacity
-        assert pyvista.Color(name, opacity) == (*i_rgba[:3], i_opacity)
-        # Opacity in color provided => overwrite using opacity
-        assert pyvista.Color(i_rgba, opacity) == (*i_rgba[:3], i_opacity)
-    # Check default_opacity
-    for opacity in (i_opacity, f_opacity, h_opacity):
-        # No opacity in color provided => use default_opacity
-        assert pyvista.Color(name, default_opacity=opacity) == (*i_rgba[:3], i_opacity)
-        # Opacity in color provided => keep that opacity
-        assert pyvista.Color(i_rgba, default_opacity=opacity) == i_rgba
-    # Check default_color
-    assert pyvista.Color(None, default_color=name) == i_rgba
-    # Check invalid colors and opacities
-    for invalid_color in invalid_colors:
-        with pytest.raises(ValueError):
-            pyvista.Color(invalid_color)
-    for invalid_opacity in invalid_opacities:
-        with pytest.raises(ValueError):
-            pyvista.Color('b', invalid_opacity)
-    # Check hex and name getters
-    assert pyvista.Color(name).hex_rgba == f'#{h}'
-    assert pyvista.Color(name).hex_rgb == f'#{h[:-2]}'
-    assert pyvista.Color('b').name == 'blue'
-    # Check sRGB conversion
-    assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
-    assert pyvista.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
-    # Check iteration and indexing
-    c = pyvista.Color(i_rgba)
-    assert all(ci == fi for ci, fi in zip(c, f_rgba))
-    for i, cnames in enumerate(pyvista.Color.CHANNEL_NAMES):
-        assert c[i] == f_rgba[i]
-        assert all(c[i] == c[cname] for cname in cnames)
-    assert c[-1] == f_rgba[-1]
-    assert c[1:3] == f_rgba[1:3]
-    with pytest.raises(TypeError):
-        c[None]  # Invalid index type
-    with pytest.raises(ValueError):
-        c["invalid_name"]  # Invalid string index
-    with pytest.raises(IndexError):
-        c[4]  # Invalid integer index
-
-
-def test_color_opacity():
-    color = pyvista.Color(opacity=0.5)
-    assert color.opacity == 128
-
-
 def test_convert_array():
     arr = np.arange(4).astype('O')
     arr2 = pyvista.core.utilities.arrays.convert_array(arr, array_type=np.dtype('O'))
@@ -886,3 +768,106 @@ def test_linkcode_resolve():
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
+
+
+def test_coerce_point_like_arg():
+    # Test with Sequence
+    point = [1.0, 2.0, 3.0]
+    coerced_arg, singular = _coerce_pointslike_arg(point)
+    assert isinstance(coerced_arg, np.ndarray)
+    assert coerced_arg.shape == (1, 3)
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
+    assert singular
+
+    # Test with 1D np.ndarray
+    point = np.array([1.0, 2.0, 3.0])
+    coerced_arg, singular = _coerce_pointslike_arg(point)
+    assert isinstance(coerced_arg, np.ndarray)
+    assert coerced_arg.shape == (1, 3)
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
+    assert singular
+
+    # Test with (1, 3) np.ndarray
+    point = np.array([[1.0, 2.0, 3.0]])
+    coerced_arg, singular = _coerce_pointslike_arg(point)
+    assert isinstance(coerced_arg, np.ndarray)
+    assert coerced_arg.shape == (1, 3)
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
+    assert not singular
+
+    # Test with 2D ndarray
+    point = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    coerced_arg, singular = _coerce_pointslike_arg(point)
+    assert isinstance(coerced_arg, np.ndarray)
+    assert coerced_arg.shape == (2, 3)
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
+    assert not singular
+
+
+def test_coerce_point_like_arg_copy():
+    # Sequence is always copied
+    point = [1.0, 2.0, 3.0]
+    coerced_arg, _ = _coerce_pointslike_arg(point, copy=True)
+    point[0] = 10.0
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
+
+    point = [1.0, 2.0, 3.0]
+    coerced_arg, _ = _coerce_pointslike_arg(point, copy=False)
+    point[0] = 10.0
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
+
+    # 1D np.ndarray can be copied or not
+    point = np.array([1.0, 2.0, 3.0])
+    coerced_arg, _ = _coerce_pointslike_arg(point, copy=True)
+    point[0] = 10.0
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
+
+    point = np.array([1.0, 2.0, 3.0])
+    coerced_arg, _ = _coerce_pointslike_arg(point, copy=False)
+    point[0] = 10.0
+    assert np.array_equal(coerced_arg, np.array([[10.0, 2.0, 3.0]]))
+
+    # 2D np.ndarray can be copied or not
+    point = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    coerced_arg, _ = _coerce_pointslike_arg(point, copy=True)
+    point[0, 0] = 10.0
+    assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
+
+    point = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    coerced_arg, _ = _coerce_pointslike_arg(point, copy=False)
+    point[0, 0] = 10.0
+    assert np.array_equal(coerced_arg, np.array([[10.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
+
+
+def test_coerce_point_like_arg_errors():
+    # wrong length sequence
+    with pytest.raises(ValueError):
+        _coerce_pointslike_arg([1, 2])
+
+    # wrong type
+    with pytest.raises(TypeError):
+        # allow Sequence but not Iterable
+        _coerce_pointslike_arg({1, 2, 3})
+
+    # wrong length ndarray
+    with pytest.raises(ValueError):
+        _coerce_pointslike_arg(np.empty(4))
+    with pytest.raises(ValueError):
+        _coerce_pointslike_arg(np.empty([2, 4]))
+
+    # wrong ndim ndarray
+    with pytest.raises(ValueError):
+        _coerce_pointslike_arg(np.empty([1, 3, 3]))
+
+
+def test_coerce_points_like_args_does_not_copy():
+    source = np.random.rand(100, 3)
+    output, _ = _coerce_pointslike_arg(source)  # test that copy=False is default
+    output /= 2
+    assert np.array_equal(output, source)
+    assert np.may_share_memory(output, source)
+
+
+def test_has_module():
+    assert has_module('pytest')
+    assert not has_module('not_a_module')

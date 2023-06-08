@@ -7,7 +7,9 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import CellType, _vtk, examples
+from pyvista import examples
+from pyvista.core import _vtk_core
+from pyvista.core.celltype import CellType
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
 from pyvista.errors import MissingDataError
 
@@ -847,7 +849,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 class InterrogateVTKGlyph3D:
-    def __init__(self, alg: _vtk.vtkGlyph3D):
+    def __init__(self, alg: _vtk_core.vtkGlyph3D):
         self.alg = alg
 
     @property
@@ -1158,7 +1160,7 @@ def test_resample():
 
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, _vtk.vtkStaticCellLocator()])
+@pytest.mark.parametrize('locator', [None, _vtk_core.vtkStaticCellLocator()])
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()

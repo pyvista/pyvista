@@ -9,7 +9,6 @@ import vtk
 import pyvista
 from pyvista import CellType, examples
 from pyvista.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
-from pyvista.plotting import system_supports_plotting
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,14 +24,6 @@ pointsetmark = pytest.mark.skipif(
 
 def test_volume(hexbeam):
     assert hexbeam.volume > 0.0
-
-
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_struct_example():
-    # create and plot structured grid
-    grid = examples.load_structured()
-    grid.plot(off_screen=True)  # basic plot
-    grid.plot_curvature(off_screen=True)
 
 
 def test_init_from_polydata(sphere):

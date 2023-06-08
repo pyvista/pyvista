@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import system_supports_plotting
 
 has_ipython = True
 try:
@@ -12,10 +11,6 @@ except:  # noqa: E722
     has_ipython = False
 
 skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")
-
-skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 
 def test_set_jupyter_backend_fail():
@@ -37,7 +32,7 @@ def test_set_jupyter_backend_static():
 
 
 @skip_no_ipython
-@skip_no_plotting
+@pytest.mark.skip_plotting
 @pytest.mark.parametrize('return_viewer', [True, False])
 def test_static_from_show(sphere, return_viewer):
     window_size = (100, 100)
@@ -53,7 +48,7 @@ def test_static_from_show(sphere, return_viewer):
 
 
 @skip_no_ipython
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_show_return_values(sphere: pv.PolyData):
     # Three possible return values: (cpos, image, widget)
     img, viewer = sphere.plot(

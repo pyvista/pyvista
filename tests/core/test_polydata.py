@@ -9,13 +9,8 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.errors import PyVistaFutureWarning
-from pyvista.plotting import system_supports_plotting
 
 radius = 0.5
-
-skip_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 
 @pytest.fixture
@@ -244,15 +239,6 @@ def test_ray_trace(sphere):
     assert np.any(ind)
 
 
-@skip_plotting
-def test_ray_trace_plot(sphere):
-    points, ind = sphere.ray_trace(
-        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
-    )
-    assert np.any(points)
-    assert np.any(ind)
-
-
 def test_multi_ray_trace(sphere):
     pytest.importorskip('rtree')
     pytest.importorskip('pyembree')
@@ -268,11 +254,6 @@ def test_multi_ray_trace(sphere):
     mesh = pyvista.Cylinder()
     with pytest.raises(NotAllTrianglesError):
         mesh.multi_ray_trace(origins, directions)
-
-
-@skip_plotting
-def test_plot_curvature(sphere):
-    sphere.plot_curvature(off_screen=True)
 
 
 def test_edge_mask(sphere):
@@ -462,40 +443,6 @@ def test_save(sphere, extension, binary, tmpdir):
     mesh = pyvista.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
-
-
-@pytest.mark.parametrize('as_str', [True, False])
-@pytest.mark.parametrize('ndim', [3, 4])
-def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
-
-    texture = np.ones((sphere.n_points, ndim), np.uint8)
-    texture[:, 2] = np.arange(sphere.n_points)[::-1]
-    if as_str:
-        sphere.point_data['texture'] = texture
-        sphere.save(filename, texture='texture')
-    else:
-        sphere.save(filename, texture=texture)
-
-    mesh = pyvista.PolyData(filename)
-    color_array_name = 'RGB' if ndim == 3 else 'RGBA'
-    assert np.allclose(mesh[color_array_name], texture)
-
-
-@pytest.mark.parametrize('as_str', [True, False])
-def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
-
-    texture = np.ones((sphere.n_points, 3), np.float32)
-    with pytest.raises(ValueError, match='Invalid datatype'):
-        if as_str:
-            sphere.point_data['texture'] = texture
-            sphere.save(filename, texture='texture')
-        else:
-            sphere.save(filename, texture=texture)
-
-    with pytest.raises(TypeError):
-        sphere.save(filename, texture=[1, 2, 3])
 
 
 def test_pathlib_read_write(tmpdir, sphere):
@@ -715,19 +662,6 @@ def test_area(sphere_dense, cube_dense):
 def test_volume(sphere_dense):
     ideal_volume = (4 / 3.0) * pi * radius**3
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
-
-
-@skip_plotting
-def test_plot_boundaries():
-    # make sure to plot an object that has boundaries
-    pyvista.Cube().plot_boundaries(off_screen=True)
-
-
-@skip_plotting
-@pytest.mark.parametrize('flip', [True, False])
-@pytest.mark.parametrize('faces', [True, False])
-def test_plot_normals(sphere, flip, faces):
-    sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
 
 
 def test_remove_points_any(sphere):

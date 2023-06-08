@@ -3,11 +3,15 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista.plotting import system_supports_plotting
 
 # skip all tests if unable to render
-if not system_supports_plotting():
-    pytestmark = pytest.mark.skip
+pytestmark = pytest.mark.skip_plotting
+
+
+@pytest.fixture(autouse=True)
+def validate_gc(check_gc):
+    """Autouse garbage collection validation fixture for this module."""
+    pass
 
 
 def test_widget_box(uniform):

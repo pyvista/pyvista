@@ -4,12 +4,10 @@ import os.path as op
 import pytest
 
 import pyvista
-from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
-if not system_supports_plotting():
-    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
+pytestmark = pytest.mark.skip_plotting
 
 
 @pytest.mark.parametrize('n_win', [1, 2])

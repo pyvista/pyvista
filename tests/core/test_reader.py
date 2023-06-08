@@ -1,12 +1,12 @@
 import os
 import platform
 
-from PIL import Image, ImageSequence
 import numpy as np
 import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.examples.downloads import download_file
 
 HAS_IMAGEIO = True
@@ -20,28 +20,6 @@ pytestmark = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-
-
-@pytest.fixture()
-def gif_file(tmpdir):
-    filename = str(tmpdir.join('sample.gif'))
-
-    pl = pyvista.Plotter(window_size=(300, 200))
-    pl.open_gif(filename, palettesize=16, fps=1)
-
-    mesh = pyvista.Sphere()
-    opacity = mesh.points[:, 0]
-    opacity -= opacity.min()
-    opacity /= opacity.max()
-    for color in ['red', 'blue', 'green']:
-        pl.clear()
-        pl.background_color = 'w'
-        pl.add_mesh(mesh, color=color, opacity=opacity)
-        pl.camera_position = 'xy'
-        pl.write_frame()
-
-    pl.close()
-    return filename
 
 
 def test_get_reader_fail():
@@ -931,27 +909,6 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
-def test_gif_reader(gif_file):
-    reader = pyvista.get_reader(gif_file)
-    assert isinstance(reader, pyvista.GIFReader)
-    assert reader.path == gif_file
-    reader.show_progress()
-
-    grid = reader.read()
-    assert grid.n_arrays == 3
-
-    img = Image.open(gif_file)
-    new_grid = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
-
-    # load each frame to the grid
-    for i, frame in enumerate(ImageSequence.Iterator(img)):
-        data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-        data_name = f'frame{i}'
-        new_grid.point_data.set_array(data, data_name)
-        assert np.allclose(grid[data_name], new_grid[data_name])
-
-
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -979,3 +936,9 @@ def test_xdmf_reader():
     reader.set_active_time_value(1.0)
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))
+
+
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
+def test_try_imageio_imread():
+    img = _try_imageio_imread(examples.mapfile)
+    assert isinstance(img, (imageio.core.util.Array, np.ndarray))

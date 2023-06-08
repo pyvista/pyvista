@@ -1,10 +1,12 @@
+import os
+
 import pytest
 import vtk
 
 import pyvista
 from pyvista import colors
 from pyvista.errors import PyVistaDeprecationWarning
-from pyvista.themes import DefaultTheme
+from pyvista.themes import DefaultTheme, _set_plot_theme_from_env
 
 
 @pytest.fixture
@@ -570,3 +572,12 @@ def test_user_theme():
     finally:
         # always return to testing theme
         pyvista.set_plot_theme('testing')
+
+
+def test_set_plot_theme_from_env():
+    os.environ['PYVISTA_PLOT_THEME'] = 'not a valid theme'
+    try:
+        with pytest.warns(UserWarning, match='Invalid'):
+            _set_plot_theme_from_env()
+    finally:
+        os.environ.pop('PYVISTA_PLOT_THEME', None)

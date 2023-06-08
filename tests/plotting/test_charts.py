@@ -10,15 +10,11 @@ from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista
 from pyvista import examples
-from pyvista.plotting import charts, system_supports_plotting
+from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
-)
-
-skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Test requires system to support plotting"
 )
 
 # skip all tests if VTK<9.2.0
@@ -210,7 +206,7 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
-def test_axis_init(chart_2d):
+def test_axis_init():
     label = "Y axis"
     r_fix = [2, 5]
 
@@ -258,7 +254,7 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
     chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
@@ -385,7 +381,7 @@ def test_axis_label_font_size(chart_2d):
     assert axis.GetLabelProperties().GetFontSize() == font_size
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 @pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
@@ -742,7 +738,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert np.allclose(stack_plot.ys, ys)
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_chart_2d(pl, chart_2d):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -907,7 +903,7 @@ def test_chart_2d(pl, chart_2d):
         )
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_chart_box(pl, chart_box, box_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -943,7 +939,7 @@ def test_chart_box(pl, chart_box, box_plot):
     assert np.allclose(box_plot.stats, stats)
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_chart_pie(pl, chart_pie, pie_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -977,7 +973,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     assert np.allclose(pie_plot.data, data)
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_chart_mpl(pl, chart_mpl):
     import matplotlib.pyplot as plt
 
@@ -1010,7 +1006,7 @@ def test_chart_mpl(pl, chart_mpl):
         chart.position = (1, 2, 3)
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 
@@ -1039,7 +1035,7 @@ def test_chart_mpl_update(pl):
     assert pl_changed()
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_charts(pl):
     win_size = pl.window_size
     top_left = pyvista.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
@@ -1080,7 +1076,7 @@ def test_charts(pl):
     assert pl.renderer._charts._scene is None
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_iren_context_style(pl):
     chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
     win_size = pl.window_size
@@ -1104,7 +1100,7 @@ def test_iren_context_style(pl):
     assert pl.iren._context_style.GetScene() is None
 
 
-@skip_no_plotting
+@pytest.mark.skip_plotting
 @pytest.mark.needs_vtk_version(
     9, 3, 0, reason="Chart interaction when using multiple renderers is bugged on older versions."
 )

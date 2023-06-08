@@ -20,7 +20,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.errors import PyVistaDeprecationWarning, RenderWindowUnavailable
-from pyvista.plotting import check_math_text_support, system_supports_plotting
+from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
@@ -28,8 +28,7 @@ from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 
 # skip all tests if unable to render
-if not system_supports_plotting():
-    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
+pytestmark = pytest.mark.skip_plotting
 
 HAS_IMAGEIO = True
 try:
@@ -88,6 +87,12 @@ skip_mac_flaky = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
 )
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+
+
+@pytest.fixture(autouse=True)
+def validate_gc(check_gc):
+    """Autouse garbage collection validation fixture for this module."""
+    pass
 
 
 @pytest.fixture(autouse=True)

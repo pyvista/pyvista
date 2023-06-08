@@ -334,8 +334,8 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
     assert str(multi) is not None
 
 
-def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     other = multi.copy()
 
     assert multi is not other
@@ -359,12 +359,12 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, globe
+    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, tetbeam
 ):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     # Now check everything
     assert multi.n_blocks == 5
     # Save it out
@@ -378,7 +378,7 @@ def test_multi_block_io(
 @skip_mac  # fails due to download examples
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
+def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, tetbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
@@ -423,9 +423,9 @@ def test_multi_io_erros(tmpdir):
         _ = MultiBlock(bad_ext_name)
 
 
-def test_extract_geometry(ant, sphere, uniform, airplane, globe):
+def test_extract_geometry(ant, sphere, uniform, airplane, tetbeam):
     multi = multi_from_datasets(ant, sphere, uniform)
-    nested = multi_from_datasets(airplane, globe)
+    nested = multi_from_datasets(airplane, tetbeam)
     multi.append(nested)
     # Now check everything
     assert multi.n_blocks == 4
@@ -434,9 +434,9 @@ def test_extract_geometry(ant, sphere, uniform, airplane, globe):
     assert isinstance(geom, PolyData)
 
 
-def test_combine_filter(ant, sphere, uniform, airplane, globe):
+def test_combine_filter(ant, sphere, uniform, airplane, tetbeam):
     multi = multi_from_datasets(ant, sphere, uniform)
-    nested = multi_from_datasets(airplane, globe)
+    nested = multi_from_datasets(airplane, tetbeam)
     multi.append(nested)
     # Now check everything
     assert multi.n_blocks == 4
@@ -445,8 +445,8 @@ def test_combine_filter(ant, sphere, uniform, airplane, globe):
     assert isinstance(geom, pyvista.UnstructuredGrid)
 
 
-def test_multi_block_copy(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     # Now check everything
     multi_copy = multi.copy()
     assert multi.n_blocks == 5 == multi_copy.n_blocks
@@ -463,8 +463,8 @@ def test_multi_block_copy(ant, sphere, uniform, airplane, globe):
         assert pyvista.is_pyvista_dataset(multi_copy.GetBlock(i))
 
 
-def test_multi_block_negative_index(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     # Now check everything
     assert id(multi[-1]) == id(multi[4])
     assert id(multi[-2]) == id(multi[3])
@@ -476,15 +476,15 @@ def test_multi_block_negative_index(ant, sphere, uniform, airplane, globe):
 
     multi[-1] = ant
     assert multi[4] == ant
-    multi[-5] = globe
-    assert multi[0] == globe
+    multi[-5] = tetbeam
+    assert multi[0] == tetbeam
 
     with pytest.raises(IndexError):
         multi[-6] = uniform
 
 
-def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+def test_multi_slice_index(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
@@ -503,19 +503,19 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
         assert sub[i] is multi[j]
         assert sub.get_block_name(i) == multi.get_block_name(j)
 
-    sub = [airplane, globe]
+    sub = [airplane, tetbeam]
     multi[0:2] = sub
     assert multi[0] is airplane
-    assert multi[1] is globe
+    assert multi[1] is tetbeam
 
 
-def test_slice_defaults(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     assert multi[:] == multi[0 : len(multi)]
 
 
-def test_slice_negatives(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+def test_slice_negatives(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
     assert multi[::-1] == test_multi
 
@@ -788,7 +788,7 @@ def test_compute_normals(multiblock_poly):
         multiblock_poly._compute_normals()
 
 
-def test_activate_plotting_scalars(multiblock_poly):
+def test_activate_scalars(multiblock_poly):
     for block in multiblock_poly:
         data = np.array(['a'] * block.n_points)
         block.point_data.set_array(data, 'data')

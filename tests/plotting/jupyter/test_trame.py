@@ -3,7 +3,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import system_supports_plotting
 
 has_trame = True
 try:
@@ -18,10 +17,6 @@ except:  # noqa: E722
 # skip all tests if VTK<9.1.0
 if pv.vtk_version_info < (9, 1):
     pytestmark = pytest.mark.skip
-
-skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(), reason="Requires system to support plotting"
-)
 
 skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
 
@@ -40,7 +35,7 @@ def test_set_jupyter_backend_trame():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_server_launch():
     pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
@@ -48,7 +43,7 @@ def test_trame_server_launch():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame():
     pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
@@ -108,7 +103,7 @@ def test_trame():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_jupyter_modes():
     pv.set_jupyter_backend('trame')
 
@@ -132,7 +127,7 @@ def test_trame_jupyter_modes():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_closed_plotter():
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
@@ -142,7 +137,7 @@ def test_trame_closed_plotter():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_views():
     server = get_server('foo')
 
@@ -155,7 +150,7 @@ def test_trame_views():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_jupyter_custom_size():
     w, h = 200, 150
     plotter = pv.Plotter(notebook=True, window_size=(w, h))
@@ -188,7 +183,7 @@ def test_trame_jupyter_custom_size():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_jupyter_custom_handler():
     def handler(viewer, src, **kwargs):
         return IFrame(src, '75%', '500px')
@@ -204,7 +199,7 @@ def test_trame_jupyter_custom_handler():
 
 
 @skip_no_trame
-@skip_no_plotting
+@pytest.mark.skip_plotting
 def test_trame_int64():
     mesh = pv.Sphere()
     mesh['int64'] = np.arange(mesh.n_cells, dtype=np.int64)
