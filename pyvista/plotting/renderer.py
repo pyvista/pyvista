@@ -923,7 +923,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Control if the orientation widget is interactive.  By
             default uses the value from
             :attr:`pyvista.global_theme.interactive
-            <pyvista.themes.DefaultTheme.interactive>`.
+            <pyvista.themes.Theme.interactive>`.
 
         color : ColorLike, optional
             The color of the actor.  This only applies if ``actor`` is

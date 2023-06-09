@@ -6,12 +6,12 @@ import vtk
 import pyvista
 from pyvista import colors
 from pyvista.errors import PyVistaDeprecationWarning
-from pyvista.themes import DefaultTheme, _set_plot_theme_from_env
+from pyvista.themes import Theme, _set_plot_theme_from_env
 
 
 @pytest.fixture
 def default_theme():
-    return pyvista.themes.DefaultTheme()
+    return pyvista.themes.Theme()
 
 
 def test_backwards_compatibility():
@@ -40,7 +40,7 @@ def test_depth_peeling_config(default_theme, parm):
 
 
 def test_depth_peeling_eq(default_theme):
-    my_theme = pyvista.themes.DefaultTheme()
+    my_theme = pyvista.themes.Theme()
     my_theme.depth_peeling.enabled = not my_theme.depth_peeling.enabled
     assert my_theme.depth_peeling != default_theme.depth_peeling
     assert my_theme.depth_peeling != 1
@@ -64,14 +64,14 @@ def test_silhouette_config(default_theme, parm):
 
 
 def test_depth_silhouette_eq(default_theme):
-    my_theme = pyvista.themes.DefaultTheme()
+    my_theme = pyvista.themes.Theme()
     my_theme.silhouette.opacity = 0.11111
     assert my_theme.silhouette != default_theme.silhouette
     assert my_theme.silhouette != 1
 
 
 def test_depth_silhouette_opacity_outside_clamp(default_theme):
-    my_theme = pyvista.themes.DefaultTheme()
+    my_theme = pyvista.themes.Theme()
     with pytest.raises(ValueError):
         my_theme.silhouette.opacity = 10
     with pytest.raises(ValueError):
@@ -107,7 +107,7 @@ def test_slider_style_config_eq(default_theme):
 
 
 def test_slider_style_eq(default_theme):
-    my_theme = pyvista.themes.DefaultTheme()
+    my_theme = pyvista.themes.Theme()
     my_theme.slider_styles.modern.slider_length *= 2
     assert default_theme.slider_styles != my_theme.slider_styles
 
@@ -136,7 +136,7 @@ def test_font():
 
 
 def test_font_eq(default_theme):
-    defa_theme = pyvista.themes.DefaultTheme()
+    defa_theme = pyvista.themes.Theme()
     assert defa_theme.font == default_theme.font
 
     paraview_theme = pyvista.themes.ParaViewTheme()
@@ -170,9 +170,9 @@ def test_font_fmt(default_theme):
 
 
 def test_axes_eq(default_theme):
-    assert default_theme.axes == pyvista.themes.DefaultTheme().axes
+    assert default_theme.axes == pyvista.themes.Theme().axes
 
-    theme = pyvista.themes.DefaultTheme()
+    theme = pyvista.themes.Theme()
     theme.axes.box = True
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
@@ -212,7 +212,7 @@ def test_axes_show(default_theme):
 
 
 def test_colorbar_eq(default_theme):
-    theme = pyvista.themes.DefaultTheme()
+    theme = pyvista.themes.Theme()
     assert default_theme.colorbar_horizontal == theme.colorbar_horizontal
 
     assert default_theme.colorbar_horizontal != 1
@@ -405,8 +405,8 @@ def test_theme_slots(default_theme):
 
 
 def test_theme_eq():
-    defa_theme0 = pyvista.themes.DefaultTheme()
-    defa_theme1 = pyvista.themes.DefaultTheme()
+    defa_theme0 = pyvista.themes.Theme()
+    defa_theme1 = pyvista.themes.Theme()
     assert defa_theme0 == defa_theme1
     dark_theme = pyvista.themes.DarkTheme()
     assert defa_theme0 != dark_theme
@@ -417,7 +417,7 @@ def test_theme_eq():
 
 def test_plotter_set_theme():
     # test that the plotter theme is set to the new theme
-    my_theme = pyvista.themes.DefaultTheme()
+    my_theme = pyvista.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pyvista.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
@@ -522,7 +522,7 @@ def test_below_range_color(default_theme):
 
 
 def test_user_theme():
-    class MyTheme(DefaultTheme):
+    class MyTheme(Theme):
         def __init__(self):
             """Initialize the theme."""
             super().__init__()
