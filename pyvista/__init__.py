@@ -19,7 +19,7 @@ from pyvista.plotting import _typing, _vtk
 from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
 from pyvista.themes import (
-    Theme as _GlobalTheme,
+    DocumentTheme as _GlobalTheme,
     _rcParams,
     _set_plot_theme_from_env,
     load_theme,
