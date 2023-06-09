@@ -7,7 +7,6 @@ DataSetMapper, <class 'pyvista.plotting.mapper.DataSetMapper'>
 FONTS, <enum 'FONTS'>
 FixedPointVolumeRayCastMapper, <class 'pyvista.plotting.mapper.FixedPointVolumeRayCastMapper'>
 GPUVolumeRayCastMapper, <class 'pyvista.plotting.mapper.GPUVolumeRayCastMapper'>
-KILL_DISPLAY, None
 # MissingDataError, <class 'pyvista.errors.MissingDataError'>
 OpenGLGPUVolumeRayCastMapper, <class 'pyvista.plotting.mapper.OpenGLGPUVolumeRayCastMapper'>
 PickingHelper, <class 'pyvista.plotting.picking.PickingHelper'>
@@ -18,9 +17,6 @@ Property, <class 'pyvista.plotting._property.Property'>
 RenderWindowInteractor, <class 'pyvista.plotting.render_window_interactor.RenderWindowInteractor'>
 RenderWindowUnavailable, <class 'pyvista.errors.RenderWindowUnavailable'>
 Renderer, <class 'pyvista.plotting.renderer.Renderer'>
-Renderers, <class 'pyvista.plotting.renderers.Renderers'>
-SUPPORTED_FORMATS, None
-ScalarBars, <class 'pyvista.plotting.scalar_bars.ScalarBars'>
 SmartVolumeMapper, <class 'pyvista.plotting.mapper.SmartVolumeMapper'>
 UnstructuredGridVolumeRayCastMapper, <class 'pyvista.plotting.mapper.UnstructuredGridVolumeRayCastMapper'>
 Volume, <class 'pyvista.plotting.volume.Volume'>
@@ -28,7 +24,6 @@ VolumeProperty, <class 'pyvista.plotting.volume_property.VolumeProperty'>
 WidgetHelper, <class 'pyvista.plotting.widgets.WidgetHelper'>
 _ALL_PLOTTERS, {}
 _vtk, <module 'pyvista._vtk' from 'pyvista/_vtk.py'>
-_warn_xserver, <function _warn_xserver at 0x7f72f5b704c0>
 active_scalars_algorithm, <function active_scalars_algorithm at 0x7f72f5e0a820>
 algorithm_to_mesh_handler, <function algorithm_to_mesh_handler at 0x7f72f5de6160>
 close_all, <function close_all at 0x7f72f5c5d5e0>

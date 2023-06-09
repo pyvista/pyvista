@@ -12,7 +12,7 @@ from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
 from .camera import Camera
-from .charts import Chart, Chart2D, ChartBox, ChartMPL, ChartPie
+from .charts import Chart2D, ChartBox, ChartMPL, ChartPie
 from .colors import PARAVIEW_BACKGROUND, Color, color_char_to_word, get_cmap_safe, hexcolors
 from .composite_mapper import BlockAttributes, CompositeAttributes, CompositePolyDataMapper
 from .cube_axes_actor import CubeAxesActor
@@ -29,22 +29,11 @@ from .mapper import (
     PointGaussianMapper,
     SmartVolumeMapper,
     UnstructuredGridVolumeRayCastMapper,
-    _BaseMapper,
 )
 from .picking import PickingHelper
-from .plotter import (
-    _ALL_PLOTTERS,
-    KILL_DISPLAY,
-    SUPPORTED_FORMATS,
-    BasePlotter,
-    Plotter,
-    _warn_xserver,
-    close_all,
-)
+from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition, Renderer, scale_point
-from .renderers import Renderers
-from .scalar_bars import ScalarBars
 from .texture import Texture, image_to_texture, numpy_to_texture
 from .tools import (
     FONTS,
