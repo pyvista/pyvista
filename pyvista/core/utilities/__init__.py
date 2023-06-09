@@ -91,7 +91,13 @@ from .misc import (
     threaded,
     try_callback,
 )
-from .observers import Observer, ProgressMonitor, VtkErrorCatcher, set_error_output_file
+from .observers import (
+    Observer,
+    ProgressMonitor,
+    VtkErrorCatcher,
+    send_errors_to_logging,
+    set_error_output_file,
+)
 from .parametric_objects import (
     KochanekSpline,
     ParametricBohemianDome,
