@@ -2054,7 +2054,9 @@ class PolyDataFilters(DataSetFilters):
         output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input
-        output.clear_textures()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            output.clear_textures()
 
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:

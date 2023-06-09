@@ -2121,12 +2121,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> from pyvista import examples
         >>>
+        >>> mesh = examples.load_globe()
+        >>> texture = examples.load_globe_texture()
+        >>>
         >>> # create multi-window plot (1 row, 2 columns)
         >>> pl = pyvista.Plotter(shape=(1, 2))
         >>>
         >>> # activate subplot 1 and add a mesh
         >>> pl.subplot(0, 0)
-        >>> _ = pl.add_mesh(examples.load_globe())
+        >>> _ = pl.add_mesh(mesh, texture=texture)
         >>>
         >>> # activate subplot 2 and add a mesh
         >>> pl.subplot(0, 1)
@@ -2918,13 +2921,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray or bool or str, optional
+        texture : vtk.vtkTexture or np.ndarray, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
-            datasets. If set to ``True``, the first available texture
-            on the object will be used. If a string name is given, it
-            will pull a texture with that name associated to the input
-            mesh.
+            datasets.
 
         render_points_as_spheres : bool, optional
             Render points as spheres rather than dots.
@@ -3337,7 +3337,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Prefer texture first
-            if len(list(mesh.textures.keys())) > 0:
+            if len(list(mesh._textures.keys())) > 0:
                 texture = True
             # If no texture, plot any active scalar
             else:
@@ -5877,10 +5877,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from tempfile import mkdtemp
         >>> import pyvista
         >>> from pyvista import examples
+        >>> mesh = examples.load_globe()
+        >>> texture = examples.load_globe_texture()
         >>> filename = os.path.join(mkdtemp(), 'orbit.gif')
         >>> plotter = pyvista.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(
-        ...     examples.load_globe(), smooth_shading=True
+        ...     mesh, texture=texture, smooth_shading=True
         ... )
         >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]

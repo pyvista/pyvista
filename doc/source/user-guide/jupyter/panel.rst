@@ -76,12 +76,12 @@ Alternatively, you can set the backend globally:
     )
     sphere.active_t_coords[:, 1] = 0.5 + np.arcsin(sphere.points[:, 2]) / math.pi
 
-    sphere.textures["surface"] = examples.planets.download_mars_surface(texture=True)
+    texture = examples.planets.download_mars_surface(texture=True)
 
     # with a black background
     pl = pyvista.Plotter(window_size=[500, 500])
     pl.background_color = 'black'
-    pl.add_mesh(sphere, smooth_shading=False)
+    pl.add_mesh(sphere, smooth_shading=False, texture=texture)
     pl.show()
 
 
