@@ -196,7 +196,11 @@ class _ThemeConfig:
         return dict_
 
     def __eq__(self, other):
-        if not isinstance(self, type(other)):
+        if not isinstance(other, _ThemeConfig):
+            return False
+
+        if not isinstance(self, Theme) and not isinstance(self, type(other)):
+            # Makes sure subconfigs are same type
             return False
 
         for attr_name in other.__slots__:
