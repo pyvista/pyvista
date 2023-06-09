@@ -12,15 +12,15 @@ Apply a built-in theme
 
 Load a theme into pyvista
 
->>> from pyvista.themes import DefaultTheme
->>> theme = DefaultTheme()
+>>> from pyvista.themes import DocumentTheme
+>>> theme = DocumentTheme()
 >>> theme.save('my_theme.json')  # doctest:+SKIP
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
 pyvista.
 
->>> my_theme = DefaultTheme()
+>>> my_theme = DocumentTheme()
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
@@ -101,8 +101,8 @@ def load_theme(filename):
     Examples
     --------
     >>> import pyvista as pv
-    >>> from pyvista.themes import DefaultTheme
-    >>> theme = DefaultTheme()
+    >>> from pyvista.themes import DocumentTheme
+    >>> theme = DocumentTheme()
     >>> theme.save('my_theme.json')  # doctest:+SKIP
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
@@ -1506,8 +1506,8 @@ class DefaultTheme(_ThemeConfig):
 
     Create a new theme from the default theme and apply it globally.
 
-    >>> from pyvista.themes import DefaultTheme
-    >>> my_theme = DefaultTheme()
+    >>> from pyvista.themes import DocumentTheme
+    >>> my_theme = DocumentTheme()
     >>> my_theme.color = 'red'
     >>> my_theme.background = 'white'
     >>> pv.global_theme.load_theme(my_theme)
@@ -2868,8 +2868,8 @@ class DefaultTheme(_ThemeConfig):
         the global theme of pyvista.
 
         >>> import pyvista as pv
-        >>> from pyvista.themes import DefaultTheme
-        >>> my_theme = DefaultTheme()
+        >>> from pyvista.themes import DocumentTheme
+        >>> my_theme = DocumentTheme()
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
@@ -2914,7 +2914,7 @@ class DefaultTheme(_ThemeConfig):
         Export and then load back in a theme.
 
         >>> import pyvista as pv
-        >>> theme = pv.themes.DefaultTheme()
+        >>> theme = pv.themes.DocumentTheme()
         >>> theme.background = 'white'
         >>> theme.save('my_theme.json')  # doctest:+SKIP
         >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
@@ -3157,5 +3157,6 @@ class _NATIVE_THEMES(Enum):
     document = DocumentTheme
     document_pro = DocumentProTheme
     dark = DarkTheme
-    default = DefaultTheme
+    default = DocumentTheme
     testing = _TestingTheme
+    vtk = DefaultTheme
