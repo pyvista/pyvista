@@ -2989,7 +2989,9 @@ class Theme(_ThemeConfig):
 class DefaultTheme(Theme):
     """Deprecated default theme.
 
-    Use ``pyvista.themes.Theme`` instead.
+    .. deprecated:: 0.40.0
+        Deprecated an renamed to ``Theme``.
+
     """
 
     def __init__(self):
