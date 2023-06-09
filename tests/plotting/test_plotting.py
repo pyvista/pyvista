@@ -90,12 +90,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 
 
 @pytest.fixture(autouse=True)
-def validate_gc(check_gc):
-    """Autouse garbage collection validation fixture for this module."""
-    pass
-
-
-@pytest.fixture(autouse=True)
 def verify_image_cache_wrapper(verify_image_cache):
     return verify_image_cache
 

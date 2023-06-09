@@ -3,17 +3,10 @@ import gc
 import weakref
 
 import numpy as np
-import pytest
 import vtk
 
 import pyvista as pv
 from pyvista.core._vtk_core import vtk_to_numpy
-
-
-@pytest.fixture(autouse=True)
-def validate_gc(check_gc):
-    """Autouse garbage collection validation fixture for this module."""
-    pass
 
 
 def test_pyvistandarray_assign(sphere):
