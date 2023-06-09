@@ -28,7 +28,7 @@ from .filters import (
     PolyDataFilters,
     UnstructuredGridFilters,
 )
-from .grid import Grid, ImageData, RectilinearGrid
+from .grid import Grid, ImageData, RectilinearGrid, UniformGrid
 from .objects import Table
 from .pointset import (
     ExplicitStructuredGrid,
