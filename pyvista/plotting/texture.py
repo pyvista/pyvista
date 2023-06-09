@@ -27,7 +27,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.UniformGrid], optional
+    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.ImageData], optional
         Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
@@ -131,10 +131,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             # add each image to the cubemap
             for i, image in enumerate(uinput):
-                if not isinstance(image, pv.UniformGrid):
+                if not isinstance(image, pv.ImageData):
                     raise TypeError(
                         'If a sequence, the each item in the first argument must be a '
-                        'pyvista.UniformGrid'
+                        'pyvista.ImageData'
                     )
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
@@ -192,8 +192,8 @@ class Texture(_vtk.vtkTexture, DataObject):
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
-        if not isinstance(image, pv.UniformGrid):
-            image = pv.UniformGrid(image)
+        if not isinstance(image, pv.ImageData):
+            image = pv.ImageData(image)
         self.SetInputDataObject(image)
         self.Update()
 
@@ -210,7 +210,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         elif image.ndim == 2:
             n_components = 1
 
-        grid = pv.UniformGrid(dimensions=(image.shape[1], image.shape[0], 1))
+        grid = pv.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
             (-1, n_components), order='F'
         )
@@ -323,7 +323,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.UniformGrid
+        pyvista.ImageData
             Texture represented as a uniform grid.
 
         """
@@ -655,11 +655,11 @@ class Texture(_vtk.vtkTexture, DataObject):
 
 
 def image_to_texture(image):
-    """Convert ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``.
+    """Convert ``vtkImageData`` (:class:`pyvista.ImageData`) to a ``vtkTexture``.
 
     Parameters
     ----------
-    image : pyvista.UniformGrid | vtkImageData
+    image : pyvista.ImageData | vtkImageData
         Image to convert.
 
     Returns

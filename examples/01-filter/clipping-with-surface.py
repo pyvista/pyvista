@@ -92,7 +92,7 @@ p.show()
 
 ###############################################################################
 # Here is another example of clipping a mesh by a surface. This time, we'll
-# generate a :class:`pyvista.UniformGrid` around a topography surface and then
+# generate a :class:`pyvista.ImageData` around a topography surface and then
 # clip that grid using the surface to create a closed 3D model of the surface
 surface = examples.load_random_hills()
 

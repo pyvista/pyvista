@@ -29,7 +29,7 @@ from pyvista import examples
 # Download the DataSet
 # ~~~~~~~~~~~~~~~~~~~~
 # Let's first download the example dataset and show that it's a
-# :class:`pyvista.UniformGrid` with the magnetic field stored as the ``'B'``
+# :class:`pyvista.ImageData` with the magnetic field stored as the ``'B'``
 # array in ``point_data``.
 
 grid = examples.download_coil_magnetic_field()

@@ -37,7 +37,7 @@ def spider_cage(x, y, z):
 # create a uniform grid to sample the function with
 n = 100
 x_min, y_min, z_min = -5, -5, -3
-grid = pv.UniformGrid(
+grid = pv.ImageData(
     dimensions=(n, n, n),
     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
     origin=(x_min, y_min, z_min),
@@ -79,7 +79,7 @@ def barth_sextic(x, y, z):
 n = 100
 k = 2.0
 x_min, y_min, z_min = -k, -k, -k
-grid = pv.UniformGrid(
+grid = pv.ImageData(
     dimensions=(n, n, n),
     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
     origin=(x_min, y_min, z_min),

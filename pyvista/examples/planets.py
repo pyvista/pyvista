@@ -766,7 +766,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid, pyvista.Texture, or str
+    pyvista.ImageData, pyvista.Texture, or str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples

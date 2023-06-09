@@ -45,7 +45,7 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
 
 def test_to_tetrahedral_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
-        pv.UniformGrid(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
+        pv.ImageData(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
 
 
 def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):

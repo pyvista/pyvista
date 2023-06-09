@@ -111,7 +111,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # somewhere
         raise NotImplementedError('Please specify dimensions.')
     dimensions = np.array(dimensions, dtype=int)
-    image = pyvista.UniformGrid()
+    image = pyvista.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
@@ -210,7 +210,7 @@ def cartesian_to_spherical(x, y, z):
     --------
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> grid = pv.UniformGrid(dimensions=(3, 3, 3))
+    >>> grid = pv.ImageData(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
     >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
 
@@ -427,7 +427,7 @@ def sample_function(
 
     Returns
     -------
-    pyvista.UniformGrid
+    pyvista.ImageData
         Uniform grid with sampled data.
 
     Examples

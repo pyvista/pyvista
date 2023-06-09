@@ -470,7 +470,7 @@ def test_download_dicom_stack():
     assert os.path.isdir(filename)
 
     data = examples.download_dicom_stack()
-    assert isinstance(data, pv.UniformGrid)
+    assert isinstance(data, pv.ImageData)
     assert all([data.n_points, data.n_cells])
 
 
@@ -572,7 +572,7 @@ def test_gif_simple():
     assert filename.endswith('gif')
 
     dataset = examples.download_gif_simple(load=True)
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert 'frame0' in dataset.point_data
 
 
@@ -648,7 +648,7 @@ def test_download_sparse_points():
 
 def test_download_puppy():
     dataset = examples.download_puppy()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert dataset.n_points > 1_000_000
 
 
@@ -659,7 +659,7 @@ def test_download_puppy_texture():
 
 def test_download_gourds_pnm():
     dataset = examples.download_gourds_pnm()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_model_with_variance():
@@ -679,7 +679,7 @@ def test_download_turbine_blade():
 
 def test_download_crater_topo():
     dataset = examples.download_crater_topo()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_crater_imagery():
@@ -702,7 +702,7 @@ def test_download_damavand_volcano():
     assert os.path.isfile(filename)
 
     dataset = examples.download_damavand_volcano()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_delaunay_example():
@@ -715,7 +715,7 @@ def test_download_embryo():
     assert os.path.isfile(filename)
 
     dataset = examples.download_embryo()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_antarctica_velocity():
@@ -730,7 +730,7 @@ def test_download_room_surface_mesh():
 
 def test_download_beach():
     dataset = examples.download_beach()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_rgba_texture():
@@ -887,7 +887,7 @@ def test_download_cells_nd():
 
 def test_download_moonlanding_image():
     dataset = examples.download_moonlanding_image()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_gltf_milk_truck():
@@ -981,7 +981,7 @@ def test_coil_magnetic_field():
     assert filename.endswith('vti')
 
     dataset = examples.download_coil_magnetic_field(load=True)
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert dataset.n_points == 531441
 
 

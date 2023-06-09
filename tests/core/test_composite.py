@@ -7,14 +7,7 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import (
-    MultiBlock,
-    PolyData,
-    RectilinearGrid,
-    StructuredGrid,
-    UniformGrid,
-    examples as ex,
-)
+from pyvista import ImageData, MultiBlock, PolyData, RectilinearGrid, StructuredGrid, examples as ex
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
@@ -64,7 +57,7 @@ def test_multi_block_init_vtk():
     assert isinstance(multi, MultiBlock)
     assert multi.n_blocks == 3
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
-    assert isinstance(multi.GetBlock(1), UniformGrid)
+    assert isinstance(multi.GetBlock(1), ImageData)
     assert isinstance(multi.GetBlock(2), MultiBlock)
 
 
@@ -139,11 +132,11 @@ def test_multi_block_set_get_ers():
     multi[5] = ex.load_uniform()
     multi.set_block_name(5, 'uni')
     multi.set_block_name(5, None)  # Make sure it doesn't get overwritten
-    assert isinstance(multi.get(5), UniformGrid)
+    assert isinstance(multi.get(5), ImageData)
     # Test get by name
-    assert isinstance(multi['uni'], UniformGrid)
+    assert isinstance(multi['uni'], ImageData)
     assert isinstance(multi['rect'], RectilinearGrid)
-    assert isinstance(multi.get('uni'), UniformGrid)
+    assert isinstance(multi.get('uni'), ImageData)
     assert multi.get('no key') is None
     assert multi.get('no key', default=pyvista.Sphere()) == pyvista.Sphere()
     # Test the del operator
@@ -174,7 +167,7 @@ def test_multi_block_set_get_ers():
         _ = multi.get_index_by_name('foo')
 
     with pytest.raises(IndexError):
-        multi[4] = UniformGrid()
+        multi[4] = ImageData()
 
     with pytest.raises(KeyError):
         multi["not a key"]
@@ -257,10 +250,10 @@ def test_insert(sphere):
     assert multi[0] is cube
 
     # test with negative index and name
-    multi.insert(-1, pyvista.UniformGrid(), name="uni")
+    multi.insert(-1, pyvista.ImageData(), name="uni")
     assert len(multi) == 5
     # inserted before last element
-    assert isinstance(multi[-2], pyvista.UniformGrid)  # inserted before last element
+    assert isinstance(multi[-2], pyvista.ImageData)  # inserted before last element
     assert multi.get_block_name(-2) == "uni"
 
 
@@ -299,7 +292,7 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     assert multi.n_blocks == 2
     assert multi.GetNumberOfBlocks() == 2
     assert isinstance(multi[0], RectilinearGrid)
-    assert isinstance(multi[1], UniformGrid)
+    assert isinstance(multi[1], ImageData)
     assert multi.get_block_name(0) == 'rect'
     assert multi.get_block_name(1) == 'uni'
     # Test a nested data struct

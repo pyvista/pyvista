@@ -41,16 +41,16 @@ available as callable methods directly from any ``UnstructuredGrid`` mesh.
    UnstructuredGridFilters
 
 
-UniformGrid Filters
+ImageData Filters
 ~~~~~~~~~~~~~~~~~~~
-The :class:`pyvista.UniformGridFilters` is inherited by
-:class:`pyvista.UniformGrid` making all the following filters
-available as callable methods directly from any ``UniformGrid`` mesh.
+The :class:`pyvista.ImageDataFilters` is inherited by
+:class:`pyvista.ImageData` making all the following filters
+available as callable methods directly from any ``ImageData`` mesh.
 
 .. autosummary::
    :toctree: _autosummary
 
-   UniformGridFilters
+   ImageDataFilters
 
 
 Composite Filters
