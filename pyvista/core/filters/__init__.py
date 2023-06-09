@@ -60,7 +60,7 @@ from .composite import CompositeFilters
 
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
 from .data_set import DataSetFilters
-from .image_data import ImageDataFilters
+from .image_data import ImageDataFilters, UniformGridFilters
 from .poly_data import PolyDataFilters
 from .rectilinear_grid import RectilinearGridFilters
 from .structured_grid import StructuredGridFilters
@@ -75,5 +75,6 @@ __all__ = [
     'RectilinearGridFilters',
     'StructuredGridFilters',
     'ImageDataFilters',
+    'UniformGridFilters',
     'UnstructuredGridFilters',
 ]

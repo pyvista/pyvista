@@ -42,7 +42,7 @@ available as callable methods directly from any ``UnstructuredGrid`` mesh.
 
 
 ImageData Filters
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 The :class:`pyvista.ImageDataFilters` is inherited by
 :class:`pyvista.ImageData` making all the following filters
 available as callable methods directly from any ``ImageData`` mesh.

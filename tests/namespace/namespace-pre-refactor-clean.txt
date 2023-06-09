@@ -157,6 +157,7 @@ TimeReader, <class 'pyvista.utilities.reader.TimeReader'>
 Triangle, <function Triangle at 0x1641c0af0>
 Tube, <function Tube at 0x1641c04c0>
 UniformGrid, <class 'pyvista.core.grid.UniformGrid'>
+UniformGridFilters, <class 'pyvista.core.filters.uniform_grid.UniformGridFilters'>
 UnstructuredGrid, <class 'pyvista.core.pointset.UnstructuredGrid'>
 UnstructuredGridFilters, <class 'pyvista.core.filters.unstructured_grid.UnstructuredGridFilters'>
 VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
