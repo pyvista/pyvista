@@ -1494,7 +1494,7 @@ class _TrameConfig(_ThemeConfig):
 
 
 class Theme(_ThemeConfig):
-    """PyVista default theme.
+    """Base VTK theme.
 
     Examples
     --------
