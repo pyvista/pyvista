@@ -505,11 +505,11 @@ class DataSet(DataSetFilters, DataObject):
     def textures(self) -> Dict[str, pyvista.Texture]:
         """Return a dictionary to hold compatible ``pyvista.Texture`` objects.
 
-        When casting back to a VTK dataset or filtering this dataset,
-        these textures will not be passed.
-
         .. deprecated:: 0.40.0
             Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
+
+        When casting back to a VTK dataset or filtering this dataset,
+        these textures will not be passed.
 
         """
         # Deprecated on v0.40.0, estimated removal on v0.42.0
@@ -536,10 +536,10 @@ class DataSet(DataSetFilters, DataObject):
     def _activate_texture(mesh, name: str) -> Optional[pyvista.Texture]:
         """Grab a texture and update the active texture coordinates.
 
-        This makes sure to not destroy old texture coordinates.
-
         .. deprecated:: 0.40.0
             Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
+
+        This makes sure to not destroy old texture coordinates.
 
         Parameters
         ----------
