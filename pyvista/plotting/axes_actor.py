@@ -16,7 +16,7 @@ class AxesActor(_vtk.vtkAxesActor):
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
     options, refer to `vtkAxesActor Details
-    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`.
+    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
 
     Examples
     --------
