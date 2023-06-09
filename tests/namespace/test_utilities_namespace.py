@@ -19,27 +19,30 @@ def test_utilities_namespace(name):
         assert hasattr(utilities, name)
 
 
-@pytest.mark.parametrize('name', [
-    'algorithms',
-    'arrays',
-    'cell_type_helper',
-    'cells',
-    'common',
-    'docs',
-    'errors',
-    'features',
-    'fileio',
-    'geometric_objects',
-    'helpers',
-    'misc',
-    'parametric_objects',
-    'reader',
-    'regression',
-    'sphinx_gallery',
-    'transformations',
-    'wrappers',
-    'xvfb',
-])
+@pytest.mark.parametrize(
+    'name',
+    [
+        'algorithms',
+        'arrays',
+        'cell_type_helper',
+        'cells',
+        'common',
+        'docs',
+        'errors',
+        'features',
+        'fileio',
+        'geometric_objects',
+        'helpers',
+        'misc',
+        'parametric_objects',
+        'reader',
+        'regression',
+        'sphinx_gallery',
+        'transformations',
+        'wrappers',
+        'xvfb',
+    ],
+)
 def test_utilities_modules(name):
     # Smoke test to make sure same modules still exist
     importlib.import_module(f'pyvista.utilities.{name}')
