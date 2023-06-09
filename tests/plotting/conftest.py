@@ -42,7 +42,7 @@ def skip_check_gc(check_gc):
 
 
 @pytest.fixture(autouse=True)
-def check_gc(request):
+def check_gc():
     """Ensure that all VTK objects are garbage-collected by Python."""
     gc.collect()
     before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
