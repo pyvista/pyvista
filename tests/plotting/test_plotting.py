@@ -26,6 +26,7 @@ from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from pyvista.plotting.utilities.gl_checks import uses_egl
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -3553,6 +3554,9 @@ def test_plot_cubemap_alone(cubemap):
     cubemap.plot()
 
 
+@pytest.mark.skipif(
+    uses_egl(), reason="Render window will be current with offscreen builds of VTK."
+)
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 

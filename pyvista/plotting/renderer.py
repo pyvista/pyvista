@@ -520,12 +520,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self, aa_type='fxaa'):
+    def enable_anti_aliasing(self, aa_type='ssaa'):
         """Enable anti-aliasing.
 
         Parameters
         ----------
-        aa_type : str, default: 'fxaa'
+        aa_type : str, default: 'ssaa'
             Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
@@ -538,7 +538,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 # only display the warning when not building documentation
                 if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
-                        "VTK compiled with OSMesa does not properly support "
+                        "VTK compiled with OSMesa/EGL does not properly support "
                         "FXAA anti-aliasing and SSAA will be used instead."
                     )
                 self._render_passes.enable_ssaa_pass()

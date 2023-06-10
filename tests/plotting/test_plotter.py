@@ -301,20 +301,20 @@ def test_clear_actors(cube, sphere):
 
 def test_anti_aliasing_multiplot(sphere):
     pl = pyvista.Plotter(shape=(1, 2))
-    pl.enable_anti_aliasing('fxaa', all_renderers=False)
-    assert pl.renderers[0].GetUseFXAA()
-    assert not pl.renderers[1].GetUseFXAA()
+    pl.enable_anti_aliasing('ssaa', all_renderers=False)
+    assert 'vtkSSAAPass' in pl.renderers[0]._render_passes._passes
+    assert 'vtkSSAAPass' not in pl.renderers[1]._render_passes._passes
 
-    pl.enable_anti_aliasing('fxaa', all_renderers=True)
-    assert pl.renderers[1].GetUseFXAA()
+    pl.enable_anti_aliasing('ssaa', all_renderers=True)
+    assert 'vtkSSAAPass' in pl.renderers[1]._render_passes._passes
 
     pl.disable_anti_aliasing(all_renderers=False)
-    assert not pl.renderers[0].GetUseFXAA()
-    assert pl.renderers[1].GetUseFXAA()
+    assert 'vtkSSAAPass' not in pl.renderers[0]._render_passes._passes
+    assert 'vtkSSAAPass' in pl.renderers[1]._render_passes._passes
 
     pl.disable_anti_aliasing(all_renderers=True)
-    assert not pl.renderers[0].GetUseFXAA()
-    assert not pl.renderers[1].GetUseFXAA()
+    assert 'vtkSSAAPass' not in pl.renderers[0]._render_passes._passes
+    assert 'vtkSSAAPass' not in pl.renderers[1]._render_passes._passes
 
 
 def test_anti_aliasing_invalid():

@@ -2564,7 +2564,7 @@ class DefaultTheme(_ThemeConfig):
                 '"msaa", "fxaa", or None',
                 PyVistaDeprecationWarning,
             )
-            anti_aliasing = 'fxaa' if anti_aliasing else None
+            anti_aliasing = 'ssaa' if anti_aliasing else None
 
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:

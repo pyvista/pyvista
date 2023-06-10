@@ -6,6 +6,7 @@ import vtk
 import pyvista
 from pyvista import colors
 from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.plotting.utilities.gl_checks import uses_egl
 from pyvista.themes import DefaultTheme, _set_plot_theme_from_env
 
 
@@ -464,7 +465,7 @@ def test_anti_aliasing(default_theme):
     with pytest.warns(PyVistaDeprecationWarning, match='is now a string'):
         default_theme.anti_aliasing = True
         pl = pyvista.Plotter(theme=default_theme)
-        assert pl.renderer.GetUseFXAA()
+        assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
 
     with pytest.raises(ValueError, match='anti_aliasing must be either'):
         default_theme.anti_aliasing = 'invalid value'
@@ -473,6 +474,7 @@ def test_anti_aliasing(default_theme):
         default_theme.anti_aliasing = 42
 
 
+@pytest.mark.skipif(uses_egl(), reason="Requires non-OSMesa/EGL VTK build.")
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'
