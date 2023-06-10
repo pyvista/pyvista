@@ -15,7 +15,7 @@ with open(namespace_data) as f:
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
-        utilities = importlib.import_module('pyvista.utilities')
+        from pyvista import utilities
         assert hasattr(utilities, name)
 
 
@@ -83,5 +83,5 @@ def test_common_utilities_import_paths():
 
 def test_failure_to_find():
     module = importlib.import_module('pyvista.utilities')
-    with pytest.raises(AttributeError, match='Module `pyvista.utilities` has been deprecated.'):
+    with pytest.raises(AttributeError, match=r'Module `pyvista\.utilities` has been deprecated\.'):
         getattr(module, 'this_does_not_exist')
