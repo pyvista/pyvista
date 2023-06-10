@@ -866,23 +866,10 @@ class UniformGrid(ImageData):
 
     def __init__(
         self,
-        uinput=None,
         *args,
-        dimensions=None,
-        spacing=(1, 1, 1),
-        origin=(0, 0, 0),
-        deep=False,
         **kwargs,
     ):
-        super().__init__(
-            uinput,
-            *args,
-            dimensions=dimensions,
-            spacing=spacing,
-            origin=origin,
-            deep=deep,
-            **kwargs,
-        )
+        super().__init__(*args, **kwargs)
         warnings.warn(
             '`UniformGrid` is deprecated. Use `ImageData` instead.', PyVistaDeprecationWarning
         )

@@ -842,14 +842,18 @@ def test_create_image_data_from_specs():
         grid = pyvista.ImageData(dimensions=dims, spacing=(-1, 1, 1))
 
     # all args (deprecated)
-    with pytest.warns(PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+    ):
         grid = pyvista.ImageData(dims, origin, spacing)
         assert grid.dimensions == dims
         assert grid.origin == origin
         assert grid.spacing == spacing
 
     # just dims (deprecated)
-    with pytest.warns(PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+    ):
         grid = pyvista.ImageData(dims)
         assert grid.dimensions == dims
 
@@ -914,7 +918,9 @@ def test_create_uniform_grid_from_specs():
 
 
 def test_image_data_invald_args():
-    with pytest.warns(PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+    ):
         pyvista.ImageData((1, 1, 1))
 
     with pytest.raises(TypeError):
