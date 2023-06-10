@@ -15,7 +15,7 @@ with open(namespace_data) as f:
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
-        from pyvista import utilities
+        utilities = importlib.import_module('pyvista.utilities')
         assert hasattr(utilities, name)
 
 
