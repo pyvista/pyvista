@@ -3337,7 +3337,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Prefer texture first
-            if len(list(mesh._textures.keys())) > 0:
+            if mesh._textures:
                 texture = True
             # If no texture, plot any active scalar
             else:
