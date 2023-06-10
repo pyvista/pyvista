@@ -54,10 +54,10 @@ def test_trame():
     widget = pl.show(return_viewer=True)
     assert isinstance(widget, Widget)
 
-    if pv.global_theme.trame.server_proxy_prefix is None:
-        assert 'http://' in widget.src
-    else:
+    if pv.global_theme.trame.server_proxy_enabled:
         assert pv.global_theme.trame.server_proxy_prefix in widget.src
+    else:
+        assert 'http://' in widget.src
 
     viewer = get_or_create_viewer(pl)
 
