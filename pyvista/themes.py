@@ -154,7 +154,7 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.themes.Theme`` or ``str``, not ' f'a {type(theme).__name__}'
+            f'Expected a ``pyvista.themes.Theme`` or ``str``, not {type(theme).__name__}'
         )
 
 
@@ -2994,7 +2994,7 @@ class DefaultTheme(Theme):
     """Deprecated default theme.
 
     .. deprecated:: 0.40.0
-        Deprecated an renamed to ``Theme``.
+        Deprecated and renamed to ``Theme``. No longer the default.
 
     """
 
