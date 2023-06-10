@@ -22,4 +22,8 @@ def test_common_plotting_import_paths():
     # These are `pyvista.plotting.plotting` imports found via search on GitHub
     # across multiple public repositories
     with pytest.warns(PyVistaDeprecationWarning):
-        from pyvista.plotting.plotting import _ALL_PLOTTERS, BasePlotter, Plotter  # noqa: F401
+        from pyvista.plotting.plotting import _ALL_PLOTTERS  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
+        from pyvista.plotting.plotting import BasePlotter  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
+        from pyvista.plotting.plotting import Plotter  # noqa: F401
