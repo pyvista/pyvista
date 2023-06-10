@@ -860,7 +860,7 @@ class UniformGrid(ImageData):
     .. deprecated:: 0.40.0
         ``pyvista.UniformGrid`` has been deprecated and renamed to ``pyvista.ImageData``.
 
-    Future versions of PyVista will implement ``UnformGrid``
+    Future versions of PyVista will implement ``UniformGrid``
     as a subclass of ``vtkUniformGrid``, not ``vtkImageData``.
     """
 
