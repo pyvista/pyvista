@@ -71,7 +71,7 @@ in older versions though.
 Widget API
 ----------
 The :class:`pyvista.Plotter` class inherits all of the widget
-methods described by the ``pyvista.plotting.widgets.WidgetHelper``
+methods described by the :class:`pyvista.plotting.widgets.WidgetHelper`
 class. For additional details, see the
 :ref:`widgets` examples.
 
@@ -84,7 +84,7 @@ class. For additional details, see the
 Picking API
 -----------
 The :class:`pyvista.Plotter` class inherits all of the picking
-methods described by the ``pyvista.plotting.picking.PickingHelper``
+methods described by the :class:`pyvista.plotting.picking.PickingHelper`
 class.
 
 .. autosummary::
