@@ -1012,6 +1012,7 @@ def test_load_venus():
     assert mesh.n_cells
     with pytest.warns(PyVistaDeprecationWarning):
         assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
         assert mesh.textures["atmosphere"]
 
 

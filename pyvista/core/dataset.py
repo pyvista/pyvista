@@ -1404,7 +1404,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
             self.clear_textures()
 
         if deep:

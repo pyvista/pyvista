@@ -10,6 +10,7 @@ from pyvista.core.errors import (
     DeprecationError,
     MissingDataError,
     NotAllTrianglesError,
+    PyVistaDeprecationWarning,
     PyVistaFutureWarning,
     VTKVersionError,
 )
@@ -2055,7 +2056,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Do not copy textures from input
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
             output.clear_textures()
 
         # ensure proper order if requested
