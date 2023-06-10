@@ -956,7 +956,7 @@ class PolyDataFilters(DataSetFilters):
         References
         ----------
         See `Optimal Surface Smoothing as Filter Design
-        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>` for details
+        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>`_ for details
         regarding the implementation of Taubin smoothing.
 
         Examples
