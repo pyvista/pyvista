@@ -15,6 +15,7 @@ _MODULES = [
     'pyvista.plotting.utilities',
     'pyvista.plotting.errors',
     'pyvista.plotting.texture',
+    'pyvista.plotting',
     'pyvista.report',
     'pyvista.themes',
 ]
