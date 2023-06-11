@@ -37,7 +37,7 @@ all plotting functionality in PyVista.
    Plotter
    Property
    Renderer
-   plotting._BaseMapper
+   plotting.mapper._BaseMapper
    plotting.opts.InterpolationType
    plotting.volume.Volume
    plotting.volume_property.VolumeProperty
@@ -70,14 +70,28 @@ in older versions though.
 
 Widget API
 ----------
-The :class:`pyvista.Plotter` class inherits all of the widget methods described
-by the ``pyvista.WidgetHelper`` class. For additional details, see the
+The :class:`pyvista.Plotter` class inherits all of the widget
+methods described by the :class:`pyvista.plotting.widgets.WidgetHelper`
+class. For additional details, see the
 :ref:`widgets` examples.
 
 .. autosummary::
    :toctree: _autosummary
 
-   WidgetHelper
+   plotting.widgets.WidgetHelper
+
+
+Picking API
+-----------
+The :class:`pyvista.Plotter` class inherits all of the picking
+methods described by the :class:`pyvista.plotting.picking.PickingHelper`
+class.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plotting.picking.PickingHelper
+
 
 Convenience Functions
 ~~~~~~~~~~~~~~~~~~~~~
