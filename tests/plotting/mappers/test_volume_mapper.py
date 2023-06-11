@@ -6,18 +6,18 @@ import pyvista as pv
 
 @pytest.fixture()
 def volume_mapper():
-    vol = pv.UniformGrid(dimensions=(10, 10, 10))
+    vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
     pl = pv.Plotter()
     actor = pl.add_volume(vol)
     return actor.mapper
 
 
-def test_volume_mapper_dataset(volume_mapper):
-    assert isinstance(volume_mapper.dataset, pv.UniformGrid)
+def test_volume_mapper_dataset(volume_mapper, skip_check_gc):
+    assert isinstance(volume_mapper.dataset, pv.ImageData)
 
 
-def test_volume_mapper_blend_mode(volume_mapper):
+def test_volume_mapper_blend_mode(volume_mapper, skip_check_gc):
     assert isinstance(volume_mapper.blend_mode, str)
 
     volume_mapper.blend_mode = vtk.vtkVolumeMapper.COMPOSITE_BLEND

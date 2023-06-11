@@ -36,21 +36,30 @@ def _is_vtk(obj):
 
 
 @pytest.fixture()
-def check_gc(request):
+def skip_check_gc(check_gc):
+    """Skip check_gc fixture."""
+    check_gc.skip = True
+
+
+@pytest.fixture(autouse=True)
+def check_gc():
     """Ensure that all VTK objects are garbage-collected by Python."""
     gc.collect()
     before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
-    yield
 
-    # Do not check for collection if the test session failed. Tests that fail
-    # also fail to cleanup their resources and this makes reading the unit test
-    # output more difficult.
-    #
-    # This applies to the entire session, so it's going to be the most useful
-    # when debugging tests with `pytest -x`
-    pyvista.close_all()
-    if request.session.testsfailed:
+    class GcHandler:
+        def __init__(self) -> None:
+            # if set to True, will entirely skip checking in this fixture
+            self.skip = False
+
+    gc_handler = GcHandler()
+
+    yield gc_handler
+
+    if gc_handler.skip:
         return
+
+    pyvista.close_all()
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]

@@ -5,6 +5,7 @@ import pytest
 
 import pyvista
 from pyvista import examples as ex
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 @pytest.mark.skip_plotting
@@ -43,7 +44,8 @@ def test_export_texture(tmpdir):
     data = ex.load_globe()
     # Create the scene
     plotter = pyvista.Plotter()
-    plotter.add_mesh(data, texture=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        plotter.add_mesh(data, texture=True)
     plotter.export_vtkjs(filename)
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')

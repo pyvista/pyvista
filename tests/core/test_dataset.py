@@ -212,21 +212,24 @@ def test_copy_metadata(globe):
     assert globe_shallow._active_scalars_info is globe._active_scalars_info
     assert globe_shallow._active_vectors_info is globe._active_vectors_info
     assert globe_shallow._active_tensors_info is globe._active_tensors_info
-    assert globe_shallow.textures is globe.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert globe_shallow.textures is globe.textures
     assert globe_shallow.point_data['bitarray'].dtype == np.bool_
     assert globe_shallow.point_data['complex_data'].dtype == np.complex128
     assert globe_shallow._association_bitarray_names is globe._association_bitarray_names
     assert globe_shallow._association_complex_names is globe._association_complex_names
 
     globe_deep = globe.copy(deep=True)
-    assert globe_deep.textures is not globe.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert globe_deep.textures is not globe.textures
     assert globe_deep._active_scalars_info is not globe._active_scalars_info
     assert globe_deep._active_vectors_info is not globe._active_vectors_info
     assert globe_deep._active_tensors_info is not globe._active_tensors_info
     assert globe_deep._active_scalars_info == globe._active_scalars_info
     assert globe_deep._active_vectors_info == globe._active_vectors_info
     assert globe_deep._active_tensors_info == globe._active_tensors_info
-    assert globe_deep.textures == globe.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert globe_deep.textures == globe.textures
     assert globe_deep.point_data['bitarray'].dtype == np.bool_
     assert globe_deep.point_data['complex_data'].dtype == np.complex128
     assert (
@@ -238,10 +241,14 @@ def test_copy_metadata(globe):
         is not globe._association_complex_names['POINT']
     )
 
-    globe.clear_textures()
-    assert not globe.textures
-    assert globe_deep.textures
-    assert not globe_shallow.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        globe.clear_textures()
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert not globe.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert globe_deep.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert not globe_shallow.textures
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
@@ -736,7 +743,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid(dimensions=(10, 10, 10))
+    grid = pyvista.ImageData(dimensions=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -885,14 +892,14 @@ def test_find_closest_cell_surface_point():
 
 
 def test_find_containing_cell():
-    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     node = np.array([0.3, 0.3, 0.0])
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
-    mesh = pyvista.UniformGrid(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pyvista.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     points_copy = points.copy()
     indices = mesh.find_containing_cell(points)
@@ -1088,7 +1095,7 @@ def test_cell_type(grid):
 
 
 def test_point_is_inside_cell():
-    grid = pyvista.UniformGrid(dimensions=(2, 2, 2))
+    grid = pyvista.ImageData(dimensions=(2, 2, 2))
     assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
     assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
 
@@ -1511,12 +1518,12 @@ def test_volume_area():
         assert np.isclose(grid.volume, 0.0)
         assert np.isclose(grid.area, 16.0)
 
-    # UniformGrid 3D size 4x4x4
-    vol_grid = pyvista.UniformGrid(dimensions=(5, 5, 5))
+    # ImageData 3D size 4x4x4
+    vol_grid = pyvista.ImageData(dimensions=(5, 5, 5))
     assert_volume(vol_grid)
 
     # 2D grid size 4x4
-    surf_grid = pyvista.UniformGrid(dimensions=(5, 5, 1))
+    surf_grid = pyvista.ImageData(dimensions=(5, 5, 1))
     assert_area(surf_grid)
 
     # UnstructuredGrid
@@ -1534,7 +1541,7 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pyvista.UniformGrid(dimensions=(5, 5, 5)).extract_surface()
+    grid = pyvista.ImageData(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
 

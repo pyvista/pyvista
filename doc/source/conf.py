@@ -98,7 +98,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.data_set',
     'pyvista.core.filters.poly_data',
     'pyvista.core.filters.structured_grid',
-    'pyvista.core.filters.uniform_grid',
+    'pyvista.core.filters.image_data',
     'pyvista.core.filters.unstructured_grid',
     'pyvista.core.utilitis.arrays',
     'pyvista.core.utilitis.cell_type_helper',
@@ -189,6 +189,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.BasePlotter$',  # Issue with class parameter documentation
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.WidgetHelper$',
+    r'\.PickingHelper$',
     r'\.from_dict$',
     r'\.to_dict$',
     r'\.__init__$',
@@ -209,8 +210,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.StructuredGrid$',
     r'\.Table$',
     r'\.Table\.save$',
-    r'\.UniformGrid$',
-    r'\.UniformGridFilters$',
+    r'\.ImageData$',
+    r'\.ImageDataFilters$',
     r'\.UnstructuredGrid$',
     r'\.UnstructuredGridFilters$',
     # classes inherit from BaseReader

@@ -17,6 +17,13 @@ skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
 )
 
+
+@pytest.fixture(autouse=True)
+def skip_check_gc(skip_check_gc):
+    """A large number of tests here fail gc."""
+    pass
+
+
 # skip all tests if VTK<9.2.0
 if pyvista.vtk_version_info < (9, 2):
     pytestmark = pytest.mark.skip
