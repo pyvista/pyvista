@@ -193,11 +193,12 @@ def load_globe():
     --------
     >>> from pyvista import examples
     >>> dataset = examples.load_globe()
-    >>> dataset.plot()
+    >>> texture = examples.load_globe_texture()
+    >>> dataset.plot(texture=texture)
 
     """
     globe = pyvista.PolyData(globefile)
-    globe.textures['2k_earth_daymap'] = load_globe_texture()
+    globe._textures['2k_earth_daymap'] = load_globe_texture()
     return globe
 
 

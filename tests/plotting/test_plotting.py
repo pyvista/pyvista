@@ -90,12 +90,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 
 
 @pytest.fixture(autouse=True)
-def validate_gc(check_gc):
-    """Autouse garbage collection validation fixture for this module."""
-    pass
-
-
-@pytest.fixture(autouse=True)
 def verify_image_cache_wrapper(verify_image_cache):
     return verify_image_cache
 
@@ -1239,7 +1233,8 @@ def test_plot_texture_associated():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
     plotter = pyvista.Plotter()
-    plotter.add_mesh(globe, texture=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        plotter.add_mesh(globe, texture=True)
     plotter.show()
 
 

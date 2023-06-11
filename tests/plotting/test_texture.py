@@ -225,10 +225,14 @@ def test_texture_coordinates():
     foo = mesh.active_t_coords
     assert np.allclose(foo, t_coords)
     texture = pv.Texture(examples.mapfile)
-    mesh.textures['map'] = texture
-    assert mesh.textures['map'] is not None
-    mesh.clear_textures()
-    assert len(mesh.textures) == 0
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.textures['map'] = texture
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures['map'] is not None
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.clear_textures()
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert len(mesh.textures) == 0
 
 
 def test_multiple_texture_coordinates():
@@ -237,18 +241,25 @@ def test_multiple_texture_coordinates():
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
     assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
     texture = pv.Texture(examples.mapfile)
-    mesh.textures["tex_a"] = texture.copy()
-    mesh.textures["tex_b"] = texture.copy()
-    mesh._activate_texture("tex_a")
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.textures["tex_a"] = texture.copy()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh.textures["tex_b"] = texture.copy()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh._activate_texture("tex_a")
     assert np.allclose(mesh.active_t_coords, mesh["tex_a"])
-    mesh._activate_texture("tex_b")
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh._activate_texture("tex_b")
     assert np.allclose(mesh.active_t_coords, mesh["tex_b"])
 
     # Now test copying
     cmesh = mesh.copy()
-    assert len(cmesh.textures) == 2
-    assert "tex_a" in cmesh.textures
-    assert "tex_b" in cmesh.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert len(cmesh.textures) == 2
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert "tex_a" in cmesh.textures
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert "tex_b" in cmesh.textures
 
 
 def test_inplace_no_overwrite_texture_coordinates():

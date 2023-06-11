@@ -4,6 +4,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 def test_load_nut():
@@ -62,7 +63,8 @@ def test_load_earth():
     mesh = pv.examples.planets.load_earth()
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_hydrogen_orbital():
