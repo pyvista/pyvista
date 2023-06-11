@@ -4,12 +4,12 @@
 Volume Rendering
 ~~~~~~~~~~~~~~~~
 
-Volume render uniform mesh types like :class:`pyvista.UniformGrid` or 3D
+Volume render uniform mesh types like :class:`pyvista.ImageData` or 3D
 NumPy arrays.
 
 This also explores how to extract a volume of interest (VOI) from a
-:class:`pyvista.UniformGrid` using the
-:func:`pyvista.UniformGridFilters.extract_subset` filter.
+:class:`pyvista.ImageData` using the
+:func:`pyvista.ImageDataFilters.extract_subset` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 3
@@ -121,7 +121,7 @@ pl.show()
 # Extracting a VOI
 # ++++++++++++++++
 #
-# Use the :func:`pyvista.UniformGridFilters.extract_subset` filter to extract
+# Use the :func:`pyvista.ImageDataFilters.extract_subset` filter to extract
 # a volume of interest/subset volume to volume render. This is ideal when
 # dealing with particularly large volumes and you want to volume render only
 # a specific region.

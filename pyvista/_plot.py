@@ -199,10 +199,10 @@ def plot(
     >>> mesh.plot(show_edges=True)
 
     Plot a volume mesh. Color by distance from the center of the
-    UniformGrid. Note ``volume=True`` is passed.
+    ImageData. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(
+    >>> grid = pv.ImageData(
     ...     dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5)
     ... )
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)

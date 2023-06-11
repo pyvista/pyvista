@@ -27,7 +27,7 @@ PyVista has the following mesh types:
 
 - A :class:`pyvista.RectilinearGrid` defines meshes with implicit geometries along the axis directions that are rectangular and regular. The :class:`pyvista.RectilinearGrid` class is an extension of `vtk.vtkRectilinearGrid`_.
 
-- Image data, commonly referred to as uniform grids, and defined by the :class:`pyvista.UniformGrid` class are meshes with implicit geometries where cell sizes are uniformly assigned along each axis and the spatial reference is built out from an origin point. The :class:`pyvista.UniformGrid` class is an extension of `vtk.vtkImageData`_.
+- Image data, commonly referred to as uniform grids, and defined by the :class:`pyvista.ImageData` class are meshes with implicit geometries where cell sizes are uniformly assigned along each axis and the spatial reference is built out from an origin point. The :class:`pyvista.ImageData` class is an extension of `vtk.vtkImageData`_.
 
 - :class:`pyvista.MultiBlock` datasets are containers to hold several VTK datasets in one accessible and spatially referenced object. The :class:`pyvista.MultiBlock` class is an extension of `vtk.vtkMultiBlockDataSet`_.
 

@@ -24,11 +24,12 @@ from .errors import (
 from .filters import (
     CompositeFilters,
     DataSetFilters,
+    ImageDataFilters,
     PolyDataFilters,
     UniformGridFilters,
     UnstructuredGridFilters,
 )
-from .grid import Grid, RectilinearGrid, UniformGrid
+from .grid import Grid, ImageData, RectilinearGrid, UniformGrid
 from .objects import Table
 from .pointset import (
     ExplicitStructuredGrid,

@@ -1763,7 +1763,7 @@ class DataSetFilters:
         ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
-        >>> grid = pv.UniformGrid(
+        >>> grid = pv.ImageData(
         ...     dimensions=(n, n, n),
         ...     spacing=(
         ...         abs(x_min) / n * 2,
@@ -3267,7 +3267,7 @@ class DataSetFilters:
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
@@ -5265,7 +5265,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Transformed dataset.  Return type matches input unless
-            input dataset is a :class:`pyvista.UniformGrid`, in which
+            input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         Examples
@@ -5542,11 +5542,11 @@ class DataSetFilters:
 
         Examples
         --------
-        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+        Partition a simple ImageData into a :class:`pyvista.MultiBlock`
         containing each partition.
 
         >>> import pyvista as pv
-        >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
         >>> out = grid.partition(4, as_composite=True)
         >>> out.plot(multi_colors=True, show_edges=True)
 
@@ -5669,9 +5669,9 @@ class DataSetFilters:
         is shallow copied to the output.
 
         The type of output dataset is always the same as the input type. Since
-        structured types of data (i.e., :class:`pyvista.UniformGrid`,
+        structured types of data (i.e., :class:`pyvista.ImageData`,
         :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
-        :class:`pyvista.UniformGrid`) are all composed of a cell of the same
+        :class:`pyvista.ImageData`) are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,
         :class:`pyvista.PolyData`) input may produce a subset of the input data

@@ -368,9 +368,9 @@ class DataObject:
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        Add field data to a UniformGrid dataset.
+        Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
+        >>> mesh = pyvista.ImageData(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(
         ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
         ... )
@@ -488,8 +488,8 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
-        >>> target = pv.UniformGrid()
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
 
@@ -507,9 +507,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 

@@ -17,7 +17,7 @@ def remove_alpha(img):
 
 
 def wrap_image_array(arr):
-    """Wrap a numpy array as a pyvista.UniformGrid.
+    """Wrap a numpy array as a pyvista.ImageData.
 
     Parameters
     ----------
@@ -128,10 +128,10 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import Plotter, UniformGrid, read, wrap
+    from pyvista import ImageData, Plotter, read, wrap
 
     def to_img(img):
-        if isinstance(img, UniformGrid):  # pragma: no cover
+        if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):
             return wrap(img)

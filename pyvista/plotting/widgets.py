@@ -735,8 +735,8 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.volume.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
-            New dataset of type :class:`pyvista.UniformGrid` or
+        volume : pyvista.plotting.volume.Volume or pyvista.ImageData or pyvista.RectilinearGrid
+            New dataset of type :class:`pyvista.ImageData` or
             :class:`pyvista.RectilinearGrid`, or the return value from
             :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
 
@@ -791,7 +791,7 @@ class WidgetHelper:
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
-            :class:`pyvista.UniformGrid` and :class:`pyvista.RectilinearGrid`.
+            :class:`pyvista.ImageData` and :class:`pyvista.RectilinearGrid`.
 
         Returns
         -------
@@ -799,11 +799,11 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
-        if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
-                'The `volume` parameter type must be either pyvista.UniformGrid, '
+                'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
@@ -2246,7 +2246,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.UniformGrid(dimensions=dims)
+            button = pyvista.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[

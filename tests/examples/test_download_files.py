@@ -14,6 +14,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
@@ -470,7 +471,7 @@ def test_download_dicom_stack():
     assert os.path.isdir(filename)
 
     data = examples.download_dicom_stack()
-    assert isinstance(data, pv.UniformGrid)
+    assert isinstance(data, pv.ImageData)
     assert all([data.n_points, data.n_cells])
 
 
@@ -572,7 +573,7 @@ def test_gif_simple():
     assert filename.endswith('gif')
 
     dataset = examples.download_gif_simple(load=True)
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert 'frame0' in dataset.point_data
 
 
@@ -648,7 +649,7 @@ def test_download_sparse_points():
 
 def test_download_puppy():
     dataset = examples.download_puppy()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert dataset.n_points > 1_000_000
 
 
@@ -659,7 +660,7 @@ def test_download_puppy_texture():
 
 def test_download_gourds_pnm():
     dataset = examples.download_gourds_pnm()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_model_with_variance():
@@ -679,7 +680,7 @@ def test_download_turbine_blade():
 
 def test_download_crater_topo():
     dataset = examples.download_crater_topo()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_crater_imagery():
@@ -702,7 +703,7 @@ def test_download_damavand_volcano():
     assert os.path.isfile(filename)
 
     dataset = examples.download_damavand_volcano()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_delaunay_example():
@@ -715,7 +716,7 @@ def test_download_embryo():
     assert os.path.isfile(filename)
 
     dataset = examples.download_embryo()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_antarctica_velocity():
@@ -730,7 +731,7 @@ def test_download_room_surface_mesh():
 
 def test_download_beach():
     dataset = examples.download_beach()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_rgba_texture():
@@ -887,7 +888,7 @@ def test_download_cells_nd():
 
 def test_download_moonlanding_image():
     dataset = examples.download_moonlanding_image()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_gltf_milk_truck():
@@ -981,72 +982,84 @@ def test_coil_magnetic_field():
     assert filename.endswith('vti')
 
     dataset = examples.download_coil_magnetic_field(load=True)
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert dataset.n_points == 531441
 
 
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_moon():
     mesh = examples.planets.load_moon()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_mercury():
     mesh = examples.planets.load_mercury()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_venus():
     mesh = examples.planets.load_venus()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_mars():
     mesh = examples.planets.load_mars()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_jupiter():
     mesh = examples.planets.load_jupiter()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_saturn():
     mesh = examples.planets.load_saturn()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_saturn_rings():
     mesh = examples.planets.load_saturn_rings()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_uranus():
     mesh = examples.planets.load_uranus()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_neptune():
     mesh = examples.planets.load_neptune()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_pluto():
     mesh = examples.planets.load_pluto()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]

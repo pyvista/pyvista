@@ -166,7 +166,8 @@ def test_output_point_scalars_rgba(sphere):
 
 def test_output_texture(globe):
     pl = pyvista.Plotter()
-    pl.add_mesh(globe)
+    with pytest.warns(PyVistaDeprecationWarning):
+        pl.add_mesh(globe, texture=True)
     pv_pythreejs.convert_plotter(pl)
 
 
