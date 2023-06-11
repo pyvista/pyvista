@@ -505,41 +505,39 @@ class DataSet(DataSetFilters, DataObject):
     def textures(self) -> Dict[str, pyvista.Texture]:
         """Return a dictionary to hold compatible ``pyvista.Texture`` objects.
 
+        .. deprecated:: 0.40.0
+            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
+
         When casting back to a VTK dataset or filtering this dataset,
         these textures will not be passed.
 
-        Examples
-        --------
-        Return the active texture datasets from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.textures
-        {'2k_earth_daymap': ...}
-
         """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
+            PyVistaDeprecationWarning,
+        )
         return self._textures
 
     def clear_textures(self):
         """Clear the textures from this mesh.
 
-        Examples
-        --------
-        Clear the texture from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.textures
-        {'2k_earth_daymap': ...}
-        >>> globe.clear_textures()
-        >>> globe.textures
-        {}
+        .. deprecated:: 0.40.0
+            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
 
         """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
+            PyVistaDeprecationWarning,
+        )
         self._textures.clear()
 
     def _activate_texture(mesh, name: str) -> Optional[pyvista.Texture]:
         """Grab a texture and update the active texture coordinates.
+
+        .. deprecated:: 0.40.0
+            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
 
         This makes sure to not destroy old texture coordinates.
 
@@ -554,6 +552,11 @@ class DataSet(DataSetFilters, DataObject):
             The active texture
 
         """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
+            PyVistaDeprecationWarning,
+        )
         if name is True or isinstance(name, int):
             keys = list(mesh.textures.keys())
             # Grab the first name available if True
@@ -1400,7 +1403,9 @@ class DataSet(DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
-        self.clear_textures()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
+            self.clear_textures()
 
         if deep:
             self._association_complex_names = deepcopy(ido._association_complex_names)
@@ -1408,7 +1413,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
-            self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+            self._textures = {name: tex.copy() for name, tex in ido._textures.items()}
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
@@ -1416,7 +1421,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
-            self._textures = ido.textures
+            self._textures = ido._textures
 
     @property
     def point_data(self) -> DataSetAttributes:
