@@ -199,10 +199,6 @@ class _ThemeConfig:
         if not isinstance(other, _ThemeConfig):
             return False
 
-        if not isinstance(self, Theme) and not isinstance(self, type(other)):
-            # Makes sure subconfigs are same type
-            return False
-
         for attr_name in other.__slots__:
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
