@@ -138,7 +138,7 @@ pl.show()
 # Show a 3D plot of areas of temperature.
 #
 # For this example, we will first sample the results from the
-# :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.UniformGrid` using
+# :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
 # :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
 # it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
@@ -150,7 +150,7 @@ dimensions = (
     int((bounds[3] - bounds[2]) // spacing[1] + 2),
     int((bounds[5] - bounds[4]) // spacing[2] + 2),
 )
-grid = pv.UniformGrid(dimensions=dimensions, spacing=spacing, origin=origin)
+grid = pv.ImageData(dimensions=dimensions, spacing=spacing, origin=origin)
 grid = grid.sample(air)
 
 opac = np.zeros(20)

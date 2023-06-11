@@ -35,13 +35,13 @@ def test_reader_invalid_file():
 
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
-    mesh = pyvista.UniformGrid()
+    mesh = pyvista.ImageData()
     mesh.save(tmpfile.strpath)
 
     reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
-    assert isinstance(new_mesh, pyvista.UniformGrid)
+    assert isinstance(new_mesh, pyvista.ImageData)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
 
@@ -261,7 +261,7 @@ def test_dcmreader(tmpdir):
     assert reader.path == directory
 
     mesh = reader.read()
-    assert isinstance(mesh, pyvista.UniformGrid)
+    assert isinstance(mesh, pyvista.ImageData)
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
@@ -271,7 +271,7 @@ def test_dcmreader(tmpdir):
     assert reader.path == filename
 
     mesh = reader.read()
-    assert isinstance(mesh, pyvista.UniformGrid)
+    assert isinstance(mesh, pyvista.ImageData)
     assert all([mesh.n_points, mesh.n_cells])
 
 

@@ -143,7 +143,7 @@ def test_gif_reader(gif_file):
     assert grid.n_arrays == 3
 
     img = Image.open(gif_file)
-    new_grid = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
+    new_grid = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):

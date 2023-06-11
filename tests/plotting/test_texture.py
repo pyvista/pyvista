@@ -17,7 +17,7 @@ def test_texture():
     assert texture is not None
 
     image = texture.to_image()
-    assert isinstance(image, pv.UniformGrid)
+    assert isinstance(image, pv.ImageData)
 
     arr = texture.to_array()
     assert isinstance(arr, np.ndarray)
@@ -72,7 +72,7 @@ def test_texture_rotate_ccw(texture):
 def test_texture_from_images(image):
     texture = pv.Texture([image] * 6)
     assert texture.cube_map
-    with pytest.raises(TypeError, match='pyvista.UniformGrid'):
+    with pytest.raises(TypeError, match='pyvista.ImageData'):
         pv.Texture(['foo'] * 6)
 
 

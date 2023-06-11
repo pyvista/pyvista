@@ -3619,7 +3619,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
-        :class:`pyvista.UniformGrid`, :class:`pyvista.RectilinearGrid`,
+        :class:`pyvista.ImageData`, :class:`pyvista.RectilinearGrid`,
         or :class:`pyvista.UnstructuredGrid`.
 
         Parameters
@@ -3629,7 +3629,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             .. warning::
                 If the input is not :class:`numpy.ndarray`,
-                :class:`pyvista.UniformGrid`, or :class:`pyvista.RectilinearGrid`,
+                :class:`pyvista.ImageData`, or :class:`pyvista.RectilinearGrid`,
                 volume rendering will often have poor performance.
 
         scalars : str | numpy.ndarray, optional
@@ -3755,7 +3755,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and
             ``'smart'``.  If ``None`` the ``"volume_mapper"`` in the
             ``self._theme`` is used. If using ``'fixed_point'``,
-            only ``UniformGrid`` types can be used.
+            only ``ImageData`` types can be used.
 
             .. note::
                 If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
@@ -3854,7 +3854,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalars.
 
         >>> import pyvista as pv
-        >>> grid = pv.UniformGrid(dimensions=(9, 9, 9))
+        >>> grid = pv.ImageData(dimensions=(9, 9, 9))
         >>> grid['scalars'] = -grid.x
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(grid, opacity='linear')
@@ -3864,7 +3864,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> grid = pv.UniformGrid(dimensions=(5, 20, 20))
+        >>> grid = pv.ImageData(dimensions=(5, 20, 20))
         >>> scalars = grid.points - (grid.origin)
         >>> scalars /= scalars.max()
         >>> opacity = np.linalg.norm(
@@ -4014,7 +4014,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'Type {type(volume)} not supported for volume rendering as it is not 3D.'
             )
         elif not isinstance(
-            volume, (pyvista.UniformGrid, pyvista.RectilinearGrid, pyvista.UnstructuredGrid)
+            volume, (pyvista.ImageData, pyvista.RectilinearGrid, pyvista.UnstructuredGrid)
         ):
             volume = volume.cast_to_unstructured_grid()
 
@@ -4025,9 +4025,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 volume = volume.triangulate()
             mapper = 'ugrid'
 
-        if mapper == 'fixed_point' and not isinstance(volume, pyvista.UniformGrid):
+        if mapper == 'fixed_point' and not isinstance(volume, pyvista.ImageData):
             raise TypeError(
-                f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.UniformGrid`.'
+                f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.ImageData`.'
             )
         elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
             raise TypeError(

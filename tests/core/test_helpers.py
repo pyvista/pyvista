@@ -105,8 +105,8 @@ def test_wrappers():
 
         assert isinstance(tri_data, Foo)
 
-        uniform_grid = pyvista.UniformGrid()
-        surface = uniform_grid.extract_surface()
+        image = pyvista.ImageData()
+        surface = image.extract_surface()
 
         assert isinstance(surface, Foo)
 

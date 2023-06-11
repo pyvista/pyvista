@@ -86,7 +86,7 @@ def load_uniform():
 
     Returns
     -------
-    pyvista.UniformGrid
+    pyvista.ImageData
         Dataset.
 
     Examples
@@ -96,7 +96,7 @@ def load_uniform():
     >>> dataset.plot()
 
     """
-    return pyvista.UniformGrid(uniformfile)
+    return pyvista.ImageData(uniformfile)
 
 
 def load_rectilinear():
@@ -225,7 +225,7 @@ def load_channels():
 
     Returns
     -------
-    pyvista.UniformGrid
+    pyvista.ImageData
         Dataset.
 
     Examples
@@ -416,7 +416,7 @@ def load_nut():
 
 
 def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
-    """Load the hydrogen wave function for a :class:`pyvista.UniformGrid`.
+    """Load the hydrogen wave function for a :class:`pyvista.ImageData`.
 
     This is the solution to the Schrödinger equation for hydrogen
     evaluated in three-dimensional Cartesian space.
@@ -446,8 +446,8 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     Returns
     -------
-    pyvista.UniformGrid
-        UniformGrid containing two ``point_data`` arrays:
+    pyvista.ImageData
+        ImageData containing two ``point_data`` arrays:
 
         * ``'real_wf'`` - Real part of the wave function.
         * ``'wf'`` - Complex wave function.
@@ -496,7 +496,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     dim = 100
     sp = (org * 2) / (dim - 1)
-    grid = pyvista.UniformGrid(
+    grid = pyvista.ImageData(
         dimensions=(dim, dim, dim),
         spacing=(sp, sp, sp),
         origin=(-org, -org, -org),

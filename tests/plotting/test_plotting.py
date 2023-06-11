@@ -2662,7 +2662,7 @@ def test_ssaa_pass():
 
 @skip_windows_mesa
 def test_ssao_pass():
-    ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pyvista.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pyvista.Plotter()
     pl.add_mesh(ugrid)
 
@@ -2677,7 +2677,7 @@ def test_ssao_pass():
 
 @skip_mesa
 def test_ssao_pass_from_helper():
-    ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pyvista.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
 
@@ -2975,7 +2975,7 @@ def test_plot_cell():
 
 
 def test_tight_square_padding():
-    grid = pyvista.UniformGrid(dimensions=(200, 100, 1))
+    grid = pyvista.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
@@ -2987,7 +2987,7 @@ def test_tight_square_padding():
 
 
 def test_tight_tall():
-    grid = pyvista.UniformGrid(dimensions=(100, 200, 1))
+    grid = pyvista.ImageData(dimensions=(100, 200, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
@@ -3001,7 +3001,7 @@ def test_tight_tall():
 
 
 def test_tight_wide():
-    grid = pyvista.UniformGrid(dimensions=(200, 100, 1))
+    grid = pyvista.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)

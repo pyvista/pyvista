@@ -31,7 +31,7 @@ def test_set_jupyter_backend_ipygany():
 @pytest.mark.parametrize(
     'dataset',
     [
-        examples.load_uniform(),  # UniformGrid
+        examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_airplane(),  # PolyData
         examples.load_hexbeam(),  # UnstructuredGrid

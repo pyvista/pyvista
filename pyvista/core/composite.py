@@ -476,7 +476,7 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"poly": pv.PolyData(), "uni": pv.UniformGrid()}
+        >>> data = {"poly": pv.PolyData(), "img": pv.ImageData()}
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get("poly")
         PolyData ...

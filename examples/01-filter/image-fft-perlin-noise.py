@@ -5,7 +5,7 @@ Fast Fourier Transform with Perlin Noise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how to apply a Fast Fourier Transform (FFT) to a
-:class:`pyvista.UniformGrid` using :func:`pyvista.UniformGridFilters.fft`
+:class:`pyvista.ImageData` using :func:`pyvista.ImageDataFilters.fft`
 filter.
 
 Here, we demonstrate FFT usage by first generating Perlin noise using
@@ -128,7 +128,7 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~
 # Show that the sum of the low and high passes equals the original noise.
 
-grid = pv.UniformGrid(dimensions=sampled.dimensions, spacing=sampled.spacing)
+grid = pv.ImageData(dimensions=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
 
 print(
