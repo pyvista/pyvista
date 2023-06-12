@@ -19,8 +19,8 @@ _MODULES = [
 
 
 class _GetAttr:
-    def __init__(self, _globals):
-        self._globals = _globals
+    def __init__(self):
+        pass
 
     @staticmethod
     def _try_import(module, name):
@@ -33,11 +33,6 @@ class _GetAttr:
         return feature, import_path
 
     def __call__(self, name):
-        try:
-            self._globals[name]
-        except KeyError:
-            pass
-
         for module in _MODULES:
             feature, import_path = _GetAttr._try_import(module, name)
             if feature is not None:
