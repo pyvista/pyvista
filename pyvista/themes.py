@@ -2998,7 +2998,7 @@ class DefaultTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         warnings.warn(
-            '`DefaultTheme` has been deprecated and renamed `Theme`. Further, it is no longer the default theme.',
+            '`DefaultTheme` has been deprecated and renamed `Theme`. Further, `DocumentTheme` is now the PyVista default theme'.,
             PyVistaDeprecationWarning,
         )
 
