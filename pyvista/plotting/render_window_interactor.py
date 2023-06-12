@@ -7,6 +7,7 @@ import time
 import warnings
 import weakref
 
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
 from pyvista.report import vtk_version_info
 
