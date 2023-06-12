@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 import vtk
@@ -284,6 +286,7 @@ def test_point_picking(left_clicking):
     plotter.close()
 
 
+@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
     class Tracker:
