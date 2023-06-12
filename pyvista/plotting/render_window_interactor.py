@@ -966,7 +966,6 @@ class RenderWindowInteractor:
         pickers = {
             'area': _vtk.vtkAreaPicker,
             'cell': _vtk.vtkCellPicker,
-            'hardware': _vtk.vtkHardwarePicker,
             'point': _vtk.vtkPointPicker,
             'prop': _vtk.vtkPropPicker,
             'rendered_area': _vtk.vtkRenderedAreaPicker,
@@ -975,6 +974,9 @@ class RenderWindowInteractor:
             'volume': _vtk.vtkVolumePicker,
             'world': _vtk.vtkWorldPointPicker,
         }
+        if _vtk.vtkHardwarePicker is not None:
+            # Unavailable on VTK < 9.2
+            pickers['hardware'] = _vtk.vtkHardwarePicker
         if isinstance(picker, str):
             try:
                 picker = pickers[picker]()

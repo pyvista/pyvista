@@ -286,6 +286,9 @@ def test_point_picking(left_clicking):
     plotter.close()
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 2, 0), reason='Hardware picker unavailable for VTK<9.2'
+)
 @pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):

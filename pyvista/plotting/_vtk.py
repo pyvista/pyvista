@@ -76,8 +76,8 @@ except ImportError:  # pragma: no cover
 try:
     from vtkmodules.vtkRenderingCore import vtkHardwarePicker
 except ImportError:  # pragma: no cover
-    # VTK < 9.2 had this named as vtkHardwareSelector
-    from vtkmodules.vtkRenderingCore import vtkHardwareSelector as vtkHardwarePicker
+    # VTK < 9.2 is missing this class
+    vtkHardwarePicker = None
 
 from vtkmodules.vtkRenderingCore import (
     vtkAbstractMapper,
