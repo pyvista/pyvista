@@ -73,6 +73,12 @@ try:
 except ImportError:  # pragma: no cover
     _has_vtkRenderingContextOpenGL2 = False
 
+try:
+    from vtkmodules.vtkRenderingCore import vtkHardwarePicker
+except ImportError:  # pragma: no cover
+    # VTK < 9.2 had this named as vtkHardwareSelector
+    from vtkmodules.vtkRenderingCore import vtkHardwareSelector as vtkHardwarePicker
+
 from vtkmodules.vtkRenderingCore import (
     vtkAbstractMapper,
     vtkActor,
@@ -84,7 +90,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkCompositeDataDisplayAttributes,
     vtkCoordinate,
     vtkDataSetMapper,
-    vtkHardwarePicker,
     vtkImageActor,
     vtkLight,
     vtkLightActor,
