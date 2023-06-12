@@ -34,7 +34,7 @@ def _getattr_factory(globs):
     """Create and return a custom getattr method.
 
     The created getattr method tries to dynamically fetch an attribute ``name``
-    from the given dictionary globs, expected to be ``globals``.
+    from the given dictionary ``globs``, expected to be ``globals()``.
 
     Raises
     ------
