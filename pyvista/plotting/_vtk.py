@@ -9,7 +9,39 @@ the entire library.
 """
 # flake8: noqa: F401
 
+from vtkmodules.vtkChartsCore import (
+    vtkAxis,
+    vtkChart,
+    vtkChartBox,
+    vtkChartPie,
+    vtkChartXY,
+    vtkChartXYZ,
+    vtkPlotArea,
+    vtkPlotBar,
+    vtkPlotBox,
+    vtkPlotLine,
+    vtkPlotLine3D,
+    vtkPlotPie,
+    vtkPlotPoints,
+    vtkPlotPoints3D,
+    vtkPlotStacked,
+    vtkPlotSurface,
+)
 from vtkmodules.vtkCommonColor import vtkColorSeries
+from vtkmodules.vtkInteractionWidgets import (
+    vtkBoxWidget,
+    vtkButtonWidget,
+    vtkImplicitPlaneWidget,
+    vtkLineWidget,
+    vtkOrientationMarkerWidget,
+    vtkPlaneWidget,
+    vtkScalarBarWidget,
+    vtkSliderRepresentation2D,
+    vtkSliderWidget,
+    vtkSphereWidget,
+    vtkSplineWidget,
+    vtkTexturedButtonRepresentation2D,
+)
 from vtkmodules.vtkRenderingAnnotation import (
     vtkAnnotatedCubeActor,
     vtkAxesActor,
