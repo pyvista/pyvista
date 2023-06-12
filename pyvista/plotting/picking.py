@@ -317,8 +317,15 @@ class PickingInterface:
             When ``True``, points can be picked by clicking the left mouse
             button. Default is to use the right mouse button.
 
-        picker : str | vtk.vtkAbstractPicker, optional
-            The picker to use.
+        picker : str, optional
+            Choice of VTK picker class type:
+
+                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                  performant for large geometries (default).
+                * ``'cell'``: Uses ``vtkCellPicker``.
+                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                  points on the surface of the mesh.
+                * ``'volume'``: Uses ``vtkVolumePicker``.
 
         show_message : bool | str, default: True
             Show the message about how to use the point picking
@@ -335,6 +342,9 @@ class PickingInterface:
 
         show_point : bool, default: True
             Show the picked point after clicking.
+
+        use_picker : bool, default: False
+            When ``True``, the callback will also be passed the picker.
 
         pickable_window : bool, default: True
             When ``True`` and the chosen picker supports it, points in the
@@ -674,6 +684,9 @@ class PickingMethods(PickingInterface):
                   points on the surface of the mesh.
                 * ``'volume'``: Uses ``vtkVolumePicker``.
 
+        use_picker : bool, default: False
+            When ``True``, the callback will also be passed the picker.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
@@ -801,6 +814,17 @@ class PickingMethods(PickingInterface):
             If True, the callback will be passed the picked actor instead of
             the mesh object.
 
+        picker : str, optional
+            Choice of VTK picker class type:
+
+                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                  performant for large geometries (default).
+                * ``'cell'``: Uses ``vtkCellPicker``.
+                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                  points on the surface of the mesh.
+                * ``'volume'``: Uses ``vtkVolumePicker``.
+
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
@@ -898,7 +922,45 @@ class PickingMethods(PickingInterface):
         start=False,
         **kwargs,
     ):
-        """Enable rectangle based cell picking through the scene."""
+        """Enable rectangle based cell picking through the scene.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, calls this callable after a selection is made.
+            The ``RectangleSelection`` is the only passed argument
+            containing the viewport coordinates of the selection and the
+            projected frustum.
+
+        show : bool, default: True
+            Show the selection interactively.
+
+        style : str, default: "wireframe"
+            Visualization style of the selection frustum. One of the
+            following: ``style='surface'``, ``style='wireframe'``, or
+            ``style='points'``.
+
+        line_width : float, default: 5.0
+            Thickness of selected mesh edges.
+
+        color : ColorLike, default: "pink"
+            The color of the selected frustum when shown.
+
+        show_message : bool | str, default: True
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
+
+        font_size : int, default: 18
+            Sets the font size of the message.
+
+        start : bool, default: True
+            Automatically start the cell selection tool.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the selection frustum is interactively displayed.
+
+        """
         self_ = weakref.ref(self)
 
         def finalize(picked):
@@ -951,7 +1013,7 @@ class PickingMethods(PickingInterface):
 
             finalize(self_().picked_cells)
 
-        return self.enable_rectangle_picking(
+        self.enable_rectangle_picking(
             callback=through_pick_callback,
             show_message=show_message,
             font_size=font_size,
@@ -970,7 +1032,45 @@ class PickingMethods(PickingInterface):
         start=False,
         **kwargs,
     ):
-        """Enable rectangle based cell picking on visible surfaces."""
+        """Enable rectangle based cell picking on visible surfaces.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, calls this callable after a selection is made.
+            The ``RectangleSelection`` is the only passed argument
+            containing the viewport coordinates of the selection and the
+            projected frustum.
+
+        show : bool, default: True
+            Show the selection interactively.
+
+        style : str, default: "wireframe"
+            Visualization style of the selection frustum. One of the
+            following: ``style='surface'``, ``style='wireframe'``, or
+            ``style='points'``.
+
+        line_width : float, default: 5.0
+            Thickness of selected mesh edges.
+
+        color : ColorLike, default: "pink"
+            The color of the selected frustum when shown.
+
+        show_message : bool | str, default: True
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
+
+        font_size : int, default: 18
+            Sets the font size of the message.
+
+        start : bool, default: True
+            Automatically start the cell selection tool.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the selection frustum is interactively displayed.
+
+        """
         self_ = weakref.ref(self)
 
         def finalize(picked):
@@ -1052,7 +1152,7 @@ class PickingMethods(PickingInterface):
 
             finalize(self_().picked_cells)
 
-        return self.enable_rectangle_picking(
+        self.enable_rectangle_picking(
             callback=visible_pick_callback,
             show_message=show_message,
             font_size=font_size,
@@ -1151,7 +1251,7 @@ class PickingMethods(PickingInterface):
             method = self.enable_rectangle_through_picking
         else:
             method = self.enable_rectangle_visible_picking
-        return method(
+        method(
             callback=callback,
             show=show,
             show_message=show_message,
@@ -1177,7 +1277,65 @@ class PickingMethods(PickingInterface):
         picker='cell',
         **kwargs,
     ):
-        """Select individual elements on a mesh."""
+        """Select individual elements on a mesh.
+
+        Parameters
+        ----------
+        callback : callable, optional
+            When input, calls this callable after a selection is made. The
+            ``mesh`` is input as the first parameter to this callable.
+
+        mode : str | ElementType, default: "cell"
+            The picking mode. Either ``"mesh"``, ``"cell"``, ``"face"``,
+            ``"edge"``, or ``"point"``.
+
+        show : bool, default: True
+            Show the selection interactively.
+
+        show_message : bool | str, default: True
+            Show the message about how to use the mesh picking tool. If this
+            is a string, that will be the message shown.
+
+        font_size : int, default: 18
+            Sets the font size of the message.
+
+        color : ColorLike, default: "pink"
+            The color of the selected mesh when shown.
+
+        tolerance : float, default: 0.025
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size. Rendering window size is measured across diagonal.
+
+            .. warning::
+                This is ignored with the ``'hardware'`` ``picker``.
+
+        pickable_window : bool, default: False
+            When ``True``, points in the 3D window are pickable.
+
+        left_clicking : bool, default: False
+            When ``True``, meshes can be picked by clicking the left
+            mousebutton.
+
+            .. note::
+               If enabled, left-clicking will **not** display the bounding box
+               around the picked mesh.
+
+        picker : str, optional
+            Choice of VTK picker class type:
+
+                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                  performant for large geometries (default).
+                * ``'cell'``: Uses ``vtkCellPicker``.
+                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                  points on the surface of the mesh.
+                * ``'volume'``: Uses ``vtkVolumePicker``.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked path is interactively displayed.
+
+        """
 
         def _end_handler(picked):
             if callback:
