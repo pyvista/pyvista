@@ -1,7 +1,8 @@
 """This module contains the VolumeProperty class."""
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import no_new_attr
+
+from . import _vtk
 
 
 @no_new_attr
@@ -151,13 +152,13 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Examples
         --------
-        Create a sample :class:`pyvista.UniformGrid` dataset.
+        Create a sample :class:`pyvista.ImageData` dataset.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> n = 21
         >>> c = -(n - 1) / 2
-        >>> vol = pv.UniformGrid(dimensions=(n, n, n), origin=(c, c, c))
+        >>> vol = pv.ImageData(dimensions=(n, n, n), origin=(c, c, c))
         >>> scalars = np.linalg.norm(vol.points, axis=1)
         >>> scalars *= 255 / scalars.max()
         >>> vol['scalars'] = scalars

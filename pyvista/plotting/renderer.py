@@ -8,18 +8,22 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS, _vtk
-from pyvista.utilities import assert_empty_kwargs, check_depth_peeling, try_callback, wrap
-from pyvista.utilities.misc import PyVistaDeprecationWarning, uses_egl
+from pyvista import MAX_N_COLOR_BARS
+from pyvista.core._typing_core import BoundsLike
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
-from .._typing import BoundsLike
+from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color, get_cycler
+from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
+from .utilities.gl_checks import check_depth_peeling, uses_egl
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -344,8 +348,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
             if camera_location not in self.CAMERA_STR_ATTR_MAP:
-                err = pyvista.core.errors.InvalidCameraError
-                raise err(
+                raise InvalidCameraError(
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
                     f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
@@ -355,15 +358,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         elif isinstance(camera_location[0], (int, float)):
             if len(camera_location) != 3:
-                raise pyvista.core.errors.InvalidCameraError
+                raise InvalidCameraError
             self.view_vector(camera_location)
         else:
             # check if a valid camera position
             if not isinstance(camera_location, CameraPosition):
                 if not len(camera_location) == 3:
-                    raise pyvista.core.errors.InvalidCameraError
+                    raise InvalidCameraError
                 elif any([len(item) != 3 for item in camera_location]):
-                    raise pyvista.core.errors.InvalidCameraError
+                    raise InvalidCameraError
 
             # everything is set explicitly
             self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
@@ -2041,7 +2044,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.renderer.lights  # doctest:+SKIP
-        [<Light (Headlight) at 0x7f1dd8155820>,
+        [<Light (Headlight) at ...>,
          <Light (Camera Light) at 0x7f1dd8155760>,
          <Light (Camera Light) at 0x7f1dd8155340>,
          <Light (Camera Light) at 0x7f1dd8155460>,
@@ -2950,7 +2953,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         nearby each other and plot it without SSAO.
 
         >>> import pyvista as pv
-        >>> ugrid = pv.UniformGrid(dimensions=(3, 2, 2)).to_tetrahedra(12)
+        >>> ugrid = pv.ImageData(dimensions=(3, 2, 2)).to_tetrahedra(12)
         >>> exploded = ugrid.explode()
         >>> exploded.plot()
 

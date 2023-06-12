@@ -5,17 +5,18 @@ from typing import Union
 
 import pyvista as pv
 
+from . import _vtk
 from .actor_properties import ActorProperties
 
 
-class AxesActor(pv._vtk.vtkAxesActor):
+class AxesActor(_vtk.vtkAxesActor):
     """Axes actor wrapper for vtkAxesActor.
 
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
     options, refer to `vtkAxesActor Details
-    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`.
+    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
 
     Examples
     --------
@@ -29,7 +30,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
     >>> _ = pl.add_mesh(pv.Sphere())
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     Or you can use this as a custom orientation widget with
     :func:`add_orientation_widget() <pyvista.Renderer.add_orientation_widget>`:
@@ -54,7 +55,7 @@ class AxesActor(pv._vtk.vtkAxesActor):
     ...     axes_actor,
     ...     viewport=(0, 0, 0.5, 0.5),
     ... )
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     """
 

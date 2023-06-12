@@ -10,8 +10,8 @@ from xml.etree import ElementTree
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 
+from . import _vtk
 from .helpers import view_vectors
 
 
@@ -606,9 +606,9 @@ class Camera(_vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista
-        >>> plotter = pyvista.Plotter()
-        >>> plotter.camera.direction  # doctest:+SKIP
-        (0.0, 0.0, -1.0)
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.direction  # doctest:+SKIP
+        (-0.5773502691896257, -0.5773502691896257, -0.5773502691896257)
 
         """
         return self.GetDirectionOfProjection()

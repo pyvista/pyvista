@@ -7,9 +7,9 @@ import weakref
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import try_callback
+from pyvista.core.utilities.misc import try_callback
 
+from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .opts import ElementType
 

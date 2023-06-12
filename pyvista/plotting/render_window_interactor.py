@@ -7,9 +7,10 @@ import time
 import warnings
 import weakref
 
-from pyvista import _vtk
-from pyvista.utilities import try_callback
-from pyvista.utilities.misc import PyVistaDeprecationWarning, vtk_version_info
+from pyvista.core.utilities.misc import try_callback
+from pyvista.report import vtk_version_info
+
+from . import _vtk
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

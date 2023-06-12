@@ -18,7 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
-from pyvista.utilities.docs import linkcode_resolve  # noqa: F401
+from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -68,8 +68,7 @@ extensions = [
     "pyvista.ext.plot_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    'sphinx.ext.linkcode',
-    "sphinx.ext.doctest",
+    "sphinx.ext.linkcode",  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
@@ -81,24 +80,15 @@ extensions = [
 # Configuration of pyvista.ext.coverage
 coverage_additional_modules = [
     'pyvista',
-    'pyvista.themes',
-    'pyvista.plotting.axes',
-    'pyvista.plotting.camera',
-    'pyvista.plotting.charts',
-    'pyvista.plotting.helpers',
-    'pyvista.plotting.lights',
-    'pyvista.plotting.picking',
-    'pyvista.plotting.plotting',
-    'pyvista.plotting.renderer',
-    'pyvista.plotting.renderers',
-    'pyvista.plotting.scalar_bars',
-    'pyvista.plotting.theme',
-    'pyvista.plotting.tools',
-    'pyvista.plotting.widgets',
+    'pyvista.errors',
+    'pyvista.report' 'pyvista.themes',
+    # core
+    'pyvista.core.cell',
+    'pyvista.core.celltype',
     'pyvista.core.composite',
     'pyvista.core.dataobject',
-    'pyvista.core.datasetattributes',
     'pyvista.core.dataset',
+    'pyvista.core.datasetattributes',
     'pyvista.core.errors',
     'pyvista.core.grid',
     'pyvista.core.objects',
@@ -108,19 +98,63 @@ coverage_additional_modules = [
     'pyvista.core.filters.data_set',
     'pyvista.core.filters.poly_data',
     'pyvista.core.filters.structured_grid',
-    'pyvista.core.filters.uniform_grid',
+    'pyvista.core.filters.image_data',
     'pyvista.core.filters.unstructured_grid',
-    'pyvista.demos',
+    'pyvista.core.utilitis.arrays',
+    'pyvista.core.utilitis.cell_type_helper',
+    'pyvista.core.utilitis.cells',
+    'pyvista.core.utilitis.features',
+    'pyvista.core.utilitis.fileio',
+    'pyvista.core.utilitis.geometric_objects',
+    'pyvista.core.utilitis.helpers',
+    'pyvista.core.utilitis.misc',
+    'pyvista.core.utilitis.observers',
+    'pyvista.core.utilitis.parametric_objects',
+    'pyvista.core.utilitis.points',
+    'pyvista.core.utilitis.reader',
+    'pyvista.core.utilitis.transformations',
+    # demos
+    'pyvista.demos.demos',
+    'pyvista.demos.logo',
+    # examples
+    'pyvista.examples.cells',
+    'pyvista.examples.downloads',
     'pyvista.examples.examples',
-    'pyvista.utilities.common',
-    'pyvista.utilities.features',
-    'pyvista.utilities.fileio',
-    'pyvista.utilities.geometric_objects',
-    'pyvista.utilities.parametric_objects',
-    'pyvista.utilities.reader',
-    'pyvista.utilities.xvfb',
-    'pyvista.utilities.transformations',
-    'pyvista.utilities.regression',
+    'pyvista.examples.gltf',
+    'pyvista.examples.planets',
+    'pyvista.examples.vrml',
+    # plotting
+    'pyvista.plotting.actor_properties',
+    'pyvista.plotting.actor',
+    'pyvista.plotting.axes_actor',
+    'pyvista.plotting.axes',
+    'pyvista.plotting.background_renderer',
+    'pyvista.plotting.camera',
+    'pyvista.plotting.charts',
+    'pyvista.plotting.colors',
+    'pyvista.plotting.composite_mapper',
+    'pyvista.plotting.cube_axes_actor',
+    'pyvista.plotting.errors',
+    'pyvista.plotting.export_vtkjs',
+    'pyvista.plotting.helpers',
+    'pyvista.plotting.lights',
+    'pyvista.plotting.lookup_table',
+    'pyvista.plotting.mapper',
+    'pyvista.plotting.opts',
+    'pyvista.plotting.picking',
+    'pyvista.plotting.plotter',
+    'pyvista.plotting.prop3d',
+    'pyvista.plotting.render_passes',
+    'pyvista.plotting.render_window_interactor',
+    'pyvista.plotting.renderer',
+    'pyvista.plotting.renderers',
+    'pyvista.plotting.scalar_bars',
+    'pyvista.plotting.texture',
+    'pyvista.plotting.theme',
+    'pyvista.plotting.tools',
+    'pyvista.plotting.volume_property',
+    'pyvista.plotting.volume',
+    'pyvista.plotting.widgets',
 ]
 coverage_ignore_modules = [
     r'\.plot_directive$',  # Issue with class parameter documentation
@@ -155,6 +189,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.BasePlotter$',  # Issue with class parameter documentation
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.WidgetHelper$',
+    r'\.PickingHelper$',
     r'\.from_dict$',
     r'\.to_dict$',
     r'\.__init__$',
@@ -175,8 +210,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.StructuredGrid$',
     r'\.Table$',
     r'\.Table\.save$',
-    r'\.UniformGrid$',
-    r'\.UniformGridFilters$',
+    r'\.ImageData$',
+    r'\.ImageDataFilters$',
     r'\.UnstructuredGrid$',
     r'\.UnstructuredGridFilters$',
     # classes inherit from BaseReader
@@ -232,7 +267,6 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*ColorLike'),
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'ActiveArrayInfo'),
-    (r'py:.*', 'CallableBool'),
     (r'py:.*', 'FieldAssociation'),
     (r'py:.*', 'VTK'),
     (r'py:.*', 'colors.Colormap'),
@@ -323,6 +357,10 @@ version = pyvista.__version__
 # The full version, including alpha/beta/rc tags.
 release = pyvista.__version__
 
+# Cname of the project
+cname = os.getenv("DOCUMENTATION_CNAME", "docs.pyvista.org")
+
+
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
 #
@@ -340,6 +378,7 @@ linkcheck_ignore = [
     'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
     'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
     'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
+    'https://docs.pyvista.org/versions.json',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -460,18 +499,26 @@ SphinxDocString._str_examples = _str_examples
 import pydata_sphinx_theme  # noqa
 
 html_theme = "pydata_sphinx_theme"
-# html_theme_path = [pydata_sphinx_theme.get_html_theme_path()]
 html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
     "github_version": "main",
-    "doc_path": "doc",
+    "doc_path": "doc/source",
+    "examples_path": "examples",
 }
 html_show_sourcelink = False
 html_copy_source = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
+
+
+def get_version_match(semver):
+    """Evaluate the version match for the multi-documentation."""
+    if semver.endswith("dev0"):
+        return "dev"
+    major, minor, _ = semver.split(".")
+    return ".".join([major, minor])
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -506,6 +553,12 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
+    "check_switcher": False,
+    "switcher": {
+        "json_url": f"https://{cname}/versions.json",
+        "version_match": get_version_match(version),
+    },
+    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
 }
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
@@ -595,6 +648,7 @@ copybutton_prompt_is_regexp = True
 
 
 def setup(app):
+    app.connect("html-page-context", pv_html_page_context)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
     app.add_css_file("summary.css")

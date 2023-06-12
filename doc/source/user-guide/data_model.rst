@@ -93,13 +93,13 @@ Here, the above datasets are ordered from most (5) to least complex
 |UnstructuredGrid| class takes the most amount of
 memory to store since they must account for every individual point and
 cell . On the other hand, since `vtkImageData`_
-(|UniformGrid|) is uniformly spaced, a few integers and
+(|ImageData|) is uniformly spaced, a few integers and
 floats can describe the shape, so it takes the least amount of memory
 to store.
 
 This is because in |PolyData| or
 |UnstructuredGrid|, points and cells must be explicitly
-defined. In other data types, such as |UniformGrid|,
+defined. In other data types, such as |ImageData|,
 the cells (and even points) are defined as an emergent property based
 on the dimensionality of the grid.
 
@@ -389,13 +389,13 @@ or cells and attached to the mesh in general.
 To illustrate data arrays within PyVista, let's first construct a
 slightly more complex mesh than our previous example. Here, we create
 a simple mesh containing four isometric cells by starting with a
-|UniformGrid| and then casting it to an |UnstructuredGrid| with
+|ImageData| and then casting it to an |UnstructuredGrid| with
 :func:`cast_to_unstructured_grid()
 <pyvista.DataSet.cast_to_unstructured_grid>`.
 
 .. jupyter-execute::
 
-   >>> grid = pyvista.UniformGrid(dimensions=(3, 3, 1))
+   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
    >>> ugrid
 
@@ -405,7 +405,7 @@ Let's also plot this basic mesh:
    :context:
    :include-source: False
 
-   >>> grid = pyvista.UniformGrid(dimensions=(3, 3, 1))
+   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
 
 .. pyvista-plot::
@@ -727,4 +727,4 @@ these vectors represent quantities with direction.
 
 .. |PolyData| replace:: :class:`PolyData <pyvista.PolyData>`
 .. |UnstructuredGrid| replace:: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`
-.. |UniformGrid| replace:: :class:`UniformGrid <pyvista.UniformGrid>`
+.. |ImageData| replace:: :class:`ImageData <pyvista.ImageData>`

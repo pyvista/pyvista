@@ -7,21 +7,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import FieldAssociation, _vtk
-from pyvista.core.errors import VTKVersionError
+import pyvista.core._vtk_core as _vtk
+from pyvista.core.errors import AmbiguousDataError, MissingDataError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.errors import AmbiguousDataError, MissingDataError
-from pyvista.utilities import (
-    NORMALS,
-    abstract_class,
-    assert_empty_kwargs,
-    generate_plane,
+from pyvista.core.utilities import transformations
+from pyvista.core.utilities.arrays import (
+    FieldAssociation,
     get_array,
     get_array_association,
-    transformations,
-    wrap,
+    set_default_active_scalars,
+    vtkmatrix_from_array,
 )
-from pyvista.utilities.cells import numpy_to_idarr
+from pyvista.core.utilities.cells import numpy_to_idarr
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -67,6 +67,113 @@ class DataSetFilters:
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
+
+    def align(
+        self,
+        target,
+        max_landmarks=100,
+        max_mean_distance=1e-5,
+        max_iterations=500,
+        check_mean_distance=True,
+        start_by_matching_centroids=True,
+        return_matrix=False,
+    ):
+        """Align a dataset to another.
+
+        Uses the iterative closest point algorithm to align the points of the
+        two meshes.  See the VTK class `vtkIterativeClosestPointTransform
+        <https://vtk.org/doc/nightly/html/classvtkIterativeClosestPointTransform.html>`_
+
+        Parameters
+        ----------
+        target : pyvista.DataSet
+            The target dataset to align to.
+
+        max_landmarks : int, default: 100
+            The maximum number of landmarks.
+
+        max_mean_distance : float, default: 1e-5
+            The maximum mean distance for convergence.
+
+        max_iterations : int, default: 500
+            The maximum number of iterations.
+
+        check_mean_distance : bool, default: True
+            Whether to check the mean distance for convergence.
+
+        start_by_matching_centroids : bool, default: True
+            Whether to start the alignment by matching centroids. Default is True.
+
+        return_matrix : bool, default: False
+            Return the transform matrix as well as the aligned mesh.
+
+        Returns
+        -------
+        aligned : pyvista.DataSet
+            The dataset aligned to the target mesh.
+
+        matrix : numpy.ndarray
+            Transform matrix to transform the input dataset to the target dataset.
+
+        Examples
+        --------
+        Create a cylinder, translate it, and use iterative closest point to
+        align mesh to its original position.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
+        >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
+        >>> aligned = transformed.align(source)
+        >>> _, closest_points = aligned.find_closest_cell(
+        ...     source.points, return_closest_point=True
+        ... )
+        >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
+
+        Visualize the source, transformed, and aligned meshes.
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Before Alignment')
+        >>> _ = pl.add_mesh(
+        ...     source, style='wireframe', opacity=0.5, line_width=2
+        ... )
+        >>> _ = pl.add_mesh(transformed)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('After Alignment')
+        >>> _ = pl.add_mesh(
+        ...     source, style='wireframe', opacity=0.5, line_width=2
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     aligned,
+        ...     scalars=dist,
+        ...     scalar_bar_args={
+        ...         'title': 'Distance to Source',
+        ...         'fmt': '%.1E',
+        ...     },
+        ... )
+        >>> pl.show()
+
+        Show that the mean distance between the source and the target is
+        nearly zero.
+
+        >>> np.abs(dist).mean()  # doctest:+SKIP
+        9.997635192915073e-05
+
+        """
+        icp = _vtk.vtkIterativeClosestPointTransform()
+        icp.SetSource(self)
+        icp.SetTarget(target)
+        icp.GetLandmarkTransform().SetModeToRigidBody()
+        icp.SetMaximumNumberOfLandmarks(max_landmarks)
+        icp.SetMaximumMeanDistance(max_mean_distance)
+        icp.SetMaximumNumberOfIterations(max_iterations)
+        icp.SetCheckMeanDistance(check_mean_distance)
+        icp.SetStartByMatchingCentroids(start_by_matching_centroids)
+        icp.Update()
+        matrix = pyvista.array_from_vtkmatrix(icp.GetMatrix())
+        if return_matrix:
+            return self.transform(matrix, inplace=False), matrix
+        return self.transform(matrix, inplace=False)
 
     def clip(
         self,
@@ -420,7 +527,7 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         alg.SetValue(value)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
         else:
             self.set_active_scalars(scalars)
 
@@ -1042,27 +1149,27 @@ class DataSetFilters:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> vol = pyvista.wrap(volume)
+        >>> vol = pv.wrap(volume)
         >>> threshed = vol.threshold(0.1)
-        >>> threshed  # doctest:+SKIP
-        UnstructuredGrid (0x7f00f9983fa0)
-          N Cells:	243
-          N Points:	400
-          X Bounds:	0.000e+00, 3.000e+00
-          Y Bounds:	0.000e+00, 9.000e+00
-          Z Bounds:	0.000e+00, 9.000e+00
-          N Arrays:	1
+        >>> threshed
+        UnstructuredGrid (...)
+          N Cells:    243
+          N Points:   400
+          X Bounds:   0.000e+00, 3.000e+00
+          Y Bounds:   0.000e+00, 9.000e+00
+          Z Bounds:   0.000e+00, 9.000e+00
+          N Arrays:   1
 
         Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> grid.plot(
@@ -1073,9 +1180,9 @@ class DataSetFilters:
 
         Next, apply the threshold.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> threshed = grid.threshold(value=0.02)
@@ -1090,7 +1197,7 @@ class DataSetFilters:
         """
         # set the scalars to threshold on
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
@@ -1228,7 +1335,7 @@ class DataSetFilters:
 
         """
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             _, tscalars = self.active_scalars_info
         else:
             tscalars = scalars
@@ -1369,14 +1476,15 @@ class DataSetFilters:
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.extract_geometry()  # doctest:+SKIP
-        PolyData (0x7f2f8c132040)
-          N Cells:	88
-          N Points:	90
-          X Bounds:	0.000e+00, 1.000e+00
-          Y Bounds:	0.000e+00, 1.000e+00
-          Z Bounds:	0.000e+00, 5.000e+00
-          N Arrays:	3
+        >>> hex_beam.extract_geometry()
+        PolyData (...)
+          N Cells:    88
+          N Points:   90
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 5.000e+00
+          N Arrays:   3
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
@@ -1389,7 +1497,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def extract_all_edges(self, use_all_points=False, progress_bar=False):
+    def extract_all_edges(self, use_all_points=False, clear_data=False, progress_bar=False):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -1398,14 +1506,18 @@ class DataSetFilters:
         ----------
         use_all_points : bool, default: False
             Indicates whether all of the points of the input mesh should exist
-            in the output. When ``True`` enables point renumbering.  If set to
-            ``True``, then a threaded approach is used which avoids the use of
-            a point locator and is quicker.
+            in the output. When ``True``, point numbering does not change and
+            a threaded approach is used, which avoids the use of a point locator
+            and is quicker.
 
             By default this is set to ``False``, and unused points are omitted
             from the output.
 
             This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+
+        clear_data : bool, default: False
+            Clear any point, cell, or field data. This is useful
+            if wanting to strictly extract the edges.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1444,7 +1556,10 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting All Edges')
         # Reset vtkLogger to default verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
-        return _get_output(alg)
+        output = _get_output(alg)
+        if clear_data:
+            output.clear_data()
+        return output
 
     def elevation(
         self,
@@ -1648,7 +1763,7 @@ class DataSetFilters:
         ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
-        >>> grid = pv.UniformGrid(
+        >>> grid = pv.ImageData(
         ...     dimensions=(n, n, n),
         ...     spacing=(
         ...         abs(x_min) / n * 2,
@@ -1711,7 +1826,7 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars_name = self.active_scalars_info
         else:
             field = get_array_association(self, scalars_name, preference=preference)
@@ -2144,7 +2259,7 @@ class DataSetFilters:
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
-                pyvista.set_default_active_scalars(self)
+                set_default_active_scalars(self)
             except MissingDataError:
                 warnings.warn("No data to use for scale. scale will be set to False.")
                 scale = False
@@ -2431,7 +2546,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
@@ -2503,7 +2618,8 @@ class DataSetFilters:
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vectors_example` for more examples using this filter.
+        See :ref:`warp_by_vectors_example` and :ref:`eigenmodes_example` for
+        more examples using this filter.
 
         """
         if vectors is None:
@@ -2607,7 +2723,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_cell_arrays``.
+            Deprecated keyword argument ``pass_cell_arrays``.
 
         Returns
         -------
@@ -2694,7 +2810,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_point_arrays``.
+            Deprecated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -2914,7 +3030,7 @@ class DataSetFilters:
         ----------
         points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
-            or something :func:`pyvista.wrap` can handle.
+            or something :func:`wrap` can handle.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
@@ -2958,7 +3074,7 @@ class DataSetFilters:
 
         """
         if not pyvista.is_pyvista_dataset(points):
-            points = pyvista.wrap(points)
+            points = wrap(points)
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(self)
@@ -3151,7 +3267,7 @@ class DataSetFilters:
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
@@ -3289,7 +3405,7 @@ class DataSetFilters:
             source.SetRadius(source_radius)
             source.SetNumberOfPoints(n_points)
         source.Update()
-        input_source = pyvista.wrap(source.GetOutput())
+        input_source = wrap(source.GetOutput())
         output = self.streamlines_from_source(
             input_source, vectors, progress_bar=progress_bar, **kwargs
         )
@@ -3827,7 +3943,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4158,7 +4274,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4284,7 +4400,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4540,6 +4656,7 @@ class DataSetFilters:
         non_manifold_edges=True,
         feature_edges=True,
         manifold_edges=True,
+        clear_data=False,
         progress_bar=False,
     ):
         """Extract edges from the surface of the mesh.
@@ -4572,6 +4689,10 @@ class DataSetFilters:
 
         manifold_edges : bool, default: True
             Extract manifold edges.
+
+        clear_data : bool, default: False
+            Clear any point, cell, or field data. This is useful
+            if wanting to strictly extract the edges.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4607,7 +4728,10 @@ class DataSetFilters:
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
-        return _get_output(featureEdges)
+        output = _get_output(featureEdges)
+        if clear_data:
+            output.clear_data()
+        return output
 
     def merge(
         self,
@@ -4943,7 +5067,7 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
@@ -5141,7 +5265,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Transformed dataset.  Return type matches input unless
-            input dataset is a :class:`pyvista.UniformGrid`, in which
+            input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         Examples
@@ -5181,7 +5305,7 @@ class DataSetFilters:
         elif isinstance(trans, np.ndarray):
             if trans.shape != (4, 4):
                 raise ValueError('Transformation array must be 4x4')
-            m = pyvista.vtkmatrix_from_array(trans)
+            m = vtkmatrix_from_array(trans)
             t = _vtk.vtkTransform()
             t.SetMatrix(m)
         else:
@@ -5418,11 +5542,11 @@ class DataSetFilters:
 
         Examples
         --------
-        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+        Partition a simple ImageData into a :class:`pyvista.MultiBlock`
         containing each partition.
 
         >>> import pyvista as pv
-        >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
         >>> out = grid.partition(4, as_composite=True)
         >>> out.plot(multi_colors=True, show_edges=True)
 
@@ -5534,6 +5658,79 @@ class DataSetFilters:
 
         """
         return self.shrink(1.0)
+
+    def extract_cells_by_type(self, cell_types, progress_bar=False):
+        """Extract cells of a specified type.
+
+        Given an input dataset and a list of cell types, produce an output
+        dataset containing only cells of the specified type(s). Note that if
+        the input dataset is homogeneous (e.g., all cells are of the same type)
+        and the cell type is one of the cells specified, then the input dataset
+        is shallow copied to the output.
+
+        The type of output dataset is always the same as the input type. Since
+        structured types of data (i.e., :class:`pyvista.ImageData`,
+        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
+        :class:`pyvista.ImageData`) are all composed of a cell of the same
+        type, the output is either empty, or a shallow copy of the input.
+        Unstructured data (:class:`pyvista.UnstructuredGrid`,
+        :class:`pyvista.PolyData`) input may produce a subset of the input data
+        (depending on the selected cell types).
+
+        Parameters
+        ----------
+        cell_types :  int | sequence[int]
+            The cell types to extract. Must be a single or list of integer cell
+            types. See :class:`pyvista.CellType`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the extracted cells. Type is the same as the input.
+
+        Notes
+        -----
+        Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
+        produces a :class:`pyvista.UnstructuredGrid` output, this filter
+        produces the same output type as input type.
+
+        Examples
+        --------
+        Create an unstructured grid with both hexahedral and tetrahedral
+        cells and then extract each individual cell type.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> beam = examples.load_hexbeam()
+        >>> beam = beam.translate([1, 0, 0])
+        >>> ugrid = beam + examples.load_tetbeam()
+        >>> hex_cells = ugrid.extract_cells_by_type(pv.CellType.HEXAHEDRON)
+        >>> tet_cells = ugrid.extract_cells_by_type(pv.CellType.TETRA)
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Extracted Hexahedron cells')
+        >>> _ = pl.add_mesh(hex_cells, show_edges=True)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('Extracted Tetrahedron cells')
+        >>> _ = pl.add_mesh(tet_cells, show_edges=True)
+        >>> pl.show()
+
+        """
+        alg = _vtk.vtkExtractCellsByType()
+        alg.SetInputDataObject(self)
+        if isinstance(cell_types, int):
+            alg.AddCellType(cell_types)
+        elif isinstance(cell_types, (np.ndarray, collections.abc.Sequence)):
+            for cell_type in cell_types:
+                alg.AddCellType(cell_type)
+        else:
+            raise TypeError(
+                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
+            )
+        _update_alg(alg, progress_bar, 'Extracting cell types')
+        return _get_output(alg)
 
 
 def _set_threshold_limit(alg, value, method, invert):

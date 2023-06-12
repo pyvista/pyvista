@@ -6,11 +6,11 @@ The data objects does not have any sort of spatial reference.
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, get_array, row_array
 
+from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
+from .utilities.arrays import FieldAssociation, get_array, row_array
 
 
 class Table(_vtk.vtkTable, DataObject):
