@@ -42,6 +42,11 @@ class _GetAttr:
                 f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
             ) from None
 
+        # Ignore __path__ to avoid confusing warnings. See
+        # https://github.com/pyvista/pyvista/pull/4507#discussion_r1225972997
+        if name == '__path__':
+            return feature
+
         message = f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
 
         warnings.warn(
