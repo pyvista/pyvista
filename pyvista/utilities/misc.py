@@ -1,4 +1,2 @@
 """Deprecated module."""
-from ._getattr import _GetAttr
-
-__getattr__ = _GetAttr()
+from . import __getattr__  # noqa: F401
