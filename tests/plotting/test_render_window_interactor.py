@@ -130,7 +130,7 @@ def test_track_click_position():
 
 
 @pytest.mark.skipif(
-    not isinstance(_vtk.vtkRenderWindowInteractor(), (_vtk.vtkWin32RenderWindowInteractor, _vtk.vtkXRenderWindowInteractor)),
+    type(_vtk.vtkRenderWindowInteractor()).__name__ not in ("vtkWin32RenderWindowInteractor", "vtkXRenderWindowInteractor"),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
 @pytest.mark.needs_vtk_version(
