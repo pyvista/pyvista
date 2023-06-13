@@ -7,6 +7,8 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+# flake8: noqa: F401
+
 from vtkmodules.vtkChartsCore import (
     vtkAxis,
     vtkChart,
@@ -107,5 +109,4 @@ from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
 from pyvista.core._vtk_core import *
 
-# flake8: noqa: F401
 from ._vtk_gl import *

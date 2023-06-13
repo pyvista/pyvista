@@ -36,7 +36,6 @@ from vtkmodules.vtkRenderingOpenGL2 import (
     vtkSSAAPass,
     vtkSSAOPass,
 )
-
 from vtkmodules.vtkRenderingVolumeOpenGL2 import (
     vtkOpenGLGPUVolumeRayCastMapper,
     vtkSmartVolumeMapper,
