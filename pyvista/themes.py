@@ -2556,15 +2556,6 @@ class Theme(_ThemeConfig):
 
     @anti_aliasing.setter
     def anti_aliasing(self, anti_aliasing: Union[str, None]):
-        if isinstance(anti_aliasing, bool):
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`anti_aliasing` is now a string or None and must be either "ssaa", '
-                '"msaa", "fxaa", or None',
-                PyVistaDeprecationWarning,
-            )
-            anti_aliasing = 'ssaa' if anti_aliasing else None
-
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
                 raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
@@ -2572,29 +2563,6 @@ class Theme(_ThemeConfig):
             raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
 
         self._anti_aliasing = anti_aliasing
-
-    @property
-    def antialiasing(self):
-        """Enable or disable anti-aliasing.
-
-        .. deprecated:: 0.37.0
-           Deprecated in favor of :attr:`anti_aliasing <Theme.anti_aliasing>`.
-        """
-        # Recommended removing at pyvista==0.40.0
-        warnings.warn(
-            'antialising is deprecated.  Please use `anti_aliasing` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.anti_aliasing
-
-    @antialiasing.setter
-    def antialiasing(self, value):  # pragma: no cover
-        # Recommended removing at pyvista==0.40.0
-        warnings.warn(
-            'antialising is deprecated.  Please use `anti_aliasing` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.anti_aliasing = value
 
     @property
     def multi_samples(self) -> int:
