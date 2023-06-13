@@ -506,13 +506,6 @@ def test_anti_aliasing_msaa(default_theme):
     assert pl.render_window.GetMultiSamples() == default_theme.multi_samples
 
 
-def test_antialiasing_deprecation(default_theme):
-    with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
-        default_theme.antialiasing
-    with pytest.warns(PyVistaDeprecationWarning, match='anti_aliasing'):
-        default_theme.antialiasing = True
-
-
 def test_above_range_color(default_theme):
     default_theme.above_range_color = 'r'
     assert isinstance(default_theme.above_range_color, pyvista.Color)
