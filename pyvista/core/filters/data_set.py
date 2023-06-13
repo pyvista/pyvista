@@ -5670,8 +5670,8 @@ class DataSetFilters:
 
         The type of output dataset is always the same as the input type. Since
         structured types of data (i.e., :class:`pyvista.ImageData`,
-        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
-        :class:`pyvista.ImageData`) are all composed of a cell of the same
+        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`)
+        are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,
         :class:`pyvista.PolyData`) input may produce a subset of the input data
