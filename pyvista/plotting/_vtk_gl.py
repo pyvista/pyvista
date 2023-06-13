@@ -14,9 +14,9 @@ try:
     # Necessary for displaying charts, otherwise crashes on rendering
     import vtkmodules.vtkRenderingContextOpenGL2
 
-    _has_vtkRenderingContextOpenGL2 = True
+    has_vtkRenderingContextOpenGL2 = True
 except ImportError:  # pragma: no cover
-    _has_vtkRenderingContextOpenGL2 = False
+    has_vtkRenderingContextOpenGL2 = False
 
 
 from vtkmodules.vtkRenderingOpenGL2 import (
