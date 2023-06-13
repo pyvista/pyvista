@@ -8,7 +8,7 @@ datasets. For example:
    Plot the built-in globe dataset
 
    >>> from pyvista import examples
-   >>> globe = examples.load_globe()
+   >>> globe = examples.load_random_hills()
    >>> globe.plot()
 
 Many datasets are too large to be included with PyVista, but can be
