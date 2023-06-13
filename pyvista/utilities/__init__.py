@@ -5,7 +5,6 @@ import warnings
 
 # Places to look for the utility
 _MODULES = [
-    'pyvista.core.utilities.cells',
     'pyvista.core.utilities',
     'pyvista.core.errors',
     'pyvista.core',

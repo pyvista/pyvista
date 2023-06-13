@@ -22,6 +22,7 @@ from .arrays import (
     vtk_id_list_to_array,
     vtkmatrix_from_array,
 )
+from .cells import create_mixed_cells, get_mixed_cells, ncells_from_cells, numpy_to_idarr
 from .features import (
     cartesian_to_spherical,
     create_grid,
