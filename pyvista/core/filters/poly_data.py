@@ -10,6 +10,7 @@ from pyvista.core.errors import (
     DeprecationError,
     MissingDataError,
     NotAllTrianglesError,
+    PyVistaDeprecationWarning,
     PyVistaFutureWarning,
     VTKVersionError,
 )
@@ -956,7 +957,7 @@ class PolyDataFilters(DataSetFilters):
         References
         ----------
         See `Optimal Surface Smoothing as Filter Design
-        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>` for details
+        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>`_ for details
         regarding the implementation of Taubin smoothing.
 
         Examples
@@ -2054,7 +2055,9 @@ class PolyDataFilters(DataSetFilters):
         output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input
-        output.clear_textures()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
+            output.clear_textures()
 
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:
@@ -2389,7 +2392,7 @@ class PolyDataFilters(DataSetFilters):
 
         color : ColorLike, optional
             Color of the arrows.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.edge_color`.
+            :attr:`pyvista.themes.Theme.edge_color`.
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to

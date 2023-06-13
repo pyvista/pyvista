@@ -9,7 +9,7 @@ def vol_prop():
     return VolumeProperty()
 
 
-def test_volume_lookup_table(vol_prop):
+def test_volume_lookup_table(vol_prop, skip_check_gc):
     lut = pv.LookupTable(cmap='bwr')
     lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
     orig = vol_prop.GetRGBTransferFunction()

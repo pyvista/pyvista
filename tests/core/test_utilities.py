@@ -91,7 +91,7 @@ def test_read(tmpdir, use_pathlib):
         pyvista.PolyData,
         pyvista.UnstructuredGrid,
         pyvista.PolyData,
-        pyvista.UniformGrid,
+        pyvista.ImageData,
         pyvista.RectilinearGrid,
     )
     for i, filename in enumerate(fnames):
@@ -132,7 +132,7 @@ def test_read_force_ext(tmpdir):
         pyvista.PolyData,
         pyvista.UnstructuredGrid,
         pyvista.PolyData,
-        pyvista.UniformGrid,
+        pyvista.ImageData,
         pyvista.RectilinearGrid,
     )
 

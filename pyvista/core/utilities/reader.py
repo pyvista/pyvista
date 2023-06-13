@@ -2367,7 +2367,7 @@ class _GIFReader(BaseVTKReader):
         from PIL import Image, ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.UniformGrid(dimensions=(img.size[0], img.size[1], 1))
+        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames

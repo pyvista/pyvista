@@ -1,6 +1,5 @@
 """Test render window interactor"""
 
-import platform
 import time
 
 import pytest
@@ -131,8 +130,9 @@ def test_track_click_position():
 
 
 @pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='vtkCocoaRenderWindowInteractor (MacOS) does not invoke TimerEvents during ProcessEvents. ',
+    type(_vtk.vtkRenderWindowInteractor()).__name__
+    not in ("vtkWin32RenderWindowInteractor", "vtkXRenderWindowInteractor"),
+    reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
 @pytest.mark.needs_vtk_version(
     (9, 2),

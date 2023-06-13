@@ -91,12 +91,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 
 
 @pytest.fixture(autouse=True)
-def validate_gc(check_gc):
-    """Autouse garbage collection validation fixture for this module."""
-    pass
-
-
-@pytest.fixture(autouse=True)
 def verify_image_cache_wrapper(verify_image_cache):
     return verify_image_cache
 
@@ -1240,7 +1234,8 @@ def test_plot_texture_associated():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
     plotter = pyvista.Plotter()
-    plotter.add_mesh(globe, texture=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        plotter.add_mesh(globe, texture=True)
     plotter.show()
 
 
@@ -2668,7 +2663,7 @@ def test_ssaa_pass():
 
 @skip_windows_mesa
 def test_ssao_pass():
-    ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pyvista.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pyvista.Plotter()
     pl.add_mesh(ugrid)
 
@@ -2683,7 +2678,7 @@ def test_ssao_pass():
 
 @skip_mesa
 def test_ssao_pass_from_helper():
-    ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pyvista.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
 
@@ -2981,7 +2976,7 @@ def test_plot_cell():
 
 
 def test_tight_square_padding():
-    grid = pyvista.UniformGrid(dimensions=(200, 100, 1))
+    grid = pyvista.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
@@ -2993,7 +2988,7 @@ def test_tight_square_padding():
 
 
 def test_tight_tall():
-    grid = pyvista.UniformGrid(dimensions=(100, 200, 1))
+    grid = pyvista.ImageData(dimensions=(100, 200, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
@@ -3007,7 +3002,7 @@ def test_tight_tall():
 
 
 def test_tight_wide():
-    grid = pyvista.UniformGrid(dimensions=(200, 100, 1))
+    grid = pyvista.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)

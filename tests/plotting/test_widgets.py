@@ -8,12 +8,6 @@ import pyvista
 pytestmark = pytest.mark.skip_plotting
 
 
-@pytest.fixture(autouse=True)
-def validate_gc(check_gc):
-    """Autouse garbage collection validation fixture for this module."""
-    pass
-
-
 def test_widget_box(uniform):
     p = pyvista.Plotter()
     func = lambda box: box  # Does nothing

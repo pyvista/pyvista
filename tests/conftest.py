@@ -99,7 +99,7 @@ def tri_cylinder():
 @fixture()
 def datasets():
     return [
-        examples.load_uniform(),  # UniformGrid
+        examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_hexbeam(),  # UnstructuredGrid
         examples.load_airplane(),  # PolyData

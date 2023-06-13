@@ -19,7 +19,7 @@ def actor():
 
 @pytest.fixture()
 def vol_actor():
-    vol = pv.UniformGrid(dimensions=(10, 10, 10))
+    vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
     pl = pv.Plotter()
     return pl.add_volume(vol)

@@ -181,13 +181,14 @@ while assigning the points scalars random values.
 
 Textures
 ~~~~~~~~
-The ``pythreejs`` backend also supports :attr:`textures <pyvista.DataSet.textures>`.
+The ``pythreejs`` backend also supports :attr:`textures <pyvista.Texture>`.
 
 .. jupyter-execute::
 
    import pyvista
    globe = examples.load_globe()
-   globe.plot(jupyter_backend='pythreejs', smooth_shading=True)
+   texture = examples.load_globe_texture()
+   globe.plot(jupyter_backend='pythreejs', smooth_shading=True, texture=texture)
 
 See the :ref:`ref_texture_example` example for more details regarding textures.
 

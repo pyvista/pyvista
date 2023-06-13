@@ -352,7 +352,7 @@ def test_plotter_suppress_rendering():
     assert pl.suppress_rendering is False
 
 
-def test_plotter_add_volume_raises(uniform: pyvista.UniformGrid, sphere: pyvista.PolyData):
+def test_plotter_add_volume_raises(uniform: pyvista.ImageData, sphere: pyvista.PolyData):
     """Test edge case where add_volume has no scalars."""
     uniform.clear_data()
     pl = pyvista.Plotter()
@@ -373,7 +373,7 @@ def test_deprecated_store_image():
         pl.store_image = True
 
 
-def test_plotter_add_volume_clim(uniform: pyvista.UniformGrid):
+def test_plotter_add_volume_clim(uniform: pyvista.ImageData):
     """Verify clim is set correctly for volume."""
     arr = uniform.x.astype(np.uint8)
     pl = pyvista.Plotter()

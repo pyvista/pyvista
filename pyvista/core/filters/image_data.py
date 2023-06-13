@@ -14,7 +14,7 @@ from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class
-class UniformGridFilters(DataSetFilters):
+class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
     def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
@@ -36,7 +36,7 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
+        pyvista.ImageData
             Uniform grid with smoothed scalars.
 
         Notes
@@ -128,7 +128,7 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
+        pyvista.ImageData
             Uniform grid with smoothed scalars.
 
         Warnings
@@ -207,8 +207,8 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
-            UniformGrid subset.
+        pyvista.ImageData
+            ImageData subset.
         """
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
@@ -219,7 +219,7 @@ class UniformGridFilters(DataSetFilters):
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.UniformGrid()
+        fixed = pyvista.ImageData()
         fixed.origin = result.bounds[::2]
         fixed.spacing = result.spacing
         fixed.dimensions = result.dimensions
@@ -264,7 +264,7 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
+        pyvista.ImageData
             Dataset that has been dilated/eroded on the boundary of the specified scalars.
 
         Notes
@@ -365,7 +365,7 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
+        pyvista.ImageData
             Dataset with the specified scalars thresholded.
 
         Examples
@@ -450,8 +450,8 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
-            :class:`pyvista.UniformGrid` with applied FFT.
+        pyvista.ImageData
+            :class:`pyvista.ImageData` with applied FFT.
 
         See Also
         --------
@@ -529,8 +529,8 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
-            :class:`pyvista.UniformGrid` with the applied reverse FFT.
+        pyvista.ImageData
+            :class:`pyvista.ImageData` with the applied reverse FFT.
 
         See Also
         --------
@@ -580,12 +580,12 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
-        This filter requires that the :class:`UniformGrid` have a complex point
-        scalars, usually generated after the :class:`UniformGrid` has been
-        converted to the frequency domain by a :func:`UniformGridFilters.fft`
+        This filter requires that the :class:`ImageData` have a complex point
+        scalars, usually generated after the :class:`ImageData` has been
+        converted to the frequency domain by a :func:`ImageDataFilters.fft`
         filter.
 
-        A :func:`UniformGridFilters.rfft` filter can be used to convert the
+        A :func:`ImageDataFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates high
         frequency components.  Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
@@ -621,8 +621,8 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
-            :class:`pyvista.UniformGrid` with the applied low pass filter.
+        pyvista.ImageData
+            :class:`pyvista.ImageData` with the applied low pass filter.
 
         See Also
         --------
@@ -658,12 +658,12 @@ class UniformGridFilters(DataSetFilters):
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
-        This filter requires that the :class:`UniformGrid` have a complex point
-        scalars, usually generated after the :class:`UniformGrid` has been
-        converted to the frequency domain by a :func:`UniformGridFilters.fft`
+        This filter requires that the :class:`ImageData` have a complex point
+        scalars, usually generated after the :class:`ImageData` has been
+        converted to the frequency domain by a :func:`ImageDataFilters.fft`
         filter.
 
-        A :func:`UniformGridFilters.rfft` filter can be used to convert the
+        A :func:`ImageDataFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates low
         frequency components.  Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
@@ -699,8 +699,8 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UniformGrid
-            :class:`pyvista.UniformGrid` with the applied high pass filter.
+        pyvista.ImageData
+            :class:`pyvista.ImageData` with the applied high pass filter.
 
         See Also
         --------
@@ -761,10 +761,10 @@ class UniformGridFilters(DataSetFilters):
                 '`numpy.complex128`.'
             )
 
-    def _flip_uniform(self, axis) -> 'pyvista.UniformGrid':
+    def _flip_uniform(self, axis) -> 'pyvista.ImageData':
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
-        This varies from :func:`DataSet.flip_x` because it returns a UniformGrid.
+        This varies from :func:`DataSet.flip_x` because it returns a ImageData.
 
         """
         alg = _vtk.vtkImageFlip()
@@ -772,3 +772,6 @@ class UniformGridFilters(DataSetFilters):
         alg.SetFilteredAxes(axis)
         alg.Update()
         return wrap(alg.GetOutput())
+
+
+UniformGridFilters = ImageDataFilters
