@@ -12,15 +12,15 @@ Apply a built-in theme
 
 Load a theme into pyvista
 
->>> from pyvista.themes import DefaultTheme
->>> theme = DefaultTheme()
+>>> from pyvista.themes import DocumentTheme
+>>> theme = DocumentTheme()
 >>> theme.save('my_theme.json')  # doctest:+SKIP
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
 pyvista.
 
->>> my_theme = DefaultTheme()
+>>> my_theme = DocumentTheme()
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
@@ -101,15 +101,15 @@ def load_theme(filename):
     Examples
     --------
     >>> import pyvista as pv
-    >>> from pyvista.themes import DefaultTheme
-    >>> theme = DefaultTheme()
+    >>> from pyvista.themes import DocumentTheme
+    >>> theme = DocumentTheme()
     >>> theme.save('my_theme.json')  # doctest:+SKIP
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
     """
     with open(filename) as f:
         theme_dict = json.load(f)
-    return DefaultTheme.from_dict(theme_dict)
+    return Theme.from_dict(theme_dict)
 
 
 def set_plot_theme(theme):
@@ -150,12 +150,11 @@ def set_plot_theme(theme):
         except KeyError:
             raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
         pyvista.global_theme.load_theme(new_theme_type())
-    elif isinstance(theme, DefaultTheme):
+    elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
-            f'a {type(theme).__name__}'
+            f'Expected a ``pyvista.themes.Theme`` or ``str``, not {type(theme).__name__}'
         )
 
 
@@ -197,7 +196,7 @@ class _ThemeConfig:
         return dict_
 
     def __eq__(self, other):
-        if not isinstance(self, type(other)):
+        if not isinstance(other, _ThemeConfig):
             return False
 
         for attr_name in other.__slots__:
@@ -1490,8 +1489,8 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = mode
 
 
-class DefaultTheme(_ThemeConfig):
-    """PyVista default theme.
+class Theme(_ThemeConfig):
+    """Base VTK theme.
 
     Examples
     --------
@@ -1506,8 +1505,8 @@ class DefaultTheme(_ThemeConfig):
 
     Create a new theme from the default theme and apply it globally.
 
-    >>> from pyvista.themes import DefaultTheme
-    >>> my_theme = DefaultTheme()
+    >>> from pyvista.themes import DocumentTheme
+    >>> my_theme = DocumentTheme()
     >>> my_theme.color = 'red'
     >>> my_theme.background = 'white'
     >>> pv.global_theme.load_theme(my_theme)
@@ -2579,7 +2578,7 @@ class DefaultTheme(_ThemeConfig):
         """Enable or disable anti-aliasing.
 
         .. deprecated:: 0.37.0
-           Deprecated in favor of :attr:`anti_aliasing <DefaultTheme.anti_aliasing>`.
+           Deprecated in favor of :attr:`anti_aliasing <Theme.anti_aliasing>`.
         """
         # Recommended removing at pyvista==0.40.0
         warnings.warn(
@@ -2602,7 +2601,7 @@ class DefaultTheme(_ThemeConfig):
         """Return or set the default ``multi_samples`` parameter.
 
         Set the number of multisamples to used with hardware anti_aliasing. This
-        is only used when :attr:`anti_aliasing <DefaultTheme.anti_aliasing>` is
+        is only used when :attr:`anti_aliasing <Theme.anti_aliasing>` is
         set to ``"msaa"``.
 
         Examples
@@ -2859,7 +2858,7 @@ class DefaultTheme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pyvista.themes.DefaultTheme
+        theme : pyvista.themes.Theme
             Theme to use to overwrite this theme.
 
         Examples
@@ -2868,8 +2867,8 @@ class DefaultTheme(_ThemeConfig):
         the global theme of pyvista.
 
         >>> import pyvista as pv
-        >>> from pyvista.themes import DefaultTheme
-        >>> my_theme = DefaultTheme()
+        >>> from pyvista.themes import DocumentTheme
+        >>> my_theme = DocumentTheme()
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
@@ -2891,10 +2890,8 @@ class DefaultTheme(_ThemeConfig):
         if isinstance(theme, str):
             theme = load_theme(theme)
 
-        if not isinstance(theme, DefaultTheme):
-            raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.themes.DefaultTheme``.'
-            )
+        if not isinstance(theme, Theme):
+            raise TypeError('``theme`` must be a pyvista theme like ``pyvista.themes.Theme``.')
 
         for attr_name in theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
@@ -2914,7 +2911,7 @@ class DefaultTheme(_ThemeConfig):
         Export and then load back in a theme.
 
         >>> import pyvista as pv
-        >>> theme = pv.themes.DefaultTheme()
+        >>> theme = pv.themes.DocumentTheme()
         >>> theme.background = 'white'
         >>> theme.save('my_theme.json')  # doctest:+SKIP
         >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
@@ -2989,7 +2986,24 @@ class DefaultTheme(_ThemeConfig):
         self._lighting_params = config
 
 
-class DarkTheme(DefaultTheme):
+class DefaultTheme(Theme):
+    """Deprecated default theme.
+
+    .. deprecated:: 0.40.0
+        Deprecated and renamed to ``Theme``. No longer the default.
+
+    """
+
+    def __init__(self):
+        """Initialize the theme."""
+        super().__init__()
+        warnings.warn(
+            '`DefaultTheme` has been deprecated and renamed `Theme`. Further, `DocumentTheme` is now the PyVista default theme.',
+            PyVistaDeprecationWarning,
+        )
+
+
+class DarkTheme(Theme):
     """Dark mode theme.
 
     Black background, "viridis" colormap, tan meshes, white (hidden) edges.
@@ -3024,7 +3038,7 @@ class DarkTheme(DefaultTheme):
         self.axes.z_color = 'blue'
 
 
-class ParaViewTheme(DefaultTheme):
+class ParaViewTheme(Theme):
     """A paraview-like theme.
 
     Examples
@@ -3059,7 +3073,7 @@ class ParaViewTheme(DefaultTheme):
         self.axes.z_color = 'green'
 
 
-class DocumentTheme(DefaultTheme):
+class DocumentTheme(Theme):
     """A document theme well suited for papers and presentations.
 
     This theme uses:
@@ -3129,7 +3143,7 @@ class DocumentProTheme(DocumentTheme):
         self.depth_peeling.enabled = True
 
 
-class _TestingTheme(DefaultTheme):
+class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
 
     Necessary for image regression.  Xvfb doesn't support
@@ -3157,5 +3171,6 @@ class _NATIVE_THEMES(Enum):
     document = DocumentTheme
     document_pro = DocumentProTheme
     dark = DarkTheme
-    default = DefaultTheme
+    default = DocumentTheme
     testing = _TestingTheme
+    vtk = Theme
