@@ -12,11 +12,9 @@ raise an ImportError if the user does not have libGL installed.
 
 try:
     # Necessary for displaying charts, otherwise crashes on rendering
-    import vtkmodules.vtkRenderingContextOpenGL2
-
-    has_vtkRenderingContextOpenGL2 = True
+    from vtkmodules import vtkRenderingContextOpenGL2
 except ImportError:  # pragma: no cover
-    has_vtkRenderingContextOpenGL2 = False
+    vtkRenderingContextOpenGL2 = None
 
 
 from vtkmodules.vtkRenderingOpenGL2 import (

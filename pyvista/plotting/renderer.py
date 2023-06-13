@@ -650,7 +650,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if not _vtk.has_vtkRenderingContextOpenGL2:  # pragma: no cover
+        if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
