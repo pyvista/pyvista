@@ -5,11 +5,11 @@ datasets. For example:
 
 .. pyvista-plot::
 
-   Plot the built-in globe dataset
+   Plot the built-in hills dataset
 
    >>> from pyvista import examples
-   >>> globe = examples.load_random_hills()
-   >>> globe.plot()
+   >>> hills = examples.load_random_hills()
+   >>> hills.plot()
 
 Many datasets are too large to be included with PyVista, but can be
 downloaded and cached locally. These datasets can be downloaded and
