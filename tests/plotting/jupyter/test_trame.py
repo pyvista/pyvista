@@ -170,7 +170,7 @@ def test_trame_jupyter_custom_size():
 
     # Make sure that if size is default theme, it uses 99%/600px
     previous_size = pv.global_theme.window_size
-    pv.global_theme.window_size = pv.themes.DefaultTheme().window_size
+    pv.global_theme.window_size = pv.themes.Theme().window_size
     try:
         plotter = pv.Plotter(notebook=True)
         _ = plotter.add_mesh(pv.Cone())

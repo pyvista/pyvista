@@ -29,7 +29,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     _new_attr_exceptions = ('_theme',)
 
     def __init__(self, theme=None, **kwargs):
-        self._theme = pv.themes.DefaultTheme()
+        self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
@@ -367,7 +367,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     dataset : pyvista.DataSet, optional
         Dataset to assign to this mapper.
 
-    theme : pyvista.themes.DefaultTheme, optional
+    theme : pyvista.themes.Theme, optional
         Plot-specific theme.
 
     Examples
@@ -388,7 +388,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     def __init__(
         self,
         dataset: Optional['pv.DataSet'] = None,
-        theme: Optional['pv.themes.DefaultTheme'] = None,
+        theme: Optional['pv.themes.Theme'] = None,
     ):
         """Initialize this class."""
         super().__init__(theme=theme)
