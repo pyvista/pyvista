@@ -1641,7 +1641,7 @@ class Theme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._anti_aliasing = None
+        self._anti_aliasing = 'ssaa'
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
@@ -3136,7 +3136,6 @@ class DocumentProTheme(DocumentTheme):
         super().__init__()
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
-        self.anti_aliasing = 'msaa'  # or 'ssaa'?
         self.multi_samples = 2
         self.depth_peeling.number_of_peels = 4
         self.depth_peeling.occlusion_ratio = 0.0
