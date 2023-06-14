@@ -31,6 +31,11 @@ def _try_import(module, name):
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` and warn if it's from a deprecated module.
 
+    Note that ``__getattr__()`` only gets called when ``name`` is missing
+    from the module's globals. The trick is that we want to import this
+    function into other deprecated modules, and we want to carry this
+    subpackage's globals along to prevent some spurious warnings.
+
     Raises
     ------
     AttributeError
