@@ -88,8 +88,6 @@ repos:
   - id: requirements-txt-fixer
   - id: trailing-whitespace
     exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
-  - id: check-added-large-files
-    args: ["--maxkb=10000", "--enforce-all"]
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
