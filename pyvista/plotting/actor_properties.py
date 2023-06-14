@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkProperty."""
-import pyvista as pv
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from . import _vtk
+from .opts import InterpolationType, RepresentationType
 
 
 class ActorProperties:
@@ -10,7 +10,7 @@ class ActorProperties:
 
     Parameters
     ----------
-    properties : pv._vtk.vtkProperty
+    properties : vtk.vtkProperty
         VTK properties of the current object.
 
     Examples
@@ -26,13 +26,13 @@ class ActorProperties:
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
 
     >>> pl = pv.Plotter()
-    >>> pl.add_actor(axes.axes_actor)  # doctest:+SKIP
-    >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> _ = pl.add_actor(axes.axes_actor)
+    >>> _ = pl.add_mesh(pv.Sphere())
+    >>> pl.show()
 
     """
 
-    def __init__(self, properties: pv._vtk.vtkProperty) -> None:
+    def __init__(self, properties: _vtk.vtkProperty) -> None:
         super().__init__()
         self.properties = properties
 

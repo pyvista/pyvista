@@ -19,17 +19,16 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
-from pyvista.errors import RenderWindowUnavailable
-from pyvista.plotting import check_math_text_support, system_supports_plotting
+from pyvista.errors import PyVistaDeprecationWarning, RenderWindowUnavailable
+from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType
-from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.utilities import algorithms
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.plotting.plotter import SUPPORTED_FORMATS
+from pyvista.plotting.texture import numpy_to_texture
+from pyvista.plotting.utilities import algorithms
 
 # skip all tests if unable to render
-if not system_supports_plotting():
-    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
+pytestmark = pytest.mark.skip_plotting
 
 HAS_IMAGEIO = True
 try:
@@ -564,7 +563,7 @@ cpos_param = [
     [-1, 2, -5],  # trigger view vector
     [1.0, 2.0, 3.0],
 ]
-cpos_param.extend(pyvista.plotting.Renderer.CAMERA_STR_ATTR_MAP)
+cpos_param.extend(pyvista.plotting.renderer.Renderer.CAMERA_STR_ATTR_MAP)
 
 
 @pytest.mark.parametrize('cpos', cpos_param)
@@ -581,7 +580,7 @@ def test_set_camera_position(cpos, sphere):
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(pyvista.core.errors.InvalidCameraError):
+    with pytest.raises(pyvista.errors.InvalidCameraError):
         plotter.camera_position = cpos
 
 
@@ -1234,7 +1233,8 @@ def test_plot_texture_associated():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
     plotter = pyvista.Plotter()
-    plotter.add_mesh(globe, texture=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        plotter.add_mesh(globe, texture=True)
     plotter.show()
 
 
@@ -1242,7 +1242,7 @@ def test_plot_texture_associated():
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile))
+    texture = numpy_to_texture(imageio.imread(examples.mapfile))
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
@@ -2662,7 +2662,7 @@ def test_ssaa_pass():
 
 @skip_windows_mesa
 def test_ssao_pass():
-    ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pyvista.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pyvista.Plotter()
     pl.add_mesh(ugrid)
 
@@ -2677,7 +2677,7 @@ def test_ssao_pass():
 
 @skip_mesa
 def test_ssao_pass_from_helper():
-    ugrid = pyvista.UniformGrid(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pyvista.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
 
@@ -2975,7 +2975,7 @@ def test_plot_cell():
 
 
 def test_tight_square_padding():
-    grid = pyvista.UniformGrid(dimensions=(200, 100, 1))
+    grid = pyvista.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
@@ -2987,7 +2987,7 @@ def test_tight_square_padding():
 
 
 def test_tight_tall():
-    grid = pyvista.UniformGrid(dimensions=(100, 200, 1))
+    grid = pyvista.ImageData(dimensions=(100, 200, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)
@@ -3001,7 +3001,7 @@ def test_tight_tall():
 
 
 def test_tight_wide():
-    grid = pyvista.UniformGrid(dimensions=(200, 100, 1))
+    grid = pyvista.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
     pl = pyvista.Plotter(window_size=(150, 150))
     pl.add_mesh(grid, show_scalar_bar=False)

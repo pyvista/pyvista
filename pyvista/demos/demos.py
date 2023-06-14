@@ -435,7 +435,7 @@ def plot_datasets(dataset_type=None):
 
     * :class:`pyvista.PolyData`
     * :class:`pyvista.UnstructuredGrid`
-    * :class:`pyvista.UniformGrid`
+    * :class:`pyvista.ImageData`
     * :class:`pyvista.RectilinearGrid`
     * :class:`pyvista.StructuredGrid`
 
@@ -446,7 +446,7 @@ def plot_datasets(dataset_type=None):
 
         * ``'PolyData'``
         * ``'UnstructuredGrid'``
-        * ``'UniformGrid'``
+        * ``'ImageData'``
         * ``'RectilinearGrid'``
         * ``'StructuredGrid'``
 
@@ -459,7 +459,7 @@ def plot_datasets(dataset_type=None):
     allowable_types = [
         'PolyData',
         'UnstructuredGrid',
-        'UniformGrid',
+        'ImageData',
         'RectilinearGrid',
         'StructuredGrid',
     ]
@@ -472,7 +472,7 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # uniform grid
-    image = pv.UniformGrid(dimensions=(6, 6, 1))
+    image = pv.ImageData(dimensions=(6, 6, 1))
     image.spacing = (3, 2, 1)
 
     ###########################################################################
@@ -539,11 +539,11 @@ def plot_datasets(dataset_type=None):
         pl.add_mesh(ugrid)
         pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color='k')
 
-    # UniformGrid
+    # ImageData
     if dataset_type is None:
         pl.subplot(2)
-        pl.add_text('1. UniformGrid')
-    if dataset_type in [None, 'UniformGrid']:
+        pl.add_text('1. ImageData')
+    if dataset_type in [None, 'ImageData']:
         pl.add_mesh(image)
         pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
         pl.camera_position = 'xy'

@@ -7,21 +7,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import FieldAssociation, _vtk
-from pyvista.core.errors import VTKVersionError
+import pyvista.core._vtk_core as _vtk
+from pyvista.core.errors import AmbiguousDataError, MissingDataError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.errors import AmbiguousDataError, MissingDataError
-from pyvista.utilities import (
-    NORMALS,
-    abstract_class,
-    assert_empty_kwargs,
-    generate_plane,
+from pyvista.core.utilities import transformations
+from pyvista.core.utilities.arrays import (
+    FieldAssociation,
     get_array,
     get_array_association,
-    transformations,
-    wrap,
+    set_default_active_scalars,
+    vtkmatrix_from_array,
 )
-from pyvista.utilities.cells import numpy_to_idarr
+from pyvista.core.utilities.cells import numpy_to_idarr
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -527,7 +527,7 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         alg.SetValue(value)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
         else:
             self.set_active_scalars(scalars)
 
@@ -1149,27 +1149,27 @@ class DataSetFilters:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> vol = pyvista.wrap(volume)
+        >>> vol = pv.wrap(volume)
         >>> threshed = vol.threshold(0.1)
-        >>> threshed  # doctest:+SKIP
-        UnstructuredGrid (0x7f00f9983fa0)
-          N Cells:	243
-          N Points:	400
-          X Bounds:	0.000e+00, 3.000e+00
-          Y Bounds:	0.000e+00, 9.000e+00
-          Z Bounds:	0.000e+00, 9.000e+00
-          N Arrays:	1
+        >>> threshed
+        UnstructuredGrid (...)
+          N Cells:    243
+          N Points:   400
+          X Bounds:   0.000e+00, 3.000e+00
+          Y Bounds:   0.000e+00, 9.000e+00
+          Z Bounds:   0.000e+00, 9.000e+00
+          N Arrays:   1
 
         Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> grid.plot(
@@ -1180,9 +1180,9 @@ class DataSetFilters:
 
         Next, apply the threshold.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> threshed = grid.threshold(value=0.02)
@@ -1197,7 +1197,7 @@ class DataSetFilters:
         """
         # set the scalars to threshold on
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
@@ -1335,7 +1335,7 @@ class DataSetFilters:
 
         """
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             _, tscalars = self.active_scalars_info
         else:
             tscalars = scalars
@@ -1476,14 +1476,15 @@ class DataSetFilters:
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.extract_geometry()  # doctest:+SKIP
-        PolyData (0x7f2f8c132040)
-          N Cells:	88
-          N Points:	90
-          X Bounds:	0.000e+00, 1.000e+00
-          Y Bounds:	0.000e+00, 1.000e+00
-          Z Bounds:	0.000e+00, 5.000e+00
-          N Arrays:	3
+        >>> hex_beam.extract_geometry()
+        PolyData (...)
+          N Cells:    88
+          N Points:   90
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 5.000e+00
+          N Arrays:   3
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
@@ -1505,9 +1506,9 @@ class DataSetFilters:
         ----------
         use_all_points : bool, default: False
             Indicates whether all of the points of the input mesh should exist
-            in the output. When ``True`` enables point renumbering.  If set to
-            ``True``, then a threaded approach is used which avoids the use of
-            a point locator and is quicker.
+            in the output. When ``True``, point numbering does not change and
+            a threaded approach is used, which avoids the use of a point locator
+            and is quicker.
 
             By default this is set to ``False``, and unused points are omitted
             from the output.
@@ -1762,7 +1763,7 @@ class DataSetFilters:
         ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
-        >>> grid = pv.UniformGrid(
+        >>> grid = pv.ImageData(
         ...     dimensions=(n, n, n),
         ...     spacing=(
         ...         abs(x_min) / n * 2,
@@ -1825,7 +1826,7 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars_name = self.active_scalars_info
         else:
             field = get_array_association(self, scalars_name, preference=preference)
@@ -2258,7 +2259,7 @@ class DataSetFilters:
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
-                pyvista.set_default_active_scalars(self)
+                set_default_active_scalars(self)
             except MissingDataError:
                 warnings.warn("No data to use for scale. scale will be set to False.")
                 scale = False
@@ -2545,7 +2546,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
@@ -2722,7 +2723,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_cell_arrays``.
+            Deprecated keyword argument ``pass_cell_arrays``.
 
         Returns
         -------
@@ -2809,7 +2810,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         **kwargs : dict, optional
-            Depreciated keyword argument ``pass_point_arrays``.
+            Deprecated keyword argument ``pass_point_arrays``.
 
         Returns
         -------
@@ -3029,7 +3030,7 @@ class DataSetFilters:
         ----------
         points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
-            or something :func:`pyvista.wrap` can handle.
+            or something :func:`wrap` can handle.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
@@ -3073,7 +3074,7 @@ class DataSetFilters:
 
         """
         if not pyvista.is_pyvista_dataset(points):
-            points = pyvista.wrap(points)
+            points = wrap(points)
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(self)
@@ -3266,7 +3267,7 @@ class DataSetFilters:
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
@@ -3404,7 +3405,7 @@ class DataSetFilters:
             source.SetRadius(source_radius)
             source.SetNumberOfPoints(n_points)
         source.Update()
-        input_source = pyvista.wrap(source.GetOutput())
+        input_source = wrap(source.GetOutput())
         output = self.streamlines_from_source(
             input_source, vectors, progress_bar=progress_bar, **kwargs
         )
@@ -3942,7 +3943,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4273,7 +4274,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -4399,7 +4400,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
@@ -5066,7 +5067,7 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
@@ -5264,7 +5265,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Transformed dataset.  Return type matches input unless
-            input dataset is a :class:`pyvista.UniformGrid`, in which
+            input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         Examples
@@ -5304,7 +5305,7 @@ class DataSetFilters:
         elif isinstance(trans, np.ndarray):
             if trans.shape != (4, 4):
                 raise ValueError('Transformation array must be 4x4')
-            m = pyvista.vtkmatrix_from_array(trans)
+            m = vtkmatrix_from_array(trans)
             t = _vtk.vtkTransform()
             t.SetMatrix(m)
         else:
@@ -5541,11 +5542,11 @@ class DataSetFilters:
 
         Examples
         --------
-        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+        Partition a simple ImageData into a :class:`pyvista.MultiBlock`
         containing each partition.
 
         >>> import pyvista as pv
-        >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
         >>> out = grid.partition(4, as_composite=True)
         >>> out.plot(multi_colors=True, show_edges=True)
 
@@ -5668,9 +5669,9 @@ class DataSetFilters:
         is shallow copied to the output.
 
         The type of output dataset is always the same as the input type. Since
-        structured types of data (i.e., :class:`pyvista.UniformGrid`,
-        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
-        :class:`pyvista.UniformGrid`) are all composed of a cell of the same
+        structured types of data (i.e., :class:`pyvista.ImageData`,
+        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`)
+        are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,
         :class:`pyvista.PolyData`) input may produce a subset of the input data

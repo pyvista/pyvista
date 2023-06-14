@@ -53,7 +53,7 @@ probes = examples.download_thermal_probes()
 
 ###############################################################################
 # Create the interpolation grid around the sparse data
-grid = pv.UniformGrid()
+grid = pv.ImageData()
 grid.origin = (329700, 4252600, -2700)
 grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)

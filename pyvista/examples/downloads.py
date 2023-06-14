@@ -28,9 +28,11 @@ from pooch import Unzip
 from pooch.utils import get_logger
 
 import pyvista
-from pyvista import _vtk
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.utilities.misc import PyVistaDeprecationWarning
+from pyvista.core.utilities.fileio import get_ext, read, read_texture
+from pyvista.core.utilities.reader import DICOMReader
+from pyvista.errors import PyVistaDeprecationWarning
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -248,15 +250,15 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
-    if pyvista.get_ext(filename) == '.zip':  # pragma: no cover
+    if get_ext(filename) == '.zip':  # pragma: no cover
         raise ValueError('Cannot download and read an archive file')
 
     saved_file = download_file(filename)
     if not load:
         return saved_file
     if texture:
-        return pyvista.read_texture(saved_file)
-    return pyvista.read(saved_file, file_format=file_format)
+        return read_texture(saved_file)
+    return read(saved_file, file_format=file_format)
 
 
 def download_masonry_texture(load=True):  # pragma: no cover
@@ -353,7 +355,7 @@ def download_puppy(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -401,7 +403,7 @@ def download_st_helens(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -611,7 +613,7 @@ def download_head(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -647,7 +649,7 @@ def download_head_2(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -828,7 +830,7 @@ def download_knee(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -858,7 +860,7 @@ def download_knee_full(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1022,7 +1024,7 @@ def download_iron_protein(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1223,7 +1225,7 @@ def download_bird(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1349,7 +1351,7 @@ def download_cake_easy(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1426,7 +1428,7 @@ def download_gourds(zoom=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1484,7 +1486,7 @@ def download_gourds_pnm(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1634,7 +1636,7 @@ def download_frog(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1668,7 +1670,7 @@ def download_chest(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1695,7 +1697,7 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1719,7 +1721,7 @@ def download_prostate(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1843,7 +1845,7 @@ def download_emoji(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1920,7 +1922,7 @@ def download_brain(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2053,7 +2055,7 @@ def download_sky_box_nz(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2282,7 +2284,7 @@ def download_carotid(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2557,7 +2559,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = pyvista.filters._get_output(alg)
+        result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -2749,7 +2751,7 @@ def download_crater_topo(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2833,7 +2835,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2894,7 +2896,7 @@ def download_embryo(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2991,7 +2993,7 @@ def download_beach(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4041,8 +4043,8 @@ def download_pump_bracket(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_pump_bracket()
-    >>> dataset  # doctest:+SKIP
-    UnstructuredGrid (0x7f46a9279120)
+    >>> dataset
+    UnstructuredGrid (...)
       N Cells:    124806
       N Points:   250487
       X Bounds:   -5.000e-01, 5.000e-01
@@ -4100,29 +4102,26 @@ def download_electronics_cooling(load=True):  # pragma: no cover
 
     Examples
     --------
-    Load the datasets
+    Load the datasets and plot the air velocity through the electronics.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> structure, air = examples.download_electronics_cooling()
-    >>> structure, air  # doctest:+SKIP
-    (PolyData (0x7fdfe4eb24a0)
-       N Cells:    344270
-       N Points:   187992
-       N Strips:   0
-       X Bounds:   -3.000e-03, 1.530e-01
-       Y Bounds:   -3.000e-03, 2.030e-01
-       Z Bounds:   -9.000e-03, 4.200e-02
-       N Arrays:   5,
-     UnstructuredGrid (0x7fdfde4478e0)
-       N Cells:    1749992
-       N Points:   610176
-       X Bounds:   -1.388e-18, 1.500e-01
-       Y Bounds:   -3.000e-03, 2.030e-01
-       Z Bounds:   -6.000e-03, 4.400e-02
-       N Arrays:   10)
-
-    Plot the air velocity through the electronics.
+    >>> structure, air
+    (PolyData (...)
+      N Cells:    344270
+      N Points:   187992
+      N Strips:   0
+      X Bounds:   -3.000e-03, 1.530e-01
+      Y Bounds:   -3.000e-03, 2.030e-01
+      Z Bounds:   -9.000e-03, 4.200e-02
+      N Arrays:   4, UnstructuredGrid (...)
+      N Cells:    1749992
+      N Points:   610176
+      X Bounds:   -1.388e-18, 1.500e-01
+      Y Bounds:   -3.000e-03, 2.030e-01
+      Z Bounds:   -6.000e-03, 4.400e-02
+      N Arrays:   10)
 
     >>> z_slice = air.clip('z', value=-0.005)
     >>> pl = pv.Plotter()
@@ -4143,6 +4142,8 @@ def download_electronics_cooling(load=True):  # pragma: no cover
     >>> pl.camera.roll = 90
     >>> pl.enable_anti_aliasing('fxaa')
     >>> pl.show()
+
+    Show the type and bounds of the datasets.
 
     See :ref:`openfoam_cooling_example` for a full example using this dataset.
 
@@ -4362,7 +4363,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     return reader.read()
 
 
-def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)
@@ -4378,7 +4379,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or path depending on ``load``.
 
     References
@@ -4412,7 +4413,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.UniformGrid, str]: 
     fnames = _download_archive('DICOM_Stack/data.zip')
     path = os.path.dirname(fnames[0])
     if load:
-        reader = pyvista.DICOMReader(path)
+        reader = DICOMReader(path)
         return reader.read()
     return path
 
@@ -4484,7 +4485,7 @@ def download_moonlanding_image(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         ``DataSet`` or filename depending on ``load``.
 
     Examples
@@ -4610,7 +4611,7 @@ def download_gif_simple(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4664,14 +4665,14 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter()
-    >>> pc  # doctest:+SKIP
-    PointSet (0x7f97f718d460)
-      N Cells:      0
-      N Points:     32314
-      X Bounds:     7.451e+01, 7.892e+01
-      Y Bounds:     1.616e+01, 2.275e+01
-      Z Bounds:     8.900e+01, 9.319e+01
-      N Arrays:     0
+    >>> pc
+    PointSet (...)
+      N Cells:    0
+      N Points:   32314
+      X Bounds:   7.451e+01, 7.892e+01
+      Y Bounds:   1.616e+01, 2.275e+01
+      Z Bounds:   8.900e+01, 9.319e+01
+      N Arrays:   0
 
     Plot the point cloud. Color based on the distance from the center of the
     cloud.
@@ -4718,14 +4719,14 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
     >>> import numpy as np
     >>> from pyvista import examples
     >>> pc = examples.download_cloud_dark_matter_dense()
-    >>> pc  # doctest:+SKIP
-    PointSet (0x7fd79493a340)
-    N Cells:      0
-    N Points:     2062256
-    X Bounds:     7.462e+01, 7.863e+01
-    Y Bounds:     1.604e+01, 2.244e+01
-    Z Bounds:     8.893e+01, 9.337e+01
-    N Arrays:     0
+    >>> pc
+    PointSet (...)
+      N Cells:    0
+      N Points:   2062256
+      X Bounds:   7.462e+01, 7.863e+01
+      Y Bounds:   1.604e+01, 2.244e+01
+      Z Bounds:   8.893e+01, 9.337e+01
+      N Arrays:   0
 
     Plot the point cloud. Color based on the distance from the center of the
     cloud.
@@ -4794,15 +4795,15 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
     ...     zoom=3.0,
     ... )
 
-    >>> stars  # doctest:+SKIP
-    PolyData (0x7fe5851ac0a0)
-      N Cells:      107857
-      N Points:     107857
-      N Strips:     0
-      X Bounds:     -9.755e+02, 9.774e+02
-      Y Bounds:     -9.620e+02, 9.662e+02
-      Z Bounds:     -9.788e+02, 9.702e+02
-      N Arrays:     4
+    >>> stars
+    PolyData (...)
+      N Cells:    107857
+      N Points:   107857
+      N Strips:   0
+      X Bounds:   -9.755e+02, 9.774e+02
+      Y Bounds:   -9.620e+02, 9.662e+02
+      Z Bounds:   -9.788e+02, 9.702e+02
+      N Arrays:   3
 
     See the :ref:`plotting_point_clouds` for more details on how to plot point
     clouds.
@@ -4938,14 +4939,16 @@ def download_black_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe489493520)
-      N Cells:      3136652
-      N Points:     1611789
-      X Bounds:     -1.092e+02, 1.533e+02
-      Y Bounds:     -1.200e+02, 1.415e+02
-      Z Bounds:     1.666e+01, 4.077e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3136652
+      N Points:   1611789
+      N Strips:   0
+      X Bounds:   -1.092e+02, 1.533e+02
+      Y Bounds:   -1.200e+02, 1.415e+02
+      Z Bounds:   1.666e+01, 4.077e+02
+      N Arrays:   0
+
 
     """
     filename = _download_archive(
@@ -4995,14 +4998,15 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7f6ed1345520)
-      N Cells:      4547716
-      N Points:     2297089
-      X Bounds:     -1.147e+02, 8.468e+01
-      Y Bounds:     -7.103e+01, 9.247e+01
-      Z Bounds:     -1.198e+02, 2.052e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3580454
+      N Points:   1811531
+      N Strips:   0
+      X Bounds:   -1.147e+02, 8.468e+01
+      Y Bounds:   -6.996e+01, 9.247e+01
+      Z Bounds:   -1.171e+02, 2.052e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5047,14 +5051,15 @@ def download_bird_bath(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8caf2ba00)
-    N Cells:      3507935
-    N Points:     1831383
-    X Bounds:     -1.601e+02, 1.483e+02
-    Y Bounds:     -1.521e+02, 1.547e+02
-    Z Bounds:     -4.241e+00, 1.409e+02
-    N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3507935
+      N Points:   1831383
+      N Strips:   0
+      X Bounds:   -1.601e+02, 1.483e+02
+      Y Bounds:   -1.521e+02, 1.547e+02
+      Z Bounds:   -4.241e+00, 1.409e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5104,14 +5109,15 @@ def download_owl(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8caeeaee0)
-      N Cells:      2440707
-      N Points:     1221756
-      X Bounds:     -5.834e+01, 7.047e+01
-      Y Bounds:     -7.006e+01, 6.658e+01
-      Z Bounds:     1.676e+00, 2.013e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    2440707
+      N Points:   1221756
+      N Strips:   0
+      X Bounds:   -5.834e+01, 7.047e+01
+      Y Bounds:   -7.006e+01, 6.658e+01
+      Z Bounds:   1.676e+00, 2.013e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5156,14 +5162,15 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8cadc14c0)
-      N Cells:      3570967
-      N Points:     1796805
-      X Bounds:     -1.364e+02, 1.929e+02
-      Y Bounds:     -1.677e+02, 1.603e+02
-      Z Bounds:     1.209e+02, 4.090e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3570967
+      N Points:   1796805
+      N Strips:   0
+      X Bounds:   -1.364e+02, 1.929e+02
+      Y Bounds:   -1.677e+02, 1.603e+02
+      Z Bounds:   1.209e+02, 4.090e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5208,14 +5215,15 @@ def download_sea_vase(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fe8b3862460)
-      N Cells:      3548473
-      N Points:     1810012
-      X Bounds:     -1.666e+02, 1.465e+02
-      Y Bounds:     -1.742e+02, 1.384e+02
-      Z Bounds:     -1.500e+02, 2.992e+02
-      N Arrays:     0
+    >>> mesh
+    PolyData (...)
+      N Cells:    3548473
+      N Points:   1810012
+      N Strips:   0
+      X Bounds:   -1.666e+02, 1.465e+02
+      Y Bounds:   -1.742e+02, 1.384e+02
+      Z Bounds:   -1.500e+02, 2.992e+02
+      N Arrays:   0
 
     """
     filename = _download_archive(
@@ -5286,14 +5294,15 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     Return the statistics of the dataset.
 
-    >>> mesh  # doctest:+SKIP
-    PolyData (0x7fd08f1faf40)
-      N Cells:      13702
-      N Points:     6801
-      X Bounds:     -6.460e-31, 9.000e+01
-      Y Bounds:     -3.535e-32, 1.480e+02
-      Z Bounds:     -7.287e-13, 2.000e+01
-      N Arrays:     1
+    >>> mesh
+    PolyData (...)
+      N Cells:    15446
+      N Points:   7677
+      N Strips:   0
+      X Bounds:   -6.460e-31, 9.000e+01
+      Y Bounds:   -3.535e-32, 1.480e+02
+      Z Bounds:   0.000e+00, 2.000e+01
+      N Arrays:   2
 
     """
     return _download_and_read('cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp', load=load)
@@ -5333,8 +5342,8 @@ def download_aero_bracket(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> dataset = examples.download_aero_bracket()
-    >>> dataset  # doctest:+SKIP
-    UnstructuredGrid (0x7f439aa2cac0)
+    >>> dataset
+    UnstructuredGrid (...)
       N Cells:    117292
       N Points:   187037
       X Bounds:   -6.858e-03, 1.118e-01
@@ -5390,7 +5399,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid or str
+    pyvista.ImageData or str
         DataSet or filename depending on ``load``.
 
     Examples

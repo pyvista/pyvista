@@ -11,13 +11,15 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
-from .._typing import BoundsLike
+from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import FieldAssociation
+from .utilities.geometric_objects import Box
+from .utilities.helpers import is_pyvista_dataset, wrap
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
@@ -90,8 +92,8 @@ class MultiBlock(
 
     """
 
-    # Bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
+    plot = pyvista._plot.plot
+
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:
@@ -139,7 +141,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, pyvista.wrap(block))
+                self.SetBlock(i, wrap(block))
 
     @property
     def bounds(self) -> BoundsLike:
@@ -218,7 +220,7 @@ class MultiBlock(
         4.3584
 
         """
-        return pyvista.Box(self.bounds).length
+        return Box(self.bounds).length
 
     @property
     def n_blocks(self) -> int:
@@ -404,8 +406,8 @@ class MultiBlock(
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
-        if not pyvista.is_pyvista_dataset(dataset):
-            dataset = pyvista.wrap(dataset)
+        if not is_pyvista_dataset(dataset):
+            dataset = wrap(dataset)
         self.n_blocks += 1
         self[index] = dataset
         # No overwrite if name is None
@@ -474,7 +476,7 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"poly": pv.PolyData(), "uni": pv.UniformGrid()}
+        >>> data = {"poly": pv.PolyData(), "img": pv.ImageData()}
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get("poly")
         PolyData ...
@@ -929,13 +931,14 @@ class MultiBlock(
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        return fmt
+        return fmt.strip()
 
     def __str__(self) -> str:
         """Return the str representation of the multi block."""
@@ -1014,7 +1017,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray
@@ -1110,6 +1113,8 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     dataset.replace(i, block.as_polydata_blocks(copy=copy))
+                elif isinstance(block, pyvista.PointSet):
+                    dataset.replace(i, block.cast_to_polydata(deep=True))
                 elif not isinstance(block, pyvista.PolyData):
                     dataset.replace(i, block.extract_surface())
                 elif copy:

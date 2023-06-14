@@ -6,27 +6,27 @@ import os
 import pathlib
 from textwrap import dedent
 from typing import Sequence, Tuple, Union
-import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, create_mixed_cells, get_mixed_cells, numpy_to_idarr
 
-from .._typing import BoundsLike
-from ..utilities.fileio import get_ext
+from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike
+from .cell import CellArray
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
-    DeprecationError,
     PointSetCellOperationError,
     PointSetDimensionReductionError,
     PointSetNotSupported,
     VTKVersionError,
 )
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
+from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from .utilities.fileio import get_ext
+from .utilities.misc import abstract_class
+from .utilities.points import vtk_points
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -287,7 +287,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             else:
                 self.shallow_copy(var_inp)
         else:
-            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
+            self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
     def __repr__(self):
         """Return the standard representation."""
@@ -621,7 +621,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # First parameter is points
         if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
-            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep, force_float=force_float))
+            self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
         else:
             msg = f"""
@@ -849,23 +849,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def is_all_triangles(self):
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
-        .. versionchanged:: 0.32.0
-           ``is_all_triangles`` is now a property.  Calling this value
-           will warn the user that this should not be called.
-           Additionally, the ``is`` operator will not work the return
-           value of this property since it is not a ``bool``
-
         Returns
         -------
-        CallableBool
+        bool
             ``True`` if all the faces of the :class:`pyvista.PolyData`
             are triangles and does not contain any vertices or lines.
-
-        Notes
-        -----
-        The return value is not a ``bool`` for compatibility
-        reasons, though this behavior will change in a future
-        release.  Future versions will simply return a ``bool``.
 
         Examples
         --------
@@ -875,60 +863,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import pyvista
         >>> plane = pyvista.Plane()
         >>> plane.is_all_triangles
-        False <CallableBool>
+        False
 
         Show that the mesh from :func:`pyvista.Sphere` contains only
         triangles.
 
         >>> sphere = pyvista.Sphere()
         >>> sphere.is_all_triangles
-        True <CallableBool>
+        True
 
         """
-
-        class CallableBool(int):  # pragma: no cover
-            """Boolean that can be called.
-
-            Programmer note: We must subclass int and not bool
-            https://stackoverflow.com/questions/2172189/why-i-cant-extend-bool-in-python
-
-            Implemented for backwards compatibility as
-            ``is_all_triangles`` was changed to be a property in
-            ``0.32.0``.
-
-            """
-
-            def __new__(cls, value):
-                """Use new instead of __init__.
-
-                See:
-                https://jfine-python-classes.readthedocs.io/en/latest/subclass-int.html#emulating-bool-using-new
-
-                """
-                return int.__new__(cls, bool(value))
-
-            def __call__(self):
-                """Return a ``bool`` of self."""
-                warnings.warn(
-                    '``is_all_triangles`` is now property as of 0.32.0 and does not need ()',
-                    DeprecationWarning,
-                )
-                return bool(self)
-
-            def __repr__(self):
-                """Return the string of bool."""
-                return f'{bool(self)} <CallableBool>'
-
         # Need to make sure there are only face cells and no lines/verts
         if not self.n_faces or self.n_lines or self.n_verts:
-            return CallableBool(False)
+            return False
 
         # early return if not all triangular
         if self._connectivity_array.size % 3:
-            return CallableBool(False)
+            return False
 
         # next, check if there are three points per face
-        return CallableBool((np.diff(self._offset_array) == 3).all())
+        return (np.diff(self._offset_array) == 3).all()
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
@@ -1015,11 +969,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         """
         return self.n_cells
-
-    @property
-    def number_of_faces(self):  # pragma: no cover
-        """Return the number of cells."""
-        raise DeprecationError('``number_of_faces`` has been deprecated.  Please use ``n_faces``')
 
     def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.
@@ -1565,7 +1514,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
-        points = pyvista.vtk_points(points, deep, force_float)
+        points = vtk_points(points, deep, force_float)
         self.SetPoints(points)
 
         self.SetCells(cell_type, vtkcells)
@@ -2005,15 +1954,15 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> zrng = np.arange(-10, 10, 1, dtype=np.float32)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
     >>> grid = pyvista.StructuredGrid(x, y, z)
-    >>> grid  # doctest:+SKIP
-    StructuredGrid (0x7fb18f2a8580)
-    N Cells:    513
-    N Points:   800
-    X Bounds:   -1.000e+01, 8.000e+00
-    Y Bounds:   -1.000e+01, 5.000e+00
-    Z Bounds:   -1.000e+01, 9.000e+00
-    Dimensions: 10, 4, 20
-    N Arrays:   0
+    >>> grid
+    StructuredGrid (...)
+      N Cells:      513
+      N Points:     800
+      X Bounds:     -1.000e+01, 8.000e+00
+      Y Bounds:     -1.000e+01, 5.000e+00
+      Z Bounds:     -1.000e+01, 9.000e+00
+      Dimensions:   10, 4, 20
+      N Arrays:     0
 
     """
 
@@ -2099,7 +2048,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         # Create structured grid
         self.SetDimensions(dim)
-        self.SetPoints(pyvista.vtk_points(points, force_float=force_float))
+        self.SetPoints(vtk_points(points, force_float=force_float))
 
     @property
     def dimensions(self):
@@ -2356,7 +2305,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> dims = np.array([ni, nj, nk]) + 1
     >>> grid = pv.ExplicitStructuredGrid(dims, corners)
     >>> grid = grid.compute_connectivity()
-    >>> grid.plot(show_edges=True)  # doctest:+SKIP
+    >>> grid.plot(show_edges=True)
 
     """
 
@@ -2429,7 +2378,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore
             cells[c, 1:] = indices[cinds]
         cells = cells.flatten()
-        points = pyvista.vtk_points(points)
+        points = vtk_points(points)
         cells = CellArray(cells, ncells)
         self.SetDimensions(dims)
         self.SetPoints(points)
@@ -2464,25 +2413,17 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.cast_to_unstructured_grid()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = grid.cast_to_unstructured_grid()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid = grid.cast_to_explicit_structured_grid()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         grid = ExplicitStructuredGrid()
@@ -2641,8 +2582,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.dimensions  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.dimensions
         (5, 6, 7)
 
         """
@@ -2666,13 +2607,13 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.bounds  # doctest:+SKIP
-        [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.bounds
+        (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
 
-        >>> grid.visible_bounds  # doctest:+SKIP
-        [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
+        >>> grid.visible_bounds
+        (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
         """
         name = _vtk.vtkDataSetAttributes.GhostArrayName()
@@ -2703,12 +2644,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.cell_id((3, 4, 0))  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.cell_id((3, 4, 0))
         19
 
         >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
-        >>> grid.cell_id(coords)  # doctest:+SKIP
+        >>> grid.cell_id(coords)
         array([19, 31, 41, 54])
 
         """
@@ -2750,11 +2691,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.cell_coords(19)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.cell_coords(19)
         (3, 4, 0)
 
-        >>> grid.cell_coords((19, 31, 41, 54))  # doctest:+SKIP
+        >>> grid.cell_coords((19, 31, 41, 54))
         array([[3, 4, 0],
                [3, 2, 1],
                [1, 0, 2],
@@ -2799,20 +2740,15 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> cell = grid.extract_cells(31)  # doctest:+SKIP
-        >>> ind = grid.neighbors(31)  # doctest:+SKIP
-        >>> neighbors = grid.extract_cells(ind)  # doctest:+SKIP
-        >>>
+        >>> grid = examples.load_explicit_structured()
+        >>> cell = grid.extract_cells(31)
+        >>> ind = grid.neighbors(31)
+        >>> neighbors = grid.extract_cells(ind)
         >>> plotter = pv.Plotter()
-        >>> plotter.add_axes()  # doctest:+SKIP
-        >>> plotter.add_mesh(
-        ...     cell, color='r', show_edges=True
-        ... )  # doctest:+SKIP
-        >>> plotter.add_mesh(
-        ...     neighbors, color='w', show_edges=True
-        ... )  # doctest:+SKIP
-        >>> plotter.show()  # doctest:+SKIP
+        >>> _ = plotter.add_axes()
+        >>> _ = plotter.add_mesh(cell, color='r', show_edges=True)
+        >>> _ = plotter.add_mesh(neighbors, color='w', show_edges=True)
+        >>> plotter.show()
 
         """
 
@@ -2938,9 +2874,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> from pyvista import examples
         >>>
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid = grid.compute_connectivity()  # doctest:+SKIP
-        >>> grid.plot(show_edges=True)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.compute_connectivity()
+        >>> grid.plot(show_edges=True)
 
         """
         if inplace:
@@ -2977,9 +2913,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid = grid.compute_connections()  # doctest:+SKIP
-        >>> grid.plot(show_edges=True)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.compute_connections()
+        >>> grid.plot(show_edges=True)
 
         """
         if inplace:

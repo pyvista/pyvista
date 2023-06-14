@@ -24,27 +24,26 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.core.errors import VTKVersionError
-from pyvista.utilities import (
-    FieldAssociation,
-    abstract_class,
-    get_array,
-    get_array_association,
-    is_pyvista_dataset,
-    raise_not_matching,
-    transformations,
-    vtk_id_list_to_array,
-)
-from pyvista.utilities.arrays import _coerce_pointslike_arg
-from pyvista.utilities.errors import check_valid_vector
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
-from .._typing import BoundsLike, Number, NumericArray, Vector, VectorArray
+from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .errors import PyVistaDeprecationWarning, VTKVersionError
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities import transformations
+from .utilities.arrays import (
+    FieldAssociation,
+    _coerce_pointslike_arg,
+    get_array,
+    get_array_association,
+    raise_not_matching,
+    vtk_id_list_to_array,
+)
+from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import abstract_class, check_valid_vector
+from .utilities.points import vtk_points
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -116,8 +115,7 @@ class ActiveArrayInfo:
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
-    # Simply bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
+    plot = pyvista._plot.plot
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -126,7 +124,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: Dict[str, _vtk.vtkTexture] = {}
+        self._textures: Dict[str, pyvista.Texture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -407,8 +405,8 @@ class DataSet(DataSetFilters, DataObject):
             _points = _points.GetData()
         except AttributeError:
             # create an empty array
-            vtk_points = pyvista.vtk_points(np.empty((0, 3)), False)
-            self.SetPoints(vtk_points)
+            vtkpts = vtk_points(np.empty((0, 3)), False)
+            self.SetPoints(vtkpts)
             _points = self.GetPoints().GetData()
         return pyvista_ndarray(_points, dataset=self)
 
@@ -431,11 +429,11 @@ class DataSet(DataSetFilters, DataObject):
             return
         # otherwise, wrap and use the array
         points, _ = _coerce_pointslike_arg(points, copy=False)
-        vtk_points = pyvista.vtk_points(points, False)
+        vtkpts = vtk_points(points, False)
         if not pdata:
-            self.SetPoints(vtk_points)
+            self.SetPoints(vtkpts)
         else:
-            pdata.SetData(vtk_points.GetData())
+            pdata.SetData(vtkpts.GetData())
         self.GetPoints().Modified()
         self.Modified()
 
@@ -504,44 +502,42 @@ class DataSet(DataSetFilters, DataObject):
         self.point_data.active_t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> Dict[str, _vtk.vtkTexture]:
-        """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
+    def textures(self) -> Dict[str, pyvista.Texture]:
+        """Return a dictionary to hold compatible ``pyvista.Texture`` objects.
+
+        .. deprecated:: 0.40.0
+            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
 
         When casting back to a VTK dataset or filtering this dataset,
         these textures will not be passed.
 
-        Examples
-        --------
-        Return the active texture datasets from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.textures
-        {'2k_earth_daymap': ...}
-
         """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
+            PyVistaDeprecationWarning,
+        )
         return self._textures
 
     def clear_textures(self):
         """Clear the textures from this mesh.
 
-        Examples
-        --------
-        Clear the texture from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.textures
-        {'2k_earth_daymap': ...}
-        >>> globe.clear_textures()
-        >>> globe.textures
-        {}
+        .. deprecated:: 0.40.0
+            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
 
         """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
+            PyVistaDeprecationWarning,
+        )
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str) -> _vtk.vtkTexture:
+    def _activate_texture(mesh, name: str) -> Optional[pyvista.Texture]:
         """Grab a texture and update the active texture coordinates.
+
+        .. deprecated:: 0.40.0
+            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
 
         This makes sure to not destroy old texture coordinates.
 
@@ -552,10 +548,15 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        vtk.vtkTexture
+        pyvista.Texture
             The active texture
 
         """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
+            PyVistaDeprecationWarning,
+        )
         if name is True or isinstance(name, int):
             keys = list(mesh.textures.keys())
             # Grab the first name available if True
@@ -602,7 +603,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Association of the scalars matching ``name``.
 
         numpy.ndarray
@@ -1402,7 +1403,9 @@ class DataSet(DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
-        self.clear_textures()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
+            self.clear_textures()
 
         if deep:
             self._association_complex_names = deepcopy(ido._association_complex_names)
@@ -1410,7 +1413,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
-            self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
+            self._textures = {name: tex.copy() for name, tex in ido._textures.items()}
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
@@ -1418,7 +1421,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
-            self._textures = ido.textures
+            self._textures = ido._textures
 
     @property
     def point_data(self) -> DataSetAttributes:
@@ -1662,13 +1665,13 @@ class DataSet(DataSetFilters, DataObject):
         Note that there are 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.volume
         64.0
 
         A mesh with 2D cells has no volume.
 
-        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
+        >>> mesh = pv.ImageData(dimensions=(5, 5, 1))
         >>> mesh.volume
         0.0
 
@@ -1700,7 +1703,7 @@ class DataSet(DataSetFilters, DataObject):
         Note 5 points in each direction.
 
         >>> import pyvista as pv
-        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 1))
+        >>> mesh = pv.ImageData(dimensions=(5, 5, 1))
         >>> mesh.area
         16.0
 
@@ -1708,7 +1711,7 @@ class DataSet(DataSetFilters, DataObject):
         the outer surface area, first extract the surface using
         :func:`pyvista.DataSetFilters.extract_surface`.
 
-        >>> mesh = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.area
         0.0
 
@@ -1793,7 +1796,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the array.
 
         Examples
@@ -2383,11 +2386,11 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista
-        >>> mesh = pyvista.UniformGrid(
+        >>> mesh = pyvista.ImageData(
         ...     dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0]
         ... )
         >>> mesh
-        UniformGrid...
+        ImageData...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
         5
 
@@ -2664,7 +2667,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> # Create a grid with 9 points and 4 cells
-        >>> mesh = pv.UniformGrid(dimensions=(3, 3, 1))
+        >>> mesh = pv.ImageData(dimensions=(3, 3, 1))
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
         ...

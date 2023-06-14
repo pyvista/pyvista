@@ -99,7 +99,7 @@ def tri_cylinder():
 @fixture()
 def datasets():
     return [
-        examples.load_uniform(),  # UniformGrid
+        examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_hexbeam(),  # UnstructuredGrid
         examples.load_airplane(),  # PolyData
@@ -158,36 +158,6 @@ def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
-
-
-def make_two_char_img(text):
-    """Turn text into an image.
-
-    This is really only here to make a two character black and white image.
-
-    """
-    # create a basic texture by plotting a sphere and converting the image
-    # buffer to a texture
-    pl = pyvista.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
-    pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
-    pl.background_color = 'k'
-    pl.camera.zoom = 'tight'
-    return pyvista.Texture(pl.screenshot()).to_image()
-
-
-@fixture()
-def cubemap(texture):
-    """Sample texture as a cubemap."""
-    return pyvista.Texture(
-        [
-            make_two_char_img('X+'),
-            make_two_char_img('X-'),
-            make_two_char_img('Y+'),
-            make_two_char_img('Y-'),
-            make_two_char_img('Z+'),
-            make_two_char_img('Z-'),
-        ]
-    )
 
 
 @fixture()

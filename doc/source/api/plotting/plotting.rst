@@ -122,12 +122,13 @@ values change through time:
 
 
     globe = examples.load_globe()
+    texture = examples.load_globe_texture()
     globe.point_data['scalars'] = np.random.rand(globe.n_points)
     globe.set_active_scalars('scalars')
 
 
     plotter = pvqt.BackgroundPlotter()
-    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
+    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=texture, scalars='scalars')
     plotter.view_isometric()
 
     # shrink globe in the background

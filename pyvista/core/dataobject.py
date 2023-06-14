@@ -8,10 +8,13 @@ from typing import Any, DefaultDict, Dict, Type, Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, abstract_class, fileio
 
+from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
+from .utilities.arrays import FieldAssociation
+from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.helpers import wrap
+from .utilities.misc import abstract_class
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -60,7 +63,7 @@ class DataObject:
         self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
-        data = pyvista.read(filename, **kwargs)
+        data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
                 f'Reading file returned data of `{type(data).__name__}`, '
@@ -125,7 +128,7 @@ class DataObject:
         self._store_metadata()
 
         writer = self._WRITERS[file_ext]()
-        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         if file_ext == '.ply' and texture is not None:
@@ -241,7 +244,7 @@ class DataObject:
                 fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
             fmt += row.format('N Arrays:', self.n_arrays)
-        return fmt
+        return fmt.strip()
 
     def _repr_html_(self):  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.
@@ -365,9 +368,9 @@ class DataObject:
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        Add field data to a UniformGrid dataset.
+        Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
+        >>> mesh = pyvista.ImageData(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(
         ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
         ... )
@@ -485,8 +488,8 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
-        >>> target = pv.UniformGrid()
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
 
@@ -504,9 +507,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 
@@ -605,7 +608,7 @@ class DataObject:
                 reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        mesh = pyvista.wrap(reader.GetOutput())
+        mesh = wrap(reader.GetOutput())
 
         # copy data
         self.copy_structure(mesh)

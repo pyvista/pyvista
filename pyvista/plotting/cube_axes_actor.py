@@ -4,10 +4,10 @@ from typing import List, Tuple
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_string_array
+from pyvista.core._typing_core import BoundsLike
+from pyvista.core.utilities.arrays import convert_string_array
 
-from .._typing import BoundsLike
+from . import _vtk
 
 
 def make_axis_labels(vmin, vmax, n, fmt):

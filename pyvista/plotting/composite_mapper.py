@@ -8,10 +8,11 @@ import matplotlib
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.misc import _check_range
+from pyvista.report import vtk_version_info
 
-from ..utilities.misc import _check_range, vtk_version_info
+from . import _vtk
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -460,21 +461,21 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.block_attr.get_block(0)  # doctest:+SKIP
+        >>> mapper.block_attr.get_block(0)
         MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         Note this is the same as using ``__getitem__``
 
-        >>> mapper.block_attr[0]  # doctest:+SKIP
-        MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+        >>> mapper.block_attr[0]
+        Composite Block Addr=... Attributes
+        Visible:   None
+        Opacity:   None
+        Color:     None
+        Pickable   None
 
         """
         try:
@@ -524,7 +525,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     dataset : pyvista.MultiBlock
         Multiblock dataset.
 
-    theme : pyvista.themes.DefaultTheme, optional
+    theme : pyvista.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional
@@ -569,12 +570,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.dataset  # doctest:+SKIP
+        >>> mapper.dataset
         MultiBlock (...)
-          N Blocks:     2
-          X Bounds:     -0.500, 0.500
-          Y Bounds:     -0.500, 0.500
-          Z Bounds:     -0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         """
         return self._dataset

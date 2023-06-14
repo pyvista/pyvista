@@ -1,7 +1,7 @@
 """Examples module."""
-from pyvista.examples.downloads import *
-from pyvista.examples.examples import *
-from . import planets
-from . import gltf
-from . import vrml
+# flake8: noqa: F401
+
+from . import gltf, planets, vrml
 from .cells import plot_cell
+from .downloads import *
+from .examples import *
