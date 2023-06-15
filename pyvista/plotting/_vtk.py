@@ -61,17 +61,6 @@ from vtkmodules.vtkRenderingContext2D import (
     vtkImageItem,
     vtkPen,
 )
-
-from pyvista.core._vtk_core import *
-
-try:
-    # Necessary for displaying charts, otherwise crashes on rendering
-    import vtkmodules.vtkRenderingContextOpenGL2
-
-    _has_vtkRenderingContextOpenGL2 = True
-except ImportError:  # pragma: no cover
-    _has_vtkRenderingContextOpenGL2 = False
-
 from vtkmodules.vtkRenderingCore import (
     vtkAbstractMapper,
     vtkActor,
@@ -110,31 +99,14 @@ from vtkmodules.vtkRenderingCore import (
 )
 from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer, vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
-from vtkmodules.vtkRenderingOpenGL2 import (
-    vtkCameraPass,
-    vtkCompositePolyDataMapper2,
-    vtkDepthOfFieldPass,
-    vtkEDLShading,
-    vtkGaussianBlurPass,
-    vtkOpenGLFXAAPass,
-    vtkOpenGLHardwareSelector,
-    vtkOpenGLRenderer,
-    vtkOpenGLTexture,
-    vtkRenderPassCollection,
-    vtkRenderStepsPass,
-    vtkSequencePass,
-    vtkShadowMapPass,
-    vtkSSAAPass,
-    vtkSSAOPass,
-)
 from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
 from vtkmodules.vtkRenderingVolume import (
     vtkFixedPointVolumeRayCastMapper,
     vtkGPUVolumeRayCastMapper,
     vtkUnstructuredGridVolumeRayCastMapper,
 )
-from vtkmodules.vtkRenderingVolumeOpenGL2 import (
-    vtkOpenGLGPUVolumeRayCastMapper,
-    vtkSmartVolumeMapper,
-)
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+
+from pyvista.core._vtk_core import *
+
+from ._vtk_gl import *
