@@ -4551,6 +4551,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError('No active scalars')
         s = convert_array(vtk_scalars)
         s[:] = scalars
+        vtk_scalars.Modified()
         data.Modified()
         try:
             # Why are the points updated here? Not all datasets have points
