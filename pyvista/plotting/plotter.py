@@ -296,7 +296,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Keep track of the scale
 
         # track if render window has ever been rendered
-        self._rendered = uses_egl()
+        self._rendered = False
 
         self._on_render_callbacks = set()
 
