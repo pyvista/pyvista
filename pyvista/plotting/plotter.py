@@ -6698,7 +6698,8 @@ class Plotter(BasePlotter):
         # Here we check for that and clean it up before moving on to any of
         # the closing routines that might try to still access that
         # render window.
-        if not self.render_window.IsCurrent():
+        # Ignore if using a Jupyter display
+        if jupyter_disp is None and not self.render_window.IsCurrent():
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
@@ -6712,7 +6713,7 @@ class Plotter(BasePlotter):
                 warnings.warn(
                     "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
                 )
-        else:
+        if self.render_window.IsCurrent():
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
