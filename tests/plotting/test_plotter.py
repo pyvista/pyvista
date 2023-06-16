@@ -11,8 +11,10 @@ import pyvista
 from pyvista.core.errors import DeprecationError
 from pyvista.errors import MissingDataError, RenderWindowUnavailable
 from pyvista.plotting import _plotting
+from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
+@pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
 def test_plotter_image_before_show():
     plotter = pyvista.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
@@ -36,6 +38,7 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
     assert actor.prop.render_lines_as_tubes
 
 
+@pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
 def test_screenshot_fail_suppressed_rendering():
     plotter = pyvista.Plotter()
     plotter.suppress_rendering = True
