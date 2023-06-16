@@ -19,7 +19,9 @@ plotter = pv.Plotter(shape=(2, 2))
 
 plotter.subplot(0, 0)
 plotter.add_text("Render Window 0", font_size=30)
-plotter.add_mesh(examples.load_globe())
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
+plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(0, 1)
 plotter.add_text("Render Window 1", font_size=30)
@@ -138,7 +140,9 @@ plotter.add_mesh(examples.load_uniform(), show_edges=True)
 
 plotter.subplot(1, 3)
 plotter.add_text("Group 4")
-plotter.add_mesh(examples.load_globe())
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
+plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(1, 1)
 plotter.add_text("Cell (1,1)")
