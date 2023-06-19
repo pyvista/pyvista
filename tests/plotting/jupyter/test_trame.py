@@ -113,21 +113,24 @@ def test_trame_jupyter_modes():
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend='client', return_viewer=True)
-    assert isinstance(widget, Widget)
-    assert pl.suppress_rendering
-
-    pl = pv.Plotter(notebook=True)
-    pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='server', return_viewer=True)
     assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
+    assert not pl._closed
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='trame', return_viewer=True)
     assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
+    assert not pl._closed
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='client', return_viewer=True)
+    assert isinstance(widget, Widget)
+    assert pl.suppress_rendering
+    assert not pl._closed
 
 
 @skip_no_trame

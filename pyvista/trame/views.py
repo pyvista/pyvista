@@ -138,6 +138,12 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
         )
         self._post_initialize()
 
+    def _post_initialize(self):
+        super()._post_initialize()
+        self.set_widgets(
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+        )
+
     def update_image(self, *args, **kwargs):
         """No-op implementation to match remote viewers."""
         pass  # pragma: no cover
@@ -199,3 +205,9 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         self._namespace = namespace
 
         self._post_initialize()
+
+    def _post_initialize(self):
+        super()._post_initialize()
+        self.set_widgets(
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+        )
