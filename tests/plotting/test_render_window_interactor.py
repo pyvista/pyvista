@@ -178,3 +178,45 @@ def test_timer():
     iren.destroy_timer(repeating_timer)
     process_events(iren, delay)
     assert len(events) == E
+
+
+@pytest.mark.skip_plotting
+def test_poked_subplot_loc():
+    pl = pyvista.Plotter(shape=(2, 2), window_size=(800, 800))
+
+    pl.iren._mouse_left_button_press(200, 600)
+    assert tuple(pl.iren.get_event_subplot_loc()) == (0, 0)
+
+    pl.iren._mouse_left_button_press(200, 200)
+    assert tuple(pl.iren.get_event_subplot_loc()) == (1, 0)
+
+    pl.iren._mouse_left_button_press(600, 600)
+    assert tuple(pl.iren.get_event_subplot_loc()) == (0, 1)
+
+    pl.iren._mouse_left_button_press(600, 200)
+    assert tuple(pl.iren.get_event_subplot_loc()) == (1, 1)
+
+    pl.close()
+
+
+@pytest.mark.skip_plotting
+def test_poked_subplot_context(verify_image_cache):
+    pl = pyvista.Plotter(shape=(2, 2), window_size=(800, 800))
+
+    pl.iren._mouse_left_button_press(200, 600)
+    with pl.iren.poked_subplot():
+        pl.add_mesh(pyvista.Cone(), color=True)
+
+    pl.iren._mouse_left_button_press(200, 200)
+    with pl.iren.poked_subplot():
+        pl.add_mesh(pyvista.Cube(), color=True)
+
+    pl.iren._mouse_left_button_press(600, 600)
+    with pl.iren.poked_subplot():
+        pl.add_mesh(pyvista.Sphere(), color=True)
+
+    pl.iren._mouse_left_button_press(600, 200)
+    with pl.iren.poked_subplot():
+        pl.add_mesh(pyvista.Arrow(), color=True)
+
+    pl.show()
