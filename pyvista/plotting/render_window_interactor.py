@@ -837,7 +837,7 @@ class RenderWindowInteractor:
             renderer = self._plotter.renderers[index]
             if renderer is poked_renderer:
                 return self._plotter.renderers.index_to_loc(index)
-        raise RuntimeError('Poked rendered not found in Plotter.')
+        raise RuntimeError('Poked renderer not found in Plotter.')
 
     @contextmanager
     def poked_subplot(self):
