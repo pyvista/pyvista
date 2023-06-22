@@ -18,6 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
 
 # Manage errors
@@ -48,6 +49,12 @@ warnings.filterwarnings(
     "ignore",
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
+)
+
+# Prevent deprecated features from being used in examples
+warnings.filterwarnings(
+    "error",
+    category=PyVistaDeprecationWarning,
 )
 
 # -- General configuration ------------------------------------------------
