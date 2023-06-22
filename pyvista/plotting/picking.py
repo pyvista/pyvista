@@ -510,6 +510,8 @@ class PickingInterface:
                         name='_rectangle_selection_frustum',
                         style=style,
                         color=color,
+                        pickable=False,
+                        reset_camera=False,
                         **kwargs,
                     )
 
@@ -1391,6 +1393,7 @@ class PickingMethods(PickingInterface):
                         picked,
                         name='_element_handler_picked',
                         pickable=False,
+                        reset_camera=False,
                         point_size=5,
                         line_width=5,
                         **kwargs,
@@ -1615,6 +1618,7 @@ class PickingHelper(PickingMethods):
                         name='_picked_path',
                         line_width=line_width,
                         point_size=point_size,
+                        pickable=False,
                         reset_camera=False,
                         **kwargs,
                     )
@@ -1750,6 +1754,7 @@ class PickingHelper(PickingMethods):
                         name='_picked_path',
                         line_width=line_width,
                         point_size=point_size,
+                        pickable=False,
                         reset_camera=False,
                         **kwargs,
                     )
