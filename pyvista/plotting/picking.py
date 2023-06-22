@@ -541,7 +541,6 @@ class PickingMethods(PickingInterface):
     def __init__(self, *args, **kwargs):
         """Initialize the picking methods."""
         super().__init__(*args, **kwargs)
-        self.picked_cells = None
         self._picked_actor = None
         self._picked_mesh = None
         self._picked_cell = None
@@ -585,6 +584,20 @@ class PickingMethods(PickingInterface):
         """Return the picked cell.
 
         This returns the picked cell after selecting a cell.
+
+        Returns
+        -------
+        pyvista.Cell or None
+            Picked cell if available.
+
+        """
+        return self._picked_cell
+
+    @property
+    def picked_cells(self):
+        """Return the picked cells.
+
+        This returns the picked cells after selecting cells.
 
         Returns
         -------
@@ -991,6 +1004,8 @@ class PickingMethods(PickingInterface):
                     self.remove_actor('_through_picking_selection')
                 return
 
+            self._picked_cell = picked
+
             if show:
                 # Use try in case selection is empty
                 with self_().iren.poked_subplot():
@@ -1024,15 +1039,15 @@ class PickingMethods(PickingInterface):
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
             if picked.n_blocks == 0:
-                self_().picked_cells = None
+                self_()._picked_cell = None
             elif picked.combine().n_cells < 1:
-                self_().picked_cells = None
+                self_()._picked_cell = None
             elif picked.n_blocks == 1:
-                self_().picked_cells = picked[0]
+                self_()._picked_cell = picked[0]
             else:
-                self_().picked_cells = picked
+                self_()._picked_cell = picked
 
-            finalize(self_().picked_cells)
+            finalize(self_()._picked_cell)
 
         self.enable_rectangle_picking(
             callback=through_pick_callback,
@@ -1170,15 +1185,15 @@ class PickingMethods(PickingInterface):
                 selection.UnRegister(selection)
 
             if len(picked) == 0:
-                self_().picked_cells = None
+                self_()._picked_cell = None
             elif picked.combine().n_cells < 1:
-                self_().picked_cells = None
+                self_()._picked_cell = None
             elif len(picked) == 1:
-                self_().picked_cells = picked[0]
+                self_()._picked_cell = picked[0]
             else:
-                self_().picked_cells = picked
+                self_()._picked_cell = picked
 
-            finalize(self_().picked_cells)
+            finalize(self_()._picked_cell)
 
         self.enable_rectangle_picking(
             callback=visible_pick_callback,
@@ -1376,6 +1391,9 @@ class PickingMethods(PickingInterface):
         def _end_handler(picked):
             if callback:
                 try_callback(callback, picked)
+
+            if mode == 'cell':
+                self._picked_cell = picked
 
             if show:
                 if mode == 'cell':

@@ -99,7 +99,7 @@ def test_enable_mesh_picking(sphere, left_clicking):
         picked.append(picked_mesh)
 
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere)
+    actor = pl.add_mesh(sphere)
     pl.enable_mesh_picking(callback=callback, left_clicking=left_clicking)
     pl.show(auto_close=False)
 
@@ -114,6 +114,7 @@ def test_enable_mesh_picking(sphere, left_clicking):
 
     assert sphere in picked
     assert pl.picked_mesh == sphere
+    assert pl.picked_actor == actor
 
     # invalid selection
     pl.iren._mouse_left_button_press(0, 0)
@@ -233,6 +234,7 @@ def test_enable_cell_picking_interactive():
     pl.iren._mouse_left_button_release(width, height)
 
     assert n_cells[0]
+    assert pl.picked_cell
 
 
 def test_enable_cell_picking_interactive_two_ren_win():
@@ -256,6 +258,7 @@ def test_enable_cell_picking_interactive_two_ren_win():
     pl.iren._mouse_left_button_release(width // 2, height)
 
     assert n_cells[0]
+    assert pl.picked_cell
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
