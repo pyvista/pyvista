@@ -480,3 +480,52 @@ def test_block_picking(multiblock_poly):
     assert mapper.block_attr[2].color
 
     assert pl.picked_block_index == picked_blocks[0]
+
+
+@pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
+def test_element_picking(mode):
+    class Tracker:
+        def __init__(self):
+            self.last_picked = None
+
+        def __call__(self, picked):
+            self.last_picked = picked
+
+    tracker = Tracker()
+
+    mesh = pyvista.Wavelet()
+    plotter = pyvista.Plotter(
+        window_size=(100, 100),
+    )
+    plotter.add_mesh(mesh)
+    plotter.enable_element_picking(
+        mode=mode,
+        show_message=True,
+        left_clicking=True,
+        callback=tracker,
+    )
+    # must show to activate the interactive renderer (for left_clicking)
+    plotter.show(auto_close=False)
+
+    # simulate the pick
+    width, height = plotter.window_size
+
+    plotter.iren._mouse_left_button_press(width // 2, height // 2)
+    plotter.iren._mouse_left_button_release(width, height)
+    plotter.iren._mouse_move(width // 2, height // 2)
+
+    plotter.close()
+
+    assert tracker.last_picked is not None
+
+    if mode == 'mesh':
+        assert tracker.last_picked == mesh
+    elif mode == 'cell':
+        assert tracker.last_picked.n_points == 8
+    elif mode == 'face':
+        assert tracker.last_picked.n_points == 4
+    elif mode == 'edge':
+        assert tracker.last_picked.n_points == 2
+    elif mode == 'point':
+        assert isinstance(tracker.last_picked, pyvista.PolyData)
+        assert tracker.last_picked.n_points == 1
