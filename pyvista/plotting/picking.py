@@ -920,6 +920,7 @@ class PickingMethods(PickingInterface):
         show_message=True,
         font_size=18,
         start=False,
+        show_frustum=False,
         **kwargs,
     ):
         """Enable rectangle based cell picking through the scene.
@@ -955,6 +956,9 @@ class PickingMethods(PickingInterface):
 
         start : bool, default: True
             Automatically start the cell selection tool.
+
+        show_frustum : bool, default: False
+            Show the frustum in the scene.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -1017,7 +1021,10 @@ class PickingMethods(PickingInterface):
             callback=through_pick_callback,
             show_message=show_message,
             font_size=font_size,
+            show_frustum=show_frustum,
             start=start,
+            style=style,
+            color=color,
         )
 
     def enable_rectangle_visible_picking(
@@ -1030,6 +1037,7 @@ class PickingMethods(PickingInterface):
         show_message=True,
         font_size=18,
         start=False,
+        show_frustum=False,
         **kwargs,
     ):
         """Enable rectangle based cell picking on visible surfaces.
@@ -1065,6 +1073,9 @@ class PickingMethods(PickingInterface):
 
         start : bool, default: True
             Automatically start the cell selection tool.
+
+        show_frustum : bool, default: False
+            Show the frustum in the scene.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -1157,6 +1168,9 @@ class PickingMethods(PickingInterface):
             show_message=show_message,
             font_size=font_size,
             start=start,
+            show_frustum=show_frustum,
+            style=style,
+            color=color,
         )
 
     def enable_cell_picking(
@@ -1170,6 +1184,7 @@ class PickingMethods(PickingInterface):
         color='pink',
         font_size=18,
         start=False,
+        show_frustum=False,
         **kwargs,
     ):
         """Enable picking of cells with a rectangle selection tool.
@@ -1230,6 +1245,9 @@ class PickingMethods(PickingInterface):
         start : bool, default: True
             Automatically start the cell selection tool.
 
+        show_frustum : bool, default: False
+            Show the frustum in the scene.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the selection is interactively displayed.
@@ -1260,6 +1278,7 @@ class PickingMethods(PickingInterface):
             color=color,
             font_size=font_size,
             start=start,
+            show_frustum=show_frustum,
             **kwargs,
         )
 
