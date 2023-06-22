@@ -1387,23 +1387,24 @@ class PickingMethods(PickingInterface):
             the picked path is interactively displayed.
 
         """
+        mode = ElementType.from_any(mode)
 
         def _end_handler(picked):
             if callback:
                 try_callback(callback, picked)
 
-            if mode == 'cell':
+            if mode == ElementType.CELL:
                 self._picked_cell = picked
 
             if show:
-                if mode == 'cell':
+                if mode == ElementType.CELL:
                     kwargs.setdefault('color', 'pink')
-                elif mode == 'edge':
+                elif mode == ElementType.EDGE:
                     kwargs.setdefault('color', 'magenta')
                 else:
                     kwargs.setdefault('color', 'pink')
 
-                if mode in ['cell', 'face']:
+                if mode in [ElementType.CELL, ElementType.FACE]:
                     picked = picked.extract_all_edges()
 
                 with self.iren.poked_subplot():
