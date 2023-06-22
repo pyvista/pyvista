@@ -14,6 +14,17 @@ from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .opts import ElementType, PickerType
 
+PICKED_REPRESENTATION_NAMES = {
+    'point': '_picked_point',
+    'mesh': '_picked_mesh',
+    'through': '_picked_through_selection',
+    'visible': '_picked_visible_selection',
+    'element': '_picked_element',
+    'path': '_picked_path',
+    'horizon': '_picked_horizon',
+    'frustum': '_rectangle_selection_frustum',
+}
+
 
 def _launch_pick_event(interactor, event):
     """Create a Pick event based on coordinate or left-click."""
@@ -172,6 +183,11 @@ class PickingInterface:
         self._picker_in_use = False
         self._picked_point = None
 
+    def _clear_picking_representations(self):
+        """Clear all picking representations."""
+        for name in PICKED_REPRESENTATION_NAMES.values():
+            self.remove_actor(name)
+
     @property
     def picked_point(self):
         """Return the picked point.
@@ -286,7 +302,7 @@ class PickingInterface:
         point_size=10,
         show_point=True,
         use_picker=False,
-        pickable_window=True,
+        pickable_window=False,
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -381,6 +397,10 @@ class PickingInterface:
                 and hasattr(picker, 'GetDataSet')
                 and picker.GetDataSet() is None
             ):
+                # Clear the selection
+                self._picked_point = None
+                with self_().iren.poked_subplot():
+                    self_()._clear_picking_representations()
                 return
             with self_().iren.poked_subplot():
                 self_()._picked_point = np.array(picker.GetPickPosition())
@@ -390,7 +410,7 @@ class PickingInterface:
                         self_().picked_point,
                         color=color,
                         point_size=point_size,
-                        name=_kwargs.pop('name', '_picked_point'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
                         pickable=_kwargs.pop('pickable', False),
                         reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
@@ -509,7 +529,7 @@ class PickingInterface:
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
                         selection.frustum_mesh,
-                        name=_kwargs.pop('name', '_rectangle_selection_frustum'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['frustum']),
                         style=style,
                         color=color,
                         pickable=_kwargs.pop('pickable', False),
@@ -739,10 +759,12 @@ class PickingMethods(PickingInterface):
         self_ = weakref.ref(self)
 
         def _end_pick_event(picked_point, picker):
-            if not pickable_window and picker.GetDataSet() is None:
+            if not pickable_window and picker.GetActor() is None:
                 self_()._picked_point = None
                 self_()._picked_actor = None
                 self_()._picked_mesh = None
+                with self_().iren.poked_subplot():
+                    self_()._clear_picking_representations()
                 return
             self_()._picked_actor = picker.GetActor()
             self_()._picked_mesh = picker.GetDataSet()
@@ -754,7 +776,7 @@ class PickingMethods(PickingInterface):
                         picked_point,
                         color=color,
                         point_size=point_size,
-                        name=_kwargs.pop('name', '_picked_point'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
                         pickable=_kwargs.pop('pickable', False),
                         reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
@@ -774,6 +796,7 @@ class PickingMethods(PickingInterface):
             use_picker=True,
             font_size=font_size,
             tolerance=tolerance,
+            pickable_window=True,  # let this callback handle pickable window
         )
 
     def enable_surface_picking(self, *args, **kwargs):
@@ -907,7 +930,7 @@ class PickingMethods(PickingInterface):
                         _kwargs = kwargs.copy()
                         self_().add_mesh(
                             self_()._picked_mesh,
-                            name=_kwargs.pop('name', '_mesh_picking_selection'),
+                            name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['mesh']),
                             style=style,
                             color=color,
                             line_width=line_width,
@@ -1006,7 +1029,7 @@ class PickingMethods(PickingInterface):
             if picked is None:
                 # Inidcates invalid pick
                 with self_().iren.poked_subplot():
-                    self.remove_actor('_through_picking_selection')
+                    self_()._clear_picking_representations()
                 return
 
             self._picked_cell = picked
@@ -1017,7 +1040,7 @@ class PickingMethods(PickingInterface):
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked,
-                        name=_kwargs.pop('name', '_through_picking_selection'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['through']),
                         style=style,
                         color=color,
                         line_width=line_width,
@@ -1126,7 +1149,7 @@ class PickingMethods(PickingInterface):
             if picked is None:
                 # Inidcates invalid pick
                 with self_().iren.poked_subplot():
-                    self.remove_actor('_visible_picking_selection')
+                    self_()._clear_picking_representations()
                 return
 
             if show:
@@ -1135,7 +1158,7 @@ class PickingMethods(PickingInterface):
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked,
-                        name=_kwargs.pop('name', '_visible_picking_selection'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['visible']),
                         style=style,
                         color=color,
                         line_width=line_width,
@@ -1418,7 +1441,7 @@ class PickingMethods(PickingInterface):
                     _kwargs = kwargs.copy()
                     self.add_mesh(
                         picked,
-                        name=_kwargs.pop('name', '_element_handler_picked'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['element']),
                         pickable=_kwargs.pop('pickable', False),
                         reset_camera=_kwargs.pop('reset_camera', False),
                         point_size=_kwargs.pop('point_size', 5),
@@ -1643,7 +1666,7 @@ class PickingHelper(PickingMethods):
                     self.add_mesh(
                         self.picked_path,
                         color=color,
-                        name=_kwargs.pop('name', '_picked_path'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
                         line_width=line_width,
                         point_size=point_size,
                         pickable=_kwargs.pop('pickable', False),
@@ -1655,7 +1678,8 @@ class PickingHelper(PickingMethods):
 
         def _clear_path_event_watcher():
             del the_points[:]
-            self.remove_actor('_picked_path')
+            with self.iren.poked_subplot():
+                self._clear_picking_representations()
 
         self.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
@@ -1780,7 +1804,7 @@ class PickingHelper(PickingMethods):
                     self.add_mesh(
                         self.picked_geodesic,
                         color=color,
-                        name=_kwargs.pop('name', '_picked_path'),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
                         line_width=line_width,
                         point_size=point_size,
                         pickable=_kwargs.pop('pickable', False),
@@ -1792,7 +1816,7 @@ class PickingHelper(PickingMethods):
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
-            self.remove_actor('_picked_path')
+            self._clear_picking_representations()
             self._last_picked_idx = None
 
         self.add_key_event('c', _clear_g_path_event_watcher)
@@ -1876,7 +1900,7 @@ class PickingHelper(PickingMethods):
             the picked path is interactively displayed.
 
         """
-        name = '_horizon'
+        name = PICKED_REPRESENTATION_NAMES['horizon']
         self.add_key_event('c', lambda: self.remove_actor(name))
 
         def _the_callback(path):
