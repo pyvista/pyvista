@@ -414,7 +414,7 @@ def test_horizon_picking():
     plotter.close()
 
 
-def test_enable_fly_to_right_click(sphere):
+def test_enable_fly_to_right_click(verify_image_cache, sphere):
     point = []
 
     def callback(click_point):
@@ -426,14 +426,15 @@ def test_enable_fly_to_right_click(sphere):
     pl.show(auto_close=False)
     width, height = pl.window_size
     cpos_before = pl.camera_position
-    pl.iren._mouse_right_button_press(width // 2, height // 2)
+    pl.iren._mouse_right_button_press(width // 4, height // 2)
 
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
     assert point
+    pl.close()
 
 
-def test_enable_fly_to_right_click_multi_render(sphere):
+def test_enable_fly_to_right_click_multi_render(verify_image_cache, sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     point = []
 
@@ -446,10 +447,24 @@ def test_enable_fly_to_right_click_multi_render(sphere):
     pl.show(auto_close=False)
     width, height = pl.window_size
     cpos_before = pl.camera_position
-    pl.iren._mouse_right_button_press(width // 4, height // 2)
+    pl.iren._mouse_right_button_press(width // 8, height // 2)
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
     assert point
+    pl.close()
+
+
+def test_fly_to_mouse_position(verify_image_cache, sphere):
+    """Same as enable as fly_to_right_click except with two renders for coverage"""
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    width, height = pl.window_size
+    cpos_before = pl.camera_position
+    pl.iren._mouse_right_button_press(width - width // 4, height // 2)
+    pl.fly_to_mouse_position()
+    assert cpos_before != pl.camera_position
+    pl.close()
 
 
 def test_block_picking(multiblock_poly):
