@@ -303,6 +303,7 @@ class PickingInterface:
         show_point=True,
         use_picker=False,
         pickable_window=False,
+        clear_on_no_selection=True,
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -367,6 +368,9 @@ class PickingInterface:
             When ``True`` and the chosen picker supports it, points in the
             3D window are pickable.
 
+        clear_on_no_selection : bool, default: True
+            Clear the selections when no point is selected.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked point is interactively displayed.
@@ -399,8 +403,9 @@ class PickingInterface:
             ):
                 # Clear the selection
                 self._picked_point = None
-                with self_().iren.poked_subplot():
-                    self_()._clear_picking_representations()
+                if clear_on_no_selection:
+                    with self_().iren.poked_subplot():
+                        self_()._clear_picking_representations()
                 return
             with self_().iren.poked_subplot():
                 self_()._picked_point = np.array(picker.GetPickPosition())
@@ -651,7 +656,8 @@ class PickingMethods(PickingInterface):
         super().disable_picking()
         # remove any picking text
         if hasattr(self, 'renderers'):
-            self.remove_actor(self._picking_text, render=False)
+            for renderer in self.renderers:
+                renderer.remove_actor(self._picking_text, render=False)
         self._picking_text = None
 
     def enable_surface_point_picking(
@@ -667,6 +673,7 @@ class PickingMethods(PickingInterface):
         left_clicking=False,
         picker=PickerType.CELL,
         use_picker=False,
+        clear_on_no_selection=True,
         **kwargs,
     ):
         """Enable picking of a point on the surface of a mesh.
@@ -725,6 +732,9 @@ class PickingMethods(PickingInterface):
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
 
+        clear_on_no_selection : bool, default: True
+            Clear the selections when no point is selected.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
@@ -763,8 +773,9 @@ class PickingMethods(PickingInterface):
                 self_()._picked_point = None
                 self_()._picked_actor = None
                 self_()._picked_mesh = None
-                with self_().iren.poked_subplot():
-                    self_()._clear_picking_representations()
+                if clear_on_no_selection:
+                    with self_().iren.poked_subplot():
+                        self_()._clear_picking_representations()
                 return
             self_()._picked_actor = picker.GetActor()
             self_()._picked_mesh = picker.GetDataSet()
@@ -797,6 +808,7 @@ class PickingMethods(PickingInterface):
             font_size=font_size,
             tolerance=tolerance,
             pickable_window=True,  # let this callback handle pickable window
+            clear_on_no_selection=clear_on_no_selection,
         )
 
     def enable_surface_picking(self, *args, **kwargs):
@@ -1692,6 +1704,7 @@ class PickingHelper(PickingMethods):
             show_message=show_message,
             show_point=False,
             tolerance=tolerance,
+            clear_on_no_selection=False,
         )
 
     def enable_geodesic_picking(
@@ -1816,7 +1829,8 @@ class PickingHelper(PickingMethods):
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
-            self._clear_picking_representations()
+            with self.iren.poked_subplot():
+                self._clear_picking_representations()
             self._last_picked_idx = None
 
         self.add_key_event('c', _clear_g_path_event_watcher)
@@ -1830,6 +1844,7 @@ class PickingHelper(PickingMethods):
             show_message=show_message,
             tolerance=tolerance,
             show_point=False,
+            clear_on_no_selection=False,
         )
 
     def enable_horizon_picking(
@@ -1900,12 +1915,17 @@ class PickingHelper(PickingMethods):
             the picked path is interactively displayed.
 
         """
-        name = PICKED_REPRESENTATION_NAMES['horizon']
-        self.add_key_event('c', lambda: self.remove_actor(name))
+
+        def _clear_horizon_event_watcher():
+            self.picked_horizon = pyvista.PolyData()
+            with self.iren.poked_subplot():
+                self._clear_picking_representations()
+
+        self.add_key_event('c', _clear_horizon_event_watcher)
 
         def _the_callback(path):
             if path.n_points < 2:
-                self.remove_actor(name)
+                _clear_horizon_event_watcher()
                 return
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
@@ -1914,7 +1934,7 @@ class PickingHelper(PickingMethods):
                     _kwargs = kwargs.copy()
                     self.add_mesh(
                         self.picked_horizon,
-                        name=name,
+                        name=_kwargs.get('name', PICKED_REPRESENTATION_NAMES['horizon']),
                         color=color,
                         opacity=opacity,
                         pickable=_kwargs.pop('pickable', False),
