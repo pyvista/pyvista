@@ -385,14 +385,15 @@ class PickingInterface:
             with self_().iren.poked_subplot():
                 self_()._picked_point = np.array(picker.GetPickPosition())
                 if show_point:
+                    _kwargs = kwargs.copy()
                     self_().add_mesh(
                         self_().picked_point,
                         color=color,
                         point_size=point_size,
-                        name='_picked_point',
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        name=_kwargs.pop('name', '_picked_point'),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
                 if callable(callback):
                     if use_picker:
@@ -505,14 +506,15 @@ class PickingInterface:
 
             if show_frustum:
                 with self_().iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self_().add_mesh(
                         selection.frustum_mesh,
-                        name='_rectangle_selection_frustum',
+                        name=_kwargs.pop('name', '_rectangle_selection_frustum'),
                         style=style,
                         color=color,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
 
             if callback is not None:
@@ -747,14 +749,15 @@ class PickingMethods(PickingInterface):
 
             if show_point:
                 with self_().iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked_point,
                         color=color,
                         point_size=point_size,
-                        name='_picked_point',
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        name=_kwargs.pop('name', '_picked_point'),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
             if callable(callback):
                 if use_picker:
@@ -901,15 +904,16 @@ class PickingMethods(PickingInterface):
                 # Use try in case selection is empty or invalid
                 try:
                     with self_().iren.poked_subplot():
+                        _kwargs = kwargs.copy()
                         self_().add_mesh(
                             self_()._picked_mesh,
-                            name='_mesh_picking_selection',
+                            name=_kwargs.pop('name', '_mesh_picking_selection'),
                             style=style,
                             color=color,
                             line_width=line_width,
-                            pickable=False,
-                            reset_camera=False,
-                            **kwargs,
+                            pickable=_kwargs.pop('pickable', False),
+                            reset_camera=_kwargs.pop('reset_camera', False),
+                            **_kwargs,
                         )
                 except Exception as e:  # pragma: no cover
                     warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
@@ -1010,15 +1014,16 @@ class PickingMethods(PickingInterface):
             if show:
                 # Use try in case selection is empty
                 with self_().iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked,
-                        name='_through_picking_selection',
+                        name=_kwargs.pop('name', '_through_picking_selection'),
                         style=style,
                         color=color,
                         line_width=line_width,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
 
             # TODO: should callbacks be within the poked subplot context
@@ -1127,15 +1132,16 @@ class PickingMethods(PickingInterface):
             if show:
                 # Use try in case selection is empty
                 with self_().iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked,
-                        name='_visible_picking_selection',
+                        name=_kwargs.pop('name', '_visible_picking_selection'),
                         style=style,
                         color=color,
                         line_width=line_width,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
 
             # TODO: should callbacks be within the poked subplot context
@@ -1409,14 +1415,15 @@ class PickingMethods(PickingInterface):
                     picked = picked.extract_all_edges()
 
                 with self.iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self.add_mesh(
                         picked,
-                        name='_element_handler_picked',
-                        pickable=False,
-                        reset_camera=False,
-                        point_size=5,
-                        line_width=5,
-                        **kwargs,
+                        name=_kwargs.pop('name', '_element_handler_picked'),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        point_size=_kwargs.pop('point_size', 5),
+                        line_width=_kwargs.pop('line_width', 5),
+                        **_kwargs,
                     )
 
         handler = PointPickingElementHandler(mode=mode, callback=_end_handler)
@@ -1632,15 +1639,16 @@ class PickingHelper(PickingMethods):
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
                 with self.iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self.add_mesh(
                         self.picked_path,
                         color=color,
-                        name='_picked_path',
+                        name=_kwargs.pop('name', '_picked_path'),
                         line_width=line_width,
                         point_size=point_size,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
             if callable(callback):
                 try_callback(callback, self.picked_path)
@@ -1768,15 +1776,16 @@ class PickingHelper(PickingMethods):
 
             if show_path:
                 with self.iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self.add_mesh(
                         self.picked_geodesic,
                         color=color,
-                        name='_picked_path',
+                        name=_kwargs.pop('name', '_picked_path'),
                         line_width=line_width,
                         point_size=point_size,
-                        pickable=False,
-                        reset_camera=False,
-                        **kwargs,
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
             if callable(callback):
                 try_callback(callback, self.picked_geodesic)
@@ -1878,13 +1887,15 @@ class PickingHelper(PickingMethods):
 
             if show_horizon:
                 with self.iren.poked_subplot():
+                    _kwargs = kwargs.copy()
                     self.add_mesh(
                         self.picked_horizon,
                         name=name,
                         color=color,
                         opacity=opacity,
-                        pickable=False,
-                        reset_camera=False,
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        **_kwargs,
                     )
 
             if callable(callback):
