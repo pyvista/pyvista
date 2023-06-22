@@ -67,6 +67,7 @@ def test_multi_cell_picking(through):
         through=through,
         start=True,
         show=True,
+        show_frustum=True,
     )
     plotter.show(auto_close=False)  # must start renderer first
 
@@ -156,7 +157,7 @@ def test_enable_mesh_picking_actor(sphere):
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
-def test_enable_surface_picking(sphere, left_clicking):
+def test_enable_surface_point_picking(sphere, left_clicking):
     picked = []
 
     def callback(point):
@@ -164,7 +165,7 @@ def test_enable_surface_picking(sphere, left_clicking):
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
-    pl.enable_surface_picking(callback=callback, left_clicking=left_clicking)
+    pl.enable_surface_point_picking(callback=callback, left_clicking=left_clicking)
     pl.show(auto_close=False)
 
     width, height = pl.window_size
@@ -193,7 +194,7 @@ def test_enable_surface_picking(sphere, left_clicking):
 def test_disable_picking(sphere, left_clicking):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
-    pl.enable_surface_picking(left_clicking=left_clicking)
+    pl.enable_surface_point_picking(left_clicking=left_clicking)
     pl.disable_picking()
     pl.show(auto_close=False)
 

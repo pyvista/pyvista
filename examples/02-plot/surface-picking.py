@@ -4,7 +4,7 @@
 Picking a Point on the Surface of a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example demonstrates how to pick meshes using
-:func:`surface_mesh_picking() <pyvista.Plotter.enable_surface_picking>`.
+:func:`surface_mesh_picking() <pyvista.Plotter.enable_surface_point_picking>`.
 
 This allows you to pick points on the surface of a mesh.
 
@@ -19,7 +19,7 @@ cube = pv.Cube()
 
 pl = pv.Plotter()
 pl.add_mesh(cube, show_edges=True)
-pl.enable_surface_picking()
+pl.enable_surface_point_picking()
 pl.show()
 
 
@@ -37,5 +37,5 @@ def callback(point):
 
 pl = pv.Plotter()
 pl.add_mesh(cube, show_edges=True)
-pl.enable_surface_picking(callback=callback, show_point=False)
+pl.enable_surface_point_picking(callback=callback, show_point=False)
 pl.show()

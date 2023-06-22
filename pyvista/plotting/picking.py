@@ -7,6 +7,7 @@ import weakref
 import numpy as np
 
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -550,7 +551,7 @@ class PickingMethods(PickingInterface):
         """Return the picked mesh.
 
         This returns the picked actor after selecting a mesh with
-        :func:`enable_surface_picking <pyvista.Plotter.enable_surface_picking>` or
+        :func:`enable_surface_point_picking <pyvista.Plotter.enable_surface_point_picking>` or
         :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>`.
 
         Returns
@@ -566,7 +567,7 @@ class PickingMethods(PickingInterface):
         """Return the picked mesh.
 
         This returns the picked mesh after selecting a mesh with
-        :func:`enable_surface_picking <pyvista.Plotter.enable_surface_picking>` or
+        :func:`enable_surface_point_picking <pyvista.Plotter.enable_surface_point_picking>` or
         :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>`.
 
         Returns
@@ -616,7 +617,7 @@ class PickingMethods(PickingInterface):
             self.remove_actor(self._picking_text, render=False)
         self._picking_text = None
 
-    def enable_surface_picking(
+    def enable_surface_point_picking(
         self,
         callback=None,
         show_message=True,
@@ -704,7 +705,7 @@ class PickingMethods(PickingInterface):
         >>> cube = pv.Cube()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(cube)
-        >>> _ = pl.enable_surface_picking()
+        >>> _ = pl.enable_surface_point_picking()
 
         See :ref:`surface_picking_example` for a full example using this method.
 
@@ -755,6 +756,20 @@ class PickingMethods(PickingInterface):
             font_size=font_size,
             tolerance=tolerance,
         )
+
+    def enable_surface_picking(self, *args, **kwargs):
+        """Surface picking.
+
+        .. deprecated:: 0.40.0
+            This method has been renamed to ``enable_surface_point_picking``.
+
+        """
+        # Deprecated on v0.40.0, estimated removal on v0.42.0
+        warnings.warn(
+            "This method has been renamed to `enable_surface_point_picking`.",
+            PyVistaDeprecationWarning,
+        )
+        return self.enable_surface_point_picking(*args, **kwargs)
 
     def enable_mesh_picking(
         self,
@@ -899,7 +914,7 @@ class PickingMethods(PickingInterface):
                     show_message = "Right-click"
                 show_message += ' or press P to pick single dataset under the mouse pointer'
 
-        self.enable_surface_picking(
+        self.enable_surface_point_picking(
             callback=end_pick_call_back,
             picker=picker,
             show_point=False,
@@ -1383,7 +1398,7 @@ class PickingMethods(PickingInterface):
 
         handler = PointPickingElementHandler(mode=mode, callback=_end_handler)
 
-        self.enable_surface_picking(
+        self.enable_surface_point_picking(
             callback=handler,
             show_message=show_message,
             font_size=font_size,
@@ -1614,7 +1629,7 @@ class PickingHelper(PickingMethods):
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        self.enable_surface_picking(
+        self.enable_surface_point_picking(
             callback=_the_callback,
             use_picker=True,
             font_size=font_size,
@@ -1750,7 +1765,7 @@ class PickingHelper(PickingMethods):
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        self.enable_surface_picking(
+        self.enable_surface_point_picking(
             callback=_the_callback,
             use_picker=True,
             font_size=font_size,
