@@ -538,8 +538,7 @@ def test_element_picking(mode):
     width, height = plotter.window_size
 
     plotter.iren._mouse_left_button_press(width // 2, height // 2)
-    plotter.iren._mouse_left_button_release(width, height)
-    plotter.iren._mouse_move(width // 2, height // 2)
+    plotter.iren._mouse_left_button_release()
 
     plotter.close()
 
@@ -559,7 +558,7 @@ def test_element_picking(mode):
 
 
 def test_switch_picking_type():
-    pl = pyvista.Plotter(window_size=[1024, 768])
+    pl = pyvista.Plotter()
     width, height = pl.window_size
     pl.add_mesh(pyvista.Sphere())
 
@@ -572,19 +571,23 @@ def test_switch_picking_type():
     with pytest.raises(PyVistaPickingError):
         pl.enable_point_picking()
 
-    pl.iren._mouse_left_button_press(169, 113)
-    pl.iren._mouse_move(875, 684)
+    pl.show(auto_close=False, interactive=False)
+    pl.iren._simulate_keypress('r')
+    pl.iren._mouse_left_button_press(width // 4, height // 4)
+    pl.iren._mouse_left_button_release(width, height)
     pl.iren._mouse_left_button_release()
 
     assert cells
     assert isinstance(cells[0], pyvista.UnstructuredGrid)
+    assert pl.picked_cells is not None
 
+    # Now switch to point picking
     pl.disable_picking()
 
-    point = []
+    points = []
 
     def callback(click_point):
-        point.append(click_point)
+        points.append(click_point)
 
     pl.enable_point_picking(callback=callback)
     # simulate the pick
@@ -594,5 +597,5 @@ def test_switch_picking_type():
     picker.Pick(width // 2, height // 2, 0, renderer)
     pl.close()
 
-    assert point
-    assert len(point[0]) == 3
+    assert points
+    assert len(points[0]) == 3
