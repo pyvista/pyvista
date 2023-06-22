@@ -538,8 +538,7 @@ def test_element_picking(mode):
     width, height = plotter.window_size
 
     plotter.iren._mouse_left_button_press(width // 2, height // 2)
-    plotter.iren._mouse_left_button_release(width, height)
-    plotter.iren._mouse_move(width // 2, height // 2)
+    plotter.iren._mouse_left_button_release()
 
     plotter.close()
 

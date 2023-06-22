@@ -812,6 +812,14 @@ class PickingMethods(PickingInterface):
         .. deprecated:: 0.40.0
             This method has been renamed to ``enable_surface_point_picking``.
 
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments.
+
+        **kwargs : dict
+            Keyword arguments.
+
         """
         # Deprecated on v0.40.0, estimated removal on v0.42.0
         warnings.warn(
