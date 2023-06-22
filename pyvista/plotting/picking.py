@@ -823,7 +823,7 @@ class PickingMethods(PickingInterface):
             "This method has been renamed to `enable_surface_point_picking`.",
             PyVistaDeprecationWarning,
         )
-        return self.enable_surface_point_picking(*args, **kwargs)
+        self.enable_surface_point_picking(*args, **kwargs)
 
     def enable_mesh_picking(
         self,
