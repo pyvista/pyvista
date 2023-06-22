@@ -12,6 +12,7 @@ from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
+from .errors import PyVistaPickingError
 from .opts import ElementType, PickerType
 
 PICKED_REPRESENTATION_NAMES = {
@@ -34,12 +35,6 @@ def _launch_pick_event(interactor, event):
     picker = interactor.GetPicker()
     renderer = interactor.GetInteractorStyle()._parent()._plotter.iren.get_poked_renderer()
     picker.Pick(click_x, click_y, click_z, renderer)
-
-
-class PyVistaPickingError(RuntimeError):
-    """General picking error class."""
-
-    pass
 
 
 class RectangleSelection:

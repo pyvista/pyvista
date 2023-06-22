@@ -5,6 +5,7 @@ import pytest
 import vtk
 
 import pyvista
+from pyvista.plotting.errors import PyVistaPickingError
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -75,6 +76,8 @@ def test_multi_cell_picking(through):
     plotter.iren._mouse_left_button_press(169, 113)
     plotter.iren._mouse_move(875, 684)
     plotter.iren._mouse_left_button_release()
+
+    assert plotter.get_pick_position() == (169, 113, 875, 684)
 
     plotter.close()
 
@@ -263,11 +266,15 @@ def test_enable_cell_picking_interactive_two_ren_win():
 
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_point_picking(left_clicking):
+    picked = []
+
+    def callback(picked_point):
+        picked.append(picked_point)
+
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
     )
-    callback = (lambda picked_point: None,)
     plotter.add_mesh(sphere)
     plotter.enable_point_picking(
         show_message=True,
@@ -288,6 +295,8 @@ def test_point_picking(left_clicking):
         picker = plotter.iren.picker
         picker.Pick(width // 2, height // 2, 0, renderer)
     plotter.close()
+
+    assert picked
 
 
 @pytest.mark.skipif(
@@ -547,3 +556,43 @@ def test_element_picking(mode):
     elif mode == 'point':
         assert isinstance(tracker.last_picked, pyvista.PolyData)
         assert tracker.last_picked.n_points == 1
+
+
+def test_switch_picking_type():
+    pl = pyvista.Plotter(window_size=[1024, 768])
+    width, height = pl.window_size
+    pl.add_mesh(pyvista.Sphere())
+
+    cells = []
+
+    def callback(picked):
+        cells.append(picked)
+
+    pl.enable_cell_picking(callback=callback)
+    with pytest.raises(PyVistaPickingError):
+        pl.enable_point_picking()
+
+    pl.iren._mouse_left_button_press(169, 113)
+    pl.iren._mouse_move(875, 684)
+    pl.iren._mouse_left_button_release()
+
+    assert cells
+    assert isinstance(cells[0], pyvista.UnstructuredGrid)
+
+    pl.disable_picking()
+
+    point = []
+
+    def callback(click_point):
+        point.append(click_point)
+
+    pl.enable_point_picking(callback=callback)
+    # simulate the pick
+    width, height = pl.window_size
+    renderer = pl.renderer
+    picker = pl.iren.picker
+    picker.Pick(width // 2, height // 2, 0, renderer)
+    pl.close()
+
+    assert point
+    assert len(point[0]) == 3
