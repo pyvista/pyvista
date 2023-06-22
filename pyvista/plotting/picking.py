@@ -286,7 +286,7 @@ class PickingInterface:
         point_size=10,
         show_point=True,
         use_picker=False,
-        pickable_window=False,
+        pickable_window=True,
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -347,7 +347,7 @@ class PickingInterface:
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
 
-        pickable_window : bool, default: False
+        pickable_window : bool, default: True
             When ``True`` and the chosen picker supports it, points in the
             3D window are pickable.
 
