@@ -12,6 +12,7 @@ from pyvista.core.utilities.misc import try_callback
 from pyvista.report import vtk_version_info
 
 from . import _vtk
+from .opts import PickerType
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -964,20 +965,21 @@ class RenderWindowInteractor:
     @picker.setter
     def picker(self, picker):
         pickers = {
-            'area': _vtk.vtkAreaPicker,
-            'cell': _vtk.vtkCellPicker,
-            'point': _vtk.vtkPointPicker,
-            'prop': _vtk.vtkPropPicker,
-            'rendered_area': _vtk.vtkRenderedAreaPicker,
-            'reslice': _vtk.vtkResliceCursorPicker,
-            'scene': _vtk.vtkScenePicker,
-            'volume': _vtk.vtkVolumePicker,
-            'world': _vtk.vtkWorldPointPicker,
+            PickerType.AREA: _vtk.vtkAreaPicker,
+            PickerType.CELL: _vtk.vtkCellPicker,
+            PickerType.POINT: _vtk.vtkPointPicker,
+            PickerType.PROP: _vtk.vtkPropPicker,
+            PickerType.RENDERED: _vtk.vtkRenderedAreaPicker,
+            PickerType.RESLICE: _vtk.vtkResliceCursorPicker,
+            PickerType.SCENE: _vtk.vtkScenePicker,
+            PickerType.VOLUME: _vtk.vtkVolumePicker,
+            PickerType.WORLD: _vtk.vtkWorldPointPicker,
         }
         if _vtk.vtkHardwarePicker is not None:
             # Unavailable on VTK < 9.2
-            pickers['hardware'] = _vtk.vtkHardwarePicker
-        if isinstance(picker, str):
+            pickers[PickerType.HARDWARE] = _vtk.vtkHardwarePicker
+        if isinstance(picker, (str, int, PickerType)):
+            picker = PickerType.from_any(picker)
             try:
                 picker = pickers[picker]()
             except KeyError:

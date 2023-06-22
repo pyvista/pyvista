@@ -12,7 +12,7 @@ from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
-from .opts import ElementType
+from .opts import ElementType, PickerType
 
 
 def _launch_pick_event(interactor, event):
@@ -279,7 +279,7 @@ class PickingInterface:
         callback=None,
         tolerance=0.025,
         left_clicking=False,
-        picker='point',
+        picker=PickerType.POINT,
         show_message=True,
         font_size=18,
         color='pink',
@@ -318,7 +318,7 @@ class PickingInterface:
             When ``True``, points can be picked by clicking the left mouse
             button. Default is to use the right mouse button.
 
-        picker : str, optional
+        picker : str | PickerType, optional
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
@@ -519,7 +519,7 @@ class PickingInterface:
                 try_callback(callback, selection)
 
         self.enable_rubber_band_style()  # TODO: better handle?
-        self.iren.picker = 'rendered_area'
+        self.iren.picker = 'rendered'
         self.iren.add_pick_obeserver(_end_pick_helper)
         self._picker_in_use = True
 
@@ -643,7 +643,7 @@ class PickingMethods(PickingInterface):
         tolerance=0.025,
         pickable_window=False,
         left_clicking=False,
-        picker='cell',
+        picker=PickerType.CELL,
         use_picker=False,
         **kwargs,
     ):
@@ -690,7 +690,7 @@ class PickingMethods(PickingInterface):
                If enabled, left-clicking will **not** display the bounding box
                around the picked mesh.
 
-        picker : str, optional
+        picker : str | PickerType, optional
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
@@ -727,7 +727,8 @@ class PickingMethods(PickingInterface):
         """
         # only allow certain pickers to be used for surface picking
         #  the picker class needs to have `GetDataSet()`
-        valid_pickers = ['point', 'cell', 'hardware', 'volume']
+        picker = PickerType.from_any(picker)
+        valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
             raise ValueError(
                 f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
@@ -797,7 +798,7 @@ class PickingMethods(PickingInterface):
         font_size=18,
         left_clicking=False,
         use_actor=False,
-        picker='cell',
+        picker=PickerType.CELL,
         **kwargs,
     ):
         """Enable picking of a mesh.
@@ -844,7 +845,7 @@ class PickingMethods(PickingInterface):
             If True, the callback will be passed the picked actor instead of
             the mesh object.
 
-        picker : str, optional
+        picker : str | PickerType, optional
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
@@ -1325,7 +1326,7 @@ class PickingMethods(PickingInterface):
         tolerance=0.025,
         pickable_window=False,
         left_clicking=False,
-        picker='cell',
+        picker=PickerType.CELL,
         **kwargs,
     ):
         """Select individual elements on a mesh.
@@ -1372,7 +1373,7 @@ class PickingMethods(PickingInterface):
                If enabled, left-clicking will **not** display the bounding box
                around the picked mesh.
 
-        picker : str, optional
+        picker : str | PickerType, optional
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more

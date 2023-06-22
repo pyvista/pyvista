@@ -37,3 +37,18 @@ class ElementType(AnnotatedIntEnum):
     FACE = (2, 'Face')
     EDGE = (3, 'Edge')
     POINT = (4, 'Point')
+
+
+class PickerType(AnnotatedIntEnum):
+    """Types of pickers."""
+
+    AREA = (0, 'Area')
+    CELL = (1, 'Cell')
+    HARDWARE = (2, 'Hardware')
+    POINT = (3, 'Point')
+    PROP = (4, 'Prop')
+    RENDERED = (5, 'Rendered')
+    RESLICE = (6, 'Reslice')
+    SCENE = (7, 'Scene')
+    VOLUME = (8, 'Volume')
+    WORLD = (9, 'World')
