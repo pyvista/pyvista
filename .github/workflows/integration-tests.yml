@@ -84,12 +84,10 @@ jobs:
         with:
           python-version: '3.10'
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
-      - name: Install Conda
-        uses: conda-incubator/setup-miniconda@v2
       - name: Install PyVista
         run: pip install -ve . # pyvista
       - name: Install GeoVista
         run: pip install -ve . # geovista
         working-directory: geovista
-      - run: tox
+      - run: python -m pytest
         working-directory: geovista
