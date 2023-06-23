@@ -86,6 +86,7 @@ jobs:
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
         run: pip install -ve . # pyvista
+      - run: apt-get install libgeos-dev
       - name: Install GeoVista
         run: pip install -ve . # geovista
         working-directory: geovista
