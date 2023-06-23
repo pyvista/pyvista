@@ -37,6 +37,12 @@ def _launch_pick_event(interactor, event):
     picker.Pick(click_x, click_y, click_z, renderer)
 
 
+def _poked_context_callback(plotter, *args, **kwargs):
+    """Use _poked_context_callback in a poked renderer context."""
+    with plotter.iren.poked_subplot():
+        try_callback(*args, **kwargs)
+
+
 class RectangleSelection:
     """Internal data structure for rectangle based selections."""
 
@@ -421,11 +427,13 @@ class PickingInterface:
                     )
                 if callable(callback):
                     if use_picker:
-                        try_callback(callback, self.picked_point, picker)
+                        _poked_context_callback(self_(), callback, self.picked_point, picker)
                     elif use_mesh:  # Lower priority
-                        try_callback(callback, picker.GetDataSet(), picker.GetPointId())
+                        _poked_context_callback(
+                            self_(), callback, picker.GetDataSet(), picker.GetPointId()
+                        )
                     else:
-                        try_callback(callback, self.picked_point)
+                        _poked_context_callback(self_(), callback, self.picked_point)
 
         if picker is not None:  # If None, that means use already set picker
             self.iren.picker = picker
@@ -544,7 +552,7 @@ class PickingInterface:
                     )
 
             if callback is not None:
-                try_callback(callback, selection)
+                _poked_context_callback(self_(), callback, selection)
 
         self.enable_rubber_band_style()  # TODO: better handle?
         self.iren.picker = 'rendered'
@@ -795,9 +803,9 @@ class PickingMethods(PickingInterface):
                     )
             if callable(callback):
                 if use_picker:
-                    try_callback(callback, picked_point, picker)
+                    _poked_context_callback(self_(), callback, picked_point, picker)
                 else:
-                    try_callback(callback, picked_point)
+                    _poked_context_callback(self_(), callback, picked_point)
 
         self.enable_point_picking(
             callback=_end_pick_event,
@@ -935,9 +943,9 @@ class PickingMethods(PickingInterface):
         def end_pick_call_back(_, picker):
             if callback:
                 if use_actor:
-                    try_callback(callback, self_()._picked_actor)
+                    _poked_context_callback(self_(), callback, self_()._picked_actor)
                 else:
-                    try_callback(callback, self_()._picked_mesh)
+                    _poked_context_callback(self_(), callback, self_()._picked_mesh)
 
             if show:
                 # Select the renderer where the mesh is added.
@@ -1070,10 +1078,8 @@ class PickingMethods(PickingInterface):
                         **_kwargs,
                     )
 
-            # TODO: should callbacks be within the poked subplot context
-            # to simplify use?
             if callback is not None:
-                try_callback(callback, self_().picked_cells)
+                _poked_context_callback(self_(), callback, self_().picked_cells)
 
         def through_pick_callback(selection):
             picked = pyvista.MultiBlock()
@@ -1188,10 +1194,8 @@ class PickingMethods(PickingInterface):
                         **_kwargs,
                     )
 
-            # TODO: should callbacks be within the poked subplot context
-            # to simplify use?
             if callback is not None:
-                try_callback(callback, picked)
+                _poked_context_callback(self_(), callback, picked)
 
         def visible_pick_callback(selection):
             picked = pyvista.MultiBlock()
@@ -1439,10 +1443,11 @@ class PickingMethods(PickingInterface):
 
         """
         mode = ElementType.from_any(mode)
+        self_ = weakref.ref(self)
 
         def _end_handler(picked):
             if callback:
-                try_callback(callback, picked)
+                _poked_context_callback(self_(), callback, picked)
 
             if mode == ElementType.CELL:
                 self._picked_cell = picked
@@ -1533,6 +1538,7 @@ class PickingMethods(PickingInterface):
         """
         # use a weak reference to enable garbage collection
         renderer_ = weakref.ref(self.renderer)
+        self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
@@ -1561,7 +1567,7 @@ class PickingMethods(PickingInterface):
                     dataset = None
 
                 if callable(callback):
-                    try_callback(callback, self._picked_block_index, dataset)
+                    _poked_context_callback(self_(), callback, self._picked_block_index, dataset)
 
         self.track_click_position(callback=get_picked_block, viewport=True, side=side)
 
@@ -1599,12 +1605,13 @@ class PickingHelper(PickingMethods):
             Callback to call immediately after right clicking.
 
         """
+        self_ = weakref.ref(self)
 
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)
             if callable(callback):
-                try_callback(callback, click_point)
+                _poked_context_callback(self_(), callback, click_point)
 
         self.track_click_position(callback=_the_callback, side="right")
 
@@ -1666,6 +1673,7 @@ class PickingHelper(PickingMethods):
             the picked path is interactively displayed.
 
         """
+        self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
         def make_line_cells(n_points):
@@ -1695,7 +1703,7 @@ class PickingHelper(PickingMethods):
                         **_kwargs,
                     )
             if callable(callback):
-                try_callback(callback, self.picked_path)
+                _poked_context_callback(self_(), callback, self.picked_path)
 
         def _clear_path_event_watcher():
             del the_points[:]
@@ -1788,6 +1796,8 @@ class PickingHelper(PickingMethods):
             the picked path is interactively displayed.
 
         """
+        self_ = weakref.ref(self)
+
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
@@ -1834,7 +1844,7 @@ class PickingHelper(PickingMethods):
                         **_kwargs,
                     )
             if callable(callback):
-                try_callback(callback, self.picked_geodesic)
+                _poked_context_callback(self_(), callback, self.picked_geodesic)
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
@@ -1924,6 +1934,7 @@ class PickingHelper(PickingMethods):
             the picked path is interactively displayed.
 
         """
+        self_ = weakref.ref(self)
 
         def _clear_horizon_event_watcher():
             self.picked_horizon = pyvista.PolyData()
@@ -1952,7 +1963,7 @@ class PickingHelper(PickingMethods):
                     )
 
             if callable(callback):
-                try_callback(callback, path)
+                _poked_context_callback(self_(), callback, path)
 
         self.enable_path_picking(
             callback=_the_callback,
