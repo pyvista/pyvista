@@ -90,5 +90,6 @@ jobs:
       - name: Install GeoVista
         run: pip install -ve . # geovista
         working-directory: geovista
+      - run: pip install pytest
       - run: python -m pytest
         working-directory: geovista
