@@ -90,6 +90,7 @@ jobs:
       - name: Install GeoVista
         run: pip install -ve . # geovista
         working-directory: geovista
-      - run: pip install pytest
+      - run: pip install requirements/pypi-optional-test.txt
+        working-directory: geovista
       - run: python -m pytest
         working-directory: geovista
