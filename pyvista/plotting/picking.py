@@ -384,9 +384,13 @@ class PickingInterface:
 
         """
         self._validate_picker_not_in_use()
-        # TODO: Removed kwargs: use_mesh
         if 'use_mesh' in kwargs:
-            raise ValueError('`use_mesh` has been deprecated.')
+            warnings.warn(
+                '`use_mesh` is deprecated. See `use_picker` instead.', PyVistaDeprecationWarning
+            )
+            use_mesh = kwargs.pop('use_mesh')
+        else:
+            use_mesh = False
 
         self_ = weakref.ref(self)
 
@@ -418,6 +422,8 @@ class PickingInterface:
                 if callable(callback):
                     if use_picker:
                         try_callback(callback, self.picked_point, picker)
+                    elif use_mesh:  # Lower priority
+                        try_callback(callback, picker.GetDataSet(), picker.GetPointId())
                     else:
                         try_callback(callback, self.picked_point)
 
