@@ -74,3 +74,22 @@ jobs:
       - run: pip install -ve .
       - run: pytest ./tests
         working-directory: pyvistaqt
+
+  geovista:
+    name: GeoVista
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: git clone https://github.com/bjlittle/geovista.git --single-branch
+      - name: Install Conda
+        uses: conda-incubator/setup-miniconda@v2
+      - name: Install PyVista
+        run: pip install -ve . # pyvista
+      - name: Install GeoVista
+        run: pip install -ve . # geovista
+        working-directory: geovista
+      - run: tox
+        working-directory: geovista
