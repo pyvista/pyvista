@@ -310,7 +310,7 @@ class PickingInterface:
         """Enable picking at points under the cursor.
 
         Enable picking a point at the mouse location in the render
-        view using the ``P`` key. This point is saved to the
+        view using the right mouse button. This point is saved to the
         ``.picked_point`` attribute on the plotter. Pass a callback
         that takes that point as an argument. The picked
         point can either be a point on the first intersecting mesh, or
