@@ -40,7 +40,7 @@ pl.camera_position = [
 
 pl.show(auto_close=False)
 
-# Programmatically pick a face ro make example look nice
+# Programmatically pick a face to make example look nice
 width, height = pl.window_size
 pl.iren._mouse_right_button_press(419, 263)
 pl.iren._mouse_right_button_release()
