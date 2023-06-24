@@ -95,7 +95,7 @@ def test_multi_cell_picking(through):
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
-def test_enable_mesh_picking(sphere, left_clicking):
+def test_mesh_picking(sphere, left_clicking):
     picked = []
 
     def callback(picked_mesh):
@@ -108,28 +108,25 @@ def test_enable_mesh_picking(sphere, left_clicking):
 
     width, height = pl.window_size
 
-    # clicking is to "activate" the renderer
-    pl.iren._mouse_left_button_press(width // 2, height // 2)
-    pl.iren._mouse_left_button_release(width, height)
-    pl.iren._mouse_move(width // 2, height // 2)
-    if not left_clicking:
-        pl.iren._simulate_keypress('p')
+    if left_clicking:
+        pl.iren._mouse_left_button_click(width // 2, height // 2)
+    else:
+        pl.iren._mouse_right_button_click(width // 2, height // 2)
 
     assert sphere in picked
     assert pl.picked_mesh == sphere
     assert pl.picked_actor == actor
 
     # invalid selection
-    pl.iren._mouse_left_button_press(0, 0)
-    pl.iren._mouse_left_button_release(0, 0)
-    pl.iren._mouse_move(0, 0)
-    if not left_clicking:
-        pl.iren._simulate_keypress('p')
+    if left_clicking:
+        pl.iren._mouse_left_button_click(0, 0)
+    else:
+        pl.iren._mouse_right_button_click(0, 0)
 
     assert pl.picked_mesh is None
 
 
-def test_enable_mesh_picking_actor(sphere):
+def test_actor_picking(sphere):
     picked = []
 
     def callback(picked_actor):
@@ -142,26 +139,19 @@ def test_enable_mesh_picking_actor(sphere):
 
     width, height = pl.window_size
 
-    # clicking is to "activate" the renderer
-    pl.iren._mouse_left_button_press(width // 2, height // 2)
-    pl.iren._mouse_left_button_release(width, height)
-    pl.iren._mouse_move(width // 2, height // 2)
-    pl.iren._simulate_keypress('p')
+    pl.iren._mouse_right_button_click(width // 2, height // 2)
 
     assert actor in picked
     assert pl.picked_mesh == sphere
 
     # invalid selection
-    pl.iren._mouse_left_button_press(0, 0)
-    pl.iren._mouse_left_button_release(0, 0)
-    pl.iren._mouse_move(0, 0)
-    pl.iren._simulate_keypress('p')
+    pl.iren._mouse_right_button_click(0, 0)
 
     assert pl.picked_mesh is None
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
-def test_enable_surface_point_picking(sphere, left_clicking):
+def test_surface_point_picking(sphere, left_clicking):
     picked = []
 
     def callback(point):
@@ -174,22 +164,19 @@ def test_enable_surface_point_picking(sphere, left_clicking):
 
     width, height = pl.window_size
 
-    # clicking is to "activate" the renderer
-    pl.iren._mouse_left_button_press(width // 2, height // 2)
-    pl.iren._mouse_left_button_release(width, height)
-    pl.iren._mouse_move(width // 2, height // 2)
-    if not left_clicking:
-        pl.iren._simulate_keypress('p')
+    if left_clicking:
+        pl.iren._mouse_left_button_click(width // 2, height // 2)
+    else:
+        pl.iren._mouse_right_button_click(width // 2, height // 2)
 
     assert len(picked)
     assert pl.picked_point is not None
 
     # invalid selection
-    pl.iren._mouse_left_button_press(0, 0)
-    pl.iren._mouse_left_button_release(0, 0)
-    pl.iren._mouse_move(0, 0)
-    if not left_clicking:
-        pl.iren._simulate_keypress('p')
+    if left_clicking:
+        pl.iren._mouse_left_button_click(0, 0)
+    else:
+        pl.iren._mouse_right_button_click(0, 0)
 
     assert pl.picked_point is None
 
@@ -202,23 +189,22 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()
     pl.show(auto_close=False)
 
+    assert pl._picking_text not in pl.renderer.actors
+
     width, height = pl.window_size
 
-    # clicking is to "activate" the renderer
-    pl.iren._mouse_left_button_press(width // 2, height // 2)
-    pl.iren._mouse_left_button_release(width, height)
-    pl.iren._mouse_move(width // 2, height // 2)
-    if not left_clicking:
-        pl.iren._simulate_keypress('p')
+    # This verifies callbacks are removed from click events
+    if left_clicking:
+        pl.iren._mouse_left_button_click(width // 2, height // 2)
+    else:
+        pl.iren._mouse_right_button_click(width // 2, height // 2)
 
     assert pl.picked_point is None
 
-    # ensure it can safely be called twice
-    pl.disable_picking()
-    assert pl._picking_text not in pl.renderer.actors
+    pl.disable_picking()  # ensure it can safely be called twice
 
 
-def test_enable_cell_picking_interactive():
+def test_cell_picking_interactive():
     n_cells = []
 
     def callback(picked_cells):
@@ -240,20 +226,23 @@ def test_enable_cell_picking_interactive():
     assert pl.picked_cell
 
 
-def test_enable_cell_picking_interactive_two_ren_win():
+def test_cell_picking_interactive_subplot():
     n_cells = []
 
     def callback(picked_cells):
         n_cells.append(picked_cells.n_cells)
 
     pl = pyvista.Plotter(shape=(1, 2))
-    pl.add_mesh(pyvista.Sphere())
+    pl.add_mesh(pyvista.Sphere())  # TRIANGLE cells
     pl.enable_cell_picking(callback=callback)
+    pl.subplot(0, 1)
+    pl.add_mesh(pyvista.Box(level=4), show_edges=True)  # QUAD cells
+
     pl.show(auto_close=False, interactive=False)
 
     width, height = pl.window_size
 
-    # simulate "r" keypress
+    # Activate picking
     pl.iren._simulate_keypress('r')
 
     # select just the left-hand side
@@ -261,7 +250,16 @@ def test_enable_cell_picking_interactive_two_ren_win():
     pl.iren._mouse_left_button_release(width // 2, height)
 
     assert n_cells[0]
-    assert pl.picked_cell
+    assert pl.picked_cells
+    assert pl.picked_cells.get_cell(0).type == pyvista.CellType.TRIANGLE
+
+    # select just the right-hand side
+    pl.iren._mouse_left_button_press(width - width // 4, height // 2)
+    pl.iren._mouse_left_button_release(width, height)
+
+    assert n_cells[0]
+    assert pl.picked_cells
+    assert pl.picked_cells.get_cell(0).type == pyvista.CellType.QUAD
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
@@ -272,29 +270,25 @@ def test_point_picking(left_clicking):
         picked.append(picked_point)
 
     sphere = pyvista.Sphere()
-    plotter = pyvista.Plotter(
+    pl = pyvista.Plotter(
         window_size=(100, 100),
     )
-    plotter.add_mesh(sphere)
-    plotter.enable_point_picking(
+    pl.add_mesh(sphere)
+    pl.enable_point_picking(
+        callback=callback,
         show_message=True,
         left_clicking=left_clicking,
-        callback=callback,
     )
     # must show to activate the interactive renderer (for left_clicking)
-    plotter.show(auto_close=False)
+    pl.show(auto_close=False)
 
     # simulate the pick
-    width, height = plotter.window_size
+    width, height = pl.window_size
+
     if left_clicking:
-        plotter.iren._mouse_left_button_press(width // 2, height // 2)
-        plotter.iren._mouse_left_button_release(width, height)
-        plotter.iren._mouse_move(width // 2, height // 2)
+        pl.iren._mouse_left_button_click(width // 2, height // 2)
     else:
-        renderer = plotter.renderer
-        picker = plotter.iren.picker
-        picker.Pick(width // 2, height // 2, 0, renderer)
-    plotter.close()
+        pl.iren._mouse_right_button_click(width // 2, height // 2)
 
     assert picked
 
@@ -312,19 +306,19 @@ def test_point_picking_window(pickable_window):
         def __call__(self, picked_point):
             self.last_picked = picked_point
 
-    plotter = pyvista.Plotter(
+    pl = pyvista.Plotter(
         window_size=(100, 100),
     )
 
     # bottom left corner, pickable
     sphere = pyvista.Sphere()
     sphere.translate([-1, -1, 0], inplace=True)
-    plotter.add_mesh(sphere, pickable=True)
+    pl.add_mesh(sphere, pickable=True)
 
-    plotter.camera_position = [(0.0, 0.0, 8.5), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl.camera_position = [(0.0, 0.0, 8.5), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
     tracker = Tracker()
-    plotter.enable_point_picking(
+    pl.enable_point_picking(
         callback=tracker,
         tolerance=0.2,
         pickable_window=pickable_window,
@@ -333,8 +327,8 @@ def test_point_picking_window(pickable_window):
     )
 
     # simulate the pick
-    renderer = plotter.renderer
-    picker = plotter.iren.picker
+    renderer = pl.renderer
+    picker = pl.iren.picker
 
     successful_pick = picker.Pick(25, 25, 0, renderer)
     assert successful_pick  # not a complete test
@@ -348,72 +342,72 @@ def test_point_picking_window(pickable_window):
     else:
         assert np.allclose(tracker.last_picked, good_point)  # make sure point did not change
 
-    plotter.close()
+    pl.close()
 
 
 def test_path_picking():
     sphere = pyvista.Sphere()
-    plotter = pyvista.Plotter(
+    pl = pyvista.Plotter(
         window_size=(100, 100),
     )
-    plotter.add_mesh(sphere)
-    plotter.enable_path_picking(
+    pl.add_mesh(sphere)
+    pl.enable_path_picking(
         show_message=True,
         callback=lambda path: None,
     )
     # simulate the pick
-    renderer = plotter.renderer
-    picker = plotter.iren.picker
+    renderer = pl.renderer
+    picker = pl.iren.picker
     picker.Pick(50, 50, 0, renderer)
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = plotter.iren._key_press_event_callbacks['c']
+    clear_callback = pl.iren._key_press_event_callbacks['c']
     clear_callback[0]()
-    plotter.close()
+    pl.close()
 
 
 def test_geodesic_picking():
     sphere = pyvista.Sphere()
-    plotter = pyvista.Plotter(
+    pl = pyvista.Plotter(
         window_size=(100, 100),
     )
-    plotter.add_mesh(sphere)
-    plotter.enable_geodesic_picking(
+    pl.add_mesh(sphere)
+    pl.enable_geodesic_picking(
         show_message=True,
         callback=lambda path: None,
         show_path=True,
         keep_order=True,
     )
-    plotter.show(auto_close=False)
+    pl.show(auto_close=False)
 
     # simulate the pick
-    renderer = plotter.renderer
-    picker = plotter.iren.picker
+    renderer = pl.renderer
+    picker = pl.iren.picker
     picker.Pick(50, 50, 0, renderer)
     picker.Pick(45, 45, 0, renderer)
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = plotter.iren._key_press_event_callbacks['c']
+    clear_callback = pl.iren._key_press_event_callbacks['c']
     clear_callback[0]()
-    plotter.close()
+    pl.close()
 
 
 def test_horizon_picking():
     sphere = pyvista.Sphere()
-    plotter = pyvista.Plotter(
+    pl = pyvista.Plotter(
         window_size=(100, 100),
     )
-    plotter.add_mesh(sphere)
-    plotter.enable_horizon_picking(
+    pl.add_mesh(sphere)
+    pl.enable_horizon_picking(
         show_message=True,
         callback=lambda path: None,
         show_horizon=True,
     )
     # simulate the pick
-    renderer = plotter.renderer
-    picker = plotter.iren.picker
+    renderer = pl.renderer
+    picker = pl.iren.picker
     # at least 3 picks
     picker.Pick(50, 50, 0, renderer)
     picker.Pick(49, 50, 0, renderer)
@@ -421,12 +415,12 @@ def test_horizon_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = plotter.iren._key_press_event_callbacks['c']
+    clear_callback = pl.iren._key_press_event_callbacks['c']
     clear_callback[0]()
-    plotter.close()
+    pl.close()
 
 
-def test_enable_fly_to_right_click(verify_image_cache, sphere):
+def test_fly_to_right_click(verify_image_cache, sphere):
     point = []
 
     def callback(click_point):
@@ -438,7 +432,7 @@ def test_enable_fly_to_right_click(verify_image_cache, sphere):
     pl.show(auto_close=False)
     width, height = pl.window_size
     cpos_before = pl.camera_position
-    pl.iren._mouse_right_button_press(width // 4, height // 2)
+    pl.iren._mouse_right_button_click(width // 4, height // 2)
 
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
@@ -446,7 +440,7 @@ def test_enable_fly_to_right_click(verify_image_cache, sphere):
     pl.close()
 
 
-def test_enable_fly_to_right_click_multi_render(verify_image_cache, sphere):
+def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     point = []
 
@@ -459,7 +453,7 @@ def test_enable_fly_to_right_click_multi_render(verify_image_cache, sphere):
     pl.show(auto_close=False)
     width, height = pl.window_size
     cpos_before = pl.camera_position
-    pl.iren._mouse_right_button_press(width // 8, height // 2)
+    pl.iren._mouse_right_button_click(width // 8, height // 2)
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
     assert point
@@ -473,7 +467,7 @@ def test_fly_to_mouse_position(verify_image_cache, sphere):
     pl.show(auto_close=False)
     width, height = pl.window_size
     cpos_before = pl.camera_position
-    pl.iren._mouse_right_button_press(width - width // 4, height // 2)
+    pl.iren._mouse_move(width - width // 4, height // 2)
     pl.fly_to_mouse_position()
     assert cpos_before != pl.camera_position
     pl.close()
@@ -497,13 +491,11 @@ def test_block_picking(multiblock_poly):
 
     # click in the corner
     assert not picked_blocks
-    pl.iren._mouse_left_button_press(0, 0)
-    pl.iren._mouse_left_button_release(0, 0)
+    pl.iren._mouse_left_button_click(0, 0)
     assert not picked_blocks
 
     # click directly in the middle
-    pl.iren._mouse_left_button_press(width // 2, height // 2)
-    pl.iren._mouse_left_button_release(width // 2, height // 2)
+    pl.iren._mouse_left_button_click(width // 2, height // 2)
     assert mapper.block_attr[2].color
 
     assert pl.picked_block_index == picked_blocks[0]
@@ -537,8 +529,7 @@ def test_element_picking(mode):
     # simulate the pick
     width, height = plotter.window_size
 
-    plotter.iren._mouse_left_button_press(width // 2, height // 2)
-    plotter.iren._mouse_left_button_release()
+    plotter.iren._mouse_left_button_click(width // 2, height // 2)
 
     plotter.close()
 
@@ -575,7 +566,6 @@ def test_switch_picking_type():
     pl.iren._simulate_keypress('r')
     pl.iren._mouse_left_button_press(width // 4, height // 4)
     pl.iren._mouse_left_button_release(width, height)
-    pl.iren._mouse_left_button_release()
 
     assert cells
     assert isinstance(cells[0], pyvista.UnstructuredGrid)
@@ -592,9 +582,9 @@ def test_switch_picking_type():
     pl.enable_point_picking(callback=callback)
     # simulate the pick
     width, height = pl.window_size
-    renderer = pl.renderer
-    picker = pl.iren.picker
-    picker.Pick(width // 2, height // 2, 0, renderer)
+
+    pl.iren._mouse_right_button_click(width // 3, height // 2)
+
     pl.close()
 
     assert points
