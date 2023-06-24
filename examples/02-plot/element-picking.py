@@ -41,9 +41,13 @@ pl.camera_position = [
 pl.show(auto_close=False)
 
 # Programmatically pick a face to make example look nice
-width, height = pl.window_size
-pl.iren._mouse_right_button_press(419, 263)
-pl.iren._mouse_right_button_release()
+try:
+    width, height = pl.window_size
+    pl.iren._mouse_right_button_press(419, 263)
+    pl.iren._mouse_right_button_release()
+except AttributeError:
+    # ignore this section when manually closing the window
+    pass
 
 ###############################################################################
 # Pick an Edge of a Cell
@@ -64,6 +68,10 @@ pl.camera_position = [
 pl.show(auto_close=False)
 
 # Programmatically pick a face to make example look nice
-width, height = pl.window_size
-pl.iren._mouse_right_button_press(480, 300)
-pl.iren._mouse_right_button_release()
+try:
+    width, height = pl.window_size
+    pl.iren._mouse_right_button_press(480, 300)
+    pl.iren._mouse_right_button_release()
+except AttributeError:
+    # ignore this section when manually closing the window
+    pass
