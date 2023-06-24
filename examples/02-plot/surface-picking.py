@@ -1,10 +1,10 @@
 """
-.. _surface_picking_example:
+.. _surface_point_picking_example:
 
 Picking a Point on the Surface of a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example demonstrates how to pick meshes using
-:func:`surface_mesh_picking() <pyvista.Plotter.enable_surface_point_picking>`.
+:func:`enable_surface_point_picking() <pyvista.Plotter.enable_surface_point_picking>`.
 
 This allows you to pick points on the surface of a mesh.
 

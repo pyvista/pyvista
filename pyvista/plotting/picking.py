@@ -763,7 +763,7 @@ class PickingMethods(PickingInterface):
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_surface_point_picking()
 
-        See :ref:`surface_picking_example` for a full example using this method.
+        See :ref:`surface_point_picking_example` for a full example using this method.
 
         """
         # only allow certain pickers to be used for surface picking
