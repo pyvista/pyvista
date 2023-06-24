@@ -365,7 +365,7 @@ class PickingInterface:
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
 
-        pickable_window : bool, default: True
+        pickable_window : bool, default: False
             When ``True`` and the chosen picker supports it, points in the
             3D window are pickable.
 
