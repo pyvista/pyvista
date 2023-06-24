@@ -92,5 +92,5 @@ jobs:
         working-directory: geovista
       - run: pip install -r requirements/pypi-optional-test.txt
         working-directory: geovista
-      - run: python -m pytest
+      - run: pytest -W error
         working-directory: geovista
