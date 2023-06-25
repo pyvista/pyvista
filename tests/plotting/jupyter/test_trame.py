@@ -53,7 +53,11 @@ def test_trame():
     actor = pl.add_mesh(pv.Cone())
     widget = pl.show(return_viewer=True)
     assert isinstance(widget, Widget)
-    assert 'http://' in widget.src
+
+    if pv.global_theme.trame.server_proxy_enabled:
+        assert pv.global_theme.trame.server_proxy_prefix in widget.src
+    else:
+        assert 'http://' in widget.src
 
     viewer = get_or_create_viewer(pl)
 
@@ -109,21 +113,24 @@ def test_trame_jupyter_modes():
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend='client', return_viewer=True)
-    assert isinstance(widget, Widget)
-    assert pl.suppress_rendering
-
-    pl = pv.Plotter(notebook=True)
-    pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='server', return_viewer=True)
     assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
+    assert not pl._closed
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     widget = pl.show(jupyter_backend='trame', return_viewer=True)
     assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
+    assert not pl._closed
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='client', return_viewer=True)
+    assert isinstance(widget, Widget)
+    assert pl.suppress_rendering
+    assert not pl._closed
 
 
 @skip_no_trame

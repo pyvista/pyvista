@@ -28,3 +28,9 @@ class RenderWindowUnavailable(RuntimeError):
     def __init__(self, message="Render window is not available."):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
+
+
+class PyVistaPickingError(RuntimeError):
+    """General picking error class."""
+
+    pass

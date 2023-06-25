@@ -41,8 +41,7 @@ p.show()
 #
 # After enabling point picking, we can modify which actors are pickable.
 sphere = pv.Sphere()
-cube = pv.Cube()
-cube.translate([10, 10, 0])
+cube = pv.Cube().translate([10, 10, 0])
 
 p = pv.Plotter()
 sphere_actor = p.add_mesh(sphere, pickable=True)  # initially pickable

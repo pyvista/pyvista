@@ -1,38 +1,74 @@
-"""Deprecated utilities module."""
+"""Deprecated utilities subpackage."""
 import importlib
 import inspect
 import warnings
 
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+# Places to look for the utility
+_MODULES = [
+    'pyvista.core.utilities',
+    'pyvista.core.errors',
+    'pyvista.core',
+    'pyvista.plotting.utilities',
+    'pyvista.plotting.errors',
+    'pyvista.plotting.texture',
+    'pyvista.plotting',
+    'pyvista.report',
+    'pyvista.themes',
+]
 
 
-def __dir__():
-    raise DeprecationError('The `pyvista.utilities` module has been deprecated.')
+def _try_import(module, name):
+    """Attempt to import a module."""
+    _module = importlib.import_module(module)
+    try:
+        feature = inspect.getattr_static(_module, name)
+        import_path = f'from {module} import {name}'
+    except AttributeError:
+        return None, None
+    return feature, import_path
 
 
 def __getattr__(name):
-    utils = importlib.import_module('pyvista.core.utilities')
+    """Fetch an attribute ``name`` from ``globals()`` and warn if it's from a deprecated module.
+
+    Note that ``__getattr__()`` only gets called when ``name`` is missing
+    from the module's globals. The trick is that we want to import this
+    function into other deprecated modules, and we want to carry this
+    subpackage's globals along to prevent some spurious warnings.
+
+    Raises
+    ------
+    AttributeError
+        If the attribute is not found in ``globals()`` and also could not be
+        imported from the modules in ``_MODULES``.
+
+    PyVistaDeprecationWarning
+        If the attribute has been found via importing from the modules in
+        ``_MODULES``, as this implies that the feature has been moved from
+        pyvista.utilities.
+
+    """
+    from pyvista.core.errors import PyVistaDeprecationWarning
+
     try:
-        value = inspect.getattr_static(utils, name)
-        import_path = f'from pyvista.core.utilities import {name}'
-    except AttributeError:
-        utils = importlib.import_module('pyvista.plotting.utilities')
-        try:
-            value = inspect.getattr_static(utils, name)
-            import_path = f'from pyvista.plotting.utilities import {name}'
-        except AttributeError:
-            raise AttributeError(
-                f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}` in `pyvista.core.utilities` or `pyvista.plotting.utilities`.'
-            ) from None
+        return globals()[name]
+    except KeyError:
+        pass
+
+    for module in _MODULES:
+        feature, import_path = _try_import(module, name)
+        if feature is not None:
+            break
+    else:
+        raise AttributeError(
+            f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
+        ) from None
 
     message = f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
-    if inspect.ismodule(value):
-        message += (
-            f' `{name}` is an internal module and its members may have changed during the refactor.'
-        )
 
     warnings.warn(
         message,
         PyVistaDeprecationWarning,
     )
-    return value
+
+    return feature

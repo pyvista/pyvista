@@ -39,6 +39,8 @@ all plotting functionality in PyVista.
    Renderer
    plotting.mapper._BaseMapper
    plotting.opts.InterpolationType
+   plotting.opts.RepresentationType
+   plotting.opts.ElementType
    plotting.volume.Volume
    plotting.volume_property.VolumeProperty
 
