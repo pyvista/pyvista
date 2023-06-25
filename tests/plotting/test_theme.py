@@ -5,7 +5,6 @@ import vtk
 
 import pyvista
 from pyvista import colors
-from pyvista.errors import PyVistaDeprecationWarning
 from pyvista.plotting.utilities.gl_checks import uses_egl
 from pyvista.themes import Theme, _set_plot_theme_from_env
 
@@ -461,12 +460,6 @@ def test_save_before_close_callback(tmpdir, default_theme):
 
 
 def test_anti_aliasing(default_theme):
-    # test backwards compatibility
-    with pytest.warns(PyVistaDeprecationWarning, match='is now a string'):
-        default_theme.anti_aliasing = True
-        pl = pyvista.Plotter(theme=default_theme)
-        assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
-
     with pytest.raises(ValueError, match='anti_aliasing must be either'):
         default_theme.anti_aliasing = 'invalid value'
 
