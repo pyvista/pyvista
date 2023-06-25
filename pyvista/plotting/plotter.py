@@ -6004,6 +6004,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             This export routine has been broken for some time and has
             been completely removed in version 0.40.0.  Use :func:`pyvista.Plotter.export_vtksz` instead.
 
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments.
+
+        **kwargs : dict, optional
+            Keyword arguments.
+
         """
         from pyvista.core.errors import DeprecationError
 
