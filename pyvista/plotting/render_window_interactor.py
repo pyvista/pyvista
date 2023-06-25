@@ -63,7 +63,7 @@ class RenderWindowInteractor:
         )
 
         self.reset_picker()
-        self.picker = PickerType.POINT
+        self.picker = PickerType.PROP
 
     @property
     def _plotter(self):
