@@ -26,10 +26,9 @@ pl.show()
 
 
 ###############################################################################
-# Pick using the left-mouse button
-# ++++++++++++++++++++++++++++++++
-# Pick using the left mouse button and trigger a callback that "shrinks" the
-# mesh each time it's selected.
+# Deform the mesh after picking
+# +++++++++++++++++++++++++++++
+# Pick to trigger a callback that "shrinks" the mesh each time it's selected.
 
 
 def callback(mesh):
@@ -41,7 +40,7 @@ def callback(mesh):
 pl = pv.Plotter()
 pl.add_mesh(sphere, color='r')
 pl.add_mesh(cube, color='b')
-pl.enable_mesh_picking(callback=callback, left_clicking=True, show=False)
+pl.enable_mesh_picking(callback=callback, show=False)
 pl.show()
 
 
