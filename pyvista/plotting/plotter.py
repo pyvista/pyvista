@@ -550,6 +550,59 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # convert and write to file
         embed_minimal_html(filename, None, title=self.title, state=state)
 
+    def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
+        """Export this plotter as a VTK.js OfflineLocalView file.
+
+        The exported file can be viewed with the OfflineLocalView viewer
+        available at https://kitware.github.io/vtk-js/examples/OfflineLocalView.html
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to export the file to. Defaults to ``'scene-export.vtksz'``.
+
+        format : str, optional
+            The format of the exported file. Defaults to ``'zip'``. Can be
+            either ``'zip'`` or ``'json'``.
+
+        Returns
+        -------
+        str
+            The exported filename.
+
+        """
+        try:
+            from trame.app import get_server
+            from trame.ui.vuetify import VAppLayout
+            from trame.widgets import vuetify
+
+            from pyvista.trame import PyVistaLocalView
+            from pyvista.trame.jupyter import elegantly_launch
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install trame to export')
+
+        # Ensure trame server is launched
+        server = get_server(pyvista.global_theme.trame.jupyter_server_name)
+        if not server.running:
+            elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)
+
+        with VAppLayout(server):
+            with vuetify.VContainer(
+                fluid=True,
+                classes="pa-0 fill-height",
+            ):
+                view = PyVistaLocalView(self)
+
+        content = view.export(format=format)
+
+        if filename is None:
+            return content
+
+        with open(filename, 'wb') as f:
+            f.write(content)
+
+        return filename
+
     def _save_panel(self, filename):
         """Save the render window as a ``panel.pane.vtk`` html file.
 

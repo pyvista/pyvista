@@ -94,6 +94,9 @@ pyvista = [
     'sphere.ply',
     'uniform.vtk',
 ]
+"pyvista.trame" = [
+    'OfflineLocalView.html',
+]
 
 [tool.isort]
 profile = 'black'
