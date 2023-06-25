@@ -94,7 +94,7 @@ pyvista = [
     'sphere.ply',
     'uniform.vtk',
 ]
-"pyvista.trame" = [
+"pyvista.ext" = [
     'OfflineLocalView.html',
 ]
 
