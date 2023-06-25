@@ -476,7 +476,7 @@ class PickingInterface:
 
         1. ``RectangleSelection.viewport``: the viewport coordinates of the
            selection rectangle.
-        2. ``RectangleSelection.frustum``: the full frustrum made from
+        2. ``RectangleSelection.frustum``: the full frustum made from
            the selection rectangle into the scene.
 
         Parameters
