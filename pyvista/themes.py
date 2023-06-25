@@ -3030,7 +3030,7 @@ class DarkTheme(Theme):
         self.cmap = 'viridis'
         self.font.color = 'white'
         self.show_edges = False
-        self.color = 'tan'
+        self.color = 'lightblue'
         self.outline_color = 'white'
         self.edge_color = 'white'
         self.axes.x_color = 'tomato'
@@ -3111,7 +3111,7 @@ class DocumentTheme(Theme):
         self.font.label_size = 18
         self.font.color = 'black'
         self.show_edges = False
-        self.color = 'tan'
+        self.color = 'lightblue'
         self.outline_color = 'black'
         self.edge_color = 'black'
         self.axes.x_color = 'tomato'

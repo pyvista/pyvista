@@ -178,7 +178,7 @@ def get_reader(filename, force_ext=None):
     >>> mesh = reader.read()
     >>> mesh
     PolyData ...
-    >>> mesh.plot(color='tan')
+    >>> mesh.plot(color='lightblue')
 
     """
     ext = _get_ext_force(filename, force_ext)
