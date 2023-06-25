@@ -9,19 +9,19 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 @pytest.mark.skip_plotting
-def test_export_single(tmpdir):
+def test_export_single(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
     data = ex.load_airplane()
     # Create the scene
     plotter = pyvista.Plotter()
     plotter.add_mesh(data)
-    plotter.export_vtkjs(filename)
+    plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}.vtkjs')
+    assert os.path.isfile(f'{filename}')
 
 
 @pytest.mark.skip_plotting
-def test_export_multi(tmpdir):
+def test_export_multi(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
     multi = pyvista.MultiBlock()
     # Add examples
@@ -33,50 +33,43 @@ def test_export_multi(tmpdir):
     # Create the scene
     plotter = pyvista.Plotter()
     plotter.add_mesh(multi)
-    plotter.export_vtkjs(filename, compress_arrays=True)
+    plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}.vtkjs')
+    assert os.path.isfile(f'{filename}')
 
 
 @pytest.mark.skip_plotting
-def test_export_texture(tmpdir):
+def test_export_texture(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = ex.load_globe()
     # Create the scene
     plotter = pyvista.Plotter()
     with pytest.warns(PyVistaDeprecationWarning):
         plotter.add_mesh(data, texture=True)
-    plotter.export_vtkjs(filename)
+    plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}.vtkjs')
+    assert os.path.isfile(f'{filename}')
 
 
 @pytest.mark.skip_plotting
-def test_export_verts(tmpdir):
+def test_export_verts(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
     data = pyvista.PolyData(np.random.rand(100, 3))
     # Create the scene
     plotter = pyvista.Plotter()
     plotter.add_mesh(data)
-    plotter.export_vtkjs(filename)
+    plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}.vtkjs')
+    assert os.path.isfile(f'{filename}')
 
 
 @pytest.mark.skip_plotting
-def test_export_color(tmpdir):
+def test_export_color(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
     data = ex.load_airplane()
     # Create the scene
     plotter = pyvista.Plotter()
     plotter.add_mesh(data, color='yellow')
-    plotter.export_vtkjs(filename)
+    plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}.vtkjs')
-
-
-def test_vtkjs_url():
-    file_url = 'https://www.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
-    vtkjs_url = 'http://viewer.pyvista.org/?fileURL=https://dl.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
-    assert vtkjs_url in pyvista.get_vtkjs_url(file_url)
-    assert vtkjs_url in pyvista.get_vtkjs_url('dropbox', file_url)
+    assert os.path.isfile(f'{filename}')

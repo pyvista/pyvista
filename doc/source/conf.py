@@ -142,7 +142,6 @@ coverage_additional_modules = [
     'pyvista.plotting.composite_mapper',
     'pyvista.plotting.cube_axes_actor',
     'pyvista.plotting.errors',
-    'pyvista.plotting.export_vtkjs',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.lookup_table',

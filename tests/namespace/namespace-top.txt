@@ -237,8 +237,8 @@ cubemap_from_filenames, <function cubemap_from_filenames at 0x163f414c0>
 # dataset, <module 'pyvista.core.dataset' from 'pyvista/pyvista/core/dataset.py'>
 # datasetattributes, <module 'pyvista.core.datasetattributes' from 'pyvista/pyvista/core/datasetattributes.py'>
 errors, <module 'pyvista.core.errors' from 'pyvista/pyvista/core/errors.py'>
-export_plotter_vtkjs, <function export_plotter_vtkjs at 0x16427c9d0>
-export_vtkjs, <module 'pyvista.plotting.export_vtkjs' from 'pyvista/pyvista/plotting/export_vtkjs.py'> # TODO: this should be a function?
+# export_plotter_vtkjs, <function export_plotter_vtkjs at 0x16427c9d0>
+# export_vtkjs, <module 'pyvista.plotting.export_vtkjs' from 'pyvista/pyvista/plotting/export_vtkjs.py'> # TODO: this should be a function?
 # features, <module 'pyvista.utilities.features' from 'pyvista/pyvista/utilities/features.py'>
 field_array, <function field_array at 0x163f40040>
 # fileio, <module 'pyvista.utilities.fileio' from 'pyvista/pyvista/utilities/fileio.py'>

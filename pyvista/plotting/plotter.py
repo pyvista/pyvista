@@ -47,7 +47,6 @@ from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
-from .export_vtkjs import export_plotter_vtkjs
 from .mapper import (
     DataSetMapper,
     FixedPointVolumeRayCastMapper,
@@ -5998,37 +5997,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             orbit()
 
-    def export_vtkjs(self, filename, compress_arrays=False):
+    def export_vtkjs(self, *args, **kwargs):
         """Export the current rendering scene as a VTKjs scene.
 
-        It can be used for rendering in a web browser.
-
-        Parameters
-        ----------
-        filename : str
-            Filename to export the scene to.  A filename extension of
-            ``'.vtkjs'`` will be added.
-
-        compress_arrays : bool, default: False
-            Enable array compression.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(examples.load_hexbeam())
-        >>> pl.export_vtkjs("sample")  # doctest:+SKIP
+        .. deprecated:: 0.40.0
+            This export routine has been broken for some time and has
+            been completely removed in version 0.40.0.  Use :func:`pyvista.Plotter.export_vtksz` instead.
 
         """
-        if self.render_window is None:
-            raise RuntimeError('Export must be called before showing/closing the scene.')
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        else:
-            filename = os.path.abspath(os.path.expanduser(filename))
+        from pyvista.core.errors import DeprecationError
 
-        export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+        raise DeprecationError('export_vtkjs is deprecated. Use export_vtksz instead.')
 
     def export_obj(self, filename):
         """Export scene to OBJ format.
