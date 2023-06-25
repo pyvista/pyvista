@@ -254,7 +254,7 @@ get_ext, <function get_ext at 0x163f3e550>
 get_gpu_info, <function get_gpu_info at 0x1641b3040>
 get_reader, <function get_reader at 0x1641d35e0>
 get_vtk_type, <function get_vtk_type at 0x163f2c160>
-get_vtkjs_url, <function get_vtkjs_url at 0x16427cb80>
+# get_vtkjs_url, <function get_vtkjs_url at 0x16427cb80>
 global_theme, None
 # grid, <module 'pyvista.core.grid' from 'pyvista/pyvista/core/grid.py'>
 grid_from_sph_coords, <function grid_from_sph_coords at 0x1641b3820>
