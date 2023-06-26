@@ -113,7 +113,7 @@ class _PointSet(DataSet):
         >>> import pyvista
         >>> hex_mesh = pyvista.read(examples.hexbeamfile)
         >>> removed = hex_mesh.remove_cells(range(10, 20))
-        >>> removed.plot(color='tan', show_edges=True, line_width=3)
+        >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
@@ -707,7 +707,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ...     )
         ... ).T
         >>> mesh.plot(
-        ...     color='tan',
+        ...     color='lightblue',
         ...     render_points_as_spheres=True,
         ...     point_size=60,
         ... )

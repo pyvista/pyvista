@@ -242,6 +242,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.DataObject\.copy_meta_from$',
     r'\.FieldAssociation$',
     r'\.InterpolationType$',
+    r'\.RepresentationType$',
+    r'\.ElementType$',
     r'\.MultiBlock\.copy_meta_from$',
     # wraps
     r'\.Plotter\.enable_depth_peeling$',

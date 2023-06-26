@@ -69,7 +69,7 @@ for ind, solid in enumerate(solids):
         solid, color='silver', smooth_shading=smooth_shading, specular=1.0, specular_power=10
     )
 p.view_vector((5.0, 2, 3))
-p.add_floor('-z', lighting=True, color='tan', pad=1.0)
+p.add_floor('-z', lighting=True, color='lightblue', pad=1.0)
 p.enable_shadows()
 p.show()
 

@@ -35,6 +35,7 @@ from vtkmodules.vtkInteractionWidgets import (
     vtkLineWidget,
     vtkOrientationMarkerWidget,
     vtkPlaneWidget,
+    vtkResliceCursorPicker,
     vtkScalarBarWidget,
     vtkSliderRepresentation2D,
     vtkSliderWidget,
@@ -61,10 +62,17 @@ from vtkmodules.vtkRenderingContext2D import (
     vtkImageItem,
     vtkPen,
 )
+
+try:
+    from vtkmodules.vtkRenderingCore import vtkHardwarePicker
+except ImportError:  # pragma: no cover
+    # VTK < 9.2 is missing this class
+    vtkHardwarePicker = None
 from vtkmodules.vtkRenderingCore import (
     vtkAbstractMapper,
     vtkActor,
     vtkActor2D,
+    vtkAreaPicker,
     vtkCamera,
     vtkCellPicker,
     vtkColorTransferFunction,
@@ -88,6 +96,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
+    vtkScenePicker,
     vtkSelectVisiblePoints,
     vtkSkybox,
     vtkTextActor,
@@ -104,6 +113,7 @@ from vtkmodules.vtkRenderingVolume import (
     vtkFixedPointVolumeRayCastMapper,
     vtkGPUVolumeRayCastMapper,
     vtkUnstructuredGridVolumeRayCastMapper,
+    vtkVolumePicker,
 )
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 

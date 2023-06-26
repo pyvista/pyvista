@@ -1780,7 +1780,7 @@ class DataSetFilters:
         ...     rng=[0, 0],
         ...     method='flying_edges',
         ... )
-        >>> out.plot(color='tan', smooth_shading=True)
+        >>> out.plot(color='lightblue', smooth_shading=True)
 
         See :ref:`common_filter_example` or
         :ref:`marching_cubes_example` for more examples using this
