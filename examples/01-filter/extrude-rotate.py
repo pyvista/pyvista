@@ -28,7 +28,7 @@ poly
 plotter = pyvista.Plotter(shape=(2, 1))
 plotter.subplot(0, 0)
 plotter.add_text("Line", font_size=24)
-plotter.add_mesh(line, color="tan", show_edges=True)
+plotter.add_mesh(line, color='lightblue', show_edges=True)
 plotter.add_mesh(
     pyvista.PolyData(line.points),
     color="red",
@@ -37,7 +37,7 @@ plotter.add_mesh(
 )
 plotter.subplot(1, 0)
 plotter.add_text("Extrude Rotated Line", font_size=24)
-plotter.add_mesh(poly, color="tan", show_edges=True)
+plotter.add_mesh(poly, color='lightblue', show_edges=True)
 plotter.add_mesh(
     pyvista.PolyData(poly.points),
     color="red",
@@ -72,6 +72,6 @@ profile = pyvista.PolyData(vertices, faces)
 # Extrude the profile to make a spring.
 spring = profile.extrude_rotate(resolution=360, translation=6.0, dradius=1.0, angle=2160.0)
 plotter.add_text("Spring", font_size=24)
-plotter.add_mesh(spring, color="tan", show_edges=True)
+plotter.add_mesh(spring, color='lightblue', show_edges=True)
 
 plotter.show(cpos="zx")

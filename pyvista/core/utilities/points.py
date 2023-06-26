@@ -218,7 +218,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(
-    ...     plane, color='tan', style='wireframe', line_width=4
+    ...     plane, color='lightblue', style='wireframe', line_width=4
     ... )
     >>> _ = pl.add_points(
     ...     cloud,
