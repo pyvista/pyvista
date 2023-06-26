@@ -6700,7 +6700,7 @@ class Plotter(BasePlotter):
         # render window.
         # Ignore if using a Jupyter display
         _is_current = self.render_window.IsCurrent()
-        if jupyter_disp is None and not _is_current:
+        if jupyter_disp is None and not _is_current and os.name == 'nt':
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
