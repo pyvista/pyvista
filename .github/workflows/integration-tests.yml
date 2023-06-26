@@ -78,6 +78,13 @@ jobs:
   geovista:
     name: GeoVista
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
+    env:
+      CARTOPY_FEATURE: 'https://raw.githubusercontent.com/SciTools/cartopy/main/tools/cartopy_feature_download.py'
+      CARTOPY_SHARE_DIR: ~/.local/share/cartopy
+      GEOVISTA_POOCH_MUTE: true
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -92,5 +99,10 @@ jobs:
         working-directory: geovista
       - run: pip install -r requirements/pypi-optional-test.txt
         working-directory: geovista
+      - name: Download cartopy assets
+        run: |
+          wget --quiet ${CARTOPY_FEATURE}
+          mkdir -p ${CARTOPY_SHARE_DIR}
+          python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
       - run: pytest -W error
         working-directory: geovista
