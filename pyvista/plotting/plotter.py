@@ -5631,11 +5631,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter()
+        >>> pl = pyvista.Plotter(off_screen=True)
         >>> _ = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
         >>> _ = pl.add_background_image(examples.mapfile)
+        >>> pl.show(auto_close=False)
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
-
+        >>> pl.close()
         """
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
 
