@@ -5637,6 +5637,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show(auto_close=False)
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
         >>> pl.close()
+
         """
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
 
