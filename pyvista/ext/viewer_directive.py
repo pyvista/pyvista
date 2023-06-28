@@ -27,7 +27,7 @@ class OfflineViewerDirective(Directive):
         # copy viewer HTML to _static
         static_path = pathlib.Path(build_dir) / '_static'
         static_path.mkdir(exist_ok=True)
-        if not pathlib.Path(static_path, 'OfflineLocalView.html').exists():
+        if not pathlib.Path(static_path, os.path.basename(HTML_VIEWER_PATH)).exists():
             shutil.copy(HTML_VIEWER_PATH, static_path)
 
         # Copy over the scene asset to the _images directory
@@ -44,7 +44,7 @@ class OfflineViewerDirective(Directive):
         # build HTML
         # ?fileURL=../{rel_asset_path}
         html = f"""
-    <iframe src='../_static/OfflineLocalView.html?fileURL=../{rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
+    <iframe src='../_static/{os.path.basename(HTML_VIEWER_PATH)}?fileURL=../{rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
 """
 
         raw_node = nodes.raw('', html, format='html')

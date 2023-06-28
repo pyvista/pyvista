@@ -574,6 +574,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         content = view.export(format=format)
 
+        view.release_resources()
+
         if filename is None:
             return content
 
@@ -6693,6 +6695,9 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
+            self.last_vtksz = tempfile.NamedTemporaryFile(suffix='.vtksz', delete=False)
+            self.export_vtksz(self.last_vtksz.name)
+            # TODO: close temp file?
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:

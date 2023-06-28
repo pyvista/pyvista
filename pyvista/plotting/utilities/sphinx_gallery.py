@@ -123,7 +123,9 @@ class DynamicScraper:
             # else:
             plotter.screenshot(fname)  # produce PNG for thumbnail
             fname = fname[:-3] + "vtksz"
-            plotter.export_vtksz(fname)
+            if not hasattr(plotter, "last_vtksz"):
+                raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
+            shutil.copy(plotter.last_vtksz.name, fname)
             image_names.append(fname)
         pyvista.close_all()  # close and clear all plotters
         return html_rst(image_names, gallery_conf["src_dir"])
