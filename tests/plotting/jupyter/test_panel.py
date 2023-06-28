@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import pyvista as pv
