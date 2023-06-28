@@ -375,7 +375,6 @@ In your ``conf.py``, add the following:
     extensions = [
         ...
         "sphinx_gallery.gen_gallery",
-        "pyvista.ext.viewer_directive",
     ]
 
     # Add the PyVista image scraper to SG
