@@ -9,7 +9,9 @@ import logging
 import os
 import pathlib
 import platform
+import shutil
 import sys
+import tempfile
 import textwrap
 from threading import Thread
 import time
@@ -476,7 +478,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def export_html(self, filename, backend='pythreejs'):
+    def export_html(self, filename, **kwargs):
         """Export this plotter as an interactive scene to a HTML file.
 
         You have the option of exposing the scene using either vtk.js (using
@@ -489,25 +491,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the html file to.
 
-        backend : str, default: "pythreejs"
-            One of the following:
-
-            - ``'pythreejs'``
-            - ``'panel'``
-
-            For more details about the advantages and disadvantages of each
-            backend, see :ref:`jupyter_plotting`.
-
         Notes
         -----
-        You will need ``ipywidgets`` and ``pythreejs`` installed if you
-        wish to export using the ``'pythreejs'`` backend, or ``'panel'``
-        installed to export using ``'panel'``.
+        You will need ``trame`` installed.
 
         Examples
         --------
-        Export as a three.js scene using the pythreejs backend.
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
@@ -521,33 +510,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
-        Export as a vtk.js scene using the panel backend.
-
-        >>> pl.export_html(
-        ...     'pyvista_panel.html', backend='panel'
-        ... )  # doctest:+SKIP
-
         """
-        if backend == 'pythreejs':
-            widget = self.to_pythreejs()
-        elif backend == 'panel':
-            self._save_panel(filename)
-            return
-        else:
-            raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
+        if 'backend' in kwargs:
+            warnings.warn('backend argument is no longer supported.', PyVistaDeprecationWarning)
+            kwargs.pop('backend')
+        assert_empty_kwargs(**kwargs)
 
-        # import after converting as we check for pythreejs import first
         try:
-            from ipywidgets.embed import dependency_state, embed_minimal_html
+            from trame_vtk.tools.vtksz2html import embbed_data_to_viewer
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install ipywidgets with:\n\n\tpip install ipywidgets')
+            raise ImportError('Please install trame-vtk to export')
 
-        # Garbage collection for embedded html output:
-        # https://github.com/jupyter-widgets/pythreejs/issues/217
-        state = dependency_state(widget)
+        # Save to temporary file
+        temp_file = tempfile.NamedTemporaryFile(suffix='.vtksz', delete=False)
+        self.export_vtksz(temp_file.name)
 
-        # convert and write to file
-        embed_minimal_html(filename, None, title=self.title, state=state)
+        # Use trame-vtk to convert to HTML
+        embbed_data_to_viewer(temp_file.name)
+
+        if not filename.endswith('.html'):
+            filename += '.html'
+
+        # Move to final destination
+        shutil.move(temp_file.name + '.html', filename)
+
+        temp_file.close()
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
         """Export this plotter as a VTK.js OfflineLocalView file.
@@ -572,8 +559,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         try:
             from trame.app import get_server
-            from trame.ui.vuetify import VAppLayout
-            from trame.widgets import vuetify
 
             from pyvista.trame import PyVistaLocalView
             from pyvista.trame.jupyter import elegantly_launch
@@ -585,12 +570,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not server.running:
             elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)
 
-        with VAppLayout(server):
-            with vuetify.VContainer(
-                fluid=True,
-                classes="pa-0 fill-height",
-            ):
-                view = PyVistaLocalView(self)
+        view = PyVistaLocalView(self, trame_server=server)
 
         content = view.export(format=format)
 

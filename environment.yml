@@ -28,9 +28,9 @@ dependencies:
   - ipyvtklink
   - pythreejs
   - pooch
-  - trame>=2.2.6
-  - trame-client>=2.4.2
-  - trame-server>=2.8.0
-  - trame-vtk>=2.4.0
+  - trame>=2.5.0
+  - trame-client>=2.9.4
+  - trame-server>=2.11.4
+  - trame-vtk>=2.5.2
   - pip:
       - pytest-memprof

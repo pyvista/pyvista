@@ -5,6 +5,7 @@ import shutil
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from sphinx.util import logging
+from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,7 @@ class OfflineViewerDirective(Directive):
         static_path = pathlib.Path(build_dir) / '_static'
         static_path.mkdir(exist_ok=True)
         if not pathlib.Path(static_path, 'OfflineLocalView.html').exists():
-            shutil.copy(
-                os.path.join(os.path.dirname(__file__), 'OfflineLocalView.html'), static_path
-            )
+            shutil.copy(HTML_VIEWER_PATH, static_path)
 
         # Copy over the scene asset to the _images directory
         image_path = pathlib.Path(build_dir) / '_images'
