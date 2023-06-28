@@ -937,7 +937,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         If any other cells are specified, these vertices are not created.
 
         >>> import pyvista
-        >>> mesh = pyvista.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1])
+        >>> mesh = pyvista.PolyData(
+        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1]
+        ... )
         >>> mesh.n_points, mesh.n_verts
         (2, 0)
 
