@@ -28,5 +28,5 @@ tqdm<4.66.0
 trame>=2.5.0,<2.6
 trame-client>=2.5.1,<2.10
 trame-server>=2.11.4,<2.12
-trame-vtk>=2.5.2,<2.6
+trame-vtk>=2.5.3,<2.6
 trimesh<3.23.0
