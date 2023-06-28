@@ -5631,18 +5631,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(off_screen=True)
+        >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
         >>> _ = pl.add_background_image(examples.mapfile)
-        >>> pl.show(auto_close=False)
         >>> pl.save_graphic("img.svg")  # doctest:+SKIP
-        >>> pl.close()
 
         """
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
 
         if self.render_window is None:
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
+        if self._first_time:
+            self._on_first_render_request()
+            self.render()
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))
