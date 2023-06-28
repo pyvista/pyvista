@@ -262,11 +262,8 @@ class Viewer:
     def export(self):
         """Export the scene as a zip file."""
         for view in self._html_views:
-            if isinstance(view, PyVistaLocalView):
-                return memoryview(view.export(format="zip"))
-            elif isinstance(view, PyVistaRemoteLocalView):
-                return memoryview(view.export_geometry(format="zip"))
-        raise TypeError('This view type cannot export.')
+            return memoryview(view.export_html())
+        raise TypeError('This viewer cannot be exported.')
 
     def ui_controls(self, mode=None, default_server_rendering=True, v_show=None):
         """Create a VRow for the UI controls.
@@ -379,20 +376,15 @@ class Viewer:
                     tooltip='Save screenshot',
                 )
 
-            with vuetify.VRow(
-                v_show=(f'!{self.SERVER_RENDERING}', default_server_rendering),
-                classes='pa-0 ma-0 align-center',
-            ):
+            def attach_export():
+                return server.protocol.addAttachment(self.export())
 
-                def attach_export():
-                    return server.protocol.addAttachment(self.export())
-
-                button(
-                    # Must use single-quote string for JS here
-                    click=f"utils.download('scene-export.vtksz', trigger('{server.trigger_name(attach_export)}'), 'application/octet-stream')",
-                    icon='mdi-download',
-                    tooltip='Export scene',
-                )
+            button(
+                # Must use single-quote string for JS here
+                click=f"utils.download('scene-export.html', trigger('{server.trigger_name(attach_export)}'), 'application/octet-stream')",
+                icon='mdi-download',
+                tooltip='Export scene as HTML',
+            )
 
     def ui(
         self,

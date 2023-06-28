@@ -1,7 +1,9 @@
 """Trame view interface for PyVista."""
+import io
 import weakref
 
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
+from trame_vtk.tools.vtksz2html import write_html
 
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
@@ -33,6 +35,21 @@ class _BasePyVistaView:
         """Update camera or push the image."""
         self.push_camera()
         self.update_image()
+
+    def export_html(self):
+        """Export scene to HTML as StringIO buffer."""
+        content = io.StringIO()
+        if isinstance(self, PyVistaLocalView):
+            data = self.export(format="zip")
+            write_html(data, content)
+            content.seek(0)
+        elif isinstance(self, PyVistaRemoteLocalView):
+            data = self.export_geometry(format="zip")
+            write_html(data, content)
+            content.seek(0)
+        else:
+            content = self._plotter().export_html(filename=None)
+        return io.BytesIO(content.read().encode('utf8')).read()
 
 
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):

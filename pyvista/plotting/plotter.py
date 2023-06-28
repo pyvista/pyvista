@@ -9,9 +9,7 @@ import logging
 import os
 import pathlib
 import platform
-import shutil
 import sys
-import tempfile
 import textwrap
 from threading import Thread
 import time
@@ -517,24 +515,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         assert_empty_kwargs(**kwargs)
 
         try:
-            from trame_vtk.tools.vtksz2html import embbed_data_to_viewer
+            from trame_vtk.tools.vtksz2html import write_html
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame-vtk to export')
 
-        # Save to temporary file
-        temp_file = tempfile.NamedTemporaryFile(suffix='.vtksz', delete=False)
-        self.export_vtksz(temp_file.name)
+        data = self.export_vtksz(filename=None)
+        buffer = io.StringIO()
+        write_html(data, buffer)
+        buffer.seek(0)
 
-        # Use trame-vtk to convert to HTML
-        embbed_data_to_viewer(temp_file.name)
+        if filename is None:
+            return buffer
 
         if not filename.endswith('.html'):
             filename += '.html'
 
         # Move to final destination
-        shutil.move(temp_file.name + '.html', filename)
-
-        temp_file.close()
+        with open(filename, 'w') as f:
+            f.write(buffer.read())
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
         """Export this plotter as a VTK.js OfflineLocalView file.
@@ -6697,9 +6695,7 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-            self.last_vtksz = tempfile.NamedTemporaryFile(suffix='.vtksz', delete=False)
-            self.export_vtksz(self.last_vtksz.name)
-            # TODO: close temp file?
+            self.last_vtksz = self.export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:
