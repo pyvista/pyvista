@@ -41,8 +41,6 @@ class OfflineViewerDirective(Directive):
         except Exception as e:
             logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
-        # build HTML
-        # ?fileURL=../{rel_asset_path}
         html = f"""
     <iframe src='../_static/{os.path.basename(HTML_VIEWER_PATH)}?fileURL=../{rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
 """
