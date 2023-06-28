@@ -52,12 +52,12 @@ room = examples.download_room_surface_mesh()
 p = pv.Plotter(shape=(1, 2))
 
 p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
-p.add_mesh(room, opacity=0.5, color="tan")
+p.add_mesh(room, opacity=0.5, color='lightblue')
 p.add_text("Depth Peeling")
 
 p.subplot(0, 1)
 p.add_text("Standard")
-p.add_mesh(room.copy(), opacity=0.5, color="tan")
+p.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
 p.link_views()
 p.camera_position = [(43.6, 49.5, 19.8), (0.0, 2.25, 0.0), (-0.57, 0.70, -0.42)]

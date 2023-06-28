@@ -119,7 +119,7 @@ Show several widgets simultaneously using
 
 
     # consistent view options for all plotters
-    plot_kwargs = {'color': 'tan', 'jupyter_backend': 'ipygany',
+    plot_kwargs = {'color': 'lightblue', 'jupyter_backend': 'ipygany',
                    'return_viewer': True, 'background': 'white'}
 
     supertoroid = pv.ParametricSuperToroid(n1=0.5)

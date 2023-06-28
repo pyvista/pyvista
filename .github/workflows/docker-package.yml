@@ -20,15 +20,11 @@ jobs:
   build-and-publish:
     name: Build and Publish Docker Image
     runs-on: ubuntu-20.04
-    # For Pull Requests, only runs from `docker`, `feat`, `fix`, `patch`, or `dependabot`
+    # For Pull Requests, only runs from `docker`
     if: github.event_name == 'push' ||
-        ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository &&
-          ( startsWith(github.event.pull_request.head.ref, 'feat') ||
-            startsWith(github.event.pull_request.head.ref, 'fix') ||
-            startsWith(github.event.pull_request.head.ref, 'patch') ||
-            startsWith(github.event.pull_request.head.ref, 'dependabot') ||
-            startsWith(github.event.pull_request.head.ref, 'docker')
-          )
+        ( github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          startsWith(github.event.pull_request.head.ref, 'docker')
         )
     steps:
       - uses: actions/checkout@v3

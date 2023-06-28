@@ -195,7 +195,7 @@ without having to manually interact with the plotting window:
     # reuse the camera position from the previous plotter
     cpos = plotter.camera_position
     plotter = pv.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='tan')
+    plotter.add_mesh(mesh, color='lightblue')
     plotter.camera_position = cpos
     plotter.show(screenshot='airplane.png')
 

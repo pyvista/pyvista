@@ -188,7 +188,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -261,7 +261,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -338,7 +338,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -510,7 +510,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_a = pyvista.Sphere()
         >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
         >>> merged = sphere_a.merge(sphere_b)
-        >>> merged.plot(style='wireframe', color='tan')
+        >>> merged.plot(style='wireframe', color='lightblue')
 
         """
         # check if dataset or datasets are not polydata
@@ -1183,7 +1183,7 @@ class PolyDataFilters(DataSetFilters):
         'Line Cells: 1'
         >>> f'Tube Cells: {tube.n_cells}'
         'Tube Cells: 22'
-        >>> tube.plot(color='tan')
+        >>> tube.plot(color='lightblue')
 
         See :ref:`create_spline_example` for more examples using this filter.
 
@@ -2928,7 +2928,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
-        >>> mesh.plot(color='tan')
+        >>> mesh.plot(color='lightblue')
 
         Extrude and cap an 8 sided polygon.
 
@@ -3081,7 +3081,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> spline = pyvista.Spline(points, 30)
         >>> extruded = spline.extrude_rotate(resolution=20, capping=False)
-        >>> extruded.plot(color='tan')
+        >>> extruded.plot(color='lightblue')
 
         """
         if capping is None:
@@ -3431,7 +3431,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> _ = pl.add_mesh(
         ...     mesh_b,
-        ...     color='tan',
+        ...     color='lightblue',
         ...     line_width=5,
         ...     opacity=0.7,
         ...     show_edges=True,

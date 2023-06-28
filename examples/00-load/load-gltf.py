@@ -38,4 +38,4 @@ pl.show()
 
 block = pyvista.read(helmet_file)
 mesh = block[0][0][0]
-mesh.plot(color='tan', show_edges=True, cpos='xy')
+mesh.plot(color='lightblue', show_edges=True, cpos='xy')

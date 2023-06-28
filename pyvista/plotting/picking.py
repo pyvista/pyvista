@@ -413,7 +413,9 @@ class PickingInterface:
                         self_()._clear_picking_representations()
                 return
             with self_().iren.poked_subplot():
-                self_()._picked_point = np.array(picker.GetPickPosition())
+                point = np.array(picker.GetPickPosition())
+                point /= self_().scale  # HACK: handle scale
+                self_()._picked_point = point
                 if show_point:
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
@@ -476,7 +478,7 @@ class PickingInterface:
 
         1. ``RectangleSelection.viewport``: the viewport coordinates of the
            selection rectangle.
-        2. ``RectangleSelection.frustum``: the full frustrum made from
+        2. ``RectangleSelection.frustum``: the full frustum made from
            the selection rectangle into the scene.
 
         Parameters
@@ -1016,9 +1018,7 @@ class PickingMethods(PickingInterface):
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made.
-            The ``RectangleSelection`` is the only passed argument
-            containing the viewport coordinates of the selection and the
-            projected frustum.
+            The picked cells is the only passed argument.
 
         show : bool, default: True
             Show the selection interactively.
@@ -1134,9 +1134,7 @@ class PickingMethods(PickingInterface):
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made.
-            The ``RectangleSelection`` is the only passed argument
-            containing the viewport coordinates of the selection and the
-            projected frustum.
+            The picked cells is the only passed argument.
 
         show : bool, default: True
             Show the selection interactively.
