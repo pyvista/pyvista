@@ -1064,14 +1064,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    def enable_anti_aliasing(self, aa_type='fxaa', multi_samples=None, all_renderers=True):
+    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers=True):
         """Enable anti-aliasing.
 
         This tends to make edges appear softer and less pixelated.
 
         Parameters
         ----------
-        aa_type : str, default: "fxaa"
+        aa_type : str, default: "ssaa"
             Anti-aliasing type. See the notes below. One of the following:
 
             * ``"ssaa"`` - Super-Sample Anti-Aliasing
