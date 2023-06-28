@@ -919,7 +919,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def n_verts(self) -> int:
         """Return the number of vertices.
 
-        A vertex is a single element cell referencing a single point.
+        A vertex is a 0D cell, which is usually a cell that references one point,
+        a vtkVertex.  It can also be a vtkPolyVertex.
         See `pyvista.PolyData.n_points` for the more common measure.
 
         Examples
