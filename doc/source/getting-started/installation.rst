@@ -380,3 +380,30 @@ In your ``conf.py``, add the following:
         "image_scrapers": ('pyvista', ..., ),
         ...
     }
+
+We also have a Sphinx-Gallery scraper for embedding dynamic 3D scenes
+instead of static screenshots. This scraper can be enabled by passing
+an instance directly to the ``image_scrapers`` parameter instead of
+the string `'pyvista'` above: d
+
+.. code-block:: python
+
+    import pyvista
+    from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+
+    # necessary when building the sphinx gallery
+    pyvista.BUILDING_GALLERY = True
+    pyvista.OFF_SCREEN = True
+
+    # Optional - set parameters like theme or window size
+    pyvista.set_plot_theme('document')
+    pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+
+    ...
+
+    # Add the PyVista image scraper to SG
+    sphinx_gallery_conf = {
+        ...
+        "image_scrapers": (DynamicScraper(), ..., ),
+        ...
+    }
