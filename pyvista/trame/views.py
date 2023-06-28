@@ -10,6 +10,7 @@ class _BasePyVistaView:
     def __init__(self, plotter):
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
+        self._plotter_render_callback = lambda *args: self.update()
 
     def pyvista_initialize(self):
         if self._plotter().render_window is None:
@@ -26,7 +27,7 @@ class _BasePyVistaView:
             self._server.controller.on_server_ready.add(self.update)
 
         # Callback to sync view on PyVista's render call when renders are suppressed
-        self._plotter().add_on_render_callback(lambda *args: self.update(), render_event=False)
+        self._plotter().add_on_render_callback(self._plotter_render_callback, render_event=False)
 
     def update_camera(self):
         """Update camera or push the image."""

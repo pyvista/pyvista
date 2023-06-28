@@ -575,6 +575,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         content = view.export(format=format)
 
         view.release_resources()
+        # Make sure callbacks are unregistered
+        self._on_render_callbacks.remove(view._plotter_render_callback)
 
         if filename is None:
             return content
