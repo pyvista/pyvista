@@ -1,3 +1,5 @@
+import os
+
 from IPython.display import IFrame
 import numpy as np
 import pytest
@@ -219,3 +221,13 @@ def test_trame_int64():
     )
     # Basically just assert that it didn't error out
     assert isinstance(widget, Widget)
+
+
+@skip_no_trame
+@pytest.mark.skip_plotting
+def test_trame_export_html(tmpdir):
+    filename = str(tmpdir.join('tmp.html'))
+    plotter = pv.Plotter()
+    plotter.add_mesh(pv.Wavelet())
+    plotter.export_html(filename)
+    assert os.path.isfile(filename)

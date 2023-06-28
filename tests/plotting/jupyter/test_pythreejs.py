@@ -22,55 +22,6 @@ def test_set_jupyter_backend_threejs():
         pyvista.global_theme.jupyter_backend = None
 
 
-def test_export_to_html(sphere, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
-
-    pl = pyvista.Plotter(shape=(1, 2))
-    pl.add_text("Sphere 1\n", font_size=30, color='grey')
-    pl.add_mesh(sphere, show_edges=False, color='grey', culling='back')
-
-    pl.subplot(0, 1)
-    pl.add_text("Sphere 2\n", font_size=30, color='grey')
-    pl.add_mesh(sphere, show_edges=False, color='grey', culling='front')
-    pl.link_views()
-
-    with pytest.raises(ValueError, match="Invalid backend"):
-        pl.export_html(filename, backend='not-a-valid-backend')
-
-    pl.export_html(filename)
-
-    raw = open(filename).read()
-    assert 'jupyter-threejs' in raw
-
-    # expect phong material
-    assert '"model_name": "MeshPhongMaterialModel"' in raw
-
-    # at least a single instance of lighting
-    assert 'DirectionalLightModel' in raw
-
-
-def test_export_to_html_composite(tmpdir):
-    filename = str(tmpdir.join('tmp.html'))
-
-    blocks = pyvista.MultiBlock()
-    blocks.append(pyvista.Sphere())
-    blocks.append(pyvista.Cube(center=(0, 0, -1)))
-
-    pl = pyvista.Plotter()
-    actor, mapper = pl.add_composite(blocks, show_edges=False, color='red')
-
-    # override the color of the sphere
-    mapper.block_attr[1].color = 'b'
-    mapper.block_attr[1].opacity = 0.5
-
-    pl.export_html(filename)
-
-    # ensure modified block attributes have been outputted
-    raw = open(filename).read()
-    assert f'"opacity": {mapper.block_attr[1].opacity}' in raw
-    assert f'"color": "{mapper.block_attr[1].color.hex_rgb}"' in raw
-
-
 def test_segment_poly_cells(spline):
     cells = pv_pythreejs.segment_poly_cells(spline)
 
