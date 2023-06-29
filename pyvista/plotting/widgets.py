@@ -2056,7 +2056,6 @@ class WidgetHelper:
         """
         if self.iren is None:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
-        self._validate_picker_not_in_use()
 
         if color is None:
             color = pyvista.global_theme.font.color.float_rgb
