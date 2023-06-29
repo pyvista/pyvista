@@ -894,7 +894,7 @@ class MultiBlock(
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
         fmt = ""
-        fmt += "<table>"
+        fmt += "<table style='width: 100%;'>"
         fmt += "<tr><th>Information</th><th>Blocks</th></tr>"
         fmt += "<tr><td>"
         fmt += "\n"
