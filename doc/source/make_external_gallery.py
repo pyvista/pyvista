@@ -198,6 +198,12 @@ articles = dict(
         link="https://github.com/stla/PyHyperbolic3D/tree/main",
         image="griddip.gif",
     ),
+    sunkit=Example(
+        title="sunkit-pyvista",
+        description="sunkit-pyvista is a python package for visualizing solar physics data in 3D.",
+        link="https://docs.sunpy.org/projects/sunkit-pyvista/en/latest/",
+        image="sunkit-pyvista.png",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",
