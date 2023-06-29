@@ -490,7 +490,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Path to export the html file to.
 
         kwargs : dict, optional
-            Deprecated keyword arguments
+            Deprecated keyword arguments.
 
         Notes
         -----
