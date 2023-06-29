@@ -2023,7 +2023,7 @@ class WidgetHelper:
 
         return self.add_mesh(alg, **kwargs)
 
-    def add_distance_widget(
+    def add_measurement_widget(
         self,
         callback=None,
     ):

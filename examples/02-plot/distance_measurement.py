@@ -4,7 +4,7 @@
 Measuring distance
 ~~~~~~~~~~~~~~~~~~
 This example demonstrates how to measure distance between two points.
-:func:`add_distance_widget() <pyvista.Plotter.add_distance_widget>`.
+:func:`add_measurement_widget() <pyvista.Plotter.add_measurement_widget>`.
 
 """
 import pyvista as pv
@@ -21,5 +21,5 @@ def callback(a, b, distance):
     pl.add_text(f'Distance: {distance:.2f}', name='dist')
 
 
-pl.add_distance_widget(callback)
+pl.add_measurement_widget(callback)
 pl.show()

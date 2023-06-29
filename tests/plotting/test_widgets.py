@@ -245,7 +245,7 @@ def test_widget_distance(uniform):
     p.add_mesh(cube1)
     p.add_mesh(cube2)
     distance_callback = DistanceCallback()
-    p.add_distance_widget(callback=distance_callback)
+    p.add_measurement_widget(callback=distance_callback)
     p.show(auto_close=False)
     width, height = p.window_size
 
