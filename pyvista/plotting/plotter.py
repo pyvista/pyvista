@@ -489,6 +489,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the html file to.
 
+        Returns
+        -------
+        StringIO
+            If filename is None, returns the HTML as a StringIO object.
+
         Notes
         -----
         You will need ``trame`` installed.
