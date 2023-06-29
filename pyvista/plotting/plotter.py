@@ -489,6 +489,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the html file to.
 
+        kwargs : dict, optional
+            Deprecated keyword arguments
+
         Notes
         -----
         You will need ``trame`` installed.
