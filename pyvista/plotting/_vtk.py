@@ -31,10 +31,13 @@ from vtkmodules.vtkCommonColor import vtkColorSeries
 from vtkmodules.vtkInteractionWidgets import (
     vtkBoxWidget,
     vtkButtonWidget,
+    vtkDistanceRepresentation3D,
+    vtkDistanceWidget,
     vtkImplicitPlaneWidget,
     vtkLineWidget,
     vtkOrientationMarkerWidget,
     vtkPlaneWidget,
+    vtkPointHandleRepresentation3D,
     vtkResliceCursorPicker,
     vtkScalarBarWidget,
     vtkSliderRepresentation2D,
