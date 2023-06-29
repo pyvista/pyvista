@@ -3,6 +3,7 @@ import pytest
 import vtk
 
 import pyvista
+from pyvista import examples
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -226,7 +227,7 @@ def test_widget_spline(uniform):
     p.close()
 
 
-def test_widget_distance(uniform):
+def test_measurement_widget():
     class DistanceCallback:
         def __init__(self):
             self.called = False
@@ -239,21 +240,19 @@ def test_widget_distance(uniform):
             self.kwargs = kwargs
             self.count += 1
 
-    p = pyvista.Plotter()
-    cube1 = pyvista.Cube()
-    cube2 = pyvista.Cube([10, 0, 0])
-    p.add_mesh(cube1)
-    p.add_mesh(cube2)
+    p = pyvista.Plotter(window_size=[1000, 1000])
+    p.add_mesh(examples.load_random_hills())
     distance_callback = DistanceCallback()
     p.add_measurement_widget(callback=distance_callback)
+    p.view_xy()
     p.show(auto_close=False)
     width, height = p.window_size
 
-    # TODO: Find the locations to click on each cube to perform a measurement with an expected distance
-    p.iren._mouse_left_button_click(width // 2, height // 2)
-    p.iren._mouse_left_button_click(width // 2 + 3, height // 2)
+    p.iren._mouse_left_button_click(300, 300)
+    p.iren._mouse_left_button_click(700, 700)
 
     assert distance_callback.called
+    assert pytest.approx(distance_callback.args[2], 1.0) == 17.4
 
     p.close()
 
