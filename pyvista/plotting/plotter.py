@@ -476,7 +476,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def export_html(self, filename, **kwargs):
+    def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
         You have the option of exposing the scene using either vtk.js (using
@@ -488,9 +488,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         filename : str
             Path to export the html file to.
-
-        kwargs : dict, optional
-            Deprecated keyword arguments.
 
         Notes
         -----
@@ -512,11 +509,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
         """
-        if 'backend' in kwargs:
-            warnings.warn('backend argument is no longer supported.', PyVistaDeprecationWarning)
-            kwargs.pop('backend')
-        assert_empty_kwargs(**kwargs)
-
         try:
             from trame_vtk.tools.vtksz2html import write_html
         except ImportError:  # pragma: no cover
