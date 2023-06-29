@@ -47,7 +47,6 @@ from .actor import Actor
 from .colors import Color, get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
-from .export_vtkjs import export_plotter_vtkjs
 from .mapper import (
     DataSetMapper,
     FixedPointVolumeRayCastMapper,
@@ -477,7 +476,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def export_html(self, filename, backend='pythreejs'):
+    def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
         You have the option of exposing the scene using either vtk.js (using
@@ -490,25 +489,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the html file to.
 
-        backend : str, default: "pythreejs"
-            One of the following:
-
-            - ``'pythreejs'``
-            - ``'panel'``
-
-            For more details about the advantages and disadvantages of each
-            backend, see :ref:`jupyter_plotting`.
+        Returns
+        -------
+        StringIO
+            If filename is None, returns the HTML as a StringIO object.
 
         Notes
         -----
-        You will need ``ipywidgets`` and ``pythreejs`` installed if you
-        wish to export using the ``'pythreejs'`` backend, or ``'panel'``
-        installed to export using ``'panel'``.
+        You will need ``trame`` installed.
 
         Examples
         --------
-        Export as a three.js scene using the pythreejs backend.
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
@@ -522,33 +513,76 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
         >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
-        Export as a vtk.js scene using the panel backend.
+        """
+        try:
+            from trame_vtk.tools.vtksz2html import write_html
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install trame-vtk to export')
 
-        >>> pl.export_html(
-        ...     'pyvista_panel.html', backend='panel'
-        ... )  # doctest:+SKIP
+        data = self.export_vtksz(filename=None)
+        buffer = io.StringIO()
+        write_html(data, buffer)
+        buffer.seek(0)
+
+        if filename is None:
+            return buffer
+
+        if not filename.endswith('.html'):
+            filename += '.html'
+
+        # Move to final destination
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(buffer.read())
+
+    def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
+        """Export this plotter as a VTK.js OfflineLocalView file.
+
+        The exported file can be viewed with the OfflineLocalView viewer
+        available at https://kitware.github.io/vtk-js/examples/OfflineLocalView.html
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to export the file to. Defaults to ``'scene-export.vtksz'``.
+
+        format : str, optional
+            The format of the exported file. Defaults to ``'zip'``. Can be
+            either ``'zip'`` or ``'json'``.
+
+        Returns
+        -------
+        str
+            The exported filename.
 
         """
-        if backend == 'pythreejs':
-            widget = self.to_pythreejs()
-        elif backend == 'panel':
-            self._save_panel(filename)
-            return
-        else:
-            raise ValueError(f"Invalid backend {backend}. Should be either 'panel' or 'pythreejs'")
-
-        # import after converting as we check for pythreejs import first
         try:
-            from ipywidgets.embed import dependency_state, embed_minimal_html
+            from trame.app import get_server
+
+            from pyvista.trame import PyVistaLocalView
+            from pyvista.trame.jupyter import elegantly_launch
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install ipywidgets with:\n\n\tpip install ipywidgets')
+            raise ImportError('Please install trame to export')
 
-        # Garbage collection for embedded html output:
-        # https://github.com/jupyter-widgets/pythreejs/issues/217
-        state = dependency_state(widget)
+        # Ensure trame server is launched
+        server = get_server(pyvista.global_theme.trame.jupyter_server_name)
+        if not server.running:
+            elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)
 
-        # convert and write to file
-        embed_minimal_html(filename, None, title=self.title, state=state)
+        view = PyVistaLocalView(self, trame_server=server)
+
+        content = view.export(format=format)
+
+        view.release_resources()
+        # Make sure callbacks are unregistered
+        self._on_render_callbacks.remove(view._plotter_render_callback)
+
+        if filename is None:
+            return content
+
+        with open(filename, 'wb') as f:
+            f.write(content)
+
+        return filename
 
     def _save_panel(self, filename):
         """Save the render window as a ``panel.pane.vtk`` html file.
@@ -5948,37 +5982,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             orbit()
 
-    def export_vtkjs(self, filename, compress_arrays=False):
+    def export_vtkjs(self, *args, **kwargs):
         """Export the current rendering scene as a VTKjs scene.
 
-        It can be used for rendering in a web browser.
+        .. deprecated:: 0.40.0
+            This export routine has been broken for some time and has
+            been completely removed in version 0.40.0.  Use :func:`pyvista.Plotter.export_vtksz` instead.
 
         Parameters
         ----------
-        filename : str
-            Filename to export the scene to.  A filename extension of
-            ``'.vtkjs'`` will be added.
+        *args : tuple
+            Positional arguments.
 
-        compress_arrays : bool, default: False
-            Enable array compression.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(examples.load_hexbeam())
-        >>> pl.export_vtkjs("sample")  # doctest:+SKIP
+        **kwargs : dict, optional
+            Keyword arguments.
 
         """
-        if self.render_window is None:
-            raise RuntimeError('Export must be called before showing/closing the scene.')
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        else:
-            filename = os.path.abspath(os.path.expanduser(filename))
+        from pyvista.core.errors import DeprecationError
 
-        export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+        raise DeprecationError('export_vtkjs is deprecated. Use export_vtksz instead.')
 
     def export_obj(self, filename):
         """Export scene to OBJ format.
@@ -6676,6 +6698,7 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
+            self.last_vtksz = self.export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:

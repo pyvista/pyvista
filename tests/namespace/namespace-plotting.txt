@@ -28,7 +28,7 @@ active_scalars_algorithm, <function active_scalars_algorithm at 0x7f72f5e0a820>
 algorithm_to_mesh_handler, <function algorithm_to_mesh_handler at 0x7f72f5de6160>
 close_all, <function close_all at 0x7f72f5c5d5e0>
 decimation_algorithm, <function decimation_algorithm at 0x7f72f5e0ac10>
-export_plotter_vtkjs, <function export_plotter_vtkjs at 0x7f72f5c30d30>
+# export_plotter_vtkjs, <function export_plotter_vtkjs at 0x7f72f5c30d30>
 extract_surface_algorithm, <function extract_surface_algorithm at 0x7f72f5e0a790>
 get_cmap_safe, <function get_cmap_safe at 0x7f72f5d01b80>
 image_from_window, <function image_from_window at 0x7f72f5cb4700>

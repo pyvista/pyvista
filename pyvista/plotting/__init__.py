@@ -17,7 +17,6 @@ from .colors import PARAVIEW_BACKGROUND, Color, color_char_to_word, get_cmap_saf
 from .composite_mapper import BlockAttributes, CompositeAttributes, CompositePolyDataMapper
 from .cube_axes_actor import CubeAxesActor
 from .errors import InvalidCameraError, RenderWindowUnavailable
-from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
 from .helpers import plot_arrows, plot_compare_four
 from .lights import Light
 from .lookup_table import LookupTable

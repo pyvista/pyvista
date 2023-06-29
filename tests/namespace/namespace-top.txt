@@ -237,8 +237,8 @@ cubemap_from_filenames, <function cubemap_from_filenames at 0x163f414c0>
 # dataset, <module 'pyvista.core.dataset' from 'pyvista/pyvista/core/dataset.py'>
 # datasetattributes, <module 'pyvista.core.datasetattributes' from 'pyvista/pyvista/core/datasetattributes.py'>
 errors, <module 'pyvista.core.errors' from 'pyvista/pyvista/core/errors.py'>
-export_plotter_vtkjs, <function export_plotter_vtkjs at 0x16427c9d0>
-export_vtkjs, <module 'pyvista.plotting.export_vtkjs' from 'pyvista/pyvista/plotting/export_vtkjs.py'> # TODO: this should be a function?
+# export_plotter_vtkjs, <function export_plotter_vtkjs at 0x16427c9d0>
+# export_vtkjs, <module 'pyvista.plotting.export_vtkjs' from 'pyvista/pyvista/plotting/export_vtkjs.py'> # TODO: this should be a function?
 # features, <module 'pyvista.utilities.features' from 'pyvista/pyvista/utilities/features.py'>
 field_array, <function field_array at 0x163f40040>
 # fileio, <module 'pyvista.utilities.fileio' from 'pyvista/pyvista/utilities/fileio.py'>
@@ -254,7 +254,7 @@ get_ext, <function get_ext at 0x163f3e550>
 get_gpu_info, <function get_gpu_info at 0x1641b3040>
 get_reader, <function get_reader at 0x1641d35e0>
 get_vtk_type, <function get_vtk_type at 0x163f2c160>
-get_vtkjs_url, <function get_vtkjs_url at 0x16427cb80>
+# get_vtkjs_url, <function get_vtkjs_url at 0x16427cb80>
 global_theme, None
 # grid, <module 'pyvista.core.grid' from 'pyvista/pyvista/core/grid.py'>
 grid_from_sph_coords, <function grid_from_sph_coords at 0x1641b3820>
