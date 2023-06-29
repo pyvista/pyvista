@@ -2052,6 +2052,7 @@ class WidgetHelper:
         """
         if self.iren is None:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
+        self._validate_picker_not_in_use()
 
         compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
 
