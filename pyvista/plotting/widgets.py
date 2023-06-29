@@ -10,6 +10,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
 from . import _vtk
 from .colors import Color
+from .opts import PickerType
 from .utilities.algorithms import (
     add_ids_algorithm,
     algorithm_to_mesh_handler,
@@ -2061,19 +2062,18 @@ class WidgetHelper:
         widget.SetInteractor(self.iren.interactor)
         widget.SetRepresentation(representation)
 
-        point_picker = _vtk.vtkPointPicker()
-        self.iren.interactor.SetPicker(point_picker)
+        self.iren.picker = PickerType.POINT
 
-        def place_point(widget, event):
+        def place_point(*_):
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
             representation.GetPoint1DisplayPosition(p1)
             representation.GetPoint2DisplayPosition(p2)
-            if point_picker.Pick(p1, self.renderer):
-                pos1 = point_picker.GetPickPosition()
+            if self.iren.picker.Pick(p1, self.renderer):
+                pos1 = self.iren.picker.GetPickPosition()
                 representation.GetPoint1Representation().SetWorldPosition(pos1)
-            if point_picker.Pick(p2, self.renderer):
-                pos2 = point_picker.GetPickPosition()
+            if self.iren.picker.Pick(p2, self.renderer):
+                pos2 = self.iren.picker.GetPickPosition()
                 representation.GetPoint2Representation().SetWorldPosition(pos2)
             representation.BuildRepresentation()
 
