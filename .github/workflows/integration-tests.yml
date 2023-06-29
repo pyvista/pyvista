@@ -71,7 +71,7 @@ jobs:
           qt: true
           pyvista: false
       - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt PyQt6
-      - run: pip install -ve .[jupyter,trame]
+      - run: pip install -ve .[trame]
       - run: pytest ./tests
         working-directory: pyvistaqt
 
