@@ -919,15 +919,29 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def n_verts(self) -> int:
         """Return the number of vertices.
 
+        A vertex is a 0D cell, which is usually a cell that references one point,
+        a vtkVertex.  It can also be a vtkPolyVertex.
+        See `pyvista.PolyData.n_points` for the more common measure.
+
         Examples
         --------
         Create a simple mesh containing just two points and return the
-        number of vertices.
+        number of vertices. By default, when constructing a PolyData with points but no cells,
+        vertices are automatically created, one per point.
 
         >>> import pyvista
         >>> mesh = pyvista.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-        >>> mesh.n_verts
-        2
+        >>> mesh.n_points, mesh.n_verts
+        (2, 2)
+
+        If any other cells are specified, these vertices are not created.
+
+        >>> import pyvista
+        >>> mesh = pyvista.PolyData(
+        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1]
+        ... )
+        >>> mesh.n_points, mesh.n_verts
+        (2, 0)
 
         """
         return self.GetNumberOfVerts()

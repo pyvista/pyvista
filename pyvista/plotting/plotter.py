@@ -5678,6 +5678,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
+        if self._first_time:
+            self._on_first_render_request()
+            self.render()
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))

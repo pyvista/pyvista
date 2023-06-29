@@ -1179,6 +1179,15 @@ def test_screenshot_bytes():
     assert im.format == 'PNG'
 
 
+def test_screenshot_rendering(tmpdir):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(examples.load_airplane(), smooth_shading=True)
+    filename = str(tmpdir.mkdir("tmpdir").join('export-graphic.svg'))
+    assert plotter._first_time
+    plotter.save_graphic(filename)
+    assert not plotter._first_time
+
+
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
