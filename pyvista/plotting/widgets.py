@@ -2026,6 +2026,7 @@ class WidgetHelper:
     def add_measurement_widget(
         self,
         callback=None,
+        color=None,
     ):
         """Interactively measure distance with a distance widget.
 
@@ -2044,6 +2045,9 @@ class WidgetHelper:
             point and end point as cartesian coordinate tuples
             and the calculated distance between the two points.
 
+        color : ColorLike, optional
+            The color of the measurement widget.
+
         Returns
         -------
         vtk.vtkDistanceWidget
@@ -2054,6 +2058,10 @@ class WidgetHelper:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
         self._validate_picker_not_in_use()
 
+        if color is None:
+            color = pyvista.global_theme.font.color.float_rgb
+        color = Color(color)
+
         compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
 
         handle = _vtk.vtkPointHandleRepresentation3D()
@@ -2062,6 +2070,10 @@ class WidgetHelper:
         widget = _vtk.vtkDistanceWidget()
         widget.SetInteractor(self.iren.interactor)
         widget.SetRepresentation(representation)
+
+        handle.GetProperty().SetColor(*color.float_rgb)
+        representation.GetLabelProperty().SetColor(*color.float_rgb)
+        representation.GetLineProperty().SetColor(*color.float_rgb)
 
         self.iren.picker = PickerType.POINT
 
