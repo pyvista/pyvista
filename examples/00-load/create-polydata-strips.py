@@ -61,7 +61,7 @@ pl.show()
 # Convert strips to triangles
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can convert strips to triangle faces using :func:`triangulate
-# <pyvista.Dataset.triangulate>`.
+# <pyvista.DataSetFilters.triangulate>`.
 
 trimesh = mesh.triangulate()
 trimesh
@@ -86,7 +86,7 @@ faces
 # Convert triangles to strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Convert faces from a :class:`pyvista.PolyData` to strips using :func:`strip()
-# <pyvista.PolyData.strip>`. Here, for demonstration purposes we convert the
+# <pyvista.PolyDataFilters.strip>`. Here, for demonstration purposes we convert the
 # triangulated mesh back to a stripped mesh.
 
 restripped = trimesh.strip()

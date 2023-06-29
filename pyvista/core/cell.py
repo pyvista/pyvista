@@ -1,15 +1,26 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
 
+from . import _vtk_core as _vtk
 from .celltype import CellType
 from .dataset import DataObject
+from .utilities.cells import ncells_from_cells, numpy_to_idarr
+
+
+def _get_vtk_id_type():
+    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
+    VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
+    if VTK_ID_TYPE_SIZE == 4:
+        return np.int32
+    elif VTK_ID_TYPE_SIZE == 8:
+        return np.int64
+    return np.int32
 
 
 class Cell(_vtk.vtkGenericCell, DataObject):
@@ -36,7 +47,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     will be much slower than accessing bulk data from the
     :attr:`pyvista.PolyData.faces` or :attr:`pyvista.UnstructuredGrid.cells` attributes.
 
-    Also note that the the cell object is a deep copy of the original cell and
+    Also note that the cell object is a deep copy of the original cell and
     is unassociated with the original cell. Changing any data of
     that cell (for example, :attr:`pyvista.Cell.points`) will not change the original dataset.
 
@@ -44,9 +55,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     --------
     Get the 0-th cell from a :class:`pyvista.PolyData`.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Sphere()
-    >>> cell = mesh.cell[0]
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
+    >>> cell = mesh.get_cell(0)
     >>> cell  # doctest: +SKIP
     Cell (0x7fa760075a10)
       Type:       <CellType.TRIANGLE: 5>
@@ -63,7 +74,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     >>> from pyvista import examples
     >>> mesh = examples.load_hexbeam()
-    >>> cell = mesh.cell[0]
+    >>> cell = mesh.get_cell(0)
     >>> cell  # doctest: +SKIP
     Cell (0x7fdc71a3c210)
       Type:       <CellType.HEXAHEDRON: 12>
@@ -101,9 +112,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].type
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).type
         <CellType.TRIANGLE: 5>
         """
         return CellType(self.GetCellType())
@@ -114,9 +125,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].is_linear
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).is_linear
         True
 
         """
@@ -135,7 +146,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> cell.plot()
 
         """
@@ -153,7 +164,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> grid = cell.cast_to_unstructured_grid()
         >>> grid  # doctest: +SKIP
         UnstructuredGrid (0x7f9383619540)
@@ -165,16 +176,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:     0
 
         """
-        args = [
+        return pyvista.UnstructuredGrid(
             [len(self.point_ids)] + list(range(len(self.point_ids))),
             [int(self.type)],
             self.points.copy(),
-        ]
-
-        if not _vtk.VTK9:  # pragma: no cover
-            args.insert(0, [0])
-
-        return pyvista.UnstructuredGrid(*args)
+        )
 
     @property
     def dimension(self) -> int:
@@ -185,9 +191,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].dimension
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).dimension
         2
         """
         return self.GetCellDimension()
@@ -198,9 +204,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].n_points
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).n_points
         3
         """
         return self.GetNumberOfPoints()
@@ -213,7 +219,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> mesh.cell[0].n_faces
+        >>> mesh.get_cell(0).n_faces
         4
         """
         return self.GetNumberOfFaces()
@@ -224,9 +230,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].n_edges
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).n_edges
         3
         """
         return self.GetNumberOfEdges()
@@ -239,7 +245,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].point_ids
+        >>> mesh.get_cell(0).point_ids
         [2, 30, 0]
         """
         point_ids = self.GetPointIds()
@@ -251,9 +257,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].points
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).points
         array([[-5.40595092e-02,  0.00000000e+00, -4.97068971e-01],
                [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
                [-5.55111512e-17,  0.00000000e+00, -5.00000000e-01]])
@@ -278,9 +284,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         Extract a single edge from a face and output the IDs of the edge
         points.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> cell = mesh.cell[0]
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> cell = mesh.get_cell(0)
         >>> edge = cell.get_edge(0)
         >>> edge.point_ids
         [2, 30]
@@ -294,12 +300,12 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(self.GetEdge(index), deep=True)
 
     @property
-    def edges(self) -> list[Cell]:
+    def edges(self) -> List[Cell]:
         """Return a list of edges composing the cell.
 
         >>> from pyvista.examples.cells import Hexahedron
         >>> mesh = Hexahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> edges = cell.edges
         >>> len(edges)
         12
@@ -308,12 +314,12 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [self.get_edge(i) for i in range(self.n_edges)]
 
     @property
-    def faces(self) -> list[Cell]:
+    def faces(self) -> List[Cell]:
         """Return a list of faces composing the cell.
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> faces = cell.faces
         >>> len(faces)
         4
@@ -340,7 +346,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> face = cell.get_face(0)
         >>> face.point_ids
         [0, 1, 3]
@@ -361,12 +367,37 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.cell[0].bounds
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).bounds
         (-0.05405950918793678, -5.551115123125783e-17, 0.0, 0.011239604093134403, -0.5, -0.49706897139549255)
+
         """
         return self.GetBounds()
+
+    @property
+    def center(self) -> Tuple[float, float, float]:
+        """Get the center of the cell.
+
+        Uses parametric coordinate center to determine x-y-z center.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.get_cell(0).center
+        (-0.0356, 0.00375, -0.498)
+
+        """
+        para_center = [0.0, 0.0, 0.0]
+        sub_id = self.GetParametricCenter(para_center)
+        # EvaluateLocation requires mutable sub_id
+        sub_id = _vtk.mutable(sub_id)
+        # center and weights are returned from EvaluateLocation
+        center = [0.0, 0.0, 0.0]
+        weights = [0.0] * self.n_points
+        self.EvaluateLocation(sub_id, para_center, center, weights)
+        return cast(Tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -414,7 +445,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
-        >>> cell = mesh.cell[0]
+        >>> cell = mesh.get_cell(0)
         >>> deep_cell = cell.copy(deep=True)
         >>> deep_cell.points[:] = 0
         >>> cell != deep_cell
@@ -429,3 +460,53 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         """
         return type(self)(self, deep=deep)
+
+
+class CellArray(_vtk.vtkCellArray):
+    """pyvista wrapping of vtkCellArray.
+
+    Provides convenience functions to simplify creating a CellArray from
+    a numpy array or list.
+
+    Import an array of data with the legacy vtkCellArray layout, e.g.
+
+    ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
+    Where n0 is the number of points in cell 0, and pX_Y is the Y'th
+    point in cell X.
+
+    Examples
+    --------
+    Create a cell array containing two triangles.
+
+    >>> from pyvista.core.cell import CellArray
+    >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
+    """
+
+    def __init__(self, cells=None, n_cells=None, deep=False):
+        """Initialize a vtkCellArray."""
+        if cells is not None:
+            self._set_cells(cells, n_cells, deep)
+
+    def _set_cells(self, cells, n_cells, deep):
+        vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
+
+        # Get number of cells if None.  This is quite a performance
+        # bottleneck and we can consider adding a warning.  Good
+        # candidate for Cython or JIT compilation
+        if n_cells is None:
+            if cells.ndim == 1:
+                n_cells = ncells_from_cells(cells)
+            else:
+                n_cells = cells.shape[0]
+
+        self.SetCells(n_cells, vtk_idarr)
+
+    @property
+    def cells(self):
+        """Return a numpy array of the cells."""
+        return _vtk.vtk_to_numpy(self.GetData()).ravel()
+
+    @property
+    def n_cells(self):
+        """Return the number of cells."""
+        return self.GetNumberOfCells()

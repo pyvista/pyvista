@@ -5,12 +5,12 @@ Fast Fourier Transform with Perlin Noise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how to apply a Fast Fourier Transform (FFT) to a
-:class:`pyvista.UniformGrid` using :func:`pyvista.UniformGridFilters.fft`
+:class:`pyvista.ImageData` using :func:`pyvista.ImageDataFilters.fft`
 filter.
 
 Here, we demonstrate FFT usage by first generating Perlin noise using
-:func:`pyvista.sample_function() <pyvista.utilities.common.sample_function>` to
-sample :func:`pyvista.perlin_noise <pyvista.utilities.common.perlin_noise>`,
+:func:`pyvista.sample_function() <pyvista.core.utilities.features.sample_function>` to
+sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
@@ -65,7 +65,7 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, plot the noise in the frequency domain. Note how there is more high
 # frequency content in the x direction and this matches the frequencies given
-# to :func:`pyvista.perlin_noise <pyvista.utilities.common.perlin_noise>`.
+# to :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`.
 
 # scale to make the plot viewable
 subset['scalars'] = np.abs(subset.active_scalars)
@@ -75,9 +75,9 @@ pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
     axes_ranges=(0, max_freq, 0, max_freq, 0, warped_subset.bounds[-1]),
-    xlabel='X Frequency',
-    ylabel='Y Frequency',
-    zlabel='Amplitude',
+    xtitle='X Frequency',
+    ytitle='Y Frequency',
+    ztitle='Amplitude',
     show_zlabels=False,
     color='k',
     font_size=26,
@@ -128,7 +128,7 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~
 # Show that the sum of the low and high passes equals the original noise.
 
-grid = pv.UniformGrid(dimensions=sampled.dimensions, spacing=sampled.spacing)
+grid = pv.ImageData(dimensions=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
 
 print(

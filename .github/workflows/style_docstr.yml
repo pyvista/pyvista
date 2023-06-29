@@ -8,23 +8,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  stylecheck:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-          cache: 'pip'
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run pre-commit
-        run: pre-commit run --all-files
-
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
@@ -52,7 +35,7 @@ jobs:
           pip install -r requirements_test.txt vtk
 
       - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@v1
+        uses: pyvista/setup-headless-display-action@v2
 
       - name: Software Report
         run: |
@@ -61,7 +44,7 @@ jobs:
           pip list
 
       - name: Test Package Docstrings
-        run: pytest -v --doctest-modules pyvista
+        run: make doctest-modules
 
       - name: Test Package Docstrings with Local Namespace
         run: make doctest-modules-local-namespace

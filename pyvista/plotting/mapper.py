@@ -5,33 +5,42 @@ from typing import Optional, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import (
+from pyvista.core._typing_core import BoundsLike
+from pyvista.core.utilities.arrays import (
     FieldAssociation,
-    abstract_class,
     convert_array,
     convert_string_array,
     raise_not_matching,
-    set_algorithm_input,
-    wrap,
 )
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class, no_new_attr
 
-from .._typing import BoundsLike
+from . import _vtk
 from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
+from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
 class _BaseMapper(_vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
-    _theme = None
+    _new_attr_exceptions = ('_theme',)
 
     def __init__(self, theme=None, **kwargs):
-        self._theme = theme
+        self._theme = pv.themes.Theme()
+        if theme is None:
+            # copy global theme to ensure local property theme is fixed
+            # after creation.
+            self._theme.load_theme(pv.global_theme)
+        else:
+            self._theme.load_theme(theme)
         self.lookup_table = LookupTable()
+
+        self.interpolate_before_map = kwargs.get(
+            'interpolate_before_map', self._theme.interpolate_before_map
+        )
 
     @property
     def bounds(self) -> BoundsLike:
@@ -62,7 +71,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> mapper_copy = mapper.copy()
 
         """
-        new_mapper = type(self)()
+        new_mapper = type(self)(theme=self._theme)
         # even though this uses ShallowCopy, the new mapper no longer retains
         # any connection with the original
         new_mapper.ShallowCopy(self)
@@ -90,7 +99,9 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         set to its default value of ``(0.0, 1.0)``.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.scalar_range
@@ -115,25 +126,29 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh, scalars=mesh.points[:, 2], cmap='bwr')
-        >>> actor.mapper.lookup_table  # doctest:+SKIP
-        LookupTable (0x7ff3be8d8c40)
+        >>> actor = pl.add_mesh(
+        ...     mesh, scalars=mesh.points[:, 2], cmap='bwr'
+        ... )
+        >>> actor.mapper.lookup_table
+        LookupTable (...)
           Table Range:                (-0.5, 0.5)
           N Values:                   256
           Above Range Color:          None
           Below Range Color:          None
-          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff')
+          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff', opacity=255)
           Log Scale:                  False
-          Color Map:                  "From values array"
+          Color Map:                  "bwr"
 
         Return the lookup table of a composite dataset mapper.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.lookup_table  # doctest:+SKIP
-        <vtkmodules.vtkCommonCore.vtkLookupTable(0x2d4c6e0) at 0x7fce74a89fa0>
+        <vtkmodules.vtkCommonCore.vtkLookupTable(...) at ...>
 
         """
         return self.GetLookupTable()
@@ -181,12 +196,17 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Disable interpolation before mapping.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ...     dataset,
+        ...     show_scalar_bar=False,
+        ...     n_colors=3,
+        ...     cmap='bwr',
         ... )
         >>> mapper.interpolate_before_map = False
         >>> pl.show()
@@ -195,7 +215,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, show_scalar_bar=False, n_colors=3, cmap='bwr',
+        ...     dataset,
+        ...     show_scalar_bar=False,
+        ...     n_colors=3,
+        ...     cmap='bwr',
         ... )
         >>> mapper.interpolate_before_map = True
         >>> pl.show()
@@ -245,11 +268,15 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         active scalars to point data.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, scalars='data', show_scalar_bar=False
+        ... )
         >>> mapper.scalar_map_mode
         'point'
         >>> pl.close()
@@ -308,7 +335,9 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Show that scalar visibility is ``True``.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -338,7 +367,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     dataset : pyvista.DataSet, optional
         Dataset to assign to this mapper.
 
-    theme : pyvista.themes.DefaultTheme, optional
+    theme : pyvista.themes.Theme, optional
         Plot-specific theme.
 
     Examples
@@ -359,7 +388,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     def __init__(
         self,
         dataset: Optional['pv.DataSet'] = None,
-        theme: Optional['pv.themes.DefaultTheme'] = None,
+        theme: Optional['pv.themes.Theme'] = None,
     ):
         """Initialize this class."""
         super().__init__(theme=theme)
@@ -517,32 +546,32 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : color_like, optional
+        nan_color : pyvista.ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like, optional
+        above_color : pyvista.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
-        below_color : color_like, optional
+        below_color : pyvista.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
-            for when displaying ``scalars``. Requires Matplotlib to be
-            installed.  ``colormap`` is also an accepted alias for this. If
+            for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
@@ -570,7 +599,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
-        clim : 2 item list, optional
+        clim : Sequence, optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``.
 
@@ -586,7 +615,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             scalars_name = '__custom_rgba'
 
         if not np.issubdtype(scalars.dtype, np.number) and not isinstance(cmap, pv.LookupTable):
-
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')
@@ -653,13 +681,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.scalar_range = self.lookup_table.scalar_range
         else:
             self.lookup_table.scalar_range = self.scalar_range
-            # Set default map if matplotlib is available
+            # Set default map
             if cmap is None:
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -670,7 +697,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             else:
                 jupyter_backend = self._theme.jupyter_backend
             if jupyter_backend == 'ipygany':  # pragma: no cover
-                from ..jupyter.pv_ipygany import check_colormap
+                from pyvista.jupyter.pv_ipygany import check_colormap
 
                 check_colormap(cmap)
             else:
@@ -680,16 +707,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     elif isinstance(categories, int):
                         n_colors = categories
 
-                if cmap is not None:
-                    self.lookup_table.apply_cmap(cmap, n_colors)
-                else:  # pragma: no cover
-                    # should be impossible to get to this point as VTK package
-                    # no requires matplotlib
-                    self.lookup_table.n_values = n_colors
-                    if flip_scalars:
-                        self.lookup_table.hue_range = (0.0, 0.66667)
-                    else:
-                        self.lookup_table.hue_range = (0.66667, 0.0)
+                self.lookup_table.apply_cmap(cmap, n_colors)
 
                 # Set opactities
                 if isinstance(opacity, np.ndarray) and not custom_opac:
@@ -698,7 +716,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 if flip_scalars:
                     self.lookup_table.values[:] = self.lookup_table.values[::-1]
 
-                if custom_opac and cmap is not None:
+                if custom_opac:
                     # need to round the colors here since we're
                     # directly displaying the colors
                     hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
@@ -712,10 +730,10 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
-                scalar_bar_args.setdefault('above_label', 'Above')
+                scalar_bar_args.setdefault('above_label', 'above')
             if below_color:
                 self.lookup_table.below_range_color = below_color
-                scalar_bar_args.setdefault('below_label', 'Below')
+                scalar_bar_args.setdefault('below_label', 'below')
             if isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
             self.lookup_table.log_scale = log_scale
@@ -744,7 +762,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Opacity array to color the dataset. Array length must match either
             the number of points or cells.
 
-        color : color_like
+        color : pyvista.ColorLike
             The color to use with the opacity array.
 
         n_colors : int
@@ -800,6 +818,13 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 @no_new_attr
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     """Wrap vtkPointGaussianMapper."""
+
+    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:
+        super().__init__(theme=theme)
+        if emissive is None:
+            emissive = self._theme.lighting_params.emissive
+        self.emissive = emissive
+        self.scale_factor = scale_factor
 
     @property
     def emissive(self) -> bool:
@@ -862,7 +887,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.scale_factor /= 1.5
 
     def __repr__(self):
-        """Representation of the gaussian mapper."""
+        """Representation of the Gaussian mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
             f'  Scalar visibility:           {self.scalar_visibility}',
@@ -888,6 +913,15 @@ class _BaseVolumeMapper(_BaseMapper):
         super().__init__(theme=theme)
         self._lut = LookupTable()
         self._scalar_range = (0.0, 256.0)
+
+    @property
+    def interpolate_before_map(self):
+        """Interpolate before map is not supported with volume mappers."""
+        return None
+
+    @interpolate_before_map.setter
+    def interpolate_before_map(self, *args):
+        pass
 
     @property
     def dataset(self):
@@ -1002,5 +1036,13 @@ class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVo
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
+
+    pass
+
+
+class UnstructuredGridVolumeRayCastMapper(
+    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
+):
+    """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
 
     pass

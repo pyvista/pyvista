@@ -10,7 +10,7 @@ represent geometry. This class is useful for improving the performance of
 filters on point clouds.
 
 This example shows the performance improvement when clipping using the
-:func:`pyvista.DataSet.clip` filter on a :class:`pyvista.PointSet`.
+:func:`pyvista.DataSetFilters.clip` filter on a :class:`pyvista.PointSet`.
 
 """
 import time

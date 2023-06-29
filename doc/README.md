@@ -10,3 +10,5 @@ repository.
 If you have any questions about this repository, feel free to ping
 [@banesullivan](https://github.com/banesullivan) as he originally
 implemented this hosting service for the PyVista documentation.
+
+Or feel free to contact [@akaszynski](https://github.com/akaszynski).

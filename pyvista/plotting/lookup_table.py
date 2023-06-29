@@ -4,11 +4,11 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.helpers import convert_array
-from pyvista.utilities.misc import has_module, no_new_attr
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.misc import no_new_attr
 
-from .._typing import ColorLike
+from . import _vtk
+from ._typing import ColorLike
 from .colors import Color, get_cmap_safe
 from .tools import opacity_transfer_function
 
@@ -95,7 +95,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     Parameters
     ----------
-    cmap : str, colors.Colormap, optional
+    cmap : str | colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
 
@@ -106,7 +106,7 @@ class LookupTable(_vtk.vtkLookupTable):
         Flip the direction of cmap. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
-    values : numpy.ndarray, optional
+    values : array_like[float], optional
         Lookup table values. Either ``values`` or ``cmap`` can be set, but not
         both.
 
@@ -147,7 +147,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     annotations : dict, optional
         A dictionary of annotations. Keys are the float values in the scalars
-        range to annotate on the scalar bar and the values are the the string
+        range to annotate on the scalar bar and the values are the string
         annotations.
 
     Examples
@@ -156,34 +156,33 @@ class LookupTable(_vtk.vtkLookupTable):
 
     >>> import pyvista as pv
     >>> lut = pv.LookupTable()
-    >>> lut  # doctest:+SKIP
-    LookupTable (0x7ff3de60d580)
+    >>> lut
+    LookupTable (...)
       Table Range:                (0.0, 1.0)
       N Values:                   256
       Above Range Color:          None
       Below Range Color:          None
-      NAN Color:                  Color(name='maroon', hex='#800000ff')
+      NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
       Log Scale:                  False
-      Color Map:                  "VTK lookup table"
+      Color Map:                  "PyVista Lookup Table"
         Alpha Range:              (1.0, 1.0)
         Hue Range:                (0.0, 0.66667)
         Saturation Range          (1.0, 1.0)
         Value Range               (1.0, 1.0)
         Ramp                      s-curve
-        Is Opaque                 True
     >>> lut.plot()
 
     Plot the lookup table with the ``'inferno'`` color map.
 
     >>> import pyvista as pv
     >>> lut = pv.LookupTable('inferno', n_values=32)
-    >>> lut  # doctest:+SKIP
-    LookupTable (0x7ff3c053f3a0)
+    >>> lut
+    LookupTable (...)
       Table Range:                (0.0, 1.0)
       N Values:                   32
       Above Range Color:          None
       Below Range Color:          None
-      NAN Color:                  Color(name='maroon', hex='#800000ff')
+      NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
       Log Scale:                  False
       Color Map:                  "inferno"
     >>> lut.plot()
@@ -557,7 +556,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.
@@ -756,9 +755,6 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> lut.plot()
 
         """
-        if not has_module('matplotlib'):  # pragma: no cover
-            raise ModuleNotFoundError('Install Matplotlib to use color maps.')
-
         if isinstance(cmap, list):
             n_values = len(cmap)
 
@@ -782,7 +778,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Parameters
         ----------
-        opacity : float, list(float), str
+        opacity : float | array_like[float] | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
             ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
@@ -815,7 +811,10 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> mesh = examples.load_random_hills()
         >>> lut = pv.LookupTable(cmap='viridis')
         >>> lut.apply_opacity([1.0, 0.4, 0.0, 0.4, 0.9])
-        >>> lut.scalar_range = (mesh.active_scalars.min(), mesh.active_scalars.max())
+        >>> lut.scalar_range = (
+        ...     mesh.active_scalars.min(),
+        ...     mesh.active_scalars.max(),
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, cmap=lut)
         >>> pl.show()
@@ -911,7 +910,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """Return or set annotations.
 
         Pass a dictionary of annotations. Keys are the float values in the
-        scalars range to annotate on the scalar bar and the values are the the
+        scalars range to annotate on the scalar bar and the values are the
         string annotations.
 
         Examples
@@ -1030,8 +1029,8 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista
         >>> lut = pyvista.LookupTable()
         >>> tf = lut.to_color_tf()
-        >>> tf  # doctest:+SKIP
-        <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(0x339bd40) at 0x7ffabf634700>
+        >>> tf
+        <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(...) at ...>
 
         """
         color_tf = _vtk.vtkColorTransferFunction()
@@ -1053,8 +1052,8 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista
         >>> lut = pyvista.LookupTable()
         >>> tf = lut.to_opacity_tf()
-        >>> tf  # doctest:+SKIP
-        <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(0x32fa410) at 0x7fe963d6d5e0>
+        >>> tf
+        <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(...) at ...>
 
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()

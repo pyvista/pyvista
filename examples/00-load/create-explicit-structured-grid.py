@@ -6,8 +6,6 @@ Creating an Explicit Structured Grid
 
 Create an explicit structured grid from NumPy arrays.
 
-Note this feature is only available for ``vtk>=9``.
-
 """
 
 import numpy as np
@@ -37,8 +35,7 @@ zcorn = np.repeat(zcorn, (4 * ni * nj))
 corners = np.stack((xcorn, ycorn, zcorn))
 corners = corners.transpose()
 
-if pv._vtk.VTK9:
-    dims = np.asarray((ni, nj, nk)) + 1
-    grid = pv.ExplicitStructuredGrid(dims, corners)
-    grid = grid.compute_connectivity()
-    grid.plot(show_edges=True)
+dims = np.asarray((ni, nj, nk)) + 1
+grid = pv.ExplicitStructuredGrid(dims, corners)
+grid = grid.compute_connectivity()
+grid.plot(show_edges=True)

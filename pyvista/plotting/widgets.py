@@ -3,16 +3,14 @@
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import (
-    NORMALS,
-    assert_empty_kwargs,
-    generate_plane,
-    get_array,
-    get_array_association,
-    try_callback,
-)
-from pyvista.utilities.algorithms import (
+from pyvista.core.utilities.arrays import get_array, get_array_association
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+
+from . import _vtk
+from .colors import Color
+from .utilities.algorithms import (
     add_ids_algorithm,
     algorithm_to_mesh_handler,
     crinkle_algorithm,
@@ -20,8 +18,6 @@ from pyvista.utilities.algorithms import (
     pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
-
-from .colors import Color
 
 
 def _parse_interaction_event(interaction_event):
@@ -168,6 +164,8 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
+        interaction_event = _parse_interaction_event(interaction_event)
+
         if bounds is None:
             bounds = self.bounds
 
@@ -271,7 +269,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -470,6 +468,7 @@ class WidgetHelper:
             plane_widget.GetNormalProperty().SetColor(color.float_rgb)
             plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
             plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
+            plane_widget.GetOutlineProperty().SetOpacity(color.opacity)
             plane_widget.SetTubing(tubing)
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
@@ -644,7 +643,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -737,10 +736,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.Volume or pyvista.UniformGrid or pyvista.RectilinearGrid
-            New dataset of type :class:`pyvista.UniformGrid` or
+        volume : pyvista.plotting.volume.Volume or pyvista.ImageData or pyvista.RectilinearGrid
+            New dataset of type :class:`pyvista.ImageData` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.Volume` from :func:`BasePlotter.add_volume`.
+            :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -791,9 +790,9 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_volume` to control how the volume is
+            :func:`Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
-            :class:`pyvista.UniformGrid` and :class:`pyvista.RectangularGrid`.
+            :class:`pyvista.ImageData` and :class:`pyvista.RectilinearGrid`.
 
         Returns
         -------
@@ -801,12 +800,12 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
-        if isinstance(volume, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
-        elif not isinstance(volume, pyvista.plotting.Volume):
+        elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
-                'The `volume` parameter type must be either pyvista.UniformGrid, '
-                'pyvista.RectangularGrid, or a pyvista.plotting.volume.Volume '
+                'The `volume` parameter type must be either pyvista.ImageData, '
+                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
         else:
@@ -915,7 +914,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1010,7 +1009,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1076,14 +1075,14 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : ColorLike, optional, defaults to white
+        color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
             Changes the arguments of the callback method to take the end
             points of the line instead of a PolyData object.
 
-        pass_widget : boollist
+        pass_widget : bool, default: False
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
@@ -1363,8 +1362,11 @@ class WidgetHelper:
         >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
-        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     sphere = pv.Sphere(
+        ...         phi_resolution=res, theta_resolution=res
+        ...     )
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
+        ...
         >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
@@ -1499,9 +1501,6 @@ class WidgetHelper:
             in the output with this option off are excluded, while cells that
             would have been excluded from the output are included.
 
-            .. warning::
-                This option is only supported for VTK version 9+
-
         widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
@@ -1561,7 +1560,7 @@ class WidgetHelper:
 
         """
         # avoid circular import
-        from ..core.filters.data_set import _set_threshold_limit
+        from pyvista.core.filters.data_set import _set_threshold_limit
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -1699,7 +1698,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1792,8 +1791,8 @@ class WidgetHelper:
             :class:`pyvista.PolyData` object to the callback function of the
             generated spline.
 
-        bounds : tuple(float), optional
-            Length 6 tuple of the bounding box where the widget is placed.
+        bounds : sequence[float], optional
+            Length 6 sequence of the bounding box where the widget is placed.
 
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
@@ -1969,7 +1968,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`BasePlotter.add_mesh` to control how the mesh is
+            :func:`Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -2123,12 +2122,11 @@ class WidgetHelper:
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
-        center : tuple(float), optional
-            Length 3 array for the XYZ coordinate of the sphere's
-            center when placing it in the scene. If more than one
-            location is passed, then that many widgets will be added
-            and the callback will also be passed the integer index of
-            that widget.
+        center : sequence[float], optional
+            The cartesian coordinate of the sphere's center when placing it in
+            the scene. If more than one location is passed, then that many
+            widgets will be added and the callback will also be passed the
+            integer index of that widget.
 
         radius : float, optional
             The radius of the sphere.
@@ -2156,7 +2154,7 @@ class WidgetHelper:
         selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
 
-        indices : sequence, optional
+        indices : sequence[int], optional
             Indices to assign the sphere widgets.
 
         pass_widget : bool, optional
@@ -2268,16 +2266,16 @@ class WidgetHelper:
             The method called every time the button is clicked. This should take
             a single parameter: the bool value of the button.
 
-        value : bool, optional
+        value : bool, default: False
             The default state of the button.
 
-        position : tuple(float), optional
+        position : sequence[float], default: (10.0, 10.0)
             The absolute coordinates of the bottom left point of the button.
 
-        size : int, optional
+        size : int, default: 50
             The size of the button in number of pixels.
 
-        border_size : int, optional
+        border_size : int, default: 5
             The size of the borders of the button in pixels.
 
         color_on : ColorLike, optional
@@ -2304,6 +2302,7 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
+        ...
         >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
@@ -2319,7 +2318,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.UniformGrid(dimensions=dims)
+            button = pyvista.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[
@@ -2364,9 +2363,10 @@ class WidgetHelper:
 
         Parameters
         ----------
-        animate : bool, optional
+        animate : bool, default: True
             Enable or disable jump-to-axis-view animation.
-        n_frames : int, optional
+
+        n_frames : int, default: 20
             The number of frames to animate the jump-to-axis-viewpoint feature.
 
         Returns
@@ -2381,12 +2381,21 @@ class WidgetHelper:
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> _ = plotter.add_mesh(
+        ...     mesh, scalars=range(6), show_scalar_bar=False
+        ... )
         >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
 
         """
-        widget = _vtk.lazy_vtkCameraOrientationWidget()
+        try:
+            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+        except ImportError:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+
+        widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)

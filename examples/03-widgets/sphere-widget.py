@@ -163,7 +163,7 @@ p.add_sphere_widget(update_surface, center=points, color=colors, radius=3)
 # Add axes grid
 p.show_grid()
 
-# Show it!
+# Show it
 p.show()
 
 ##############################################################################

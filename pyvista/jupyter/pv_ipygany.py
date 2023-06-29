@@ -3,7 +3,6 @@
 from array import array
 import warnings
 
-from IPython import display
 import numpy as np
 
 # not to be imported at the init level
@@ -161,7 +160,7 @@ def ipygany_camera_from_plotter(plotter):
     return {'position': position.tolist(), 'target': target, 'up': up}
 
 
-def show_ipygany(plotter, return_viewer, height=None, width=None):
+def show_ipygany(plotter, height=None, width=None):
     """Show an ipygany scene."""
     # convert each mesh in the plotter to an ipygany scene
     actors = plotter.renderer._actors
@@ -188,10 +187,6 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
                 colored_mesh = mesh
                 break
 
-    # Simply return the scene
-    if return_viewer:
-        return scene
-
     if cbar is not None:
         # Colormap choice widget
         options = list(colormaps.items())
@@ -217,4 +212,4 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         legend = VBox((title, colormap_dd, cbar))
         scene = AppLayout(center=scene, footer=legend, pane_heights=[0, 0, '150px'])
 
-    display.display_html(scene)
+    return scene

@@ -1,14 +1,14 @@
-"""Wrap vtkActor."""
+"""Wrap vtkActor module."""
 
 from typing import Optional, Union
-import weakref
 
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities.misc import no_new_attr
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core.utilities.misc import no_new_attr
 
+from . import _vtk
 from ._property import Property
 from .mapper import _BaseMapper
 from .prop3d import Prop3D
@@ -32,6 +32,9 @@ class Actor(Prop3D, _vtk.vtkActor):
     prop : pyvista.Property, optional
         Property of the actor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
     Examples
     --------
     Create an actor without using :class:`pyvista.Plotter`.
@@ -40,8 +43,8 @@ class Actor(Prop3D, _vtk.vtkActor):
     >>> mesh = pv.Sphere()
     >>> mapper = pv.DataSetMapper(mesh)
     >>> actor = pv.Actor(mapper=mapper)
-    >>> actor  # doctest:+SKIP
-    Actor (0x7f54c4d65ee0)
+    >>> actor
+    Actor (...)
       Center:                     (0.0, 0.0, 0.0)
       Pickable:                   True
       Position:                   (0.0, 0.0, 0.0)
@@ -76,15 +79,29 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _renderer = None
+    _new_attr_exceptions = ['_name']
 
-    def __init__(self, mapper=None, prop=None):
+    def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
             self.mapper = mapper
         if prop is None:
             self.prop = Property()
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """Get or set the unique name identifier used by PyVista."""
+        if self._name is None:
+            self._name = f'{type(self).__name__}({self.memory_address})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        if not value:
+            raise ValueError('Name must be truthy.')
+        self._name = value
 
     @property
     def mapper(self) -> _BaseMapper:
@@ -98,24 +115,23 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> dataset = pv.Sphere()
         >>> actor = pv.Actor()
         >>> actor.mapper = pv.DataSetMapper(dataset)
-        >>> actor.mapper  # doctest:+SKIP
-        DataSetMapper (0x7f34dcec5040)
+        >>> actor.mapper
+        DataSetMapper (...)
           Scalar visibility:           True
           Scalar range:                (0.0, 1.0)
-          Interpolate before mapping:  False
+          Interpolate before mapping:  True
           Scalar map mode:             default
           Color mode:                  direct
         <BLANKLINE>
         Attached dataset:
-        PolyData (0x7f34dcec5f40)
-          N Cells:  1680
-          N Points: 842
-          N Strips: 0
-          X Bounds: -4.993e-01, 4.993e-01
-          Y Bounds: -4.965e-01, 4.965e-01
-          Z Bounds: -5.000e-01, 5.000e-01
-          N Arrays: 1
-        <BLANKLINE>
+        PolyData (...)
+          N Cells:    1680
+          N Points:   842
+          N Strips:   0
+          X Bounds:   -4.993e-01, 4.993e-01
+          Y Bounds:   -4.965e-01, 4.965e-01
+          Z Bounds:   -5.000e-01, 5.000e-01
+          N Arrays:   1
 
         """
         return self.GetMapper()
@@ -168,8 +184,11 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane)
         >>> actor.texture = examples.download_masonry_texture()
-        >>> actor.texture  # doctest:+SKIP
-        <Texture(0x378c920) at 0x7f7af577e700>
+        >>> actor.texture
+        Texture (...)
+          Components:   3
+          Cube Map:     False
+          Dimensions:   256, 256
 
         """
         return self.GetTexture()
@@ -177,17 +196,6 @@ class Actor(Prop3D, _vtk.vtkActor):
     @texture.setter
     def texture(self, obj):
         self.SetTexture(obj)
-
-    @property
-    def renderer(self):
-        """Return the renderer associated with this actor."""
-        return self._renderer
-
-    @renderer.setter
-    def renderer(self, obj):
-        if not isinstance(obj, weakref.ProxyType):
-            raise TypeError("Only a ProxyType can be assigned to `renderer`")
-        self._renderer = obj
 
     @property
     def memory_address(self):
@@ -362,7 +370,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         ...         [0.707, -0.707, 0, 0],
         ...         [0.707, 0.707, 0, 0],
         ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2]
+        ...         [0, 0, 0, 2],
         ...     ]
         ... )
         >>> actor.user_matrix = arr
@@ -372,13 +380,13 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         mat = self.GetUserMatrix()
         if mat is not None:
-            mat = pv.array_from_vtkmatrix(mat)
+            mat = array_from_vtkmatrix(mat)
         return mat
 
     @user_matrix.setter
-    def user_matrix(self, value: Union[pv._vtk.vtkMatrix4x4, np.ndarray]):
+    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):
         if isinstance(value, np.ndarray):
-            value = pv.vtkmatrix_from_array(value)
+            value = vtkmatrix_from_array(value)
         self.SetUserMatrix(value)
 
     @property
@@ -409,7 +417,11 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor = pl.add_mesh(mesh, smooth_shading=True)
         >>> actor.backface_prop.color = 'lightblue'
         >>> _ = pl.add_mesh(
-        ...     plane, opacity=0.25, show_edges=True, color='grey', lighting=False,
+        ...     plane,
+        ...     opacity=0.25,
+        ...     show_edges=True,
+        ...     color='grey',
+        ...     lighting=False,
         ... )
         >>> pl.show()
 

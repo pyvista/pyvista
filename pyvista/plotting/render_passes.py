@@ -1,9 +1,7 @@
 """Render passes module for PyVista."""
 import weakref
 
-from pyvista import _vtk
-
-from ..utilities.misc import vtk_version_info
+from . import _vtk
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
@@ -196,11 +194,6 @@ class RenderPasses:
 
     def enable_ssao_pass(self, radius, bias, kernel_size, blur):
         """Enable the screen space ambient occlusion pass."""
-        if vtk_version_info < (9,):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # avoid circular import
-
-            raise VTKVersionError('SSAO pass requires VTK 9 or newer.')
-
         if self._dof_pass is not None:
             raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
 

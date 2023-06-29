@@ -4,12 +4,12 @@
 Volume Rendering
 ~~~~~~~~~~~~~~~~
 
-Volume render uniform mesh types like :class:`pyvista.UniformGrid` or 3D
+Volume render uniform mesh types like :class:`pyvista.ImageData` or 3D
 NumPy arrays.
 
 This also explores how to extract a volume of interest (VOI) from a
-:class:`pyvista.UniformGrid` using the
-:func:`pyvista.UniformGridFilters.extract_subset` filter.
+:class:`pyvista.ImageData` using the
+:func:`pyvista.ImageDataFilters.extract_subset` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 3
@@ -121,7 +121,7 @@ pl.show()
 # Extracting a VOI
 # ++++++++++++++++
 #
-# Use the :func:`pyvista.UniformGridFilters.extract_subset` filter to extract
+# Use the :func:`pyvista.ImageDataFilters.extract_subset` filter to extract
 # a volume of interest/subset volume to volume render. This is ideal when
 # dealing with particularly large volumes and you want to volume render only
 # a specific region.
@@ -146,7 +146,7 @@ pl.show()
 
 
 ###############################################################################
-# Woah, that's a big volume! We probably don't want to volume render the
+# Woah, that's a big volume. We probably don't want to volume render the
 # whole thing. So let's extract a region of interest under the volcano.
 #
 # The region we will extract will be between nodes 175 and 200 on the x-axis,
@@ -161,7 +161,7 @@ pl.add_mesh(voi, cmap="magma")
 pl.show()
 
 ###############################################################################
-# Ah, much better. Let's now volume render that region of interest!
+# Ah, much better. Let's now volume render that region of interest.
 
 pl = pv.Plotter()
 pl.add_volume(voi, cmap="magma", clim=clim, opacity=opacity, opacity_unit_distance=2000)

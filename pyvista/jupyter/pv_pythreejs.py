@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover
 from ipywidgets import GridspecLayout
 
 import pyvista as pv
+from pyvista.core._vtk_core import numpy_to_vtk
 
 
 def segment_poly_cells(mesh):
@@ -118,7 +119,7 @@ def map_scalars(lookup_table, scalars):
         if hasattr(scalars, 'VTKObject') and scalars.VTKObject is not None:
             scalars = scalars.VTKObject
         else:
-            scalars = pv._vtk.numpy_to_vtk(scalars)
+            scalars = numpy_to_vtk(scalars)
     return pv.wrap(lookup_table.MapScalars(scalars, 0, 0))[:, :3] / 255
 
 
@@ -189,7 +190,7 @@ def to_surf_mesh(
     if add_attr is None:
         add_attr = {}
     # convert to an all-triangular surface
-    if surf.is_all_triangles():
+    if surf.is_all_triangles:
         trimesh = surf
     else:
         trimesh = surf.triangulate()
@@ -659,7 +660,7 @@ def convert_renderer(pv_renderer):
 
 def convert_plotter(pl):
     """Convert a pyvista plotter to a pythreejs widget."""
-    if not hasattr(pl, 'ren_win'):
+    if pl.render_window is None:
         raise AttributeError(
             'This plotter is closed and unable to export to html.\n'
             'Please run this before showing or closing the plotter.'

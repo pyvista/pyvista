@@ -1,9 +1,9 @@
 """Prop3D module."""
 from typing import Tuple
 
-from pyvista import _vtk
+from pyvista.core._typing_core import BoundsLike, Vector
 
-from .._typing import BoundsLike, Vector
+from . import _vtk
 
 
 class Prop3D(_vtk.vtkProp3D):
@@ -84,7 +84,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.rotate_x(45)
         >>> pl.show_axes()
@@ -111,7 +115,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.rotate_y(45)
         >>> pl.show_axes()
@@ -138,7 +146,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
         ... )
         >>> actor.rotate_z(45)
         >>> pl.show_axes()
@@ -156,6 +168,25 @@ class Prop3D(_vtk.vtkProp3D):
 
         Examples
         --------
+        Reorient just the actor and plot it. Note how the actor is rotated
+        about its own axes as defined by its position.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
+        ... )
+        >>> actor.position = (0, 0, 1)
+        >>> actor.orientation = (45, 0, 0)
+        >>> pl.show_axes()
+        >>> pl.show()
+
         Show that the orientation changes with rotation.
 
         >>> import pyvista as pv
@@ -171,21 +202,6 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor.orientation = (0, 45, 45)
         >>> actor.orientation  # doctest:+SKIP
         (0, 45, 45)
-
-        Reorient just the actor and plot it. Note how the actor is rotated
-        about its own axes as defined by its position.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(
-        ...     mesh, color='r', style='wireframe', line_width=5, lighting=False,
-        ... )
-        >>> actor.position = (0, 0, 1)
-        >>> actor.orientation = (45, 0, 0)
-        >>> pl.show_axes()
-        >>> pl.show()
 
         """
         return self.GetOrientation()

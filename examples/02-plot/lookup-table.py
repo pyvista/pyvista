@@ -142,12 +142,12 @@ pl.add_slider_widget(
     set_min_alpha,
     (0, 1),
     value=lut.alpha_range[0],
-    event_type='always',
+    interaction_event='always',
     title='Alpha Range',
     tube_width=0.003,
 )
 pl.add_slider_widget(
-    set_max_alpha, (0, 1), value=lut.alpha_range[1], event_type='always', tube_width=0.0
+    set_max_alpha, (0, 1), value=lut.alpha_range[1], interaction_event='always', tube_width=0.0
 )
 
 pl.show()
@@ -205,7 +205,7 @@ def make_double_slider(attr, idx):
         set_min,
         rng,
         value=getattr(lut, attr)[0],
-        event_type='always',
+        interaction_event='always',
         title=' '.join(attr.split('_')).capitalize(),
         tube_width=0.003,
         pointa=(0.6, 0.9 - 0.165 * idx),
@@ -215,7 +215,7 @@ def make_double_slider(attr, idx):
         set_max,
         rng,
         value=getattr(lut, attr)[1],
-        event_type='always',
+        interaction_event='always',
         tube_width=0.0,
         pointa=(0.6, 0.9 - 0.165 * idx),
         pointb=(0.9, 0.9 - 0.165 * idx),

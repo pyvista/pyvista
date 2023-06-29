@@ -338,8 +338,11 @@ def plot_ants_plane(notebook=None):
        Add airplane mesh and make the color equal to the Y position.
 
        >>> plane_scalars = airplane.points[:, 1]
-       >>> _ = plotter.add_mesh(airplane, scalars=plane_scalars,
-       ...                      scalar_bar_args={'title': 'Plane Y Location'})
+       >>> _ = plotter.add_mesh(
+       ...     airplane,
+       ...     scalars=plane_scalars,
+       ...     scalar_bar_args={'title': 'Plane Y Location'},
+       ... )
        >>> _ = plotter.add_text('Ants and Plane Example')
        >>> plotter.show()
 
@@ -409,12 +412,7 @@ def plot_beam(notebook=None):
         (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
     ]
 
-    try:
-        import matplotlib  # noqa
-
-        cmap = 'bwr'
-    except ImportError:  # pragma: no cover
-        cmap = None
+    cmap = 'bwr'
 
     # plot this displaced beam
     plotter = pv.Plotter(notebook=notebook)
@@ -437,7 +435,7 @@ def plot_datasets(dataset_type=None):
 
     * :class:`pyvista.PolyData`
     * :class:`pyvista.UnstructuredGrid`
-    * :class:`pyvista.UniformGrid`
+    * :class:`pyvista.ImageData`
     * :class:`pyvista.RectilinearGrid`
     * :class:`pyvista.StructuredGrid`
 
@@ -448,7 +446,7 @@ def plot_datasets(dataset_type=None):
 
         * ``'PolyData'``
         * ``'UnstructuredGrid'``
-        * ``'UniformGrid'``
+        * ``'ImageData'``
         * ``'RectilinearGrid'``
         * ``'StructuredGrid'``
 
@@ -461,7 +459,7 @@ def plot_datasets(dataset_type=None):
     allowable_types = [
         'PolyData',
         'UnstructuredGrid',
-        'UniformGrid',
+        'ImageData',
         'RectilinearGrid',
         'StructuredGrid',
     ]
@@ -474,7 +472,7 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # uniform grid
-    image = pv.UniformGrid(dimensions=(6, 6, 1))
+    image = pv.ImageData(dimensions=(6, 6, 1))
     image.spacing = (3, 2, 1)
 
     ###########################################################################
@@ -541,11 +539,11 @@ def plot_datasets(dataset_type=None):
         pl.add_mesh(ugrid)
         pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color='k')
 
-    # UniformGrid
+    # ImageData
     if dataset_type is None:
         pl.subplot(2)
-        pl.add_text('1. UniformGrid')
-    if dataset_type in [None, 'UniformGrid']:
+        pl.add_text('1. ImageData')
+    if dataset_type in [None, 'ImageData']:
         pl.add_mesh(image)
         pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
         pl.camera_position = 'xy'

@@ -48,7 +48,7 @@ plt.pcolormesh(data, cmap="seismic", clim=[-1, 1])
 plt.gca().invert_yaxis()
 
 ###############################################################################
-# View the the path of the GPR profile from a top-down perspective.
+# View the path of the GPR profile from a top-down perspective.
 # Since we have the full coordinates (XY and Z), we can create a structured
 # mesh "draping" down from those coordinates to hold the GPR image data.
 plt.scatter(path[:, 1], path[:, 0])
@@ -59,7 +59,7 @@ plt.ylabel("Easting")
 ###############################################################################
 
 assert len(path) in data.shape, "Make sure coordinates are present for every trace."
-# If not, you'll need to interpolate the path!
+# If not, you'll need to interpolate the path
 
 # Grab the number of samples (in Z dir) and number of traces/soundings
 nsamples, ntraces = data.shape  # Might be opposite for your data, pay attention here
@@ -80,12 +80,12 @@ grid = pv.StructuredGrid()
 grid.points = points
 grid.dimensions = nsamples, ntraces, 1
 
-# Add the data array - note the ordering!
+# Add the data array - note the ordering
 grid["values"] = data.ravel(order="F")
 
 ###############################################################################
-# And now we can plot it! or process or do anything, because it is a PyVista
-# mesh and the possibilities are endless with PyVista
+# And now we can plot it, process it, or do anything, because it is a PyVista
+# mesh and the possibilities are endless with PyVista.
 
 cpos = [
     (1217002.366883762, 345363.80666238244, 3816.828857791056),

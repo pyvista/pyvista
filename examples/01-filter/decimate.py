@@ -21,9 +21,9 @@ dargs = dict(show_edges=True, color=True)
 mesh.plot(cpos=cpos, **dargs)
 
 ###############################################################################
-#  Now let's define a target reduction and compare the
-# :func:`pyvista.PolyData.decimate` and :func:`pyvista.PolyData.decimate_pro`
-# filters.
+# Now let's define a target reduction and compare the
+# :func:`pyvista.PolyDataFilters.decimate` and
+# :func:`pyvista.PolyDataFilters.decimate_pro` filters.
 target_reduction = 0.7
 print(f"Reducing {target_reduction * 100.0} percent out of the original mesh")
 
@@ -42,20 +42,20 @@ pro_decimated.plot(cpos=cpos, **dargs)
 ###############################################################################
 # Side by side comparison:
 
-p = pv.Plotter(shape=(1, 3))
-p.add_mesh(mesh, **dargs)
-p.add_text("Input mesh", font_size=24)
-p.camera_position = cpos
-p.reset_camera()
-p.subplot(0, 1)
-p.add_mesh(decimated, **dargs)
-p.add_text("Decimated mesh", font_size=24)
-p.camera_position = cpos
-p.reset_camera()
-p.subplot(0, 2)
-p.add_mesh(pro_decimated, **dargs)
-p.add_text("Pro Decimated mesh", font_size=24)
-p.camera_position = cpos
-p.reset_camera()
-p.link_views()
-p.show()
+pl = pv.Plotter(shape=(1, 3))
+pl.add_mesh(mesh, **dargs)
+pl.add_text("Input mesh", font_size=24)
+pl.camera_position = cpos
+pl.reset_camera()
+pl.subplot(0, 1)
+pl.add_mesh(decimated, **dargs)
+pl.add_text("Decimated mesh", font_size=24)
+pl.camera_position = cpos
+pl.reset_camera()
+pl.subplot(0, 2)
+pl.add_mesh(pro_decimated, **dargs)
+pl.add_text("Pro Decimated mesh", font_size=24)
+pl.camera_position = cpos
+pl.reset_camera()
+pl.link_views()
+pl.show()

@@ -1,0 +1,5 @@
+pyvista
+trame>=2.2.6
+trame-client>=2.4.2
+trame-server>=2.7.1
+trame-vtk>=2.4.0
