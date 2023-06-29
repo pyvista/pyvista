@@ -10,6 +10,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
 from . import _vtk
 from .colors import Color
+from .opts import PickerType
 from .utilities.algorithms import (
     add_ids_algorithm,
     algorithm_to_mesh_handler,
@@ -80,6 +81,7 @@ class WidgetHelper:
         self.spline_sliced_meshes = []
         self.sphere_widgets = []
         self.button_widgets = []
+        self.distance_widgets = []
 
     def add_box_widget(
         self,
@@ -2021,6 +2023,88 @@ class WidgetHelper:
 
         return self.add_mesh(alg, **kwargs)
 
+    def add_measurement_widget(
+        self,
+        callback=None,
+        color=None,
+    ):
+        """Interactively measure distance with a distance widget.
+
+        Creates an overlay documenting the selected line and total
+        distance between two mouse left-click interactions.
+
+        The measurement overlay stays on the rendering until the
+        widget is deleted. Only one measurement can be added by each
+        widget instance.
+
+        Parameters
+        ----------
+        callback : Callable[[Tuple[float, float, float], [Tuple[float, float, float], int], float]
+            The method called every time the widget calculates a
+            distance measurement. This callback receives the start
+            point and end point as cartesian coordinate tuples
+            and the calculated distance between the two points.
+
+        color : ColorLike, optional
+            The color of the measurement widget.
+
+        Returns
+        -------
+        vtk.vtkDistanceWidget
+            The newly created distance widget.
+
+        """
+        if self.iren is None:
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
+        if color is None:
+            color = pyvista.global_theme.font.color.float_rgb
+        color = Color(color)
+
+        compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
+
+        handle = _vtk.vtkPointHandleRepresentation3D()
+        representation = _vtk.vtkDistanceRepresentation3D()
+        representation.SetHandleRepresentation(handle)
+        widget = _vtk.vtkDistanceWidget()
+        widget.SetInteractor(self.iren.interactor)
+        widget.SetRepresentation(representation)
+
+        handle.GetProperty().SetColor(*color.float_rgb)
+        representation.GetLabelProperty().SetColor(*color.float_rgb)
+        representation.GetLineProperty().SetColor(*color.float_rgb)
+
+        self.iren.picker = PickerType.POINT
+
+        def place_point(*_):
+            p1 = [0, 0, 0]
+            p2 = [0, 0, 0]
+            representation.GetPoint1DisplayPosition(p1)
+            representation.GetPoint2DisplayPosition(p2)
+            if self.iren.picker.Pick(p1, self.renderer):
+                pos1 = self.iren.picker.GetPickPosition()
+                representation.GetPoint1Representation().SetWorldPosition(pos1)
+            if self.iren.picker.Pick(p2, self.renderer):
+                pos2 = self.iren.picker.GetPickPosition()
+                representation.GetPoint2Representation().SetWorldPosition(pos2)
+            representation.BuildRepresentation()
+
+            a = representation.GetPoint1Representation().GetWorldPosition()
+            b = representation.GetPoint2Representation().GetWorldPosition()
+            if callable(callback):
+                try_callback(callback, a, b, compute(a, b))
+            return
+
+        widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, place_point)
+
+        widget.On()
+        self.distance_widgets.append(widget)
+        return widget
+
+    def clear_measure_widgets(self):
+        """Remove all of the measurement widgets."""
+        self.distance_widgets.clear()
+
     def add_sphere_widget(
         self,
         callback,
@@ -2349,3 +2433,4 @@ class WidgetHelper:
         self.clear_spline_widgets()
         self.clear_button_widgets()
         self.clear_camera_widgets()
+        self.clear_measure_widgets()
