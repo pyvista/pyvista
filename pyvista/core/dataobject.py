@@ -209,7 +209,7 @@ class DataObject:
             fmt = ""
             # HTML version
             fmt += "\n"
-            fmt += "<table>\n"
+            fmt += "<table style='width: 100%;'>\n"
             fmt += f"<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n"
             row = "<tr><td>{}</td><td>{}</td></tr>\n"
             # now make a call on the object to get its attributes as a list of len 2 tuples
