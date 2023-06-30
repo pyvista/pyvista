@@ -178,19 +178,7 @@ numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
 # see https://github.com/pyvista/pyvista/pull/1612
-numpydoc_validate = True
-numpydoc_validation_checks = {
-    "all",  # all but the following:
-    "GL01",  # Contradicts numpydoc examples
-    "GL02",  # Permit a blank line after the end of our docstring
-    "GL03",  # Considering enforcing
-    "SA01",  # Not all docstrings need a see also
-    "SA04",  # See also section does not need descriptions
-    "SS05",  # Appears to be broken.
-    "ES01",  # Not all docstrings need an extend summary.
-    "EX01",  # Examples: Will eventually enforce
-    "YD01",  # Yields: No plan to enforce
-}
+numpydoc_validate = False
 numpydoc_validation_exclude = {  # set of regex
     r'\.BasePlotter$',  # Issue with class parameter documentation
     r'\.Plotter$',  # Issue with class parameter documentation

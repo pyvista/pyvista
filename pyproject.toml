@@ -165,3 +165,21 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+
+
+
+[tool.numpydoc_validation]
+ignore = [
+    "GL01",  # Contradicts numpydoc examples
+    "GL02",  # Permit a blank line after the end of our docstring
+    "GL03",  # Considering enforcing
+    "SA01",  # Not all docstrings need a see also
+    "SA04",  # See also section does not need descriptions
+    "SS05",  # Appears to be broken.
+    "ES01",  # Not all docstrings need an extended summary.
+    "EX01",  # Examples: Will eventually enforce
+    "YD01",  # Yields: No plan to enforce
+]
+override = [
+    '\.BasePlotter$',
+]
