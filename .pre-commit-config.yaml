@@ -94,3 +94,8 @@ repos:
   rev: 0.23.2
   hooks:
     - id: check-github-workflows
+
+- repo: https://github.com/stefmolin/numpydoc
+  rev: 6a1a606
+  hooks:
+  - id: numpydoc-validation
