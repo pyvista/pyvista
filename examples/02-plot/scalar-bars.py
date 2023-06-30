@@ -34,8 +34,8 @@ p.show()
 # We could also plot the scene with an interactive scalar bar to move around
 # and place where we like by specifying passing keyword arguments to control
 # the scalar bar via the ``scalar_bar_args`` parameter in
-# :func:`pyvista.BasePlotter.add_mesh`. The keyword arguments to control the
-# scalar bar are defined in :func:`pyvista.BasePlotter.add_scalar_bar`.
+# :func:`pyvista.Plotter.add_mesh`. The keyword arguments to control the
+# scalar bar are defined in :func:`pyvista.Plotter.add_scalar_bar`.
 
 # create dictionary of parameters to control scalar bar
 sargs = dict(interactive=True)  # Simply make the bar interactive
@@ -44,7 +44,7 @@ p = pv.Plotter(notebook=False)  # If in IPython, be sure to show the scene
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 # Remove from plotters so output is not produced in docs
-pv.plotting._ALL_PLOTTERS.clear()
+pv.plotting.plotter._ALL_PLOTTERS.clear()
 
 
 ###############################################################################

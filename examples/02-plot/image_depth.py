@@ -17,7 +17,6 @@ mesh = examples.load_random_hills()
 # Establish geometry within a pv.Plotter()
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
-p.store_image = True  # permit image caching after plotter is closed
 p.show()
 
 ###############################################################################

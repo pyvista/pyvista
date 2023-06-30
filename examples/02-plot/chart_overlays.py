@@ -67,7 +67,13 @@ def update_time(time):
 
 
 time_slider = p.add_slider_widget(
-    update_time, [np.min(t), np.max(t)], 0, "Time", (0.25, 0.9), (0.75, 0.9), event_type='always'
+    update_time,
+    [np.min(t), np.max(t)],
+    0,
+    "Time",
+    (0.25, 0.9),
+    (0.75, 0.9),
+    interaction_event='always',
 )
 
 # Start incrementing time automatically

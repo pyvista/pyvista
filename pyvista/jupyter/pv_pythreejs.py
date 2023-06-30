@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover
 from ipywidgets import GridspecLayout
 
 import pyvista as pv
+from pyvista.core._vtk_core import numpy_to_vtk
 
 
 def segment_poly_cells(mesh):
@@ -118,7 +119,7 @@ def map_scalars(lookup_table, scalars):
         if hasattr(scalars, 'VTKObject') and scalars.VTKObject is not None:
             scalars = scalars.VTKObject
         else:
-            scalars = pv._vtk.numpy_to_vtk(scalars)
+            scalars = numpy_to_vtk(scalars)
     return pv.wrap(lookup_table.MapScalars(scalars, 0, 0))[:, :3] / 255
 
 
@@ -189,7 +190,7 @@ def to_surf_mesh(
     if add_attr is None:
         add_attr = {}
     # convert to an all-triangular surface
-    if surf.is_all_triangles():
+    if surf.is_all_triangles:
         trimesh = surf
     else:
         trimesh = surf.triangulate()
@@ -450,6 +451,11 @@ def dataset_to_mesh(
 
     rep_type = prop.GetRepresentationAsString()
 
+    # PolyData vertices should always be rendered
+    has_verts = False
+    if isinstance(dataset, pv.PolyData):
+        has_verts = dataset.verts.any()
+
     meshes = []
     if rep_type == 'Surface' and has_faces:
         surf = extract_surface_mesh(dataset)
@@ -490,7 +496,15 @@ def dataset_to_mesh(
         meshes.append(
             to_tjs_points(dataset, prop, coloring, lookup_table, color=color, opacity=opacity)
         )
-    else:  # wireframe
+
+    if has_verts:
+        # extract just vertices
+        poly_points = dataset.extract_cells(dataset.verts[1::2])
+        meshes.append(
+            to_tjs_points(poly_points, prop, coloring, lookup_table, color=color, opacity=opacity)
+        )
+
+    if rep_type not in ['Surface', 'Points']:
         if has_faces:
             surf = extract_surface_mesh(dataset)
             mesh = to_edge_mesh(
@@ -574,7 +588,7 @@ def meshes_from_actors(actors, focal_point):
         elif not hasattr(mapper, 'GetInputAsDataSet'):
             continue
         else:
-            dataset = mapper.GetInputAsDataSet()
+            dataset = pv.wrap(mapper.GetInputAsDataSet())
             mesh = dataset_to_mesh(
                 dataset,
                 actor.GetProperty(),
@@ -646,7 +660,7 @@ def convert_renderer(pv_renderer):
 
 def convert_plotter(pl):
     """Convert a pyvista plotter to a pythreejs widget."""
-    if not hasattr(pl, 'ren_win'):
+    if pl.render_window is None:
         raise AttributeError(
             'This plotter is closed and unable to export to html.\n'
             'Please run this before showing or closing the plotter.'

@@ -6,7 +6,6 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
-from pyvista.utilities.misc import PyVistaDeprecationWarning
 
 
 def test_delete_downloads(tmpdir):
@@ -99,10 +98,3 @@ def test_local_file_cache(tmpdir):
         downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)
-
-
-def test_planets_deprecate_warnings():
-    with pytest.warns(PyVistaDeprecationWarning):
-        examples.download_mars_jpg()
-    with pytest.warns(PyVistaDeprecationWarning):
-        examples.download_stars_jpg()

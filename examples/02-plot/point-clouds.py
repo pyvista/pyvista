@@ -89,7 +89,7 @@ actor = pl.add_points(
     point_size=10,
     ambient=0.7,
 )
-pl.add_text('"points" not as spheres')
+pl.add_text('"points" not as spheres', color='w')
 
 # Gaussian points
 pl.subplot(0, 1)
@@ -104,7 +104,7 @@ actor = pl.add_points(
     point_size=10,
     ambient=1.0,
 )
-pl.add_text('"points_gaussian" not as spheres\nemissive=False')
+pl.add_text('"points_gaussian" not as spheres\nemissive=False', color='w')
 
 # Gaussian points with emissive=True
 pl.subplot(1, 0)
@@ -115,12 +115,11 @@ actor = pl.add_points(
     emissive=True,
     scalars=rgba,
     rgba=True,
-    # opacity=0.999999,  # does not work and _must_ be 1.0
     point_size=10,
 )
-pl.add_text('"points_gaussian" not as spheres\nemissive=True')
+pl.add_text('"points_gaussian" not as spheres\nemissive=True', color='w')
 
-# Gaussian points with emissive=True
+# With render_points_as_spheres=True
 pl.subplot(1, 1)
 actor = pl.add_points(
     points,
@@ -130,11 +129,10 @@ actor = pl.add_points(
     rgba=True,
     point_size=10,
 )
-pl.add_text('"points_gaussian" as spheres')
+pl.add_text('"points_gaussian" as spheres', color='w')
 
 pl.background_color = 'k'
 pl.link_views()
-# pl.reset_camera()
 pl.camera_position = 'xy'
 pl.camera.zoom(1.2)
 pl.show()

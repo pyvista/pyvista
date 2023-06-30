@@ -3,8 +3,10 @@ import gc
 import weakref
 
 import numpy as np
+import vtk
 
 import pyvista as pv
+from pyvista.core._vtk_core import vtk_to_numpy
 
 
 def test_pyvistandarray_assign(sphere):
@@ -52,7 +54,7 @@ def test_plotting_collection():
     ref_charts = weakref.ref(pl.renderer._charts)  # instantiated on the fly
 
     # delete known references to Plotter
-    del pv.plotting._ALL_PLOTTERS[pl._id_name]
+    del pv.plotting.plotter._ALL_PLOTTERS[pl._id_name]
     del pl
 
     # check that everything is eventually destroyed
@@ -61,3 +63,27 @@ def test_plotting_collection():
     assert ref_renderers() is None
     assert ref_renderer() is None
     assert ref_charts() is None
+
+
+def test_vtk_points_slice():
+    mesh = pv.Sphere()
+    n = 10
+    orig_points = np.array(mesh.points[:n])
+    pts = pv.vtk_points(mesh.points[:n], deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+
+    del mesh
+    gc.collect()
+    assert np.allclose(vtk_to_numpy(pts.GetData()), orig_points)
+
+
+def test_vtk_points():
+    mesh = pv.Sphere()
+    orig_points = np.array(mesh.points)
+    pts = pv.vtk_points(mesh.points, deep=False)
+    assert isinstance(pts, vtk.vtkPoints)
+    assert np.shares_memory(mesh.points, vtk_to_numpy(pts.GetData()))
+
+    del mesh
+    gc.collect()
+    assert np.allclose(vtk_to_numpy(pts.GetData()), orig_points)

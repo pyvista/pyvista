@@ -211,7 +211,7 @@ class Renderers:
 
         Parameters
         ----------
-        loc : int, tuple, or list
+        loc : int | sequence[int]
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
@@ -246,8 +246,7 @@ class Renderers:
 
     def __iter__(self):
         """Return a iterable of renderers."""
-        for renderer in self._renderers:
-            yield renderer
+        yield from self._renderers
 
     @property
     def active_index(self):
@@ -283,7 +282,7 @@ class Renderers:
         index_row : int
             Index of the subplot to activate along the rows.
 
-        index_column : int
+        index_column : int, optional
             Index of the subplot to activate along the columns.
 
         """
@@ -296,6 +295,53 @@ class Renderers:
         if index_column < 0 or index_column >= self.shape[1]:
             raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_index = self.loc_to_index((index_row, index_column))
+
+    def set_chart_interaction(self, interactive, toggle=False):
+        """
+        Set or toggle interaction with charts for the active renderer.
+
+        Interaction with other charts in other renderers is disabled.
+        Interaction with other charts in the active renderer is only disabled
+        when ``toggle`` is ``False``.
+
+        Parameters
+        ----------
+        interactive : bool | Chart | int | sequence[Chart] | sequence[int]
+            Following parameter values are accepted:
+
+            * A boolean to enable (``True``) or disable (``False``) interaction
+              with all charts in the active renderer.
+            * The chart or its index to enable interaction with. Interaction
+              with multiple charts can be enabled by passing a list of charts
+              or indices.
+
+        toggle : bool, default: False
+            Instead of enabling interaction with the provided chart(s), interaction
+            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            is not a boolean.
+
+        Returns
+        -------
+        list of Chart
+            The list of all interactive charts for the active renderer.
+
+        """
+        interactive_scene, interactive_charts = None, []
+        if self.active_renderer.has_charts:
+            interactive_scene = self.active_renderer._charts._scene
+            interactive_charts = self.active_renderer.set_chart_interaction(interactive, toggle)
+        # Disable chart interaction for other renderers
+        for renderer in self:
+            if renderer is not self.active_renderer:
+                renderer.set_chart_interaction(False)
+        # Setup the context interactor style based on the resulting amount of interactive charts.
+        self._plotter.iren._set_context_style(interactive_scene if interactive_charts else None)
+        return interactive_charts
+
+    def on_plotter_render(self):
+        """Notify all renderers of explicit plotter render call."""
+        for renderer in self:
+            renderer.on_plotter_render()
 
     def deep_clean(self):
         """Clean all renderers."""
@@ -317,13 +363,13 @@ class Renderers:
         image_path : str
             Path to an image file.
 
-        scale : float, optional
+        scale : float
             Scale the image larger or smaller relative to the size of
             the window.  For example, a scale size of 2 will make the
             largest dimension of the image twice as large as the
             largest dimension of the render window.  Defaults to 1.
 
-        as_global : bool, optional
+        as_global : bool
             When multiple render windows are present, setting
             ``as_global=False`` will cause the background to only
             appear in one window.
@@ -359,6 +405,11 @@ class Renderers:
             if renderer is not None:
                 renderer.clear()
 
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        for renderer in self:
+            renderer.clear_actors()
+
     def clear(self):
         """Clear all renders."""
         for renderer in self:
@@ -392,7 +443,7 @@ class Renderers:
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to current theme parameters.  For example:
 
@@ -401,12 +452,12 @@ class Renderers:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : color_like, optional
+        top : ColorLike, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
 
-        all_renderers : bool
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 
@@ -418,7 +469,7 @@ class Renderers:
         >>> plotter = pyvista.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
-        Color(name='black', hex='#000000ff')
+        Color(name='black', hex='#000000ff', opacity=255)
         >>> plotter.close()
 
         Set the background color at the bottom to black and white at
@@ -437,6 +488,52 @@ class Renderers:
             self._shadow_renderer.set_background(color)
         else:
             self.active_renderer.set_background(color, top=top)
+
+    def set_color_cycler(self, color_cycler, all_renderers=True):
+        """Set or reset the color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str | cycler.Cycler | sequence[ColorLike]
+            The colors to cycle through.
+
+        all_renderers : bool, default: True
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        if all_renderers:
+            for renderer in self:
+                renderer.set_color_cycler(color_cycler)
+        else:
+            self.active_renderer.set_color_cycler(color_cycler)
 
     def remove_background_image(self):
         """Remove the background image at the current renderer.

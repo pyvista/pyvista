@@ -14,6 +14,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
@@ -91,6 +92,14 @@ def test_download_clown():
 def test_download_exodus():
     data = examples.download_exodus()
     assert data.n_blocks
+
+
+def test_download_fea_hertzian_contact_cylinder():
+    filename = examples.download_fea_hertzian_contact_cylinder(load=False)
+    assert os.path.isfile(filename)
+
+    data = examples.download_fea_hertzian_contact_cylinder()
+    assert data.n_cells
 
 
 def test_download_nefertiti():
@@ -462,7 +471,7 @@ def test_download_dicom_stack():
     assert os.path.isdir(filename)
 
     data = examples.download_dicom_stack()
-    assert isinstance(data, pv.UniformGrid)
+    assert isinstance(data, pv.ImageData)
     assert all([data.n_points, data.n_cells])
 
 
@@ -484,12 +493,39 @@ def test_download_cavity():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+def test_download_openfoam_tubes():
+    filename = examples.download_openfoam_tubes(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_openfoam_tubes(load=True)
+    assert isinstance(dataset, pv.MultiBlock)
+
+
 def test_download_lucy():
     filename = examples.download_lucy(load=False)
     assert os.path.isfile(filename)
 
     dataset = examples.download_lucy(load=True)
     assert isinstance(dataset, pv.PolyData)
+
+
+def test_download_pump_bracket():
+    filename = examples.download_pump_bracket(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_pump_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data) == 10
+
+
+def test_download_electronics_cooling():
+    filenames = examples.download_electronics_cooling(load=False)
+    for filename in filenames:
+        assert os.path.isfile(filename)
+
+    structure, air = examples.download_electronics_cooling(load=True)
+    assert isinstance(structure, pv.PolyData)
+    assert isinstance(air, pv.UnstructuredGrid)
 
 
 def test_angular_sector():
@@ -537,7 +573,7 @@ def test_gif_simple():
     assert filename.endswith('gif')
 
     dataset = examples.download_gif_simple(load=True)
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert 'frame0' in dataset.point_data
 
 
@@ -613,7 +649,7 @@ def test_download_sparse_points():
 
 def test_download_puppy():
     dataset = examples.download_puppy()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
     assert dataset.n_points > 1_000_000
 
 
@@ -624,7 +660,7 @@ def test_download_puppy_texture():
 
 def test_download_gourds_pnm():
     dataset = examples.download_gourds_pnm()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_model_with_variance():
@@ -632,78 +668,83 @@ def test_download_model_with_variance():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_downlad_download_thermal_probes():
+def test_download_thermal_probes():
     dataset = examples.download_thermal_probes()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_turbine_blade():
+def test_download_turbine_blade():
     dataset = examples.download_turbine_blade()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_crater_topo():
+def test_download_crater_topo():
     dataset = examples.download_crater_topo()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
-def test_downlad_download_crater_imagery():
+def test_download_crater_imagery():
     dataset = examples.download_crater_imagery()
     assert isinstance(dataset, pv.Texture)
 
 
-def test_downlad_download_dolfin():
+def test_download_dolfin():
     dataset = examples.download_dolfin()
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_downlad_download_damavand_volcano():
+def test_download_meshio_xdmf():
+    dataset = examples.download_meshio_xdmf()
+    assert isinstance(dataset, pv.UnstructuredGrid)
+
+
+def test_download_damavand_volcano():
     filename = examples.download_damavand_volcano(load=False)
     assert os.path.isfile(filename)
 
     dataset = examples.download_damavand_volcano()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
-def test_downlad_download_delaunay_example():
+def test_download_delaunay_example():
     dataset = examples.download_delaunay_example()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_embryo():
+def test_download_embryo():
     filename = examples.download_embryo(load=False)
     assert os.path.isfile(filename)
 
     dataset = examples.download_embryo()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
-def test_downlad_download_antarctica_velocity():
+def test_download_antarctica_velocity():
     dataset = examples.download_antarctica_velocity()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_room_surface_mesh():
+def test_download_room_surface_mesh():
     dataset = examples.download_room_surface_mesh()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_beach():
+def test_download_beach():
     dataset = examples.download_beach()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
-def test_downlad_download_rgba_texture():
+def test_download_rgba_texture():
     dataset = examples.download_rgba_texture()
     assert isinstance(dataset, pv.Texture)
 
 
-def test_downlad_download_vtk_logo():
+def test_download_vtk_logo():
     dataset = examples.download_vtk_logo()
     assert isinstance(dataset, pv.Texture)
 
 
-def test_downlad_download_gpr_data_array():
+def test_download_gpr_data_array():
     filename = examples.download_gpr_data_array(load=False)
     assert os.path.isfile(filename)
 
@@ -711,7 +752,7 @@ def test_downlad_download_gpr_data_array():
     assert isinstance(dataset, np.ndarray)
 
 
-def test_downlad_download_gpr_path():
+def test_download_gpr_path():
     filename = examples.download_gpr_path(load=False)
     assert os.path.isfile(filename)
 
@@ -719,67 +760,67 @@ def test_downlad_download_gpr_path():
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_woman():
+def test_download_woman():
     dataset = examples.download_woman()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_lobster():
+def test_download_lobster():
     dataset = examples.download_lobster()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_face2():
+def test_download_face2():
     dataset = examples.download_face2()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_urn():
+def test_download_urn():
     dataset = examples.download_urn()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_pepper():
+def test_download_pepper():
     dataset = examples.download_pepper()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_drill():
+def test_download_drill():
     dataset = examples.download_drill()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_action_figure():
+def test_download_action_figure():
     dataset = examples.download_action_figure()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_mars_jpg():
+def test_download_mars_jpg():
     filename = examples.download_mars_jpg()
     assert os.path.isfile(filename)
 
 
-def test_downlad_download_stars_jpg():
+def test_download_stars_jpg():
     filename = examples.download_stars_jpg()
     assert os.path.isfile(filename)
 
 
-def test_downlad_download_notch_stress():
+def test_download_notch_stress():
     dataset = examples.download_notch_stress()
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_downlad_download_notch_displacement():
+def test_download_notch_displacement():
     dataset = examples.download_notch_displacement()
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_downlad_download_louis_louvre():
+def test_download_louis_louvre():
     dataset = examples.download_louis_louvre()
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_downlad_download_cylinder_crossflow():
+def test_download_cylinder_crossflow():
     filename = examples.download_cylinder_crossflow(load=False)
     assert os.path.isfile(filename)
 
@@ -787,7 +828,7 @@ def test_downlad_download_cylinder_crossflow():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_naca():
+def test_download_naca():
     filename = examples.download_naca(load=False)
     assert os.path.isfile(filename)
 
@@ -795,7 +836,7 @@ def test_downlad_download_naca():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_wavy():
+def test_download_wavy():
     filename = examples.download_wavy(load=False)
     assert os.path.isfile(filename)
 
@@ -803,7 +844,7 @@ def test_downlad_download_wavy():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_dual_sphere_animation():
+def test_download_dual_sphere_animation():
     filename = examples.download_dual_sphere_animation(load=False)
     assert os.path.isfile(filename)
 
@@ -811,7 +852,7 @@ def test_downlad_download_dual_sphere_animation():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_cgns_structured():
+def test_download_cgns_structured():
     filename = examples.download_cgns_structured(load=False)
     assert os.path.isfile(filename)
 
@@ -819,7 +860,7 @@ def test_downlad_download_cgns_structured():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_tecplot_ascii():
+def test_download_tecplot_ascii():
     filename = examples.download_tecplot_ascii(load=False)
     assert os.path.isfile(filename)
 
@@ -827,7 +868,7 @@ def test_downlad_download_tecplot_ascii():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_cgns_multi():
+def test_download_cgns_multi():
     filename = examples.download_cgns_multi(load=False)
     assert os.path.isfile(filename)
 
@@ -835,19 +876,19 @@ def test_downlad_download_cgns_multi():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-def test_downlad_download_parched_canal_4k():
+def test_download_parched_canal_4k():
     dataset = examples.download_parched_canal_4k()
     assert isinstance(dataset, pv.Texture)
 
 
-def test_downlad_download_cells_nd():
+def test_download_cells_nd():
     dataset = examples.download_cells_nd()
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_downlad_download_moonlanding_image():
+def test_download_moonlanding_image():
     dataset = examples.download_moonlanding_image()
-    assert isinstance(dataset, pv.UniformGrid)
+    assert isinstance(dataset, pv.ImageData)
 
 
 def test_download_gltf_milk_truck():
@@ -925,68 +966,100 @@ def test_cad_model_case():
     assert dataset.n_points == 7677
 
 
+def test_download_aero_bracket():
+    filename = examples.download_aero_bracket(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtu')
+
+    dataset = examples.download_aero_bracket(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data.keys()) == 3
+
+
+def test_coil_magnetic_field():
+    filename = examples.download_coil_magnetic_field(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vti')
+
+    dataset = examples.download_coil_magnetic_field(load=True)
+    assert isinstance(dataset, pv.ImageData)
+    assert dataset.n_points == 531441
+
+
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_moon():
     mesh = examples.planets.load_moon()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_mercury():
     mesh = examples.planets.load_mercury()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_venus():
     mesh = examples.planets.load_venus()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_mars():
     mesh = examples.planets.load_mars()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]
 
 
 def test_load_jupiter():
     mesh = examples.planets.load_jupiter()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_saturn():
     mesh = examples.planets.load_saturn()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_saturn_rings():
     mesh = examples.planets.load_saturn_rings()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_uranus():
     mesh = examples.planets.load_uranus()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_neptune():
     mesh = examples.planets.load_neptune()
     assert mesh.n_cells
-    assert mesh.textures["atmosphere"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["atmosphere"]
 
 
 def test_load_pluto():
     mesh = examples.planets.load_pluto()
     assert mesh.n_cells
-    assert mesh.textures["surface"]
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert mesh.textures["surface"]

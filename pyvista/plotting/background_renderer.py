@@ -12,7 +12,7 @@ class BackgroundRenderer(Renderer):
     def __init__(self, parent, image_path, scale=1, view_port=None):
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
-        from pyvista import _vtk
+        from . import _vtk
 
         # read the image first as we don't need to create a render if
         # the image path is invalid
@@ -40,7 +40,7 @@ class BackgroundRenderer(Renderer):
         """Resize a background renderer."""
         if self.parent is None:  # when deleted
             return
-        if not hasattr(self.parent, 'ren_win'):  # BasePlotter
+        if self.parent.render_window is None:  # BasePlotter
             return
 
         if self._prior_window_size != self.parent.window_size:

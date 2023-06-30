@@ -22,9 +22,11 @@ Example
 >>> iso = dataset.contour()
 
 """
+# flake8: noqa: F401
 
 import pyvista
-from pyvista.utilities import wrap, ProgressMonitor
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.observers import ProgressMonitor
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -40,7 +42,7 @@ def _get_output(
     algorithm, iport=0, iconnection=0, oport=0, active_scalars=None, active_scalars_field='point'
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = algorithm.GetInputDataObject(iport, iconnection)
+    ido = wrap(algorithm.GetInputDataObject(iport, iconnection))
     data = wrap(algorithm.GetOutputDataObject(oport))
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido, deep=True)
@@ -50,19 +52,19 @@ def _get_output(
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
     if isinstance(ido, pyvista.PointSet):
-        return data.cast_to_pointset(deep=False)
+        return data.cast_to_pointset()
     return data
 
 
+from .composite import CompositeFilters
+
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
 from .data_set import DataSetFilters
-from .composite import CompositeFilters
+from .image_data import ImageDataFilters, UniformGridFilters
 from .poly_data import PolyDataFilters
-from .unstructured_grid import UnstructuredGridFilters
 from .rectilinear_grid import RectilinearGridFilters
 from .structured_grid import StructuredGridFilters
-from .uniform_grid import UniformGridFilters
-
+from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
     '_update_alg',
@@ -72,6 +74,7 @@ __all__ = [
     'PolyDataFilters',
     'RectilinearGridFilters',
     'StructuredGridFilters',
+    'ImageDataFilters',
     'UniformGridFilters',
     'UnstructuredGridFilters',
 ]

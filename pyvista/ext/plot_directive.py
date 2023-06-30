@@ -1,7 +1,6 @@
 """Plot directive module.
 
 A directive for including a PyVista plot in a Sphinx document
-=============================================================
 
 The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.
@@ -223,11 +222,9 @@ def _split_code_at_show(text):
     Includes logic to deal with edge cases like:
 
     >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue',
-    ...                       cpos='xy')
+    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red',
-    ...                       cpos='xy')
+    >>> pyvista.Sphere().plot(color='red', cpos='xy')
 
     """
     parts = []
@@ -372,7 +369,7 @@ def render_figures(
             )
 
             images = []
-            figures = pyvista.plotting._ALL_PLOTTERS
+            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
@@ -538,7 +535,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             images = []
 
         opts = [
-            ':%s: %s' % (key, val)
+            f':{key}: {val}'
             for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align')
         ]

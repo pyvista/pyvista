@@ -1,17 +1,18 @@
 """Module containing composite data mapper."""
 from itertools import cycle
-import logging
 import sys
 from typing import Optional
 import weakref
 
+import matplotlib
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.misc import _check_range
+from pyvista.report import vtk_version_info
 
-from ..utilities.misc import has_module, vtk_version_info
+from . import _vtk
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -63,7 +64,7 @@ class BlockAttributes:
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -110,7 +111,9 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'r'
@@ -142,7 +145,9 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].visible = False
@@ -180,7 +185,9 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[2].opacity = 0.5
@@ -199,6 +206,7 @@ class BlockAttributes:
             self._attr.Modified()
             return
 
+        _check_range(new_opacity, (0, 1), 'opacity')
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
@@ -213,7 +221,9 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].pickable = True
@@ -296,7 +306,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     Composite Block Addr=... Attributes
     Visible:   None
     Opacity:   0.1
-    Color:     Color(name='blue', hex='#0000ffff')
+    Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
     """
@@ -319,7 +329,9 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].visible = False
@@ -341,13 +353,18 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].pickable = True
         >>> mapper.block_attr[2].pickable = False
         >>> mapper.block_attr.reset_pickabilities()
-        >>> [mapper.block_attr[1].pickable, mapper.block_attr[2].pickable]
+        >>> [
+        ...     mapper.block_attr[1].pickable,
+        ...     mapper.block_attr[2].pickable,
+        ... ]
         [None, None]
         >>> pl.close()
 
@@ -362,7 +379,9 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         Set individual block colors and then reset them.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset, color='w')
         >>> mapper.block_attr[1].color = 'r'
@@ -385,7 +404,9 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[2].opacity = 0.5
@@ -435,24 +456,26 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         and ``2`` to access the individual sub-blocks.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.block_attr.get_block(0)  # doctest:+SKIP
+        >>> mapper.block_attr.get_block(0)
         MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         Note this is the same as using ``__getitem__``
 
-        >>> mapper.block_attr[0]  # doctest:+SKIP
-        MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+        >>> mapper.block_attr[0]
+        Composite Block Addr=... Attributes
+        Visible:   None
+        Opacity:   None
+        Color:     None
+        Pickable   None
 
         """
         try:
@@ -502,7 +525,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     dataset : pyvista.MultiBlock
         Multiblock dataset.
 
-    theme : pyvista.themes.DefaultTheme, optional
+    theme : pyvista.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional
@@ -542,15 +565,17 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Examples
         --------
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.dataset   # doctest:+SKIP
+        >>> mapper.dataset
         MultiBlock (...)
-          N Blocks:     2
-          X Bounds:     -0.500, 0.500
-          Y Bounds:     -0.500, 0.500
-          Z Bounds:     -0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         """
         return self._dataset
@@ -582,7 +607,9 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         change the visibility and color of the blocks.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'b'
@@ -591,7 +618,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Composite Block Addr=... Attributes
         Visible:   None
         Opacity:   0.1
-        Color:     Color(name='blue', hex='#0000ffff')
+        Color:     Color(name='blue', hex='#0000ffff', opacity=255)
         Pickable   None
 
         """
@@ -606,10 +633,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Enable coloring missing values with NaN.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
+        >>> actor, mapper = pl.add_composite(
+        ...     dataset, scalars='data', show_scalar_bar=False
+        ... )
         >>> mapper.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
@@ -631,25 +662,21 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Set each block of the composite dataset to a unique color.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+        >>> dataset = pv.MultiBlock(
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.set_unique_colors()
         >>> mapper.block_attr[1].color
-        Color(name='tab:orange', hex='#ff7f0eff')
+        Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
-        Color(name='tab:green', hex='#2ca02cff')
+        Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
-        if has_module('matplotlib'):
-            import matplotlib
-
-            colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
-            for attr in self.block_attr:
-                attr.color = next(colors)['color']
-
-        else:  # pragma: no cover
-            logging.warning('Please install matplotlib for color cycles.')
+        colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+        for attr in self.block_attr:
+            attr.color = next(colors)['color']
 
     def set_scalars(
         self,
@@ -666,7 +693,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         clim,
         cmap,
         flip_scalars,
-        categories,
         log_scale,
     ):
         """Set the scalars of the mapper.
@@ -692,7 +718,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         annotations : dict
             Pass a dictionary of annotations. Keys are the float
             values in the scalars range to annotate on the scalar bar
-            and the values are the the string annotations.
+            and the values are the string annotations.
 
         rgb : bool
             If the ``scalars_name`` corresponds to a 2 dimensional array, plot
@@ -701,26 +727,26 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         scalar_bar_args : dict
             Dictionary of keyword arguments to pass when adding the
             scalar bar to the scene. For options, see
-            :func:`pyvista.BasePlotter.add_scalar_bar`.
+            :func:`pyvista.Plotter.add_scalar_bar`.
 
         n_colors : int
             Number of colors to use when displaying scalars.
 
-        nan_color : color_like
+        nan_color : ColorLike
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : color_like
+        above_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``.
+            ``above_label`` to ``'above'``.
 
-        below_color : color_like
+        below_color : ColorLike
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``.
+            ``below_label`` to ``'below'``.
 
-        clim : 2 item list
+        clim : Sequence
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
@@ -728,8 +754,8 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
-            for when displaying ``scalars``. Requires Matplotlib to be
-            installed.  ``colormap`` is also an accepted alias for this. If
+            for when displaying ``scalars``.
+            ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
@@ -745,11 +771,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         flip_scalars : bool
             Flip direction of cmap. Most colormaps allow ``*_r``
             suffix to do this as well.
-
-        categories : bool
-            If set to ``True``, then the number of unique values in
-            the scalar array will be used as the ``n_colors``
-            argument.
 
         log_scale : bool
             Use log scale when mapping data to colors. Scalars less
@@ -802,20 +823,20 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
                 self.lookup_table.annotations = annotations
 
             # self.lookup_table.SetNumberOfTableValues(n_colors)
-            self.lookup_table.nan_color = nan_color
+            if nan_color:
+                self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
-                scalar_bar_args.setdefault('above_label', 'Above')
+                scalar_bar_args.setdefault('above_label', 'above')
             if below_color:
                 self.lookup_table.below_range_color = below_color
-                scalar_bar_args.setdefault('below_label', 'Below')
+                scalar_bar_args.setdefault('below_label', 'below')
 
-            if cmap is None:  # Set default map if matplotlib is available
-                if has_module('matplotlib'):
-                    if self._theme is None:
-                        cmap = pv.global_theme.cmap
-                    else:
-                        cmap = self._theme.cmap
+            if cmap is None:
+                if self._theme is None:
+                    cmap = pv.global_theme.cmap
+                else:
+                    cmap = self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)

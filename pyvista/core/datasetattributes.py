@@ -1,17 +1,13 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
-import warnings
 
 import numpy as np
 
-from pyvista import _vtk
-import pyvista.utilities.helpers as helpers
-from pyvista.utilities.helpers import FieldAssociation
-from pyvista.utilities.misc import PyVistaDeprecationWarning, copy_vtk_array
-
-from .._typing import Number
+from . import _vtk_core as _vtk
+from ._typing_core import Number
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -176,7 +172,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             Name of the array item you want to return the value from.
 
-        value : anything, optional
+        value : Any, optional
             A value to return if the key does not exist.  Default
             is ``None``.
 
@@ -214,7 +210,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: np.ndarray):
+    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -227,8 +223,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if has_arr:
             return
 
-        # make active if not field data
-        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+        # make active if not field data and there isn't already an active scalar
+        if (
+            self.association
+            in [
+                FieldAssociation.POINT,
+                FieldAssociation.CELL,
+            ]
+            and self.active_scalars_name is None
+        ):
             self.active_scalars_name = key
 
     def __delitem__(self, key: str):
@@ -244,8 +247,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __iter__(self) -> Iterator[str]:
         """Implement for loop iteration."""
-        for array in self.keys():
-            yield array
+        yield from self.keys()
 
     def __len__(self) -> int:
         """Return the number of arrays."""
@@ -259,7 +261,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active scalars.  Either use
             :func:`DataSetAttributes.set_scalars` or if the array
             already exists, assign to
-            :attr:`DataSetAttribute.active_scalars_name`.
+            :attr:`pyvista.DataSetAttributes.active_scalars_name`.
 
         Examples
         --------
@@ -283,18 +285,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self._patch_type(array)
         return None
 
-    @active_scalars.setter
-    def active_scalars(self, name: str):  # pragma: no cover
-        warnings.warn(
-            "\n\nUsing active_scalars to set the active scalars has been "
-            "deprecated.  Use:\n\n"
-            "  - `DataSetAttributes.set_scalars`\n"
-            "  - `DataSetAttributes.active_scalars_name`\n"
-            "  - The [] operator",
-            PyVistaDeprecationWarning,
-        )
-        self.active_scalars_name = name
-
     @property
     def active_vectors(self) -> Optional[np.ndarray]:
         """Return the active vectors as a pyvista_ndarray.
@@ -303,7 +293,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Can no longer be used to set the active vectors.  Either use
             :func:`DataSetAttributes.set_vectors` or if the array
             already exists, assign to
-            :attr:`DataSetAttribute.active_vectors_name`.
+            :attr:`pyvista.DataSetAttributes.active_vectors_name`.
 
         Examples
         --------
@@ -326,17 +316,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if vectors is not None:
             return pyvista_ndarray(vectors, dataset=self.dataset, association=self.association)
         return None
-
-    @active_vectors.setter
-    def active_vectors(self, name: str):  # pragma: no cover
-        warnings.warn(
-            "\n\nUsing active_vectors to set the active vectors has been "
-            "deprecated.  Use:\n\n"
-            "  - `DataSetAttributes.set_vectors`\n"
-            "  - `DataSetAttributes.active_vectors_name`\n",
-            PyVistaDeprecationWarning,
-        )
-        self.active_vectors_name = name
 
     @property
     def valid_array_len(self) -> Optional[int]:
@@ -367,31 +346,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
         return None
-
-    @property
-    def t_coords(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
-        """Return the active texture coordinates.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSetAttributes.active_t_coords` to return the
-            active texture coordinates.
-
-        """
-        warnings.warn(
-            "Use of `DataSetAttributes.t_coords` is deprecated. "
-            "Use `DataSetAttributes.active_t_coords` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.active_t_coords
-
-    @t_coords.setter
-    def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
-        warnings.warn(
-            "Use of `DataSetAttributes.t_coords` is deprecated. "
-            "Use `DataSetAttributes.active_t_coords` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.active_t_coords = t_coords  # type: ignore
 
     @property
     def active_t_coords(self) -> Optional[pyvista_ndarray]:
@@ -444,21 +398,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.Modified()
 
     @property
-    def active_texture_name(self) -> Optional[str]:  # pragma: no cover
-        """Name of the active texture coordinates array.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataSetAttributes.active_t_coords_name` to
-            return the name of the active texture coordinates array.
-
-        """
-        warnings.warn(
-            "Use of `active_texture_name` is deprecated. Use `active_t_coords_name` instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.active_t_coords_name
-
-    @property
     def active_t_coords_name(self) -> Optional[str]:
         """Name of the active texture coordinates array.
 
@@ -492,7 +431,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        key : str, int
+        key : str | int
             The name or index of the array to return.  Arrays are
             ordered within VTK DataSetAttributes, and this feature is
             mirrored here.
@@ -574,9 +513,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        data : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
-            ``tuple`` or scalar value.
+        data : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
+            ``list``, ``tuple`` or scalar value.
 
         name : str
             Name to assign to the data.  If this name already exists,
@@ -639,14 +578,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        scalars : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
+        scalars : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`, ``list``,
             ``tuple`` or scalar value.
 
-        name : str, default='scalars'
+        name : str, default: 'scalars'
             Name to assign the scalars.
 
-        deep_copy : bool, optional
+        deep_copy : bool, default: False
             When ``True`` makes a full copy of the array.
 
         Notes
@@ -693,15 +632,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        vectors : sequence
-            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``, or
-            ``tuple``.  Must match the number of cells or points of
-            the dataset.
+        vectors : float | array_like[float]
+            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
+            ``list``, or ``tuple``.  Must match the number of cells or points
+            of the dataset.
 
         name : str
             Name of the vectors.
 
-        deep_copy : bool, optional
+        deep_copy : bool, default: False
             When ``True`` makes a full copy of the array.  When
             ``False``, the data references the original array
             without copying it.
@@ -870,42 +809,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # referring to the input dataset.
         copy = pyvista_ndarray(data)
 
-        return helpers.convert_array(copy, name, deep=deep_copy)
-
-    def append(
-        self,
-        narray: Union[Sequence[Number], Number, np.ndarray],
-        name: str,
-        deep_copy=False,
-        active_vectors=False,
-        active_scalars=True,
-    ) -> None:  # pragma: no cover
-        """Add an array to this object.
-
-        .. deprecated:: 0.32.0
-            Use one of the following instead:
-
-            * :func:`DataSetAttributes.set_array`
-            * :func:`DataSetAttributes.set_scalars`
-            * :func:`DataSetAttributes.set_vectors`
-            * The ``[]`` operator
-
-        """
-        warnings.warn(
-            "\n\n`DataSetAttributes.append` is deprecated.\n\n"
-            "Use one of the following instead:\n"
-            "  - `DataSetAttributes.set_array`\n"
-            "  - `DataSetAttributes.set_scalars`\n"
-            "  - `DataSetAttributes.set_vectors`\n"
-            "  - The [] operator",
-            PyVistaDeprecationWarning,
-        )
-        if active_vectors:  # pragma: no cover
-            raise ValueError('Use set_vectors to set vector data')
-
-        self.set_array(narray, name, deep_copy)
-        if active_scalars:
-            self.active_scalars_name = name
+        return convert_array(copy, name, deep=deep_copy)
 
     def remove(self, key: str) -> None:
         """Remove an array.
@@ -955,7 +859,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             The name of the array to remove and return.
 
-        default : anything, optional
+        default : Any, optional
             If default is not given and key is not in the dictionary,
             a KeyError is raised.
 
@@ -1006,7 +910,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data0'] = [0] * mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.items()
         [('data0', pyvista_ndarray([0, 0, 0, 0, 0, 0])), ('data1', pyvista_ndarray([0, 1, 2, 3, 4, 5]))]
@@ -1027,7 +931,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.clear_data()
-        >>> mesh.point_data['data0'] = [0]*mesh.n_points
+        >>> mesh.point_data['data0'] = [0] * mesh.n_points
         >>> mesh.point_data['data1'] = range(mesh.n_points)
         >>> mesh.point_data.keys()
         ['data0', 'data1']
@@ -1059,7 +963,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data0'] = [0] * mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.values()
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
@@ -1117,14 +1021,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data
         pyvista DataSetAttributes
         Association     : POINT
-        Active Scalars  : rand
+        Active Scalars  : Spatial Point Data
         Active Vectors  : None
         Active Texture  : None
         Active Normals  : None
         Contains arrays :
-            Spatial Point Data      float64    (1000,)
+            Spatial Point Data      float64    (1000,)              SCALARS
             foo                     int64      (1000,)
-            rand                    float64    (1000,)              SCALARS
+            rand                    float64    (1000,)
 
         """
         for name, array in array_dict.items():
@@ -1147,24 +1051,30 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Examples
         --------
-        Add two arrays to the mesh point data.
+        Add two arrays to the mesh point data. Note how the first array becomes
+        the active scalars since the ``mesh`` contained no scalars.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> mesh.point_data['my_other_data'] = range(mesh.n_points)
         >>> mesh.point_data.active_scalars_name
-        'my_other_data'
+        'my_data'
 
         Set the name of the active scalars.
 
-        >>> mesh.point_data.active_scalars_name = 'my_data'
+        >>> mesh.point_data.active_scalars_name = 'my_other_data'
         >>> mesh.point_data.active_scalars_name
-        'my_data'
+        'my_other_data'
 
         """
         if self.GetScalars() is not None:
-            return str(self.GetScalars().GetName())
+            name = self.GetScalars().GetName()
+            if name is None:
+                # Getting the keys has the side effect of naming "unnamed" arrays
+                self.keys()
+                name = self.GetScalars().GetName()
+            return str(name)
         return None
 
     @active_scalars_name.setter
@@ -1188,8 +1098,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_data.set_vectors(np.random.random((mesh.n_points, 3)),
-        ...                             'my-vectors')
+        >>> mesh.point_data.set_vectors(
+        ...     np.random.random((mesh.n_points, 3)), 'my-vectors'
+        ... )
         >>> mesh.point_data.active_vectors_name
         'my-vectors'
 

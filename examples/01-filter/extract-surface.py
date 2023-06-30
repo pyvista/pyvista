@@ -61,12 +61,9 @@ quad_pts += np.random.random(quad_pts.shape) * 0.3
 pts = np.vstack((lin_pts, quad_pts))
 
 # create the grid
-
-# If you are using vtk>=9, you do not need the offset array
-offset = np.array([0])
 cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
 celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
-grid = pv.UnstructuredGrid(offset, cells, celltypes, pts)
+grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # finally, extract the surface and plot it
 surf = grid.extract_surface()

@@ -12,18 +12,20 @@ from pyvista import examples
 ###############################################################################
 # This example shows how to create a multi-window plotter by specifying the
 # ``shape`` parameter.  The window generated is a two by two window by setting
-# ``shape=(2, 2)``. Use the :func:`pyvista.BasePlotter.subplot` function to
+# ``shape=(2, 2)``. Use the :func:`pyvista.Plotter.subplot` method to
 # select the subplot you wish to be the active subplot.
 
 plotter = pv.Plotter(shape=(2, 2))
 
 plotter.subplot(0, 0)
 plotter.add_text("Render Window 0", font_size=30)
-plotter.add_mesh(examples.load_globe())
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
+plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(0, 1)
 plotter.add_text("Render Window 1", font_size=30)
-plotter.add_mesh(pv.Cube(), show_edges=True, color="tan")
+plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 plotter.subplot(1, 0)
 plotter.add_text("Render Window 2", font_size=30)
@@ -117,22 +119,20 @@ groups = [
 plotter = pv.Plotter(shape=shape, row_weights=row_weights, col_weights=col_weights, groups=groups)
 
 # A grouped subplot can be activated through any of its composing cells using
-# the :func:`pyvista.BasePlotter.subplot` function.
+# the subplot() method.
 
 # Access all subplots and groups and plot something:
 plotter.subplot(0, 0)
 plotter.add_text("Group 1")
 plotter.add_mesh(pv.Cylinder(direction=[0, 1, 0], height=20))
 plotter.view_yz()
-plotter.camera.Zoom(10)
-plotter.camera_set = True
+plotter.camera.zoom(10)
 
 plotter.subplot(2, 0)
 plotter.add_text("Group 2")
-plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color="tan")
+plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color='lightblue')
 plotter.view_isometric()
-plotter.camera.Zoom(2)
-plotter.camera_set = True
+plotter.camera.zoom(2)
 
 plotter.subplot(2, 1)
 plotter.add_text("Group 3")
@@ -140,7 +140,9 @@ plotter.add_mesh(examples.load_uniform(), show_edges=True)
 
 plotter.subplot(1, 3)
 plotter.add_text("Group 4")
-plotter.add_mesh(examples.load_globe())
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
+plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(1, 1)
 plotter.add_text("Cell (1,1)")
@@ -159,7 +161,7 @@ plotter.add_mesh(examples.load_airplane(), show_edges=False)
 
 plotter.subplot(4, 3)
 plotter.add_text("Cell (4,3)")
-plotter.add_mesh(pv.Cube(), show_edges=True, color="tan")
+plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 # Display the window
 plotter.show()

@@ -4,7 +4,7 @@
 Clipping with Planes & Boxes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clip/cut any dataset using using planes or boxes.
+Clip/cut any dataset using planes or boxes.
 """
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
@@ -85,7 +85,7 @@ p.show()
 #
 # This option is available for :func:`pyvista.DataSetFilters.clip`,
 # :func:`pyvista.DataSetFilters.clip_box`, and
-# :func:`pyvista.DataSetFilters.clip_sruface`, but not available when clipping
+# :func:`pyvista.DataSetFilters.clip_surface`, but not available when clipping
 # by scalar in :func:`pyvista.DataSetFilters.clip_scalar`.
 
 # Input mesh

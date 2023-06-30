@@ -37,7 +37,7 @@ from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 # Add scalar array with range (0, 100) that correlates with elevation
-mesh['values'] = pv.plotting.normalize(mesh['Elevation']) * 100
+mesh['values'] = pv.plotting.tools.normalize(mesh['Elevation']) * 100
 
 ###############################################################################
 # Build a custom colormap - here we make a colormap with 5 discrete colors
@@ -62,12 +62,12 @@ newcolors[mapping < 1] = black
 my_colormap = ListedColormap(newcolors)
 
 ###############################################################################
-# Simply pass the colormap to the plotting routine!
+# Simply pass the colormap to the plotting routine.
 mesh.plot(scalars='values', cmap=my_colormap)
 
 ###############################################################################
 # Or you could make a simple colormap... any Matplotlib colormap can be passed
-# to PyVista!
+# to PyVista.
 boring_cmap = plt.cm.get_cmap("viridis", 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
 
@@ -79,7 +79,7 @@ mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'
 ###############################################################################
 # If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
-# plotter along with the the colormap
+# plotter along with the colormap
 scalars = np.empty(mesh.n_points)
 scalars[mesh['values'] >= 80] = 4  # red
 scalars[mesh['values'] < 80] = 3  # grey

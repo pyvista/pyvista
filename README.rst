@@ -2,7 +2,7 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/main/doc/_static/pyvista_banner_small.png
+.. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
@@ -51,29 +51,42 @@ PyVista
   :target: https://github.com/psf/black
   :alt: black
 
+.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+   :target: https://www.python.org/downloads/
 
-+----------------------+-----------+------------+
-| Deployment           | |pypi|    |   |conda|  |
-+----------------------+-----------+------------+
-| Build Status         | |GH-CI|                |
-+----------------------+-----------+------------+
-| Metrics              | |codacy|  |  |codecov| |
-+----------------------+-----------+------------+
-| Activity             | |PyPIact| | |condaact| |
-+----------------------+-----------+------------+
-| Citation             | |joss|    |  |zenodo|  |
-+----------------------+-----------+------------+
-| License              | |MIT|     |            |
-+----------------------+-----------+------------+
-| Community            | |slack|   |  |discuss| |
-+----------------------+-----------+------------+
-| Formatter            | |black|   |  |isort|   |
-+----------------------+-----------+------------+
+.. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
+
+.. |pre-commit.ci status| image:: https://results.pre-commit.ci/badge/github/pyvista/pyvista/main.svg
+   :target: https://results.pre-commit.ci/latest/github/pyvista/pyvista/main
+
+
++----------------------+------------------------+-------------+
+| Deployment           | |pypi|                 | |conda|     |
++----------------------+------------------------+-------------+
+| Build Status         | |GH-CI|                | |python|    |
+|                      +------------------------+-------------+
+|                      | |pre-commit.ci status| |             |
++----------------------+------------------------+-------------+
+| Metrics              | |codacy|               | |codecov|   |
++----------------------+------------------------+-------------+
+| Activity             | |PyPIact|              | |condaact|  |
++----------------------+------------------------+-------------+
+| Citation             | |joss|                 | |zenodo|    |
++----------------------+------------------------+-------------+
+| License              | |MIT|                  |             |
++----------------------+------------------------+-------------+
+| Community            | |slack|                | |discuss|   |
++----------------------+------------------------+-------------+
+| Formatter            | |black|                | |isort|     |
++----------------------+------------------------+-------------+
+| Affiliated           | |NumFOCUS Affiliated|                |
++----------------------+------------------------+-------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
 
-PyVista is...
+PyVista is:
 
 * *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
 * mesh data structures and filtering methods for spatial datasets
@@ -99,6 +112,14 @@ PyVista.
 Share this project on Twitter: |tweet|
 
 
+PyVista is a NumFOCUS affiliated project
+
+.. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
+   :alt: NumFOCUS affiliated projects
+   :height: 60px
+
+
 Highlights
 ==========
 
@@ -107,7 +128,7 @@ Highlights
    :alt: Launch on Binder
 
 Head over to the `Quick Examples`_ page in the docs to explore our gallery of
-examples showcasing what PyVista can do! Want to test-drive PyVista?
+examples showcasing what PyVista can do. Want to test-drive PyVista?
 All of the examples from the gallery are live on MyBinder for you to test
 drive without installing anything locally: |binder|
 
@@ -118,15 +139,15 @@ Overview of Features
 --------------------
 
 * Extensive gallery of examples (see `Quick Examples`_)
-* Interactive plotting in Jupyter Notebooks using server-side rendering
-  with `ipyvtklink`_ or client-side rendering with ``panel`` or ``ipygany``.
+* Interactive plotting in Jupyter Notebooks with server-side and client-side
+  rendering with `trame`_.
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
-* Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in!
+* Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in.
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
-.. _ipyvtklink: https://github.com/Kitware/ipyvtklink
+.. _trame: https://github.com/Kitware/trame
 .. _Widgets: https://docs.pyvista.org/api/plotting/index.html#widget-api
 .. _Filters: https://docs.pyvista.org/api/core/filters.html
 .. _Plotting: https://docs.pyvista.org/api/plotting/index.html
@@ -154,7 +175,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.7::
+using ``pip`` on Python >= 3.8::
 
     pip install pyvista
 
@@ -181,11 +202,20 @@ by a diverse community of users on our `Connections page`_.
 Authors
 =======
 
+.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/graphs/contributors
+   :alt: contrib.rocks
+
 Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
+|contrib.rocks|
+
+Made with `contrib rocks`_.
+
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
+.. _contrib rocks: https://contrib.rocks
 
 
 Contributing
@@ -205,7 +235,7 @@ We absolutely welcome contributions and we hope that our `Contributing Guide`_
 will facilitate your ability to make PyVista better. PyVista is mostly
 maintained on a volunteer basis and thus we need to foster a community that can
 support user questions and develop new features to make this software a useful
-tool for all users while encouraging every member of the commutinity to share
+tool for all users while encouraging every member of the community to share
 their ideas. To learn more about contributing to PyVista, please see the
 `Contributing Guide`_ and our `Code of Conduct`_.
 
@@ -216,10 +246,10 @@ their ideas. To learn more about contributing to PyVista, please see the
 Citing PyVista
 ==============
 
-There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_!
+There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_.
 
 If you are using PyVista in your scientific research, please help our scientific
-visibility by citing our work!
+visibility by citing our work.
 
 
     Sullivan and Kaszynski, (2019). PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK). Journal of Open Source Software, 4(37), 1450, https://doi.org/10.21105/joss.01450

@@ -37,8 +37,8 @@ def spider_cage(x, y, z):
 # create a uniform grid to sample the function with
 n = 100
 x_min, y_min, z_min = -5, -5, -3
-grid = pv.UniformGrid(
-    dims=(n, n, n),
+grid = pv.ImageData(
+    dimensions=(n, n, n),
     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
     origin=(x_min, y_min, z_min),
 )
@@ -48,7 +48,7 @@ x, y, z = grid.points.T
 values = spider_cage(x, y, z)
 mesh = grid.contour([1], values, method='marching_cubes')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_scalar_bar=False)
+mesh.plot(scalars=dist, smooth_shading=True, specular=1, cmap="plasma", show_scalar_bar=False)
 
 
 ###############################################################################
@@ -79,8 +79,8 @@ def barth_sextic(x, y, z):
 n = 100
 k = 2.0
 x_min, y_min, z_min = -k, -k, -k
-grid = pv.UniformGrid(
-    dims=(n, n, n),
+grid = pv.ImageData(
+    dimensions=(n, n, n),
     spacing=(abs(x_min) / n * 2, abs(y_min) / n * 2, abs(z_min) / n * 2),
     origin=(x_min, y_min, z_min),
 )
@@ -90,7 +90,7 @@ x, y, z = grid.points.T
 values = barth_sextic(x, y, z)
 mesh = grid.contour([0], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, specular=5, cmap="plasma", show_scalar_bar=False)
+mesh.plot(scalars=dist, smooth_shading=True, specular=1, cmap="plasma", show_scalar_bar=False)
 
 
 ###############################################################################
@@ -118,7 +118,7 @@ for angle in np.linspace(0, np.pi, 20, endpoint=False):
         mesh,
         scalars=dist,
         smooth_shading=True,
-        specular=5,
+        specular=1,
         rng=[0.5, 1.5],
         cmap="plasma",
         show_scalar_bar=False,

@@ -31,13 +31,13 @@ def download_damaged_helmet():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
-    >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_damaged_helmet()
+    >>> cubemap = examples.download_sky_box_cube_map()
+    >>> pl = pyvista.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.set_environment_texture(cubemap)
+    >>> pl.show()
 
     """
     return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
@@ -56,9 +56,9 @@ def download_sheen_chair():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_sheen_chair()  # doctest:+SKIP
-    >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_sheen_chair()
+    >>> cubemap = examples.download_sky_box_cube_map()
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
     >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
@@ -81,11 +81,11 @@ def download_gearbox():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_gearbox()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_gearbox()
+    >>> pl = pyvista.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
 
     """
     return GLTF_FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
@@ -104,11 +104,11 @@ def download_avocado():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_avocado()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_avocado()
+    >>> pl = pyvista.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
 
     """
     return GLTF_FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
@@ -127,11 +127,11 @@ def download_milk_truck():  # pragma: no cover
     Examples
     --------
     >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_milk_truck()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_milk_truck()
+    >>> pl = pyvista.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
 
     """
     return GLTF_FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
