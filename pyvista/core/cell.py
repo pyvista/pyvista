@@ -14,7 +14,13 @@ from .utilities.cells import ncells_from_cells, numpy_to_idarr
 
 
 def _get_vtk_id_type():
-    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
+    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``.
+
+    Returns
+    -------
+    type
+        Type of vtk id.
+    """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
@@ -90,7 +96,25 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     """
 
     def __init__(self, vtk_cell=None, cell_type=None, deep=False):
-        """Initialize the cell."""
+        """Initialize the cell.
+
+        Parameters
+        ----------
+        vtk_cell : vtk.vtkCell, optional
+            The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
+
+        cell_type : int, optional
+            VTK cell type. Determined from ``vtk_cell`` if not input.
+
+        deep : bool, default: False
+            Perform a deep copy of the original cell.
+
+        Returns
+        -------
+        None
+            Nothing.
+
+        """
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
@@ -110,6 +134,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def type(self) -> CellType:
         """Get the cell type from the enum :class:`pyvista.CellType`.
 
+        Returns
+        -------
+        pyvista.CellType
+            Type of cell.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -122,6 +151,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     @property
     def is_linear(self) -> bool:
         """Return if the cell is linear.
+
+        Returns
+        -------
+        bool
+            If the cell is linear.
 
         Examples
         --------
@@ -189,6 +223,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         This returns the dimensionality of the cell. For example, 1 for an edge,
         2 for a triangle, and 3 for a tetrahedron.
 
+        Returns
+        -------
+        int
+            The cell dimension.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -201,6 +240,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     @property
     def n_points(self) -> int:
         """Get the number of points composing the cell.
+
+        Returns
+        -------
+        int
+            The number of points.
 
         Examples
         --------
@@ -215,6 +259,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def n_faces(self) -> int:
         """Get the number of faces composing the cell.
 
+        Returns
+        -------
+        int
+            The number of faces.
+
         Examples
         --------
         >>> from pyvista.examples.cells import Tetrahedron
@@ -227,6 +276,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     @property
     def n_edges(self) -> int:
         """Get the number of edges composing the cell.
+
+        Returns
+        -------
+        int
+            The number of edges composing the cell.
 
         Examples
         --------
@@ -241,6 +295,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def point_ids(self) -> List[int]:
         """Get the point IDs composing the cell.
 
+        Returns
+        -------
+        List[int]
+            The point IDs composing the cell.
+
         Examples
         --------
         >>> import pyvista
@@ -254,6 +313,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     @property
     def points(self) -> np.ndarray:
         """Get the point coordinates of the cell.
+
+        Returns
+        -------
+        np.ndarray
+            The point coordinates of the cell.
 
         Examples
         --------
@@ -303,6 +367,13 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def edges(self) -> List[Cell]:
         """Return a list of edges composing the cell.
 
+        Returns
+        -------
+        List[Cell]
+            A list of edges composing the cell.
+
+        Examples
+        --------
         >>> from pyvista.examples.cells import Hexahedron
         >>> mesh = Hexahedron()
         >>> cell = mesh.get_cell(0)
@@ -317,6 +388,13 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def faces(self) -> List[Cell]:
         """Return a list of faces composing the cell.
 
+        Returns
+        -------
+        List[Cell]
+            A list of faces composing the cell.
+
+        Examples
+        --------
         >>> from pyvista.examples.cells import Tetrahedron
         >>> mesh = Tetrahedron()
         >>> cell = mesh.get_cell(0)
@@ -365,6 +443,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
+        Returns
+        -------
+        Tuple[float, float, float, float, float, float]
+            The cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -380,6 +463,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """Get the center of the cell.
 
         Uses parametric coordinate center to determine x-y-z center.
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            The center of the cell.
 
         Examples
         --------
@@ -400,7 +488,13 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return cast(Tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
-        """Return the representation methods (internal helper)."""
+        """Return the representation methods (internal helper).
+
+        Returns
+        -------
+        List
+            The representation methods (internal helper).
+        """
         attrs = []
         attrs.append(("Type", repr(self.type), "{}" * len(repr(self.type))))
         attrs.append(("Linear", self.is_linear, "{}"))
@@ -417,11 +511,23 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return attrs
 
     def __repr__(self) -> str:
-        """Return the object representation."""
+        """Return the object representation.
+
+        Returns
+        -------
+        str
+            The object representation.
+        """
         return self.head(display=False, html=False)
 
     def __str__(self) -> str:
-        """Return the object string representation."""
+        """Return the object string representation.
+
+        Returns
+        -------
+        str
+            The object string representation.
+        """
         return self.head(display=False, html=False)
 
     def copy(self, deep=True) -> Cell:
@@ -463,16 +569,24 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
 
 class CellArray(_vtk.vtkCellArray):
-    """pyvista wrapping of vtkCellArray.
+    """PyVista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
     a numpy array or list.
 
-    Import an array of data with the legacy vtkCellArray layout, e.g.
+    Parameters
+    ----------
+    cells : np.ndarray or list, optional
+        Import an array of data with the legacy vtkCellArray layout, e.g.
+        ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
+        Where n0 is the number of points in cell 0, and pX_Y is the Y'th
+        point in cell X.
 
-    ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
-    Where n0 is the number of points in cell 0, and pX_Y is the Y'th
-    point in cell X.
+    n_cells : int, optional
+        The number of cells.
+
+    deep : bool, default: False
+        Perform a deep copy of the original cell.
 
     Examples
     --------
@@ -483,11 +597,42 @@ class CellArray(_vtk.vtkCellArray):
     """
 
     def __init__(self, cells=None, n_cells=None, deep=False):
-        """Initialize a vtkCellArray."""
+        """Initialize a vtkCellArray.
+
+        Parameters
+        ----------
+        cells : np.ndarray or list, optional
+            Import an array of data with the legacy vtkCellArray layout, e.g.
+            ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
+            Where n0 is the number of points in cell 0, and pX_Y is the Y'th
+            point in cell X.
+
+        n_cells : int, optional
+            The number of cells.
+
+        deep : bool, default: False
+            Perform a deep copy of the original cell.
+        """
         if cells is not None:
             self._set_cells(cells, n_cells, deep)
 
     def _set_cells(self, cells, n_cells, deep):
+        """Set a vtkCellArray.
+
+        Parameters
+        ----------
+        cells : np.ndarray or list, optional
+            Import an array of data with the legacy vtkCellArray layout, e.g.
+            ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
+            Where n0 is the number of points in cell 0, and pX_Y is the Y'th
+            point in cell X.
+
+        n_cells : int, optional
+            The number of cells.
+
+        deep : bool, default: False
+            Perform a deep copy of the original cell.
+        """
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
 
         # Get number of cells if None.  This is quite a performance
@@ -503,10 +648,22 @@ class CellArray(_vtk.vtkCellArray):
 
     @property
     def cells(self):
-        """Return a numpy array of the cells."""
+        """Return a numpy array of the cells.
+
+        Returns
+        -------
+        np.ndarray
+            A numpy array of the cells.
+        """
         return _vtk.vtk_to_numpy(self.GetData()).ravel()
 
     @property
     def n_cells(self):
-        """Return the number of cells."""
+        """Return the number of cells.
+
+        Returns
+        -------
+        int
+            The number of cells.
+        """
         return self.GetNumberOfCells()
