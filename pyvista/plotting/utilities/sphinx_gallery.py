@@ -123,10 +123,8 @@ class DynamicScraper:
             # else:
             plotter.screenshot(fname)  # produce PNG for thumbnail
             fname = fname[:-3] + "vtksz"
-            if not hasattr(plotter, "last_vtksz"):
-                raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
             if plotter.last_vtksz is None:
-                raise RuntimeError("Trouble exporting scene, make sure all dependencies are installed.")
+                raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
             with open(fname, "wb") as f:
                 f.write(plotter.last_vtksz)
             image_names.append(fname)
