@@ -1242,9 +1242,9 @@ def test_plot_texture():
 def test_plot_texture_associated():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
+    texture = examples.load_globe_texture()
     plotter = pyvista.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning):
-        plotter.add_mesh(globe, texture=True)
+    plotter.add_mesh(globe, texture=texture)
     plotter.show()
 
 
