@@ -1,8 +1,5 @@
 """PyVista package for 3D plotting and mesh analysis."""
 # flake8: noqa: F401
-
-MAX_N_COLOR_BARS = 10
-
 import os
 import warnings
 
@@ -58,6 +55,8 @@ PICKLE_FORMAT = 'xml'
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
 
+MAX_N_COLOR_BARS = 10
+
 
 # Lazily import/access the plotting module
 import importlib
@@ -80,6 +79,16 @@ def __getattr__(name):
         return globals()[name]
     except KeyError:
         pass
+
+    whitelist = [
+        'demos',
+        'examples',
+        'ext',
+        'trame',
+        'utilities',
+    ]
+    if name in whitelist:
+        return importlib.import_module(f'pyvista.{name}')
 
     _module = importlib.import_module('pyvista.plotting')
     try:

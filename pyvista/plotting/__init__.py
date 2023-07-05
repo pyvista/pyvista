@@ -94,6 +94,3 @@ rcParams = _rcParams()  # raises DeprecationError when used
 
 # Set preferred plot theme
 _set_plot_theme_from_env()
-
-
-print('imported the plotting module!')
