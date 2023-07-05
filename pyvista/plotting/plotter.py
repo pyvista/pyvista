@@ -2956,7 +2956,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray, optional
+        texture : pyvista.Texture or np.ndarray, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
             datasets.
@@ -3371,18 +3371,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
-            # Prefer texture first
-            if mesh._textures:
-                texture = True
-            # If no texture, plot any active scalar
+            # Make sure scalars components are not vectors/tuples
+            scalars = mesh.active_scalars_name
+            # Don't allow plotting of string arrays by default
+            if scalars is not None:  # and np.issubdtype(mesh.active_scalars.dtype, np.number):
+                scalar_bar_args.setdefault('title', scalars)
             else:
-                # Make sure scalars components are not vectors/tuples
-                scalars = mesh.active_scalars_name
-                # Don't allow plotting of string arrays by default
-                if scalars is not None:  # and np.issubdtype(mesh.active_scalars.dtype, np.number):
-                    scalar_bar_args.setdefault('title', scalars)
-                else:
-                    scalars = None
+                scalars = None
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
@@ -3445,9 +3440,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
-
-        if texture is True or isinstance(texture, (str, int)):
-            texture = mesh._activate_texture(texture)
 
         if texture:
             if isinstance(texture, np.ndarray):

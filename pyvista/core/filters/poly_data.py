@@ -10,7 +10,6 @@ from pyvista.core.errors import (
     DeprecationError,
     MissingDataError,
     NotAllTrianglesError,
-    PyVistaDeprecationWarning,
     PyVistaFutureWarning,
     VTKVersionError,
 )
@@ -2053,11 +2052,6 @@ class PolyDataFilters(DataSetFilters):
             )
 
         output["vtkOriginalPointIds"] = original_ids
-
-        # Do not copy textures from input
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
-            output.clear_textures()
 
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:

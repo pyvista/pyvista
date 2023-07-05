@@ -5,8 +5,8 @@ import vtk
 
 import pyvista
 from pyvista import colors
-from pyvista.plotting.utilities.gl_checks import uses_egl
 from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
+from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
 @pytest.fixture

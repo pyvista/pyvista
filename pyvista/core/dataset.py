@@ -8,7 +8,6 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    Dict,
     Generator,
     Iterable,
     Iterator,
@@ -124,7 +123,6 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: Dict[str, pyvista.Texture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -500,89 +498,6 @@ class DataSet(DataSetFilters, DataObject):
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):
         self.point_data.active_t_coords = t_coords  # type: ignore
-
-    @property
-    def textures(self) -> Dict[str, pyvista.Texture]:
-        """Return a dictionary to hold compatible ``pyvista.Texture`` objects.
-
-        .. deprecated:: 0.40.0
-            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
-
-        When casting back to a VTK dataset or filtering this dataset,
-        these textures will not be passed.
-
-        """
-        # Deprecated on v0.40.0, estimated removal on v0.42.0
-        warnings.warn(
-            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
-            PyVistaDeprecationWarning,
-        )
-        return self._textures
-
-    def clear_textures(self):
-        """Clear the textures from this mesh.
-
-        .. deprecated:: 0.40.0
-            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
-
-        """
-        # Deprecated on v0.40.0, estimated removal on v0.42.0
-        warnings.warn(
-            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
-            PyVistaDeprecationWarning,
-        )
-        self._textures.clear()
-
-    def _activate_texture(mesh, name: str) -> Optional[pyvista.Texture]:
-        """Grab a texture and update the active texture coordinates.
-
-        .. deprecated:: 0.40.0
-            Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.
-
-        This makes sure to not destroy old texture coordinates.
-
-        Parameters
-        ----------
-        name : str
-            The name of the texture and texture coordinates to activate
-
-        Returns
-        -------
-        pyvista.Texture
-            The active texture
-
-        """
-        # Deprecated on v0.40.0, estimated removal on v0.42.0
-        warnings.warn(
-            'Texture tracking on datasets is deprecated and will be removed in a future version of PyVista.',
-            PyVistaDeprecationWarning,
-        )
-        if name is True or isinstance(name, int):
-            keys = list(mesh.textures.keys())
-            # Grab the first name available if True
-            idx = 0 if not isinstance(name, int) or name is True else name
-            if idx > len(keys):  # is this necessary?
-                idx = 0
-            try:
-                name = keys[idx]
-            except IndexError:
-                warnings.warn('No textures associated with input mesh.')
-                return None
-        # Grab the texture object by name
-        try:
-            texture = mesh.textures[name]
-        except KeyError:
-            warnings.warn(f'Texture ({name}) not associated with this dataset')
-            texture = None
-        else:
-            # Be sure to reset the tcoords if present
-            # Grab old coordinates
-            if name in mesh.array_names:
-                old_tcoord = mesh.GetPointData().GetTCoords()
-                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetAbstractArray(name))
-                mesh.GetPointData().AddArray(old_tcoord)
-                mesh.Modified()
-        return texture
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
@@ -1403,17 +1318,12 @@ class DataSet(DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
-            self.clear_textures()
-
         if deep:
             self._association_complex_names = deepcopy(ido._association_complex_names)
             self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
-            self._textures = {name: tex.copy() for name, tex in ido._textures.items()}
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
@@ -1421,7 +1331,6 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
-            self._textures = ido._textures
 
     @property
     def point_data(self) -> DataSetAttributes:

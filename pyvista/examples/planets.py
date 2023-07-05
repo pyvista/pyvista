@@ -3,7 +3,6 @@
 import numpy as np
 
 import pyvista
-from pyvista import examples
 
 from .downloads import _download_and_read
 
@@ -78,8 +77,6 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_sun_surface(texture=True)
-    sphere._textures["atmosphere"] = surface
     return sphere
 
 
@@ -120,8 +117,6 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_moon_surface(texture=True)
-    sphere._textures["surface"] = surface
     return sphere
 
 
@@ -162,8 +157,6 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_mercury_surface(texture=True)
-    sphere._textures["surface"] = surface
     return sphere
 
 
@@ -204,10 +197,6 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_venus_surface(atmosphere=False, texture=True)
-    sphere._textures["surface"] = surface
-    atmosphere = download_venus_surface(texture=True)
-    sphere._textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -248,7 +237,6 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    sphere._textures["surface"] = examples.load_globe_texture()
     return sphere
 
 
@@ -289,8 +277,6 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_mars_surface(texture=True)
-    sphere._textures["surface"] = surface
     return sphere
 
 
@@ -331,8 +317,6 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_jupiter_surface(texture=True)
-    sphere._textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -373,8 +357,6 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_saturn_surface(texture=True)
-    sphere._textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -419,8 +401,6 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     disc.active_t_coords[:, 0] = radius / np.max(radius)
     disc.active_t_coords[:, 1] = 0.0
-    atmosphere = download_saturn_rings(texture=True)
-    disc._textures["atmosphere"] = atmosphere
     return disc
 
 
@@ -461,8 +441,6 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_uranus_surface(texture=True)
-    sphere._textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -503,8 +481,6 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_neptune_surface(texture=True)
-    sphere._textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -545,8 +521,6 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_pluto_surface(texture=True)
-    sphere._textures["surface"] = surface
     return sphere
 
 

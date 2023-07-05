@@ -37,12 +37,13 @@ from typing import Callable, List, Optional, Union
 import warnings
 
 from pyvista.core._typing_core import Number
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
 
-from pyvista.core.errors import PyVistaDeprecationWarning
 from ._typing import ColorLike
 from .colors import Color, get_cmap_safe, get_cycler
 from .opts import InterpolationType
+
 # from .plotter import Plotter
 from .tools import parse_font_family
 
@@ -2859,7 +2860,9 @@ class Theme(_ThemeConfig):
             theme = load_theme(theme)
 
         if not isinstance(theme, Theme):
-            raise TypeError('``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.')
+            raise TypeError(
+                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+            )
 
         for attr_name in theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))

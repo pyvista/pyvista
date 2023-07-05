@@ -12,6 +12,7 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities import cells, fileio, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
@@ -27,7 +28,6 @@ from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 def test_version():

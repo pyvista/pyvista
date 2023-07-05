@@ -9,6 +9,7 @@ except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
+from pyvista import examples
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.jupyter import pv_pythreejs
 
@@ -115,10 +116,11 @@ def test_output_point_scalars_rgba(sphere):
     pv_pythreejs.convert_plotter(pl)
 
 
-def test_output_texture(globe):
+def test_output_texture():
+    globe = examples.load_globe()
+    texture = examples.load_globe_texture()
     pl = pyvista.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pl.add_mesh(globe, texture=True)
+    pl.add_mesh(globe, texture=texture)
     pv_pythreejs.convert_plotter(pl)
 
 

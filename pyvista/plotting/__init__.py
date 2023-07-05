@@ -89,6 +89,7 @@ class QtInteractor:
         """Empty init."""
         raise QtDeprecationError('QtInteractor')
 
+
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
 

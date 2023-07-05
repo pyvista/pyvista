@@ -6,9 +6,9 @@ from vtk.util import numpy_support
 
 import pyvista
 from pyvista.core import _vtk_core
+from pyvista.core.errors import AmbiguousDataError, MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
 def test_wrap_none():

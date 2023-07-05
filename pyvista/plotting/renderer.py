@@ -3040,7 +3040,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        texture : vtk.vtkTexture
+        texture : pyvista.Texture
             Texture.
 
         is_srgb : bool, default: False
