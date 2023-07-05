@@ -13,7 +13,6 @@ from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers
 from pyvista.jupyter import set_jupyter_backend
-# TODO from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
 
 # get the int type from vtk

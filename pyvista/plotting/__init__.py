@@ -53,6 +53,7 @@ from .tools import (
     system_supports_plotting,
 )
 from .utilities import *
+from .utilities.sphinx_gallery import _get_sg_image_scraper
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
