@@ -2392,7 +2392,7 @@ class PolyDataFilters(DataSetFilters):
 
         color : ColorLike, optional
             Color of the arrows.  Defaults to
-            :attr:`pyvista.themes.Theme.edge_color`.
+            :attr:`pyvista.plotting.themes.Theme.edge_color`.
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to

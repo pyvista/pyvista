@@ -19,7 +19,7 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
-from pyvista.errors import PyVistaDeprecationWarning, RenderWindowUnavailable
+from pyvista.core.errors import PyVistaDeprecationWarning, RenderWindowUnavailable
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.opts import InterpolationType, RepresentationType

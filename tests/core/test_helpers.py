@@ -8,7 +8,7 @@ import pyvista
 from pyvista.core import _vtk_core
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
-from pyvista.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
 def test_wrap_none():

@@ -5,7 +5,7 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.texture import numpy_to_texture
 
 

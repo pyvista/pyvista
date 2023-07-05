@@ -62,6 +62,7 @@ from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
 from .texture import numpy_to_texture
+from .themes import Theme
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
 from .utilities.algorithms import (
     active_scalars_algorithm,
@@ -205,7 +206,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         * ``'three lights'``: illumination using 3 lights.
         * ``'none'``: no light sources at instantiation.
 
-    theme : pyvista.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     image_scale : int, optional
@@ -252,15 +253,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self._initialized = False
 
-        self._theme = pyvista.themes.Theme()
+        self._theme = Theme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
             # after creation.
             self._theme.load_theme(pyvista.global_theme)
         else:
-            if not isinstance(theme, pyvista.themes.Theme):
+            if not isinstance(theme, pyvista.plotting.themes.Theme):
                 raise TypeError(
-                    'Expected ``pyvista.themes.Theme`` for '
+                    'Expected ``pyvista.plotting.themes.Theme`` for '
                     f'``theme``, not {type(theme).__name__}.'
                 )
             self._theme.load_theme(theme)
@@ -380,10 +381,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme):
-        if not isinstance(theme, pyvista.themes.Theme):
+        if not isinstance(theme, pyvista.plotting.themes.Theme):
             raise TypeError(
                 'Expected a pyvista theme like '
-                '``pyvista.themes.Theme``, '
+                '``pyvista.plotting.themes.Theme``, '
                 f'not {type(theme).__name__}.'
             )
         self._theme.load_theme(theme)
@@ -2280,7 +2281,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         dataset : pyvista.MultiBlock
             A :class:`pyvista.MultiBlock` dataset.
 
-        color : ColorLike, default: :attr:`pyvista.themes.Theme.color`
+        color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.color`
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -2305,16 +2306,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
             also an accepted alias for this.
 
-        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges <pyvista.themes.Theme.show_edges>`
+        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges <pyvista.plotting.themes.Theme.show_edges>`
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color <pyvista.themes.Theme.edge_color>`
+        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color <pyvista.plotting.themes.Theme.edge_color>`
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
             Defaults to :attr:`pyvista.global_theme.edge_color
-            <pyvista.themes.Theme.edge_color>`.
+            <pyvista.plotting.themes.Theme.edge_color>`.
 
         point_size : float, default: 5.0
             Point size of any points in the dataset plotted. Also
@@ -2345,7 +2346,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.themes.Theme.cmap`
+        cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``.
@@ -2396,7 +2397,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Show lines as thick tubes rather than flat lines.  Control
             the width with ``line_width``.
 
-        smooth_shading : bool, default: :attr`pyvista.themes.Theme.smooth_shading`
+        smooth_shading : bool, default: :attr`pyvista.plotting.themes.Theme.smooth_shading`
             Enable smooth shading when ``True`` using the Phong shading
             algorithm.  When ``False``, uses flat shading.  Automatically
             enabled when ``pbr=True``.  See :ref:`shading_example`.
@@ -2424,7 +2425,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, default: 1.0
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : ColorLike, default: :attr:`pyvista.themes.Theme.nan_color`
+        nan_color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.nan_color`
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -2838,7 +2839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             specified.
 
             Defaults to :attr:`pyvista.global_theme.color
-            <pyvista.themes.Theme.color>`.
+            <pyvista.plotting.themes.Theme.color>`.
 
         style : str, optional
             Visualization style of the mesh.  One of the following:
@@ -2870,7 +2871,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Either a string, RGB list, or hex color string.
 
             Defaults to :attr:`pyvista.global_theme.edge_color
-            <pyvista.themes.Theme.edge_color>`.
+            <pyvista.plotting.themes.Theme.edge_color>`.
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also
@@ -2910,7 +2911,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.themes.Theme.cmap`
+        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``.
@@ -3731,7 +3732,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.themes.Theme.cmap`
+        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``.  See available Matplotlib colormaps.
             Only applicable for when displaying ``scalars``.
@@ -4748,7 +4749,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-            Defaults to :attr:`pyvista.global_theme.font.color <pyvista.themes._Font.color>`.
+            Defaults to :attr:`pyvista.global_theme.font.color <pyvista.plotting.themes._Font.color>`.
 
         font : str, optional
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
@@ -6298,7 +6299,7 @@ class Plotter(BasePlotter):
         The default is a ``'light kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
-    theme : pyvista.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     image_scale : int, optional
@@ -6434,7 +6435,7 @@ class Plotter(BasePlotter):
         self._window_size_unset = False
         if window_size is None:
             self.window_size = self._theme.window_size
-            if self.window_size == pyvista.themes.Theme().window_size:
+            if self.window_size == pyvista.plotting.themes.Theme().window_size:
                 self._window_size_unset = True
         else:
             self.window_size = window_size
@@ -6475,21 +6476,21 @@ class Plotter(BasePlotter):
         ----------
         title : str, optional
             Title of plotting window.  Defaults to
-            :attr:`pyvista.global_theme.title <pyvista.themes.Theme.title>`.
+            :attr:`pyvista.global_theme.title <pyvista.plotting.themes.Theme.title>`.
 
         window_size : list, optional
             Window size in pixels.  Defaults to
-            :attr:`pyvista.global_theme.window_size <pyvista.themes.Theme.window_size>`.
+            :attr:`pyvista.global_theme.window_size <pyvista.plotting.themes.Theme.window_size>`.
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
             Defaults to
-            :attr:`pyvista.global_theme.interactive <pyvista.themes.Theme.interactive>`.
+            :attr:`pyvista.global_theme.interactive <pyvista.plotting.themes.Theme.interactive>`.
 
         auto_close : bool, optional
             Exits plotting session when user closes the window when
             interactive is ``True``.  Defaults to
-            :attr:`pyvista.global_theme.auto_close <pyvista.themes.Theme.auto_close>`.
+            :attr:`pyvista.global_theme.auto_close <pyvista.plotting.themes.Theme.auto_close>`.
 
         interactive_update : bool, default: False
             Allows user to non-blocking draw, user should call
@@ -6498,7 +6499,7 @@ class Plotter(BasePlotter):
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to
-            :attr:`pyvista.global_theme.full_screen <pyvista.themes.Theme.full_screen>`.
+            :attr:`pyvista.global_theme.full_screen <pyvista.plotting.themes.Theme.full_screen>`.
 
         screenshot : str | pathlib.Path | io.BytesIO | bool, default: False
             Take a screenshot of the initial state of the plot.  If a string,
@@ -6543,7 +6544,7 @@ class Plotter(BasePlotter):
         return_cpos : bool, optional
             Return the last camera position from the render window
             when enabled.  Default based on theme setting.  See
-            :attr:`pyvista.themes.Theme.return_cpos`.
+            :attr:`pyvista.plotting.themes.Theme.return_cpos`.
 
         before_close_callback : Callable, optional
             Callback that is called before the plotter is closed.

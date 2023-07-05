@@ -923,7 +923,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Control if the orientation widget is interactive.  By
             default uses the value from
             :attr:`pyvista.global_theme.interactive
-            <pyvista.themes.Theme.interactive>`.
+            <pyvista.plotting.themes.Theme.interactive>`.
 
         color : ColorLike, optional
             The color of the actor.  This only applies if ``actor`` is
@@ -1271,17 +1271,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         font_size : float, optional
             Sets the size of the label font. Defaults to
             :attr:`pyvista.global_theme.font.size
-            <pyvista.themes._Font.size>`.
+            <pyvista.plotting.themes._Font.size>`.
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
             or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
-            <pyvista.themes._Font.family>`.
+            <pyvista.plotting.themes._Font.family>`.
 
         color : ColorLike, optional
             Color of all labels and axis titles.  Defaults to
             :attr:`pyvista.global_theme.font.color
-            <pyvista.themes._Font.color>`.
+            <pyvista.plotting.themes._Font.color>`.
 
             Either a string, RGB list, or hex color string.  For
             example:

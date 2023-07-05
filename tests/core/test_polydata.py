@@ -8,7 +8,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
-from pyvista.errors import PyVistaFutureWarning
+from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
 

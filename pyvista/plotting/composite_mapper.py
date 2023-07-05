@@ -525,7 +525,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     dataset : pyvista.MultiBlock
         Multiblock dataset.
 
-    theme : pyvista.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional

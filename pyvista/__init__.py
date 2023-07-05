@@ -12,25 +12,9 @@ from pyvista.core import *
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers
-from pyvista.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.jupyter import set_jupyter_backend
-from pyvista.plotting import *
-from pyvista.plotting import _typing, _vtk
-from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
+# TODO from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
-from pyvista.themes import (
-    DocumentTheme as _GlobalTheme,
-    _rcParams,
-    _set_plot_theme_from_env,
-    load_theme,
-    set_plot_theme,
-)
-
-global_theme = _GlobalTheme()
-rcParams = _rcParams()  # raises DeprecationError when used
-
-# Set preferred plot theme
-_set_plot_theme_from_env()
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
@@ -74,3 +58,34 @@ PICKLE_FORMAT = 'xml'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
+
+
+# Lazily import/access the plotting module
+import importlib
+import inspect
+
+
+def __getattr__(name):
+    """Fetch an attribute ``name`` from ``globals()``or the ``pyvista.plotting`` module..
+
+    This override is implemented to prevent importing all of the plotting module
+    and GL-dependent VTK modules when importing PyVista.
+
+    Raises
+    ------
+    AttributeError
+        If the attribute is not found.
+
+    """
+    try:
+        return globals()[name]
+    except KeyError:
+        pass
+
+    _module = importlib.import_module('pyvista.plotting')
+    try:
+        feature = inspect.getattr_static(_module, name)
+    except AttributeError as e:
+        raise AttributeError(e) from None
+
+    return feature

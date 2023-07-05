@@ -32,7 +32,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
 from pyvista.core.utilities.reader import DICOMReader
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()

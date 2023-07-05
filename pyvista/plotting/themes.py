@@ -12,7 +12,7 @@ Apply a built-in theme
 
 Load a theme into pyvista
 
->>> from pyvista.themes import DocumentTheme
+>>> from pyvista.plotting.themes import DocumentTheme
 >>> theme = DocumentTheme()
 >>> theme.save('my_theme.json')  # doctest:+SKIP
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
@@ -39,12 +39,12 @@ import warnings
 from pyvista.core._typing_core import Number
 from pyvista.core.utilities.misc import _check_range
 
-from .errors import PyVistaDeprecationWarning
-from .plotting._typing import ColorLike
-from .plotting.colors import Color, get_cmap_safe, get_cycler
-from .plotting.opts import InterpolationType
-from .plotting.plotter import Plotter
-from .plotting.tools import parse_font_family
+from pyvista.core.errors import PyVistaDeprecationWarning
+from ._typing import ColorLike
+from .colors import Color, get_cmap_safe, get_cycler
+from .opts import InterpolationType
+# from .plotter import Plotter
+from .tools import parse_font_family
 
 
 def _set_plot_theme_from_env():
@@ -101,7 +101,7 @@ def load_theme(filename):
     Examples
     --------
     >>> import pyvista as pv
-    >>> from pyvista.themes import DocumentTheme
+    >>> from pyvista.plotting.themes import DocumentTheme
     >>> theme = DocumentTheme()
     >>> theme.save('my_theme.json')  # doctest:+SKIP
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
@@ -154,7 +154,7 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.themes.Theme`` or ``str``, not {type(theme).__name__}'
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
         )
 
 
@@ -1505,7 +1505,7 @@ class Theme(_ThemeConfig):
 
     Create a new theme from the default theme and apply it globally.
 
-    >>> from pyvista.themes import DocumentTheme
+    >>> from pyvista.plotting.themes import DocumentTheme
     >>> my_theme = DocumentTheme()
     >>> my_theme.color = 'red'
     >>> my_theme.background = 'white'
@@ -2742,12 +2742,12 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[[Plotter], None]:
+    def before_close_callback(self) -> Callable:
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
-    def before_close_callback(self, value: Callable[[Plotter], None]):
+    def before_close_callback(self, value: Callable):
         self._before_close_callback = value
 
     def restore_defaults(self):
@@ -2826,7 +2826,7 @@ class Theme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pyvista.themes.Theme
+        theme : pyvista.plotting.themes.Theme
             Theme to use to overwrite this theme.
 
         Examples
@@ -2835,7 +2835,7 @@ class Theme(_ThemeConfig):
         the global theme of pyvista.
 
         >>> import pyvista as pv
-        >>> from pyvista.themes import DocumentTheme
+        >>> from pyvista.plotting.themes import DocumentTheme
         >>> my_theme = DocumentTheme()
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
@@ -2847,7 +2847,7 @@ class Theme(_ThemeConfig):
         Create a custom theme from the dark theme and load it into
         pyvista.
 
-        >>> from pyvista.themes import DarkTheme
+        >>> from pyvista.plotting.themes import DarkTheme
         >>> my_theme = DarkTheme()
         >>> my_theme.show_edges = True
         >>> pv.global_theme.load_theme(my_theme)
@@ -2859,7 +2859,7 @@ class Theme(_ThemeConfig):
             theme = load_theme(theme)
 
         if not isinstance(theme, Theme):
-            raise TypeError('``theme`` must be a pyvista theme like ``pyvista.themes.Theme``.')
+            raise TypeError('``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.')
 
         for attr_name in theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))

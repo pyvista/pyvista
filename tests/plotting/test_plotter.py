@@ -9,7 +9,7 @@ import pytest
 
 import pyvista
 from pyvista.core.errors import DeprecationError
-from pyvista.errors import MissingDataError, RenderWindowUnavailable
+from pyvista.core.errors import MissingDataError, RenderWindowUnavailable
 from pyvista.plotting import _plotting
 from pyvista.plotting.utilities.gl_checks import uses_egl
 

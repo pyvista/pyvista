@@ -11,7 +11,7 @@ from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
-from pyvista.errors import MissingDataError
+from pyvista.core.errors import MissingDataError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 

@@ -34,6 +34,13 @@ from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition, Renderer, scale_point
 from .texture import Texture, image_to_texture, numpy_to_texture
+from .themes import (
+    DocumentTheme as _GlobalTheme,
+    _rcParams,
+    _set_plot_theme_from_env,
+    load_theme,
+    set_plot_theme,
+)
 from .tools import (
     FONTS,
     check_math_text_support,
@@ -80,3 +87,12 @@ class QtInteractor:
     def __init__(self, *args, **kwargs):
         """Empty init."""
         raise QtDeprecationError('QtInteractor')
+
+global_theme = _GlobalTheme()
+rcParams = _rcParams()  # raises DeprecationError when used
+
+# Set preferred plot theme
+_set_plot_theme_from_env()
+
+
+print('imported the plotting module!')

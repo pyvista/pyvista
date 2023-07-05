@@ -175,7 +175,7 @@ XMLRectilinearGridReader, <class 'pyvista.utilities.reader.XMLRectilinearGridRea
 XMLStructuredGridReader, <class 'pyvista.utilities.reader.XMLStructuredGridReader'>
 XMLUnstructuredGridReader, <class 'pyvista.utilities.reader.XMLUnstructuredGridReader'>
 XdmfReader, <class 'pyvista.utilities.reader.XdmfReader'>
-_GlobalTheme, <class 'pyvista.themes.DefaultTheme'>
+_GlobalTheme, <class 'pyvista.plotting.themes.DefaultTheme'>
 __builtins__, None
 __cached__, pyvista/pyvista/__pycache__/__init__.cpython-39.pyc
 __doc__, PyVista package for 3D plotting and mesh analysis.
@@ -188,7 +188,7 @@ __spec__, ModuleSpec(name='pyvista', loader=<_frozen_importlib_external.SourceFi
 __version__, 0.40.dev0
 _get_sg_image_scraper, <function _get_sg_image_scraper at 0x1641c8790>
 _get_vtk_id_type, <function _get_vtk_id_type at 0x163f2cdc0>
-_rcParams, <class 'pyvista.themes._rcParams'>
+_rcParams, <class 'pyvista.plotting.themes._rcParams'>
 _set_plot_theme_from_env, <function _set_plot_theme_from_env at 0x163f2c9d0>
 _typing, <module 'pyvista._typing' from 'pyvista/pyvista/_typing.py'>
 _version, <module 'pyvista._version' from 'pyvista/pyvista/_version.py'>
@@ -326,7 +326,7 @@ start_xvfb, <function start_xvfb at 0x1641c8ca0>
 surface_from_para, <function surface_from_para at 0x1641c8670>
 system_supports_plotting, <function system_supports_plotting at 0x1641af550>
 # texture, <module 'pyvista.core.texture' from 'pyvista/pyvista/core/texture.py'>
-themes, <module 'pyvista.themes' from 'pyvista/pyvista/themes.py'>
+themes, <module 'pyvista.plotting.themes' from 'pyvista/pyvista/themes.py'>
 threaded, <function threaded at 0x163f40dc0>
 # tools, <module 'pyvista.plotting.tools' from 'pyvista/pyvista/plotting/tools.py'>
 # trans_from_matrix, <function trans_from_matrix at 0x163f40670>

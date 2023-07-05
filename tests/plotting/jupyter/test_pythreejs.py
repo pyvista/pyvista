@@ -9,7 +9,7 @@ except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.jupyter import pv_pythreejs
 
 
