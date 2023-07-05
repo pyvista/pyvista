@@ -36,4 +36,3 @@ trame-client==2.9.4
 trame-server==2.11.4
 trame-vtk==2.5.4
 trimesh==3.22.3
-typed-ast==1.5.4
