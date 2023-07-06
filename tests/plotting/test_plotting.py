@@ -21,7 +21,7 @@ from pyvista import examples
 from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
-from pyvista.plotting.errors import RenderWindowUnavailable
+from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
@@ -581,7 +581,7 @@ def test_set_camera_position(cpos, sphere):
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(pyvista.plotting.errors.InvalidCameraError):
+    with pytest.raises(InvalidCameraError):
         plotter.camera_position = cpos
 
 
