@@ -43,7 +43,6 @@ from pyvista.core.utilities.misc import _check_range
 from ._typing import ColorLike
 from .colors import Color, get_cmap_safe, get_cycler
 from .opts import InterpolationType
-
 from .tools import parse_font_family
 
 
