@@ -14,21 +14,6 @@ def default_theme():
     return pyvista.plotting.themes.Theme()
 
 
-def test_backwards_compatibility():
-    try:
-        color = (0.1, 0.4, 0.7)
-        pyvista.rcParams['color'] = color
-        assert pyvista.rcParams['color'] == pyvista.Color(color)
-
-        # test nested values
-        init_value = pyvista.rcParams['axes']['show']
-        pyvista.rcParams['axes']['show'] = not init_value
-        assert pyvista.rcParams['axes']['show'] is not init_value
-    finally:
-        # always return to testing theme
-        pyvista.set_plot_theme('testing')
-
-
 @pytest.mark.parametrize(
     'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
 )

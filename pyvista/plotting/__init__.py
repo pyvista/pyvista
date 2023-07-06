@@ -36,7 +36,6 @@ from .renderer import CameraPosition, Renderer, scale_point
 from .texture import Texture, image_to_texture, numpy_to_texture
 from .themes import (
     DocumentTheme as _GlobalTheme,
-    _rcParams,
     _set_plot_theme_from_env,
     load_theme,
     set_plot_theme,
@@ -91,7 +90,6 @@ class QtInteractor:
 
 
 global_theme = _GlobalTheme()
-rcParams = _rcParams()  # raises DeprecationError when used
 
 # Set preferred plot theme
 _set_plot_theme_from_env()

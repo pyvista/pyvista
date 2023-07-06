@@ -44,7 +44,6 @@ from ._typing import ColorLike
 from .colors import Color, get_cmap_safe, get_cycler
 from .opts import InterpolationType
 
-# from .plotter import Plotter
 from .tools import parse_font_family
 
 
@@ -60,35 +59,6 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
-
-
-class _rcParams(dict):  # pragma: no cover
-    """Reference to the deprecated rcParams dictionary."""
-
-    def __getitem__(self, key):
-        import pyvista  # avoids circular import
-
-        warnings.warn(
-            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
-        )
-        return getattr(pyvista.global_theme, key)
-
-    def __setitem__(self, key, value):
-        import pyvista  # avoids circular import
-
-        warnings.warn(
-            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
-        )
-        setattr(pyvista.global_theme, key, value)
-
-    def __repr__(self):
-        """Use the repr of global_theme."""
-        import pyvista  # avoids circular import
-
-        warnings.warn(
-            'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning
-        )
-        return repr(pyvista.global_theme)
 
 
 def load_theme(filename):
