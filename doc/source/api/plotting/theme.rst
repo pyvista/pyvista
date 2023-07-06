@@ -12,7 +12,7 @@ provides a theme that is similar to the default styling of VTK.
 See :ref:`themes_example` for an example on how to use themes within
 PyVista.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.plotting
 
 .. autosummary::
    :toctree: _autosummary
