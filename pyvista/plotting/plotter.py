@@ -325,6 +325,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_depth_null = None
         self.last_image_depth = None
         self.last_image = None
+        self.last_vtksz = None
         self._has_background_layer = False
         if image_scale is None:
             image_scale = self._theme.image_scale
@@ -6698,7 +6699,10 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-            self.last_vtksz = self.export_vtksz(filename=None)
+            try:
+                self.last_vtksz = self.export_vtksz(filename=None)
+            except ImportError:
+                pass
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:
