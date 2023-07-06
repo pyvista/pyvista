@@ -59,10 +59,6 @@ MAX_N_COLOR_BARS = 10
 
 
 # Lazily import/access the plotting module
-import importlib
-import inspect
-
-
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()``or the ``pyvista.plotting`` module..
 
@@ -79,6 +75,9 @@ def __getattr__(name):
         return globals()[name]
     except KeyError:
         pass
+
+    import importlib
+    import inspect
 
     whitelist = [
         'demos',
