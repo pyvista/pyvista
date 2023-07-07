@@ -913,3 +913,10 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
 
     with pytest.raises(ValueError, match=match):
         combined.geodesic_distance(start_vertex, end_vertex)
+
+
+def test_polydata_polys_is_cell_array():
+    p = pyvista.PolyData()
+    assert isinstance(p.GetPolys(), CellArray)
+
+

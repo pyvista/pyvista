@@ -462,6 +462,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return type(self)(self, deep=deep)
 
 
+@_vtk.vtkCellArray.override
 class CellArray(_vtk.vtkCellArray):
     """pyvista wrapping of vtkCellArray.
 
