@@ -42,7 +42,7 @@ class OfflineViewerDirective(Directive):
             logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
         html = f"""
-    <iframe src='../_static/{os.path.basename(HTML_VIEWER_PATH)}?fileURL=../{rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
+    <iframe src='/_static/{os.path.basename(HTML_VIEWER_PATH)}?fileURL=/{rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
 """
 
         raw_node = nodes.raw('', html, format='html')
