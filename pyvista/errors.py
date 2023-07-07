@@ -55,7 +55,7 @@ def __getattr__(name):
     else:
         raise AttributeError(
             f'Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
-        ) from None
+        ) from None  # pragma: no cover
 
     message = f'The `pyvista.errors` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
 
