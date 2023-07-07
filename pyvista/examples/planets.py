@@ -57,7 +57,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Sun dataset.
 
     Examples
     --------
@@ -97,7 +97,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     Returns
     -------
     pyvista.PolyData
-        Moon dataset with texture.
+        Moon dataset.
 
     Examples
     --------
@@ -137,7 +137,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     Returns
     -------
     pyvista.PolyData
-        Mercury dataset with texture.
+        Mercury dataset.
 
     Examples
     --------
@@ -177,7 +177,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     Returns
     -------
     pyvista.PolyData
-        Venus dataset with texture.
+        Venus dataset.
 
     Examples
     --------
@@ -217,7 +217,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     Returns
     -------
     pyvista.PolyData
-        Earth dataset with texture.
+        Earth dataset.
 
     Examples
     --------
@@ -257,7 +257,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     Returns
     -------
     pyvista.PolyData
-        Mars dataset with texture.
+        Mars dataset.
 
     Examples
     --------
@@ -297,7 +297,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     Returns
     -------
     pyvista.PolyData
-        Jupiter dataset with texture.
+        Jupiter dataset.
 
     Examples
     --------
@@ -337,7 +337,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     Returns
     -------
     pyvista.PolyData
-        Saturn dataset with texture.
+        Saturn dataset.
 
     Examples
     --------
@@ -421,7 +421,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     Returns
     -------
     pyvista.PolyData
-        Uranus dataset with texture.
+        Uranus dataset.
 
     Examples
     --------
@@ -461,7 +461,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     Returns
     -------
     pyvista.PolyData
-        Neptune dataset with texture.
+        Neptune dataset.
 
     Examples
     --------
@@ -501,7 +501,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     Returns
     -------
     pyvista.PolyData
-        Pluto dataset with texture.
+        Pluto dataset.
 
     Examples
     --------
