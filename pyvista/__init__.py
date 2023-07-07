@@ -79,20 +79,21 @@ def __getattr__(name):
     import importlib
     import inspect
 
-    whitelist = [
+    allow = {
         'demos',
         'examples',
         'ext',
         'trame',
         'utilities',
-    ]
-    if name in whitelist:
+    }
+    if name in allow:
         return importlib.import_module(f'pyvista.{name}')
 
-    _module = importlib.import_module('pyvista.plotting')
+    import pyvista.plotting
+
     try:
-        feature = inspect.getattr_static(_module, name)
+        feature = inspect.getattr_static(pyvista.plotting, name)
     except AttributeError as e:
-        raise AttributeError(e) from None
+        raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 
     return feature
