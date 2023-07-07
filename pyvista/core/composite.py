@@ -150,7 +150,7 @@ class MultiBlock(
         Returns
         -------
         tuple[float, float, float, float, float, float]
-            length 6 tuple of floats containing min/max along each axis
+            Length 6 tuple of floats containing min/max along each axis.
 
         Examples
         --------
@@ -187,6 +187,11 @@ class MultiBlock(
     def center(self) -> Any:
         """Return the center of the bounding box.
 
+        Returns
+        -------
+        Any
+            Center of the bounding box.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -207,6 +212,11 @@ class MultiBlock(
     def length(self) -> float:
         """Return the length of the diagonal of the bounding box.
 
+        Returns
+        -------
+        float
+            Length of the diagonal of the bounding box.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -226,6 +236,11 @@ class MultiBlock(
     def n_blocks(self) -> int:
         """Return the total number of blocks set.
 
+        Returns
+        -------
+        int
+            Total number of blocks set.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -243,7 +258,14 @@ class MultiBlock(
 
     @n_blocks.setter
     def n_blocks(self, n):
-        """Change the total number of blocks set."""
+        """Change the total number of blocks set.
+
+        Parameters
+        ----------
+        n : int
+            The total number of blocks set.
+
+        """
         self.SetNumberOfBlocks(n)
         self.Modified()
 
@@ -627,8 +649,8 @@ class MultiBlock(
 
         To set the name simultaneously, pass a string name as the 2nd index.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import pyvista
         >>> multi = pyvista.MultiBlock()
         >>> multi.append(pyvista.PolyData())
@@ -688,7 +710,13 @@ class MultiBlock(
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
     def __delitem__(self, index: Union[int, str, slice]) -> None:
-        """Remove a block at the specified index."""
+        """Remove a block at the specified index.
+
+        Parameters
+        ----------
+        index: Union[int, str, slice]
+            Index to remove.
+        """
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
                 for i in reversed(range(*index.indices(self.n_blocks))):
@@ -709,12 +737,29 @@ class MultiBlock(
             self._refs.pop(dataset.memory_address, None)  # type: ignore
 
     def __iter__(self) -> 'MultiBlock':
-        """Return the iterator across all blocks."""
+        """Return the iterator across all blocks.
+
+        Returns
+        -------
+        MultiBlock
+            Object itself.
+        """
         self._iter_n = 0
         return self
 
-    def __eq__(self, other):
-        """Equality comparison."""
+    def __eq__(self, other) -> bool:
+        """Equality comparison.
+
+        Parameters
+        ----------
+        other : MultiBlock
+            Object to compare.
+
+        Returns
+        -------
+        bool
+            If two object is equal.
+        """
         if not isinstance(other, MultiBlock):
             return False
 
@@ -892,7 +937,13 @@ class MultiBlock(
         return attrs
 
     def _repr_html_(self) -> str:
-        """Define a pretty representation for Jupyter notebooks."""
+        """Define a pretty representation for Jupyter notebooks.
+
+        Returns
+        -------
+        str
+            The object representation for Jupyter notebooks.
+        """
         fmt = ""
         fmt += "<table style='width: 100%;'>"
         fmt += "<tr><th>Information</th><th>Blocks</th></tr>"
@@ -927,7 +978,13 @@ class MultiBlock(
         return fmt
 
     def __repr__(self) -> str:
-        """Define an adequate representation."""
+        """Define an adequate representation.
+
+        Returns
+        -------
+        str
+            The object representation.
+        """
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
@@ -941,11 +998,23 @@ class MultiBlock(
         return fmt.strip()
 
     def __str__(self) -> str:
-        """Return the str representation of the multi block."""
+        """Return the str representation of the multi block.
+
+        Returns
+        -------
+        str
+            The object representation.
+        """
         return MultiBlock.__repr__(self)
 
     def __len__(self) -> int:
-        """Return the number of blocks."""
+        """Return the number of blocks.
+
+        Returns
+        -------
+        int
+            Number of blocks.
+        """
         return self.n_blocks
 
     def copy_meta_from(self, ido, deep):
@@ -1186,8 +1255,14 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
-        """Extract the real component of the active scalars of this dataset."""
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
+        """Extract the real component of the active scalars of this dataset.
+
+        Returns
+        -------
+        str
+            Name of the active scalars of this dataset.
+        """
         for block in self:
             if isinstance(block, MultiBlock):
                 block._convert_to_real_scalars(data_attr, scalars_name)
@@ -1203,7 +1278,13 @@ class MultiBlock(
     def _convert_to_single_component(
         self, data_attr: str, scalars_name: str, component: Union[None, str]
     ) -> str:
-        """Convert multi-component scalars to a single component."""
+        """Convert multi-component scalars to a single component.
+
+        Returns
+        -------
+        str
+            Name of a single component.
+        """
         if component is None:
             for block in self:
                 if isinstance(block, MultiBlock):
@@ -1228,8 +1309,17 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
-    def _get_consistent_active_scalars(self):
-        """Check if there are any consistent active scalars."""
+    def _get_consistent_active_scalars(self) -> Tuple[str, str]:
+        """Check if there are any consistent active scalars.
+
+        Returns
+        -------
+        str
+            Consistent active point scalars name.
+
+        str
+            Consistent active cell scalars name.
+        """
         point_names = set()
         cell_names = set()
         for block in self:
