@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import examples
+from pyvista import examples, CellArray
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.errors import PyVistaFutureWarning
 
@@ -920,3 +920,24 @@ def test_polydata_polys_is_cell_array():
     assert isinstance(p.GetPolys(), CellArray)
 
 
+@pytest.mark.parametrize('deep', [False, True])
+def test_regular_faces(deep):
+    points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
+    faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
+    mesh = pyvista.PolyData.from_regular_faces(points, faces, deep=deep)
+    expected_faces = np.hstack([np.full((len(faces), 1), 3), faces], dtype=pyvista.ID_TYPE).flatten()
+    assert np.array_equal(mesh.faces, expected_faces)
+    assert np.array_equal(mesh.regular_faces, faces)
+
+
+def test_empty_regular_faces():
+    mesh = pyvista.PolyData()
+    assert np.array_equal(mesh.regular_faces, np.array([], dtype=pyvista.ID_TYPE))
+
+
+def test_regular_faces_mutable():
+    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2]]
+    mesh = pyvista.PolyData.from_regular_faces(points, faces)
+    mesh.regular_faces[0, 2] = 3
+    assert np.array_equal(mesh.faces, [3, 0, 1, 3])
