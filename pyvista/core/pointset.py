@@ -889,17 +889,19 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.boolean_difference(cutting_mesh)
 
     @property
+    def _polys(self) -> CellArray:
+        # Because CellArray overrides vtkCellArray, this returns the former, not the latter
+        return self.GetPolys()
+
+    @property
     def _offset_array(self):
         """Return the array used to store cell offsets."""
-        return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
+        return self._polys.offset_array
 
     @property
     def _connectivity_array(self):
-        """Return the array with the point ids that define the cells connectivity."""
-        try:
-            return _vtk.vtk_to_numpy(self.GetPolys().GetConnectivityArray())
-        except AttributeError:  # pragma: no cover
-            raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
+        """Return the array with the point ids that define the cells' connectivity."""
+        return self._polys.connectivity_array
 
     @property
     def n_lines(self) -> int:
