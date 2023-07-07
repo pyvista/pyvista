@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import List, Tuple, cast
 
 import numpy as np
+from pyvista.core.errors import VTKVersionError
 
 import pyvista
 
@@ -477,10 +478,15 @@ class CellArray(_vtk.vtkCellArray):
 
     Examples
     --------
-    Create a cell array containing two triangles.
-
+    Create a cell array containing two triangles from the traditional interleaved format
     >>> from pyvista.core.cell import CellArray
     >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
+
+    Create a cell array containing two triangles from separate offsets and connectivity arrays
+    >>> from pyvista.core.cell import CellArray
+    >>> offsets = [0, 3, 6]
+    >>> connectivity = [0, 1, 2, 3, 4, 5]
+    >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
     def __init__(self, cells=None, n_cells=None, deep=False):
@@ -511,3 +517,93 @@ class CellArray(_vtk.vtkCellArray):
     def n_cells(self):
         """Return the number of cells."""
         return self.GetNumberOfCells()
+
+    @property
+    def connectivity_array(self):
+        """Return the array with the point ids that define the cells' connectivity."""
+        try:
+            return _vtk.vtk_to_numpy(self.GetConnectivityArray())
+        except AttributeError:  # pragma: no cover
+            raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
+
+    @property
+    def offset_array(self):
+        """Return the array used to store cell offsets."""
+        return _vtk.vtk_to_numpy(self.GetOffsetsArray())
+
+    @staticmethod
+    def from_arrays(offsets, connectivity, deep=False) -> 'CellArray':
+        """Construct a vtkCellArray from offsets and connectivity arrays
+
+        Parameters
+        ----------
+        offsets : numpy.ndarray or list[int]
+            Offsets array of length `n_cells + 1`
+
+        connectivity : numpy.ndarray or list[int]
+            Connectivity array
+
+        deep : bool, default: False
+            Whether to deep copy the array data into the vtk arrays.
+            Default is ``False``.
+        """
+        cellarr = CellArray()
+        offsets = numpy_to_idarr(offsets, deep=deep)
+        connectivity = numpy_to_idarr(connectivity, deep=deep)
+        cellarr.SetData(offsets, connectivity)
+        return cellarr
+
+    @property
+    def regular_cells(self) -> np.ndarray:
+        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size
+
+        Returns
+        -------
+        numpy.ndarray
+            (n_cells, cell_size) Array of face indices
+
+        Notes
+        --------
+        This property does not validate that the cells are all
+        actually the same size. If they're not, this property may either
+        raise a `ValueError` or silently return an incorrect array.
+        """
+
+        cells = self.connectivity_array
+        if len(cells) == 0:
+            return cells
+
+        offsets = self.offset_array
+        cell_size = offsets[1] - offsets[0]
+        return cells.reshape(-1, cell_size)
+
+    @staticmethod
+    def from_regular_cells(cells, deep=True) -> 'CellArray':
+        """Set cells from a (n_cells, cell_size) array
+
+        Parameters
+        ----------
+        cells : numpy.ndarray or list[list[int]]
+            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`
+
+        deep : bool, default: False
+            Whether to deep copy the cell array data into the vtk connectivity array
+            Default is ``True``.
+
+        Returns
+        -------
+        pyvista.CellArray
+        """
+        cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
+        connectivity = numpy_to_idarr(cells, deep=deep)
+
+        n_cells, cell_size = cells.shape
+        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
+        offsets = numpy_to_idarr(offsets, deep=True)  # Since we're creating offsets on the fly here, force deep copy
+        cellarr = CellArray()
+        try:
+            cellarr.SetData(offsets, connectivity)
+        except AttributeError:  # pragma: no cover
+            raise VTKVersionError('vtkCellArray.SetData implemented in VTK 9 or newer.')
+
+        return cellarr
