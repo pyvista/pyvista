@@ -834,7 +834,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Returns
         -------
         numpy.ndarray
-            (n_faces, face_size) Array of face indices
+            Array of face indices with shape (n_faces, face_size).
 
         See Also
         --------
