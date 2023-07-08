@@ -566,9 +566,9 @@ class CellArray(_vtk.vtkCellArray):
         """
         return _get_regular_cells(self)
 
-    @staticmethod
-    def from_regular_cells(cells, deep=True) -> 'CellArray':
-        """Set cells from a (n_cells, cell_size) array
+    @classmethod
+    def from_regular_cells(cls, cells, deep=True):
+        """Constract a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
         ----------
@@ -589,7 +589,7 @@ class CellArray(_vtk.vtkCellArray):
         n_cells, cell_size = cells.shape
         offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
         offsets = numpy_to_idarr(offsets, deep=True)  # Since we're creating offsets on the fly here, force deep copy
-        cellarr = CellArray()
+        cellarr = cls()
         try:
             cellarr.SetData(offsets, connectivity)
         except AttributeError:  # pragma: no cover

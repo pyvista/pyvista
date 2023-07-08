@@ -864,8 +864,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Set the face cells from an (n_faces, face_size) array."""
         self.faces = CellArray.from_regular_cells(faces, deep=True)
 
-    @staticmethod
-    def from_regular_faces(points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=True) -> 'PolyData':
+    @classmethod
+    def from_regular_faces(cls, points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=True):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
         
         Parameters
@@ -892,7 +892,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
         >>> tetra = pv.PolyData.from_regular_faces(points, faces)
         """
-        p = PolyData()
+        p = cls()
         p.points = points
         p.faces = CellArray.from_regular_cells(faces, deep=deep)
         return p
