@@ -463,7 +463,6 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return type(self)(self, deep=deep)
 
 
-@_vtk.vtkCellArray.override
 class CellArray(_vtk.vtkCellArray):
     """pyvista wrapping of vtkCellArray.
 
@@ -521,15 +520,12 @@ class CellArray(_vtk.vtkCellArray):
     @property
     def connectivity_array(self):
         """Return the array with the point ids that define the cells' connectivity."""
-        try:
-            return _vtk.vtk_to_numpy(self.GetConnectivityArray())
-        except AttributeError:  # pragma: no cover
-            raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
+        return _get_connectivity_array(self)
 
     @property
     def offset_array(self):
         """Return the array used to store cell offsets."""
-        return _vtk.vtk_to_numpy(self.GetOffsetsArray())
+        return _get_offset_array(self)
 
     @staticmethod
     def from_arrays(offsets, connectivity, deep=False) -> 'CellArray':
@@ -568,14 +564,7 @@ class CellArray(_vtk.vtkCellArray):
         actually the same size. If they're not, this property may either
         raise a `ValueError` or silently return an incorrect array.
         """
-
-        cells = self.connectivity_array
-        if len(cells) == 0:
-            return cells
-
-        offsets = self.offset_array
-        cell_size = offsets[1] - offsets[0]
-        return cells.reshape(-1, cell_size)
+        return _get_regular_cells(self)
 
     @staticmethod
     def from_regular_cells(cells, deep=True) -> 'CellArray':
@@ -607,3 +596,33 @@ class CellArray(_vtk.vtkCellArray):
             raise VTKVersionError('vtkCellArray.SetData implemented in VTK 9 or newer.')
 
         return cellarr
+
+
+# The following methods would be much nicer bound to CellArray,
+# but then they wouldn't be available on bare vtkCellArrays. In the future,
+# consider using vtkCellArray.override decorator, so they're all automatically
+# returned as CellArrays
+
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
+    """Return the array with the point ids that define the cells' connectivity."""
+    try:
+        return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
+    except AttributeError:  # pragma: no cover
+        raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
+
+
+def _get_offset_array(cellarr: _vtk.vtkCellArray):
+    """Return the array used to store cell offsets."""
+    return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
+
+
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
+    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
+
+    cells = _get_connectivity_array(cellarr)
+    if len(cells) == 0:
+        return cells
+
+    offsets = _get_offset_array(cellarr)
+    cell_size = offsets[1] - offsets[0]
+    return cells.reshape(-1, cell_size)

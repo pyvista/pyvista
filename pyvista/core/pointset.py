@@ -13,7 +13,7 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
-from .cell import CellArray
+from .cell import CellArray, _get_offset_array, _get_regular_cells, _get_connectivity_array
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -857,7 +857,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                [0, 2, 3],
                [0, 3, 1]])
         """
-        return self.GetPolys().regular_cells
+        return _get_regular_cells(self.GetPolys())
 
     @regular_faces.setter
     def regular_faces(self, faces: Union[List[List[int]], np.ndarray]):
@@ -968,19 +968,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.boolean_difference(cutting_mesh)
 
     @property
-    def _polys(self) -> CellArray:
-        # Because CellArray overrides vtkCellArray, this returns the former, not the latter
-        return self.GetPolys()
-
-    @property
     def _offset_array(self):
         """Return the array used to store cell offsets."""
-        return self._polys.offset_array
+        return _get_offset_array(self.GetPolys())
 
     @property
     def _connectivity_array(self):
         """Return the array with the point ids that define the cells' connectivity."""
-        return self._polys.connectivity_array
+        return _get_connectivity_array(self.GetPolys())
 
     @property
     def n_lines(self) -> int:

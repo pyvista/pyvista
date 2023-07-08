@@ -915,9 +915,9 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
         combined.geodesic_distance(start_vertex, end_vertex)
 
 
-def test_polydata_polys_is_cell_array():
-    p = pyvista.PolyData()
-    assert isinstance(p.GetPolys(), CellArray)
+def test_tetrahedron_regular_faces():
+    tetra = pyvista.Tetrahedron()
+    assert np.array_equal(tetra.faces.reshape(-1, 4)[:, 1:], tetra.regular_faces)
 
 
 @pytest.mark.parametrize('deep', [False, True])
