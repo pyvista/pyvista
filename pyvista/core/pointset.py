@@ -776,16 +776,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         numpy.ndarray
             Array of face connectivity.
 
+        See Also
+        --------
+        pyvista.PolyData.regular_faces
+
         Notes
         -----
         The array returned cannot be modified in place and will raise a
         ``ValueError`` if attempted.
 
         You can, however, set the faces directly. See the example.
-
-        See Also
-        --------
-        pyvista.PolyData.regular_faces
 
         Examples
         --------
@@ -829,10 +829,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @property
     def regular_faces(self) -> np.ndarray:
-        """Return a face array of point indices when all faces have the same size
+        """Return a face array of point indices when all faces have the same size.
 
         Returns
-        -------
+        --------
         numpy.ndarray
             (n_faces, face_size) Array of face indices
 
@@ -858,27 +858,28 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @regular_faces.setter
     def regular_faces(self, faces: Union[List[List[int]], np.ndarray]):
-        """Set the face cells from an (n_faces, face_size) array"""
+        """Set the face cells from an (n_faces, face_size) array."""
         self.faces = CellArray.from_regular_cells(faces, deep=True)
 
     @staticmethod
-    def from_regular_faces(points, faces: Union[np.ndarray, List[List[int]]], deep=True) -> 'PolyData':
-        """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays
+    def from_regular_faces(points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=True) -> 'PolyData':
+        """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
         
         Parameters
         ----------
-        points: numpy.ndarray or list[list[float]]
-            A (n_points, 3) array of points
+        points : numpy.ndarray, sequence[sequence[float]]
+            A (n_points, 3) array of points.
             
-        faces : numpy.ndarray or list[list[int]]
-            A (n_faces, face_size) array of face indices. For a triangle mesh, face_size = 3
+        faces : numpy.ndarray or sequence[sequence[int]]
+            A (n_faces, face_size) array of face indices. For a triangle mesh, face_size = 3.
 
-        deep : bool
-            Whether to deep copy the faces array into vtkCellArray connectivity data. Default `True`
+        deep : bool, optional
+            Whether to deep copy the faces array into vtkCellArray connectivity data. Default `True`.
 
         Returns
         -------
         pyvista.PolyData
+            The newly constructed mesh.
 
         Examples
         --------
