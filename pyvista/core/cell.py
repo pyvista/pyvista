@@ -556,7 +556,7 @@ class CellArray(_vtk.vtkCellArray):
         Returns
         -------
         numpy.ndarray
-            (n_cells, cell_size) Array of face indices
+            Array of face indices of shape (n_cells, cell_size).
 
         Notes
         -----
