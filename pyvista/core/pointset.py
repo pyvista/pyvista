@@ -832,7 +832,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return a face array of point indices when all faces have the same size.
 
         Returns
-        --------
+        -------
         numpy.ndarray
             (n_faces, face_size) Array of face indices
 
@@ -841,7 +841,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         pyvista.PolyData.faces
 
         Notes
-        --------
+        -----
         This property does not validate that the mesh's faces are all
         actually the same size. If they're not, this property may either
         raise a `ValueError` or silently return an incorrect array.

@@ -533,7 +533,7 @@ class CellArray(_vtk.vtkCellArray):
 
     @staticmethod
     def from_arrays(offsets, connectivity, deep=False) -> 'CellArray':
-        """Construct a vtkCellArray from offsets and connectivity arrays
+        """Construct a vtkCellArray from offsets and connectivity arrays.
 
         Parameters
         ----------
@@ -555,7 +555,7 @@ class CellArray(_vtk.vtkCellArray):
 
     @property
     def regular_cells(self) -> np.ndarray:
-        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size
+        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
 
         Returns
         -------
@@ -563,7 +563,7 @@ class CellArray(_vtk.vtkCellArray):
             (n_cells, cell_size) Array of face indices
 
         Notes
-        --------
+        -----
         This property does not validate that the cells are all
         actually the same size. If they're not, this property may either
         raise a `ValueError` or silently return an incorrect array.
