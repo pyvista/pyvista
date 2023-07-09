@@ -849,6 +849,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Examples
         --------
         Get the face array of a tetrahedron as a 4x3 array
+
         >>> import pyvista as pv
         >>> tetra = pv.Tetrahedron()
         >>> tetra.regular_faces
