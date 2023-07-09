@@ -856,6 +856,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                [1, 3, 2],
                [0, 2, 3],
                [0, 3, 1]])
+
         """
         return _get_regular_cells(self.GetPolys())
 
