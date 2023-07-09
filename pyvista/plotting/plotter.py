@@ -4715,6 +4715,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         name=None,
         viewport=False,
         orientation=0.0,
+        font_file=None,
         *,
         render=True,
     ):
@@ -4751,8 +4752,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             Defaults to :attr:`pyvista.global_theme.font.color <pyvista.themes._Font.color>`.
 
-        font : str, optional
+        font : str, default: 'arial'
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
+            This is ignored if the `font_file` is set.
+
+        font_file : str, default: None
+            The absolute file path to a local file containing a free type readable font.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
@@ -4847,6 +4852,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         text_prop = self.textActor.GetTextProperty()
         text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
         text_prop.SetFontFamily(FONTS[font].value)
+        if font_file is not None:
+            text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
+            text_prop.SetFontFile(font_file)
         text_prop.SetShadow(shadow)
         text_prop.SetOrientation(orientation)
 

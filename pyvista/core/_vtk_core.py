@@ -67,6 +67,7 @@ from vtkmodules.vtkCommonCore import (
     VTK_ARIAL,
     VTK_COURIER,
     VTK_TIMES,
+    VTK_FONT_FILE,
     VTK_UNSIGNED_CHAR,
     buffer_shared,
     mutable,
