@@ -478,6 +478,7 @@ class CellArray(_vtk.vtkCellArray):
     Examples
     --------
     Create a cell array containing two triangles from the traditional interleaved format
+
     >>> from pyvista.core.cell import CellArray
     >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
 
