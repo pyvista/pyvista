@@ -483,6 +483,7 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
 
     Create a cell array containing two triangles from separate offsets and connectivity arrays
+
     >>> from pyvista.core.cell import CellArray
     >>> offsets = [0, 3, 6]
     >>> connectivity = [0, 1, 2, 3, 4, 5]
