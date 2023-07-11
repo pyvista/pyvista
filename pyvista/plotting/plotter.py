@@ -4756,9 +4756,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
             This is ignored if the `font_file` is set.
 
-        font_file : str, default: None
-            The absolute file path to a local file containing a free type readable font.
-
         shadow : bool, default: False
             Adds a black shadow to the text.
 
@@ -4776,6 +4773,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Angle orientation of text counterclockwise in degrees.  The text
             is rotated around an anchor point that may be on the edge or
             corner of the text.  The default is horizontal (0.0 degrees).
+
+        font_file : str, default: None
+            The absolute file path to a local file containing a free type readable font.
 
         render : bool, optional
             Force a render when ``True`` (default).
