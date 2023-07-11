@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import examples, CellArray
+from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.errors import PyVistaFutureWarning
 

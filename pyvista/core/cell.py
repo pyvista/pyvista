@@ -570,7 +570,7 @@ class CellArray(_vtk.vtkCellArray):
 
     @classmethod
     def from_regular_cells(cls, cells, deep=True):
-        """Constract a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
         ----------
@@ -620,7 +620,6 @@ def _get_offset_array(cellarr: _vtk.vtkCellArray):
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
     """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
-
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells
