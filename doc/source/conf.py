@@ -142,7 +142,6 @@ coverage_additional_modules = [
     'pyvista.plotting.composite_mapper',
     'pyvista.plotting.cube_axes_actor',
     'pyvista.plotting.errors',
-    'pyvista.plotting.export_vtkjs',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.lookup_table',
@@ -242,6 +241,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.DataObject\.copy_meta_from$',
     r'\.FieldAssociation$',
     r'\.InterpolationType$',
+    r'\.RepresentationType$',
+    r'\.ElementType$',
     r'\.MultiBlock\.copy_meta_from$',
     # wraps
     r'\.Plotter\.enable_depth_peeling$',

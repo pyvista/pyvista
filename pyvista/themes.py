@@ -1390,6 +1390,7 @@ class _TrameConfig(_ThemeConfig):
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
         if service and not prefix.startswith('http'):  # pragma: no cover
             self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
+            self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
         self._default_mode = 'trame'
@@ -2556,15 +2557,6 @@ class Theme(_ThemeConfig):
 
     @anti_aliasing.setter
     def anti_aliasing(self, anti_aliasing: Union[str, None]):
-        if isinstance(anti_aliasing, bool):
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`anti_aliasing` is now a string or None and must be either "ssaa", '
-                '"msaa", "fxaa", or None',
-                PyVistaDeprecationWarning,
-            )
-            anti_aliasing = 'fxaa' if anti_aliasing else None
-
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
                 raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
@@ -2572,29 +2564,6 @@ class Theme(_ThemeConfig):
             raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
 
         self._anti_aliasing = anti_aliasing
-
-    @property
-    def antialiasing(self):
-        """Enable or disable anti-aliasing.
-
-        .. deprecated:: 0.37.0
-           Deprecated in favor of :attr:`anti_aliasing <Theme.anti_aliasing>`.
-        """
-        # Recommended removing at pyvista==0.40.0
-        warnings.warn(
-            'antialising is deprecated.  Please use `anti_aliasing` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.anti_aliasing
-
-    @antialiasing.setter
-    def antialiasing(self, value):  # pragma: no cover
-        # Recommended removing at pyvista==0.40.0
-        warnings.warn(
-            'antialising is deprecated.  Please use `anti_aliasing` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.anti_aliasing = value
 
     @property
     def multi_samples(self) -> int:
@@ -3030,7 +2999,7 @@ class DarkTheme(Theme):
         self.cmap = 'viridis'
         self.font.color = 'white'
         self.show_edges = False
-        self.color = 'tan'
+        self.color = 'lightblue'
         self.outline_color = 'white'
         self.edge_color = 'white'
         self.axes.x_color = 'tomato'
@@ -3111,7 +3080,7 @@ class DocumentTheme(Theme):
         self.font.label_size = 18
         self.font.color = 'black'
         self.show_edges = False
-        self.color = 'tan'
+        self.color = 'lightblue'
         self.outline_color = 'black'
         self.edge_color = 'black'
         self.axes.x_color = 'tomato'
@@ -3134,9 +3103,9 @@ class DocumentProTheme(DocumentTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
-        self.anti_aliasing = 'msaa'  # or 'ssaa'?
         self.multi_samples = 2
         self.depth_peeling.number_of_peels = 4
         self.depth_peeling.occlusion_ratio = 0.0

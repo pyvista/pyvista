@@ -49,7 +49,7 @@ grid = pv.UnstructuredGrid(examples.hexbeamfile)
 ###############################################################################
 # Create plotting class and add the unstructured grid
 plotter = pv.Plotter()
-plotter.add_mesh(grid, show_edges=True, color="tan")
+plotter.add_mesh(grid, show_edges=True, color='lightblue')
 
 # Add labels to points on the yz plane (where x == 0)
 points = grid.points

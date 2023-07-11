@@ -26,6 +26,7 @@ from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from pyvista.plotting.utilities.gl_checks import uses_egl
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -1176,6 +1177,15 @@ def test_screenshot_bytes():
     buffer.seek(0)
     im = Image.open(buffer)
     assert im.format == 'PNG'
+
+
+def test_screenshot_rendering(tmpdir):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(examples.load_airplane(), smooth_shading=True)
+    filename = str(tmpdir.mkdir("tmpdir").join('export-graphic.svg'))
+    assert plotter._first_time
+    plotter.save_graphic(filename)
+    assert not plotter._first_time
 
 
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
@@ -3548,6 +3558,9 @@ def test_plot_cubemap_alone(cubemap):
     cubemap.plot()
 
 
+@pytest.mark.skipif(
+    uses_egl(), reason="Render window will be current with offscreen builds of VTK."
+)
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 

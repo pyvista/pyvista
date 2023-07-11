@@ -259,6 +259,12 @@ class Viewer:
         buffer.seek(0)
         return memoryview(buffer.read())
 
+    def export(self):
+        """Export the scene as a zip file."""
+        for view in self._html_views:
+            return memoryview(view.export_html())
+        raise TypeError('This viewer cannot be exported.')
+
     def ui_controls(self, mode=None, default_server_rendering=True, v_show=None):
         """Create a VRow for the UI controls.
 
@@ -369,6 +375,16 @@ class Viewer:
                     icon='mdi-file-png-box',
                     tooltip='Save screenshot',
                 )
+
+            def attach_export():
+                return server.protocol.addAttachment(self.export())
+
+            button(
+                # Must use single-quote string for JS here
+                click=f"utils.download('scene-export.html', trigger('{server.trigger_name(attach_export)}'), 'application/octet-stream')",
+                icon='mdi-download',
+                tooltip='Export scene as HTML',
+            )
 
     def ui(
         self,

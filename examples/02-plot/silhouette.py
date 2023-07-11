@@ -19,11 +19,11 @@ bunny = examples.download_bunny()
 # Now we can display the silhouette of the mesh and compare the result:
 plotter = pyvista.Plotter(shape=(1, 2))
 plotter.subplot(0, 0)
-plotter.add_mesh(bunny, color='tan', silhouette=True)
+plotter.add_mesh(bunny, color='lightblue', silhouette=True)
 plotter.add_text("Silhouette")
 plotter.view_xy()
 plotter.subplot(0, 1)
-plotter.add_mesh(bunny, color='tan')
+plotter.add_mesh(bunny, color='lightblue')
 plotter.add_text("No silhouette")
 plotter.view_xy()
 plotter.show()
@@ -54,7 +54,7 @@ plotter = pyvista.Plotter(shape=(1, 3))
 plotter.subplot(0, 0)
 plotter.add_mesh(
     cylinder,
-    color='tan',
+    color='lightblue',
     smooth_shading=True,
     silhouette=dict(color='red', line_width=8.0, decimate=None, feature_angle=True),
 )
@@ -63,14 +63,14 @@ plotter.view_isometric()
 plotter.subplot(0, 1)
 plotter.add_mesh(
     cylinder,
-    color='tan',
+    color='lightblue',
     smooth_shading=True,
     silhouette=dict(color='red', line_width=8.0, decimate=None),
 )
 plotter.add_text("Silhouette without sharp edges")
 plotter.view_isometric()
 plotter.subplot(0, 2)
-plotter.add_mesh(cylinder, color='tan', smooth_shading=True)
+plotter.add_mesh(cylinder, color='lightblue', smooth_shading=True)
 plotter.add_text("No silhouette")
 plotter.view_isometric()
 plotter.show()
@@ -91,7 +91,7 @@ plotter.add_mesh(
 
 plotter.add_mesh(
     cylinder,
-    color='tan',
+    color='lightblue',
     smooth_shading=True,
     silhouette=dict(decimate=None, feature_angle=True, line_width=8, color='white'),
 )

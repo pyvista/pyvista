@@ -3,6 +3,7 @@ import pytest
 import vtk
 
 import pyvista
+from pyvista import examples
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -226,7 +227,37 @@ def test_widget_spline(uniform):
     p.close()
 
 
-def test_widget_uniform(uniform):
+def test_measurement_widget():
+    class DistanceCallback:
+        def __init__(self):
+            self.called = False
+            self.args = None
+            self.count = 0
+
+        def __call__(self, *args, **kwargs):
+            self.called = True
+            self.args = args
+            self.kwargs = kwargs
+            self.count += 1
+
+    p = pyvista.Plotter(window_size=[1000, 1000])
+    p.add_mesh(examples.load_random_hills())
+    distance_callback = DistanceCallback()
+    p.add_measurement_widget(callback=distance_callback)
+    p.view_xy()
+    p.show(auto_close=False)
+    width, height = p.window_size
+
+    p.iren._mouse_left_button_click(300, 300)
+    p.iren._mouse_left_button_click(700, 700)
+
+    assert distance_callback.called
+    assert pytest.approx(distance_callback.args[2], 1.0) == 17.4
+
+    p.close()
+
+
+def test_widget_sphere(uniform):
     p = pyvista.Plotter()
     func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))

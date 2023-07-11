@@ -1,8 +1,12 @@
+import os
+
 from IPython.display import IFrame
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 has_trame = True
 try:
@@ -17,11 +21,11 @@ except:  # noqa: E722
 # skip all tests if VTK<9.1.0
 if pv.vtk_version_info < (9, 1):
     pytestmark = pytest.mark.skip
+else:
+    skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
+    pytestmark = [skip_no_trame, pytest.mark.skip_plotting]
 
-skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
 
-
-@skip_no_trame
 def test_set_jupyter_backend_trame():
     try:
         pv.global_theme.jupyter_backend = 'trame'
@@ -34,16 +38,12 @@ def test_set_jupyter_backend_trame():
         pv.global_theme.jupyter_backend = None
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_server_launch():
     pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     assert server.running
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame():
     pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
@@ -106,8 +106,6 @@ def test_trame():
     assert isinstance(viewer.screenshot(), memoryview)
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_jupyter_modes():
     pv.set_jupyter_backend('trame')
 
@@ -133,8 +131,6 @@ def test_trame_jupyter_modes():
     assert not pl._closed
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_closed_plotter():
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
@@ -143,8 +139,6 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_views():
     server = get_server('foo')
 
@@ -156,8 +150,6 @@ def test_trame_views():
     assert PyVistaLocalView(pl, trame_server=server)
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_jupyter_custom_size():
     w, h = 200, 150
     plotter = pv.Plotter(notebook=True, window_size=(w, h))
@@ -189,8 +181,6 @@ def test_trame_jupyter_custom_size():
         pv.global_theme.window_size = previous_size
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_jupyter_custom_handler():
     def handler(viewer, src, **kwargs):
         return IFrame(src, '75%', '500px')
@@ -205,8 +195,6 @@ def test_trame_jupyter_custom_handler():
     assert isinstance(iframe, IFrame)
 
 
-@skip_no_trame
-@pytest.mark.skip_plotting
 def test_trame_int64():
     mesh = pv.Sphere()
     mesh['int64'] = np.arange(mesh.n_cells, dtype=np.int64)
@@ -219,3 +207,74 @@ def test_trame_int64():
     )
     # Basically just assert that it didn't error out
     assert isinstance(widget, Widget)
+
+
+@pytest.mark.skip_plotting
+def test_trame_export_html(tmpdir):
+    filename = str(tmpdir.join('tmp.html'))
+    plotter = pv.Plotter()
+    plotter.add_mesh(pv.Wavelet())
+    plotter.export_html(filename)
+    assert os.path.isfile(filename)
+
+
+def test_export_single(tmpdir, skip_check_gc):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
+    data = examples.load_airplane()
+    # Create the scene
+    plotter = pv.Plotter()
+    plotter.add_mesh(data)
+    plotter.export_vtksz(filename)
+    # Now make sure the file is there
+    assert os.path.isfile(f'{filename}')
+
+
+def test_export_multi(tmpdir, skip_check_gc):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
+    multi = pv.MultiBlock()
+    # Add examples
+    multi.append(examples.load_ant())
+    multi.append(examples.load_sphere())
+    multi.append(examples.load_uniform())
+    multi.append(examples.load_airplane())
+    multi.append(examples.load_rectilinear())
+    # Create the scene
+    plotter = pv.Plotter()
+    plotter.add_mesh(multi)
+    plotter.export_vtksz(filename)
+    # Now make sure the file is there
+    assert os.path.isfile(f'{filename}')
+
+
+def test_export_texture(tmpdir, skip_check_gc):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
+    data = examples.load_globe()
+    # Create the scene
+    plotter = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning):
+        plotter.add_mesh(data, texture=True)
+    plotter.export_vtksz(filename)
+    # Now make sure the file is there
+    assert os.path.isfile(f'{filename}')
+
+
+def test_export_verts(tmpdir, skip_check_gc):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
+    data = pv.PolyData(np.random.rand(100, 3))
+    # Create the scene
+    plotter = pv.Plotter()
+    plotter.add_mesh(data)
+    plotter.export_vtksz(filename)
+    # Now make sure the file is there
+    assert os.path.isfile(f'{filename}')
+
+
+def test_export_color(tmpdir, skip_check_gc):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
+    data = examples.load_airplane()
+    # Create the scene
+    plotter = pv.Plotter()
+    plotter.add_mesh(data, color='yellow')
+    plotter.export_vtksz(filename)
+    # Now make sure the file is there
+    assert os.path.isfile(f'{filename}')

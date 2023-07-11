@@ -19,7 +19,7 @@ attribute names:
 
 .. code:: python
 
-   >>> pyvista.global_theme.color = 'tan'
+   >>> pyvista.global_theme.color = 'lightblue'
 
 Here's an example plot of the Stanford Dragon using default plotting
 parameters:
