@@ -930,6 +930,13 @@ def test_regular_faces(deep):
     assert np.array_equal(mesh.regular_faces, faces)
 
 
+def test_set_regular_faces():
+    mesh = pyvista.Tetrahedron()
+    flipped_faces = mesh.regular_faces[:, ::-1]
+    mesh.regular_faces = flipped_faces
+    assert np.array_equal(mesh.regular_faces, flipped_faces)
+
+
 def test_empty_regular_faces():
     mesh = pyvista.PolyData()
     assert np.array_equal(mesh.regular_faces, np.array([], dtype=pyvista.ID_TYPE))
