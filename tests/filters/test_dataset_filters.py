@@ -11,7 +11,7 @@ from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import NotAllTrianglesError, VTKVersionError
-from pyvista.errors import MissingDataError
+from pyvista.errors import MissingDataError, PyVistaDeprecationWarning
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -1168,9 +1168,10 @@ def test_probe(categorical, use_points, locator):
         dataset = np.array(mesh.points)
     else:
         dataset = mesh
-    result = data_to_probe.probe(
-        dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator
-    )
+    with pytest.warns(PyVistaDeprecationWarning):
+        result = data_to_probe.probe(
+            dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator
+        )
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))

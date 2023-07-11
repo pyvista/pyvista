@@ -8,7 +8,12 @@ import numpy as np
 
 import pyvista
 import pyvista.core._vtk_core as _vtk
-from pyvista.core.errors import AmbiguousDataError, MissingDataError, VTKVersionError
+from pyvista.core.errors import (
+    AmbiguousDataError,
+    MissingDataError,
+    PyVistaDeprecationWarning,
+    VTKVersionError,
+)
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import (
@@ -3024,7 +3029,11 @@ class DataSetFilters:
     ):
         """Sample data values at specified point locations.
 
-        This uses :class:`vtk.vtkProbeFilter`.
+        .. deprecated:: 0.40.06
+          `probe` will be removed in a future version. Use
+          :func:`pyvista.DataSetFilters.sample` instead.
+
+        This uses :class:`vtkProbeFilter`.
 
         Parameters
         ----------
@@ -3073,6 +3082,16 @@ class DataSetFilters:
         True
 
         """
+        # deprecated in v0.40.0
+        # remove in v0.43.0
+        warnings.warn(
+            """probe filter is deprecated and will be removed in a future version.
+            Use sample filter instead.
+            If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
+            """,
+            PyVistaDeprecationWarning,
+        )
+
         if not pyvista.is_pyvista_dataset(points):
             points = wrap(points)
         alg = _vtk.vtkProbeFilter()
