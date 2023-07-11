@@ -3029,7 +3029,7 @@ class DataSetFilters:
     ):
         """Sample data values at specified point locations.
 
-        .. deprecated:: 0.40.06
+        .. deprecated:: 0.41.0
           `probe` will be removed in a future version. Use
           :func:`pyvista.DataSetFilters.sample` instead.
 
