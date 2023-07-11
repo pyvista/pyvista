@@ -4,9 +4,9 @@ from __future__ import annotations
 from typing import List, Tuple, cast
 
 import numpy as np
-from pyvista.core.errors import VTKVersionError
 
 import pyvista
+from pyvista.core.errors import VTKVersionError
 
 from . import _vtk_core as _vtk
 from .celltype import CellType
@@ -530,7 +530,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_offset_array(self)
 
     @staticmethod
-    def from_arrays(offsets, connectivity, deep=False) -> 'CellArray':
+    def from_arrays(offsets, connectivity, deep=False) -> CellArray:
         """Construct a vtkCellArray from offsets and connectivity arrays.
 
         Parameters
@@ -590,7 +590,9 @@ class CellArray(_vtk.vtkCellArray):
 
         n_cells, cell_size = cells.shape
         offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
-        offsets = numpy_to_idarr(offsets, deep=True)  # Since we're creating offsets on the fly here, force deep copy
+        offsets = numpy_to_idarr(
+            offsets, deep=True
+        )  # Since we're creating offsets on the fly here, force deep copy
         cellarr = cls()
         try:
             cellarr.SetData(offsets, connectivity)
@@ -604,6 +606,7 @@ class CellArray(_vtk.vtkCellArray):
 # but then they wouldn't be available on bare vtkCellArrays. In the future,
 # consider using vtkCellArray.override decorator, so they're all automatically
 # returned as CellArrays
+
 
 def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
     """Return the array with the point ids that define the cells' connectivity."""

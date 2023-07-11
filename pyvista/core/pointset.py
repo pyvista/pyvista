@@ -5,7 +5,7 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import Sequence, Tuple, Union, List
+from typing import List, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -13,7 +13,7 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
-from .cell import CellArray, _get_offset_array, _get_regular_cells, _get_connectivity_array
+from .cell import CellArray, _get_connectivity_array, _get_offset_array, _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -867,14 +867,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         self.faces = CellArray.from_regular_cells(faces, deep=True)
 
     @classmethod
-    def from_regular_faces(cls, points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=True):
+    def from_regular_faces(
+        cls, points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=True
+    ):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
-        
+
         Parameters
         ----------
         points : numpy.ndarray, sequence[sequence[float]]
             A (n_points, 3) array of points.
-            
+
         faces : numpy.ndarray or sequence[sequence[int]]
             A (n_faces, face_size) array of face indices. For a triangle mesh, face_size = 3.
 

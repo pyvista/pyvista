@@ -925,7 +925,9 @@ def test_regular_faces(deep):
     points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
     faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
     mesh = pyvista.PolyData.from_regular_faces(points, faces, deep=deep)
-    expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pyvista.ID_TYPE).flatten()
+    expected_faces = (
+        np.hstack([np.full((len(faces), 1), 3), faces]).astype(pyvista.ID_TYPE).flatten()
+    )
     assert np.array_equal(mesh.faces, expected_faces)
     assert np.array_equal(mesh.regular_faces, faces)
 

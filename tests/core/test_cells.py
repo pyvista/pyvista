@@ -296,16 +296,19 @@ def test_init_cell_array_from_arrays(offsets, connectivity, deep):
 REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
 
 
-@pytest.mark.parametrize(('deep', 'cells'), [
-    (True, REGULAR_CELL_LIST),
-    (True, np.array(np.vstack(REGULAR_CELL_LIST), order='F')),
-    (False, np.array(REGULAR_CELL_LIST, np.int16)),
-    (True, np.array(REGULAR_CELL_LIST, np.int16)),
-    (False, np.array(REGULAR_CELL_LIST, np.int32)),
-    (True, np.array(REGULAR_CELL_LIST, np.int32)),
-    (False, np.array(REGULAR_CELL_LIST, np.int64)),
-    (True, np.array(REGULAR_CELL_LIST, np.int64)),
-])
+@pytest.mark.parametrize(
+    ('deep', 'cells'),
+    [
+        (True, REGULAR_CELL_LIST),
+        (True, np.array(np.vstack(REGULAR_CELL_LIST), order='F')),
+        (False, np.array(REGULAR_CELL_LIST, np.int16)),
+        (True, np.array(REGULAR_CELL_LIST, np.int16)),
+        (False, np.array(REGULAR_CELL_LIST, np.int32)),
+        (True, np.array(REGULAR_CELL_LIST, np.int32)),
+        (False, np.array(REGULAR_CELL_LIST, np.int64)),
+        (True, np.array(REGULAR_CELL_LIST, np.int64)),
+    ],
+)
 def test_init_cell_array_from_regular_cells(deep, cells):
     cell_array = pyvista.core.cell.CellArray.from_regular_cells(cells, deep=deep)
     assert np.array_equal(np.array(cells), cell_array.regular_cells)
