@@ -1145,17 +1145,24 @@ def test_smooth_taubin(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
-def test_resample():
+def test_sample():
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
-    result = mesh.sample(data_to_probe, progress_bar=True)
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
+
+    def sample_test(**kwargs):
+        """Test `sample` with kwargs."""
+        result = mesh.sample(data_to_probe, **kwargs)
+        name = 'Spatial Point Data'
+        assert name in result.array_names
+        assert isinstance(result, type(mesh))
+
+    sample_test()
+    sample_test(tolerance=1.0)
+    sample_test(progress_bar=True)
+    sample_test(categorical=True)
+    sample_test(locator=_vtk_core.vtkStaticCellLocator())
+    sample_test(pass_cell_data=False)
+    sample_test(pass_point_data=False)
 
 
 @pytest.mark.parametrize('use_points', [True, False])
