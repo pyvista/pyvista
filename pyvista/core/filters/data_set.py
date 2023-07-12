@@ -3120,6 +3120,7 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        locator=None,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3149,6 +3150,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        locator : vtkAbstractCellLocator, optional
+            Prototype cell locator to perform the ``FindCell()``
+            operation.  Default uses the DataSet ``FindCell`` method.
 
         Returns
         -------
@@ -3181,6 +3186,9 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
+        if locator:
+            alg.SetCellLocatorPrototype(locator)
+
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
