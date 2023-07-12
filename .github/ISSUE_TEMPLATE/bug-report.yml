@@ -38,8 +38,13 @@ body:
         This report helps us track down bugs and will be critical to addressing your bug.
         ```python
         # Get system info
-        import pyvista as pv
-        print(pv.Report())
+        try:
+            from pyvista import report
+            print(report.Report())
+        # pyvista>=0.40
+        except:
+            from pyvista import report
+            print(report.Report())
         ```
       render: shell
     validations:
