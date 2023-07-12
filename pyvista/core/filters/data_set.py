@@ -3124,6 +3124,13 @@ class DataSetFilters:
     ):
         """Resample array data from a passed mesh onto this mesh.
 
+        For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
+        the points of `mesh1`.  This function interpolates within an
+        enclosing cell.  This contrasts with
+        :function`pyvista.DataSetFilters.interpolate` that uses a distance
+        weighting for nearby points.  If there is cell topology, `sample` is
+        usually preferred.
+
         This uses :class:`vtk.vtkResampleWithDataSet`.
 
         Parameters
@@ -3159,6 +3166,10 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Dataset containing resampled data.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.interpolate
 
         Examples
         --------
@@ -3206,8 +3217,8 @@ class DataSetFilters:
     ):
         """Interpolate values onto this mesh from a given dataset.
 
-        The input dataset is typically a point cloud. Only point data from
-        the source mesh will be interpolated onto points of this mesh. Whether
+        The ``target`` dataset is typically a point cloud. Only point data from
+        the ``target`` mesh will be interpolated onto points of this mesh. Whether
         preexisting point and cell data of this mesh are preserved in the
         output can be customized with the ``pass_point_data`` and
         ``pass_cell_data`` parameters.
@@ -3215,6 +3226,10 @@ class DataSetFilters:
         This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
+
+        If the cell topology is more useful for interpolating, e.g. from a
+        discretized FEM or CFD simulation, use
+        :func:`pyvista.DataSetFilters.sample` instead.
 
         Parameters
         ----------
@@ -3264,6 +3279,10 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Interpolated dataset.  Return type matches input.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.sample
 
         Examples
         --------
