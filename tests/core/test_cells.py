@@ -315,6 +315,15 @@ def test_init_cell_array_from_regular_cells(deep, cells):
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
 
 
+def test_set_shallow_regular_cells():
+    points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
+    meshes = [pyvista.PolyData.from_regular_faces(points, faces, deep=False) for _ in range(2)]
+
+    for m in meshes:
+        assert np.array_equal(m.regular_faces, faces)
+
+
 def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
     idarr = numpy_to_idarr(mask)

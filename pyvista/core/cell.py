@@ -492,6 +492,8 @@ class CellArray(_vtk.vtkCellArray):
 
     def __init__(self, cells=None, n_cells=None, deep=False):
         """Initialize a vtkCellArray."""
+        self.__offsets = None
+        self.__connectivity = None
         if cells is not None:
             self._set_cells(cells, n_cells, deep)
 
@@ -508,6 +510,7 @@ class CellArray(_vtk.vtkCellArray):
                 n_cells = cells.shape[0]
 
         self.SetCells(n_cells, vtk_idarr)
+        self.__offsets = self.__connectivity = None
 
     @property
     def cells(self):
@@ -529,6 +532,23 @@ class CellArray(_vtk.vtkCellArray):
         """Return the array used to store cell offsets."""
         return _get_offset_array(self)
 
+    def _set_data(self, offsets, connectivity, deep=False):
+        """Set the offsets and connectivity arrays."""
+        offsets = numpy_to_idarr(offsets, deep=deep)
+        connectivity = numpy_to_idarr(connectivity, deep=deep)
+        try:
+            self.SetData(offsets, connectivity)
+        except AttributeError:  # pragma: no cover
+            raise VTKVersionError('vtkCellArray.SetData implemented in VTK 9 or newer.')
+
+        if not deep:
+            # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
+            # garbage collected. Keep a reference to them for safety
+            self.__offsets = offsets
+            self.__connectivity = connectivity
+        else:
+            self.__offsets = self.__connectivity = None
+
     @staticmethod
     def from_arrays(offsets, connectivity, deep=False) -> CellArray:
         """Construct a vtkCellArray from offsets and connectivity arrays.
@@ -546,9 +566,7 @@ class CellArray(_vtk.vtkCellArray):
             Default is ``False``.
         """
         cellarr = CellArray()
-        offsets = numpy_to_idarr(offsets, deep=deep)
-        connectivity = numpy_to_idarr(connectivity, deep=deep)
-        cellarr.SetData(offsets, connectivity)
+        cellarr._set_data(offsets, connectivity, deep=deep)
         return cellarr
 
     @property
@@ -569,7 +587,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(cls, cells, deep=True):
+    def from_regular_cells(cls, cells, deep=False):
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -587,18 +605,10 @@ class CellArray(_vtk.vtkCellArray):
         """
         cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
         connectivity = numpy_to_idarr(cells, deep=deep)
-
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
-        offsets = numpy_to_idarr(
-            offsets, deep=True
-        )  # Since we're creating offsets on the fly here, force deep copy
+        offsets = numpy_to_idarr(cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE))
         cellarr = cls()
-        try:
-            cellarr.SetData(offsets, connectivity)
-        except AttributeError:  # pragma: no cover
-            raise VTKVersionError('vtkCellArray.SetData implemented in VTK 9 or newer.')
-
+        cellarr._set_data(offsets, connectivity, deep=deep)
         return cellarr
 
 
