@@ -39,8 +39,8 @@ body:
         ```python
         # Get system info
         try:
-            from pyvista import report
-            print(report.Report())
+            import pyvista as pv
+            print(pv.Report())
         # pyvista>=0.40
         except:
             from pyvista import report
