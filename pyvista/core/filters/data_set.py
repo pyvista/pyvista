@@ -3083,8 +3083,8 @@ class DataSetFilters:
         True
 
         """
-        # deprecated in v0.40.0
-        # remove in v0.43.0
+        # deprecated in v0.41.0
+        # remove in v0.44.0
         warnings.warn(
             """probe filter is deprecated and will be removed in a future version.
             Use sample filter instead.
