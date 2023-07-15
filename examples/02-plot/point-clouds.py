@@ -4,7 +4,7 @@
 Plotting Point Clouds
 ~~~~~~~~~~~~~~~~~~~~~
 This example shows you how to plot point clouds using PyVista using both the
-``'point'`` and ``'point_gaussian'`` styles.
+``'points'`` and ``'points_gaussian'`` styles.
 
 """
 
@@ -61,7 +61,7 @@ pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos
 ###############################################################################
 # Point Cloud Plot Styles
 # ~~~~~~~~~~~~~~~~~~~~~~~
-# PyVista supports the ``'point_gaussian'`` style, which renders points as
+# PyVista supports the ``'points_gaussian'`` style, which renders points as
 # individual soft sprites. You have the option of displaying these as tight
 # "spheres" using ``render_points_as_spheres=True`` (default), or disabling it
 # to create softer points at the expense of render performance.
