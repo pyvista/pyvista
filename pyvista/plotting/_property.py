@@ -1147,7 +1147,7 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        from pyvista import examples  # avoid circular import
+        from pyexamples import examples  # avoid circular import
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
