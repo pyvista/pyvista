@@ -864,11 +864,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     @regular_faces.setter
     def regular_faces(self, faces: Union[List[List[int]], np.ndarray]):
         """Set the face cells from an (n_faces, face_size) array."""
-        self.faces = CellArray.from_regular_cells(faces, deep=True)
+        self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
     def from_regular_faces(
-        cls, points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=True
+        cls, points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=False
     ):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
 
@@ -880,8 +880,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         faces : numpy.ndarray or sequence[sequence[int]]
             A (n_faces, face_size) array of face indices. For a triangle mesh, face_size = 3.
 
-        deep : bool, optional
-            Whether to deep copy the faces array into vtkCellArray connectivity data. Default `True`.
+        deep : bool, optional, default: False
+            Whether to deep copy the faces array into vtkCellArray connectivity data.
 
         Returns
         -------

@@ -557,7 +557,6 @@ class CellArray(_vtk.vtkCellArray):
 
         deep : bool, default: False
             Whether to deep copy the array data into the vtk arrays.
-            Default is ``False``.
         """
         cellarr = CellArray()
         cellarr._set_data(offsets, connectivity, deep=deep)
@@ -587,11 +586,10 @@ class CellArray(_vtk.vtkCellArray):
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`
+            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
 
         deep : bool, default: False
-            Whether to deep copy the cell array data into the vtk connectivity array
-            Default is ``True``.
+            Whether to deep copy the cell array data into the vtk connectivity array.
 
         Returns
         -------
