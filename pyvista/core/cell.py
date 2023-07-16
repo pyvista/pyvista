@@ -541,13 +541,10 @@ class CellArray(_vtk.vtkCellArray):
         except AttributeError:  # pragma: no cover
             raise VTKVersionError('vtkCellArray.SetData implemented in VTK 9 or newer.')
 
-        if not deep:
-            # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
-            # garbage collected. Keep a reference to them for safety
-            self.__offsets = offsets
-            self.__connectivity = connectivity
-        else:
-            self.__offsets = self.__connectivity = None
+        # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
+        # garbage collected. Keep a reference to them for safety
+        self.__offsets = offsets
+        self.__connectivity = connectivity
 
     @staticmethod
     def from_arrays(offsets, connectivity, deep=False) -> CellArray:
