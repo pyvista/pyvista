@@ -598,11 +598,10 @@ class CellArray(_vtk.vtkCellArray):
         pyvista.CellArray
         """
         cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
-        connectivity = numpy_to_idarr(cells, deep=deep)
         n_cells, cell_size = cells.shape
-        offsets = numpy_to_idarr(cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE))
+        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
         cellarr = cls()
-        cellarr._set_data(offsets, connectivity, deep=deep)
+        cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
 
