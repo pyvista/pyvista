@@ -536,10 +536,7 @@ class CellArray(_vtk.vtkCellArray):
         """Set the offsets and connectivity arrays."""
         offsets = numpy_to_idarr(offsets, deep=deep)
         connectivity = numpy_to_idarr(connectivity, deep=deep)
-        try:
-            self.SetData(offsets, connectivity)
-        except AttributeError:  # pragma: no cover
-            raise VTKVersionError('vtkCellArray.SetData implemented in VTK 9 or newer.')
+        self.SetData(offsets, connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
         # garbage collected. Keep a reference to them for safety
@@ -617,10 +614,7 @@ class CellArray(_vtk.vtkCellArray):
 
 def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
     """Return the array with the point ids that define the cells' connectivity."""
-    try:
-        return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
-    except AttributeError:  # pragma: no cover
-        raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
+    return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
 def _get_offset_array(cellarr: _vtk.vtkCellArray):
