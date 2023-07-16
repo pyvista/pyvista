@@ -32,6 +32,7 @@ dependencies = [
     'pooch',
     'scooby>=0.5.1',
     'vtk',  # keep without version constraints
+    'pyvista-examples'
 ]
 dynamic = ['version']
 

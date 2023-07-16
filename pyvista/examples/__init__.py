@@ -1,7 +1,7 @@
 """Examples module."""
 # flake8: noqa: F401
 
-from . import gltf, planets, vrml
-from .cells import plot_cell
-from .downloads import *
-from .examples import *
+from pvexamples import gltf, planets, vrml
+from pvexamples.cells import plot_cell
+from pvexamples.downloads import *
+from pvexamples.examples import *
