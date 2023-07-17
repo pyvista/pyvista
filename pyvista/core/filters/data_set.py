@@ -8,7 +8,12 @@ import numpy as np
 
 import pyvista
 import pyvista.core._vtk_core as _vtk
-from pyvista.core.errors import AmbiguousDataError, MissingDataError, VTKVersionError
+from pyvista.core.errors import (
+    AmbiguousDataError,
+    MissingDataError,
+    PyVistaDeprecationWarning,
+    VTKVersionError,
+)
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import (
@@ -3024,7 +3029,12 @@ class DataSetFilters:
     ):
         """Sample data values at specified point locations.
 
-        This uses :class:`vtk.vtkProbeFilter`.
+        .. deprecated:: 0.41.0
+          `probe` will be removed in a future version. Use
+          :func:`pyvista.DataSetFilters.sample` instead.
+          If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
+
+        This uses :class:`vtkProbeFilter`.
 
         Parameters
         ----------
@@ -3068,11 +3078,21 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
-        >>> result = grid.probe(mesh)
-        >>> 'Spatial Point Data' in result.point_data
+        >>> result = grid.probe(mesh)  # doctest:+SKIP
+        >>> 'Spatial Point Data' in result.point_data  # doctest:+SKIP
         True
 
         """
+        # deprecated in v0.41.0
+        # remove in v0.44.0
+        warnings.warn(
+            """probe filter is deprecated and will be removed in a future version.
+            Use sample filter instead.
+            If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
+            """,
+            PyVistaDeprecationWarning,
+        )
+
         if not pyvista.is_pyvista_dataset(points):
             points = wrap(points)
         alg = _vtk.vtkProbeFilter()
@@ -3100,8 +3120,16 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        locator=None,
     ):
         """Resample array data from a passed mesh onto this mesh.
+
+        For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
+        the points of `mesh1`.  This function interpolates within an
+        enclosing cell.  This contrasts with
+        :function`pyvista.DataSetFilters.interpolate` that uses a distance
+        weighting for nearby points.  If there is cell topology, `sample` is
+        usually preferred.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
 
@@ -3130,21 +3158,40 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        locator : vtkAbstractCellLocator, optional
+            Prototype cell locator to perform the ``FindCell()``
+            operation.  Default uses the DataSet ``FindCell`` method.
+
         Returns
         -------
         pyvista.DataSet
             Dataset containing resampled data.
 
+        See Also
+        --------
+        pyvista.DataSetFilters.interpolate
+
         Examples
         --------
         Resample data from another dataset onto a sphere.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> data_to_probe = examples.load_uniform()
         >>> result = mesh.sample(data_to_probe)
         >>> result.plot(scalars="Spatial Point Data")
+
+        If sampling from a set of points represented by a ``(n, 3)``
+        shaped ``numpy.ndarray``, they need to be converted to a
+        PyVista DataSet, e.g. :class:`pyvista.PolyData`, first.
+
+        >>> import numpy as np
+        >>> points = np.array([[1.5, 5.0, 6.2], [6.7, 4.2, 8.0]])
+        >>> mesh = pv.PolyData(points)
+        >>> result = mesh.sample(data_to_probe)
+        >>> result["Spatial Point Data"]
+        pyvista_ndarray([ 46.5 , 225.12])
 
         See :ref:`resampling_example` for more examples using this filter.
 
@@ -3161,6 +3208,9 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
+        if locator:
+            alg.SetCellLocatorPrototype(locator)
+
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -3178,8 +3228,8 @@ class DataSetFilters:
     ):
         """Interpolate values onto this mesh from a given dataset.
 
-        The input dataset is typically a point cloud. Only point data from
-        the source mesh will be interpolated onto points of this mesh. Whether
+        The ``target`` dataset is typically a point cloud. Only point data from
+        the ``target`` mesh will be interpolated onto points of this mesh. Whether
         preexisting point and cell data of this mesh are preserved in the
         output can be customized with the ``pass_point_data`` and
         ``pass_cell_data`` parameters.
@@ -3187,6 +3237,10 @@ class DataSetFilters:
         This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
+
+        If the cell topology is more useful for interpolating, e.g. from a
+        discretized FEM or CFD simulation, use
+        :func:`pyvista.DataSetFilters.sample` instead.
 
         Parameters
         ----------
@@ -3236,6 +3290,10 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Interpolated dataset.  Return type matches input.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.sample
 
         Examples
         --------
