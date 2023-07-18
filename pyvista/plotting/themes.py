@@ -36,6 +36,7 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
+import pyvista
 from pyvista.core._typing_core import Number
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
@@ -2713,12 +2714,12 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable:
+    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
-    def before_close_callback(self, value: Callable):
+    def before_close_callback(self, value: Callable[['pyvista.Plotter'], None]):
         self._before_close_callback = value
 
     def restore_defaults(self):
