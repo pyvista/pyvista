@@ -40,16 +40,20 @@ For general questions about the project, its applications, or about
 software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_
-or send one of the developers an email. The project support team can be
-reached at info@pyvista.org
 
-For more technical questions, you are welcome to create an issue on the
-`issues page <https://github.com/pyvista/pyvista/issues>`_ which we
-will address promptly. Through posting on the issues page, your question
-can be addressed by community members with the needed expertise and the
-information gained will remain available on the issues page for other
-users.
+You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+but Slack should be reserverd for ad hoc conversations and community engagement
+rather than technical discussions.
+
+For critical, high-level project support and engagement, please email
+info@pyvista.org - but please do not use this email for technical support.
+
+For all technical conversations, you are welcome to create an issue on the
+`Discussions page <https://github.com/pyvista/pyvista/discussions>`_
+which we will address promptly. Through posting on the Discussions page,
+your question can be addressed by community members with the needed
+expertise and the information gained will remain available for other
+users to find.
 
 Reporting Bugs
 --------------
