@@ -45,11 +45,6 @@ def __getattr__(name):
     """
     from pyvista.core.errors import PyVistaDeprecationWarning
 
-    try:
-        return globals()[name]
-    except KeyError:
-        pass
-
     for module in _MODULES:
         feature, import_path = _try_import(module, name)
         if feature is not None:

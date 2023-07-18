@@ -71,11 +71,6 @@ def __getattr__(name):
         If the attribute is not found.
 
     """
-    try:
-        return globals()[name]
-    except KeyError:
-        pass
-
     import importlib
     import inspect
 
