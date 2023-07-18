@@ -1,6 +1,7 @@
 """PyVista package for 3D plotting and mesh analysis."""
 # flake8: noqa: F401
 import os
+import sys
 import warnings
 
 from pyvista._plot import plot
@@ -84,10 +85,12 @@ def __getattr__(name):
     if name in allow:
         return importlib.import_module(f'pyvista.{name}')
 
-    import pyvista.plotting
+    # avoid recursive import
+    if 'pyvista.plotting' not in sys.modules:
+        import pyvista.plotting
 
     try:
-        feature = inspect.getattr_static(pyvista.plotting, name)
+        feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError as e:
         raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 
