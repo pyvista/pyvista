@@ -42,7 +42,7 @@ software usage, please create a discussion in the
 repository where the community can collectively address your questions.
 
 You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
-but Slack should be reserverd for ad hoc conversations and community engagement
+but Slack should be reserved for ad hoc conversations and community engagement
 rather than technical discussions.
 
 For critical, high-level project support and engagement, please email
