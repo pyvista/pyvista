@@ -6,9 +6,9 @@ import shutil
 import pyvista
 
 BUILDING_GALLERY_ERROR_MSG = (
-    'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
-    'images within sphinx_gallery or when building documentation using the '
-    'pyvista-plot directive.'
+    "pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture "
+    "images within sphinx_gallery or when building documentation using the "
+    "pyvista-plot directive."
 )
 
 
@@ -36,7 +36,7 @@ def html_rst(figure_list, sources_dir, fig_titles='', srcsetpaths=None):
         srcsetpaths = [{0: fl} for fl in figure_list]
 
     figure_paths = [
-        os.path.relpath(figure_path, sources_dir).replace(os.sep, '/').lstrip('/')
+        os.path.relpath(figure_path, sources_dir).replace(os.sep, "/").lstrip("/")
         for figure_path in figure_list
     ]
 
@@ -44,9 +44,9 @@ def html_rst(figure_list, sources_dir, fig_titles='', srcsetpaths=None):
     if len(figure_paths) == 1:
         hinames = srcsetpaths[0]
         srcset = _get_srcset_st(sources_dir, hinames)
-        images_rst = "\n.. offlineviewer:: {}\n\n".format(srcset.lstrip('/'))
+        images_rst = "\n.. offlineviewer:: {}\n\n".format(srcset.lstrip("/"))
     elif len(figure_paths) > 1:
-        raise RuntimeError('Only one figure per output is supported for now.')
+        raise RuntimeError("Only one figure per output is supported for now.")
 
     return images_rst
 
@@ -80,7 +80,7 @@ class Scraper:
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for _, plotter in figures.items():
             fname = next(image_path_iterator)
-            if hasattr(plotter, '_gif_filename'):
+            if hasattr(plotter, "_gif_filename"):
                 # move gif to fname
                 fname = fname[:-3] + "gif"
                 shutil.move(plotter._gif_filename, fname)
@@ -123,9 +123,9 @@ class DynamicScraper:
             # else:
             plotter.screenshot(fname)  # produce PNG for thumbnail
             fname = fname[:-3] + "vtksz"
-            if not hasattr(plotter, "last_vtksz"):
+            if plotter.last_vtksz is None:
                 raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
-            with open(fname, 'wb') as f:
+            with open(fname, "wb") as f:
                 f.write(plotter.last_vtksz)
             image_names.append(fname)
         pyvista.close_all()  # close and clear all plotters
