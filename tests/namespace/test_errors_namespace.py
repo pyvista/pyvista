@@ -18,12 +18,28 @@ from pyvista.core.errors import PyVistaDeprecationWarning
         'PyVistaFutureWarning',
         'PyVistaPipelineError',
         'VTKVersionError',
+    ],
+)
+def test_core_errors_namespace(name):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match='now imported as: `from pyvista.core.errors import'
+    ):
+        import pyvista.errors as errors
+
+        assert hasattr(errors, name)
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
         'InvalidCameraError',
         'RenderWindowUnavailable',
     ],
 )
-def test_utilities_namespace(name):
-    with pytest.warns(PyVistaDeprecationWarning):
+def test_plotting_errors_namespace(name):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match='now imported as: `from pyvista.plotting.errors import'
+    ):
         import pyvista.errors as errors
 
         assert hasattr(errors, name)
