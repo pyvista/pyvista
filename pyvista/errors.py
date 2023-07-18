@@ -35,10 +35,12 @@ def __getattr__(name):
         If the attribute is not found in ``globals()`` and also could not be
         imported from the modules in ``_MODULES``.
 
+    Warns
+    -----
     PyVistaDeprecationWarning
         If the attribute has been found via importing from the modules in
         ``_MODULES``, as this implies that the feature has been moved from
-        pyvista.utilities.
+        ``pyvista.utilities``.
 
     """
     from pyvista.core.errors import PyVistaDeprecationWarning
