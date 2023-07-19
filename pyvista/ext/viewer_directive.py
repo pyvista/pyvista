@@ -17,12 +17,13 @@ class OfflineViewerDirective(Directive):
     has_content = True
 
     def run(self):
-        source_file = self.arguments[0]
+        source_dir = self.state.document.settings.env.app.srcdir
+        build_dir = self.state.document.settings.env.app.outdir
+
+        source_file = os.path.join(source_dir, self.arguments[0])
         if not os.path.isfile(source_file):
             logger.warn(f'Source file {source_file} does not exist.')
             return []
-
-        build_dir = self.state.document.settings.env.app.outdir
 
         # copy viewer HTML to _static
         static_path = pathlib.Path(build_dir) / '_static'
