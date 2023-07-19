@@ -7,13 +7,13 @@ imageio-ffmpeg==0.4.8
 ipygany==0.5.0
 ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
-jupyterlab==4.0.2
+jupyterlab==4.0.3
 lxml==4.9.3
 meshio==5.3.4
 mypy==1.4.1
 mypy-extensions==1.0.0
 numpydoc==1.5.0
-osmnx==1.5.0
+osmnx==1.5.1
 panel==0.14.2
 param==1.13.0  # due to panel bug
 pydata-sphinx-theme==0.13.3
@@ -33,6 +33,6 @@ sphinxcontrib-websupport==1.2.4
 sympy==1.12
 trame==2.5.0
 trame-client==2.9.4
-trame-server==2.11.4
+trame-server==2.11.5
 trame-vtk==2.5.4
-trimesh==3.22.3
+trimesh==3.22.4

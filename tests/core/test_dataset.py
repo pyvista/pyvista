@@ -14,8 +14,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista import examples
 from pyvista.core.dataset import DataSet
-from pyvista.core.errors import VTKVersionError
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.examples import (
     load_airplane,
     load_explicit_structured,
@@ -212,24 +211,18 @@ def test_copy_metadata(globe):
     assert globe_shallow._active_scalars_info is globe._active_scalars_info
     assert globe_shallow._active_vectors_info is globe._active_vectors_info
     assert globe_shallow._active_tensors_info is globe._active_tensors_info
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert globe_shallow.textures is globe.textures
     assert globe_shallow.point_data['bitarray'].dtype == np.bool_
     assert globe_shallow.point_data['complex_data'].dtype == np.complex128
     assert globe_shallow._association_bitarray_names is globe._association_bitarray_names
     assert globe_shallow._association_complex_names is globe._association_complex_names
 
     globe_deep = globe.copy(deep=True)
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert globe_deep.textures is not globe.textures
     assert globe_deep._active_scalars_info is not globe._active_scalars_info
     assert globe_deep._active_vectors_info is not globe._active_vectors_info
     assert globe_deep._active_tensors_info is not globe._active_tensors_info
     assert globe_deep._active_scalars_info == globe._active_scalars_info
     assert globe_deep._active_vectors_info == globe._active_vectors_info
     assert globe_deep._active_tensors_info == globe._active_tensors_info
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert globe_deep.textures == globe.textures
     assert globe_deep.point_data['bitarray'].dtype == np.bool_
     assert globe_deep.point_data['complex_data'].dtype == np.complex128
     assert (
@@ -240,15 +233,6 @@ def test_copy_metadata(globe):
         globe_deep._association_complex_names['POINT']
         is not globe._association_complex_names['POINT']
     )
-
-    with pytest.warns(PyVistaDeprecationWarning):
-        globe.clear_textures()
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert not globe.textures
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert globe_deep.textures
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert not globe_shallow.textures
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)

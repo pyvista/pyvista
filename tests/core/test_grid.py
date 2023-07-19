@@ -8,7 +8,7 @@ import vtk
 
 import pyvista
 from pyvista import CellType, examples
-from pyvista.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
