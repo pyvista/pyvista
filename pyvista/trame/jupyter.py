@@ -93,7 +93,7 @@ def launch_server(server=None, port=None, host=None):
     ----------
     server : str, optional
         By default this uses :attr:`pyvista.global_theme.trame.jupyter_server_name
-        <pyvista.themes._TrameConfig.jupyter_server_name>`, which by default is
+        <pyvista.plotting.themes._TrameConfig.jupyter_server_name>`, which by default is
         set to ``'pyvista-jupyter'``.
 
         If a server name is given and such server is not available yet, it will

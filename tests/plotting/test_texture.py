@@ -4,8 +4,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import VTKVersionError
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.plotting.texture import numpy_to_texture
 
 
@@ -224,15 +223,6 @@ def test_texture_coordinates():
     # now grab the texture coordinates
     foo = mesh.active_t_coords
     assert np.allclose(foo, t_coords)
-    texture = pv.Texture(examples.mapfile)
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.textures['map'] = texture
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert mesh.textures['map'] is not None
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.clear_textures()
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert len(mesh.textures) == 0
 
 
 def test_multiple_texture_coordinates():
@@ -240,26 +230,6 @@ def test_multiple_texture_coordinates():
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
     assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
-    texture = pv.Texture(examples.mapfile)
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.textures["tex_a"] = texture.copy()
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.textures["tex_b"] = texture.copy()
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh._activate_texture("tex_a")
-    assert np.allclose(mesh.active_t_coords, mesh["tex_a"])
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh._activate_texture("tex_b")
-    assert np.allclose(mesh.active_t_coords, mesh["tex_b"])
-
-    # Now test copying
-    cmesh = mesh.copy()
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert len(cmesh.textures) == 2
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert "tex_a" in cmesh.textures
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert "tex_b" in cmesh.textures
 
 
 def test_inplace_no_overwrite_texture_coordinates():
@@ -268,11 +238,3 @@ def test_inplace_no_overwrite_texture_coordinates():
     mesh.texture_map_to_sphere(inplace=True)
     test = mesh.texture_map_to_plane(inplace=True)
     assert np.allclose(truth.active_t_coords, test.active_t_coords)
-
-
-def test_activate_texture_none():
-    grid = pv.UnstructuredGrid(examples.hexbeamfile)
-    with pytest.warns(UserWarning, match=r'not a key'):
-        assert grid._activate_texture('not a key') is None
-    with pytest.warns(UserWarning, match=r'No textures associated'):
-        assert grid._activate_texture(True) is None

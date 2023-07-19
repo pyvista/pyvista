@@ -547,7 +547,6 @@ the ``verify_image_cache`` fixture can be utilized:
 .. code:: python
 
 
-       @skip_no_plotting
        def test_add_background_image_not_global(verify_image_cache):
            verify_image_cache.skip = True  # Turn off caching
            plotter = pyvista.Plotter()
