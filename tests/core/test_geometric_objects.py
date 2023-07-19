@@ -40,6 +40,14 @@ def test_plane():
     surf = pyvista.Plane()
     assert np.any(surf.points)
     assert np.any(surf.faces)
+    assert np.allclose(surf.point_normals[0], (0, 0, 1))  # has correct normal
+    assert np.allclose(surf.center, (0, 0, 0))  # has correct center
+
+    # test correct size
+    i_sz = 2
+    j_sz = 3
+    surf = pyvista.Plane(i_size=i_sz, j_size=j_sz)
+    assert np.allclose(surf.bounds, (-i_sz / 2, i_sz / 2, -j_sz / 2, j_sz / 2, 0.0, 0.0))
 
 
 def test_line():
