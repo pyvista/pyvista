@@ -6,7 +6,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 has_trame = True
 try:
@@ -249,10 +248,10 @@ def test_export_multi(tmpdir, skip_check_gc):
 def test_export_texture(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = examples.load_globe()
+    texture = examples.load_globe_texture()
     # Create the scene
     plotter = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning):
-        plotter.add_mesh(data, texture=True)
+    plotter.add_mesh(data, texture=texture)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}')
