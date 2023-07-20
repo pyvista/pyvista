@@ -330,8 +330,10 @@ def test_voxelize_throws_point_cloud(hexbeam):
 def test_report():
     report = pyvista.Report(gpu=True)
     assert report is not None
+    assert not "GPU Details : None" in report.__repr__()
     report = pyvista.Report(gpu=False)
     assert report is not None
+    assert "GPU Details : None" in report.__repr__()
 
 
 def test_line_segments_from_points():
