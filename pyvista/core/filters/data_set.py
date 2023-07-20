@@ -406,7 +406,7 @@ class DataSetFilters:
         Nodes of this mesh which are interior to the input surface
         geometry have a negative distance, and nodes on the exterior
         have a positive distance. Nodes which intersect the input
-        surface have a distance of zero.
+        surface has a distance of zero.
 
         Parameters
         ----------
