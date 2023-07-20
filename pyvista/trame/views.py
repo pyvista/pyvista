@@ -10,6 +10,7 @@ CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. D
 
 
 def get_server(*args, **kwargs):
+    """Override trame's get_server."""
     server = trame_get_server(*args, **kwargs)
     server.client_type = 'vue2'
     return server

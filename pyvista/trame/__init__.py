@@ -1,5 +1,6 @@
 """Trame interface for PyVista."""
 import logging
+
 logging.getLogger('trame.app').disabled = True
 
 from pyvista.trame.jupyter import elegantly_launch, launch_server, show_trame
