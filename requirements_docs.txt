@@ -32,7 +32,6 @@ sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.4
 sympy==1.12
 trame==2.5.2
-trame-client==2.10.0
-trame-server==2.11.7
-trame-vtk==2.5.7
+trame-vuetify==2.3.1
+trame-vtk==2.5.8
 trimesh==3.22.5
