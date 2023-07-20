@@ -198,12 +198,11 @@ def load_globe():
 
     """
     globe = pyvista.PolyData(globefile)
-    globe._textures['2k_earth_daymap'] = load_globe_texture()
     return globe
 
 
 def load_globe_texture():
-    """Load a vtk.vtkTexture that can be applied to the globe source.
+    """Load a pyvista.Texture that can be applied to the globe source.
 
     Returns
     -------
