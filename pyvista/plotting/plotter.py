@@ -136,7 +136,9 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pyvista.global_theme.jupyter_backend in ['client',]:
+        if pyvista.global_theme.jupyter_backend in [
+            'client',
+        ]:
             return
 
         # Check if VTK has EGL support

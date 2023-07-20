@@ -691,11 +691,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
                 self._cmap = cmap
-            if self._theme is None:
-                jupyter_backend = pv.global_theme.jupyter_backend
-            else:
-                jupyter_backend = self._theme.jupyter_backend
-
             if categories:
                 if categories is True:
                     n_colors = len(np.unique(scalars))
