@@ -50,6 +50,8 @@ jupyter = [
     'ipywidgets',
     'jupyter-server-proxy',
     'nest_asyncio',
+    'panel',
+    'pythreejs',
     'trame>=2.5.2',
     'trame-vuetify>=2.3.1',
     'trame-vtk>=2.5.8',
