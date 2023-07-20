@@ -1591,7 +1591,7 @@ def test_link_views_camera_set(sphere, verify_image_cache):
 
 
 def test_orthographic_slicer(uniform):
-    uniform.set_active_scalars('Spatial Cell Data')
+    uniform.set_active_scalars('Spatial Point Data')
     slices = uniform.slice_orthogonal()
 
     # Orthographic Slicer
