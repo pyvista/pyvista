@@ -162,12 +162,10 @@ class Report(scooby.Report):
                IPython : 7.31.0
               colorcet : 3.0.1
                cmocean : 2.0
-            ipyvtklink : 0.2.3
                  scipy : 1.9.1
                   tqdm : 4.64.1
                 meshio : 5.3.4
             jupyterlab : 3.4.7
-             pythreejs : Version unknown
 
     """
 
@@ -186,13 +184,11 @@ class Report(scooby.Report):
             'IPython',
             'colorcet',
             'cmocean',
-            'ipyvtklink',
             'ipywidgets',
             'scipy',
             'tqdm',
             'meshio',
             'jupyterlab',
-            'pythreejs',
             'pytest_pyvista',
             'trame',
             'trame_client',
