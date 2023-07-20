@@ -19,7 +19,6 @@ except ImportError:  # pragma: no cover
 
 from vtkmodules.vtkRenderingOpenGL2 import (
     vtkCameraPass,
-    vtkCompositePolyDataMapper2,
     vtkDepthOfFieldPass,
     vtkEDLShading,
     vtkGaussianBlurPass,

@@ -517,7 +517,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             yield self[ii]
 
 
-class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
+class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
     """Composite PolyData mapper.
 
     Parameters
@@ -812,6 +812,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             if dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')
                 values = np.array([0, 1])
+                print('n_colors is 2')
                 n_colors = 2
                 scalar_bar_args.setdefault('n_labels', 0)
                 self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
