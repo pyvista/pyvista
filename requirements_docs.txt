@@ -33,6 +33,6 @@ sphinxcontrib-websupport==1.2.4
 sympy==1.12
 trame==2.5.0
 trame-client==2.10.0
-trame-server==2.11.5
+trame-server==2.11.7
 trame-vtk==2.5.7
 trimesh==3.22.5
