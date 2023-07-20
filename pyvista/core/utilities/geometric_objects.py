@@ -310,7 +310,7 @@ def Sphere(
     start_phi=0.0,
     end_phi=180.0,
 ):
-    """Create a vtk Sphere.
+    """Create a sphere.
 
     Parameters
     ----------
@@ -321,7 +321,8 @@ def Sphere(
         Center in ``[x, y, z]``.
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction the top of the sphere points to in ``[x, y, z]``.
+        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees latitude.
 
     theta_resolution : int, default: 30
         Set the number of points in the longitude direction (ranging
@@ -332,16 +333,16 @@ def Sphere(
         ``start_phi`` to ``end_phi``).
 
     start_theta : float, default: 0.0
-        Starting longitude angle.
+        Starting longitude angle in degrees ``[0, 360]``.
 
     end_theta : float, default: 360.0
-        Ending longitude angle.
+        Ending longitude angle in degrees ``[0, 360]``.
 
     start_phi : float, default: 0.0
-        Starting latitude angle.
+        Starting latitude angle in degrees ``[0, 180]``.
 
     end_phi : float, default: 180.0
-        Ending latitude angle.
+        Ending latitude angle in degrees ``[0, 180]``.
 
     Returns
     -------
@@ -365,6 +366,11 @@ def Sphere(
     >>> sphere = pyvista.Sphere(end_theta=90)
     >>> out = sphere.plot(show_edges=True)
 
+    Create a hemisphere by setting ``end_phi``.
+
+    >>> sphere = pyvista.Sphere(end_phi=90)
+    >>> out = sphere.plot(show_edges=True)
+
     """
     sphere = _vtk.vtkSphereSource()
     sphere.SetRadius(radius)
@@ -376,7 +382,7 @@ def Sphere(
     sphere.SetEndPhi(end_phi)
     sphere.Update()
     surf = wrap(sphere.GetOutput())
-    surf.rotate_y(-90, inplace=True)
+    surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
 

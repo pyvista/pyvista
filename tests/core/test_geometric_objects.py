@@ -35,6 +35,36 @@ def test_sphere():
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
+    # test direction points from south pole to north pole
+    direction = (0, 0, 1)
+    north_pole = pyvista.Sphere(direction=direction, start_phi=0, end_phi=0).points[0]
+    south_pole = pyvista.Sphere(direction=direction, start_phi=180, end_phi=180).points[0]
+    assert np.allclose(direction, north_pole - south_pole)
+
+    # test phi
+    atol = 1e-8
+    north_hemisphere = pyvista.Sphere(start_phi=0, end_phi=90)
+    assert np.all(north_hemisphere.points[:, 2] >= 0 - atol)  # north is above XY plane
+    south_hemisphere = pyvista.Sphere(start_phi=90, end_phi=180)
+    assert np.all(south_hemisphere.points[:, 2] < 0 + atol)  # south is below XY plane
+
+    # test theta
+    quadrant1 = pyvista.Sphere(start_theta=0, end_theta=90)
+    assert np.all(quadrant1.points[:, 0] >= 0 - atol)  # +X
+    assert np.all(quadrant1.points[:, 1] >= 0 - atol)  # +Y
+
+    quadrant2 = pyvista.Sphere(start_theta=90, end_theta=180)
+    assert np.all(quadrant2.points[:, 0] <= 0 + atol)  # -X
+    assert np.all(quadrant2.points[:, 1] >= 0 - atol)  # +Y
+
+    quadrant3 = pyvista.Sphere(start_theta=180, end_theta=270)
+    assert np.all(quadrant3.points[:, 0] <= 0 + atol)  # -X
+    assert np.all(quadrant3.points[:, 1] <= 0 + atol)  # -Y
+
+    quadrant4 = pyvista.Sphere(start_theta=270, end_theta=360)
+    assert np.all(quadrant4.points[:, 0] >= 0 - atol)  # +X
+    assert np.all(quadrant4.points[:, 1] <= 0 + atol)  # -Y
+
 
 def test_plane():
     surf = pyvista.Plane()
