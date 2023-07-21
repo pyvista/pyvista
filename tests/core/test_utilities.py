@@ -559,14 +559,8 @@ def test_vtk_error_catcher():
 
 
 def test_axis_angle_rotation():
-    # rotate cube corners around body diagonal
-    points = np.array(
-        [
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ]
-    )
+    # rotate points around body diagonal
+    points = np.eye(3)
     axis = [1, 1, 1]
 
     # no-op case
@@ -608,44 +602,29 @@ def test_axis_angle_rotation():
             points_out = transformations.apply_transformation_to_points(trans, points_out)
         return points_out
 
-    points = np.array(
-        [
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ]
-    )
+    points = np.eye(3)
     axis = [1, 0, 0]  # rotate_x
-    angle = 90
-    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    actual = _apply_transformation_n_times(points, axis, 90, 4)
     assert np.array_equal(actual, points)
-    angle = 180
-    actual = _apply_transformation_n_times(points, axis, angle, 2)
+    actual = _apply_transformation_n_times(points, axis, 180, 2)
     assert np.array_equal(actual, points)
-    angle = 270
-    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    actual = _apply_transformation_n_times(points, axis, 270, 4)
     assert np.array_equal(actual, points)
 
     axis = [0, 1, 0]  # rotate_y
-    angle = 90
-    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    actual = _apply_transformation_n_times(points, axis, 90, 4)
     assert np.array_equal(actual, points)
-    angle = 180
-    actual = _apply_transformation_n_times(points, axis, angle, 2)
+    actual = _apply_transformation_n_times(points, axis, 180, 2)
     assert np.array_equal(actual, points)
-    angle = 270
-    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    actual = _apply_transformation_n_times(points, axis, 270, 4)
     assert np.array_equal(actual, points)
 
     axis = [0, 0, 1]  # rotate_z
-    angle = 90
-    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    actual = _apply_transformation_n_times(points, axis, 90, 4)
     assert np.array_equal(actual, points)
-    angle = 180
-    actual = _apply_transformation_n_times(points, axis, angle, 2)
+    actual = _apply_transformation_n_times(points, axis, 180, 2)
     assert np.array_equal(actual, points)
-    angle = 270
-    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    actual = _apply_transformation_n_times(points, axis, 270, 4)
     assert np.array_equal(actual, points)
 
 
