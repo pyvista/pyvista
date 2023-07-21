@@ -2,7 +2,7 @@ cmocean
 colorcet
 imageio
 imageio-ffmpeg
-ipywidgets<8.0.0
+ipywidgets<9.0.0
 jupyter-server-proxy
 jupyterlab<4.0.0
 meshio
