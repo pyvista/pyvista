@@ -862,7 +862,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_regular_cells(self.GetPolys())
 
     @regular_faces.setter
-    def regular_faces(self, faces: Union[List[List[int]], np.ndarray]):
+    def regular_faces(self, faces: Union[np.ndarray, Sequence[Sequence[int]]]):
         """Set the face cells from an (n_faces, face_size) array."""
         self.faces = CellArray.from_regular_cells(faces)
 
