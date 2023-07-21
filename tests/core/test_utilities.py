@@ -598,6 +598,56 @@ def test_axis_angle_rotation():
     with pytest.raises(ValueError):
         transformations.axis_angle_rotation([0, 0, 0], angle)
 
+    # exact transformation cases (90, 180, 270 degrees)
+    # test that applying a rotation many times (up to a multiple of 360)
+    # yields the exact same input
+    def _apply_transformation_n_times(points_in, axis_in, angle_in, n):
+        points_out = points_in.copy()
+        trans = transformations.axis_angle_rotation(axis_in, angle_in)
+        for _ in range(n):
+            points_out = transformations.apply_transformation_to_points(trans, points_out)
+        return points_out
+
+    points = np.array(
+        [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ]
+    )
+    axis = [1, 0, 0]  # rotate_x
+    angle = 90
+    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    assert np.array_equal(actual, points)
+    angle = 180
+    actual = _apply_transformation_n_times(points, axis, angle, 2)
+    assert np.array_equal(actual, points)
+    angle = 270
+    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    assert np.array_equal(actual, points)
+
+    axis = [0, 1, 0]  # rotate_y
+    angle = 90
+    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    assert np.array_equal(actual, points)
+    angle = 180
+    actual = _apply_transformation_n_times(points, axis, angle, 2)
+    assert np.array_equal(actual, points)
+    angle = 270
+    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    assert np.array_equal(actual, points)
+
+    axis = [0, 0, 1]  # rotate_z
+    angle = 90
+    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    assert np.array_equal(actual, points)
+    angle = 180
+    actual = _apply_transformation_n_times(points, axis, angle, 2)
+    assert np.array_equal(actual, points)
+    angle = 270
+    actual = _apply_transformation_n_times(points, axis, angle, 4)
+    assert np.array_equal(actual, points)
+
 
 def test_reflection():
     # reflect points of a square across a diagonal
