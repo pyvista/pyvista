@@ -557,10 +557,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from trame.app import get_server
-
             from pyvista.trame import PyVistaLocalView
             from pyvista.trame.jupyter import elegantly_launch
+            from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame to export')
 
