@@ -2,10 +2,18 @@
 import io
 import weakref
 
+from trame.app import get_server as trame_get_server
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
+
+
+def get_server(*args, **kwargs):
+    """Override trame's get_server."""
+    server = trame_get_server(*args, **kwargs)
+    server.client_type = 'vue2'
+    return server
 
 
 class _BasePyVistaView:
