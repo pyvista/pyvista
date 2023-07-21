@@ -2195,7 +2195,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pyvista.Sphere()
         >>> index = mesh.find_closest_point((0, 1, 0))
         >>> index
-        212
+        239
 
         Get the coordinate of that point.
 
@@ -2278,7 +2278,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> point = [0.1, 0.2, 0.3]
         >>> index = mesh.find_closest_cell(point)
         >>> index
-        591
+        338
 
         Make sure that this cell indeed is the closest to
         ``[0.1, 0.2, 0.3]``.
@@ -2288,7 +2288,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> relative_position = cell_centers.points - point
         >>> distance = np.linalg.norm(relative_position, axis=1)
         >>> np.argmin(distance)
-        591
+        338
 
         Find the nearest cells to several random points that
         are centered on the origin.
@@ -2464,7 +2464,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
-        array([842, 843, 896, 897])
+        array([  86,   87, 1652, 1653])
 
         """
         if np.array(pointa).size != 3:
@@ -2519,7 +2519,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
-        array([896])
+        array([  86, 1653])
 
         """
         if pyvista.vtk_version_info < (9, 2, 0):

@@ -260,9 +260,9 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).points
-        array([[-5.40595092e-02,  0.00000000e+00, -4.97068971e-01],
-               [-5.28781787e-02,  1.12396041e-02, -4.97068971e-01],
-               [-5.55111512e-17,  0.00000000e+00, -5.00000000e-01]])
+        array([[0.05405951, 0.        , 0.49706897]
+               [0.05287818, 0.0112396 , 0.49706897],
+               [0.        , 0.        , 0.5       ]])
         """
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
@@ -370,7 +370,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
-        (-0.05405950918793678, -5.551115123125783e-17, 0.0, 0.011239604093134403, -0.5, -0.49706897139549255)
+        (0.0, 0.05405950918793678, 0.0, 0.011239604093134403, 0.49706897139549255, 0.5)
 
         """
         return self.GetBounds()
@@ -386,7 +386,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).center
-        (-0.0356, 0.00375, -0.498)
+        (0.03564589594801267, 0.0037465346977114677, 0.49804598093032837)
 
         """
         para_center = [0.0, 0.0, 0.0]
