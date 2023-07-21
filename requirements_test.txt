@@ -25,7 +25,7 @@ Sphinx<6.3.0
 sphinx-gallery<0.14.0
 sympy<1.13.0
 tqdm<4.66.0
-trame>=2.5.2,<2.6
+trame>=2.5.2,<3.1
 trame-client>=2.10.0,<2.11
 trame-server>=2.11.7,<2.12
 trame-vtk>=2.5.7,<2.6
