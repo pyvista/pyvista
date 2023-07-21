@@ -125,7 +125,7 @@ class WidgetHelper:
         color : ColorLike, optional
             Either a string, rgb sequence, or hex color string.
             Defaults to :attr:`pyvista.global_theme.font.color
-            <pyvista.themes._Font.color>`.
+            <pyvista.plotting.themes._Font.color>`.
 
         use_planes : bool, optional
             Changes the arguments passed to the callback to the planes
@@ -1174,7 +1174,7 @@ class WidgetHelper:
         color : ColorLike, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
-            <pyvista.themes._Font.color>`.
+            <pyvista.plotting.themes._Font.color>`.
 
         interaction_event : vtk.vtkCommand.EventIds, str, optional
             The VTK interaction event to use for triggering the
@@ -1304,7 +1304,7 @@ class WidgetHelper:
         color : ColorLike, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
-            <pyvista.themes._Font.color>`.
+            <pyvista.plotting.themes._Font.color>`.
 
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last

@@ -37,7 +37,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     scalars : sequence
         Sequence of scalars.
 
-    texture : vtk.vtkTexture or np.ndarray or bool, optional
+    texture : pyvista.Texture or np.ndarray, optional
         A texture to apply to the mesh.
 
     split_sharp_edges : bool

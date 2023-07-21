@@ -10,7 +10,6 @@ from pyvista.core.errors import (
     DeprecationError,
     MissingDataError,
     NotAllTrianglesError,
-    PyVistaDeprecationWarning,
     PyVistaFutureWarning,
     VTKVersionError,
 )
@@ -2054,11 +2053,6 @@ class PolyDataFilters(DataSetFilters):
 
         output["vtkOriginalPointIds"] = original_ids
 
-        # Do not copy textures from input
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=PyVistaDeprecationWarning)
-            output.clear_textures()
-
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:
             output.points[...] = output.points[::-1, :]
@@ -2392,7 +2386,7 @@ class PolyDataFilters(DataSetFilters):
 
         color : ColorLike, optional
             Color of the arrows.  Defaults to
-            :attr:`pyvista.themes.Theme.edge_color`.
+            :attr:`pyvista.plotting.themes.Theme.edge_color`.
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to

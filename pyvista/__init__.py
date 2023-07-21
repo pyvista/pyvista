@@ -1,9 +1,7 @@
 """PyVista package for 3D plotting and mesh analysis."""
 # flake8: noqa: F401
-
-MAX_N_COLOR_BARS = 10
-
 import os
+import sys
 import warnings
 
 from pyvista._plot import plot
@@ -12,25 +10,8 @@ from pyvista.core import *
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers
-from pyvista.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.jupyter import set_jupyter_backend
-from pyvista.plotting import *
-from pyvista.plotting import _typing, _vtk
-from pyvista.plotting.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
-from pyvista.themes import (
-    DocumentTheme as _GlobalTheme,
-    _rcParams,
-    _set_plot_theme_from_env,
-    load_theme,
-    set_plot_theme,
-)
-
-global_theme = _GlobalTheme()
-rcParams = _rcParams()  # raises DeprecationError when used
-
-# Set preferred plot theme
-_set_plot_theme_from_env()
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
@@ -74,3 +55,43 @@ PICKLE_FORMAT = 'xml'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
+
+MAX_N_COLOR_BARS = 10
+
+
+# Lazily import/access the plotting module
+def __getattr__(name):
+    """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
+
+    This override is implemented to prevent importing all of the plotting module
+    and GL-dependent VTK modules when importing PyVista.
+
+    Raises
+    ------
+    AttributeError
+        If the attribute is not found.
+
+    """
+    import importlib
+    import inspect
+
+    allow = {
+        'demos',
+        'examples',
+        'ext',
+        'trame',
+        'utilities',
+    }
+    if name in allow:
+        return importlib.import_module(f'pyvista.{name}')
+
+    # avoid recursive import
+    if 'pyvista.plotting' not in sys.modules:
+        import pyvista.plotting
+
+    try:
+        feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
+    except AttributeError as e:
+        raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
+
+    return feature

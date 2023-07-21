@@ -65,7 +65,7 @@ apply it globally with:
 
    Create a theme based off the DocumentTheme
 
-   >>> my_theme = pyvista.themes.DocumentTheme()
+   >>> my_theme = pyvista.plotting.themes.DocumentTheme()
    >>> my_theme.cmap = 'jet'
    >>> my_theme.show_edges = True
 

@@ -13,7 +13,7 @@ _MODULES = [
     'pyvista.plotting.texture',
     'pyvista.plotting',
     'pyvista.report',
-    'pyvista.themes',
+    'pyvista.plotting.themes',
 ]
 
 

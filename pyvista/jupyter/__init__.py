@@ -4,7 +4,7 @@
 import warnings
 
 import pyvista
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [
     'ipyvtklink',

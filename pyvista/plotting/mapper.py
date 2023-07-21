@@ -367,7 +367,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     dataset : pyvista.DataSet, optional
         Dataset to assign to this mapper.
 
-    theme : pyvista.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     Examples
