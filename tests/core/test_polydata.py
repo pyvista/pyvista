@@ -326,7 +326,7 @@ def test_append_raises(sphere: pyvista.PolyData):
 
 
 def test_merge(sphere, sphere_shifted, hexbeam):
-    merged = sphere.merge(hexbeam, progress_bar=True)
+    merged = sphere.merge(hexbeam, merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
     assert isinstance(merged, pyvista.UnstructuredGrid)
 
