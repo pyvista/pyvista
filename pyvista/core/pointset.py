@@ -5,7 +5,7 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import List, Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
