@@ -18,10 +18,10 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista.core.errors import DeprecationError
-from pyvista.errors import PyVistaDeprecationWarning, RenderWindowUnavailable
+from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
+from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
 from pyvista.plotting.opts import InterpolationType, RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
@@ -581,7 +581,7 @@ def test_set_camera_position(cpos, sphere):
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(pyvista.errors.InvalidCameraError):
+    with pytest.raises(InvalidCameraError):
         plotter.camera_position = cpos
 
 
@@ -1236,15 +1236,6 @@ def test_plot_texture():
     texture = examples.load_globe_texture()
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=texture)
-    plotter.show()
-
-
-def test_plot_texture_associated():
-    """Test adding a texture to a plot"""
-    globe = examples.load_globe()
-    plotter = pyvista.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning):
-        plotter.add_mesh(globe, texture=True)
     plotter.show()
 
 

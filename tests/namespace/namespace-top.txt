@@ -188,7 +188,7 @@ __spec__, ModuleSpec(name='pyvista', loader=<_frozen_importlib_external.SourceFi
 __version__, 0.40.dev0
 _get_sg_image_scraper, <function _get_sg_image_scraper at 0x1641c8790>
 _get_vtk_id_type, <function _get_vtk_id_type at 0x163f2cdc0>
-_rcParams, <class 'pyvista.themes._rcParams'>
+# _rcParams, <class 'pyvista.themes._rcParams'>
 _set_plot_theme_from_env, <function _set_plot_theme_from_env at 0x163f2c9d0>
 _typing, <module 'pyvista._typing' from 'pyvista/pyvista/_typing.py'>
 _version, <module 'pyvista._version' from 'pyvista/pyvista/_version.py'>
@@ -294,7 +294,7 @@ point_array, <function point_array at 0x163f3ef70>
 # pyvista, <module 'pyvista' from 'pyvista/pyvista/__init__.py'>
 pyvista_ndarray, <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
 raise_not_matching, <function raise_not_matching at 0x163f40b80>
-rcParams, None
+# rcParams, None
 read, <function read at 0x163f3e700>
 read_exodus, <function read_exodus at 0x163f3e8b0>
 read_legacy, <function read_legacy at 0x163f3e670>

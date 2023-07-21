@@ -77,8 +77,8 @@ def test_file_copier(tmpdir):
 
 def test_local_file_cache(tmpdir):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
-    basename = os.path.basename(examples.mapfile)
-    dirname = os.path.dirname(examples.mapfile)
+    basename = os.path.basename(examples.planefile)
+    dirname = os.path.dirname(examples.planefile)
     downloads.FETCHER.registry[basename] = None
 
     try:
@@ -90,8 +90,6 @@ def test_local_file_cache(tmpdir):
 
         dataset = downloads._download_and_read(basename, load=True)
         assert isinstance(dataset, pv.DataSet)
-        texture = downloads._download_and_read(basename, texture=True)
-        assert isinstance(texture, pv.Texture)
         os.remove(filename)
 
     finally:

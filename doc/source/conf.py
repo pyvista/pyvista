@@ -88,7 +88,7 @@ extensions = [
 coverage_additional_modules = [
     'pyvista',
     'pyvista.errors',
-    'pyvista.report' 'pyvista.themes',
+    'pyvista.report',
     # core
     'pyvista.core.cell',
     'pyvista.core.celltype',
@@ -156,7 +156,7 @@ coverage_additional_modules = [
     'pyvista.plotting.renderers',
     'pyvista.plotting.scalar_bars',
     'pyvista.plotting.texture',
-    'pyvista.plotting.theme',
+    'pyvista.plotting.themes',
     'pyvista.plotting.tools',
     'pyvista.plotting.volume_property',
     'pyvista.plotting.volume',
