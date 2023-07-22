@@ -3441,7 +3441,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=self.mapper)
 
-        if texture:
+        if texture is not None:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
