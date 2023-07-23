@@ -13,7 +13,7 @@ import vtk
 import pyvista
 from pyvista import examples as ex
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities import cells, fileio, transformations
+from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     copy_vtk_array,
@@ -900,3 +900,22 @@ def test_coerce_points_like_args_does_not_copy():
 def test_has_module():
     assert has_module('pytest')
     assert not has_module('not_a_module')
+
+
+def test_fit_plane_to_points():
+    points = ex.load_airplane().points
+    plane, center, normal = fit_plane_to_points(points, return_meta=True)
+
+    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
+    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
+    assert np.allclose(
+        plane.bounds,
+        [
+            139.06036376953125,
+            1654.9306640625,
+            38.0776252746582,
+            1335.2164306640625,
+            -1.4434913396835327,
+            157.70724487304688,
+        ],
+    )
