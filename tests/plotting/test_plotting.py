@@ -1239,6 +1239,7 @@ def test_plot_texture():
     plotter.show()
 
 
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
     globe = examples.load_globe()
