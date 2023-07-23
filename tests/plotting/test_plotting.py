@@ -1239,6 +1239,14 @@ def test_plot_texture():
     plotter.show()
 
 
+def test_plot_numpy_texture():
+    """Text adding a np.ndarray texture to a plot"""
+    globe = examples.load_globe()
+    texture_np = np.asarray(imageio.imread(examples.mapfile))
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(globe, texture=texture_np)
+
+
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
