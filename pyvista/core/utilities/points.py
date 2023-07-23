@@ -262,7 +262,7 @@ def fit_plane_to_points(points, return_meta=False):
     # Apply SVD to get orthogonal basis vectors to define the plane
     data = np.array(points)
     data_center = data.mean(axis=0)
-    U, S, Vh = np.linalg.svd(data - data_center)
+    _, _, Vh = np.linalg.svd(data - data_center)
     i_vector = Vh[0]
     j_vector = Vh[1]
     normal = np.cross(i_vector, j_vector)
