@@ -263,6 +263,65 @@ def test_init_cell_array(cells, n_cells, deep):
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == NCELLS
 
 
+CONNECTIVITY_LIST = [0, 1, 2, 3, 4, 5]
+OFFSETS_LIST = [0, 3, 6]
+
+
+@pytest.mark.parametrize(
+    'offsets',
+    [
+        OFFSETS_LIST,
+        np.array(OFFSETS_LIST, np.int16),
+        np.array(OFFSETS_LIST, np.int32),
+        np.array(OFFSETS_LIST, np.int64),
+    ],
+)
+@pytest.mark.parametrize(
+    'connectivity',
+    [
+        CONNECTIVITY_LIST,
+        np.array(CONNECTIVITY_LIST, np.int16),
+        np.array(CONNECTIVITY_LIST, np.int32),
+        np.array(CONNECTIVITY_LIST, np.int64),
+    ],
+)
+@pytest.mark.parametrize('deep', [False, True])
+def test_init_cell_array_from_arrays(offsets, connectivity, deep):
+    cell_array = pyvista.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
+    assert np.array_equal(np.array(connectivity), cell_array.connectivity_array)
+    assert np.array_equal(np.array(offsets), cell_array.offset_array)
+    assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(offsets) - 1
+
+
+REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
+
+
+@pytest.mark.parametrize(
+    'cells',
+    [
+        REGULAR_CELL_LIST,
+        np.array(REGULAR_CELL_LIST, np.int16),
+        np.array(REGULAR_CELL_LIST, np.int32),
+        np.array(REGULAR_CELL_LIST, np.int64),
+        np.array(np.vstack(REGULAR_CELL_LIST), order='F'),
+    ],
+)
+@pytest.mark.parametrize('deep', [False, True])
+def test_init_cell_array_from_regular_cells(cells, deep):
+    cell_array = pyvista.core.cell.CellArray.from_regular_cells(cells, deep=deep)
+    assert np.array_equal(np.array(cells), cell_array.regular_cells)
+    assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
+
+
+def test_set_shallow_regular_cells():
+    points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
+    meshes = [pyvista.PolyData.from_regular_faces(points, faces, deep=False) for _ in range(2)]
+
+    for m in meshes:
+        assert np.array_equal(m.regular_faces, faces)
+
+
 def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
     idarr = numpy_to_idarr(mask)
