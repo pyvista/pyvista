@@ -165,7 +165,7 @@ def texture():
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
     pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
-    mesh = pyvista.Sphere(direction=(0, 0, -1))
+    mesh = pyvista.Sphere()
     pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
     pl.background_color = 'w'
     return pyvista.Texture(pl.screenshot())

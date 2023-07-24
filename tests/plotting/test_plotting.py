@@ -2930,7 +2930,7 @@ def test_export_obj(tmpdir, sphere):
 def test_multi_plot_scalars(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     res = 5
-    plane = pyvista.Plane(j_resolution=res, i_resolution=res)
+    plane = pyvista.Plane(j_resolution=res, i_resolution=res, direction=(0, 0, -1))
     plane.clear_data()
     kek = np.arange(res + 1)
     kek = np.tile(kek, (res + 1, 1))
