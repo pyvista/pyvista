@@ -36,10 +36,12 @@ def test_sphere():
     assert np.any(surf.faces)
 
     # test direction points from south pole to north pole
-    direction = (0, 0, 1)
-    north_pole = pyvista.Sphere(direction=direction, start_phi=0, end_phi=0).points[0]
-    south_pole = pyvista.Sphere(direction=direction, start_phi=180, end_phi=180).points[0]
-    assert np.allclose(direction, north_pole - south_pole)
+    directions = np.vstack((np.eye(3), -np.eye(3)))
+    for expected in directions:
+        north_pole = pyvista.Sphere(direction=expected, start_phi=0, end_phi=0).points[0]
+        south_pole = pyvista.Sphere(direction=expected, start_phi=180, end_phi=180).points[0]
+        actual = north_pole - south_pole
+        assert np.array_equal(expected, actual)
 
     # test phi
     atol = 1e-16
@@ -70,10 +72,16 @@ def test_plane():
     surf = pyvista.Plane()
     assert np.any(surf.points)
     assert np.any(surf.faces)
-    assert np.array_equal(surf.point_normals[0], (0, 0, 1))  # has correct normal
-    assert np.array_equal(surf.center, (0, 0, 0))  # has correct center
+    assert np.array_equal(surf.center, (0, 0, 0))
 
-    # test correct size
+    # test direction
+    directions = np.vstack((np.eye(3), -np.eye(3)))
+    for expected in directions:
+        surf = pyvista.Plane(direction=expected)
+        actual = surf.point_normals[0]
+        assert np.array_equal(actual, expected)
+
+    # test size
     i_sz = 2
     j_sz = 3
     surf = pyvista.Plane(i_size=i_sz, j_size=j_sz)

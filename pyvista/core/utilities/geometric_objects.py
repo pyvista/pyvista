@@ -48,7 +48,14 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
     """
     normx = np.array(direction) / np.linalg.norm(direction)
-    normz = np.cross(normx, [0.0, 1.0, 0.0])
+    # assume temporary normy to calculate normz
+    norm_y_temp = [0.0, 1.0, 0.0]
+    normz = np.cross(normx, norm_y_temp)
+    if np.array_equal(normz, (0.0, 0.0, 0.0)):
+        # the assumed normy axis is parallel to normx, so shift its
+        # axis and recalculate normz
+        norm_y_temp = np.roll(norm_y_temp, 1)
+        normz = np.cross(normx, norm_y_temp)
     normz /= np.linalg.norm(normz)
     normy = np.cross(normz, normx)
 
