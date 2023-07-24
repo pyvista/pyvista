@@ -98,7 +98,7 @@ def verify_image_cache_wrapper(verify_image_cache):
 @pytest.fixture()
 def multicomp_poly():
     """Create a dataset with vector values on points and cells."""
-    data = pyvista.Plane()
+    data = pyvista.Plane(direction=(0, 0, -1))
 
     vector_values_points = np.empty((data.n_points, 3))
     vector_values_points[:, 0] = np.arange(data.n_points)
@@ -2190,7 +2190,7 @@ def test_plot_shadows():
 
     # add several planes
     for plane_y in [2, 5, 10]:
-        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, -1, 0), i_size=5, j_size=5)
         plotter.add_mesh(screen, color='white')
 
     light = pyvista.Light(
@@ -2224,7 +2224,7 @@ def test_plot_shadows_enable_disable():
 
     # add several planes
     for plane_y in [2, 5, 10]:
-        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, -1, 0), i_size=5, j_size=5)
         plotter.add_mesh(screen, color='white')
 
     light = pyvista.Light(

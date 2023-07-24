@@ -82,7 +82,7 @@ def struct_grid():
 
 @fixture()
 def plane():
-    return pyvista.Plane()
+    return pyvista.Plane(direction=(0, 0, -1))
 
 
 @fixture()
@@ -110,19 +110,19 @@ def datasets():
 @fixture()
 def multiblock_poly():
     # format and order of data (including missing) is intentional
-    mesh_a = pyvista.Sphere(center=(0, 0, 0))
+    mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
     mesh_a['data_a'] = mesh_a.points[:, 0] * 10
     mesh_a['data_b'] = mesh_a.points[:, 1] * 10
     mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
     mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
 
-    mesh_b = pyvista.Sphere(center=(1, 0, 0))
+    mesh_b = pyvista.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
     mesh_b['data_a'] = mesh_b.points[:, 0] * 10
     mesh_b['data_b'] = mesh_b.points[:, 1] * 10
     mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
     mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
 
-    mesh_c = pyvista.Sphere(center=(2, 0, 0))
+    mesh_c = pyvista.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
     mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
     mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
 
@@ -165,7 +165,7 @@ def texture():
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
     pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
-    mesh = pyvista.Sphere()
+    mesh = pyvista.Sphere(direction=(0, 0, -1))
     pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
     pl.background_color = 'w'
     return pyvista.Texture(pl.screenshot())
