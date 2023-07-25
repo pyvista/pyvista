@@ -52,6 +52,8 @@ def test_sphere_phi():
     assert np.all(south_hemisphere.points[:, 2] <= 0 + atol)  # south is below XY plane
 
 def test_sphere_theta():
+    atol = 1e-16
+
     quadrant1 = pyvista.Sphere(start_theta=0, end_theta=90)
     assert np.all(quadrant1.points[:, 0] >= 0 - atol)  # +X
     assert np.all(quadrant1.points[:, 1] >= 0 - atol)  # +Y
