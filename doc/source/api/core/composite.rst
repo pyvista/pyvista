@@ -3,7 +3,7 @@ Composite Datasets
 
 The :class:`pyvista.MultiBlock` class is a composite class to hold many
 data sets which can be iterated over. ``MultiBlock`` behaves mostly like
-a list, but has some dictionary-like features.
+a list, but has some Dictionary-like features.
 
 List-like Features
 ------------------
@@ -42,7 +42,7 @@ Plotting the ``MultiBlock`` plots all the meshes contained by it.
 
    blocks.plot(smooth_shading=True)
 
-``MultiBlock`` is list-like, so individual blocks can be accessed via
+``MultiBlock`` is List-like, so individual blocks can be accessed via
 indices.
 
 .. jupyter-execute::
@@ -94,7 +94,7 @@ of the blocks, and then access them
 
 It is important to note that ``MultiBlock`` is not a dictionary and does
 not enforce unique keys. Keys can also be ``None``. Extra care must be
-taken to avoid problems using the dictionary-like features.
+taken to avoid problems using the Dictionary-like features.
 
 PyVista tries to keep the keys ordered correctly when doing list operations.
 
