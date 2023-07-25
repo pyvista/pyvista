@@ -593,6 +593,7 @@ def test_axis_angle_rotation():
         transformations.axis_angle_rotation([0, 0, 0], angle)
 
 
+@pytest.mark.parametrize("axis,angle,times", [([1, 0, 0], 90, 4), ([1, 0, 0], 180, 2), ([1, 0, 0], 270, 4), ([0, 1, 0], 90, 4), ([0, 1, 0], 180, 2), ([0, 1, 0], 270, 4), ([0, 0, 1], 90, 4), ([0, 0, 1], 180, 2), ([0, 0, 1] , 270, 4)])
 def test_axis_angle_rotation_many_times():
     # yields the exact same input
     def _apply_transformation_n_times(points_in, axis_in, angle_in, n):
@@ -601,32 +602,10 @@ def test_axis_angle_rotation_many_times():
         for _ in range(n):
             points_out = transformations.apply_transformation_to_points(trans, points_out)
         return points_out
-
     points = np.eye(3)
-
-    axis = [1, 0, 0]  # rotate_x
-    actual = _apply_transformation_n_times(points, axis, 90, 4)
-    assert np.array_equal(actual, points)
-    actual = _apply_transformation_n_times(points, axis, 180, 2)
-    assert np.array_equal(actual, points)
-    actual = _apply_transformation_n_times(points, axis, 270, 4)
-    assert np.array_equal(actual, points)
-
-    axis = [0, 1, 0]  # rotate_y
-    actual = _apply_transformation_n_times(points, axis, 90, 4)
-    assert np.array_equal(actual, points)
-    actual = _apply_transformation_n_times(points, axis, 180, 2)
-    assert np.array_equal(actual, points)
-    actual = _apply_transformation_n_times(points, axis, 270, 4)
-    assert np.array_equal(actual, points)
-
-    axis = [0, 0, 1]  # rotate_z
-    actual = _apply_transformation_n_times(points, axis, 90, 4)
-    assert np.array_equal(actual, points)
-    actual = _apply_transformation_n_times(points, axis, 180, 2)
-    assert np.array_equal(actual, points)
-    actual = _apply_transformation_n_times(points, axis, 270, 4)
-    assert np.array_equal(actual, points)
+    actual = _apply_transformation_n_times(points, axis, angle, times)
+    expect = points
+    assert np.array_equal(actual, expect)
 
 
 def test_reflection():
