@@ -58,20 +58,20 @@ def test_sphere_theta():
     atol = 1e-16
 
     quadrant1 = pyvista.Sphere(start_theta=0, end_theta=90)
-    assert np.all(quadrant1.points[:, 0] >= 0 - atol)  # +X
-    assert np.all(quadrant1.points[:, 1] >= 0 - atol)  # +Y
+    assert np.all(quadrant1.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant1.points[:, 1] >= -atol)  # +Y
 
     quadrant2 = pyvista.Sphere(start_theta=90, end_theta=180)
-    assert np.all(quadrant2.points[:, 0] <= 0 + atol)  # -X
-    assert np.all(quadrant2.points[:, 1] >= 0 - atol)  # +Y
+    assert np.all(quadrant2.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant2.points[:, 1] >= -atol)  # +Y
 
     quadrant3 = pyvista.Sphere(start_theta=180, end_theta=270)
-    assert np.all(quadrant3.points[:, 0] <= 0 + atol)  # -X
-    assert np.all(quadrant3.points[:, 1] <= 0 + atol)  # -Y
+    assert np.all(quadrant3.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant3.points[:, 1] <= atol)  # -Y
 
     quadrant4 = pyvista.Sphere(start_theta=270, end_theta=360)
-    assert np.all(quadrant4.points[:, 0] >= 0 - atol)  # +X
-    assert np.all(quadrant4.points[:, 1] <= 0 + atol)  # -Y
+    assert np.all(quadrant4.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
 def test_plane():
