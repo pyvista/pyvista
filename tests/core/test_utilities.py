@@ -593,8 +593,21 @@ def test_axis_angle_rotation():
         transformations.axis_angle_rotation([0, 0, 0], angle)
 
 
-@pytest.mark.parametrize("axis,angle,times", [([1, 0, 0], 90, 4), ([1, 0, 0], 180, 2), ([1, 0, 0], 270, 4), ([0, 1, 0], 90, 4), ([0, 1, 0], 180, 2), ([0, 1, 0], 270, 4), ([0, 0, 1], 90, 4), ([0, 0, 1], 180, 2), ([0, 0, 1] , 270, 4)])
-def test_axis_angle_rotation_many_times(axis,angle,times):
+@pytest.mark.parametrize(
+    "axis,angle,times",
+    [
+        ([1, 0, 0], 90, 4),
+        ([1, 0, 0], 180, 2),
+        ([1, 0, 0], 270, 4),
+        ([0, 1, 0], 90, 4),
+        ([0, 1, 0], 180, 2),
+        ([0, 1, 0], 270, 4),
+        ([0, 0, 1], 90, 4),
+        ([0, 0, 1], 180, 2),
+        ([0, 0, 1], 270, 4),
+    ],
+)
+def test_axis_angle_rotation_many_times(axis, angle, times):
     # yields the exact same input
     expect = np.eye(3)
     actual = expect.copy()
