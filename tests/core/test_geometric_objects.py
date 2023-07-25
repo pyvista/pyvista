@@ -81,12 +81,11 @@ def test_plane():
     assert np.array_equal(surf.center, (0, 0, 0))
 
 
-def test_plane_direction():
-    directions = np.vstack((np.eye(3), -np.eye(3)))
-    for expected in directions:
-        surf = pyvista.Plane(direction=expected)
-        actual = surf.point_normals[0]
-        assert np.array_equal(actual, expected)
+@pytest.mark.parametrize('expected', [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]])
+def test_plane_direction(expected):
+    surf = pyvista.Plane(direction=expected)
+    actual = surf.point_normals[0]
+    assert np.array_equal(actual, expected)
 
 
 def test_plane_size():
