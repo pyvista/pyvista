@@ -35,7 +35,8 @@ def test_sphere():
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
-    # test direction points from south pole to north pole
+def test_sphere_direction_points():
+    # from south pole to north pole
     directions = np.vstack((np.eye(3), -np.eye(3)))
     for expected in directions:
         north_pole = pyvista.Sphere(direction=expected, start_phi=0, end_phi=0).points[0]
@@ -43,14 +44,14 @@ def test_sphere():
         actual = north_pole - south_pole
         assert np.array_equal(expected, actual)
 
-    # test phi
+def test_sphere_phi():
     atol = 1e-16
     north_hemisphere = pyvista.Sphere(start_phi=0, end_phi=90)
     assert np.all(north_hemisphere.points[:, 2] >= 0 - atol)  # north is above XY plane
     south_hemisphere = pyvista.Sphere(start_phi=90, end_phi=180)
     assert np.all(south_hemisphere.points[:, 2] <= 0 + atol)  # south is below XY plane
 
-    # test theta
+def test_sphere_theta():
     quadrant1 = pyvista.Sphere(start_theta=0, end_theta=90)
     assert np.all(quadrant1.points[:, 0] >= 0 - atol)  # +X
     assert np.all(quadrant1.points[:, 1] >= 0 - atol)  # +Y
@@ -74,14 +75,14 @@ def test_plane():
     assert np.any(surf.faces)
     assert np.array_equal(surf.center, (0, 0, 0))
 
-    # test direction
+def test_plane_direction():
     directions = np.vstack((np.eye(3), -np.eye(3)))
     for expected in directions:
         surf = pyvista.Plane(direction=expected)
         actual = surf.point_normals[0]
         assert np.array_equal(actual, expected)
 
-    # test size
+def test_plane_size():
     i_sz = 2
     j_sz = 3
     surf = pyvista.Plane(i_size=i_sz, j_size=j_sz)

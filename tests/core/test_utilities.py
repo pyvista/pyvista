@@ -592,8 +592,7 @@ def test_axis_angle_rotation():
     with pytest.raises(ValueError):
         transformations.axis_angle_rotation([0, 0, 0], angle)
 
-    # exact transformation cases (90, 180, 270 degrees)
-    # test that applying a rotation many times (up to a multiple of 360)
+def test_axis_angle_rotation_many_times():
     # yields the exact same input
     def _apply_transformation_n_times(points_in, axis_in, angle_in, n):
         points_out = points_in.copy()
