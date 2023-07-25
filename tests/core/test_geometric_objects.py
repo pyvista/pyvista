@@ -36,14 +36,13 @@ def test_sphere():
     assert np.any(surf.faces)
 
 
-def test_sphere_direction_points():
+@pytest.mark.parametrize('expected', [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]])
+def test_sphere_direction_points(expected):
     # from south pole to north pole
-    directions = np.vstack((np.eye(3), -np.eye(3)))
-    for expected in directions:
-        north_pole = pyvista.Sphere(direction=expected, start_phi=0, end_phi=0).points[0]
-        south_pole = pyvista.Sphere(direction=expected, start_phi=180, end_phi=180).points[0]
-        actual = north_pole - south_pole
-        assert np.array_equal(expected, actual)
+    north_pole = pyvista.Sphere(direction=expected, start_phi=0, end_phi=0).points[0]
+    south_pole = pyvista.Sphere(direction=expected, start_phi=180, end_phi=180).points[0]
+    actual = north_pole - south_pole
+    assert np.array_equal(expected, actual)
 
 
 def test_sphere_phi():
