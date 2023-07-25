@@ -603,6 +603,7 @@ def test_axis_angle_rotation_many_times():
         return points_out
 
     points = np.eye(3)
+
     axis = [1, 0, 0]  # rotate_x
     actual = _apply_transformation_n_times(points, axis, 90, 4)
     assert np.array_equal(actual, points)
