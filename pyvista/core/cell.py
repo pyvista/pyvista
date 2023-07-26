@@ -436,6 +436,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         if not np.array_equal(self.point_ids, other.point_ids):
             return False
         if self.type == CellType.POLYHEDRON:
+            # POLYHEDRON has a nested structure that depends on the faces
             return all(zip(self.faces, other.faces))
         return True
 
