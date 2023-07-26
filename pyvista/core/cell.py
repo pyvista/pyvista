@@ -176,8 +176,16 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:     0
 
         """
+        if self.type == CellType.POLYHEDRON:
+            # construct from faces
+            cell_ids = [self.n_faces]
+            for face in self.faces:
+                cell_ids.extend([len(face.point_ids)] + face.point_ids)
+            cell_ids.insert(0, len(cell_ids))
+        else:
+            cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
         return pyvista.UnstructuredGrid(
-            [len(self.point_ids)] + list(range(len(self.point_ids))),
+            cell_ids,
             [int(self.type)],
             self.points.copy(),
         )
@@ -415,6 +423,21 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
 
         return attrs
+
+    def __eq__(self, other):
+        """Cell equality."""
+        # cells must have the same points and point ids
+        if not isinstance(other, Cell):
+            return False
+        if not self.type == other.type:
+            return False
+        if not np.array_equal(self.points, other.points):
+            return False
+        if not np.array_equal(self.point_ids, other.point_ids):
+            return False
+        if self.type == CellType.POLYHEDRON:
+            return all(zip(self.faces, other.faces))
+        return True
 
     def __repr__(self) -> str:
         """Return the object representation."""
