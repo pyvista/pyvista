@@ -559,14 +559,8 @@ def test_vtk_error_catcher():
 
 
 def test_axis_angle_rotation():
-    # rotate cube corners around body diagonal
-    points = np.array(
-        [
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ]
-    )
+    # rotate points around body diagonal
+    points = np.eye(3)
     axis = [1, 1, 1]
 
     # no-op case
@@ -597,6 +591,30 @@ def test_axis_angle_rotation():
         transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):
         transformations.axis_angle_rotation([0, 0, 0], angle)
+
+
+@pytest.mark.parametrize(
+    "axis,angle,times",
+    [
+        ([1, 0, 0], 90, 4),
+        ([1, 0, 0], 180, 2),
+        ([1, 0, 0], 270, 4),
+        ([0, 1, 0], 90, 4),
+        ([0, 1, 0], 180, 2),
+        ([0, 1, 0], 270, 4),
+        ([0, 0, 1], 90, 4),
+        ([0, 0, 1], 180, 2),
+        ([0, 0, 1], 270, 4),
+    ],
+)
+def test_axis_angle_rotation_many_times(axis, angle, times):
+    # yields the exact same input
+    expect = np.eye(3)
+    actual = expect.copy()
+    trans = transformations.axis_angle_rotation(axis, angle)
+    for _ in range(times):
+        actual = transformations.apply_transformation_to_points(trans, actual)
+    assert np.array_equal(actual, expect)
 
 
 def test_reflection():
