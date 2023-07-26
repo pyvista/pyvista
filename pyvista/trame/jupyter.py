@@ -4,7 +4,6 @@ import logging
 import os
 import warnings
 
-from trame.app import get_server
 from trame.ui.vuetify import VAppLayout
 from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
 
@@ -16,7 +15,7 @@ except ImportError:
 
 import pyvista
 from pyvista.trame.ui import UI_TITLE, get_or_create_viewer
-from pyvista.trame.views import CLOSED_PLOTTER_ERROR
+from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
@@ -93,7 +92,7 @@ def launch_server(server=None, port=None, host=None):
     ----------
     server : str, optional
         By default this uses :attr:`pyvista.global_theme.trame.jupyter_server_name
-        <pyvista.themes._TrameConfig.jupyter_server_name>`, which by default is
+        <pyvista.plotting.themes._TrameConfig.jupyter_server_name>`, which by default is
         set to ``'pyvista-jupyter'``.
 
         If a server name is given and such server is not available yet, it will

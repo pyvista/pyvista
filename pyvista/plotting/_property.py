@@ -17,10 +17,10 @@ class Property(_vtk.vtkProperty):
 
     Parameters
     ----------
-    theme : pyvista.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    interpolation : str, default: :attr:`pyvista.themes._LightingConfig.interpolation`
+    interpolation : str, default: :attr:`pyvista.plotting.themes._LightingConfig.interpolation`
         Set the method of shading. One of the following:
 
         * ``'Physically based rendering'`` - Physically based rendering.
@@ -31,7 +31,7 @@ class Property(_vtk.vtkProperty):
 
         This parameter is case insensitive.
 
-    color : ColorLike, default: :attr:`pyvista.themes.Theme.color`
+    color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.color`
         Used to make the entire mesh have a single solid color.
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -44,56 +44,56 @@ class Property(_vtk.vtkProperty):
         Note that ``'wireframe'`` only shows a wireframe of the outer
         geometry.
 
-    metallic : float, default: :attr:`pyvista.themes._LightingConfig.metallic`
+    metallic : float, default: :attr:`pyvista.plotting.themes._LightingConfig.metallic`
         Usually this value is either 0 or 1 for a real material but any
         value in between is valid. This parameter is only used by PBR
         interpolation.
 
-    roughness : float, default: :attr:`pyvista.themes._LightingConfig.roughness`
+    roughness : float, default: :attr:`pyvista.plotting.themes._LightingConfig.roughness`
         This value has to be between 0 (glossy) and 1 (rough). A glossy
         material has reflections and a high specular part. This parameter
         is only used by PBR interpolation.
 
-    point_size : float, default: :attr:`pyvista.themes.Theme.point_size`
+    point_size : float, default: :attr:`pyvista.plotting.themes.Theme.point_size`
         Size of the points represented by this property.
 
-    opacity : float, default: :attr:`pyvista.themes.Theme.opacity`
+    opacity : float, default: :attr:`pyvista.plotting.themes.Theme.opacity`
         Opacity of the mesh. A single float value that will be applied globally
         opacity of the mesh and uniformly applied everywhere - should be
         between 0 and 1.
 
-    ambient : float, default: :attr:`pyvista.themes._LightingConfig.ambient`
+    ambient : float, default: :attr:`pyvista.plotting.themes._LightingConfig.ambient`
         When lighting is enabled, this is the amount of light in the range
         of 0 to 1 that reaches the actor when not directed at the light
         source emitted from the viewer.
 
-    diffuse : float, default: :attr:`pyvista.themes._LightingConfig.diffuse`
+    diffuse : float, default: :attr:`pyvista.plotting.themes._LightingConfig.diffuse`
         The diffuse lighting coefficient.
 
-    specular : float, default: :attr:`pyvista.themes._LightingConfig.specular`
+    specular : float, default: :attr:`pyvista.plotting.themes._LightingConfig.specular`
         The specular lighting coefficient.
 
-    specular_power : float, default: :attr:`pyvista.themes._LightingConfig.specular_power`
+    specular_power : float, default: :attr:`pyvista.plotting.themes._LightingConfig.specular_power`
         The specular power. Must be between 0.0 and 128.0.
 
-    show_edges : bool, default: :attr:`pyvista.themes.Theme.show_edges`
+    show_edges : bool, default: :attr:`pyvista.plotting.themes.Theme.show_edges`
         Shows the edges.  Does not apply to a wireframe representation.
 
-    edge_color : ColorLike, default: :attr:`pyvista.themes.Theme.edge_color`
+    edge_color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.edge_color`
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
-    render_points_as_spheres : bool, default: :attr:`pyvista.themes.Theme.render_points_as_spheres`
+    render_points_as_spheres : bool, default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
         Render points as spheres rather than dots.
 
-    render_lines_as_tubes : bool, default: :attr:`pyvista.themes.Theme.render_lines_as_tubes`
+    render_lines_as_tubes : bool, default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
         Show lines as thick tubes rather than flat lines.  Control
         the width with ``line_width``.
 
-    lighting : bool, default: :attr:`pyvista.themes.Theme.lighting`
+    lighting : bool, default: :attr:`pyvista.plotting.themes.Theme.lighting`
         Enable or disable view direction lighting.
 
-    line_width : float, default: :attr:`pyvista.themes.Theme.line_width`
+    line_width : float, default: :attr:`pyvista.plotting.themes.Theme.line_width`
         Thickness of lines.  Only valid for wireframe and surface
         representations.
 
@@ -461,7 +461,7 @@ class Property(_vtk.vtkProperty):
     def ambient(self) -> float:
         """Return or set ambient.
 
-        Default :attr:`pyvista.themes._LightingConfig.ambient`.
+        Default :attr:`pyvista.plotting.themes._LightingConfig.ambient`.
 
         When lighting is enabled, this is the amount of light in the range
         of 0 to 1 that reaches the actor when not directed at the light
@@ -502,7 +502,7 @@ class Property(_vtk.vtkProperty):
     def diffuse(self) -> float:
         """Return or set the diffuse lighting coefficient.
 
-        Default :attr:`pyvista.themes._LightingConfig.diffuse`.
+        Default :attr:`pyvista.plotting.themes._LightingConfig.diffuse`.
 
         This is the scattering of light by reflection or
         transmission. Diffuse reflection results when light strikes an
@@ -544,7 +544,7 @@ class Property(_vtk.vtkProperty):
     def specular(self) -> float:
         """Return or set specular.
 
-        Default :attr:`pyvista.themes._LightingConfig.specular`.
+        Default :attr:`pyvista.plotting.themes._LightingConfig.specular`.
 
         Specular lighting simulates the bright spot of a light that appears
         on shiny objects. Must be between 0 and 1.
@@ -584,7 +584,7 @@ class Property(_vtk.vtkProperty):
     def specular_power(self) -> float:
         """Return or set specular power.
 
-        Default :attr:`pyvista.themes._LightingConfig.specular_power`.
+        Default :attr:`pyvista.plotting.themes._LightingConfig.specular_power`.
 
         The specular power. Must be between 0.0 and 128.0.
 
@@ -631,7 +631,7 @@ class Property(_vtk.vtkProperty):
     def metallic(self) -> float:
         """Return or set metallic.
 
-        Default :attr:`pyvista.themes._LightingConfig.metallic`.
+        Default :attr:`pyvista.plotting.themes._LightingConfig.metallic`.
 
         This requires that the interpolation be set to ``'Physically based
         rendering'``. Must be between 0 and 1.
@@ -675,7 +675,7 @@ class Property(_vtk.vtkProperty):
     def roughness(self) -> float:
         """Return or set roughness.
 
-        Default :attr:`pyvista.themes._LightingConfig.roughness`.
+        Default :attr:`pyvista.plotting.themes._LightingConfig.roughness`.
 
         This requires that the interpolation be set to ``'Physically based
         rendering'``. Must be between 0 and 1.
@@ -720,7 +720,7 @@ class Property(_vtk.vtkProperty):
     def interpolation(self) -> InterpolationType:
         """Return or set the method of shading.
 
-        Defaults to :attr:`pyvista.themes._LightingConfig.interpolation`.
+        Defaults to :attr:`pyvista.plotting.themes._LightingConfig.interpolation`.
 
         One of the following options.
 
@@ -777,7 +777,7 @@ class Property(_vtk.vtkProperty):
     def render_points_as_spheres(self) -> bool:
         """Return or set rendering points as spheres.
 
-        Defaults to :attr:`pyvista.themes.Theme.render_points_as_spheres`.
+        Defaults to :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`.
 
         Requires representation style be set to ``'points'``.
 
@@ -814,7 +814,7 @@ class Property(_vtk.vtkProperty):
     def render_lines_as_tubes(self) -> bool:
         """Return or set rendering lines as tubes.
 
-        Defaults to :attr:`pyvista.themes.Theme.render_lines_as_tubes`.
+        Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
 
         Requires representation style be set to ``'wireframe'``.
 
@@ -851,7 +851,7 @@ class Property(_vtk.vtkProperty):
     def line_width(self) -> float:
         """Return or set the line width.
 
-        Defaults to :attr:`pyvista.themes.Theme.line_width`.
+        Defaults to :attr:`pyvista.plotting.themes.Theme.line_width`.
 
         Examples
         --------
@@ -885,7 +885,7 @@ class Property(_vtk.vtkProperty):
     def point_size(self):
         """Return or set the point size.
 
-        Defaults to :attr:`pyvista.themes.Theme.point_size`.
+        Defaults to :attr:`pyvista.plotting.themes.Theme.point_size`.
 
         Examples
         --------

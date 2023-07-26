@@ -34,6 +34,12 @@ from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition, Renderer, scale_point
 from .texture import Texture, image_to_texture, numpy_to_texture
+from .themes import (
+    DocumentTheme as _GlobalTheme,
+    _set_plot_theme_from_env,
+    load_theme,
+    set_plot_theme,
+)
 from .tools import (
     FONTS,
     check_math_text_support,
@@ -46,6 +52,7 @@ from .tools import (
     system_supports_plotting,
 )
 from .utilities import *
+from .utilities.sphinx_gallery import _get_sg_image_scraper
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
@@ -80,3 +87,9 @@ class QtInteractor:
     def __init__(self, *args, **kwargs):
         """Empty init."""
         raise QtDeprecationError('QtInteractor')
+
+
+global_theme = _GlobalTheme()
+
+# Set preferred plot theme
+_set_plot_theme_from_env()

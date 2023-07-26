@@ -12,7 +12,8 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.core.utilities import cells, fileio, transformations
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     copy_vtk_array,
@@ -27,7 +28,6 @@ from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
-from pyvista.errors import PyVistaDeprecationWarning
 
 
 def test_version():
@@ -559,14 +559,8 @@ def test_vtk_error_catcher():
 
 
 def test_axis_angle_rotation():
-    # rotate cube corners around body diagonal
-    points = np.array(
-        [
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ]
-    )
+    # rotate points around body diagonal
+    points = np.eye(3)
     axis = [1, 1, 1]
 
     # no-op case
@@ -597,6 +591,30 @@ def test_axis_angle_rotation():
         transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):
         transformations.axis_angle_rotation([0, 0, 0], angle)
+
+
+@pytest.mark.parametrize(
+    "axis,angle,times",
+    [
+        ([1, 0, 0], 90, 4),
+        ([1, 0, 0], 180, 2),
+        ([1, 0, 0], 270, 4),
+        ([0, 1, 0], 90, 4),
+        ([0, 1, 0], 180, 2),
+        ([0, 1, 0], 270, 4),
+        ([0, 0, 1], 90, 4),
+        ([0, 0, 1], 180, 2),
+        ([0, 0, 1], 270, 4),
+    ],
+)
+def test_axis_angle_rotation_many_times(axis, angle, times):
+    # yields the exact same input
+    expect = np.eye(3)
+    actual = expect.copy()
+    trans = transformations.axis_angle_rotation(axis, angle)
+    for _ in range(times):
+        actual = transformations.apply_transformation_to_points(trans, actual)
+    assert np.array_equal(actual, expect)
 
 
 def test_reflection():
@@ -871,3 +889,22 @@ def test_coerce_points_like_args_does_not_copy():
 def test_has_module():
     assert has_module('pytest')
     assert not has_module('not_a_module')
+
+
+def test_fit_plane_to_points():
+    points = ex.load_airplane().points
+    plane, center, normal = fit_plane_to_points(points, return_meta=True)
+
+    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
+    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
+    assert np.allclose(
+        plane.bounds,
+        [
+            139.06036376953125,
+            1654.9306640625,
+            38.0776252746582,
+            1335.2164306640625,
+            -1.4434913396835327,
+            157.70724487304688,
+        ],
+    )

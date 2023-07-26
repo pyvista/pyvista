@@ -655,7 +655,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
 
 def image_to_texture(image):
-    """Convert ``vtkImageData`` (:class:`pyvista.ImageData`) to a ``vtkTexture``.
+    """Convert :class:`pyvista.ImageData` to a :class:`pyvista.Texture`.
 
     Parameters
     ----------
@@ -664,15 +664,15 @@ def image_to_texture(image):
 
     Returns
     -------
-    vtkTexture
-        VTK texture.
+    pyvista.Texture
+        The texture.
 
     """
     return Texture(image)
 
 
 def numpy_to_texture(image):
-    """Convert a NumPy image array to a vtk.vtkTexture.
+    """Convert a NumPy image array to a :class:`pyvista.Texture`.
 
     Parameters
     ----------

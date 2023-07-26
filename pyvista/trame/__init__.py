@@ -1,4 +1,8 @@
 """Trame interface for PyVista."""
+import logging
+
+logging.getLogger('trame.app').disabled = True
+
 from pyvista.trame.jupyter import elegantly_launch, launch_server, show_trame
 from pyvista.trame.ui import get_or_create_viewer, plotter_ui
 from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
