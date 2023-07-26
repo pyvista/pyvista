@@ -26,6 +26,7 @@ cells = [
     example_cells.Quadrilateral().get_cell(0),
     example_cells.Tetrahedron().get_cell(0),
     example_cells.Voxel().get_cell(0),
+    example_cells.Polyhedron().get_cell(0),
 ]
 grids = [
     load_hexbeam(),
@@ -43,7 +44,7 @@ types = [
     CellType.QUAD,
     CellType.TETRA,
     CellType.VOXEL,
-    CellType.HEXAHEDRON,
+    CellType.POLYHEDRON,
 ]
 faces_types = [
     CellType.QUAD,
@@ -52,12 +53,12 @@ faces_types = [
     None,
     CellType.TRIANGLE,
     CellType.PIXEL,
-    CellType.QUAD,
+    CellType.POLYGON,
 ]
 dims = [3, 2, 3, 2, 3, 3, 3]
-npoints = [8, 3, 8, 4, 4, 8, 8]
-nfaces = [6, 0, 6, 0, 4, 6, 6]
-nedges = [12, 3, 12, 4, 6, 12, 12, 12]
+npoints = [8, 3, 8, 4, 4, 8, 4]
+nfaces = [6, 0, 6, 0, 4, 6, 4]
+nedges = [12, 3, 12, 4, 6, 12, 6]
 
 ids = [str(type(grid)) for grid in grids]
 cell_ids = list(map(repr, types))
