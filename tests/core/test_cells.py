@@ -241,6 +241,13 @@ def test_cell_points(cell):
     assert points.shape[1] == 3
 
 
+@pytest.mark.parametrize("cell", cells)
+def test_cell_cast_to_unstructured_grid(cell):
+    grid = cell.cast_to_unstructured_grid()
+    assert grid.n_cells == 1
+    assert grid.get_cell(0) == cell
+
+
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
 NCELLS = 2
 FCONTIG_ARR = np.array(np.vstack(([3, 0, 1, 2], [3, 3, 4, 5])), order='F')
