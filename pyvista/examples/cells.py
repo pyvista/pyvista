@@ -385,6 +385,44 @@ def Polygon() -> UnstructuredGrid:
     return UnstructuredGrid(cells, [CellType.POLYGON], points)
 
 
+def Polyhedron() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single polyhedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.POLYHEDRON` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single polyhedron.
+
+    Examples
+    --------
+    Create and plot a single polyhedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.Polyhedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+
+
+    List the grid's points.
+
+    >>> grid.points
+
+
+    >>> grid.celltypes  # same as pyvista.CellType.POLYHEDRON
+
+
+    """
+    points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
+    cells = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+    cells = [len(cells)] + cells
+    return UnstructuredGrid(cells, [CellType.POLYHEDRON], points)
+
+
 def Pixel() -> UnstructuredGrid:
     """Create a :class:`pyvista.UnstructuredGrid` containing a single pixel.
 
