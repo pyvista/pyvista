@@ -424,22 +424,6 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         return attrs
 
-    def __eq__(self, other):
-        """Cell equality."""
-        # cells must have the same points and point ids
-        if not isinstance(other, Cell):
-            return False
-        if not self.type == other.type:
-            return False
-        if not np.array_equal(self.points, other.points):
-            return False
-        if not np.array_equal(self.point_ids, other.point_ids):
-            return False
-        if self.type == CellType.POLYHEDRON:
-            # POLYHEDRON has a nested structure that depends on the faces
-            return all(zip(self.faces, other.faces))
-        return True
-
     def __repr__(self) -> str:
         """Return the object representation."""
         return self.head(display=False, html=False)
