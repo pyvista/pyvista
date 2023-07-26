@@ -44,14 +44,6 @@ types = [
     CellType.TETRA,
     CellType.VOXEL,
 ]
-faces_types = [
-    CellType.QUAD,
-    None,
-    CellType.PIXEL,
-    None,
-    CellType.TRIANGLE,
-    CellType.PIXEL,
-]
 dims = [3, 2, 3, 2, 3, 3]
 npoints = [8, 3, 8, 4, 4, 8]
 nfaces = [6, 0, 6, 0, 4, 6]
