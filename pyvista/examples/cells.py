@@ -403,18 +403,16 @@ def Polyhedron() -> UnstructuredGrid:
     >>> grid = examples.cells.Polyhedron()
     >>> examples.plot_cell(grid)
 
-    List the grid's cells.
+    A polyhedron is defined by it's faces. List the grid's faces.
 
-    >>> grid.cells
-
-
-    List the grid's points.
-
-    >>> grid.points
-
+    >>> grid.get_cell(0).faces  # doctest: +ELLIPSIS
+    [Cell...
+    ..., Cell...
+    ..., Cell...
+    ...]
 
     >>> grid.celltypes  # same as pyvista.CellType.POLYHEDRON
-
+    array([42], dtype=uint8)
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
