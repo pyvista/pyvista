@@ -27,12 +27,11 @@ sphinx-copybutton==0.5.2
 sphinx-design==0.4.1
 sphinx-gallery==0.13.0
 sphinx-notfound-page==0.8.3
-sphinx-toolbox==3.4.0
+sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.4
 sympy==1.12
 trame==2.5.2
-trame-client==2.10.0
-trame-server==2.11.7
-trame-vtk==2.5.7
+trame-vtk==2.5.8
+trame-vuetify==2.3.1
 trimesh==3.22.5

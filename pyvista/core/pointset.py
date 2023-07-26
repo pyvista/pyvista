@@ -13,7 +13,7 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
-from .cell import CellArray
+from .cell import CellArray, _get_connectivity_array, _get_offset_array, _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -520,6 +520,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
+
+    See Also
+    --------
+    pyvista.PolyData.from_regular_faces
+
     Examples
     --------
     >>> import vtk
@@ -771,6 +776,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         numpy.ndarray
             Array of face connectivity.
 
+        See Also
+        --------
+        pyvista.PolyData.regular_faces
+
         Notes
         -----
         The array returned cannot be modified in place and will raise a
@@ -817,6 +826,81 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
+
+    @property
+    def regular_faces(self) -> np.ndarray:
+        """Return a face array of point indices when all faces have the same size.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face indices with shape (n_faces, face_size).
+
+        See Also
+        --------
+        pyvista.PolyData.faces
+
+        Notes
+        -----
+        This property does not validate that the mesh's faces are all
+        actually the same size. If they're not, this property may either
+        raise a `ValueError` or silently return an incorrect array.
+
+        Examples
+        --------
+        Get the face array of a tetrahedron as a 4x3 array
+
+        >>> import pyvista as pv
+        >>> tetra = pv.Tetrahedron()
+        >>> tetra.regular_faces
+        array([[0, 1, 2],
+               [1, 3, 2],
+               [0, 2, 3],
+               [0, 3, 1]])
+
+        """
+        return _get_regular_cells(self.GetPolys())
+
+    @regular_faces.setter
+    def regular_faces(self, faces: Union[np.ndarray, Sequence[Sequence[int]]]):
+        """Set the face cells from an (n_faces, face_size) array."""
+        self.faces = CellArray.from_regular_cells(faces)
+
+    @classmethod
+    def from_regular_faces(
+        cls, points, faces: Union[np.ndarray, Sequence[Sequence[int]]], deep=False
+    ):
+        """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
+
+        Parameters
+        ----------
+        points : numpy.ndarray, sequence[sequence[float]]
+            A (n_points, 3) array of points.
+
+        faces : numpy.ndarray or sequence[sequence[int]]
+            A (n_faces, face_size) array of face indices. For a triangle mesh, face_size = 3.
+
+        deep : bool, optional, default: False
+            Whether to deep copy the faces array into vtkCellArray connectivity data.
+
+        Returns
+        -------
+        pyvista.PolyData
+            The newly constructed mesh.
+
+        Examples
+        --------
+        Construct a tetrahedron from four triangles
+
+        >>> import pyvista as pv
+        >>> points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+        >>> faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
+        >>> tetra = pv.PolyData.from_regular_faces(points, faces)
+        """
+        p = cls()
+        p.points = points
+        p.faces = CellArray.from_regular_cells(faces, deep=deep)
+        return p
 
     @property
     def strips(self) -> np.ndarray:
@@ -891,15 +975,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     @property
     def _offset_array(self):
         """Return the array used to store cell offsets."""
-        return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
+        return _get_offset_array(self.GetPolys())
 
     @property
     def _connectivity_array(self):
-        """Return the array with the point ids that define the cells connectivity."""
-        try:
-            return _vtk.vtk_to_numpy(self.GetPolys().GetConnectivityArray())
-        except AttributeError:  # pragma: no cover
-            raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
+        """Return the array with the point ids that define the cells' connectivity."""
+        return _get_connectivity_array(self.GetPolys())
 
     @property
     def n_lines(self) -> int:

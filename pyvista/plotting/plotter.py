@@ -558,10 +558,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from trame.app import get_server
-
             from pyvista.trame import PyVistaLocalView
             from pyvista.trame.jupyter import elegantly_launch
+            from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame to export')
 
@@ -3442,7 +3441,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=self.mapper)
 
-        if texture:
+        if texture is not None:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
