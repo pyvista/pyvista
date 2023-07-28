@@ -51,7 +51,7 @@ def plot_cell(grid, cpos=None, **kwargs):
 
 
 def Empty() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single Tetrahedron.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single empty cell.
 
     This cell corresponds to the :attr:`pyvista.CellType.EMPTY_CELL` cell type.
 
