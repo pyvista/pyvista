@@ -180,7 +180,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
             # construct from faces
             cell_ids = [self.n_faces]
             for face in self.faces:
-                cell_ids.extend([len(face.point_ids)] + face.point_ids)
+                cell_ids.append(len(face.point_ids))
+                cell_ids.extend(self.point_ids.index(i) for i in face.point_ids)
             cell_ids.insert(0, len(cell_ids))
         else:
             cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
