@@ -1,7 +1,7 @@
 import pytest
 
 import pyvista as pv
-from pyvista.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 has_panel = True
 try:

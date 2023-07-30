@@ -36,10 +36,66 @@ def test_sphere():
     assert np.any(surf.faces)
 
 
+@pytest.mark.parametrize(
+    'expected', [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]
+)
+def test_sphere_direction_points(expected):
+    # from south pole to north pole
+    north_pole = pyvista.Sphere(direction=expected, start_phi=0, end_phi=0).points[0]
+    south_pole = pyvista.Sphere(direction=expected, start_phi=180, end_phi=180).points[0]
+    actual = north_pole - south_pole
+    assert np.array_equal(expected, actual)
+
+
+def test_sphere_phi():
+    atol = 1e-16
+    north_hemisphere = pyvista.Sphere(start_phi=0, end_phi=90)
+    assert np.all(north_hemisphere.points[:, 2] >= -atol)  # north is above XY plane
+    south_hemisphere = pyvista.Sphere(start_phi=90, end_phi=180)
+    assert np.all(south_hemisphere.points[:, 2] <= atol)  # south is below XY plane
+
+
+def test_sphere_theta():
+    atol = 1e-16
+
+    quadrant1 = pyvista.Sphere(start_theta=0, end_theta=90)
+    assert np.all(quadrant1.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant1.points[:, 1] >= -atol)  # +Y
+
+    quadrant2 = pyvista.Sphere(start_theta=90, end_theta=180)
+    assert np.all(quadrant2.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant2.points[:, 1] >= -atol)  # +Y
+
+    quadrant3 = pyvista.Sphere(start_theta=180, end_theta=270)
+    assert np.all(quadrant3.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant3.points[:, 1] <= atol)  # -Y
+
+    quadrant4 = pyvista.Sphere(start_theta=270, end_theta=360)
+    assert np.all(quadrant4.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
+
+
 def test_plane():
     surf = pyvista.Plane()
     assert np.any(surf.points)
     assert np.any(surf.faces)
+    assert np.array_equal(surf.center, (0, 0, 0))
+
+
+@pytest.mark.parametrize(
+    'expected', [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]
+)
+def test_plane_direction(expected):
+    surf = pyvista.Plane(direction=expected)
+    actual = surf.point_normals[0]
+    assert np.array_equal(actual, expected)
+
+
+def test_plane_size():
+    i_sz = 2
+    j_sz = 3
+    surf = pyvista.Plane(i_size=i_sz, j_size=j_sz)
+    assert np.array_equal(surf.bounds, (-i_sz / 2, i_sz / 2, -j_sz / 2, j_sz / 2, 0.0, 0.0))
 
 
 def test_line():
