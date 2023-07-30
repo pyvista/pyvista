@@ -11,7 +11,7 @@ ipython<9.0.0
 ipyvtklink<0.4.0
 ipywidgets<9.0.0
 meshio<5.4.0
-nest_asyncio<1.5.7
+nest_asyncio<1.5.8
 numpydoc==1.5.0
 panel<0.15.0
 param<1.14.0
@@ -21,7 +21,7 @@ pytest-memprof<0.3.0
 pytest-xdist<3.4.0
 pytest_pyvista==0.1.8
 pythreejs<2.5.0
-Sphinx<6.3.0
+Sphinx<7.2.0
 sphinx-gallery<0.14.0
 sympy<1.13.0
 tqdm<4.66.0
