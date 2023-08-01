@@ -702,7 +702,7 @@ class CellArray(_vtk.vtkCellArray):
 
     @staticmethod
     def from_arrays(offsets, connectivity, deep=False) -> CellArray:
-        """Construct a vtkCellArray from offsets and connectivity arrays.
+        """Construct a CellArray from offsets and connectivity arrays.
 
         Parameters
         ----------
@@ -714,6 +714,12 @@ class CellArray(_vtk.vtkCellArray):
 
         deep : bool, default: False
             Whether to deep copy the array data into the vtk arrays.
+
+        Returns
+        -------
+        CellArray
+            Constructed CellArray
+            
         """
         cellarr = CellArray()
         cellarr._set_data(offsets, connectivity, deep=deep)
