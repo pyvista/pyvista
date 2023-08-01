@@ -707,10 +707,10 @@ class CellArray(_vtk.vtkCellArray):
         Parameters
         ----------
         offsets : numpy.ndarray or list[int]
-            Offsets array of length `n_cells + 1`
+            Offsets array of length `n_cells + 1`.
 
         connectivity : numpy.ndarray or list[int]
-            Connectivity array
+            Connectivity array.
 
         deep : bool, default: False
             Whether to deep copy the array data into the vtk arrays.
@@ -718,7 +718,7 @@ class CellArray(_vtk.vtkCellArray):
         Returns
         -------
         CellArray
-            Constructed CellArray
+            Constructed CellArray.
             
         """
         cellarr = CellArray()
@@ -757,6 +757,7 @@ class CellArray(_vtk.vtkCellArray):
         Returns
         -------
         pyvista.CellArray
+            Constructed ``CellArray``.
         """
         cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
         n_cells, cell_size = cells.shape
