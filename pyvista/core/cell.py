@@ -691,6 +691,7 @@ class CellArray(_vtk.vtkCellArray):
     @property
     def connectivity_array(self):
         """Return the array with the point ids that define the cells' connectivity.
+
         Returns
         -------
         np.ndarray
@@ -701,6 +702,7 @@ class CellArray(_vtk.vtkCellArray):
     @property
     def offset_array(self):
         """Return the array used to store cell offsets.
+
         Returns
         -------
         np.ndarray
