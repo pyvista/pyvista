@@ -747,7 +747,7 @@ class MultiBlock(
         self._iter_n = 0
         return self
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other):
         """Equality comparison.
 
         Parameters
@@ -1255,7 +1255,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
         """Extract the real component of the active scalars of this dataset.
 
         Returns
@@ -1309,12 +1309,12 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
-    def _get_consistent_active_scalars(self) -> Tuple[str, str]:
+    def _get_consistent_active_scalars(self):
         """Check if there are any consistent active scalars.
 
         Returns
         -------
-        Tuple[str, str]
+        Tuple[Any | str | None, str | None]
             Consistent active point scalars name.
         """
         point_names = set()

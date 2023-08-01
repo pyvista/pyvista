@@ -68,13 +68,13 @@ def __getattr__(name):
 
     Parameters
     ----------
-    name
+    name : str
         Name of attribute.
 
     Returns
     -------
     ModuleType
-        attribute fetched by ``name``.
+        Attribute fetched by ``name``.
 
     Raises
     ------
