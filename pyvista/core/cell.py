@@ -794,6 +794,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
     Returns
     -------
     np.ndarray
+        An array of shape (n_cells, cell_size) of point indices
     """
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
