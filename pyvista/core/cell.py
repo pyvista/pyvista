@@ -777,7 +777,17 @@ def _get_offset_array(cellarr: _vtk.vtkCellArray):
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
-    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
+    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
+
+    Parameters
+    ----------
+    cellarr : _vtk.vtkCellArray
+        Cell array.
+
+    Returns
+    -------
+    np.ndarray
+    """
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells
