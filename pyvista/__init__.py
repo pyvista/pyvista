@@ -68,7 +68,7 @@ def __getattr__(name):
 
     Parameters
     ----------
-    name: str
+    name : str
         Name of attribute.
 
     Returns
