@@ -711,7 +711,20 @@ class CellArray(_vtk.vtkCellArray):
         return _get_offset_array(self)
 
     def _set_data(self, offsets, connectivity, deep=False):
-        """Set the offsets and connectivity arrays."""
+        """Set the offsets and connectivity arrays.
+
+        Parameters
+        ----------
+        offsets : numpy.ndarray or list[int]
+            Offsets array of length `n_cells + 1`.
+
+        connectivity : numpy.ndarray or list[int]
+            Connectivity array.
+
+        deep : bool, default: False
+            Whether to deep copy the array data into the vtk arrays.
+
+        """
         offsets = numpy_to_idarr(offsets, deep=deep)
         connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(offsets, connectivity)
