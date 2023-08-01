@@ -4906,7 +4906,7 @@ class DataSetFilters:
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if inplace:
-            if type(self) == type(merged):
+            if isinstance(self, type(merged)):
                 self.deep_copy(merged)
                 return self
             else:
