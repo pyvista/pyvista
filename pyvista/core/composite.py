@@ -747,7 +747,7 @@ class MultiBlock(
         self._iter_n = 0
         return self
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other):
         """Equality comparison.
 
         Parameters
