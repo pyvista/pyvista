@@ -1255,7 +1255,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
         """Extract the real component of the active scalars of this dataset.
 
         Returns
