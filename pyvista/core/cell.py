@@ -681,12 +681,22 @@ class CellArray(_vtk.vtkCellArray):
 
     @property
     def connectivity_array(self):
-        """Return the array with the point ids that define the cells' connectivity."""
+        """Return the array with the point ids that define the cells' connectivity.
+        Returns
+        -------
+        np.ndarray
+            Array with the point ids that define the cells' connectivity.
+        """
         return _get_connectivity_array(self)
 
     @property
     def offset_array(self):
-        """Return the array used to store cell offsets."""
+        """Return the array used to store cell offsets.
+        Returns
+        -------
+        np.ndarray
+            Array used to store cell offsets.
+        """
         return _get_offset_array(self)
 
     def _set_data(self, offsets, connectivity, deep=False):
@@ -784,6 +794,7 @@ def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
     Returns
     -------
     np.ndarray
+        Array with the point ids that define the cells' connectivity.
     """
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
@@ -799,6 +810,7 @@ def _get_offset_array(cellarr: _vtk.vtkCellArray):
     Returns
     -------
     np.ndarray
+        Array used to store cell offsets.
     """
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
