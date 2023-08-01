@@ -719,7 +719,7 @@ class CellArray(_vtk.vtkCellArray):
         -------
         CellArray
             Constructed CellArray.
-            
+
         """
         cellarr = CellArray()
         cellarr._set_data(offsets, connectivity, deep=deep)
