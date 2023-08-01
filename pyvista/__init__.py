@@ -74,7 +74,7 @@ def __getattr__(name):
     Returns
     -------
     ModuleType
-        attribute fetched by ``name``.
+        Attribute fetched by ``name``.
 
     Raises
     ------
