@@ -20,6 +20,7 @@ def _get_vtk_id_type():
     -------
     type
         Type of vtk id.
+
     """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
