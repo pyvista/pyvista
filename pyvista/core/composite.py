@@ -661,7 +661,7 @@ class MultiBlock(
         self,
         index,
         data,
-    ):
+    ):  # numpydoc ignore=PR01
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
