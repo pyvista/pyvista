@@ -19,14 +19,6 @@ from pyvista.examples import (
     load_uniform,
 )
 
-cells = [
-    example_cells.Hexahedron().get_cell(0),
-    example_cells.Triangle().get_cell(0),
-    example_cells.Voxel().get_cell(0),
-    example_cells.Quadrilateral().get_cell(0),
-    example_cells.Tetrahedron().get_cell(0),
-    example_cells.Voxel().get_cell(0),
-]
 grids = [
     load_hexbeam(),
     load_airplane(),
@@ -36,6 +28,17 @@ grids = [
     load_uniform(),
     load_explicit_structured(),
 ]
+ids = [str(type(grid)) for grid in grids]
+
+cells = [
+    example_cells.Hexahedron().get_cell(0),
+    example_cells.Triangle().get_cell(0),
+    example_cells.Voxel().get_cell(0),
+    example_cells.Quadrilateral().get_cell(0),
+    example_cells.Tetrahedron().get_cell(0),
+    example_cells.Voxel().get_cell(0),
+    example_cells.Polyhedron().get_cell(0),
+]
 types = [
     CellType.HEXAHEDRON,
     CellType.TRIANGLE,
@@ -43,23 +46,13 @@ types = [
     CellType.QUAD,
     CellType.TETRA,
     CellType.VOXEL,
-    CellType.HEXAHEDRON,
+    CellType.POLYHEDRON,
 ]
-faces_types = [
-    CellType.QUAD,
-    None,
-    CellType.PIXEL,
-    None,
-    CellType.TRIANGLE,
-    CellType.PIXEL,
-    CellType.QUAD,
-]
-dims = [3, 2, 3, 2, 3, 3, 3]
-npoints = [8, 3, 8, 4, 4, 8, 8]
-nfaces = [6, 0, 6, 0, 4, 6, 6]
-nedges = [12, 3, 12, 4, 6, 12, 12, 12]
 
-ids = [str(type(grid)) for grid in grids]
+dims = [3, 2, 3, 2, 3, 3, 3]
+npoints = [8, 3, 8, 4, 4, 8, 4]
+nfaces = [6, 0, 6, 0, 4, 6, 4]
+nedges = [12, 3, 12, 4, 6, 12, 6]
 cell_ids = list(map(repr, types))
 
 
@@ -90,42 +83,42 @@ def test_cell_get_cell():
     assert isinstance(hexbeam.get_cell(0), pyvista.Cell)
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize("cell,type", zip(cells[:5], types[:5]))
+@pytest.mark.parametrize("cell,type", zip(cells, types), ids=cell_ids)
 def test_cell_type(cell, type):
     assert cell.type == type
 
 
-@pytest.mark.parametrize("cell", cells)
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize("cell, dim", zip(cells[:5], dims[:5]))
+@pytest.mark.parametrize("cell, dim", zip(cells, dims), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize("cell, np", zip(cells[:5], npoints[:5]))
+@pytest.mark.parametrize("cell, np", zip(cells, npoints), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize("cell, nf", zip(cells[:5], nfaces[:5]))
+@pytest.mark.parametrize("cell, nf", zip(cells, nfaces), ids=cell_ids)
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize("cell, ne", zip(cells[:5], nedges[:5]))
+@pytest.mark.parametrize("cell, ne", zip(cells, nedges), ids=cell_ids)
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_get_edges(cell):
     assert all(cell.get_edge(i).type == CellType.LINE for i in range(cell.n_edges))
 
@@ -133,7 +126,7 @@ def test_cell_get_edges(cell):
         cell.get_edge(cell.n_edges)
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_edges(cell):
     assert all(edge.type == CellType.LINE for edge in cell.edges)
 
@@ -146,7 +139,7 @@ def test_cell_no_field_data():
         cells[0].clear_field_data()
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_copy_generic(cell):
     cell = cell.copy()
     cell_copy = cell.copy(deep=True)
@@ -174,19 +167,19 @@ def test_cell_copy():
     assert cell_copy == cell
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_edges_point_ids(cell):
     point_ids = {frozenset(cell.get_edge(i).point_ids) for i in range(cell.n_edges)}
     assert len(point_ids) == cell.n_edges
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_faces_point_ids(cell):
     point_ids = {frozenset(cell.get_face(i).point_ids) for i in range(cell.n_faces)}
     assert len(point_ids) == cell.n_faces
 
 
-@pytest.mark.parametrize("cell", cells[:5], ids=cell_ids[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_faces(cell):
     if cell.n_faces:
         assert cell.get_face(0) == cell.faces[0]
@@ -221,23 +214,30 @@ def test_cell_center_value():
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
-@pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))
+@pytest.mark.parametrize("cell,type_", zip(cells, types), ids=cell_ids)
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize("cell,type_", zip(cells[:5], types[:5]))
+@pytest.mark.parametrize("cell,type_", zip(cells, types), ids=cell_ids)
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 
 
-@pytest.mark.parametrize("cell", cells[:5])
+@pytest.mark.parametrize("cell", cells, ids=cell_ids)
 def test_cell_points(cell):
     points = cell.points
     assert isinstance(points, np.ndarray)
     assert points.ndim == 2
     assert points.shape[0] > 0
     assert points.shape[1] == 3
+
+
+@pytest.mark.parametrize("cell", cells)
+def test_cell_cast_to_unstructured_grid(cell):
+    grid = cell.cast_to_unstructured_grid()
+    assert grid.n_cells == 1
+    assert grid.get_cell(0) == cell
 
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
@@ -261,6 +261,65 @@ def test_init_cell_array(cells, n_cells, deep):
     cell_array = pyvista.core.cell.CellArray(cells, n_cells, deep)
     assert np.allclose(np.array(cells).ravel(), cell_array.cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == NCELLS
+
+
+CONNECTIVITY_LIST = [0, 1, 2, 3, 4, 5]
+OFFSETS_LIST = [0, 3, 6]
+
+
+@pytest.mark.parametrize(
+    'offsets',
+    [
+        OFFSETS_LIST,
+        np.array(OFFSETS_LIST, np.int16),
+        np.array(OFFSETS_LIST, np.int32),
+        np.array(OFFSETS_LIST, np.int64),
+    ],
+)
+@pytest.mark.parametrize(
+    'connectivity',
+    [
+        CONNECTIVITY_LIST,
+        np.array(CONNECTIVITY_LIST, np.int16),
+        np.array(CONNECTIVITY_LIST, np.int32),
+        np.array(CONNECTIVITY_LIST, np.int64),
+    ],
+)
+@pytest.mark.parametrize('deep', [False, True])
+def test_init_cell_array_from_arrays(offsets, connectivity, deep):
+    cell_array = pyvista.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
+    assert np.array_equal(np.array(connectivity), cell_array.connectivity_array)
+    assert np.array_equal(np.array(offsets), cell_array.offset_array)
+    assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(offsets) - 1
+
+
+REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
+
+
+@pytest.mark.parametrize(
+    'cells',
+    [
+        REGULAR_CELL_LIST,
+        np.array(REGULAR_CELL_LIST, np.int16),
+        np.array(REGULAR_CELL_LIST, np.int32),
+        np.array(REGULAR_CELL_LIST, np.int64),
+        np.array(np.vstack(REGULAR_CELL_LIST), order='F'),
+    ],
+)
+@pytest.mark.parametrize('deep', [False, True])
+def test_init_cell_array_from_regular_cells(cells, deep):
+    cell_array = pyvista.core.cell.CellArray.from_regular_cells(cells, deep=deep)
+    assert np.array_equal(np.array(cells), cell_array.regular_cells)
+    assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
+
+
+def test_set_shallow_regular_cells():
+    points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
+    meshes = [pyvista.PolyData.from_regular_faces(points, faces, deep=False) for _ in range(2)]
+
+    for m in meshes:
+        assert np.array_equal(m.regular_faces, faces)
 
 
 def test_numpy_to_idarr_bool():

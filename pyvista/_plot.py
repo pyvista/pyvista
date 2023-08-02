@@ -56,7 +56,7 @@ def plot(
         screenshots without a window popping up.  Defaults to the
         global setting ``pyvista.OFF_SCREEN``.
 
-    full_screen : bool, default: :attr:`pyvista.themes.Theme.full_screen`
+    full_screen : bool, default: :attr:`pyvista.plotting.themes.Theme.full_screen`
         Opens window in full screen.  When enabled, ignores
         ``window_size``.
 
@@ -68,26 +68,26 @@ def plot(
         When ``True``, takes screenshot and returns ``numpy`` array of
         image.
 
-    interactive : bool, default: :attr:`pyvista.themes.Theme.interactive`
+    interactive : bool, default: :attr:`pyvista.plotting.themes.Theme.interactive`
         Allows user to pan and move figure.
 
     cpos : list, optional
         List of camera position, focal point, and view up.
 
-    window_size : sequence, default: :attr:`pyvista.themes.Theme.window_size`
+    window_size : sequence, default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
 
     show_bounds : bool, default: False
         Shows mesh bounds when ``True``.
 
-    show_axes : bool, default: :attr:`pyvista.themes._AxesConfig.show`
+    show_axes : bool, default: :attr:`pyvista.plotting.themes._AxesConfig.show`
         Shows a vtk axes widget.
 
-    notebook : bool, default: :attr:`pyvista.themes.Theme.notebook`
+    notebook : bool, default: :attr:`pyvista.plotting.themes.Theme.notebook`
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : ColorLike, default: :attr:`pyvista.themes.Theme.background`
+    background : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.background`
         Color of the background.
 
     text : str, optional
@@ -106,7 +106,7 @@ def plot(
     parallel_projection : bool, default: False
         Enable parallel projection.
 
-    jupyter_backend : str, default: :attr:`pyvista.themes.Theme.jupyter_backend`
+    jupyter_backend : str, default: :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
         Jupyter notebook plotting backend to use.  One of the
         following:
 
@@ -130,16 +130,16 @@ def plot(
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
-    theme : pyvista.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    hidden_line_removal : bool, default: :attr:`pyvista.themes.Theme.hidden_line_removal`
+    hidden_line_removal : bool, default: :attr:`pyvista.plotting.themes.Theme.hidden_line_removal`
         Wireframe geometry will be drawn using hidden line removal if
         the rendering engine supports it.  See
         :func:`Plotter.enable_hidden_line_removal
         <Plotter.enable_hidden_line_removal>`.
 
-    anti_aliasing : bool, default: :attr:`pyvista.themes.Theme.anti_aliasing`
+    anti_aliasing : bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
         Enable or disable anti-aliasing.
 
     zoom : float, str, optional

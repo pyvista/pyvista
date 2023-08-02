@@ -1,7 +1,7 @@
 import pytest
 
 import pyvista as pv
-from pyvista.errors import MissingDataError
+from pyvista.core.errors import MissingDataError
 
 
 def test_contour_banded_raise(sphere):

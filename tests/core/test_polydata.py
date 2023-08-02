@@ -7,8 +7,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.core.errors import NotAllTrianglesError
-from pyvista.errors import PyVistaFutureWarning
+from pyvista.core.errors import NotAllTrianglesError, PyVistaFutureWarning
 
 radius = 0.5
 
@@ -326,7 +325,7 @@ def test_append_raises(sphere: pyvista.PolyData):
 
 
 def test_merge(sphere, sphere_shifted, hexbeam):
-    merged = sphere.merge(hexbeam, progress_bar=True)
+    merged = sphere.merge(hexbeam, merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
     assert isinstance(merged, pyvista.UnstructuredGrid)
 
@@ -913,3 +912,40 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
 
     with pytest.raises(ValueError, match=match):
         combined.geodesic_distance(start_vertex, end_vertex)
+
+
+def test_tetrahedron_regular_faces():
+    tetra = pyvista.Tetrahedron()
+    assert np.array_equal(tetra.faces.reshape(-1, 4)[:, 1:], tetra.regular_faces)
+
+
+@pytest.mark.parametrize('deep', [False, True])
+def test_regular_faces(deep):
+    points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
+    faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
+    mesh = pyvista.PolyData.from_regular_faces(points, faces, deep=deep)
+    expected_faces = (
+        np.hstack([np.full((len(faces), 1), 3), faces]).astype(pyvista.ID_TYPE).flatten()
+    )
+    assert np.array_equal(mesh.faces, expected_faces)
+    assert np.array_equal(mesh.regular_faces, faces)
+
+
+def test_set_regular_faces():
+    mesh = pyvista.Tetrahedron()
+    flipped_faces = mesh.regular_faces[:, ::-1]
+    mesh.regular_faces = flipped_faces
+    assert np.array_equal(mesh.regular_faces, flipped_faces)
+
+
+def test_empty_regular_faces():
+    mesh = pyvista.PolyData()
+    assert np.array_equal(mesh.regular_faces, np.array([], dtype=pyvista.ID_TYPE))
+
+
+def test_regular_faces_mutable():
+    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2]]
+    mesh = pyvista.PolyData.from_regular_faces(points, faces)
+    mesh.regular_faces[0, 2] = 3
+    assert np.array_equal(mesh.faces, [3, 0, 1, 3])
