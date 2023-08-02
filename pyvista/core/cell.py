@@ -502,13 +502,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return attrs
 
     def __repr__(self) -> str:
-        """Return the object representation.
-
-        Returns
-        -------
-        str
-            The object representation.
-        """
+        """Return the object representation."""
         return self.head(display=False, html=False)
 
     def __str__(self) -> str:
