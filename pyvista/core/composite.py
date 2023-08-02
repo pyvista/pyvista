@@ -45,6 +45,9 @@ class MultiBlock(
 
     Parameters
     ----------
+    *args : dict, optional
+        Data object dictionary.
+
     **kwargs : dict, optional
         See :func:`pyvista.read` for additional options.
 
