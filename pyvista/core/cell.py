@@ -594,23 +594,7 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):
-        """Initialize a vtkCellArray.
-
-        Parameters
-        ----------
-        cells : np.ndarray or list, optional
-            Import an array of data with the legacy vtkCellArray layout, e.g.
-            ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
-            Where n0 is the number of points in cell 0, and pX_Y is the Y'th
-            point in cell X.
-
-        n_cells : int, optional
-            The number of cells.
-
-        deep : bool, default: False
-            Perform a deep copy of the original cell.
-        """
+    def __init__(self, cells=None, n_cells=None, deep=False):# numpydoc ignore=PR01
         """Initialize a vtkCellArray."""
         self.__offsets = None
         self.__connectivity = None
