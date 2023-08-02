@@ -382,16 +382,6 @@ class MultiBlock(
 
         If the name is non-unique then returns the first occurrence.
 
-        Parameters
-        ----------
-        index : slice | str
-            Index or name of the block.
-
-        Returns
-        -------
-        MultiBlock
-            MultiBlock by its index or name.
-
         """
         if isinstance(index, slice):
             multi = MultiBlock()
