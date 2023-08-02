@@ -181,3 +181,4 @@ ignore = [
 override = [
     '\.BasePlotter$',
 ]
+override_GL08 = '^(__init__)$'
