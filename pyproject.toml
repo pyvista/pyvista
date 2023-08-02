@@ -180,5 +180,4 @@ ignore = [
 ]
 override = [
     '\.BasePlotter$',
-    '^(__init__)$',
 ]
