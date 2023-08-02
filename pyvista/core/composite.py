@@ -97,7 +97,13 @@ class MultiBlock(
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:
-        """Initialize multi block."""
+        """Initialize multi block.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            See :func:`pyvista.read` for additional options.
+        """
         super().__init__()
         deep = kwargs.pop('deep', False)
 
