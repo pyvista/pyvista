@@ -95,7 +95,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):
+    def __init__(self, vtk_cell=None, cell_type=None, deep=False):  # numpydoc ignore=PR01
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
