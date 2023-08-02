@@ -96,25 +96,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
     """
 
     def __init__(self, vtk_cell=None, cell_type=None, deep=False):
-        """Initialize the cell.
-
-        Parameters
-        ----------
-        vtk_cell : vtk.vtkCell, optional
-            The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
-
-        cell_type : int, optional
-            VTK cell type. Determined from ``vtk_cell`` if not input.
-
-        deep : bool, default: False
-            Perform a deep copy of the original cell.
-
-        Returns
-        -------
-        None
-            Nothing.
-
-        """
+        """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
