@@ -308,18 +308,7 @@ class DataObject:
         return newobject
 
     def __eq__(self, other):
-        """Test equivalency between data objects.
-
-        Parameters
-        ----------
-        other : DataObject
-            Object to compare.
-
-        Returns
-        -------
-        bool
-            If two object is equal.
-        """
+        """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
 

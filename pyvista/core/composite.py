@@ -727,13 +727,7 @@ class MultiBlock(
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
     def __delitem__(self, index: Union[int, str, slice]) -> None:
-        """Remove a block at the specified index.
-
-        Parameters
-        ----------
-        index: Union[int, str, slice]
-            Index to remove.
-        """
+        """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
                 for i in reversed(range(*index.indices(self.n_blocks))):
@@ -754,29 +748,12 @@ class MultiBlock(
             self._refs.pop(dataset.memory_address, None)  # type: ignore
 
     def __iter__(self) -> 'MultiBlock':
-        """Return the iterator across all blocks.
-
-        Returns
-        -------
-        MultiBlock
-            Object itself.
-        """
+        """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
 
     def __eq__(self, other):
-        """Equality comparison.
-
-        Parameters
-        ----------
-        other : MultiBlock
-            Object to compare.
-
-        Returns
-        -------
-        bool
-            If two object is equal.
-        """
+        """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
 
@@ -995,13 +972,7 @@ class MultiBlock(
         return fmt
 
     def __repr__(self) -> str:
-        """Define an adequate representation.
-
-        Returns
-        -------
-        str
-            The object representation.
-        """
+        """Define an adequate representation."""
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
@@ -1015,23 +986,11 @@ class MultiBlock(
         return fmt.strip()
 
     def __str__(self) -> str:
-        """Return the str representation of the multi block.
-
-        Returns
-        -------
-        str
-            The object representation.
-        """
+        """Return the str representation of the multi block."""
         return MultiBlock.__repr__(self)
 
     def __len__(self) -> int:
-        """Return the number of blocks.
-
-        Returns
-        -------
-        int
-            Number of blocks.
-        """
+        """Return the number of blocks."""
         return self.n_blocks
 
     def copy_meta_from(self, ido, deep):
