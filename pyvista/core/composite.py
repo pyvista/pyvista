@@ -648,13 +648,13 @@ class MultiBlock(
     @overload
     def __setitem__(
         self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
-    ):  # noqa: D105
+    ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
-    ):  # noqa: D105
+    ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
