@@ -750,12 +750,12 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore
 
-    def __iter__(self) -> 'MultiBlock':
+    def __iter__(self) -> 'MultiBlock':  # numpydoc ignore=RT01
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
@@ -774,7 +774,7 @@ class MultiBlock(
 
         return True
 
-    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
+    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:  # numpydoc ignore=RT01
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
