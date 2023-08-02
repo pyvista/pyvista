@@ -974,7 +974,7 @@ class MultiBlock(
         fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # numpydoc ignore=RT01
         """Define an adequate representation."""
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
@@ -988,11 +988,11 @@ class MultiBlock(
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # numpydoc ignore=RT01
         """Return the str representation of the multi block."""
         return MultiBlock.__repr__(self)
 
-    def __len__(self) -> int:
+    def __len__(self) -> int:  # numpydoc ignore=RT01
         """Return the number of blocks."""
         return self.n_blocks
 
