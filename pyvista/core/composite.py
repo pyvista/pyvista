@@ -43,6 +43,11 @@ class MultiBlock(
        from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`pyvista.read` for additional options.
+
     Examples
     --------
     >>> import pyvista as pv
