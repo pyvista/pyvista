@@ -365,7 +365,9 @@ class MultiBlock(
         raise KeyError(f'Block name ({name}) not found')
 
     @overload
-    def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
+    def __getitem__(
+        self, index: Union[int, str]
+    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
