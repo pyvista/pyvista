@@ -1161,8 +1161,40 @@ def test_sample():
     sample_test(progress_bar=True)
     sample_test(categorical=True)
     sample_test(locator=_vtk_core.vtkStaticCellLocator())
+    for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
+        sample_test(locator=locator)
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
+    sample_test(pass_field_data=False)
+
+
+def test_sample_composite():
+    mesh0 = pyvista.ImageData(
+        dimensions=(11, 11, 1), origin=(0.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0)
+    )
+    mesh1 = pyvista.ImageData(
+        dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0)
+    )
+    mesh0["common_data"] = np.zeros(mesh0.n_points)
+    mesh1["common_data"] = np.ones(mesh1.n_points)
+    mesh0["partial_data"] = np.ones(mesh0.n_points)
+
+    composite = pyvista.MultiBlock([mesh0, mesh1])
+
+    probe_points = pyvista.PolyData(
+        [
+            [5.0, 5.0, 0.0],
+            [15.0, 5.0, 0.0],
+            [25.0, 5.0, 0.0],  # outside domain
+        ]
+    )
+
+    result = probe_points.sample(composite)
+    assert "common_data" in result.point_data
+    assert "partial_data" not in result.point_data
+    # data outside domain is 0
+    assert np.array_equal(result["common_data"], [0.0, 1.0, 0.0])
+    assert np.array_equal(result["vtkValidPointMask"], [1, 1, 0])
 
 
 @pytest.mark.parametrize('use_points', [True, False])
