@@ -96,7 +96,7 @@ class MultiBlock(
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
