@@ -26,7 +26,7 @@ class DataObject:
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None: # numpydoc ignore=PR01
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
