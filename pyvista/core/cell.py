@@ -512,13 +512,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.head(display=False, html=False)
 
     def __str__(self) -> str:
-        """Return the object string representation.
-
-        Returns
-        -------
-        str
-            The object string representation.
-        """
+        """Return the object string representation."""
         return self.head(display=False, html=False)
 
     def copy(self, deep=True) -> Cell:
