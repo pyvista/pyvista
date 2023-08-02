@@ -594,7 +594,7 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):# numpydoc ignore=PR01
+    def __init__(self, cells=None, n_cells=None, deep=False):  # numpydoc ignore=PR01
         """Initialize a vtkCellArray."""
         self.__offsets = None
         self.__connectivity = None
