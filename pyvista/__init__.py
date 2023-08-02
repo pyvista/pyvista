@@ -66,16 +66,6 @@ def __getattr__(name):
     This override is implemented to prevent importing all of the plotting module
     and GL-dependent VTK modules when importing PyVista.
 
-    Parameters
-    ----------
-    name : str
-        Name of attribute.
-
-    Returns
-    -------
-    ModuleType
-        Attribute fetched by ``name``.
-
     Raises
     ------
     AttributeError
