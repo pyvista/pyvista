@@ -396,7 +396,7 @@ class DataObject:
     def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
-        Use field data when the size of the data you wish to associate
+        Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
 
