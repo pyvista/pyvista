@@ -181,4 +181,3 @@ ignore = [
 override = [
     '\.BasePlotter$',
 ]
-override_GL08 = '^(__(eq|getattr|getitem|getstate|init|iter|repr|setstate)__)$'
