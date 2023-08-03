@@ -1279,7 +1279,7 @@ class MultiBlock(
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(self):
-        """Check if there are any consistent active scalars.
+        """Get if there are any consistent active scalars.
 
         Returns
         -------
