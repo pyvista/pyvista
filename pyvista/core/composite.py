@@ -914,7 +914,13 @@ class MultiBlock(
             null_blocks -= 1
 
     def _get_attrs(self):
-        """Return the representation methods (internal helper)."""
+        """Return the representation methods (internal helper).
+
+        Returns
+        -------
+        List
+            List of attributes tuples.
+        """
         attrs = []
         attrs.append(("N Blocks", self.n_blocks, "{}"))
         bds = self.bounds
