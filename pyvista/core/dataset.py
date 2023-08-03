@@ -74,7 +74,7 @@ class ActiveArrayInfo:
         state['association'] = int(self.association.value)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state):  # numpydoc ignore=PR01
         """Support unpickling."""
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
