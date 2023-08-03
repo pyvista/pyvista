@@ -501,11 +501,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         return attrs
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # numpydoc ignore=RT01
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # numpydoc ignore=RT01
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
