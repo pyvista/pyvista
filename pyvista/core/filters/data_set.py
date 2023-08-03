@@ -3258,10 +3258,10 @@ class DataSetFilters:
         if locator:
             if isinstance(locator, str):
                 locator_map = {
-                    "cell": _vtk.vtkCellLocator,
-                    "cell_tree": _vtk.vtkCellTreeLocator,
-                    "obb_tree": _vtk.vtkOBBTree,
-                    "static_cell": _vtk.vtkStaticCellLocator,
+                    "cell": _vtk.vtkCellLocator(),
+                    "cell_tree": _vtk.vtkCellTreeLocator(),
+                    "obb_tree": _vtk.vtkOBBTree(),
+                    "static_cell": _vtk.vtkStaticCellLocator(),
                 }
                 try:
                     locator = locator_map[locator]
