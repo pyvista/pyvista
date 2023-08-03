@@ -1182,7 +1182,9 @@ class MultiBlock(
 
         return True
 
-    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):  # numpydoc ignore=PR01,RT01
+    def _activate_plotting_scalars(
+        self, scalars_name, preference, component, rgb
+    ):  # numpydoc ignore=PR01,RT01
         """Active a scalars for an instance of :class:`pyvista.Plotter`."""
         # set the active scalars
         field, scalars = self.set_active_scalars(
@@ -1218,7 +1220,9 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):  # numpydoc ignore=PR01,RT01
+    def _convert_to_real_scalars(
+        self, data_attr: str, scalars_name: str
+    ):  # numpydoc ignore=PR01,RT01
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
