@@ -104,7 +104,7 @@ class MultiBlock(
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
-    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01
+    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
@@ -654,7 +654,7 @@ class MultiBlock(
         self,
         index,
         data,
-    ):  # numpydoc ignore=PR01
+    ):  # numpydoc ignore=PR01,RT01
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -719,7 +719,7 @@ class MultiBlock(
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:  # numpydoc ignore=PR01
+    def __delitem__(self, index: Union[int, str, slice]) -> None:  # numpydoc ignore=PR01,RT01
         """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
@@ -740,7 +740,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore
 
-    def __iter__(self) -> 'MultiBlock':  # numpydoc ignore=RT01
+    def __iter__(self) -> 'MultiBlock':  # numpydoc ignore=PR01,RT01
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
@@ -764,7 +764,7 @@ class MultiBlock(
 
         return True
 
-    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:  # numpydoc ignore=RT01
+    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:  # numpydoc ignore=PR01,RT01
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
@@ -964,7 +964,7 @@ class MultiBlock(
         fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self) -> str:  # numpydoc ignore=RT01
+    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
         """Define an adequate representation."""
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
@@ -978,11 +978,11 @@ class MultiBlock(
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 
-    def __str__(self) -> str:  # numpydoc ignore=RT01
+    def __str__(self) -> str:  # numpydoc ignore=PR01,RT01
         """Return the str representation of the multi block."""
         return MultiBlock.__repr__(self)
 
-    def __len__(self) -> int:  # numpydoc ignore=RT01
+    def __len__(self) -> int:  # numpydoc ignore=PR01,RT01
         """Return the number of blocks."""
         return self.n_blocks
 
