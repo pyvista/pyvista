@@ -79,7 +79,9 @@ class PointPickingElementHandler:
     This handler is only valid for single point picking operations.
     """
 
-    def __init__(self, mode: ElementType = ElementType.CELL, callback=None):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, mode: ElementType = ElementType.CELL, callback=None
+    ):  # numpydoc ignore=PR01,RT01
         self._picker_ = None
         self.callback = callback
         self.mode = ElementType.from_any(mode)

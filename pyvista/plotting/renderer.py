@@ -219,7 +219,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color='w', border_width=2.0):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, parent, border=True, border_color='w', border_width=2.0
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}

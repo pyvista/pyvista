@@ -1982,7 +1982,9 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
-    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label=""):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, chart, x, y, color="b", width=1.0, style="-", label=""
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2129,7 +2131,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
-    def __init__(self, chart, x, y, color="b", size=10, style="o", label=""):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, chart, x, y, color="b", size=10, style="o", label=""
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2497,7 +2501,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, chart, x, y, color=None, orientation="V", label=None):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, chart, x, y, color=None, orientation="V", label=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
         if not isinstance(y[0], (Sequence, np.ndarray)):
@@ -2849,7 +2855,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
-    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
@@ -3686,7 +3694,9 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         "chart_set_labels": 'chart.plot.label = "Data label"',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, data, colors=None, labels=None, size=None, loc=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -3972,7 +3982,9 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, data, colors=None, labels=None, size=None, loc=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4180,7 +4192,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
         if figure is None:

@@ -30,7 +30,9 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -766,7 +768,9 @@ class RenderWindowInteractor:
         self.interactor.SetKeyCode(key)
         self.interactor.CharEvent()
 
-    def _mouse_left_button_press(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    def _mouse_left_button_press(
+        self, x=None, y=None
+    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a left mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -777,7 +781,9 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.LeftButtonPressEvent()
 
-    def _mouse_left_button_release(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    def _mouse_left_button_release(
+        self, x=None, y=None
+    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
@@ -788,7 +794,9 @@ class RenderWindowInteractor:
             self._mouse_left_button_press(x, y)
             self._mouse_left_button_release()
 
-    def _mouse_right_button_press(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    def _mouse_right_button_press(
+        self, x=None, y=None
+    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a right mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -799,7 +807,9 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.RightButtonPressEvent()
 
-    def _mouse_right_button_release(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    def _mouse_right_button_release(
+        self, x=None, y=None
+    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)

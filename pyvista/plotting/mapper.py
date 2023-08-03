@@ -819,7 +819,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     """Wrap vtkPointGaussianMapper."""
 
-    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, theme=None, emissive=None, scale_factor=1.0
+    ) -> None:  # numpydoc ignore=PR01,RT01
         super().__init__(theme=theme)
         if emissive is None:
             emissive = self._theme.lighting_params.emissive

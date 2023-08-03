@@ -39,7 +39,9 @@ class ScalarBars:
             lines.append(f'{title:20} {str(interactive):5}')
         return '\n'.join(lines)
 
-    def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):  # numpydoc ignore=PR01,RT01
+    def _remove_mapper_from_plotter(
+        self, actor, reset_camera=False, render=False
+    ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
         This ensures that when actors are removed, their corresponding
