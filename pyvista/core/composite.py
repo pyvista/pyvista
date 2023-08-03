@@ -734,7 +734,7 @@ class MultiBlock(
         self._remove_ref(index)
         self.RemoveBlock(index)
 
-    def _remove_ref(self, index: int):
+    def _remove_ref(self, index: int):  # numpydoc ignore=PR01,RT01
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
@@ -1218,7 +1218,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):  # numpydoc ignore=PR01,RT01
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
