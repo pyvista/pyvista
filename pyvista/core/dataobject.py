@@ -62,7 +62,7 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self, filename: Union[str, Path], **kwargs):
+    def _from_file(self, filename: Union[str, Path], **kwargs):  # numpydoc ignore=PR01,RT01
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
@@ -396,9 +396,14 @@ class DataObject:
     def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
-        Use field data when size of the data you wish to associate
+        Use field data when the size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
+
+        Returns
+        -------
+        DataSetAttributes
+            FieldData as DataSetAttributes.
 
         Examples
         --------
