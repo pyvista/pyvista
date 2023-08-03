@@ -3147,7 +3147,6 @@ class DataSetFilters:
         progress_bar=False,
         locator=None,
         pass_field_data=True,
-        pass_partial_arrays=False,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3201,10 +3200,6 @@ class DataSetFilters:
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
 
-        pass_partial_arrays : bool, default: False
-            When sampling from composite data sets, whether to pass arrays
-            that do not exist on all blocks.
-
         Returns
         -------
         pyvista.DataSet
@@ -3248,7 +3243,6 @@ class DataSetFilters:
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
-        alg.SetPassPartialArrays(pass_partial_arrays)
 
         alg.SetCategoricalData(categorical)
 
