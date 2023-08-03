@@ -95,7 +95,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):  # numpydoc ignore=PR01
+    def __init__(self, vtk_cell=None, cell_type=None, deep=False):  # numpydoc ignore=PR01,RT01
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
@@ -501,11 +501,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         return attrs
 
-    def __repr__(self) -> str:  # numpydoc ignore=RT01
+    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self) -> str:  # numpydoc ignore=RT01
+    def __str__(self) -> str:  # numpydoc ignore=PR01,RT01
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
@@ -582,7 +582,7 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):  # numpydoc ignore=PR01
+    def __init__(self, cells=None, n_cells=None, deep=False):  # numpydoc ignore=PR01,RT01
         """Initialize a vtkCellArray."""
         self.__offsets = None
         self.__connectivity = None
