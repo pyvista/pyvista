@@ -46,7 +46,12 @@ class OfflineViewerDirective(Directive):
         # which is the same as the relative path of the '_static' directory to the
         # generated HTML file.
         relpath_to_source_root = relative_path(self.state.document.current_source, source_dir)
-        rel_viewer_path = (pathlib.Path(".") / relpath_to_source_root / '_static' / os.path.basename(HTML_VIEWER_PATH)).as_posix()
+        rel_viewer_path = (
+            pathlib.Path(".")
+            / relpath_to_source_root
+            / '_static'
+            / os.path.basename(HTML_VIEWER_PATH)
+        ).as_posix()
         rel_asset_path = pathlib.Path(os.path.relpath(dest_file, static_path)).as_posix()
         html = f"""
     <iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
