@@ -146,7 +146,7 @@ class DataObject:
                 writer.SetEnableAlpha(True)
         writer.Write()
 
-    def _store_metadata(self):
+    def _store_metadata(self):  # numpydoc ignore=PR01,RT01
         """Store metadata as field data."""
         fdata = self.field_data
         for assoc_name in ('bitarray', 'complex'):
@@ -157,7 +157,7 @@ class DataObject:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
 
-    def _restore_metadata(self):
+    def _restore_metadata(self):  # numpydoc ignore=PR01,RT01
         """Restore PyVista metadata from field data.
 
         Metadata is stored using ``_store_metadata`` and contains entries in

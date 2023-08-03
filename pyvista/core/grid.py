@@ -20,7 +20,7 @@ from .utilities.misc import abstract_class, assert_empty_kwargs
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize the grid."""
         super().__init__()
 
@@ -55,7 +55,7 @@ class Grid(DataSet):
         self.SetDimensions(*dims)
         self.Modified()
 
-    def _get_attrs(self):
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
         """Return the representation methods (internal helper)."""
         attrs = DataSet._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
@@ -124,7 +124,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(self, *args, check_duplicates=False, deep=False, **kwargs):
+    def __init__(self, *args, check_duplicates=False, deep=False, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
         super().__init__()
 
@@ -163,15 +163,15 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Return the default representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):
+    def __str__(self):  # numpydoc ignore=PR01,RT01
         """Return the str representation."""
         return DataSet.__str__(self)
 
-    def _update_dimensions(self):
+    def _update_dimensions(self):  # numpydoc ignore=PR01,RT01
         """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
@@ -560,15 +560,15 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Return the default representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):
+    def __str__(self):  # numpydoc ignore=PR01,RT01
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def _from_specs(self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):
+    def _from_specs(self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):  # numpydoc ignore=PR01,RT01
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the point spacings for each axis
@@ -763,7 +763,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.SetSpacing(*spacing)
         self.Modified()
 
-    def _get_attrs(self):
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
         fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT] * 3)

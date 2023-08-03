@@ -28,7 +28,7 @@ class Table(_vtk.vtkTable, DataObject):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize the table."""
         super().__init__(*args, **kwargs)
         if len(args) == 1:
@@ -48,7 +48,7 @@ class Table(_vtk.vtkTable, DataObject):
                 raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     @staticmethod
-    def _prepare_arrays(arrays):
+    def _prepare_arrays(arrays):  # numpydoc ignore=PR01,RT01
         arrays = np.asarray(arrays)
         if arrays.ndim == 1:
             return np.reshape(arrays, (1, -1))
@@ -57,19 +57,19 @@ class Table(_vtk.vtkTable, DataObject):
         else:
             raise ValueError('Only 1D or 2D arrays are supported by Tables.')
 
-    def _from_arrays(self, arrays):
+    def _from_arrays(self, arrays):  # numpydoc ignore=PR01,RT01
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
 
-    def _from_dict(self, array_dict):
+    def _from_dict(self, array_dict):  # numpydoc ignore=PR01,RT01
         for array in array_dict.values():
             if not isinstance(array, np.ndarray) and array.ndim < 3:
                 raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
-    def _from_pandas(self, data_frame):
+    def _from_pandas(self, data_frame):  # numpydoc ignore=PR01,RT01
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name].values
 
@@ -97,7 +97,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self.n_columns
 
-    def _row_array(self, name=None):
+    def _row_array(self, name=None):  # numpydoc ignore=PR01,RT01
         """Return row scalars of a vtk object.
 
         Parameters
@@ -185,11 +185,11 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self.row_arrays.pop(name)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
         """Search row data for an array."""
         return self._row_array(name=index)
 
-    def _ipython_key_completions_(self):
+    def _ipython_key_completions_(self):  # numpydoc ignore=PR01,RT01
         return self.keys()
 
     def get(self, index):
@@ -207,30 +207,30 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self[index]
 
-    def __setitem__(self, name, scalars):
+    def __setitem__(self, name, scalars):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, field, key):
+    def _remove_array(self, field, key):  # numpydoc ignore=PR01,RT01
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
-    def __delitem__(self, name):
+    def __delitem__(self, name):  # numpydoc ignore=PR01,RT01
         """Remove an array by the specified name."""
         del self.row_arrays[name]
 
-    def __iter__(self):
+    def __iter__(self):  # numpydoc ignore=PR01,RT01
         """Return the iterator across all arrays."""
         for array_name in self.row_arrays:
             yield self.row_arrays[array_name]
 
-    def _get_attrs(self):
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
         """Return the representation methods."""
         attrs = []
         attrs.append(("N Rows", self.n_rows, "{}"))
         return attrs
 
-    def _repr_html_(self):
+    def _repr_html_(self):  # numpydoc ignore=PR01,RT01
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -274,11 +274,11 @@ class Table(_vtk.vtkTable, DataObject):
             fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self):
+    def __str__(self):  # numpydoc ignore=PR01,RT01
         """Return the object string representation."""
         return self.head(display=False, html=False)
 

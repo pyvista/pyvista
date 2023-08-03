@@ -1823,7 +1823,7 @@ class DataSet(DataSetFilters, DataObject):
             pass
         return names
 
-    def _get_attrs(self):
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))

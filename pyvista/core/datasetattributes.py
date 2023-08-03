@@ -210,7 +210,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):
+    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -234,7 +234,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         ):
             self.active_scalars_name = key
 
-    def __delitem__(self, key: str):
+    def __delitem__(self, key: str):  # numpydoc ignore=PR01,RT01
         """Implement del with array name or index."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -482,7 +482,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         return self._patch_type(narray)
 
-    def _patch_type(self, narray):
+    def _patch_type(self, narray):  # numpydoc ignore=PR01,RT01
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
         if name in self.dataset._association_bitarray_names[self.association.name]:
@@ -1034,13 +1034,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for name, array in array_dict.items():
             self[name] = array.copy()
 
-    def _raise_index_out_of_bounds(self, index: Any):
+    def _raise_index_out_of_bounds(self, index: Any):  # numpydoc ignore=PR01,RT01
         if isinstance(index, int):
             max_index = self.VTKObject.GetNumberOfArrays()
             if not 0 <= index < max_index:
                 raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
-    def _raise_field_data_no_scalars_vectors(self):
+    def _raise_field_data_no_scalars_vectors(self):  # numpydoc ignore=PR01,RT01
         """Raise a TypeError if FieldData."""
         if self.association == FieldAssociation.NONE:
             raise TypeError('FieldData does not have active scalars or vectors.')
@@ -1257,12 +1257,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_no_normals()
         self.SetActiveNormals(name)
 
-    def _raise_no_normals(self):
+    def _raise_no_normals(self):  # numpydoc ignore=PR01,RT01
         """Raise AttributeError when attempting access normals for field data."""
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active normals.')
 
-    def _raise_no_t_coords(self):
+    def _raise_no_t_coords(self):  # numpydoc ignore=PR01,RT01
         """Raise AttributeError when attempting access t_coords for field data."""
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active texture coordinates.')
