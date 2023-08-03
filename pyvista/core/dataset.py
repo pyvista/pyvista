@@ -52,7 +52,7 @@ ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'
 class ActiveArrayInfo:
     """Active array info class with support for pickling."""
 
-    def __init__(self, association, name):
+    def __init__(self, association, name):  # numpydoc ignore=PR01
         """Initialize."""
         self.association = association
         self.name = name
