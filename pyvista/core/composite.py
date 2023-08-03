@@ -377,7 +377,7 @@ class MultiBlock(
     def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
