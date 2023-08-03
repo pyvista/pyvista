@@ -183,4 +183,3 @@ override = [
 ]
 override_PR01 = '^(__(eq|getattr|getitem|getstate|init|iter|repr|setstate)__)$'
 override_RT01 = '^(__(eq|getattr|getitem|getstate|init|iter|repr|setstate)__)$'
-
