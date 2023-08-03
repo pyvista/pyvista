@@ -63,6 +63,7 @@ class DataObject:
         self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):  # numpydoc ignore=PR01,RT01
+        """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
