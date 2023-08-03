@@ -36,7 +36,7 @@ class DataObject:
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: DefaultDict = collections.defaultdict(set)
 
-    def __getattr__(self, item: str) -> Any:
+    def __getattr__(self, item: str) -> Any:  # numpydoc ignore=PR01,RT01
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
