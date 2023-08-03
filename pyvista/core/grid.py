@@ -124,7 +124,9 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(self, *args, check_duplicates=False, deep=False, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, *args, check_duplicates=False, deep=False, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
         super().__init__()
 
@@ -568,7 +570,9 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def _from_specs(self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):  # numpydoc ignore=PR01,RT01
+    def _from_specs(
+        self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
+    ):  # numpydoc ignore=PR01,RT01
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the point spacings for each axis

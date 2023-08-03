@@ -30,7 +30,9 @@ class VTKVersionError(RuntimeError):
 class PointSetNotSupported(TypeError):
     """Requested filter or property is not supported by the PointSet class."""
 
-    def __init__(self, message='The requested operation is not supported for PointSets.'):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, message='The requested operation is not supported for PointSets.'
+    ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
 
@@ -38,7 +40,9 @@ class PointSetNotSupported(TypeError):
 class PointSetCellOperationError(PointSetNotSupported):
     """Requested filter or property is not supported by the PointSet class."""
 
-    def __init__(self, message='Cell operations are not supported. PointSets contain no cells.'):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, message='Cell operations are not supported. PointSets contain no cells.'
+    ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
 
@@ -72,7 +76,9 @@ class AmbiguousDataError(ValueError):
 class PyVistaPipelineError(RuntimeError):
     """Exception when a VTK pipeline runs into an issue."""
 
-    def __init__(self, message="VTK pipeline issue detected by PyVista."):  # numpydoc ignore=PR01,RT01
+    def __init__(
+        self, message="VTK pipeline issue detected by PyVista."
+    ):  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
