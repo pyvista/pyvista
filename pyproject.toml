@@ -180,4 +180,12 @@ ignore = [
 ]
 override = [
     '\.BasePlotter$',
+    '^(__eq__)$',
+    '^(__getattr__)$',
+    '^(__getitem__)$',
+    '^(__getstate__)$',
+    '^(__init__)$',
+    '^(__iter__)$',
+    '^(__repr__)$',
+    '^(__setstate__)$',
 ]
