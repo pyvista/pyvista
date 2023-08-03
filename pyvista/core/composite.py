@@ -719,7 +719,7 @@ class MultiBlock(
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:
+    def __delitem__(self, index: Union[int, str, slice]) -> None:  # numpydoc ignore=PR01
         """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
