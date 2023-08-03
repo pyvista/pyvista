@@ -6,7 +6,7 @@ import warnings
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 
-def __getattr__(name):
+def __getattr__(name):  # numpydoc ignore=PR01,RT01
     module = importlib.import_module('pyvista.plotting.plotter')
     try:
         value = inspect.getattr_static(module, name)

@@ -14,7 +14,7 @@ class Prop3D(_vtk.vtkProp3D):
     in Actor and Volume class.
     """
 
-    def __init__(self):
+    def __init__(self):  # numpydoc ignore=PR01,RT01
         """Initialize Prop3D."""
         super().__init__()
 

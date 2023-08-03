@@ -17,7 +17,7 @@ def get_server(*args, **kwargs):
 
 
 class _BasePyVistaView:
-    def __init__(self, plotter):
+    def __init__(self, plotter):  # numpydoc ignore=PR01,RT01  # numpydoc ignore=PR01,RT01
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
         self._plotter_render_callback = lambda *args: self.update()
@@ -30,7 +30,7 @@ class _BasePyVistaView:
                 renderer.camera_position = renderer.get_default_cam_pos()
                 renderer.ResetCamera()
 
-    def _post_initialize(self):
+    def _post_initialize(self):  # numpydoc ignore=PR01,RT01  # numpydoc ignore=PR01,RT01
         if self._server.running:
             self.update()
         else:
@@ -99,7 +99,9 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(
+        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -150,7 +152,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, namespace=None, **kwargs):
+    def __init__(self, plotter, namespace=None, **kwargs):  # numpydoc ignore=PR01,RT01
         """Create a trame local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -164,7 +166,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
         )
         self._post_initialize()
 
-    def _post_initialize(self):
+    def _post_initialize(self):  # numpydoc ignore=PR01,RT01
         super()._post_initialize()
         self.set_widgets(
             [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
@@ -208,7 +210,9 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(
+        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -232,7 +236,7 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
         self._post_initialize()
 
-    def _post_initialize(self):
+    def _post_initialize(self):  # numpydoc ignore=PR01,RT01
         super()._post_initialize()
         self.set_widgets(
             [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]

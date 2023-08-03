@@ -139,7 +139,7 @@ class CameraPosition:
 
     """
 
-    def __init__(self, position, focal_point, viewup):
+    def __init__(self, position, focal_point, viewup):  # numpydoc ignore=PR01,RT01
         """Initialize a new camera position descriptor."""
         self._position = position
         self._focal_point = focal_point
@@ -163,15 +163,15 @@ class CameraPosition:
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """List representation method."""
         return "[{},\n {},\n {}]".format(*self.to_list())
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
         """Comparison operator to act on list version of CameraPosition object."""
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
@@ -219,7 +219,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color='w', border_width=2.0):
+    def __init__(self, parent, border=True, border_color='w', border_width=2.0):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
@@ -316,7 +316,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return next(self._color_cycle)['color']
 
     @property
-    def _charts(self):
+    def _charts(self):  # numpydoc ignore=PR01,RT01
         """Return the charts collection."""
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
@@ -408,7 +408,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
-        def _update_bounds(bounds):
+        def _update_bounds(bounds):  # numpydoc ignore=PR01,RT01
             def update_axis(ax):
                 if bounds[ax * 2] < the_bounds[ax * 2]:
                     the_bounds[ax * 2] = bounds[ax * 2]
@@ -473,7 +473,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.set_background(color)
         self.Modified()
 
-    def _before_render_event(self, *args, **kwargs):
+    def _before_render_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Notify all charts about render event."""
         for chart in self._charts:
             chart._render_event(*args, **kwargs)
@@ -557,12 +557,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-    def _enable_fxaa(self):
+    def _enable_fxaa(self):  # numpydoc ignore=PR01,RT01
         """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def _disable_fxaa(self):
+    def _disable_fxaa(self):  # numpydoc ignore=PR01,RT01
         """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
@@ -670,7 +670,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
 
     @wraps(Charts.get_charts_by_pos)
-    def _get_charts_by_pos(self, pos):
+    def _get_charts_by_pos(self, pos):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.get_charts_by_pos``."""
         # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []
@@ -3157,7 +3157,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # remove reference to parent last
         self.parent = None
 
-    def __del__(self):
+    def __del__(self):  # numpydoc ignore=PR01,RT01
         """Delete the renderer."""
         self.deep_clean()
 
@@ -3747,7 +3747,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
 
-def _line_for_legend():
+def _line_for_legend():  # numpydoc ignore=PR01,RT01
     """Create a simple line-like rectangle for the legend."""
     points = [
         [0, 0, 0],

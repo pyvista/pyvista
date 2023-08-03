@@ -86,7 +86,7 @@ def set_algorithm_input(alg, inp, port=0):
 class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type."""
 
-    def __init__(self, nInputPorts=1, nOutputPorts=1):
+    def __init__(self, nInputPorts=1, nOutputPorts=1):  # numpydoc ignore=PR01,RT01
         """Initialize algorithm."""
         _vtk.VTKPythonAlgorithmBase.__init__(
             self,
@@ -139,7 +139,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, name: str, preference: str = 'point'):
+    def __init__(self, name: str, preference: str = 'point'):  # numpydoc ignore=PR01,RT01
         """Initialize algorithm."""
         super().__init__()
         self.scalars_name = name
@@ -166,7 +166,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
     This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
     """
 
-    def __init__(self):
+    def __init__(self):  # numpydoc ignore=PR01,RT01
         """Initialize algorithm."""
         _vtk.VTKPythonAlgorithmBase.__init__(
             self,
@@ -196,7 +196,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
     point and/or cell ID arrays added.
     """
 
-    def __init__(self, point_ids=True, cell_ids=True):
+    def __init__(self, point_ids=True, cell_ids=True):  # numpydoc ignore=PR01,RT01
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
@@ -226,7 +226,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
-    def __init__(self):
+    def __init__(self):  # numpydoc ignore=PR01,RT01
         """Initialize algorithm."""
         super().__init__(
             nInputPorts=2,

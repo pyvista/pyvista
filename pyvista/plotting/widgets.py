@@ -21,7 +21,7 @@ from .utilities.algorithms import (
 )
 
 
-def _parse_interaction_event(interaction_event):
+def _parse_interaction_event(interaction_event):  # numpydoc ignore=PR01,RT01
     """Parse the interaction event.
 
     Parameters
@@ -64,7 +64,7 @@ class WidgetHelper:
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize widget helper."""
         super().__init__(*args, **kwargs)
         self.camera_widgets = []
@@ -170,7 +170,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        def _the_callback(box_widget, event_id):
+        def _the_callback(box_widget, event_id):  # numpydoc ignore=PR01,RT01
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
@@ -452,7 +452,7 @@ class WidgetHelper:
         if assign_to_axis:
             normal_rotation = False
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, event_id):  # numpydoc ignore=PR01,RT01
             the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
@@ -1101,7 +1101,7 @@ class WidgetHelper:
 
         color = Color(color, default_color=pyvista.global_theme.font.color)
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, event_id):  # numpydoc ignore=PR01,RT01
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
             if callable(callback):
@@ -1214,7 +1214,7 @@ class WidgetHelper:
         # avoid division by zero in case there is only one element
         delta = 1 if delta == 0 else delta
 
-        def _the_callback(value):
+        def _the_callback(value):  # numpydoc ignore=PR01,RT01
             if isinstance(value, float):
                 idx = int(value / delta)
                 # handle limit index
@@ -1436,7 +1436,7 @@ class WidgetHelper:
         if tube_width is not None:
             slider_rep.SetTubeWidth(tube_width)
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, event):  # numpydoc ignore=PR01,RT01
             value = widget.GetRepresentation().GetValue()
             if callable(callback):
                 if pass_widget:
@@ -1856,7 +1856,7 @@ class WidgetHelper:
 
         ribbon = pyvista.PolyData()
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, event_id):  # numpydoc ignore=PR01,RT01
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
@@ -2203,7 +2203,7 @@ class WidgetHelper:
         else:
             colors = [color] * num
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, event_id):  # numpydoc ignore=PR01,RT01
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
@@ -2358,7 +2358,7 @@ class WidgetHelper:
         button_widget.SetCurrentRenderer(self.renderer)
         button_widget.On()
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, event):  # numpydoc ignore=PR01,RT01
             state = widget.GetRepresentation().GetState()
             if callable(callback):
                 try_callback(callback, bool(state))

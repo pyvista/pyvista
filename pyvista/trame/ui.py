@@ -52,7 +52,7 @@ def checkbox(model, icons, tooltip):
 class Viewer:
     """Internal wrapper to sync trame view with Plotter."""
 
-    def __init__(self, plotter, suppress_rendering=False):
+    def __init__(self, plotter, suppress_rendering=False):  # numpydoc ignore=PR01,RT01
         """Initialize Viewer."""
         if plotter._id_name in _VIEWERS:
             raise RuntimeError('A viewer instance already exists for this Plotter.')

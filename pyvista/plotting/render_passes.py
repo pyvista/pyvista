@@ -32,7 +32,7 @@ class RenderPasses:
 
     """
 
-    def __init__(self, renderer):
+    def __init__(self, renderer):  # numpydoc ignore=PR01,RT01
         """Initialize render passes."""
         self._renderer_ref = weakref.ref(renderer)
 
@@ -49,7 +49,7 @@ class RenderPasses:
         self.__camera_pass = None
 
     @property
-    def _pass_collection(self):
+    def _pass_collection(self):  # numpydoc ignore=PR01,RT01
         """Initialize (when necessary) the pass collection and return it.
 
         This lets us lazily generate the pass collection only when we need it
@@ -61,7 +61,7 @@ class RenderPasses:
         return self.__pass_collection
 
     @property
-    def _seq_pass(self):
+    def _seq_pass(self):  # numpydoc ignore=PR01,RT01
         """Initialize (when necessary) the sequence collection and return it.
 
         This lets us lazily generate the sequence collection only when we need it
@@ -73,7 +73,7 @@ class RenderPasses:
         return self.__seq_pass
 
     @property
-    def _camera_pass(self):
+    def _camera_pass(self):  # numpydoc ignore=PR01,RT01
         """Initialize (when necessary) the camera pass and return it.
 
         This lets us lazily generate the camera pass only when we need it
@@ -84,7 +84,7 @@ class RenderPasses:
             self._init_passes()
         return self.__camera_pass
 
-    def _init_passes(self):
+    def _init_passes(self):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
         self.__pass_collection = _vtk.vtkRenderPassCollection()
@@ -98,7 +98,7 @@ class RenderPasses:
         self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
-    def _renderer(self):
+    def _renderer(self):  # numpydoc ignore=PR01,RT01
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
@@ -229,7 +229,7 @@ class RenderPasses:
         self._remove_pass(self._ssaa_pass)
         self._ssaa_pass = None
 
-    def _update_passes(self):
+    def _update_passes(self):  # numpydoc ignore=PR01,RT01
         """Reassemble pass delegation."""
         if self._renderer is None:  # pragma: no cover
             raise RuntimeError('The renderer has been closed.')
@@ -247,7 +247,7 @@ class RenderPasses:
         else:
             self._renderer.SetPass(current_pass)
 
-    def _add_pass(self, render_pass):
+    def _add_pass(self, render_pass):  # numpydoc ignore=PR01,RT01
         """Add a render pass."""
         class_name = render_pass.GetClassName()
 
@@ -261,7 +261,7 @@ class RenderPasses:
 
         self._update_passes()
 
-    def _remove_pass(self, render_pass):
+    def _remove_pass(self, render_pass):  # numpydoc ignore=PR01,RT01
         """Remove a pass.
 
         Remove a pass and reassemble the pass ordering.

@@ -21,7 +21,7 @@ from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolor
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
-    def __init__(cls, clsname, bases, attrs):
+    def __init__(cls, clsname, bases, attrs):  # numpydoc ignore=PR01,RT01
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
         sig = inspect.signature(cls.__init__)
@@ -33,7 +33,7 @@ class _vtkWrapperMeta(type):
         cls.__signature__ = sig.replace(parameters=params[1:])
         super().__init__(clsname, bases, attrs)
 
-    def __call__(cls, *args, _wrap=None, **kwargs):
+    def __call__(cls, *args, _wrap=None, **kwargs):  # numpydoc ignore=PR01,RT01
         obj = cls.__new__(cls, *args, **kwargs)
         obj._wrapped = _wrap
         obj.__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class _vtkWrapperMeta(type):
 
 
 class _vtkWrapper(metaclass=_vtkWrapperMeta):
-    def __getattribute__(self, item):
+    def __getattribute__(self, item):  # numpydoc ignore=PR01,RT01
         unwrapped_attrs = ["_wrapped", "__class__", "__init__"]
         wrapped = super().__getattribute__("_wrapped")
         if item in unwrapped_attrs or wrapped is None:
@@ -52,7 +52,7 @@ class _vtkWrapper(metaclass=_vtkWrapperMeta):
             except AttributeError:
                 return super().__getattribute__(item)
 
-    def __str__(self):
+    def __str__(self):  # numpydoc ignore=PR01,RT01
         if self._wrapped is None:
             return super().__str__()
         else:
@@ -73,7 +73,7 @@ class DocSubs:
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ":DOC_SUBS:"
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize subclasses."""
         # First substitute all members for this class (marked in a super class)
         if cls._DOC_SUBS is not None:
@@ -105,7 +105,7 @@ class DocSubs:
                 member.__doc__ = """Docstring to be specialized in subclasses."""
 
     @staticmethod
-    def _wrap_member(member):
+    def _wrap_member(member):  # numpydoc ignore=PR01,RT01
         if callable(member):
 
             @wraps(member)
@@ -186,7 +186,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
     }
 
-    def __init__(self, color="k", width=1, style="-"):
+    def __init__(self, color="k", width=1, style="-"):  # numpydoc ignore=PR01,RT01
         """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
@@ -286,7 +286,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     """
 
-    def __init__(self, color="k", texture=None):
+    def __init__(self, color="k", texture=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
@@ -409,7 +409,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self._repeat = bool(val)
         self._update_textureprops()
 
-    def _update_textureprops(self):
+    def _update_textureprops(self):  # numpydoc ignore=PR01,RT01
         # Interpolation: NEAREST = 0x01, LINEAR = 0x02
         # Stretch/repeat: STRETCH = 0x04, REPEAT = 0x08
         self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
@@ -450,7 +450,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label="", range=None, grid=True):
+    def __init__(self, label="", range=None, grid=True):  # numpydoc ignore=PR01,RT01
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -977,7 +977,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     def ticks_visible(self, val):
         self.SetTicksVisible(bool(val))
 
-    def _update_ticks(self):
+    def _update_ticks(self):  # numpydoc ignore=PR01,RT01
         locs = None if self._tick_locs.GetNumberOfValues() == 0 else self._tick_locs
         labels = None if self._tick_labels.GetNumberOfValues() == 0 else self._tick_labels
         self.SetCustomTickPositions(locs, labels)
@@ -993,7 +993,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
             # item is the _CustomContextItem subclass instance
             return item.paint(painter)
 
-    def __init__(self):
+    def __init__(self):  # numpydoc ignore=PR01,RT01
         super().__init__()
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
@@ -1005,7 +1005,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 class _ChartBackground(_CustomContextItem):
     """Utility class for chart backgrounds."""
 
-    def __init__(self, chart):
+    def __init__(self, chart):  # numpydoc ignore=PR01,RT01
         super().__init__()
         # Note: This SHOULD be a weakref proxy, as otherwise the garbage collector will not clean up unused charts
         # (because of the cyclic references between charts and their background).
@@ -1040,7 +1040,7 @@ class _Chart(DocSubs):
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
     _DOC_SUBS: Optional[Dict[str, str]] = None
 
-    def __init__(self, size=(1, 1), loc=(0, 0)):
+    def __init__(self, size=(1, 1), loc=(0, 0)):  # numpydoc ignore=PR01,RT01
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()
@@ -1051,22 +1051,22 @@ class _Chart(DocSubs):
             self.loc = loc
 
     @property
-    def _scene(self):
+    def _scene(self):  # numpydoc ignore=PR01,RT01
         """Get a reference to the vtkScene in which this chart is drawn."""
         return self.GetScene()
 
     @property
-    def _renderer(self):
+    def _renderer(self):  # numpydoc ignore=PR01,RT01
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
+    def _render_event(self, *args, plotter_render=False, **kwargs):  # numpydoc ignore=PR01,RT01
         """Update the chart right before it will be rendered."""
         # Only resize on real VTK render events (plotter.render calls will afterwards invoke a proper render event)
         if not plotter_render:
             self._resize()
 
-    def _resize(self):
+    def _resize(self):  # numpydoc ignore=PR01,RT01
         """Resize this chart.
 
         Resize this chart such that it always occupies the specified
@@ -1095,17 +1095,17 @@ class _Chart(DocSubs):
         return resize
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=PR01,RT01
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
         return tuple(self.GetSize())
 
     @_geometry.setter
-    def _geometry(self, val):
+    def _geometry(self, val):  # numpydoc ignore=PR01,RT01
         """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))
 
     @property
-    def _interactive(self):
+    def _interactive(self):  # numpydoc ignore=PR01,RT01
         """Return or set the chart's interactivity.
 
         Notes
@@ -1117,10 +1117,10 @@ class _Chart(DocSubs):
         return self.GetInteractive()
 
     @_interactive.setter
-    def _interactive(self, val):
+    def _interactive(self, val):  # numpydoc ignore=PR01,RT01
         self.SetInteractive(val)
 
-    def _is_within(self, pos):
+    def _is_within(self, pos):  # numpydoc ignore=PR01,RT01
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
         return l <= pos[0] <= l + w and b <= pos[1] <= b + h
@@ -1531,7 +1531,7 @@ class _Plot(DocSubs):
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: Optional[Dict[str, str]] = None
 
-    def __init__(self, chart):
+    def __init__(self, chart):  # numpydoc ignore=PR01,RT01
         super().__init__()
         self._chart = weakref.proxy(chart)
         self._pen = Pen()
@@ -1746,7 +1746,7 @@ class _MultiCompPlot(_Plot):
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
     _DOC_SUBS: Optional[Dict[str, str]] = None
 
-    def __init__(self, chart):
+    def __init__(self, chart):  # numpydoc ignore=PR01,RT01
         super().__init__(chart)
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
@@ -1982,7 +1982,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
-    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label=""):
+    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label=""):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2129,7 +2129,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
-    def __init__(self, chart, x, y, color="b", size=10, style="o", label=""):
+    def __init__(self, chart, x, y, color="b", size=10, style="o", label=""):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2319,7 +2319,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
     }
 
-    def __init__(self, chart, x, y1, y2=None, color="b", label=""):
+    def __init__(self, chart, x, y1, y2=None, color="b", label=""):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -2497,7 +2497,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, chart, x, y, color=None, orientation="V", label=None):
+    def __init__(self, chart, x, y, color=None, orientation="V", label=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
         if not isinstance(y[0], (Sequence, np.ndarray)):
@@ -2682,7 +2682,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, chart, x, ys, colors=None, labels=None):
+    def __init__(self, chart, x, ys, colors=None, labels=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
         if not isinstance(ys[0], (Sequence, np.ndarray)):
@@ -2849,7 +2849,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
-    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
+    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
@@ -2869,13 +2869,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.grid = grid
         self.legend_visible = True
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
+    def _render_event(self, *args, plotter_render=False, **kwargs):  # numpydoc ignore=PR01,RT01
         if plotter_render:
             # TODO: should probably be called internally by VTK when plot data or axis behavior/logscale is changed?
             self.RecalculateBounds()
         super()._render_event(*args, plotter_render=plotter_render, **kwargs)
 
-    def _add_plot(self, plot_type, *args, **kwargs):
+    def _add_plot(self, plot_type, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Add a plot of the given type to this chart."""
         plot = self.PLOT_TYPES[plot_type](self, *args, **kwargs)
         self.AddPlot(plot)
@@ -2883,7 +2883,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return plot
 
     @classmethod
-    def _parse_format(cls, fmt):
+    def _parse_format(cls, fmt):  # numpydoc ignore=PR01,RT01
         """Parse a format string and separate it into a marker style, line style and color.
 
         Parameters
@@ -3561,7 +3561,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         "multiplot_init": "chart.plot",
     }
 
-    def __init__(self, chart, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -3686,7 +3686,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         "chart_set_labels": 'chart.plot.label = "Data label"',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
+    def __init__(self, data, colors=None, labels=None, size=None, loc=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -3700,7 +3700,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         self.SetColumnVisibilityAll(True)
         self.legend_visible = True
 
-    def _render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # In older VTK versions, ChartBox fills the entire scene, so
             # no resizing is needed (nor possible).
@@ -3709,14 +3709,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             super()._render_event(*args, **kwargs)
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=PR01,RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
             return _Chart._geometry.fget(self)
 
     @_geometry.setter
-    def _geometry(self, value):
+    def _geometry(self, value):  # numpydoc ignore=PR01,RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
@@ -3871,7 +3871,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         "multiplot_init": "chart.plot",
     }
 
-    def __init__(self, chart, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new pie plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(data)
@@ -3972,7 +3972,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
+    def __init__(self, data, colors=None, labels=None, size=None, loc=None):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -3991,7 +3991,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             self.SetPlot(self._plot)
         self.legend_visible = True
 
-    def _render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # In older VTK versions, ChartPie fills the entire scene, so
             # no resizing is needed (nor possible).
@@ -4000,14 +4000,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             super()._render_event(*args, **kwargs)
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=PR01,RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
             return _Chart._geometry.fget(self)
 
     @_geometry.setter
-    def _geometry(self, value):
+    def _geometry(self, value):  # numpydoc ignore=PR01,RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
@@ -4180,7 +4180,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
+    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
         if figure is None:
@@ -4247,7 +4247,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     def redraw_on_render(self, val):
         self._redraw_on_render = bool(val)
 
-    def _resize(self):
+    def _resize(self):  # numpydoc ignore=PR01,RT01
         r_w, r_h = self._renderer.GetSize()
         c_w, c_h = (int(s) for s in self._canvas.get_width_height())
         # Calculate target size from specified normalized width and height and the renderer's current size
@@ -4262,7 +4262,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self.position = (int(self._loc[0] * r_w), int(self._loc[1] * r_h))
         return resize
 
-    def _redraw(self, event=None):
+    def _redraw(self, event=None):  # numpydoc ignore=PR01,RT01
         """Redraw the chart."""
         if event is None:
             # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
@@ -4277,7 +4277,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
+    def _render_event(self, *args, plotter_render=False, **kwargs):  # numpydoc ignore=PR01,RT01
         # Redraw figure when geometry has changed (self._resize call
         # already updated figure dimensions in that case) OR the
         # plotter's render method was called and redraw_on_render is
@@ -4286,14 +4286,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._redraw()
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=PR01,RT01
         r_w, r_h = self._renderer.GetSize()
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
         return (*self.position, t_w, t_h)
 
     @_geometry.setter
-    def _geometry(self, value):
+    def _geometry(self, value):  # numpydoc ignore=PR01,RT01
         raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
@@ -4391,7 +4391,7 @@ class Charts:
 
     """
 
-    def __init__(self, renderer):
+    def __init__(self, renderer):  # numpydoc ignore=PR01,RT01
         """Create a new collection of charts for the given renderer."""
         self._charts = []
 
@@ -4406,11 +4406,11 @@ class Charts:
         self.__renderer = weakref.ref(renderer)
 
     @property
-    def _renderer(self):
+    def _renderer(self):  # numpydoc ignore=PR01,RT01
         """Return the weakly dereferenced renderer, maybe None."""
         return self.__renderer()
 
-    def _setup_scene(self):
+    def _setup_scene(self):  # numpydoc ignore=PR01,RT01
         """Set up a new context scene and actor for these charts."""
         self._scene = _vtk.vtkContextScene()
         self._actor = _vtk.vtkContextActor()
@@ -4523,18 +4523,18 @@ class Charts:
         """
         return [chart for chart in self._charts if chart.visible and chart._is_within(pos)]
 
-    def __getitem__(self, index) -> Chart:
+    def __getitem__(self, index) -> Chart:  # numpydoc ignore=PR01,RT01
         """Return a chart based on an index."""
         return self._charts[index]
 
-    def __len__(self):
+    def __len__(self):  # numpydoc ignore=PR01,RT01
         """Return number of charts."""
         return len(self._charts)
 
-    def __iter__(self):
+    def __iter__(self):  # numpydoc ignore=PR01,RT01
         """Return an iterable of charts."""
         yield from self._charts
 
-    def __del__(self):
+    def __del__(self):  # numpydoc ignore=PR01,RT01
         """Clean up before being destroyed."""
         self.deep_clean()

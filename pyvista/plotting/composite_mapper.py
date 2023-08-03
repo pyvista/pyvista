@@ -69,33 +69,33 @@ class BlockAttributes:
 
     """
 
-    def __init__(self, block, attr):
+    def __init__(self, block, attr):  # numpydoc ignore=PR01,RT01
         """Initialize the block attributes class."""
         self._block = block
         self.__attr = weakref.ref(attr)
 
     @property
-    def _attr(self):
+    def _attr(self):  # numpydoc ignore=PR01,RT01
         """Return the CompositeAttributes."""
         return self.__attr()
 
     @property
-    def _has_color(self):
+    def _has_color(self):  # numpydoc ignore=PR01,RT01
         """Return if a block has its color set."""
         return self._attr.HasBlockColor(self._block)
 
     @property
-    def _has_visibility(self):
+    def _has_visibility(self):  # numpydoc ignore=PR01,RT01
         """Return if a block has its visibility set."""
         return self._attr.HasBlockVisibility(self._block)
 
     @property
-    def _has_opacity(self):
+    def _has_opacity(self):  # numpydoc ignore=PR01,RT01
         """Return if a block has its opacity set."""
         return self._attr.HasBlockOpacity(self._block)
 
     @property
-    def _has_pickable(self):
+    def _has_pickable(self):  # numpydoc ignore=PR01,RT01
         """Return if a block has its pickability set."""
         return self._attr.HasBlockPickability(self._block)
 
@@ -246,7 +246,7 @@ class BlockAttributes:
             return
         self._attr.SetBlockPickability(self._block, new_pickable)
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Representation of block properties."""
         return '\n'.join(
             [
@@ -311,7 +311,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
     """
 
-    def __init__(self, mapper, dataset):
+    def __init__(self, mapper, dataset):  # numpydoc ignore=PR01,RT01
         """Initialize CompositeAttributes."""
         super().__init__()
         mapper.SetCompositeDataDisplayAttributes(self)
@@ -493,11 +493,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 ) from None
         return block
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
         """Return a block attribute by its flat index."""
         return BlockAttributes(self.get_block(index), self)
 
-    def __len__(self):
+    def __len__(self):  # numpydoc ignore=PR01,RT01
         """Return the number of blocks in this dataset."""
         from pyvista import MultiBlock  # avoid circular
 
@@ -511,7 +511,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 cc += 1
         return cc
 
-    def __iter__(self):
+    def __iter__(self):  # numpydoc ignore=PR01,RT01
         """Return an iterator of all the block attributes."""
         for ii in range(len(self)):
             yield self[ii]

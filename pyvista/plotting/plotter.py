@@ -114,7 +114,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-def _warn_xserver():  # pragma: no cover
+def _warn_xserver():  # pragma:  # numpydoc ignore=PR01,RT01 no cover
     """Check if plotting is supported and persist this state.
 
     Check once and cache this value between calls.  Warn the user if
@@ -585,7 +585,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return filename
 
-    def _save_panel(self, filename):
+    def _save_panel(self, filename):  # numpydoc ignore=PR01,RT01
         """Save the render window as a ``panel.pane.vtk`` html file.
 
         See https://panel.holoviz.org/api/panel.pane.vtk.html
@@ -868,13 +868,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._scalar_bars
 
     @property
-    def _before_close_callback(self):
+    def _before_close_callback(self):  # numpydoc ignore=PR01,RT01
         """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
 
     @_before_close_callback.setter
-    def _before_close_callback(self, func):
+    def _before_close_callback(self, func):  # numpydoc ignore=PR01,RT01
         """Store a weakref.ref of the function being called."""
         if func is not None:
             self.__before_close_callback = weakref.ref(func)
@@ -1028,7 +1028,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
 
-        def _to_pos(elevation, azimuth):
+        def _to_pos(elevation, azimuth):  # numpydoc ignore=PR01,RT01
             theta = azimuth * np.pi / 180.0
             phi = (90.0 - elevation) * np.pi / 180.0
             x = np.sin(theta) * np.sin(phi)
@@ -1554,22 +1554,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.center
 
     @property
-    def _scalar_bar_slots(self):
+    def _scalar_bar_slots(self):  # numpydoc ignore=PR01,RT01
         """Return the scalar bar slots of the active renderer."""
         return self.renderer._scalar_bar_slots
 
     @_scalar_bar_slots.setter
-    def _scalar_bar_slots(self, value):
+    def _scalar_bar_slots(self, value):  # numpydoc ignore=PR01,RT01
         """Set the scalar bar slots of the active renderer."""
         self.renderer._scalar_bar_slots = value
 
     @property
-    def _scalar_bar_slot_lookup(self):
+    def _scalar_bar_slot_lookup(self):  # numpydoc ignore=PR01,RT01
         """Return the scalar bar slot lookup of the active renderer."""
         return self.renderer._scalar_bar_slot_lookup
 
     @_scalar_bar_slot_lookup.setter
-    def _scalar_bar_slot_lookup(self, value):
+    def _scalar_bar_slot_lookup(self, value):  # numpydoc ignore=PR01,RT01
         """Set the scalar bar slot lookup of the active renderer."""
         self.renderer._scalar_bar_slot_lookup = value
 
@@ -1734,7 +1734,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.get_image_depth()
 
-    def _check_rendered(self):
+    def _check_rendered(self):  # numpydoc ignore=PR01,RT01
         """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
             raise AttributeError(
@@ -1744,14 +1744,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'for off screen rendering.\n'
             )
 
-    def _check_has_ren_win(self):
+    def _check_has_ren_win(self):  # numpydoc ignore=PR01,RT01
         """Check if render window attribute exists and raise an exception if not."""
         if self.render_window is None:
             raise RenderWindowUnavailable('Render window is not available.')
         if not self.render_window.IsCurrent():
             raise RenderWindowUnavailable('Render window is not current.')
 
-    def _make_render_window_current(self):
+    def _make_render_window_current(self):  # numpydoc ignore=PR01,RT01
         if self.render_window is None:
             raise RenderWindowUnavailable('Render window is not available.')
         self.render_window.MakeCurrent()  # pragma: no cover
@@ -1983,7 +1983,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for actor in renderer.actors.values():
                 actor.SetPickable(actor in actors)
 
-    def _prep_for_close(self):
+    def _prep_for_close(self):  # numpydoc ignore=PR01,RT01
         """Make sure a screenshot is acquired before closing.
 
         This doesn't actually close anything. It just preps the plotter for
@@ -3599,7 +3599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color):
+    def _add_legend_label(self, actor, label, scalars, color):  # numpydoc ignore=PR01,RT01
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
@@ -4617,7 +4617,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-    def _clear_ren_win(self):
+    def _clear_ren_win(self):  # numpydoc ignore=PR01,RT01
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
@@ -5594,7 +5594,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.add_mesh(arrows, **kwargs)
 
     @staticmethod
-    def _save_image(image, filename, return_img):
+    def _save_image(image, filename, return_img):  # numpydoc ignore=PR01,RT01
         """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
@@ -6032,7 +6032,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.Write()
 
     @property
-    def _datasets(self):
+    def _datasets(self):  # numpydoc ignore=PR01,RT01
         """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
@@ -6045,7 +6045,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return datasets
 
-    def __del__(self):
+    def __del__(self):  # numpydoc ignore=PR01,RT01
         """Delete the plotter."""
         # We have to check here if the plotter was only partially initialized
         if self._initialized:
@@ -6114,7 +6114,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # will not be rendered
         self.renderer.layer = 0
 
-    def _on_first_render_request(self):
+    def _on_first_render_request(self):  # numpydoc ignore=PR01,RT01
         """Once an image or render is officially requested, run this routine.
 
         For example on the show call or any screenshot producing code.
@@ -6894,7 +6894,7 @@ class Plotter(BasePlotter):
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 
 
-def _kill_display(disp_id):  # pragma: no cover
+def _kill_display(disp_id):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
     """Forcibly close the display on Linux.
 
     See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584

@@ -38,7 +38,7 @@ class lookup_table_ndarray(np.ndarray):
 
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self, obj):  # numpydoc ignore=PR01,RT01
         """Finalize array (associate with parent metadata)."""
         _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
@@ -48,7 +48,7 @@ class lookup_table_ndarray(np.ndarray):
             self.table = None
             self.VTKObject = None
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):  # numpydoc ignore=PR01,RT01
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -65,7 +65,7 @@ class lookup_table_ndarray(np.ndarray):
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None):
+    def __array_wrap__(self, out_arr, context=None):  # numpydoc ignore=PR01,RT01
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
@@ -368,7 +368,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def log_scale(self, value: bool):
         self.SetScale(value)
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Return the representation."""
         lines = [f'{type(self).__name__} ({hex(id(self))})']
         lines.append(f'  Table Range:                {self.scalar_range}')
@@ -941,7 +941,7 @@ class LookupTable(_vtk.vtkLookupTable):
                 self.SetAnnotation(float(val), str(anno))
 
     @property
-    def _lookup_type(self) -> str:
+    def _lookup_type(self) -> str:  # numpydoc ignore=PR01,RT01
         """Return the lookup type."""
         if self.cmap:
             if hasattr(self.cmap, 'name'):
@@ -1092,7 +1092,7 @@ class LookupTable(_vtk.vtkLookupTable):
             color.append(self.GetOpacity(value))
         return tuple(color)
 
-    def __call__(self, value):
+    def __call__(self, value):  # numpydoc ignore=PR01,RT01
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)

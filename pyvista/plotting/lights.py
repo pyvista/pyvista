@@ -23,7 +23,7 @@ class LightType(IntEnum):
     CAMERA_LIGHT = 2
     SCENE_LIGHT = 3
 
-    def __str__(self):
+    def __str__(self):  # numpydoc ignore=PR01,RT01
         """Pretty name for a light type."""
         return self.name.replace('_', ' ').title()
 
@@ -208,11 +208,11 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Print a repr specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
@@ -248,7 +248,7 @@ class Light(vtkLight):
                         return False
         return True
 
-    def __del__(self):
+    def __del__(self):  # numpydoc ignore=PR01,RT01
         """Clean up when the light is being destroyed."""
         self.actor = None
         self._renderers.clear()
@@ -585,7 +585,7 @@ class Light(vtkLight):
         self.SetPositional(state)
         self._check_actor()
 
-    def _check_actor(self):
+    def _check_actor(self):  # numpydoc ignore=PR01,RT01
         """Check if the light actor should be added or removed from attached renderers.
 
         This should be called whenever positional state or cone angle

@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 class TrameServerDownError(RuntimeError):
     """Exception when trame server is down for Jupyter."""
 
-    def __init__(self, server_name):
+    def __init__(self, server_name):  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         super().__init__(SERVER_DOWN_MESSAGE.format(name=server_name))
 
@@ -53,7 +53,7 @@ class TrameServerDownError(RuntimeError):
 class TrameJupyterServerDownError(RuntimeError):
     """Exception when trame server is down for Jupyter."""
 
-    def __init__(self):
+    def __init__(self):  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
@@ -65,7 +65,7 @@ class TrameJupyterServerDownError(RuntimeError):
 class Widget(HTML):
     """Custom HTML iframe widget for trame viewer."""
 
-    def __init__(self, viewer, src, width, height, **kwargs):
+    def __init__(self, viewer, src, width, height, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize."""
         if HTML is object:
             raise ImportError('Please install `ipywidgets`.')

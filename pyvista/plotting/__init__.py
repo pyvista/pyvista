@@ -68,7 +68,7 @@ class QtDeprecationError(Exception):
     See https://github.com/pyvista/pyvistaqt
 """
 
-    def __init__(self, feature_name):
+    def __init__(self, feature_name):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         Exception.__init__(self, self.message.format(*[feature_name] * 4))
 
@@ -76,7 +76,7 @@ class QtDeprecationError(Exception):
 class BackgroundPlotter:
     """This class has been moved to pyvistaqt."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         raise QtDeprecationError('BackgroundPlotter')
 
@@ -84,7 +84,7 @@ class BackgroundPlotter:
 class QtInteractor:
     """This class has been moved to pyvistaqt."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         raise QtDeprecationError('QtInteractor')
 

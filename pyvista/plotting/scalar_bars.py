@@ -14,7 +14,7 @@ from .tools import parse_font_family
 class ScalarBars:
     """Plotter Scalar Bars."""
 
-    def __init__(self, plotter):
+    def __init__(self, plotter):  # numpydoc ignore=PR01,RT01
         """Initialize ScalarBars."""
         self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
@@ -29,7 +29,7 @@ class ScalarBars:
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Nice representation of this class."""
         lines = []
         lines.append('Scalar Bar Title     Interactive')
@@ -39,7 +39,7 @@ class ScalarBars:
             lines.append(f'{title:20} {str(interactive):5}')
         return '\n'.join(lines)
 
-    def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):
+    def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
         This ensures that when actors are removed, their corresponding
@@ -120,11 +120,11 @@ class ScalarBars:
         if widget is not None:
             widget.SetEnabled(0)
 
-    def __len__(self):
+    def __len__(self):  # numpydoc ignore=PR01,RT01
         """Return the number of scalar bar actors."""
         return len(self._scalar_bar_actors)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
         """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 
@@ -140,7 +140,7 @@ class ScalarBars:
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key):
+    def __contains__(self, key):  # numpydoc ignore=PR01,RT01
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 

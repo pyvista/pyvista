@@ -843,7 +843,7 @@ class Color:
         else:
             raise ValueError(f"Unsupported color channel value provided: {val}")
 
-    def _from_rgba(self, rgba):
+    def _from_rgba(self, rgba):  # numpydoc ignore=PR01,RT01
         """Construct color from an RGB(A) sequence."""
         arg = rgba
         if len(rgba) == 3:
@@ -858,7 +858,7 @@ class Color:
         except ValueError:
             raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
 
-    def _from_dict(self, dct):
+    def _from_dict(self, dct):  # numpydoc ignore=PR01,RT01
         """Construct color from an RGB(A) dictionary."""
         # Get any of the keys associated with each color channel (or None).
         rgba = [
@@ -866,7 +866,7 @@ class Color:
         ]
         self._from_rgba(rgba)
 
-    def _from_hex(self, h):
+    def _from_hex(self, h):  # numpydoc ignore=PR01,RT01
         """Construct color from a hex string."""
         arg = h
         h = self.strip_hex_prefix(h)
@@ -875,7 +875,7 @@ class Color:
         except ValueError:
             raise ValueError(f"Invalid hex string: {arg}") from None
 
-    def _from_str(self, n: str):
+    def _from_str(self, n: str):  # numpydoc ignore=PR01,RT01
         """Construct color from a name or hex string."""
         arg = n
         n = n.lower()
@@ -1152,18 +1152,18 @@ class Color:
         """
         return self._opacity
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
         """Equality comparison."""
         try:
             return self.int_rgba == Color(other).int_rgba
         except ValueError:  # pragma: no cover
             return NotImplemented
 
-    def __hash__(self):  # pragma: no cover
+    def __hash__(self):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
-    def __getitem__(self, item):
+    def __getitem__(self, item):  # numpydoc ignore=PR01,RT01
         """Support indexing the float RGBA representation for backward compatibility."""
         if not isinstance(item, (str, slice, int, np.integer)):
             raise TypeError("Invalid index specified, only strings and integers are supported.")
@@ -1176,11 +1176,11 @@ class Color:
                 raise ValueError(f"Invalid string index {item!r}.")
         return self.float_rgba[item]
 
-    def __iter__(self):
+    def __iter__(self):  # numpydoc ignore=PR01,RT01
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Human readable representation."""
         kwargs = f"hex={self.hex_rgba!r}, opacity={self.opacity}"
         if self._name is not None:

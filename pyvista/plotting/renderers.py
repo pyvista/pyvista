@@ -236,15 +236,15 @@ class Renderers:
         else:
             raise TypeError('"loc" must be an integer or a sequence.')
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
         """Return a renderer based on an index."""
         return self._renderers[index]
 
-    def __len__(self):
+    def __len__(self):  # numpydoc ignore=PR01,RT01
         """Return number of renderers."""
         return len(self._renderers)
 
-    def __iter__(self):
+    def __iter__(self):  # numpydoc ignore=PR01,RT01
         """Return a iterable of renderers."""
         yield from self._renderers
 
@@ -559,6 +559,6 @@ class Renderers:
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 
-    def __del__(self):
+    def __del__(self):  # numpydoc ignore=PR01,RT01
         """Destructor."""
         self._shadow_renderer = None

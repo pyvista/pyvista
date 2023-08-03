@@ -14,7 +14,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
     """
 
-    def __init__(self):
+    def __init__(self):  # numpydoc ignore=PR01,RT01
         """Initialize volume."""
         super().__init__()
 

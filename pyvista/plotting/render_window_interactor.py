@@ -30,7 +30,7 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
+    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):  # numpydoc ignore=PR01,RT01
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -66,7 +66,7 @@ class RenderWindowInteractor:
         self.picker = PickerType.POINT
 
     @property
-    def _plotter(self):
+    def _plotter(self):  # numpydoc ignore=PR01,RT01
         """Return the plotter."""
         return self.__plotter()
 
@@ -90,7 +90,7 @@ class RenderWindowInteractor:
         self._key_press_event_callbacks[key].append(callback)
 
     @staticmethod
-    def _get_event_str(event):
+    def _get_event_str(event):  # numpydoc ignore=PR01,RT01
         if isinstance(event, str):
             # Make sure we pass it at least once through these functions, such that
             # invalid event names are mapped to "NoEvent".
@@ -219,7 +219,7 @@ class RenderWindowInteractor:
         self.remove_observers(_vtk.vtkCommand.MouseMoveEvent)
 
     @staticmethod
-    def _get_click_event(side):
+    def _get_click_event(side):  # numpydoc ignore=PR01,RT01
         side = str(side).lower()
         if side in ["right", "r"]:
             return "RightButtonPressEvent"
@@ -228,7 +228,7 @@ class RenderWindowInteractor:
         else:
             raise TypeError(f"Side ({side}) not supported. Try `left` or `right`.")
 
-    def _click_event(self, obj, event):
+    def _click_event(self, obj, event):  # numpydoc ignore=PR01,RT01
         t = time.time()
         dt = t - self._click_time
         last_pos = self._plotter.click_position or (0, 0)
@@ -324,7 +324,7 @@ class RenderWindowInteractor:
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
 
-    def _toggle_chart_interaction(self, mouse_pos):
+    def _toggle_chart_interaction(self, mouse_pos):  # numpydoc ignore=PR01,RT01
         """Toggle interaction with indicated charts.
 
         Parameters
@@ -364,7 +364,7 @@ class RenderWindowInteractor:
         # with any scene if there are no interactive charts).
         self._set_context_style(interactive_scene)
 
-    def _set_context_style(self, scene):
+    def _set_context_style(self, scene):  # numpydoc ignore=PR01,RT01
         """
         Set the context style interactor or switch back to previous interactor style.
 
@@ -759,14 +759,14 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def _simulate_keypress(self, key):  # pragma: no cover
+    def _simulate_keypress(self, key):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a keypress."""
         if len(key) > 1:
             raise ValueError('Only accepts a single key')
         self.interactor.SetKeyCode(key)
         self.interactor.CharEvent()
 
-    def _mouse_left_button_press(self, x=None, y=None):  # pragma: no cover
+    def _mouse_left_button_press(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a left mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -777,18 +777,18 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.LeftButtonPressEvent()
 
-    def _mouse_left_button_release(self, x=None, y=None):  # pragma: no cover
+    def _mouse_left_button_release(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
         self.interactor.LeftButtonReleaseEvent()
 
-    def _mouse_left_button_click(self, x=None, y=None, count=1):
+    def _mouse_left_button_click(self, x=None, y=None, count=1):  # numpydoc ignore=PR01,RT01
         for _ in range(count):
             self._mouse_left_button_press(x, y)
             self._mouse_left_button_release()
 
-    def _mouse_right_button_press(self, x=None, y=None):  # pragma: no cover
+    def _mouse_right_button_press(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a right mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -799,18 +799,18 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.RightButtonPressEvent()
 
-    def _mouse_right_button_release(self, x=None, y=None):  # pragma: no cover
+    def _mouse_right_button_release(self, x=None, y=None):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
         self.interactor.RightButtonReleaseEvent()
 
-    def _mouse_right_button_click(self, x=None, y=None, count=1):
+    def _mouse_right_button_click(self, x=None, y=None, count=1):  # numpydoc ignore=PR01,RT01
         for _ in range(count):
             self._mouse_right_button_press(x, y)
             self._mouse_right_button_release()
 
-    def _mouse_move(self, x, y):  # pragma: no cover
+    def _mouse_move(self, x, y):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
         self.interactor.SetEventInformation(x, y)
         self.interactor.MouseMoveEvent()
@@ -1034,13 +1034,13 @@ class RenderWindowInteractor:
         self._click_event_callbacks = None
 
 
-def _style_factory(klass):
+def _style_factory(klass):  # numpydoc ignore=PR01,RT01
     """Create a subclass with capturing ability, return it."""
     # We have to use a custom subclass for this because the default ones
     # swallow the release events
     # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
 
-    def _make_class(klass):
+    def _make_class(klass):  # numpydoc ignore=PR01,RT01
         """Make the class."""
         try:
             from vtkmodules import vtkInteractionStyle
@@ -1048,7 +1048,7 @@ def _style_factory(klass):
             import vtk as vtkInteractionStyle
 
         class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-            def __init__(self, parent):
+            def __init__(self, parent):  # numpydoc ignore=PR01,RT01
                 super().__init__()
                 self._parent = weakref.ref(parent)
 
@@ -1060,7 +1060,7 @@ def _style_factory(klass):
                     self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
                 )
 
-            def _press(self, obj, event):
+            def _press(self, obj, event):  # numpydoc ignore=PR01,RT01
                 # Figure out which renderer has the event and disable the
                 # others
                 super().OnLeftButtonDown()
@@ -1071,7 +1071,7 @@ def _style_factory(klass):
                         interact = renderer.IsInViewport(*click_pos)
                         renderer.SetInteractive(interact)
 
-            def _release(self, obj, event):
+            def _release(self, obj, event):  # numpydoc ignore=PR01,RT01
                 super().OnLeftButtonUp()
                 parent = self._parent()
                 if len(parent._plotter.renderers) > 1:

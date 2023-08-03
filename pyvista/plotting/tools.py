@@ -35,7 +35,7 @@ def supports_open_gl():
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():
+def _system_supports_plotting():  # numpydoc ignore=PR01,RT01
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -92,7 +92,7 @@ def system_supports_plotting():
     return SUPPORTS_PLOTTING
 
 
-def _update_axes_label_color(axes_actor, color=None):
+def _update_axes_label_color(axes_actor, color=None):  # numpydoc ignore=PR01,RT01
     """Set the axes label color (internal helper)."""
     color = Color(color, default_color=pyvista.global_theme.font.color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):

@@ -107,7 +107,7 @@ def cubemap_from_filenames(image_paths):
     return _cubemap_from_paths(image_paths)
 
 
-def _cubemap_from_paths(image_paths):
+def _cubemap_from_paths(image_paths):  # numpydoc ignore=PR01,RT01
     """Construct a cubemap from image paths."""
     for image_path in image_paths:
         if not os.path.isfile(image_path):

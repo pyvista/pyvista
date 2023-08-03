@@ -28,7 +28,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     _new_attr_exceptions = ('_theme',)
 
-    def __init__(self, theme=None, **kwargs):
+    def __init__(self, theme=None, **kwargs):  # numpydoc ignore=PR01,RT01
         self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
@@ -797,7 +797,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         self.lookup_table.n_values = n_colors
         self._configure_scalars_mode(rgba, '', preference, True)
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Representation of the mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -819,7 +819,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     """Wrap vtkPointGaussianMapper."""
 
-    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:
+    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:  # numpydoc ignore=PR01,RT01
         super().__init__(theme=theme)
         if emissive is None:
             emissive = self._theme.lighting_params.emissive
@@ -886,7 +886,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.SetSplatShaderCode(None)
         self.scale_factor /= 1.5
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Representation of the Gaussian mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -908,7 +908,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 class _BaseVolumeMapper(_BaseMapper):
     """Volume mapper class to override methods and attributes for to volume mappers."""
 
-    def __init__(self, theme=None):
+    def __init__(self, theme=None):  # numpydoc ignore=PR01,RT01
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
@@ -1012,7 +1012,7 @@ class _BaseVolumeMapper(_BaseMapper):
         else:
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
 
-    def __del__(self):
+    def __del__(self):  # numpydoc ignore=PR01,RT01
         self._lut = None
 
 

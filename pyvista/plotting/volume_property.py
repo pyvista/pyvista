@@ -343,7 +343,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         new_prop.DeepCopy(self)
         return new_prop
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Representation of this property."""
         props = [
             f'{type(self).__name__} ({hex(id(self))})',

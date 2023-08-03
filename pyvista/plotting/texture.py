@@ -111,7 +111,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         MIRRORED_REPEAT = (2, 'Mirrored repeat')
         CLAMP_TO_BORDER = (3, 'Clamp to border')
 
-    def __init__(self, uinput=None, **kwargs):
+    def __init__(self, uinput=None, **kwargs):  # numpydoc ignore=PR01,RT01
         """Initialize the texture."""
         super().__init__(uinput, **kwargs)
 
@@ -143,7 +143,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         else:
             raise TypeError(f'Cannot create a pyvista.Texture from ({type(uinput)})')
 
-    def _from_file(self, filename, **kwargs):
+    def _from_file(self, filename, **kwargs):  # numpydoc ignore=PR01,RT01
         try:
             image = pv.read(filename, **kwargs)
             if image.n_points < 2:
@@ -152,7 +152,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         except (KeyError, ValueError, OSError):
             self._from_array(_try_imageio_imread(filename))  # pragma: no cover
 
-    def _from_texture(self, texture):
+    def _from_texture(self, texture):  # numpydoc ignore=PR01,RT01
         image = texture.GetInput()
         self._from_image_data(image)
 
@@ -191,13 +191,13 @@ class Texture(_vtk.vtkTexture, DataObject):
     def mipmap(self, value: bool):
         self.SetMipmap(value)
 
-    def _from_image_data(self, image):
+    def _from_image_data(self, image):  # numpydoc ignore=PR01,RT01
         if not isinstance(image, pv.ImageData):
             image = pv.ImageData(image)
         self.SetInputDataObject(image)
         self.Update()
 
-    def _from_array(self, image):
+    def _from_array(self, image):  # numpydoc ignore=PR01,RT01
         """Create a texture from a np.ndarray."""
         if image.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
@@ -430,11 +430,11 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox.SetTexture(self)
             return skybox
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=PR01,RT01
         """Return the object representation."""
         return pv.DataSet.__repr__(self)
 
-    def _get_attrs(self):
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("Components", self.n_components, "{:d}"))
@@ -520,7 +520,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         mesh = pv.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
         return mesh.plot(texture=self, **kwargs)
 
-    def _plot_skybox(self, **kwargs):
+    def _plot_skybox(self, **kwargs):  # numpydoc ignore=PR01,RT01
         """Plot this texture as a skybox."""
         cpos = kwargs.pop('cpos', 'xy')
         zoom = kwargs.pop('zoom', 0.5)

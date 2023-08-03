@@ -17,7 +17,7 @@ _MODULES = [
 ]
 
 
-def _try_import(module, name):
+def _try_import(module, name):  # numpydoc ignore=PR01,RT01
     """Attempt to import a module."""
     _module = importlib.import_module(module)
     try:
@@ -28,7 +28,7 @@ def _try_import(module, name):
     return feature, import_path
 
 
-def __getattr__(name):
+def __getattr__(name):  # numpydoc ignore=PR01,RT01
     """Fetch an attribute ``name`` from ``globals()`` and warn if it's from a deprecated module.
 
     Note that ``__getattr__()`` only gets called when ``name`` is missing
