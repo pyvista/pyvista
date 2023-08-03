@@ -13,14 +13,8 @@ from .dataset import DataObject
 from .utilities.cells import ncells_from_cells, numpy_to_idarr
 
 
-def _get_vtk_id_type():
-    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``.
-
-    Returns
-    -------
-    type
-        Type of vtk id.
-    """
+def _get_vtk_id_type():  # numpydoc ignore=PR01,RT01
+    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
@@ -478,14 +472,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         self.EvaluateLocation(sub_id, para_center, center, weights)
         return cast(Tuple[float, float, float], tuple(center))
 
-    def _get_attrs(self):
-        """Return the representation methods (internal helper).
-
-        Returns
-        -------
-        List
-            The representation methods (internal helper).
-        """
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+        """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("Type", repr(self.type), "{}" * len(repr(self.type))))
         attrs.append(("Linear", self.is_linear, "{}"))
@@ -589,23 +577,8 @@ class CellArray(_vtk.vtkCellArray):
         if cells is not None:
             self._set_cells(cells, n_cells, deep)
 
-    def _set_cells(self, cells, n_cells, deep):
-        """Set a vtkCellArray.
-
-        Parameters
-        ----------
-        cells : np.ndarray or list, optional
-            Import an array of data with the legacy vtkCellArray layout, e.g.
-            ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
-            Where n0 is the number of points in cell 0, and pX_Y is the Y'th
-            point in cell X.
-
-        n_cells : int, optional
-            The number of cells.
-
-        deep : bool, default: False
-            Perform a deep copy of the original cell.
-        """
+    def _set_cells(self, cells, n_cells, deep):  # numpydoc ignore=PR01,RT01
+        """Set a vtkCellArray."""
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
 
         # Get number of cells if None.  This is quite a performance
@@ -664,21 +637,8 @@ class CellArray(_vtk.vtkCellArray):
         """
         return _get_offset_array(self)
 
-    def _set_data(self, offsets, connectivity, deep=False):
-        """Set the offsets and connectivity arrays.
-
-        Parameters
-        ----------
-        offsets : numpy.ndarray or list[int]
-            Offsets array of length `n_cells + 1`.
-
-        connectivity : numpy.ndarray or list[int]
-            Connectivity array.
-
-        deep : bool, default: False
-            Whether to deep copy the array data into the vtk arrays.
-
-        """
+    def _set_data(self, offsets, connectivity, deep=False):  # numpydoc ignore=PR01,RT01
+        """Set the offsets and connectivity arrays."""
         offsets = numpy_to_idarr(offsets, deep=deep)
         connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(offsets, connectivity)
@@ -761,51 +721,18 @@ class CellArray(_vtk.vtkCellArray):
 # returned as CellArrays
 
 
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
-    """Return the array with the point ids that define the cells' connectivity.
-
-    Parameters
-    ----------
-    cellarr : _vtk.vtkCellArray
-        Cell array.
-
-    Returns
-    -------
-    np.ndarray
-        Array with the point ids that define the cells' connectivity.
-    """
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray):  # numpydoc ignore=PR01,RT01
+    """Return the array with the point ids that define the cells' connectivity."""
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray):
-    """Return the array used to store cell offsets.
-
-    Parameters
-    ----------
-    cellarr : _vtk.vtkCellArray
-        Cell array.
-
-    Returns
-    -------
-    np.ndarray
-        Array used to store cell offsets.
-    """
+def _get_offset_array(cellarr: _vtk.vtkCellArray):  # numpydoc ignore=PR01,RT01
+    """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
 
-def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
-    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
-
-    Parameters
-    ----------
-    cellarr : _vtk.vtkCellArray
-        Cell array.
-
-    Returns
-    -------
-    np.ndarray
-        An array of shape (n_cells, cell_size) of point indices.
-    """
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:  # numpydoc ignore=PR01,RT01
+    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells
