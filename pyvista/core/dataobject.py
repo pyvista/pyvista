@@ -26,7 +26,7 @@ class DataObject:
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
-    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01
+    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
@@ -516,7 +516,7 @@ class DataObject:
         """
         self.CopyAttributes(dataset)
 
-    def __getstate__(self):  # numpydoc ignore=RT01
+    def __getstate__(self):  # numpydoc ignore=PR01,RT01
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
 
         The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
@@ -567,7 +567,7 @@ class DataObject:
         state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
-    def __setstate__(self, state):  # numpydoc ignore=PR01
+    def __setstate__(self, state):  # numpydoc ignore=PR01,RT01
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
