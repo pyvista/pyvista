@@ -1195,7 +1195,28 @@ class MultiBlock(
         return True
 
     def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
-        """Active a scalars for an instance of :class:`pyvista.Plotter`."""
+        """Active a scalars for an instance of :class:`pyvista.Plotter`.
+
+        Parameters
+        ----------
+        scalars_name : str or None
+            Name of the scalars array to assign as active.  If
+            ``None``, deactivates active scalars for both point and
+            cell data.
+
+        preference : str, default: "cell"
+            If there are two arrays of the same name associated with
+            points or cells, it will prioritize an array matching this
+            type.  Can be either ``'cell'`` or ``'point'``.
+
+        component : int | NoneType
+            Set component of vector valued scalars to activate.  Must be
+            nonnegative, if supplied. If ``None``, the magnitude of
+            the vector is activateed.
+
+        rgb : Tuple(float)
+            Color value as an RGB float tuple.
+        """
         # set the active scalars
         field, scalars = self.set_active_scalars(
             scalars_name,
