@@ -1284,7 +1284,7 @@ class MultiBlock(
         Returns
         -------
         Tuple[Any | str | None, str | None]
-            Consistent active point scalars name.
+            Consistent active scalars name.
         """
         point_names = set()
         cell_names = set()
