@@ -52,7 +52,7 @@ ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'
 class ActiveArrayInfo:
     """Active array info class with support for pickling."""
 
-    def __init__(self, association, name):  # numpydoc ignore=PR01
+    def __init__(self, association, name):  # numpydoc ignore=RT01,PR01
         """Initialize."""
         self.association = association
         self.name = name
@@ -68,13 +68,13 @@ class ActiveArrayInfo:
         """
         return ActiveArrayInfo(self.association, self.name)
 
-    def __getstate__(self):  # numpydoc ignore=RT01
+    def __getstate__(self):  # numpydoc ignore=RT01,PR01
         """Support pickling."""
         state = self.__dict__.copy()
         state['association'] = int(self.association.value)
         return state
 
-    def __setstate__(self, state):  # numpydoc ignore=PR01
+    def __setstate__(self, state):  # numpydoc ignore=RT01,PR01
         """Support unpickling."""
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
@@ -84,27 +84,27 @@ class ActiveArrayInfo:
         """Build a namedtuple on the fly to provide legacy support."""
         return ActiveArrayInfoTuple(self.association, self.name)
 
-    def __iter__(self):
+    def __iter__(self):  # numpydoc ignore=RT01,PR01
         """Provide namedtuple-like __iter__."""
         return self._namedtuple.__iter__()
 
-    def __repr__(self):
+    def __repr__(self):  # numpydoc ignore=RT01,PR01
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
 
-    def __getitem__(self, item):
+    def __getitem__(self, item):  # numpydoc ignore=RT01,PR01
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):  # numpydoc ignore=RT01,PR01
         """Provide namedtuple-like __setitem__."""
         self._namedtuple.__setitem__(key, value)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item):  # numpydoc ignore=RT01,PR01
         """Provide namedtuple-like __getattr__."""
         self._namedtuple.__getattr__(item)
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # numpydoc ignore=RT01,PR01
         """Check equivalence (useful for serialize/deserialize tests)."""
         same_association = int(self.association.value) == int(other.association.value)
         return self.name == other.name and same_association
@@ -116,7 +116,7 @@ class DataSet(DataSetFilters, DataObject):
 
     plot = pyvista._plot.plot
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=RT01,PR01
         """Initialize the common object."""
         super().__init__()
         self._last_active_scalars_name: Optional[str] = None
@@ -124,7 +124,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
 
-    def __getattr__(self, item) -> Any:
+    def __getattr__(self, item) -> Any:  # numpydoc ignore=RT01,PR01
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
@@ -1739,7 +1739,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
+    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:  # numpydoc ignore=RT01,PR01
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
@@ -1756,7 +1756,7 @@ class DataSet(DataSetFilters, DataObject):
     def _ipython_key_completions_(self) -> List[str]:
         return self.array_names
 
-    def __setitem__(self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence]):
+    def __setitem__(self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence]):  # numpydoc ignore=RT01,PR01
         """Add/set an array in the point_data, or cell_data accordingly.
 
         It depends on the array's length, or specified mode.
@@ -1880,11 +1880,11 @@ class DataSet(DataSetFilters, DataObject):
             fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # numpydoc ignore=RT01,PR01
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # numpydoc ignore=RT01,PR01
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
