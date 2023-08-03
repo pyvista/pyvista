@@ -913,14 +913,8 @@ class MultiBlock(
             del self[int(null_blocks[i])]
             null_blocks -= 1
 
-    def _get_attrs(self):
-        """Return the representation methods (internal helper).
-
-        Returns
-        -------
-        List
-            List of attributes tuples.
-        """
+    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+        """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("N Blocks", self.n_blocks, "{}"))
         bds = self.bounds
@@ -929,14 +923,8 @@ class MultiBlock(
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
         return attrs
 
-    def _repr_html_(self) -> str:
-        """Define a pretty representation for Jupyter notebooks.
-
-        Returns
-        -------
-        str
-            The object representation for Jupyter notebooks.
-        """
+    def _repr_html_(self) -> str:  # numpydoc ignore=PR01,RT01
+        """Define a pretty representation for Jupyter notebooks."""
         fmt = ""
         fmt += "<table style='width: 100%;'>"
         fmt += "<tr><th>Information</th><th>Blocks</th></tr>"
@@ -1194,29 +1182,8 @@ class MultiBlock(
 
         return True
 
-    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
-        """Active a scalars for an instance of :class:`pyvista.Plotter`.
-
-        Parameters
-        ----------
-        scalars_name : str or None
-            Name of the scalars array to assign as active.  If
-            ``None``, deactivates active scalars for both point and
-            cell data.
-
-        preference : str, default: "cell"
-            If there are two arrays of the same name associated with
-            points or cells, it will prioritize an array matching this
-            type.  Can be either ``'cell'`` or ``'point'``.
-
-        component : int | NoneType
-            Set component of vector valued scalars to activate.  Must be
-            nonnegative, if supplied. If ``None``, the magnitude of
-            the vector is activateed.
-
-        rgb : Tuple(float)
-            Color value as an RGB float tuple.
-        """
+    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):  # numpydoc ignore=PR01,RT01
+        """Active a scalars for an instance of :class:`pyvista.Plotter`."""
         # set the active scalars
         field, scalars = self.set_active_scalars(
             scalars_name,
@@ -1252,13 +1219,7 @@ class MultiBlock(
         return field, scalars_name, dtype
 
     def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
-        """Extract the real component of the active scalars of this dataset.
-
-        Returns
-        -------
-        str
-            Name of the active scalars of this dataset.
-        """
+        """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
                 block._convert_to_real_scalars(data_attr, scalars_name)
@@ -1273,14 +1234,8 @@ class MultiBlock(
 
     def _convert_to_single_component(
         self, data_attr: str, scalars_name: str, component: Union[None, str]
-    ) -> str:
-        """Convert multi-component scalars to a single component.
-
-        Returns
-        -------
-        str
-            Name of a single component.
-        """
+    ) -> str:  # numpydoc ignore=PR01,RT01
+        """Convert multi-component scalars to a single component."""
         if component is None:
             for block in self:
                 if isinstance(block, MultiBlock):
@@ -1305,14 +1260,8 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
-    def _get_consistent_active_scalars(self):
-        """Get if there are any consistent active scalars.
-
-        Returns
-        -------
-        Tuple[Any | str | None, str | None]
-            Consistent active scalars name.
-        """
+    def _get_consistent_active_scalars(self):  # numpydoc ignore=PR01,RT01
+        """Get if there are any consistent active scalars."""
         point_names = set()
         cell_names = set()
         for block in self:
