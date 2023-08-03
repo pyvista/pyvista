@@ -516,7 +516,7 @@ class DataObject:
         """
         self.CopyAttributes(dataset)
 
-    def __getstate__(self):
+    def __getstate__(self):  # numpydoc ignore=RT01
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
 
         The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
