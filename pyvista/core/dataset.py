@@ -68,7 +68,7 @@ class ActiveArrayInfo:
         """
         return ActiveArrayInfo(self.association, self.name)
 
-    def __getstate__(self):
+    def __getstate__(self):  # numpydoc ignore=RT01
         """Support pickling."""
         state = self.__dict__.copy()
         state['association'] = int(self.association.value)
