@@ -250,6 +250,11 @@ class DataSet(DataSetFilters, DataObject):
     def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array.
 
+        Returns
+        -------
+        Optional[pyvista_ndarray]
+            Active vectors array.
+
         Examples
         --------
         Create a mesh, compute the normals inplace, and return the
