@@ -178,14 +178,9 @@ ignore = [
     "EX01",  # Examples: Will eventually enforce
     "YD01",  # Yields: No plan to enforce
 ]
-override_GL08 = [
+override = [
     '\.BasePlotter$',
-    '^(__eq__)$',
-    '^(__getattr__)$',
-    '^(__getitem__)$',
-    '^(__getstate__)$',
-    '^(__init__)$',
-    '^(__iter__)$',
-    '^(__repr__)$',
-    '^(__setstate__)$',
 ]
+override_PR01 = '^(__(eq|getattr|getitem|getstate|init|iter|repr|setstate)__)$'
+override_RT01 = '^(__(eq|getattr|getitem|getstate|init|iter|repr|setstate)__)$'
+
