@@ -307,7 +307,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
