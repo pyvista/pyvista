@@ -567,7 +567,7 @@ class DataObject:
         state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state):  # numpydoc ignore=PR01
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
