@@ -243,7 +243,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_tensors_info(self) -> ActiveArrayInfo:
-        """Return the active tensor's field and name: [field, name]."""
+        """Return the active tensor's field and name: [field, name].
+
+        Returns
+        -------
+        ActiveArrayInfo
+            Active tensor's field and name: [field, name].
+
+        """
         return self._active_tensors_info
 
     @property
@@ -287,7 +294,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_tensors(self) -> Optional[np.ndarray]:
-        """Return the active tensors array."""
+        """Return the active tensors array.
+
+        Returns
+        -------
+        Optional[np.ndarray]
+            Active tensors array.
+
+        """
         field, name = self.active_tensors_info
         if name is not None:
             try:
@@ -301,16 +315,29 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_tensors_name(self) -> str:
-        """Return the name of the active tensor array."""
+        """Return the name of the active tensor array.
+
+        Returns
+        -------
+        str
+            Name of the active tensor array.
+
+        """
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
     def active_tensors_name(self, name: str):
+        """Set the name of the active tensor array."""
         self.set_active_tensors(name)
 
     @property
     def active_vectors_name(self) -> str:
         """Return the name of the active vectors array.
+
+        Returns
+        -------
+        str
+            Name of the active vectors array.
 
         Examples
         --------
@@ -329,11 +356,17 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str):
+        """Set the name of the active vectors array."""
         self.set_active_vectors(name)
 
     @property  # type: ignore
     def active_scalars_name(self) -> str:  # type: ignore
         """Return the name of the active scalars.
+
+        Returns
+        -------
+        str
+            Name of the active scalars.
 
         Examples
         --------
@@ -351,6 +384,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str):
+        """Set the name of the active scalars."""
         self.set_active_scalars(name)
 
     @property
