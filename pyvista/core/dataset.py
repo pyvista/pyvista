@@ -391,6 +391,11 @@ class DataSet(DataSetFilters, DataObject):
     def points(self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
+        Returns
+        -------
+        pyvista_ndarray
+            Reference to the points as a numpy object.
+
         Examples
         --------
         Create a mesh and return the points of the mesh as a numpy
@@ -449,6 +454,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @points.setter
     def points(self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]):
+        """Set a reference to the points as a numpy object."""
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -514,7 +520,12 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_t_coords(self) -> Optional[pyvista_ndarray]:
-        """Return or set the active texture coordinates on the points.
+        """Return the active texture coordinates on the points.
+
+        Returns
+        -------
+        Optional[pyvista_ndarray]
+            Active texture coordinates on the points.
 
         Examples
         --------
@@ -536,6 +547,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):
+        """Set the active texture coordinates on the points."""
         self.point_data.active_t_coords = t_coords  # type: ignore
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
@@ -719,7 +731,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:
-        """Return the active scalars as an array."""
+        """Return the active scalars as an array.
+
+        Returns
+        -------
+        Optional[pyvista_ndarray]
+            Active scalars as an array.
+
+        """
         field, name = self.active_scalars_info
         if name is not None:
             try:
