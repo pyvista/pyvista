@@ -1159,7 +1159,7 @@ class Color:
         except ValueError:  # pragma: no cover
             return NotImplemented
 
-    def __hash__(self):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    def __hash__(self):  # pragma: no cover  # numpydoc ignore=PR01,RT01
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
@@ -1180,7 +1180,7 @@ class Color:
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
 
-    def __repr__(self):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    def __repr__(self):  # pragma: no cover  # numpydoc ignore=PR01,RT01
         """Human readable representation."""
         kwargs = f"hex={self.hex_rgba!r}, opacity={self.opacity}"
         if self._name is not None:
