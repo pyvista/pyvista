@@ -14,10 +14,10 @@ def get_server(*args, **kwargs):
 
     Parameters
     ----------
-    *args : 
+    *args :
         Any extra args are passed as option to the server instance.
 
-    **kwargs : 
+    **kwargs :
         Any extra keyword args are passed as option to the server instance.
 
     """
