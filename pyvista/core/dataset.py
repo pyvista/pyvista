@@ -50,7 +50,17 @@ ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'
 
 
 class ActiveArrayInfo:
-    """Active array info class with support for pickling."""
+    """Active array info class with support for pickling.
+
+    Parameters
+    ----------
+    association : pyvista.core.utilities.arrays.FieldAssociation
+        Array association.
+        Association of the array.
+
+    name : str
+        The name of the array.
+    """
 
     def __init__(self, association, name):  # numpydoc ignore=PR01,RT01
         """Initialize."""
@@ -80,7 +90,7 @@ class ActiveArrayInfo:
         self.association = FieldAssociation(state['association'])
 
     @property
-    def _namedtuple(self):
+    def _namedtuple(self):  # numpydoc ignore=PR01,RT01
         """Build a namedtuple on the fly to provide legacy support."""
         return ActiveArrayInfoTuple(self.association, self.name)
 
@@ -112,7 +122,17 @@ class ActiveArrayInfo:
 
 @abstract_class
 class DataSet(DataSetFilters, DataObject):
-    """Methods in common to spatially referenced objects."""
+    """Methods in common to spatially referenced objects.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to spatially referenced objects.
+
+    **kwargs :
+        Any extra keyword args are passed as option to spatially referenced objects.
+
+    """
 
     plot = pyvista._plot.plot
 

@@ -22,7 +22,17 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 @abstract_class
 class DataObject:
-    """Methods common to all wrapped data objects."""
+    """Methods common to all wrapped data objects.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to all wrapped data objects.
+
+    **kwargs :
+        Any extra keyword args are passed as option to all wrapped data objects.
+
+    """
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
