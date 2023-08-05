@@ -9,7 +9,7 @@ from trame_vtk.tools.vtksz2html import write_html
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
-def get_server(*args, **kwargs):
+def get_server(*args, **kwargs):  # numpydoc ignore=PR01,RT01
     """Override trame's get_server."""
     server = trame_get_server(*args, **kwargs)
     server.client_type = 'vue2'
@@ -17,7 +17,8 @@ def get_server(*args, **kwargs):
 
 
 class _BasePyVistaView:
-    def __init__(self, plotter):  # numpydoc ignore=PR01,RT01  # numpydoc ignore=PR01,RT01
+    def __init__(self, plotter):  # numpydoc ignore=PR01,RT01
+        """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
         self._plotter_render_callback = lambda *args: self.update()
@@ -30,7 +31,7 @@ class _BasePyVistaView:
                 renderer.camera_position = renderer.get_default_cam_pos()
                 renderer.ResetCamera()
 
-    def _post_initialize(self):  # numpydoc ignore=PR01,RT01  # numpydoc ignore=PR01,RT01
+    def _post_initialize(self):  # numpydoc ignore=PR01,RT01
         if self._server.running:
             self.update()
         else:
