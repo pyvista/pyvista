@@ -2,7 +2,7 @@
 
 
 class Text(TextActor):
-    """Define text.
+    """Define text by default theme.
 
     Examples
     --------
