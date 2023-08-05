@@ -347,7 +347,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_tensors_name.setter
     def active_tensors_name(self, name: str):
-        """Set the name of the active tensor array."""
+        """Set the name of the active tensor array.
+
+        Parameters
+        ----------
+        name : str
+            Name of the active tensor array.
+
+        """
         self.set_active_tensors(name)
 
     @property
@@ -376,7 +383,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str):
-        """Set the name of the active vectors array."""
+        """Set the name of the active vectors array.
+
+        Parameters
+        ----------
+        name : str
+            Name of the active vectors array.
+
+        """
         self.set_active_vectors(name)
 
     @property  # type: ignore
@@ -404,7 +418,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str):
-        """Set the name of the active scalars."""
+        """Set the name of the active scalars.
+
+        Parameters
+        ----------
+        name : str
+             Name of the active scalars.
+
+        """
         self.set_active_scalars(name)
 
     @property
@@ -474,7 +495,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @points.setter
     def points(self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]):
-        """Set a reference to the points as a numpy object."""
+        """Set a reference to the points as a numpy object.
+
+        Parameters
+        ----------
+        points : Union[VectorArray, NumericArray, _vtk.vtkPoints]
+            Points as a array object.
+
+        """
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -567,7 +595,13 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):
-        """Set the active texture coordinates on the points."""
+        """Set the active texture coordinates on the points.
+
+        Parameters
+        ----------
+        t_coords : np.ndarray
+            Active texture coordinates on the points.
+        """
         self.point_data.active_t_coords = t_coords  # type: ignore
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
@@ -1412,7 +1446,12 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def point_data(self) -> DataSetAttributes:
-        """Return vtkPointData as DataSetAttributes.
+        """Return point data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Point data as DataSetAttributes.
 
         Examples
         --------
@@ -1496,7 +1535,12 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def cell_data(self) -> DataSetAttributes:
-        """Return vtkCellData as DataSetAttributes.
+        """Return cell data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Cell data as DataSetAttributes.
 
         Examples
         --------
@@ -1538,6 +1582,11 @@ class DataSet(DataSetFilters, DataObject):
     def n_points(self) -> int:
         """Return the number of points in the entire dataset.
 
+        Returns
+        -------
+        int
+            Number of points in the entire dataset.
+
         Examples
         --------
         Create a mesh and return the number of points in the
@@ -1554,6 +1603,11 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def n_cells(self) -> int:
         """Return the number of cells in the entire dataset.
+
+        Returns
+        -------
+        int :
+             Number of cells in the entire dataset.
 
         Notes
         -----
@@ -1575,19 +1629,37 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def number_of_points(self) -> int:  # pragma: no cover
-        """Return the number of points."""
+        """Return the number of points.
+
+        Returns
+        -------
+        int :
+             Number of points.
+
+        """
         return self.GetNumberOfPoints()
 
     @property
     def number_of_cells(self) -> int:  # pragma: no cover
-        """Return the number of cells."""
+        """Return the number of cells.
+
+        Returns
+        -------
+        int :
+             Number of cells.
+
+        """
         return self.GetNumberOfCells()
 
     @property
     def bounds(self) -> BoundsLike:
         """Return the bounding box of this dataset.
 
-        The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        Returns
+        -------
+        BoundsLike
+            Bounding box of this dataset.
+            The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -1604,6 +1676,11 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def length(self) -> float:
         """Return the length of the diagonal of the bounding box.
+
+        Returns
+        -------
+        float :
+            Length of the diagonal of the bounding box.
 
         Examples
         --------
@@ -1622,6 +1699,11 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def center(self) -> Vector:
         """Return the center of the bounding box.
+
+        Returns
+        -------
+        Vector :
+            Center of the bounding box.
 
         Examples
         --------
@@ -1831,7 +1913,8 @@ class DataSet(DataSetFilters, DataObject):
             )
         return self.get_array(name, preference=preference)
 
-    def _ipython_key_completions_(self) -> List[str]:
+    def _ipython_key_completions_(self) -> List[str]:  # numpydoc ignore=PR01,RT01
+        """Tab completion of IPython."""
         return self.array_names
 
     def __setitem__(
@@ -1862,7 +1945,14 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def n_arrays(self) -> int:
-        """Return the number of arrays present in the dataset."""
+        """Return the number of arrays present in the dataset.
+
+        Returns
+        -------
+        int
+           Number of arrays present in the dataset.
+
+        """
         n = self.GetPointData().GetNumberOfArrays()
         n += self.GetCellData().GetNumberOfArrays()
         n += self.GetFieldData().GetNumberOfArrays()
@@ -1873,6 +1963,11 @@ class DataSet(DataSetFilters, DataObject):
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
+
+        Returns
+        -------
+        List[str]
+            List of array names for the dataset.
 
         Examples
         --------
@@ -1912,7 +2007,7 @@ class DataSet(DataSetFilters, DataObject):
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
-    def _repr_html_(self) -> str:
+    def _repr_html_(self) -> str:  # numpydoc ignore=PR01,RT01
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -2005,7 +2100,7 @@ class DataSet(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):
+    def overwrite(self, mesh: _vtk.vtkDataSet):  # numpydoc ignore=GL09
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         .. deprecated:: 0.37.0
@@ -2664,7 +2759,7 @@ class DataSet(DataSetFilters, DataObject):
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
-    def cell_n_points(self, ind: int) -> int:
+    def cell_n_points(self, ind: int) -> int:  # numpydoc ignore=GL09
         """Return the number of points in a cell.
 
         .. deprecated:: 0.38.0
@@ -2688,7 +2783,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.get_cell(ind).n_points
 
-    def cell_points(self, ind: int) -> np.ndarray:
+    def cell_points(self, ind: int) -> np.ndarray:  # numpydoc ignore=GL09
         """Return the points in a cell.
 
         ..  deprecated:: 0.38.0
@@ -2713,7 +2808,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.get_cell(ind).points
 
-    def cell_bounds(self, ind: int) -> BoundsLike:
+    def cell_bounds(self, ind: int) -> BoundsLike:  # numpydoc ignore=GL09
         """Return the bounding box of a cell.
 
         ..  deprecated:: 0.38.0
@@ -2737,7 +2832,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.get_cell(ind).bounds
 
-    def cell_type(self, ind: int) -> int:
+    def cell_type(self, ind: int) -> int:  # numpydoc ignore=GL09
         """Return the type of a cell.
 
         .. deprecated:: 0.38.0
@@ -2761,7 +2856,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return self.get_cell(ind).type
 
-    def cell_point_ids(self, ind: int) -> List[int]:
+    def cell_point_ids(self, ind: int) -> List[int]:  # numpydoc ignore=GL09
         """Return the point ids in a cell.
 
         .. deprecated:: 0.38.0
@@ -2911,7 +3006,7 @@ class DataSet(DataSetFilters, DataObject):
             "faces": range(cell.n_faces),
         }
 
-        def generate_ids(i: int, connections: str):
+        def generate_ids(i: int, connections: str):  # numpydoc ignore=GL08
             if connections == "points":
                 ids = _vtk.vtkIdList()
                 ids.InsertNextId(i)
@@ -3165,7 +3260,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def _get_levels_neihgbors(
         self, ind: int, n_levels: int, method: Callable
-    ) -> Generator[List[int], None, None]:
+    ) -> Generator[List[int], None, None]:  # numpydoc ignore=PR01,RT01
         """Provide helper method that yields neighbors ids."""
         neighbors = set(method(ind))
         yield list(neighbors)
