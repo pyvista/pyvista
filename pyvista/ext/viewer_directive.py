@@ -4,7 +4,7 @@ import shutil
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from docutils.utils import relative_path
+from docutils.utils import relative_path  # pragma: no cover
 from sphinx.util import logging
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
 
@@ -17,7 +17,7 @@ class OfflineViewerDirective(Directive):
     final_argument_whitespace = True
     has_content = True
 
-    def run(self):
+    def run(self):  # pragma: no cover
         source_dir = self.state.document.settings.env.app.srcdir
         build_dir = self.state.document.settings.env.app.outdir
 
