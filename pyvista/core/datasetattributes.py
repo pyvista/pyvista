@@ -265,6 +265,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             already exists, assign to
             :attr:`pyvista.DataSetAttributes.active_scalars_name`.
 
+        Returns
+        -------
+        Optional[pyvista_ndarray]
+            Active scalars.
+
         Examples
         --------
         Associate point data to a simple cube mesh and show that the
@@ -297,6 +302,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             already exists, assign to
             :attr:`pyvista.DataSetAttributes.active_vectors_name`.
 
+        Returns
+        -------
+        Optional[np.ndarray]
+            Active vectors as a pyvista_ndarray.
+
         Examples
         --------
         Associate point data to a simple cube mesh and show that the
@@ -324,6 +334,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Return the length data should be when added to the dataset.
 
         If there are no restrictions, returns ``None``.
+
+        Returns
+        -------
+        Optional[int]
+            Length data should be when added to the dataset.
 
         Examples
         --------
