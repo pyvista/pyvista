@@ -125,13 +125,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __init__(
         self, vtkobject: _vtk.vtkFieldData, dataset: _vtk.vtkDataSet, association: FieldAssociation
-    ):
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
         self.association = association
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
         """Printable representation of DataSetAttributes."""
         info = ['pyvista DataSetAttributes']
         array_info = ' None'
@@ -197,11 +197,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self[key]
         return value
 
-    def __bool__(self) -> bool:
+    def __bool__(self) -> bool:  # numpydoc ignore=PR01,RT01
         """Return ``True`` when there are arrays present."""
         return bool(self.GetNumberOfArrays())
 
-    def __getitem__(self, key: str) -> pyvista_ndarray:
+    def __getitem__(self, key: str) -> pyvista_ndarray:  # numpydoc ignore=PR01,RT01
         """Implement ``[]`` operator.
 
         Accepts an array name.
@@ -243,15 +243,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         self.remove(key)
 
-    def __contains__(self, name: str) -> bool:
+    def __contains__(self, name: str) -> bool:  # numpydoc ignore=PR01,RT01
         """Implement the ``in`` operator."""
         return name in self.keys()
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[str]:  # numpydoc ignore=PR01,RT01
         """Implement for loop iteration."""
         yield from self.keys()
 
-    def __len__(self) -> int:
+    def __len__(self) -> int:  # numpydoc ignore=PR01,RT01
         """Return the number of arrays."""
         return self.VTKObject.GetNumberOfArrays()
 
@@ -1126,7 +1126,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise ValueError(f'{name} needs 3 components, has ({n_comp})')
         self.SetActiveVectors(name)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # numpydoc ignore=PR01,RT01
         """Test dict-like equivalency."""
         # here we check if other is the same class or a subclass of self.
         if not isinstance(other, type(self)):
