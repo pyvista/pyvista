@@ -700,7 +700,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def _prepare_array(
         self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy: bool
-    ) -> _vtk.vtkDataSet:
+    ) -> _vtk.vtkDataSet:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
         Notes
