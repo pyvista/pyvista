@@ -398,8 +398,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def active_t_coords(self, t_coords: np.ndarray):
         """Set the active texture coordinates array.
 
-        Params
-        ------
+        Parameters
+        ----------
         t_coords: np.ndarray
             Array of the active texture coordinates.
         """
@@ -447,8 +447,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def active_t_coords_name(self, name: str) -> None:
         """Set the name of the active texture coordinates array.
 
-        Params
-        ------
+        Parameters
+        ----------
         name: str
             Name of the active texture coordinates array.
         """
