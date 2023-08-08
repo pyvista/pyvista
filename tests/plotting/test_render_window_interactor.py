@@ -69,7 +69,7 @@ def test_close_key_event_callbacks():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Sphere())
     pl.add_key_event(key, pl.close)
-    pl.show(auto_close=False)
+    pl.show(auto_close=False, interactive=False)
     pl.iren._simulate_keypress(key)
     assert pl._closed
 
