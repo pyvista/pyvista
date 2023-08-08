@@ -366,7 +366,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_t_coords(self) -> Optional[pyvista_ndarray]:
-        """Return or set the active texture coordinates array.
+        """Return the active texture coordinates array.
 
         Returns
         -------
@@ -396,6 +396,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):
+        """Set the active texture coordinates array.
+
+        Params
+        ------
+        t_coords: np.ndarray
+            Array of the active texture coordinates.
+        """
         self._raise_no_t_coords()
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
@@ -416,7 +423,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_t_coords_name(self) -> Optional[str]:
-        """Name of the active texture coordinates array.
+        """Return the name of the active texture coordinates array.
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active texture coordinates array.
 
         Examples
         --------
@@ -433,6 +445,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_t_coords_name.setter
     def active_t_coords_name(self, name: str) -> None:
+        """Set the name of the active texture coordinates array.
+
+        Params
+        ------
+        name: str
+            Name of the active texture coordinates array.
+        """
         if name is None:
             self.SetActiveTCoords(None)
             return
@@ -1052,6 +1071,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self[name] = array.copy()
 
     def _raise_index_out_of_bounds(self, index: Any):  # numpydoc ignore=PR01,RT01
+        """Raise a KeyError if array index is out of bounds."""
         if isinstance(index, int):
             max_index = self.VTKObject.GetNumberOfArrays()
             if not 0 <= index < max_index:
@@ -1064,7 +1084,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_scalars_name(self) -> Optional[str]:
-        """Name of the active scalars.
+        """Return name of the active scalars.
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active scalars.
 
         Examples
         --------
@@ -1096,6 +1121,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str) -> None:
+        """Set name of the active scalars.
+
+        Parameters
+        ----------
+        name: str
+            Name of the active scalars.
+        """
         # permit setting no active scalars
         if name is None:
             self.SetActiveScalars(None)
@@ -1108,7 +1140,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_vectors_name(self) -> Optional[str]:
-        """Name of the active vectors.
+        """Return name of the active vectors.
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active vectors.
 
         Examples
         --------
@@ -1128,6 +1165,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str) -> None:
+        """Set name of the active vectors.
+
+        Parameters
+        ----------
+        name: str
+            Name of the active vectors.
+        """
         # permit setting no active
         if name is None:
             self.SetActiveVectors(None)
@@ -1166,7 +1210,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_normals(self) -> Optional[pyvista_ndarray]:
-        """Return or set the normals.
+        """Return the normals.
 
         Returns
         -------
@@ -1224,6 +1268,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_normals.setter
     def active_normals(self, normals: Union[Sequence[Number], np.ndarray]):
+        """Set the normals.
+
+        Parameters
+        ----------
+        normals: Union[Sequence[Number], np.ndarray]
+            Normals of this dataset attribute.
+        """
         self._raise_no_normals()
         normals = np.asarray(normals)
         if normals.ndim != 2:
