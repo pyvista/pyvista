@@ -64,6 +64,15 @@ def test_clear_key_event_callbacks():
     pl.reset_key_events()
 
 
+def test_close_key_event_callbacks():
+    key = 'q'
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere())
+    pl.add_key_event(key, pl.close)
+    pl.show(auto_close=False)
+    pl.iren._simulate_keypress(key)
+
+
 @pytest.mark.skip_plotting
 def test_track_mouse_position():
     pl = pyvista.Plotter()
