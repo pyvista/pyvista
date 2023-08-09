@@ -1327,7 +1327,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the active normals array.
 
         """
