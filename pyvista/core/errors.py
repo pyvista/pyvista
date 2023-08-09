@@ -7,7 +7,7 @@ class NotAllTrianglesError(ValueError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -22,7 +22,7 @@ class DeprecationError(RuntimeError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -37,7 +37,7 @@ class VTKVersionError(RuntimeError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -54,7 +54,7 @@ class PointSetNotSupported(TypeError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -71,7 +71,7 @@ class PointSetCellOperationError(PointSetNotSupported):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -88,7 +88,7 @@ class PointSetDimensionReductionError(PointSetNotSupported):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -105,7 +105,7 @@ class MissingDataError(ValueError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -120,7 +120,7 @@ class AmbiguousDataError(ValueError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
@@ -135,7 +135,7 @@ class PyVistaPipelineError(RuntimeError):
     Parameters
     ----------
     message : str
-        Error message
+        Error message.
 
     """
 
