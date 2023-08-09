@@ -1298,7 +1298,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_normals_name(self) -> Optional[str]:
-        """Return or set the name of the normals array.
+        """Return the name of the normals array.
 
         Returns
         -------
@@ -1323,6 +1323,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_normals_name.setter
     def active_normals_name(self, name: str) -> None:
+        """Set the name of the normals array.
+
+        Parameters
+        ----------
+        name: str
+            Name of the active normals array.
+
+        """
         # permit setting no active
         if name is None:
             self.SetActiveNormals(None)
