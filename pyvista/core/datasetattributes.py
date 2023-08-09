@@ -400,8 +400,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        t_coords: np.ndarray
+        t_coords : np.ndarray
             Array of the active texture coordinates.
+
         """
         self._raise_no_t_coords()
         if not isinstance(t_coords, np.ndarray):
@@ -449,8 +450,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the active texture coordinates array.
+
         """
         if name is None:
             self.SetActiveTCoords(None)
@@ -1125,8 +1127,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the active scalars.
+
         """
         # permit setting no active scalars
         if name is None:
@@ -1169,8 +1172,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the active vectors.
+
         """
         # permit setting no active
         if name is None:
@@ -1272,8 +1276,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        normals: Union[Sequence[Number], np.ndarray]
+        normals : Union[Sequence[Number], np.ndarray]
             Normals of this dataset attribute.
+
         """
         self._raise_no_normals()
         normals = np.asarray(normals)
