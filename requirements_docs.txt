@@ -29,7 +29,7 @@ sphinx-gallery==0.13.0
 sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.3.7
-sphinxcontrib-websupport==1.2.4
+sphinxcontrib-websupport==1.2.5
 sympy==1.12
 trame==3.1.0
 trame-vtk==2.5.8
