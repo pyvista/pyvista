@@ -94,7 +94,7 @@ class PointSetDimensionReductionError(PointSetNotSupported):
 
     def __init__(
         self, message='Slice and other dimension reducing filters are not supported on PointSets.'
-    ):
+    ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
 
