@@ -110,8 +110,8 @@ class TextProperty(_vtk.vtkTextProperty):
     def opacity(self) -> float:
         """Return or set the opacity of text's property.
 
-        Opacity of the mesh. A single float value that will be applied globally
-        opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
+        Opacity of the text. A single float value that will be applied globally
+        opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         Examples
         --------
@@ -184,3 +184,44 @@ class TextProperty(_vtk.vtkTextProperty):
         self._background_color_set = value is not None
         rgb_color = Color(value, default_color=self._theme.background)
         self.SetBackgroundColor(rgb_color.float_rgb)
+
+    @property
+    def background_opacity(self):
+        """Return or set the background opacity of text's property.
+
+        Background opacity of the text. A single float value that will be applied globally
+        background opacity of the text and uniformly applied everywhere. Between 0 and 1.
+
+        Examples
+        --------
+        Set background opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> prop = pv.TextProperty()
+        >>> prop.background_opacity = 0.5
+        >>> prop.background_opacity
+        0.5
+
+        Visualize default background opacity of ``1.0``.
+
+        >>> prop.background_opacity = 1.0
+        >>> prop.plot()
+
+        Visualize background opacity of ``0.75``.
+
+        >>> prop.background_opacity = 0.75
+        >>> prop.plot()
+
+        Visualize background opacity of ``0.25``.
+
+        >>> prop.background_opacity = 0.25
+        >>> prop.plot()
+
+
+        """
+        return self.GetBackgroundOpacity()
+
+    @background_opacity.setter
+    def background_opacity(self, value: float):
+        _check_range(value, (0, 1), 'background_opacity')
+        self.SetOpacity(value)
