@@ -4,6 +4,7 @@ import shutil
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
+from docutils.utils import relative_path  # pragma: no cover
 from sphinx.util import logging
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
 
@@ -16,7 +17,7 @@ class OfflineViewerDirective(Directive):
     final_argument_whitespace = True
     has_content = True
 
-    def run(self):
+    def run(self):  # pragma: no cover
         source_dir = self.state.document.settings.env.app.srcdir
         build_dir = self.state.document.settings.env.app.outdir
 
@@ -35,15 +36,25 @@ class OfflineViewerDirective(Directive):
         image_path = pathlib.Path(build_dir) / '_images'
         image_path.mkdir(exist_ok=True)
 
-        rel_asset_path = pathlib.Path('_images', os.path.basename(source_file))
-        dest_file = os.path.join(build_dir, rel_asset_path)
+        dest_file = pathlib.Path(build_dir) / '_images' / os.path.basename(source_file)
         try:
             shutil.copy(source_file, dest_file)
         except Exception as e:
             logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
+        # Compute the relative path of the current source to the source directory,
+        # which is the same as the relative path of the '_static' directory to the
+        # generated HTML file.
+        relpath_to_source_root = relative_path(self.state.document.current_source, source_dir)
+        rel_viewer_path = (
+            pathlib.Path(".")
+            / relpath_to_source_root
+            / '_static'
+            / os.path.basename(HTML_VIEWER_PATH)
+        ).as_posix()
+        rel_asset_path = pathlib.Path(os.path.relpath(dest_file, static_path)).as_posix()
         html = f"""
-    <iframe src='/_static/{os.path.basename(HTML_VIEWER_PATH)}?fileURL=/{rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
+    <iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
 """
 
         raw_node = nodes.raw('', html, format='html')

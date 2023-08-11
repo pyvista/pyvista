@@ -40,6 +40,6 @@ from .pointset import (
     UnstructuredGrid,
 )
 from .pyvista_ndarray import pyvista_ndarray
+from .text import Text, TextProperty
 from .utilities import *
 from .wrappers import _wrappers
-from .text import Text, TextProperty

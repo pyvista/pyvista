@@ -13,6 +13,7 @@ class Text(TextActor):
     >>> prop = text.prop
     """
 
+
 class Text(TextProperty):
     """Define text property.
 

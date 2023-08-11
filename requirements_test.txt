@@ -3,7 +3,7 @@
 -r requirements.txt
 cmocean<3.1
 colorcet<3.1.0
-hypothesis<6.82.1
+hypothesis<6.82.4
 imageio<2.32.0
 imageio-ffmpeg<0.5.0
 ipygany<0.6.0
@@ -24,8 +24,8 @@ pythreejs<2.5.0
 Sphinx<7.2.0
 sphinx-gallery<0.14.0
 sympy<1.13.0
-tqdm<4.66.0
-trame>=2.5.2,<2.6
+tqdm<4.67.0
+trame>=2.5.2,<3.2
 trame-vtk>=2.5.8,<2.6
 trame-vuetify>=2.3.1,<2.4
-trimesh<3.23.0
+trimesh<3.24.0
