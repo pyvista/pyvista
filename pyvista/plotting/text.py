@@ -287,3 +287,37 @@ class TextProperty(_vtk.vtkTextProperty):
     @frame_color.setter
     def frame_color(self, value):
         self.SetFrameColor(Color(value).float_rgb)
+
+    @property
+    def frame_width(self) -> int:
+        """Set/Get the width of the frame.
+
+        The width is expressed in pixels. The default is 1 pixel.
+
+        Examples
+        --------
+        Change the frame width to ``10``.
+
+        >>> import pyvista as pv
+        >>> prop = pv.TextProperty()
+        >>> prop.frame_width = 10
+        >>> prop.frame_width
+        10.0
+
+        Visualize the default frame width.
+
+        >>> prop.line_width = 1
+        >>> prop.show_edges = True
+        >>> prop.plot()
+
+        Visualize with a frame width of ``5``.
+
+        >>> prop.line_width = 5
+        >>> prop.plot()
+
+        """
+        return self.GetFrameWidth()
+
+    @frame_width.setter
+    def frame_width(self, value: int):
+        self.SetFrameWidth(value)

@@ -18,11 +18,11 @@ def test_text_prop():
     prop.background_opacity = 0.5
     prop.show_frame = True
     prop.frame_color = "b"
-    prop.frame_width = 10.0
+    prop.frame_width = 10
     assert prop.color == "b"
     assert prop.opacity == 0.5
     assert prop.background_color == "b"
     assert prop.background_opacity == 0.5
     assert prop.show_frame is True
     assert prop.frame_color == "b"
-    assert prop.frame_width == 10.0
+    assert prop.frame_width == 10
