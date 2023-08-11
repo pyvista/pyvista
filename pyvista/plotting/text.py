@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import pyvista as pv
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
 from .colors import Color
@@ -58,10 +58,14 @@ class TextProperty(_vtk.vtkTextProperty):
     _theme = None
     _color_set = None
 
-    def __init__(self, color=None):
+    def __init__(self, color=None, opacity=None):
         """Initialize text property."""
         self._theme = pv.themes.Theme()
         self.color = color
+
+        if opacity is None:
+            opacity = self._theme.opacity
+        self.opacity = opacity
 
     @property
     def color(self) -> Color:
@@ -100,3 +104,44 @@ class TextProperty(_vtk.vtkTextProperty):
         self._color_set = value is not None
         rgb_color = Color(value, default_color=self._theme.color)
         self.SetColor(rgb_color.float_rgb)
+
+    @property
+    def opacity(self) -> float:
+        """Return or set the opacity of text property.
+
+        Opacity of the mesh. A single float value that will be applied globally
+        opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
+
+        Examples
+        --------
+        Set opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> prop = pv.TextProperty()
+        >>> prop.opacity = 0.5
+        >>> prop.opacity
+        0.5
+
+        Visualize default opacity of ``1.0``.
+
+        >>> prop.opacity = 1.0
+        >>> prop.plot()
+
+        Visualize opacity of ``0.75``.
+
+        >>> prop.opacity = 0.75
+        >>> prop.plot()
+
+        Visualize opacity of ``0.25``.
+
+        >>> prop.opacity = 0.25
+        >>> prop.plot()
+
+
+        """
+        return self.GetOpacity()
+
+    @opacity.setter
+    def opacity(self, value: float):
+        _check_range(value, (0, 1), 'opacity')
+        self.SetOpacity(value)
