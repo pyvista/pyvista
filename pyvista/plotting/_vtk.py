@@ -103,6 +103,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkSelectVisiblePoints,
     vtkSkybox,
     vtkTextActor,
+    vtkTextProperty,
     vtkTexture,
     vtkVolume,
     vtkVolumeProperty,
