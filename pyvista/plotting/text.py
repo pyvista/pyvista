@@ -77,7 +77,7 @@ class TextProperty(_vtk.vtkTextProperty):
         Set the color to blue.
 
         >>> import pyvista as pv
-        >>> prop = pv.Property()
+        >>> prop = pv.TextProperty()
         >>> prop.color = 'b'
         >>> prop.color
         Color(name='blue', hex='#0000ffff', opacity=255)
