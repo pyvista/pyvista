@@ -224,7 +224,7 @@ class TextProperty(_vtk.vtkTextProperty):
     @background_opacity.setter
     def background_opacity(self, value: float):
         _check_range(value, (0, 1), 'background_opacity')
-        self.SetOpacity(value)
+        self.SetBackgroundOpacity(value)
 
     @property
     def show_frame(self) -> bool:
