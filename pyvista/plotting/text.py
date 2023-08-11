@@ -13,7 +13,7 @@ class Text(_vtk.vtkTextActor):
 
     Examples
     --------
-    Create a text with text property.
+    Create a text with text's property.
 
     >>> from pyvista import Text
     >>> text = Text("text")
@@ -38,11 +38,11 @@ class Text(_vtk.vtkTextActor):
 
 @no_new_attr
 class TextProperty(_vtk.vtkTextProperty):
-    """Define text property.
+    """Define text's property.
 
     Examples
     --------
-    Create a text property.
+    Create a text's property.
 
     >>> from pyvista import TextProperty
     >>> prop = TextProperty()
@@ -57,9 +57,10 @@ class TextProperty(_vtk.vtkTextProperty):
 
     _theme = None
     _color_set = None
+    _background_color_set = None
 
     def __init__(self, color=None, opacity=None):
-        """Initialize text property."""
+        """Initialize text's property."""
         self._theme = pv.themes.Theme()
         self.color = color
 
@@ -69,7 +70,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @property
     def color(self) -> Color:
-        """Return or set the color of this property.
+        """Return or set the color of text's property.
 
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
@@ -86,7 +87,7 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.color
         Color(name='blue', hex='#0000ffff', opacity=255)
 
-        Visualize setting the property to blue.
+        Visualize setting the text property to blue.
 
         >>> prop.color = 'b'
         >>> prop.plot()
@@ -107,7 +108,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @property
     def opacity(self) -> float:
-        """Return or set the opacity of text property.
+        """Return or set the opacity of text's property.
 
         Opacity of the mesh. A single float value that will be applied globally
         opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
@@ -145,3 +146,41 @@ class TextProperty(_vtk.vtkTextProperty):
     def opacity(self, value: float):
         _check_range(value, (0, 1), 'opacity')
         self.SetOpacity(value)
+
+    @property
+    def background_color(self):
+        """Return or set the background color of text's property.
+
+        Either a string, RGB list, or hex color string.  For example:
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+        ``color='#FFFFFF'``. Color will be overridden if scalars are
+        specified.
+
+        Examples
+        --------
+        Set the background color to blue.
+
+        >>> import pyvista as pv
+        >>> prop = pv.TextProperty()
+        >>> prop.background_color = 'b'
+        >>> prop.background_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        Visualize setting the text property to blue.
+
+        >>> prop.color = 'b'
+        >>> prop.plot()
+
+        Visualize setting the background color using an RGB value.
+
+        >>> prop.color = (0.5, 0.5, 0.1)
+        >>> prop.plot()
+
+        """
+        return Color(self.GetBackgroundColor())
+
+    @background_color.setter
+    def background_color(self, value):
+        self._background_color_set = value is not None
+        rgb_color = Color(value, default_color=self._theme.background)
+        self.SetBackgroundColor(rgb_color.float_rgb)
