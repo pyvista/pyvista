@@ -1,6 +1,8 @@
 """Contains the pyvista.Text class."""
 from __future__ import annotations
 
+from pyvista.core.utilities.misc import no_new_attr
+
 from . import _vtk
 
 
@@ -32,6 +34,7 @@ class Text(_vtk.vtkTextActor):
         self.SetTextProperty(obj)
 
 
+@no_new_attr
 class TextProperty(_vtk.vtkTextProperty):
     """Define text property.
 
