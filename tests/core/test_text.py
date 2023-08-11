@@ -2,6 +2,7 @@
 Tests for text objects
 """
 import pytest
+
 import pyvista
 
 
@@ -9,6 +10,7 @@ def test_text():
     text = pyvista.Text('text')
     prop = text.prop
     assert isinstance(prop, pyvista.TextProperty)
+
 
 def test_text_prop():
     prop = pyvista.TextProperty()
