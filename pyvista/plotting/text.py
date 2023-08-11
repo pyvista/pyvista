@@ -256,3 +256,34 @@ class TextProperty(_vtk.vtkTextProperty):
     @show_frame.setter
     def show_frame(self, value: bool):
         self.SetFrame(value)
+
+    @property
+    def frame_color(self) -> Color:
+        """Return or set the frame color of this property.
+
+        Either a string, RGB list, or hex color string.  For example:
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+        ``color='#FFFFFF'``. Color will be overridden if scalars are
+        specified.
+
+        Examples
+        --------
+        Set the frame color to blue.
+
+        >>> import pyvista as pv
+        >>> prop = pv.TextProperty()
+        >>> prop.frame_color = 'b'
+        >>> prop.frame_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        Visualize setting the frame color to blue.
+
+        >>> prop.frame_color = 'b'
+        >>> prop.plot()
+
+        """
+        return Color(self.GetFrameColor())
+
+    @frame_color.setter
+    def frame_color(self, value):
+        self.SetFrameColor(Color(value).float_rgb)
