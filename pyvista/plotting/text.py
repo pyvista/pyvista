@@ -1,7 +1,10 @@
 """Contains the pyvista.Text class."""
+from __future__ import annotations
+
+from . import _vtk
 
 
-class Text(TextActor):
+class Text(_vtk.vtkTextActor):
     """Define text by default theme.
 
     Examples
@@ -13,8 +16,23 @@ class Text(TextActor):
     >>> prop = text.prop
     """
 
+    def __init__(self, text, prop=None):
+        """Initialize a new text descriptor."""
+        self._input = text
+        if prop is None:
+            self.prop = TextProperty()
 
-class Text(TextProperty):
+    @property
+    def prop(self):
+        """Return or set the property of this actor."""
+        return self.GetTextProperty()
+
+    @prop.setter
+    def prop(self, obj: TextProperty):
+        self.SetTextProperty(obj)
+
+
+class TextProperty(_vtk.vtkTextProperty):
     """Define text property.
 
     Examples

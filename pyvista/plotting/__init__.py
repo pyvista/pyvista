@@ -33,6 +33,7 @@ from .picking import PickingHelper
 from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition, Renderer, scale_point
+from .text import Text, TextProperty
 from .texture import Texture, image_to_texture, numpy_to_texture
 from .themes import (
     DocumentTheme as _GlobalTheme,
