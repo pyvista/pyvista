@@ -37,6 +37,7 @@ cells = [
     example_cells.Quadrilateral().get_cell(0),
     example_cells.Tetrahedron().get_cell(0),
     example_cells.Voxel().get_cell(0),
+    example_cells.Polyhedron().get_cell(0),
 ]
 types = [
     CellType.HEXAHEDRON,
@@ -45,11 +46,13 @@ types = [
     CellType.QUAD,
     CellType.TETRA,
     CellType.VOXEL,
+    CellType.POLYHEDRON,
 ]
-dims = [3, 2, 3, 2, 3, 3]
-npoints = [8, 3, 8, 4, 4, 8]
-nfaces = [6, 0, 6, 0, 4, 6]
-nedges = [12, 3, 12, 4, 6, 12, 12]
+
+dims = [3, 2, 3, 2, 3, 3, 3]
+npoints = [8, 3, 8, 4, 4, 8, 4]
+nfaces = [6, 0, 6, 0, 4, 6, 4]
+nedges = [12, 3, 12, 4, 6, 12, 6]
 cell_ids = list(map(repr, types))
 
 
@@ -228,6 +231,13 @@ def test_cell_points(cell):
     assert points.ndim == 2
     assert points.shape[0] > 0
     assert points.shape[1] == 3
+
+
+@pytest.mark.parametrize("cell", cells)
+def test_cell_cast_to_unstructured_grid(cell):
+    grid = cell.cast_to_unstructured_grid()
+    assert grid.n_cells == 1
+    assert grid.get_cell(0) == cell
 
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
