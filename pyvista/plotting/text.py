@@ -225,3 +225,34 @@ class TextProperty(_vtk.vtkTextProperty):
     def background_opacity(self, value: float):
         _check_range(value, (0, 1), 'background_opacity')
         self.SetOpacity(value)
+
+    @property
+    def show_frame(self) -> bool:
+        """Return or set the visibility of frame.
+
+        Shows or hides the frame.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.TextProperty()
+        >>> prop.show_frame = True
+        >>> prop.show_frame
+        True
+
+        Visualize default frame visibility of ``False``.
+
+        >>> prop.show_frame = False
+        >>> prop.plot()
+
+        Visualize frame visibility of ``True``.
+
+        >>> prop.show_frame = True
+        >>> prop.plot()
+
+        """
+        return bool(self.GetFrame())
+
+    @show_frame.setter
+    def show_frame(self, value: bool):
+        self.SetFrame(value)
