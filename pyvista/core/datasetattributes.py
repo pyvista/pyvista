@@ -1031,8 +1031,19 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             rand                    float64    (1000,)
 
         """
+        # store current active scalars so they can be restored after updating
+        set_active_scalars = False
+        if hasattr(self, 'active_scalars_name'):
+            active_scalars_name = self.active_scalars_name
+            set_active_scalars = True
+
+        # do update
         for name, array in array_dict.items():
             self[name] = array.copy()
+
+        # restore active scalars
+        if set_active_scalars:
+            self.active_scalars_name = active_scalars_name
 
     def _raise_index_out_of_bounds(self, index: Any):
         if isinstance(index, int):
