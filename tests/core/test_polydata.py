@@ -328,41 +328,49 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     merged = sphere.merge(hexbeam, merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
     assert isinstance(merged, pyvista.UnstructuredGrid)
+    assert merged.active_scalars_name is None
 
     # list with unstructuredgrid case
     merged = sphere.merge([hexbeam, hexbeam], merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points * 2)
     assert isinstance(merged, pyvista.UnstructuredGrid)
+    assert merged.active_scalars_name is None
 
     # with polydata
     merged = sphere.merge(sphere_shifted, progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.active_scalars_name is None
 
     # with polydata list (no merge)
     merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False, progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points * 2
+    assert merged.active_scalars_name is None
 
     # with polydata list (merge)
     merged = sphere.merge([sphere_shifted, sphere_shifted], progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.active_scalars_name is None
 
     # test in-place merge
     mesh = sphere.copy()
     merged = mesh.merge(sphere_shifted, inplace=True)
     assert merged is mesh
+    assert merged.active_scalars_name is None
 
     # test merge with lines
     arc_1 = pyvista.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
     arc_2 = pyvista.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
     merged = arc_1 + arc_2
     assert merged.n_lines == 2
+    assert merged.active_scalars_name == 'Distance'
 
     # test merge with lines as iterable
     merged = arc_1.merge((arc_2, arc_2))
     assert merged.n_lines == 3
+    assert merged.active_scalars_name == 'Distance'
 
     # test main_has_priority
     mesh = sphere.copy()
