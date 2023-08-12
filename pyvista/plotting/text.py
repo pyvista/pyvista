@@ -22,9 +22,22 @@ class Text(_vtk.vtkTextActor):
 
     def __init__(self, text, prop=None):
         """Initialize a new text descriptor."""
-        self._input = text
+        self.input = text
         if prop is None:
             self.prop = TextProperty()
+
+    @property
+    def input(self):
+        r"""Set the text string to be displayed.
+
+        "\n" is recognized as a carriage return/linefeed (line separator).
+        The characters must be in the UTF-8 encoding.
+        """
+        return self.GetInput()
+
+    @input.setter
+    def input(self, obj: str):
+        self.SetInput(obj)
 
     @property
     def prop(self):

@@ -6,8 +6,18 @@ import pytest
 import pyvista as pv
 
 
-def test_text():
-    text = pv.Text('text')
+@pytest.fixture()
+def text():
+    return pv.Text('text')
+
+
+def test_text_input(text):
+    assert text.input == 'text'
+    text.input = 'input'
+    assert text.input == 'input'
+
+
+def test_text_prop(text):
     prop = text.prop
     assert isinstance(prop, pv.TextProperty)
 
