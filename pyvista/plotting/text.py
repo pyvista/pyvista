@@ -59,14 +59,15 @@ class TextProperty(_vtk.vtkTextProperty):
     _color_set = None
     _background_color_set = None
 
-    def __init__(self, color=None, opacity=None):
+    def __init__(self, theme=None):
         """Initialize text's property."""
         self._theme = pv.themes.Theme()
-        self.color = color
-
-        if opacity is None:
-            opacity = self._theme.opacity
-        self.opacity = opacity
+        if theme is None:
+            # copy global theme to ensure local property theme is fixed
+            # after creation.
+            self._theme.load_theme(pv.global_theme)
+        else:
+            self._theme.load_theme(theme)
 
     @property
     def color(self) -> Color:
