@@ -51,7 +51,7 @@ class TextProperty(_vtk.vtkTextProperty):
     >>> prop.background_opacity = 0.5
     >>> prop.frame = True
     >>> prop.frame_color = "b"
-    >>> prop.frame_width = 10.0
+    >>> prop.frame_width = 10
     >>> assert prop.color == "b"
     """
 
@@ -302,7 +302,7 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop = pv.TextProperty()
         >>> prop.frame_width = 10
         >>> prop.frame_width
-        10.0
+        10
 
         Visualize the default frame width.
 
