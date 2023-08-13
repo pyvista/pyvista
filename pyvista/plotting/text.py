@@ -29,11 +29,14 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     >>> prop = text.prop
     """
 
-    def __init__(self, prop=None):
+    def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
         """Initialize a new text annotation descriptor."""
         super().__init__()
+        self.set_text(position, text)
         if prop is None:
             self.prop = TextProperty()
+        if linear_font_scale_factor is not None:
+            self.linear_font_scale_factor = linear_font_scale_factor
 
     def get_text(self, position):
         """Get the text to be displayed for each corner."""
@@ -99,9 +102,13 @@ class Text(_vtk.vtkTextActor):
     >>> prop = text.prop
     """
 
-    def __init__(self, prop=None):
+    def __init__(self, text=None, position=None, prop=None):
         """Initialize a new text descriptor."""
         super().__init__()
+        if text is not None:
+            self.input = text
+        if position is not None:
+            self.position = position
         if prop is None:
             self.prop = TextProperty()
 
@@ -163,7 +170,16 @@ class TextProperty(_vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(self, theme=None, color=None, font_family=None, orientation=None, font_file=None):
+    def __init__(
+        self,
+        theme=None,
+        color=None,
+        font_family=None,
+        orientation=None,
+        font_size=None,
+        font_file=None,
+        shadow=False,
+    ):
         """Initialize text's property."""
         super().__init__()
         if theme is None:
@@ -174,11 +190,14 @@ class TextProperty(_vtk.vtkTextProperty):
             self._theme.load_theme(theme)
         self.color = color
         self.font_family = font_family
-        if orientation is None:
-            orientation = 0.0
-        self.orientation = orientation
+        if orientation is not None:
+            self.orientation = orientation
+        if font_size is not None:
+            self.font_size = font_size
         if font_file is not None:
             self.set_font_file(font_file)
+        if shadow:
+            self.enable_shadow()
 
     @property
     def color(self) -> Color:

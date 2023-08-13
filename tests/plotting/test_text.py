@@ -11,12 +11,12 @@ import pyvista as pv
 
 @pytest.fixture()
 def corner_annotation():
-    return pv.CornerAnnotation()
+    return pv.CornerAnnotation(0, 'text')
 
 
 def test_corner_annotation_text(corner_annotation):
-    corner_annotation.set_text(0, 'text')
-    assert corner_annotation.get_text(0) == 'text'
+    corner_annotation.set_text(1, 'text1')
+    assert corner_annotation.get_text(1) == 'text1'
 
 
 def test_corner_annotation_prop(corner_annotation):

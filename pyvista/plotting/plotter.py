@@ -4800,29 +4800,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
             x = (window_size[0] * 0.02) / self.shape[0]
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
-
-        text_prop = TextProperty(color=color, font_family=font, orientation=orientation)
-        if font_file is not None:
-            text_prop.set_font_file(font_file)
-        if shadow:
-            text_prop.enable_shadow()
-
+        text_prop = TextProperty(
+            color=color,
+            font_family=font,
+            orientation=orientation,
+            font_file=font_file,
+            shadow=shadow,
+        )
         if isinstance(position, (int, str, bool)):
-            self.text = CornerAnnotation()
-            # This is how you set the font size with this actor
-            self.text.linear_font_scale_factor = font_size // 2
-            self.text.set_text(position, text)
+            self.text = CornerAnnotation(position, text, linear_font_scale_factor=font_size // 2)
         else:
-            self.text = Text()
-            self.text.input = text
-            self.text.position = position
+            self.text = Text(text=text, position=position)
             if viewport:
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             text_prop.font_size = int(font_size * 2)
-
         self.text.prop = text_prop
-
         self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)
         return self.text
 
