@@ -10,7 +10,7 @@ import numpy as np
 from pytest import fixture, mark, raises
 
 import pyvista
-from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import FieldAssociation, convert_array
 
 skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = mark.skipif(
@@ -178,6 +178,22 @@ def test_add_matrix(hexbeam):
     hexbeam.point_data.set_array(mat, 'mat')
     matout = hexbeam.point_data['mat'].reshape(mat_shape)
     assert np.allclose(mat, matout)
+
+
+def test_set_fails_with_wrong_shape(hexbeam):
+    with raises(ValueError):
+        hexbeam['foo'] = [1, 2, 3]
+    with raises(ValueError):
+        hexbeam.point_data['foo'] = [1, 2, 3]
+    with raises(ValueError):
+        hexbeam.cell_data['foo'] = [1, 2, 3]
+
+    # Use vtk methods directly to add bad data. This can simulate
+    # cases where buggy vtk methods may set arrays with incorrect shape
+    bad_data = convert_array([1, 2, 3], 'foo')
+    hexbeam.cell_data.VTKObject.AddArray(bad_data)
+    with raises(ValueError):
+        hexbeam.cell_data['foo'] = hexbeam.cell_data['foo']
 
 
 def test_set_active_scalars_fail(hexbeam):

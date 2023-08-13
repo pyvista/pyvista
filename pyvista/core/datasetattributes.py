@@ -711,25 +711,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if data is None:
             raise TypeError('``data`` cannot be None.')
 
-        # attempt to reuse the existing pointer to underlying VTK data
-        if isinstance(data, pyvista_ndarray):
-            # pyvista_ndarray already contains the reference to the vtk object
-            # pyvista needs to use the copy of this object rather than wrapping
-            # the array (which leaves a C++ pointer uncollected.
-            if data.VTKObject is not None:
-                # VTK doesn't support strides, therefore we can't directly
-                # point to the underlying object
-                if data.flags.c_contiguous:
-                    # no reason to return a shallow copy if the array and name
-                    # are identical, just return the underlying array name
-                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
-                        return data.VTKObject
-
-                    vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
-                    if isinstance(name, str):
-                        vtk_arr.SetName(name)
-                    return vtk_arr
-
         # convert to numpy type if necessary
         data = np.asanyarray(data)
 
@@ -747,6 +728,27 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             data = tmparray
         if data.shape[0] != array_len:
             raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+
+        # attempt to reuse the existing pointer to underlying VTK data
+        if isinstance(data, pyvista_ndarray):
+            # pyvista_ndarray already contains the reference to the vtk object
+            # pyvista needs to use the copy of this object rather than wrapping
+            # the array (which leaves a C++ pointer uncollected.
+            if data.VTKObject is not None:
+                # VTK doesn't support strides, therefore we can't directly
+                # point to the underlying object
+                if data.flags.c_contiguous:
+                    # no reason to return a shallow copy if the array and name
+                    # are identical, just return the underlying array name
+                    if not deep_copy and isinstance(name,
+                                                    str) and data.VTKObject.GetName() == name:
+                        return data.VTKObject
+
+                    vtk_arr = copy_vtk_array(data.VTKObject,
+                                             deep=deep_copy)
+                    if isinstance(name, str):
+                        vtk_arr.SetName(name)
+                    return vtk_arr
 
         # reset data association
         if name in self.dataset._association_bitarray_names[self.association.name]:
