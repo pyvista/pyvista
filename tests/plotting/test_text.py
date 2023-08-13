@@ -1,6 +1,8 @@
 """
 Tests for text objects
 """
+import os
+
 import numpy as np
 import pytest
 
@@ -120,3 +122,8 @@ def test_property_enable_shadow(prop):
 def test_property_orientation(prop):
     prop.orientation = 90.0
     assert prop.orientation == 90.0
+
+
+def test_property_set_font_file(prop):
+    font_file = os.path.join(os.path.dirname(__file__), "fonts/Mplus2-Regular.ttf")
+    prop.set_font_file(font_file)
