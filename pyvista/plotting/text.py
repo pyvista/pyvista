@@ -208,16 +208,6 @@ class TextProperty(_vtk.vtkTextProperty):
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 
-        Examples
-        --------
-        Set the color to blue.
-
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.color = 'b'
-        >>> prop.color
-        Color(name='blue', hex='#0000ffff', opacity=255)
-
         """
         return Color(self.GetColor())
 
@@ -233,16 +223,6 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Opacity of the text. A single float value that will be applied globally
         opacity of the text and uniformly applied everywhere. Between 0 and 1.
-
-        Examples
-        --------
-        Set opacity to ``0.5``.
-
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.opacity = 0.5
-        >>> prop.opacity
-        0.5
 
         """
         return self.GetOpacity()
@@ -261,16 +241,6 @@ class TextProperty(_vtk.vtkTextProperty):
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 
-        Examples
-        --------
-        Set the background color to blue.
-
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.background_color = 'b'
-        >>> prop.background_color
-        Color(name='blue', hex='#0000ffff', opacity=255)
-
         """
         return Color(self.GetBackgroundColor())
 
@@ -287,16 +257,6 @@ class TextProperty(_vtk.vtkTextProperty):
         Background opacity of the text. A single float value that will be applied globally
         background opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
-        Examples
-        --------
-        Set background opacity to ``0.5``.
-
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.background_opacity = 0.5
-        >>> prop.background_opacity
-        0.5
-
         """
         return self.GetBackgroundOpacity()
 
@@ -310,14 +270,6 @@ class TextProperty(_vtk.vtkTextProperty):
         """Return or set the visibility of frame.
 
         Shows or hides the frame.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.show_frame = True
-        >>> prop.show_frame
-        True
 
         """
         return bool(self.GetFrame())
@@ -335,16 +287,6 @@ class TextProperty(_vtk.vtkTextProperty):
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 
-        Examples
-        --------
-        Set the frame color to blue.
-
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.frame_color = 'b'
-        >>> prop.frame_color
-        Color(name='blue', hex='#0000ffff', opacity=255)
-
         """
         return Color(self.GetFrameColor())
 
@@ -357,16 +299,6 @@ class TextProperty(_vtk.vtkTextProperty):
         """Set/Get the width of the frame.
 
         The width is expressed in pixels. The default is 1 pixel.
-
-        Examples
-        --------
-        Change the frame width to ``10``.
-
-        >>> import pyvista as pv
-        >>> prop = pv.TextProperty()
-        >>> prop.frame_width = 10
-        >>> prop.frame_width
-        10
 
         """
         return self.GetFrameWidth()
