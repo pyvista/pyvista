@@ -4803,32 +4803,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
 
-        corner_mappings = {
-            'lower_left': _vtk.vtkCornerAnnotation.LowerLeft,
-            'lower_right': _vtk.vtkCornerAnnotation.LowerRight,
-            'upper_left': _vtk.vtkCornerAnnotation.UpperLeft,
-            'upper_right': _vtk.vtkCornerAnnotation.UpperRight,
-            'lower_edge': _vtk.vtkCornerAnnotation.LowerEdge,
-            'upper_edge': _vtk.vtkCornerAnnotation.UpperEdge,
-            'left_edge': _vtk.vtkCornerAnnotation.LeftEdge,
-            'right_edge': _vtk.vtkCornerAnnotation.RightEdge,
-        }
-        corner_mappings['ll'] = corner_mappings['lower_left']
-        corner_mappings['lr'] = corner_mappings['lower_right']
-        corner_mappings['ul'] = corner_mappings['upper_left']
-        corner_mappings['ur'] = corner_mappings['upper_right']
-        corner_mappings['top'] = corner_mappings['upper_edge']
-        corner_mappings['bottom'] = corner_mappings['lower_edge']
-        corner_mappings['right'] = corner_mappings['right_edge']
-        corner_mappings['r'] = corner_mappings['right_edge']
-        corner_mappings['left'] = corner_mappings['left_edge']
-        corner_mappings['l'] = corner_mappings['left_edge']
-
         if isinstance(position, (int, str, bool)):
-            if isinstance(position, str):
-                position = corner_mappings[position]
-            elif position is True:
-                position = corner_mappings['upper_left']
             self.text = CornerAnnotation()
             # This is how you set the font size with this actor
             self.text.SetLinearFontScaleFactor(font_size // 2)

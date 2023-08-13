@@ -35,6 +35,30 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
     def set_text(self, position, obj):
         """Set the text to be displayed for each corner."""
+        corner_mappings = {
+            'lower_left': self.LowerLeft,
+            'lower_right': self.LowerRight,
+            'upper_left': self.UpperLeft,
+            'upper_right': self.UpperRight,
+            'lower_edge': self.LowerEdge,
+            'upper_edge': self.UpperEdge,
+            'left_edge': self.LeftEdge,
+            'right_edge': self.RightEdge,
+        }
+        corner_mappings['ll'] = corner_mappings['lower_left']
+        corner_mappings['lr'] = corner_mappings['lower_right']
+        corner_mappings['ul'] = corner_mappings['upper_left']
+        corner_mappings['ur'] = corner_mappings['upper_right']
+        corner_mappings['top'] = corner_mappings['upper_edge']
+        corner_mappings['bottom'] = corner_mappings['lower_edge']
+        corner_mappings['right'] = corner_mappings['right_edge']
+        corner_mappings['r'] = corner_mappings['right_edge']
+        corner_mappings['left'] = corner_mappings['left_edge']
+        corner_mappings['l'] = corner_mappings['left_edge']
+        if isinstance(position, str):
+            position = corner_mappings[position]
+        elif position is True:
+            position = corner_mappings['upper_left']
         self.SetText(position, obj)
 
     @property
