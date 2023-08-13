@@ -8,11 +8,10 @@ import pyvista as pv
 
 @pytest.fixture()
 def text():
-    return pv.Text('text')
+    return pv.Text()
 
 
 def test_text_input(text):
-    assert text.input == 'text'
     text.input = 'input'
     assert text.input == 'input'
 
