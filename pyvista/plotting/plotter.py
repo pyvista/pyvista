@@ -61,7 +61,7 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .text import CornerAnnotation, Text
+from .text import CornerAnnotation, Text, TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
 from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa
@@ -4801,6 +4801,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
 
+        text_prop = TextProperty()
+        text_prop.color = color
+        text_prop.font_family = font
+        if font_file is not None:
+            text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
+            text_prop.SetFontFile(font_file)
+        if shadow:
+            text_prop.enable_shadow()
+        text_prop.orientation = orientation
+
         if isinstance(position, (int, str, bool)):
             self.text = CornerAnnotation()
             # This is how you set the font size with this actor
@@ -4813,17 +4823,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if viewport:
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
-            self.text.prop.font_size = int(font_size * 2)
+            text_prop.font_size = int(font_size * 2)
 
-        text_prop = self.text.prop
-        text_prop.color = color
-        text_prop.font_family = font
-        if font_file is not None:
-            text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
-            text_prop.SetFontFile(font_file)
-        if shadow:
-            text_prop.enable_shadow()
-        text_prop.orientation = orientation
+        self.text.prop = text_prop
 
         self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)
         return self.text
