@@ -348,4 +348,4 @@ class TextProperty(_vtk.vtkTextProperty):
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
-        self.SetFontFile(path)
+        self.SetFontFile(str(path))
