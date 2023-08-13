@@ -61,7 +61,7 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .text import Text
+from .text import CornerAnnotation, Text
 from .texture import numpy_to_texture
 from .themes import Theme
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
@@ -4829,10 +4829,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 position = corner_mappings[position]
             elif position is True:
                 position = corner_mappings['upper_left']
-            self.text = _vtk.vtkCornerAnnotation()
+            self.text = CornerAnnotation()
             # This is how you set the font size with this actor
             self.text.SetLinearFontScaleFactor(font_size // 2)
-            self.text.SetText(position, text)
+            self.text.set_text(position, text)
         else:
             self.text = Text()
             self.text.input = text
@@ -4842,7 +4842,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.text.prop.SetFontSize(int(font_size * 2))
 
-        text_prop = self.text.GetTextProperty()
+        text_prop = self.text.prop
         text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
         text_prop.SetFontFamily(FONTS[font].value)
         if font_file is not None:

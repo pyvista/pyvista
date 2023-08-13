@@ -23,7 +23,28 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     >>> prop = text.prop
     """
 
-    pass
+    def __init__(self, prop=None):
+        """Initialize a new text annotation descriptor."""
+        if prop is None:
+            self.prop = TextProperty()
+
+    @property
+    def text(self):
+        """Get the text to be displayed for each corner."""
+        return self.GetText()
+
+    def set_text(self, position, obj):
+        """Set the text to be displayed for each corner."""
+        self.SetText(position, obj)
+
+    @property
+    def prop(self):
+        """Return or set the property of this actor."""
+        return self.GetTextProperty()
+
+    @prop.setter
+    def prop(self, obj: TextProperty):
+        self.SetTextProperty(obj)
 
 
 @no_new_attr

@@ -7,6 +7,21 @@ import pyvista as pv
 
 
 @pytest.fixture()
+def corner_annotation():
+    return pv.CornerAnnotation()
+
+
+def test_text_text(text):
+    text.set_text(0, 'text')
+    assert text.text == 'text'
+
+
+def test_corner_annotation_prop(corner_annotation):
+    prop = corner_annotation.prop
+    assert isinstance(prop, pv.TextProperty)
+
+
+@pytest.fixture()
 def text():
     return pv.Text()
 
