@@ -4821,7 +4821,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if font_file is not None:
             text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
             text_prop.SetFontFile(font_file)
-        text_prop.SetShadow(shadow)
+        if shadow:
+            text_prop.enable_shadow()
         text_prop.SetOrientation(orientation)
 
         self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)

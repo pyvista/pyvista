@@ -110,3 +110,8 @@ def test_property_font_size(prop):
     value = 10
     prop.font_size = value
     assert prop.font_size == value
+
+
+def test_property_enable_shadow(prop):
+    prop.enable_shadow()
+    assert prop.GetShadow() == 1

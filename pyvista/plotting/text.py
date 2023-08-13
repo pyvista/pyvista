@@ -369,3 +369,7 @@ class TextProperty(_vtk.vtkTextProperty):
     @font_size.setter
     def font_size(self, font_size: int):
         self.SetFontSize(font_size)
+
+    def enable_shadow(self) -> None:
+        """Enable the shadow."""
+        self.SetShadow(True)
