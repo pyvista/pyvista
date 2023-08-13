@@ -135,7 +135,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     """
 
-    _theme = None
+    _theme = pv.themes.Theme()
     _color_set = None
     _background_color_set = None
     _font_family = None
@@ -143,7 +143,6 @@ class TextProperty(_vtk.vtkTextProperty):
     def __init__(self, theme=None, color=None):
         """Initialize text's property."""
         super().__init__()
-        self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
@@ -334,6 +333,8 @@ class TextProperty(_vtk.vtkTextProperty):
         return self._font_family
 
     @font_family.setter
-    def font_family(self, font: str):
+    def font_family(self, font: str | None):
+        if font is None:
+            font = self._theme.font.family
         self._font_family = font
         self.SetFontFamily(FONTS[self._font_family].value)

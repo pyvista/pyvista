@@ -4792,8 +4792,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        if font is None:
-            font = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
         if position is None:
