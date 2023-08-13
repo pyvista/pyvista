@@ -4835,7 +4835,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.text.SetText(position, text)
         else:
             self.text = Text()
-            self.text.SetInput(text)
+            self.text.input = text
             self.text.SetPosition(position)
             if viewport:
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
