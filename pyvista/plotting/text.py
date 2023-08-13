@@ -1,6 +1,7 @@
 """Contains the pyvista.Text class."""
 from __future__ import annotations
 
+import os
 from typing import Sequence
 
 import pyvista as pv
@@ -388,7 +389,9 @@ class TextProperty(_vtk.vtkTextProperty):
     def orientation(self, value: float):
         self.SetOrientation(value)
 
-    def set_font_file(self, font_file: str):
+    def set_font_file(self, filename: str):
         """Set the font file."""
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
-        self.SetFontFile(font_file)
+        self.SetFontFile(filename)
