@@ -137,7 +137,7 @@ class TextProperty(_vtk.vtkTextProperty):
     _color_set = None
     _background_color_set = None
 
-    def __init__(self, theme=None):
+    def __init__(self, theme=None, color=None):
         """Initialize text's property."""
         self._theme = pv.themes.Theme()
         if theme is None:
@@ -146,6 +146,7 @@ class TextProperty(_vtk.vtkTextProperty):
             self._theme.load_theme(pv.global_theme)
         else:
             self._theme.load_theme(theme)
+        self.color = color
 
     @property
     def color(self) -> Color:
@@ -172,7 +173,7 @@ class TextProperty(_vtk.vtkTextProperty):
     @color.setter
     def color(self, value):
         self._color_set = value is not None
-        rgb_color = Color(value, default_color=self._theme.color)
+        rgb_color = Color(value, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
 
     @property
@@ -225,7 +226,7 @@ class TextProperty(_vtk.vtkTextProperty):
     @background_color.setter
     def background_color(self, value):
         self._background_color_set = value is not None
-        rgb_color = Color(value, default_color=self._theme.background)
+        rgb_color = Color(value)
         self.SetBackgroundColor(rgb_color.float_rgb)
 
     @property

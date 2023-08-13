@@ -4818,7 +4818,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.text.prop.SetFontSize(int(font_size * 2))
 
         text_prop = self.text.prop
-        text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
+        text_prop.color = color
         text_prop.SetFontFamily(FONTS[font].value)
         if font_file is not None:
             text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
