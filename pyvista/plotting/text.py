@@ -6,6 +6,7 @@ from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
 from .colors import Color
+from .themes import Theme
 from .tools import FONTS
 
 
@@ -135,7 +136,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     """
 
-    _theme = pv.themes.Theme()
+    _theme = Theme()
     _color_set = None
     _background_color_set = None
     _font_family = None
