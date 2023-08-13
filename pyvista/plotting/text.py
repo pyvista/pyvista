@@ -8,6 +8,7 @@ from . import _vtk
 from .colors import Color
 
 
+@no_new_attr
 class Text(_vtk.vtkTextActor):
     """Define text by default theme.
 

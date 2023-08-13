@@ -4840,7 +4840,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if viewport:
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
-            self.text.GetTextProperty().SetFontSize(int(font_size * 2))
+            self.text.prop.SetFontSize(int(font_size * 2))
 
         text_prop = self.text.GetTextProperty()
         text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
