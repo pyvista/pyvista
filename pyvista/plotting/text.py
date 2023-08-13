@@ -1,6 +1,8 @@
 """Contains the pyvista.Text class."""
 from __future__ import annotations
 
+from typing import Sequence
+
 import pyvista as pv
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
@@ -113,6 +115,15 @@ class Text(_vtk.vtkTextActor):
     @prop.setter
     def prop(self, obj: TextProperty):
         self.SetTextProperty(obj)
+
+    @property
+    def position(self):
+        """Get/Set the position coordinate."""
+        return self.GetPosition()
+
+    @position.setter
+    def position(self, obj: Sequence[float]):
+        self.SetPosition(obj[0], obj[1])
 
 
 @no_new_attr

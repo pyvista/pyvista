@@ -1,6 +1,7 @@
 """
 Tests for text objects
 """
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -34,6 +35,12 @@ def test_text_input(text):
 def test_text_prop(text):
     prop = text.prop
     assert isinstance(prop, pv.TextProperty)
+
+
+def test_text_position(text):
+    position = np.random.random(2)
+    text.position = position
+    assert np.all(text.position == position)
 
 
 @pytest.fixture()
