@@ -4667,8 +4667,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 _kill_display(disp_id)
             self.iren = None
 
-        if hasattr(self, 'textActor'):
-            del self.textActor
+        if hasattr(self, 'text'):
+            del self.text
 
         # end movie
         if hasattr(self, 'mwriter'):
@@ -4694,7 +4694,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mesh = None
         self.mapper = None
         self.volume = None
-        self.textActor = None
+        self.text = None
 
     def add_text(
         self,
@@ -4828,20 +4828,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 position = corner_mappings[position]
             elif position is True:
                 position = corner_mappings['upper_left']
-            self.textActor = _vtk.vtkCornerAnnotation()
+            self.text = _vtk.vtkCornerAnnotation()
             # This is how you set the font size with this actor
-            self.textActor.SetLinearFontScaleFactor(font_size // 2)
-            self.textActor.SetText(position, text)
+            self.text.SetLinearFontScaleFactor(font_size // 2)
+            self.text.SetText(position, text)
         else:
-            self.textActor = _vtk.vtkTextActor()
-            self.textActor.SetInput(text)
-            self.textActor.SetPosition(position)
+            self.text = _vtk.vtkTextActor()
+            self.text.SetInput(text)
+            self.text.SetPosition(position)
             if viewport:
-                self.textActor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
-                self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
-            self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
+                self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+            self.text.GetTextProperty().SetFontSize(int(font_size * 2))
 
-        text_prop = self.textActor.GetTextProperty()
+        text_prop = self.text.GetTextProperty()
         text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
         text_prop.SetFontFamily(FONTS[font].value)
         if font_file is not None:
@@ -4850,8 +4850,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         text_prop.SetShadow(shadow)
         text_prop.SetOrientation(orientation)
 
-        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False, render=render)
-        return self.textActor
+        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)
+        return self.text
 
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.
