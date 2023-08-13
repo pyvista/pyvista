@@ -16,13 +16,12 @@ class Text(_vtk.vtkTextActor):
     Create a text with text's property.
 
     >>> from pyvista import Text
-    >>> text = Text("text")
+    >>> text = Text()
     >>> prop = text.prop
     """
 
-    def __init__(self, text, prop=None):
+    def __init__(self, prop=None):
         """Initialize a new text descriptor."""
-        self.input = text
         if prop is None:
             self.prop = TextProperty()
 

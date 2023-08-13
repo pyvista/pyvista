@@ -61,6 +61,7 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .text import Text
 from .texture import numpy_to_texture
 from .themes import Theme
 from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
@@ -4833,7 +4834,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.text.SetLinearFontScaleFactor(font_size // 2)
             self.text.SetText(position, text)
         else:
-            self.text = _vtk.vtkTextActor()
+            self.text = Text()
             self.text.SetInput(text)
             self.text.SetPosition(position)
             if viewport:
