@@ -62,7 +62,7 @@ class TextProperty(_vtk.vtkTextProperty):
     >>> prop.opacity = 0.5
     >>> prop.background_color = "b"
     >>> prop.background_opacity = 0.5
-    >>> prop.frame = True
+    >>> prop.show_frame = True
     >>> prop.frame_color = "b"
     >>> prop.frame_width = 10
     >>> assert prop.color == "b"
@@ -101,16 +101,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.color
         Color(name='blue', hex='#0000ffff', opacity=255)
 
-        Visualize setting the text property to blue.
-
-        >>> prop.color = 'b'
-        >>> prop.plot()
-
-        Visualize setting the color using an RGB value.
-
-        >>> prop.color = (0.5, 0.5, 0.1)
-        >>> prop.plot()
-
         """
         return Color(self.GetColor())
 
@@ -136,22 +126,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.opacity = 0.5
         >>> prop.opacity
         0.5
-
-        Visualize default opacity of ``1.0``.
-
-        >>> prop.opacity = 1.0
-        >>> prop.plot()
-
-        Visualize opacity of ``0.75``.
-
-        >>> prop.opacity = 0.75
-        >>> prop.plot()
-
-        Visualize opacity of ``0.25``.
-
-        >>> prop.opacity = 0.25
-        >>> prop.plot()
-
 
         """
         return self.GetOpacity()
@@ -180,16 +154,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.background_color
         Color(name='blue', hex='#0000ffff', opacity=255)
 
-        Visualize setting the text property to blue.
-
-        >>> prop.color = 'b'
-        >>> prop.plot()
-
-        Visualize setting the background color using an RGB value.
-
-        >>> prop.color = (0.5, 0.5, 0.1)
-        >>> prop.plot()
-
         """
         return Color(self.GetBackgroundColor())
 
@@ -216,22 +180,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.background_opacity
         0.5
 
-        Visualize default background opacity of ``1.0``.
-
-        >>> prop.background_opacity = 1.0
-        >>> prop.plot()
-
-        Visualize background opacity of ``0.75``.
-
-        >>> prop.background_opacity = 0.75
-        >>> prop.plot()
-
-        Visualize background opacity of ``0.25``.
-
-        >>> prop.background_opacity = 0.25
-        >>> prop.plot()
-
-
         """
         return self.GetBackgroundOpacity()
 
@@ -253,16 +201,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.show_frame = True
         >>> prop.show_frame
         True
-
-        Visualize default frame visibility of ``False``.
-
-        >>> prop.show_frame = False
-        >>> prop.plot()
-
-        Visualize frame visibility of ``True``.
-
-        >>> prop.show_frame = True
-        >>> prop.plot()
 
         """
         return bool(self.GetFrame())
@@ -290,11 +228,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.frame_color
         Color(name='blue', hex='#0000ffff', opacity=255)
 
-        Visualize setting the frame color to blue.
-
-        >>> prop.frame_color = 'b'
-        >>> prop.plot()
-
         """
         return Color(self.GetFrameColor())
 
@@ -317,17 +250,6 @@ class TextProperty(_vtk.vtkTextProperty):
         >>> prop.frame_width = 10
         >>> prop.frame_width
         10
-
-        Visualize the default frame width.
-
-        >>> prop.line_width = 1
-        >>> prop.show_edges = True
-        >>> prop.plot()
-
-        Visualize with a frame width of ``5``.
-
-        >>> prop.line_width = 5
-        >>> prop.plot()
 
         """
         return self.GetFrameWidth()
