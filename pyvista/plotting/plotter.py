@@ -4801,15 +4801,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
 
-        text_prop = TextProperty()
-        text_prop.color = color
-        text_prop.font_family = font
+        text_prop = TextProperty(color=color, font_family=font, orientation=orientation)
         if font_file is not None:
             text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
             text_prop.SetFontFile(font_file)
         if shadow:
             text_prop.enable_shadow()
-        text_prop.orientation = orientation
 
         if isinstance(position, (int, str, bool)):
             self.text = CornerAnnotation()

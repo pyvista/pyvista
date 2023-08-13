@@ -161,7 +161,7 @@ class TextProperty(_vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(self, theme=None, color=None, font_family=None):
+    def __init__(self, theme=None, color=None, font_family=None, orientation=None):
         """Initialize text's property."""
         super().__init__()
         if theme is None:
@@ -172,6 +172,9 @@ class TextProperty(_vtk.vtkTextProperty):
             self._theme.load_theme(theme)
         self.color = color
         self.font_family = font_family
+        if orientation is None:
+            orientation = 0.0
+        self.orientation = orientation
 
     @property
     def color(self) -> Color:
