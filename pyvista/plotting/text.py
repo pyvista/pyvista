@@ -25,6 +25,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
     def __init__(self, prop=None):
         """Initialize a new text annotation descriptor."""
+        super().__init__()
         if prop is None:
             self.prop = TextProperty()
 
@@ -86,6 +87,7 @@ class Text(_vtk.vtkTextActor):
 
     def __init__(self, prop=None):
         """Initialize a new text descriptor."""
+        super().__init__()
         if prop is None:
             self.prop = TextProperty()
 
@@ -139,6 +141,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     def __init__(self, theme=None, color=None):
         """Initialize text's property."""
+        super().__init__()
         self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
