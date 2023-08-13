@@ -6,6 +6,7 @@ from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
 from .colors import Color
+from .tools import FONTS
 
 
 @no_new_attr
@@ -29,10 +30,9 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         if prop is None:
             self.prop = TextProperty()
 
-    @property
-    def text(self):
+    def get_text(self, position):
         """Get the text to be displayed for each corner."""
-        return self.GetText()
+        return self.GetText(position)
 
     def set_text(self, position, obj):
         """Set the text to be displayed for each corner."""
@@ -138,6 +138,7 @@ class TextProperty(_vtk.vtkTextProperty):
     _theme = None
     _color_set = None
     _background_color_set = None
+    _font_family = None
 
     def __init__(self, theme=None, color=None):
         """Initialize text's property."""
@@ -326,3 +327,13 @@ class TextProperty(_vtk.vtkTextProperty):
     @frame_width.setter
     def frame_width(self, value: int):
         self.SetFrameWidth(value)
+
+    @property
+    def font_family(self) -> str | None:
+        """Set/Get the font family."""
+        return self._font_family
+
+    @font_family.setter
+    def font_family(self, font: str):
+        self._font_family = font
+        self.SetFontFamily(FONTS[self._font_family].value)

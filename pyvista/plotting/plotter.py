@@ -64,7 +64,7 @@ from .scalar_bars import ScalarBars
 from .text import CornerAnnotation, Text
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa
 from .utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
@@ -4819,7 +4819,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         text_prop = self.text.prop
         text_prop.color = color
-        text_prop.SetFontFamily(FONTS[font].value)
+        text_prop.font_family = font
         if font_file is not None:
             text_prop.SetFontFamily(_vtk.VTK_FONT_FILE)
             text_prop.SetFontFile(font_file)

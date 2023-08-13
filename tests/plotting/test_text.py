@@ -11,9 +11,9 @@ def corner_annotation():
     return pv.CornerAnnotation()
 
 
-def test_text_text(text):
-    text.set_text(0, 'text')
-    assert text.text == 'text'
+def test_corner_annotation_text(corner_annotation):
+    corner_annotation.set_text(0, 'text')
+    assert corner_annotation.get_text(0) == 'text'
 
 
 def test_corner_annotation_prop(corner_annotation):
@@ -91,3 +91,8 @@ def test_property_frame_width(prop):
     value = 10
     prop.frame_width = value
     assert prop.frame_width == value
+
+
+def test_property_font_family(prop):
+    prop.font_family = 'arial'
+    assert prop.font_family == 'arial'
