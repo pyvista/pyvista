@@ -9,6 +9,24 @@ from .colors import Color
 
 
 @no_new_attr
+class CornerAnnotation(_vtk.vtkCornerAnnotation):
+    """text annotation in four corners.
+
+    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+
+    Examples
+    --------
+    Create text annotation in four corners.
+
+    >>> from pyvista import CornerAnnotation
+    >>> text = CornerAnnotation()
+    >>> prop = text.prop
+    """
+
+    pass
+
+
+@no_new_attr
 class Text(_vtk.vtkTextActor):
     """Define text by default theme.
 
