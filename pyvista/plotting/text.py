@@ -74,6 +74,15 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     def prop(self, obj: TextProperty):
         self.SetTextProperty(obj)
 
+    @property
+    def linear_font_scale_factor(self):
+        """Set/Get font scaling factors."""
+        return self.GetLinearFontScaleFactor()
+
+    @linear_font_scale_factor.setter
+    def linear_font_scale_factor(self, obj: float):
+        return self.SetLinearFontScaleFactor(obj)
+
 
 @no_new_attr
 class Text(_vtk.vtkTextActor):
@@ -152,7 +161,7 @@ class TextProperty(_vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(self, theme=None, color=None):
+    def __init__(self, theme=None, color=None, font_family=None):
         """Initialize text's property."""
         super().__init__()
         if theme is None:
@@ -162,6 +171,7 @@ class TextProperty(_vtk.vtkTextProperty):
         else:
             self._theme.load_theme(theme)
         self.color = color
+        self.font_family = font_family
 
     @property
     def color(self) -> Color:
@@ -350,3 +360,12 @@ class TextProperty(_vtk.vtkTextProperty):
             font = self._theme.font.family
         self._font_family = font
         self.SetFontFamily(FONTS[self._font_family].value)
+
+    @property
+    def font_size(self) -> int:
+        """Set/Get the font size."""
+        return self.GetFontSize()
+
+    @font_size.setter
+    def font_size(self, font_size: int):
+        self.SetFontSize(font_size)

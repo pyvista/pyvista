@@ -103,3 +103,10 @@ def test_property_frame_width(prop):
 def test_property_font_family(prop):
     prop.font_family = 'arial'
     assert prop.font_family == 'arial'
+
+
+def test_property_font_size(prop):
+    assert isinstance(prop.font_size, int)
+    value = 10
+    prop.font_size = value
+    assert prop.font_size == value

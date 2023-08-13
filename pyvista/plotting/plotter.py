@@ -4804,7 +4804,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(position, (int, str, bool)):
             self.text = CornerAnnotation()
             # This is how you set the font size with this actor
-            self.text.SetLinearFontScaleFactor(font_size // 2)
+            self.text.linear_font_scale_factor = font_size // 2
             self.text.set_text(position, text)
         else:
             self.text = Text()
@@ -4813,7 +4813,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if viewport:
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
-            self.text.prop.SetFontSize(int(font_size * 2))
+            self.text.prop.font_size = int(font_size * 2)
 
         text_prop = self.text.prop
         text_prop.color = color
