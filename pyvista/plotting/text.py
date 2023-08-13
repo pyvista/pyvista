@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 from typing import Sequence
 
 import pyvista as pv
@@ -391,7 +392,9 @@ class TextProperty(_vtk.vtkTextProperty):
 
     def set_font_file(self, filename: str):
         """Set the font file."""
-        if not os.path.isfile(filename):
-            raise FileNotFoundError(f'Unable to locate {filename}')
+        path = pathlib.Path(filename)
+        path = path.resolve()
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
-        self.SetFontFile(filename)
+        self.SetFontFile(path)
