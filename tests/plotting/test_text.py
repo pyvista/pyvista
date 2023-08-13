@@ -115,3 +115,8 @@ def test_property_font_size(prop):
 def test_property_enable_shadow(prop):
     prop.enable_shadow()
     assert prop.GetShadow() == 1
+
+
+def test_property_orientation(prop):
+    prop.orientation = 90.0
+    assert prop.orientation == 90.0

@@ -373,3 +373,12 @@ class TextProperty(_vtk.vtkTextProperty):
     def enable_shadow(self) -> None:
         """Enable the shadow."""
         self.SetShadow(True)
+
+    @property
+    def orientation(self) -> float:
+        """Set/Get the text's orientation (in degrees)."""
+        return self.GetOrientation()
+
+    @orientation.setter
+    def orientation(self, value: float):
+        self.SetOrientation(value)

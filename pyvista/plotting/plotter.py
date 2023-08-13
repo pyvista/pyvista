@@ -4823,7 +4823,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             text_prop.SetFontFile(font_file)
         if shadow:
             text_prop.enable_shadow()
-        text_prop.SetOrientation(orientation)
+        text_prop.orientation = orientation
 
         self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)
         return self.text
