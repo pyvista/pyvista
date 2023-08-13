@@ -65,7 +65,9 @@ class TextProperty(_vtk.vtkTextProperty):
     >>> prop.show_frame = True
     >>> prop.frame_color = "b"
     >>> prop.frame_width = 10
-    >>> assert prop.color == "b"
+    >>> prop.frame_color
+    Color(name='blue', hex='#0000ffff', opacity=255)
+
     """
 
     _theme = None
