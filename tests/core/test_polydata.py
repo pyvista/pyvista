@@ -372,14 +372,61 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert merged.n_lines == 3
     assert merged.active_scalars_name == 'Distance'
 
-    # test main_has_priority
-    mesh = sphere.copy()
+
+@pytest.mark.parametrize('input', [examples.load_hexbeam(), pyvista.Sphere()])
+def test_merge_active_scalars(input):
+    mesh1 = input.copy()
+    mesh1['foo'] = np.arange(mesh1.n_points)
+    mesh2 = mesh1.copy()
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = None
+    b.active_scalars_name = None
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = 'foo'
+    b.active_scalars_name = None
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = None
+    b.active_scalars_name = 'foo'
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = 'foo'
+    b.active_scalars_name = 'foo'
+    merged = a.merge(b)
+    assert merged.active_scalars_name == 'foo'
+    merged = b.merge(a)
+    assert merged.active_scalars_name == 'foo'
+
+
+@pytest.mark.parametrize('input', [examples.load_hexbeam(), pyvista.Sphere()])
+def test_merge_main_has_priority(input):
+    mesh = input.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
+    mesh.set_active_scalars('present_in_both')
+
     other = mesh.copy()
     data_other = -data_main
     other.point_data['present_in_both'] = data_other
-    merged = mesh.merge(other, main_has_priority=True)
+    other.set_active_scalars('present_in_both')
 
     # note: order of points can change after point merging
     def matching_point_data(this, that, scalars_name):
@@ -390,9 +437,13 @@ def test_merge(sphere, sphere_shifted, hexbeam):
             for j in (this.points == point).all(-1).nonzero()
         )
 
+    merged = mesh.merge(other, main_has_priority=True)
     assert matching_point_data(merged, mesh, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
+
     merged = mesh.merge(other, main_has_priority=False)
     assert matching_point_data(merged, other, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
 
 
 def test_add(sphere, sphere_shifted):
