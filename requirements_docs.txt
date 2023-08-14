@@ -10,7 +10,7 @@ jupyter_sphinx==0.4.0
 jupyterlab==4.0.4
 lxml==4.9.3
 meshio==5.3.4
-mypy==1.4.1
+mypy==1.5.0
 mypy-extensions==1.0.0
 numpydoc==1.5.0
 osmnx==1.6.0
@@ -29,7 +29,7 @@ sphinx-gallery==0.13.0
 sphinx-notfound-page==0.8.3
 sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.3.7
-sphinxcontrib-websupport==1.2.4
+sphinxcontrib-websupport==1.2.6
 sympy==1.12
 trame==3.1.0
 trame-vtk==2.5.8

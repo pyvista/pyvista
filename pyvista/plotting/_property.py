@@ -878,7 +878,7 @@ class Property(_vtk.vtkProperty):
         return self.GetLineWidth()
 
     @line_width.setter
-    def line_width(self, value: bool):
+    def line_width(self, value: float):
         self.SetLineWidth(value)
 
     @property

@@ -24,7 +24,7 @@ pythreejs<2.5.0
 Sphinx<7.2.0
 sphinx-gallery<0.14.0
 sympy<1.13.0
-tqdm<4.66.0
+tqdm<4.67.0
 trame>=2.5.2,<3.2
 trame-vtk>=2.5.8,<2.6
 trame-vuetify>=2.3.1,<2.4
