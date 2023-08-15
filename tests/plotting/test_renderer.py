@@ -38,7 +38,7 @@ def test_show_bounds_with_scaling(sphere):
     with pytest.warns():
         actor0 = plotter.show_bounds()
         assert actor0.GetUseTextActor3D()
-    plotter.set_scale(0.5, 0.5, 2)
+        plotter.set_scale(0.5, 0.5, 2)
     actor1 = plotter.show_bounds()
     assert not actor1.GetUseTextActor3D()
 
