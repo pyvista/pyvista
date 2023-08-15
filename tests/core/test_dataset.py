@@ -131,6 +131,16 @@ def test_cell_data_bad_value(grid):
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
+def test_point_cell_data_single_scalar_no_exception_raised():
+    try:
+        m = pyvista.PolyData([0, 0, 0.0])
+        m.point_data["foo"] = 1
+        m.cell_data["bar"] = 1
+        m["baz"] = 1
+    except Exception as e:
+        pytest.fail(f"Unexpected exception raised: {e}")
+
+
 def test_field_data(grid):
     key = 'test_array_field'
     # Add array of length not equal to n_cells or n_points

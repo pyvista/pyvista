@@ -210,7 +210,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence]):
+    def __setitem__(self, key: str, value: Union[np.ndarray, Sequence, float]):
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -719,7 +719,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         elif self.association == FieldAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
         else:
-            array_len = data.shape[0] if isinstance(data, np.ndarray) else 1
+            array_len = 1 if data.ndim == 0 else data.shape[0]
 
         # Fixup input array length for scalar input
         if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
@@ -740,12 +740,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if data.flags.c_contiguous:
                     # no reason to return a shallow copy if the array and name
                     # are identical, just return the underlying array name
-                    if not deep_copy and isinstance(name,
-                                                    str) and data.VTKObject.GetName() == name:
+                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
                         return data.VTKObject
 
-                    vtk_arr = copy_vtk_array(data.VTKObject,
-                                             deep=deep_copy)
+                    vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
                     return vtk_arr
