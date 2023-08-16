@@ -1167,6 +1167,8 @@ def test_sample():
     sample_test(locator=_vtk_core.vtkStaticCellLocator())
     for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
         sample_test(locator=locator)
+    with pytest.raises(ValueError):
+        sample_test(locator="invalid")
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
