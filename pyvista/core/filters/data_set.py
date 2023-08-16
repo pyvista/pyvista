@@ -3147,6 +3147,7 @@ class DataSetFilters:
         progress_bar=False,
         locator=None,
         pass_field_data=True,
+        mark_blank=True,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3200,6 +3201,9 @@ class DataSetFilters:
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
 
+        mark_blank : bool, default: True
+            Whether to mark blank points and cells in "vtkGhostType".
+
         Returns
         -------
         pyvista.DataSet
@@ -3244,6 +3248,7 @@ class DataSetFilters:
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
 
+        alg.SetMarkBlankPointsAndCells(mark_blank)
         alg.SetCategoricalData(categorical)
 
         if tolerance is not None:
