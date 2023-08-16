@@ -6903,6 +6903,7 @@ class Plotter(BasePlotter):
 
         return meshes
 
+
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
 #
