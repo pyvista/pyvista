@@ -3193,10 +3193,11 @@ class DataSetFilters:
             Prototype cell locator to perform the ``FindCell()``
             operation.  Default uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
-                - 'cell' - vtkCellLocator
-                - 'cell_tree' - vtkCellTreeLocator
-                - 'obb_tree' - vtkOBBTree
-                - 'static_cell' - vtkStaticCellLocator
+
+                * 'cell' - vtkCellLocator
+                * 'cell_tree' - vtkCellTreeLocator
+                * 'obb_tree' - vtkOBBTree
+                * 'static_cell' - vtkStaticCellLocator
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
