@@ -3159,7 +3159,7 @@ class DataSetFilters:
         usually preferred.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled
-        with a value of 1 meaning successful sampling and value of 0 meaning
+        with a value of 1 meaning successful sampling. And a value of 0 means
         unsuccessful.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
