@@ -1195,6 +1195,7 @@ def test_sample_composite():
 
     result = probe_points.sample(composite)
     assert "common_data" in result.point_data
+    # Need pass partial arrays?
     assert "partial_data" not in result.point_data
     assert "vtkValidPointMask" in result.point_data
     assert "vtkGhostType" in result.point_data
@@ -1215,6 +1216,7 @@ def test_sample_composite():
     probe_composite = pyvista.MultiBlock([small_mesh_0, small_mesh_1])
     result = probe_composite.sample(composite)
     assert "common_data" in result[0].point_data
+    # Need pass partial arrays?
     assert "partial_data" not in result[0].point_data
     assert "vtkValidPointMask" in result[0].point_data
     assert "vtkGhostType" in result[0].point_data
