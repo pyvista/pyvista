@@ -6889,11 +6889,9 @@ class Plotter(BasePlotter):
     def meshes(self):
         """Return plotter meshes.
 
-        _extended_summary_
-
         Returns
         -------
-        List[Union[pv.PolyData, pv.UnstructuredGrid, pv.UniformGrid]
+        List[Union[pyvista.DataSet, PyVista.MultiBlock]]
             List of mesh objects such as pv.PolyData, pv.UnstructuredGrid, etc.
         """
         meshes = []
