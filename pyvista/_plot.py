@@ -139,8 +139,10 @@ def plot(
         :func:`Plotter.enable_hidden_line_removal
         <Plotter.enable_hidden_line_removal>`.
 
-    anti_aliasing : bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
-        Enable or disable anti-aliasing.
+    anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+        Enable or disable anti-aliasing. If ``True``, uses MSAA. If False,
+        disables anti_aliasing. If a string, should be either ``"FXAA"`` or
+        ``"SSAA"``.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
@@ -235,8 +237,14 @@ def plot(
         show_axes = pl.theme.axes.show
     if show_axes:
         pl.add_axes()
+
     if anti_aliasing:
-        pl.enable_anti_aliasing()
+        if anti_aliasing is True:
+            pl.enable_anti_aliasing('MXAA', multi_samples=pyvista.global_theme.multi_samples)
+        else:
+            pl.enable_anti_aliasing(anti_aliasing)
+    elif anti_aliasing is False:
+        pl.disable_anti_aliasing()
 
     pl.set_background(background)
 
