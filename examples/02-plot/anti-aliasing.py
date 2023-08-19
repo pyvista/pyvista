@@ -124,7 +124,7 @@ pl.show()
 # You can compare the time to render for each one of the anti-aliasing
 # approaches with:
 #
-# .. code:: python
+# .. code-block:: python
 #
 #     n_render = 100
 #     for anti_aliasing in [False, 'fxaa', 'msaa', 'ssaa']:
