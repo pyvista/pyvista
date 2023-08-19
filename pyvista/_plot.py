@@ -240,7 +240,7 @@ def plot(
 
     if anti_aliasing:
         if anti_aliasing is True:
-            pl.enable_anti_aliasing('MSAA', multi_samples=pyvista.global_theme.multi_samples)
+            pl.enable_anti_aliasing('msaa', multi_samples=pyvista.global_theme.multi_samples)
         else:
             pl.enable_anti_aliasing(anti_aliasing)
     elif anti_aliasing is False:
