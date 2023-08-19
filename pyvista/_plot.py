@@ -140,9 +140,9 @@ def plot(
         <Plotter.enable_hidden_line_removal>`.
 
     anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
-        Enable or disable anti-aliasing. If ``True``, uses MSAA. If False,
-        disables anti_aliasing. If a string, should be either ``"FXAA"`` or
-        ``"SSAA"``.
+        Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
+        disables anti_aliasing. If a string, should be either ``"fxaa"`` or
+        ``"ssaa"``.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
