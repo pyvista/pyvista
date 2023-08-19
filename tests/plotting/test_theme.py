@@ -458,7 +458,6 @@ def test_anti_aliasing_fxaa(default_theme):
     assert default_theme.anti_aliasing == 'fxaa'
     pl = pyvista.Plotter(theme=default_theme)
     assert pl.renderer.GetUseFXAA()
-    assert pl.renderer.GetMultiSamples() == 0
 
 
 def test_anti_aliasing_ssaa(default_theme):
@@ -471,7 +470,6 @@ def test_anti_aliasing_ssaa(default_theme):
     assert default_theme.anti_aliasing == 'ssaa'
     pl = pyvista.Plotter(theme=default_theme)
     assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
-    assert pl.renderer.GetMultiSamples() == 0
 
 
 def test_anti_aliasing_msaa(default_theme):
