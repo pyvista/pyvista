@@ -62,6 +62,12 @@ repos:
         "--no-capitalize-first-letter",
       ]
 
+- repo: https://github.com/numpy/numpydoc
+  rev: 803a9bd3e7f9aef71cefe67adc554e1dd022a892
+  hooks:
+  - id: numpydoc-validation
+    files: ^pyvista/
+
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.4.1
   hooks:
@@ -94,9 +100,3 @@ repos:
   rev: 0.23.3
   hooks:
     - id: check-github-workflows
-
-- repo: https://github.com/numpy/numpydoc
-  rev: eeb509e
-  hooks:
-  - id: numpydoc-validation
-    files: ^pyvista/
