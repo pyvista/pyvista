@@ -550,9 +550,19 @@ class PolyDataFilters(DataSetFilters):
                 polydata_merged = pyvista.PolyData(
                     merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
                 )
+                # Calling update() will modify the active scalars in this specific
+                # case. Store values to restore after updating.
+                active_point_scalars_name = merged.point_data.active_scalars_name
+                active_cell_scalars_name = merged.cell_data.active_scalars_name
+
                 polydata_merged.point_data.update(merged.point_data)
                 polydata_merged.cell_data.update(merged.cell_data)
                 polydata_merged.field_data.update(merged.field_data)
+
+                # restore active scalars
+                polydata_merged.point_data.active_scalars_name = active_point_scalars_name
+                polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+
                 merged = polydata_merged
 
         if inplace:

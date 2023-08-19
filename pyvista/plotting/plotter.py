@@ -6885,6 +6885,22 @@ class Plotter(BasePlotter):
 
         return actor
 
+    @property
+    def meshes(self):
+        """Return plotter meshes.
+
+        Returns
+        -------
+        List[Union[pyvista.DataSet, PyVista.MultiBlock]]
+            List of mesh objects such as pv.PolyData, pv.UnstructuredGrid, etc.
+        """
+        meshes = []
+        for actor in self.actors.values():
+            if hasattr(actor, 'mapper'):
+                meshes.append(actor.mapper.dataset)
+
+        return meshes
+
 
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
