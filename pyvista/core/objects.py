@@ -75,17 +75,38 @@ class Table(_vtk.vtkTable, DataObject):
 
     @property
     def n_rows(self):
-        """Return the number of rows."""
+        """Return the number of rows.
+
+        Returns
+        -------
+        int
+            The number of rows.
+
+        """
         return self.GetNumberOfRows()
 
     @n_rows.setter
     def n_rows(self, n):
-        """Set the number of rows."""
+        """Set the number of rows.
+
+        Parameters
+        ----------
+        n : int
+            The number of rows.
+
+        """
         self.SetNumberOfRows(n)
 
     @property
     def n_columns(self):
-        """Return the number of columns."""
+        """Return the number of columns.
+
+        Returns
+        -------
+        int
+            The number of columns.
+
+        """
         return self.GetNumberOfColumns()
 
     @property
@@ -93,6 +114,11 @@ class Table(_vtk.vtkTable, DataObject):
         """Return the number of columns.
 
         Alias for: ``n_columns``.
+     
+        Returns
+        -------
+        int
+            The number of columns.
 
         """
         return self.n_columns
@@ -115,7 +141,14 @@ class Table(_vtk.vtkTable, DataObject):
 
     @property
     def row_arrays(self):
-        """Return the all row arrays."""
+        """Return the all row arrays.
+
+        Returns
+        -------
+        int
+            The all row arrays.
+
+        """
         return DataSetAttributes(
             vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
         )
