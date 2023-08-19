@@ -114,7 +114,7 @@ class Table(_vtk.vtkTable, DataObject):
         """Return the number of columns.
 
         Alias for: ``n_columns``.
-     
+
         Returns
         -------
         int
