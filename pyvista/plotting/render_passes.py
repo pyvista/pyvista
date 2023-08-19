@@ -30,9 +30,14 @@ class RenderPasses:
     are "stacked", while the post-processing passes are added as a final pass
     to the rendered image.
 
+    Parameters
+    ----------
+    renderer : vtk.vtkRenderer
+        Renderer to initialize render passes for.
+
     """
 
-    def __init__(self, renderer):  # numpydoc ignore=PR01,RT01
+    def __init__(self, renderer):
         """Initialize render passes."""
         self._renderer_ref = weakref.ref(renderer)
 
@@ -49,7 +54,7 @@ class RenderPasses:
         self.__camera_pass = None
 
     @property
-    def _pass_collection(self):  # numpydoc ignore=PR01,RT01
+    def _pass_collection(self):
         """Initialize (when necessary) the pass collection and return it.
 
         This lets us lazily generate the pass collection only when we need it
@@ -61,7 +66,7 @@ class RenderPasses:
         return self.__pass_collection
 
     @property
-    def _seq_pass(self):  # numpydoc ignore=PR01,RT01
+    def _seq_pass(self):
         """Initialize (when necessary) the sequence collection and return it.
 
         This lets us lazily generate the sequence collection only when we need it
@@ -73,7 +78,7 @@ class RenderPasses:
         return self.__seq_pass
 
     @property
-    def _camera_pass(self):  # numpydoc ignore=PR01,RT01
+    def _camera_pass(self):
         """Initialize (when necessary) the camera pass and return it.
 
         This lets us lazily generate the camera pass only when we need it
@@ -84,7 +89,7 @@ class RenderPasses:
             self._init_passes()
         return self.__camera_pass
 
-    def _init_passes(self):  # numpydoc ignore=PR01,RT01
+    def _init_passes(self):
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
         self.__pass_collection = _vtk.vtkRenderPassCollection()
@@ -98,7 +103,7 @@ class RenderPasses:
         self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
-    def _renderer(self):  # numpydoc ignore=PR01,RT01
+    def _renderer(self):
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
@@ -122,7 +127,14 @@ class RenderPasses:
         self._blur_passes = []
 
     def enable_edl_pass(self):
-        """Enable the EDL pass."""
+        """Enable the EDL pass.
+
+        Returns
+        -------
+        vtk.vtkEDLShading
+            The enabled EDL pass.
+
+        """
         if self._edl_pass is not None:
             return
         self._edl_pass = _vtk.vtkEDLShading()
@@ -141,6 +153,11 @@ class RenderPasses:
 
         This is a vtkImageProcessingPass and delegates to the last pass.
 
+        Returns
+        -------
+        vtk.vtkGaussianBlurPass
+            The added Gaussian blur pass.
+
         """
         blur_pass = _vtk.vtkGaussianBlurPass()
         self._add_pass(blur_pass)
@@ -154,7 +171,14 @@ class RenderPasses:
             self._remove_pass(self._blur_passes.pop())
 
     def enable_shadow_pass(self):
-        """Enable shadow pass."""
+        """Enable shadow pass.
+
+        Returns
+        -------
+        vtk.vtkShadowMapPass
+            The enabled shadow pass.
+
+        """
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
             return
@@ -173,7 +197,20 @@ class RenderPasses:
         self._update_passes()
 
     def enable_depth_of_field_pass(self, automatic_focal_distance=True):
-        """Enable the depth of field pass."""
+        """Enable the depth of field pass.
+
+        Parameters
+        ----------
+        automatic_focal_distance : bool, default: True
+            If ``True``, the depth of field effect will automatically compute
+            the focal distance. If ``False``, the user must specify the distance.
+
+        Returns
+        -------
+        vtk.vtkDepthOfFieldPass
+            The enabled depth of field pass.
+
+        """
         if self._dof_pass is not None:
             return
 
@@ -193,7 +230,25 @@ class RenderPasses:
         self._dof_pass = None
 
     def enable_ssao_pass(self, radius, bias, kernel_size, blur):
-        """Enable the screen space ambient occlusion pass."""
+        """Enable the screen space ambient occlusion pass.
+
+        Parameters
+        ----------
+        radius : float
+            Radius of occlusion generation.
+        bias : float
+            Bias to adjust the occlusion generation.
+        kernel_size : int
+            Size of the kernel for occlusion generation.
+        blur : bool
+            If ``True``, the pass uses a blur stage.
+
+        Returns
+        -------
+        vtk.vtkSSAOPass
+            The enabled screen space ambient occlusion pass.
+
+        """
         if self._dof_pass is not None:
             raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
 
@@ -215,7 +270,14 @@ class RenderPasses:
         self._ssao_pass = None
 
     def enable_ssaa_pass(self):
-        """Enable super-sample anti-aliasing pass."""
+        """Enable super-sample anti-aliasing pass.
+
+        Returns
+        -------
+        vtk.vtkSSAAPass
+            The enabled super-sample anti-aliasing pass.
+
+        """
         if self._ssaa_pass is not None:
             return
         self._ssaa_pass = _vtk.vtkSSAAPass()
@@ -229,7 +291,7 @@ class RenderPasses:
         self._remove_pass(self._ssaa_pass)
         self._ssaa_pass = None
 
-    def _update_passes(self):  # numpydoc ignore=PR01,RT01
+    def _update_passes(self):
         """Reassemble pass delegation."""
         if self._renderer is None:  # pragma: no cover
             raise RuntimeError('The renderer has been closed.')
@@ -247,7 +309,7 @@ class RenderPasses:
         else:
             self._renderer.SetPass(current_pass)
 
-    def _add_pass(self, render_pass):  # numpydoc ignore=PR01,RT01
+    def _add_pass(self, render_pass):
         """Add a render pass."""
         class_name = render_pass.GetClassName()
 
@@ -261,7 +323,7 @@ class RenderPasses:
 
         self._update_passes()
 
-    def _remove_pass(self, render_pass):  # numpydoc ignore=PR01,RT01
+    def _remove_pass(self, render_pass):
         """Remove a pass.
 
         Remove a pass and reassemble the pass ordering.

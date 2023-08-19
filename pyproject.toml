@@ -189,6 +189,9 @@ exclude = [  # don't report on objects that match any of these regex
     '\.__init__$',
     '\.__new__$',
     '\.__getattr__$',
+    '\.keys$',
+    '\.values$',
+    '\.items$',
     '\._.*$',  # Ignore anything that's private (e.g., starts with _)
     # parm of abstract classes
     '\._BaseMapper$',

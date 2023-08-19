@@ -11,7 +11,37 @@ from .renderer import Renderer
 
 
 class Renderers:
-    """Organize Renderers for ``pyvista.Plotter``."""
+    """Organize Renderers for ``pyvista.Plotter``.
+
+    Parameters
+    ----------
+    plotter : str
+        The PyVista plotter.
+
+    shape : tuple[int], optional
+        The initial shape of the PyVista plotter, (rows, columns).
+
+    splitting_position : float, optional
+        The position to place the splitting line between plots.
+
+    row_weights : sequence, optional
+        The weights of the rows when the plot window is resized.
+
+    col_weights : sequence, optional
+        The weights of the columns when the plot window is resized.
+
+    groups : list, optional
+        A list of sequences that defines the grouping of the sub-datasets.
+
+    border : bool, optional
+        Whether or not a border should be added around each subplot.
+
+    border_color : str, optional
+        The color of the border around each subplot.
+
+    border_width : float, optional
+        The width of the border around each subplot.
+    """
 
     def __init__(
         self,
@@ -195,7 +225,19 @@ class Renderers:
         self._shadow_renderer.SetDraw(False)
 
     def loc_to_group(self, loc):
-        """Return group id of the given location index or ``None`` if this location is not part of any group."""
+        """Return index of the render window given a location index.
+
+        Parameters
+        ----------
+        loc : int | sequence[int]
+            Index of the renderer to add the actor to.  For example, ``loc=2``
+            or ``loc=(1, 1)``.
+
+        Returns
+        -------
+        int
+            Index of the render window.
+        """
         group_idxs = np.arange(self.groups.shape[0])
         index = (
             (loc[0] >= self.groups[:, 0])
@@ -212,12 +254,12 @@ class Renderers:
         Parameters
         ----------
         loc : int | sequence[int]
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.
+            Index of the renderer to add the actor to. For example, ``loc=2``
+            or ``loc=(1, 1)``.
 
         Returns
         -------
-        idx : int
+        int
             Index of the render window.
 
         """
@@ -250,11 +292,28 @@ class Renderers:
 
     @property
     def active_index(self):
-        """Return the active index."""
+        """Return the active index.
+
+        Returns
+        -------
+        int
+            Active index.
+        """
         return self._active_index
 
     def index_to_loc(self, index):
-        """Convert a 1D index location to the 2D location on the plotting grid."""
+        """Convert a 1D index location to the 2D location on the plotting grid.
+
+        Parameters
+        ----------
+        index : int
+            A scalar integer that refers to the 1D location index.
+
+        Returns
+        -------
+        numpy.ndarray
+            2D location on the plotting grid.
+        """
         if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
@@ -266,12 +325,24 @@ class Renderers:
 
     @property
     def active_renderer(self):
-        """Return the active renderer."""
+        """Return the active renderer.
+
+        Returns
+        -------
+        Renderer
+            Active renderer.
+        """
         return self._renderers[self._active_index]
 
     @property
     def shape(self):
-        """Return the shape of the renderers."""
+        """Return the shape of the renderers.
+
+        Returns
+        -------
+        tuple
+            Shape of the renderers.
+        """
         return self._shape
 
     def set_active_renderer(self, index_row, index_column=None):
@@ -396,7 +467,14 @@ class Renderers:
 
     @property
     def has_active_background_renderer(self):
-        """Return ``True`` when Renderer has an active background renderer."""
+        """Return ``True`` when Renderer has an active background renderer.
+
+        Returns
+        -------
+        bool
+            Whether or not the active renderer has a background renderer.
+
+        """
         return self._background_renderers[self.active_index] is not None
 
     def clear_background_renderers(self):
@@ -435,7 +513,13 @@ class Renderers:
 
     @property
     def shadow_renderer(self):
-        """Shadow renderer."""
+        """Shadow renderer.
+
+        Returns
+        -------
+        pyvista.plotting.renderer.Renderer
+            Shadow renderer.
+        """
         return self._shadow_renderer
 
     def set_background(self, color, top=None, all_renderers=True):

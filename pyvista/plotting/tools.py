@@ -27,7 +27,17 @@ SUPPORTS_PLOTTING = None
 
 
 def supports_open_gl():
-    """Return if the system supports OpenGL."""
+    """
+    Return if the system supports OpenGL.
+
+    This function checks if the system supports OpenGL by creating a VTK render
+    window and querying its OpenGL support.
+
+    Returns
+    -------
+    bool
+        ``True`` if the system supports OpenGL, ``False`` otherwise.
+    """
     global SUPPORTS_OPENGL
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
@@ -428,7 +438,26 @@ def create_axes_orientation_box(
 
 
 def normalize(x, minimum=None, maximum=None):
-    """Normalize the given value between [minimum, maximum]."""
+    """
+    Normalize the given value between [minimum, maximum].
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        The array of values to normalize.
+    minimum : float, optional
+        The minimum value to which ``x`` should be normalized. If not specified,
+        the minimum value in ``x`` will be used.
+    maximum : float, optional
+        The maximum value to which ``x`` should be normalized. If not specified,
+        the maximum value in ``x`` will be used.
+
+    Returns
+    -------
+    numpy.ndarray
+        The normalized array of values, where the values are scaled to the
+        range ``[minimum, maximum]``.
+    """
     if minimum is None:
         minimum = np.nanmin(x)
     if maximum is None:
@@ -573,8 +602,28 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 
 
-def parse_font_family(font_family):
-    """Check font name."""
+def parse_font_family(font_family: str) -> int:
+    """
+    Check and validate the given font family name.
+
+    Parameters
+    ----------
+    font_family : str
+        Font family name to validate. Must be one of the font names defined in
+        the ``FONTS`` enum class.
+
+    Returns
+    -------
+    int
+        Corresponding integer value of the valid font family name in the
+        ``FONTS`` enum class.
+
+    Raises
+    ------
+    ValueError
+        If the font_family is not one of the defined font names in the ``FONTS``
+        enum class.
+    """
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
@@ -583,10 +632,12 @@ def parse_font_family(font_family):
 
 
 def check_matplotlib_vtk_compatibility():
-    """Check if VTK and Matplotlib versions are compatible.
+    """
+    Check if VTK and Matplotlib versions are compatible for MathText rendering.
 
-    This is primarily geared towards checking if MathText rendering is
-    supported. These are the version constraints for VTK and Matplotlib:
+    This function is primarily geared towards checking if MathText rendering is
+    supported with the given versions of VTK and Matplotlib. It follows the
+    version constraints:
 
     * VTK <= 9.2.2 requires Matplotlib < 3.6
     * VTK > 9.2.2 requires Matplotlib >= 3.6
@@ -594,6 +645,17 @@ def check_matplotlib_vtk_compatibility():
     Other version combinations of VTK and Matplotlib will work without
     errors, but some features (like MathText/LaTeX rendering) may
     silently fail.
+
+    Returns
+    -------
+    bool
+        True if the versions of VTK and Matplotlib are compatible for MathText
+        rendering, False otherwise.
+
+    Raises
+    ------
+    RuntimeError
+        If the versions of VTK and Matplotlib cannot be checked.
 
     """
     import matplotlib
@@ -611,7 +673,14 @@ def check_matplotlib_vtk_compatibility():
 
 
 def check_math_text_support():
-    """Check if MathText and LaTeX symbols are supported."""
+    """Check if MathText and LaTeX symbols are supported.
+
+    Returns
+    -------
+    bool
+        ``True`` if both MathText and LaTeX symbols are supported, ``False``
+        otherwise.
+    """
     return (
         _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
         and check_matplotlib_vtk_compatibility()

@@ -12,9 +12,16 @@ from .tools import parse_font_family
 
 
 class ScalarBars:
-    """Plotter Scalar Bars."""
+    """Plotter Scalar Bars.
 
-    def __init__(self, plotter):  # numpydoc ignore=PR01,RT01
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter that the scalar bars are associated with.
+
+    """
+
+    def __init__(self, plotter):
         """Initialize ScalarBars."""
         self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
@@ -122,11 +129,11 @@ class ScalarBars:
         if widget is not None:
             widget.SetEnabled(0)
 
-    def __len__(self):  # numpydoc ignore=PR01,RT01
+    def __len__(self):
         """Return the number of scalar bar actors."""
         return len(self._scalar_bar_actors)
 
-    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, index):
         """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 

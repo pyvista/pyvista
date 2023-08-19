@@ -104,7 +104,7 @@ class MultiBlock(
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
-    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
@@ -377,7 +377,7 @@ class MultiBlock(
     def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
-    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, index):
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -654,7 +654,7 @@ class MultiBlock(
         self,
         index,
         data,
-    ):  # numpydoc ignore=PR01,RT01
+    ):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -719,7 +719,7 @@ class MultiBlock(
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:  # numpydoc ignore=PR01,RT01
+    def __delitem__(self, index: Union[int, str, slice]) -> None:
         """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
@@ -734,18 +734,18 @@ class MultiBlock(
         self._remove_ref(index)
         self.RemoveBlock(index)
 
-    def _remove_ref(self, index: int):  # numpydoc ignore=PR01,RT01
+    def _remove_ref(self, index: int):
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore
 
-    def __iter__(self) -> 'MultiBlock':  # numpydoc ignore=PR01,RT01
+    def __iter__(self) -> 'MultiBlock':
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
@@ -764,7 +764,7 @@ class MultiBlock(
 
         return True
 
-    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:  # numpydoc ignore=PR01,RT01
+    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
@@ -913,7 +913,7 @@ class MultiBlock(
             del self[int(null_blocks[i])]
             null_blocks -= 1
 
-    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+    def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("N Blocks", self.n_blocks, "{}"))
@@ -923,7 +923,7 @@ class MultiBlock(
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
         return attrs
 
-    def _repr_html_(self) -> str:  # numpydoc ignore=PR01,RT01
+    def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
         fmt = ""
         fmt += "<table style='width: 100%;'>"
@@ -958,7 +958,7 @@ class MultiBlock(
         fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
@@ -972,11 +972,11 @@ class MultiBlock(
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 
-    def __str__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __str__(self) -> str:
         """Return the str representation of the multi block."""
         return MultiBlock.__repr__(self)
 
-    def __len__(self) -> int:  # numpydoc ignore=PR01,RT01
+    def __len__(self) -> int:
         """Return the number of blocks."""
         return self.n_blocks
 
@@ -1182,9 +1182,7 @@ class MultiBlock(
 
         return True
 
-    def _activate_plotting_scalars(
-        self, scalars_name, preference, component, rgb
-    ):  # numpydoc ignore=PR01,RT01
+    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
         """Active a scalars for an instance of :class:`pyvista.Plotter`."""
         # set the active scalars
         field, scalars = self.set_active_scalars(
@@ -1220,9 +1218,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(
-        self, data_attr: str, scalars_name: str
-    ):  # numpydoc ignore=PR01,RT01
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1238,7 +1234,7 @@ class MultiBlock(
 
     def _convert_to_single_component(
         self, data_attr: str, scalars_name: str, component: Union[None, str]
-    ) -> str:  # numpydoc ignore=PR01,RT01
+    ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:
             for block in self:
@@ -1264,7 +1260,7 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
-    def _get_consistent_active_scalars(self):  # numpydoc ignore=PR01,RT01
+    def _get_consistent_active_scalars(self):
         """Get if there are any consistent active scalars."""
         point_names = set()
         cell_names = set()
