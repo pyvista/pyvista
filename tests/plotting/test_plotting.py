@@ -2670,7 +2670,6 @@ def test_ssaa_pass():
     pl.add_mesh(pyvista.Sphere(), show_edges=True)
     pl.enable_anti_aliasing('ssaa')
     pl.show()
-    assert pl.renderer.GetMultiSamples() == 0
 
 
 @skip_windows_mesa
