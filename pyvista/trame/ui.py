@@ -24,7 +24,7 @@ VALID_UI_MODES = [
 _VIEWERS = {}
 
 
-def button(click, icon, tooltip):
+def button(click, icon, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify button."""
     with vuetify.VTooltip(bottom=True):
         with vuetify.Template(v_slot_activator='{ on, attrs }'):
@@ -33,7 +33,7 @@ def button(click, icon, tooltip):
         html.Span(tooltip)
 
 
-def checkbox(model, icons, tooltip):
+def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify checkbox."""
     with vuetify.VTooltip(bottom=True):
         with vuetify.Template(v_slot_activator='{ on, attrs }'):

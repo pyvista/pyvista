@@ -9,7 +9,7 @@ from trame_vtk.tools.vtksz2html import write_html
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
-def get_server(*args, **kwargs):
+def get_server(*args, **kwargs):  # numpydoc ignore=RT01
     """Override trame's get_server.
 
     Parameters
@@ -20,6 +20,10 @@ def get_server(*args, **kwargs):
     **kwargs :
         Any extra keyword args are passed as option to the server instance.
 
+    Returns
+    -------
+    trame_server.core.Server
+        Trame server.
     """
     server = trame_get_server(*args, **kwargs)
     server.client_type = 'vue2'
