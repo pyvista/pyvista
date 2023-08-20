@@ -28,7 +28,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     _new_attr_exceptions = ('_theme',)
 
-    def __init__(self, theme=None, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(self, theme=None, **kwargs):
         self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
@@ -294,7 +294,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
+    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):  # numpydoc ignore=GL08
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()  # type: ignore
@@ -350,7 +350,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return bool(self.GetScalarVisibility())
 
     @scalar_visibility.setter
-    def scalar_visibility(self, value: bool):
+    def scalar_visibility(self, value: bool):  # numpydoc ignore=GL08
         return self.SetScalarVisibility(value)
 
     def update(self):
@@ -396,14 +396,14 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pv.core.dataset.DataSet']:
+    def dataset(self) -> Optional['pv.core.dataset.DataSet']:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         return wrap(self.GetInputAsDataSet())
 
     @dataset.setter
     def dataset(
         self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
-    ):
+    ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
     def as_rgba(self):
@@ -749,7 +749,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.as_rgba()
 
     @property
-    def cmap(self):
+    def cmap(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Colormap assigned to this mapper."""
         return self._cmap
 
@@ -797,7 +797,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         self.lookup_table.n_values = n_colors
         self._configure_scalars_mode(rgba, '', preference, True)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Representation of the mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -817,11 +817,21 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
 @no_new_attr
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
-    """Wrap vtkPointGaussianMapper."""
+    """Wrap vtkPointGaussianMapper.
 
-    def __init__(
-        self, theme=None, emissive=None, scale_factor=1.0
-    ) -> None:  # numpydoc ignore=PR01,RT01
+    Parameters
+    ----------
+    theme : pyvista.Theme, optional
+        The theme to be used.
+    emissive : bool, optional
+        Whether or not the point should appear emissive. Default is set by the
+        theme's ``lighting_params.emissive``.
+    scale_factor : float, default: 1.0
+        Scale factor applied to the point size.
+
+    """
+
+    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:
         super().__init__(theme=theme)
         if emissive is None:
             emissive = self._theme.lighting_params.emissive
@@ -829,7 +839,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.scale_factor = scale_factor
 
     @property
-    def emissive(self) -> bool:
+    def emissive(self) -> bool:  # numpydoc ignore=RT01
         """Set or return emissive.
 
         This treats points as emissive light sources. Two points that overlap
@@ -838,11 +848,11 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         return bool(self.GetEmissive())
 
     @emissive.setter
-    def emissive(self, value: bool):
+    def emissive(self, value: bool):  # numpydoc ignore=GL08
         return self.SetEmissive(value)
 
     @property
-    def scale_factor(self) -> float:
+    def scale_factor(self) -> float:  # numpydoc ignore=RT01
         """Set or return the scale factor.
 
         Ranges from 0 to 1. A value of 0 will cause the splats to be rendered
@@ -852,7 +862,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         return self.GetScaleFactor()
 
     @scale_factor.setter
-    def scale_factor(self, value: float):
+    def scale_factor(self, value: float):  # numpydoc ignore=GL08
         return self.SetScaleFactor(value)
 
     def use_circular_splat(self, opacity: float = 1.0):
@@ -888,7 +898,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.SetSplatShaderCode(None)
         self.scale_factor /= 1.5
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Representation of the Gaussian mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -910,7 +920,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 class _BaseVolumeMapper(_BaseMapper):
     """Volume mapper class to override methods and attributes for to volume mappers."""
 
-    def __init__(self, theme=None):  # numpydoc ignore=PR01,RT01
+    def __init__(self, theme=None):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
@@ -1014,7 +1024,7 @@ class _BaseVolumeMapper(_BaseMapper):
         else:
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
 
-    def __del__(self):  # numpydoc ignore=PR01,RT01
+    def __del__(self):
         self._lut = None
 
 

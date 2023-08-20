@@ -27,7 +27,7 @@ PICKED_REPRESENTATION_NAMES = {
 }
 
 
-def _launch_pick_event(interactor, event):  # numpydoc ignore=PR01,RT01
+def _launch_pick_event(interactor, event):
     """Create a Pick event based on coordinate or left-click."""
     click_x, click_y = interactor.GetEventPosition()
     click_z = 0
@@ -37,26 +37,35 @@ def _launch_pick_event(interactor, event):  # numpydoc ignore=PR01,RT01
     picker.Pick(click_x, click_y, click_z, renderer)
 
 
-def _poked_context_callback(plotter, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+def _poked_context_callback(plotter, *args, **kwargs):
     """Use _poked_context_callback in a poked renderer context."""
     with plotter.iren.poked_subplot():
         try_callback(*args, **kwargs)
 
 
 class RectangleSelection:
-    """Internal data structure for rectangle based selections."""
+    """Internal data structure for rectangle based selections.
 
-    def __init__(self, frustum, viewport):  # numpydoc ignore=PR01,RT01
+    Parameters
+    ----------
+    frustum : _vtk.vtkPlanes
+        Frustum that defines the selection.
+    viewport : Tuple[float, float, float, float]
+        The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
+
+    """
+
+    def __init__(self, frustum, viewport):
         self._frustum = frustum
         self._viewport = viewport
 
     @property
-    def frustum(self) -> _vtk.vtkPlanes:
+    def frustum(self) -> _vtk.vtkPlanes:  # numpydoc ignore=RT01
         """Get the selected frustum through the scene."""
         return self._frustum
 
     @property
-    def frustum_mesh(self) -> 'pyvista.PolyData':
+    def frustum_mesh(self) -> 'pyvista.PolyData':  # numpydoc ignore=RT01
         """Get the frustum as a PyVista mesh."""
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()
@@ -65,10 +74,10 @@ class RectangleSelection:
         return pyvista.wrap(frustum_source.GetOutput())
 
     @property
-    def viewport(self) -> Tuple[float, float, float, float]:
+    def viewport(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the selected viewport coordinates.
 
-        Coordinates are given as: x0, y0, x1, y1
+        Coordinates are given as: ``(x0, y0, x1, y1)``
         """
         return self._viewport
 
@@ -77,32 +86,54 @@ class PointPickingElementHandler:
     """Internal picking handler for element-based picking.
 
     This handler is only valid for single point picking operations.
+
+    Parameters
+    ----------
+    mode : ElementType, optional
+        The element type to pick.
+    callback : callable, optional
+        A callback function to be executed on picking events.
     """
 
-    def __init__(
-        self, mode: ElementType = ElementType.CELL, callback=None
-    ):  # numpydoc ignore=PR01,RT01
+    def __init__(self, mode: ElementType = ElementType.CELL, callback=None):
         self._picker_ = None
         self.callback = callback
         self.mode = ElementType.from_any(mode)
 
     @property
-    def picker(self):
+    def picker(self):  # numpydoc ignore=RT01
         """Get or set the picker instance."""
         return self._picker_()
 
     @picker.setter
-    def picker(self, picker):
+    def picker(self, picker):  # numpydoc ignore=GL08
         self._picker_ = weakref.ref(picker)
 
     def get_mesh(self):
-        """Get the picked mesh."""
+        """Get the picked mesh.
+
+        Returns
+        -------
+        pyvista.DataSet
+
+        """
         ds = self.picker.GetDataSet()
         if ds is not None:
             return pyvista.wrap(ds)
 
     def get_cell(self, picked_point):
-        """Get the picked cell of the picked mesh."""
+        """Get the picked cell of the picked mesh.
+
+        Parameters
+        ----------
+        picked_point : sequence[float]
+            Coordinates of the picked point.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+
+        """
         mesh = self.get_mesh()
         # cell_id = self.picker.GetCellId()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
@@ -113,7 +144,18 @@ class PointPickingElementHandler:
         return cell
 
     def get_face(self, picked_point):
-        """Get the picked face of the picked cell."""
+        """Get the picked face of the picked cell.
+
+        Parameters
+        ----------
+        picked_point : sequence[float]
+            Coordinates of the picked point.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+
+        """
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_faces > 1:
             for i, face in enumerate(cell.faces):
@@ -128,10 +170,22 @@ class PointPickingElementHandler:
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
+
         return face
 
     def get_edge(self, picked_point):
-        """Get the picked edge of the picked cell."""
+        """Get the picked edge of the picked cell.
+
+        Parameters
+        ----------
+        picked_point : sequence[float]
+            Coordinates of the picked point.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+
+        """
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_edges > 1:
             ei = (
@@ -141,17 +195,29 @@ class PointPickingElementHandler:
             edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
         else:
             edge = cell.cast_to_unstructured_grid()
+
         return edge
 
     def get_point(self, picked_point):
-        """Get the picked point of the picked mesh."""
+        """Get the picked point of the picked mesh.
+
+        Parameters
+        ----------
+        picked_point : sequence[float]
+            Coordinates of the picked point.
+
+        Returns
+        -------
+        pyvista.PolyData
+
+        """
         mesh = self.get_mesh()
         pid = mesh.find_closest_point(picked_point)
         picked = pyvista.PolyData(mesh.points[pid])
         picked.point_data['vtkOriginalPointIds'] = np.array([pid])
         return picked
 
-    def __call__(self, picked_point, picker):  # numpydoc ignore=PR01,RT01
+    def __call__(self, picked_point, picker):
         """Perform the pick."""
         self.picker = picker
         mesh = self.get_mesh()
@@ -178,7 +244,7 @@ class PointPickingElementHandler:
 class PickingInterface:
     """An internal class to hold core picking related features."""
 
-    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs):
         """Initialize the picking interface."""
         super().__init__(*args, **kwargs)
         self._picking_left_clicking_observer = None
@@ -186,7 +252,7 @@ class PickingInterface:
         self._picker_in_use = False
         self._picked_point = None
 
-    def _clear_picking_representations(self):  # numpydoc ignore=PR01,RT01
+    def _clear_picking_representations(self):
         """Clear all picking representations."""
         for name in PICKED_REPRESENTATION_NAMES.values():
             self.remove_actor(name)
@@ -247,7 +313,7 @@ class PickingInterface:
         self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)
         return self.iren.picker.GetPickPosition()
 
-    def _init_click_picking_callback(self, left_clicking=False):  # numpydoc ignore=PR01,RT01
+    def _init_click_picking_callback(self, left_clicking=False):
         if left_clicking:
             self._picking_left_clicking_observer = self.iren.add_observer(
                 "LeftButtonPressEvent",
@@ -287,7 +353,7 @@ class PickingInterface:
 
         self._picker_in_use = False
 
-    def _validate_picker_not_in_use(self):  # numpydoc ignore=PR01,RT01
+    def _validate_picker_not_in_use(self):
         if self._picker_in_use:
             raise PyVistaPickingError(
                 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
@@ -402,7 +468,7 @@ class PickingInterface:
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picker, event):  # numpydoc ignore=PR01,RT01
+        def _end_pick_event(picker, event):
             if (
                 not pickable_window
                 and hasattr(picker, 'GetDataSet')
@@ -533,7 +599,7 @@ class PickingInterface:
 
         self_ = weakref.ref(self)
 
-        def _end_pick_helper(picker, *args):  # numpydoc ignore=PR01,RT01
+        def _end_pick_helper(picker, *args):
             renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
             x0 = int(renderer.GetPickX1())
             x1 = int(renderer.GetPickX2())
@@ -578,7 +644,7 @@ class PickingInterface:
 class PickingMethods(PickingInterface):
     """Internal class to contain picking utilities."""
 
-    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs):
         """Initialize the picking methods."""
         super().__init__(*args, **kwargs)
         self._picked_actor = None
@@ -781,7 +847,7 @@ class PickingMethods(PickingInterface):
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picked_point, picker):  # numpydoc ignore=PR01,RT01
+        def _end_pick_event(picked_point, picker):
             if not pickable_window and picker.GetActor() is None:
                 self_()._picked_point = None
                 self_()._picked_actor = None
@@ -1445,7 +1511,7 @@ class PickingMethods(PickingInterface):
         mode = ElementType.from_any(mode)
         self_ = weakref.ref(self)
 
-        def _end_handler(picked):  # numpydoc ignore=PR01,RT01
+        def _end_handler(picked):
             if callback:
                 _poked_context_callback(self_(), callback, picked)
 
@@ -1575,7 +1641,7 @@ class PickingMethods(PickingInterface):
 class PickingHelper(PickingMethods):
     """Internal container class to contain picking helper methods."""
 
-    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs):
         """Initialize the picking methods."""
         super().__init__(*args, **kwargs)
         self.picked_path = None
@@ -1607,7 +1673,7 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        def _the_callback(*args):  # numpydoc ignore=PR01,RT01
+        def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)
             if callable(callback):
@@ -1676,14 +1742,14 @@ class PickingHelper(PickingMethods):
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points):
+        def make_line_cells(n_points):  # numpydoc ignore=GL08
             cells = np.arange(0, n_points, dtype=np.int_)
             cells = np.insert(cells, 0, n_points)
             return cells
 
         the_points = []
 
-        def _the_callback(picked_point, picker):  # numpydoc ignore=PR01,RT01
+        def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:
                 return
             the_points.append(picked_point)
@@ -1705,7 +1771,7 @@ class PickingHelper(PickingMethods):
             if callable(callback):
                 _poked_context_callback(self_(), callback, self.picked_path)
 
-        def _clear_path_event_watcher():  # numpydoc ignore=PR01,RT01
+        def _clear_path_event_watcher():
             del the_points[:]
             with self.iren.poked_subplot():
                 self._clear_picking_representations()
@@ -1803,7 +1869,7 @@ class PickingHelper(PickingMethods):
         self.picked_geodesic = pyvista.PolyData()
         self._last_picked_idx = None
 
-        def _the_callback(picked_point, picker):  # numpydoc ignore=PR01,RT01
+        def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:
                 return
             mesh = pyvista.wrap(picker.GetDataSet())
@@ -1846,7 +1912,7 @@ class PickingHelper(PickingMethods):
             if callable(callback):
                 _poked_context_callback(self_(), callback, self.picked_geodesic)
 
-        def _clear_g_path_event_watcher():  # numpydoc ignore=PR01,RT01
+        def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
             with self.iren.poked_subplot():
                 self._clear_picking_representations()
@@ -1936,14 +2002,14 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        def _clear_horizon_event_watcher():  # numpydoc ignore=PR01,RT01
+        def _clear_horizon_event_watcher():
             self.picked_horizon = pyvista.PolyData()
             with self.iren.poked_subplot():
                 self._clear_picking_representations()
 
         self.add_key_event('c', _clear_horizon_event_watcher)
 
-        def _the_callback(path):  # numpydoc ignore=PR01,RT01
+        def _the_callback(path):
             if path.n_points < 2:
                 _clear_horizon_event_watcher()
                 return

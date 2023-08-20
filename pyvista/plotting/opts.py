@@ -3,7 +3,20 @@ from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 
 class InterpolationType(AnnotatedIntEnum):
-    """Lighting interpolation types."""
+    """Lighting interpolation types.
+
+    Attributes
+    ----------
+    FLAT : (int, str)
+        Flat interpolation type.
+    GOURAUD : (int, str)
+        Gouraud interpolation type.
+    PHONG : (int, str)
+        Phong interpolation type.
+    PBR : (int, str)
+        Physically based rendering interpolation type.
+
+    """
 
     FLAT = (0, 'Flat')
     GOURAUD = (1, 'Gouraud')
@@ -12,7 +25,17 @@ class InterpolationType(AnnotatedIntEnum):
 
     @classmethod
     def from_str(cls, input_str):
-        """Create from string."""
+        """Create from string.
+
+        Create an instance of InterpolationType from a string.
+
+        Parameters
+        ----------
+        input_str : str
+            The string representation of the interpolation type.  Accepts
+            aliases such as ``'pbr'`` for ``'Physically based rendering'``.
+
+        """
         aliases = {
             'pbr': 'Physically based rendering',
         }

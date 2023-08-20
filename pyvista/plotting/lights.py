@@ -23,7 +23,7 @@ class LightType(IntEnum):
     CAMERA_LIGHT = 2
     SCENE_LIGHT = 3
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Pretty name for a light type."""
         return self.name.replace('_', ' ').title()
 
@@ -208,11 +208,11 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
@@ -248,13 +248,13 @@ class Light(vtkLight):
                         return False
         return True
 
-    def __del__(self):  # numpydoc ignore=PR01,RT01
+    def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
         self._renderers.clear()
 
     @property
-    def shadow_attenuation(self):
+    def shadow_attenuation(self):  # numpydoc ignore=RT01
         """Return or set the value of shadow attenuation.
 
         By default a light will be completely blocked when in shadow.
@@ -277,12 +277,12 @@ class Light(vtkLight):
         return self.GetShadowAttenuation()
 
     @shadow_attenuation.setter
-    def shadow_attenuation(self, value):
+    def shadow_attenuation(self, value):  # numpydoc ignore=GL08
         """Set the shadow intensity."""
         self.SetShadowAttenuation(value)
 
     @property
-    def ambient_color(self):
+    def ambient_color(self):  # numpydoc ignore=RT01
         """Return or set the ambient color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -307,12 +307,12 @@ class Light(vtkLight):
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color: ColorLike):
+    def ambient_color(self, color: ColorLike):  # numpydoc ignore=GL08
         """Set the ambient color of the light."""
         self.SetAmbientColor(Color(color).float_rgb)
 
     @property
-    def diffuse_color(self):
+    def diffuse_color(self):  # numpydoc ignore=RT01
         """Return or set the diffuse color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -337,12 +337,12 @@ class Light(vtkLight):
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color: ColorLike):
+    def diffuse_color(self, color: ColorLike):  # numpydoc ignore=GL08
         """Set the diffuse color of the light."""
         self.SetDiffuseColor(Color(color).float_rgb)
 
     @property
-    def specular_color(self):
+    def specular_color(self):  # numpydoc ignore=RT01
         """Return or set the specular color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -367,12 +367,12 @@ class Light(vtkLight):
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color: ColorLike):
+    def specular_color(self, color: ColorLike):  # numpydoc ignore=GL08
         """Set the specular color of the light."""
         self.SetSpecularColor(Color(color).float_rgb)
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Return the position of the light.
 
         Note: the position is defined in the coordinate space
@@ -399,12 +399,12 @@ class Light(vtkLight):
         return self.GetPosition()
 
     @position.setter
-    def position(self, pos):
+    def position(self, pos):  # numpydoc ignore=GL08
         """Set the position of the light."""
         self.SetPosition(pos)
 
     @property
-    def world_position(self):
+    def world_position(self):  # numpydoc ignore=RT01
         """Return the world space position of the light.
 
         The world space position is the :py:attr:`position` property
@@ -434,7 +434,7 @@ class Light(vtkLight):
         return self.GetTransformedPosition()
 
     @property
-    def focal_point(self):
+    def focal_point(self):  # numpydoc ignore=RT01
         """Return the focal point of the light.
 
         Note: the focal point is defined in the coordinate space
@@ -454,12 +454,12 @@ class Light(vtkLight):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, pos):
+    def focal_point(self, pos):  # numpydoc ignore=GL08
         """Set the focal point of the light."""
         self.SetFocalPoint(pos)
 
     @property
-    def world_focal_point(self):
+    def world_focal_point(self):  # numpydoc ignore=RT01
         """Return the world space focal point of the light.
 
         The world space focal point is the :py:attr:`focal_point`
@@ -490,7 +490,7 @@ class Light(vtkLight):
         return self.GetTransformedFocalPoint()
 
     @property
-    def intensity(self):
+    def intensity(self):  # numpydoc ignore=RT01
         """Return the brightness of the light (between 0 and 1).
 
         Examples
@@ -518,12 +518,12 @@ class Light(vtkLight):
         return self.GetIntensity()
 
     @intensity.setter
-    def intensity(self, intensity):
+    def intensity(self, intensity):  # numpydoc ignore=GL08
         """Set the brightness of the light (between 0 and 1)."""
         self.SetIntensity(intensity)
 
     @property
-    def on(self):
+    def on(self):  # numpydoc ignore=RT01
         """Return whether the light is on.
 
         This corresponds to the Switch state of the ``vtk.vtkLight`` class.
@@ -542,12 +542,12 @@ class Light(vtkLight):
         return bool(self.GetSwitch())
 
     @on.setter
-    def on(self, state):
+    def on(self, state):  # numpydoc ignore=GL08
         """Set whether the light should be on."""
         self.SetSwitch(state)
 
     @property
-    def positional(self):
+    def positional(self):  # numpydoc ignore=RT01
         """Return whether the light is positional.
 
         The default is a directional light, i.e. an infinitely distant
@@ -578,14 +578,14 @@ class Light(vtkLight):
         return bool(self.GetPositional())
 
     @positional.setter
-    def positional(self, state):
+    def positional(self, state):  # numpydoc ignore=GL08
         """Set whether the light should be positional."""
         if not state:
             self.hide_actor()
         self.SetPositional(state)
         self._check_actor()
 
-    def _check_actor(self):  # numpydoc ignore=PR01,RT01
+    def _check_actor(self):
         """Check if the light actor should be added or removed from attached renderers.
 
         This should be called whenever positional state or cone angle
@@ -609,7 +609,7 @@ class Light(vtkLight):
                     renderer.remove_actor(self.actor, render=False)
 
     @property
-    def exponent(self):
+    def exponent(self):  # numpydoc ignore=RT01
         """Return the exponent of the cosine used for spotlights.
 
         With a spotlight (a positional light with cone angle less than
@@ -656,12 +656,12 @@ class Light(vtkLight):
         return self.GetExponent()
 
     @exponent.setter
-    def exponent(self, exp):
+    def exponent(self, exp):  # numpydoc ignore=GL08
         """Set the exponent of the cosine used in positional lighting."""
         self.SetExponent(exp)
 
     @property
-    def cone_angle(self):
+    def cone_angle(self):  # numpydoc ignore=RT01
         """Return the cone angle of a positional light.
 
         The angle is in degrees and is measured between the axis of
@@ -704,7 +704,7 @@ class Light(vtkLight):
         return self.GetConeAngle()
 
     @cone_angle.setter
-    def cone_angle(self, angle):
+    def cone_angle(self, angle):  # numpydoc ignore=GL08
         """Set the cone angle of a positional light."""
         if angle >= 90:
             self.hide_actor()
@@ -712,7 +712,7 @@ class Light(vtkLight):
         self._check_actor()
 
     @property
-    def attenuation_values(self):
+    def attenuation_values(self):  # numpydoc ignore=RT01
         """Return the quadratic attenuation constants.
 
         The values are 3-length sequences which specify the constant,
@@ -759,12 +759,12 @@ class Light(vtkLight):
         return self.GetAttenuationValues()
 
     @attenuation_values.setter
-    def attenuation_values(self, values):
+    def attenuation_values(self, values):  # numpydoc ignore=GL08
         """Set the quadratic attenuation constants."""
         self.SetAttenuationValues(values)
 
     @property
-    def transform_matrix(self):
+    def transform_matrix(self):  # numpydoc ignore=RT01
         """Return the transformation matrix of the light (if any).
 
         The transformation matrix is ``None`` by default, and it is
@@ -807,7 +807,7 @@ class Light(vtkLight):
         return self.GetTransformMatrix()
 
     @transform_matrix.setter
-    def transform_matrix(self, matrix):
+    def transform_matrix(self, matrix):  # numpydoc ignore=GL08
         """Set the 4x4 transformation matrix of the light."""
         if matrix is None or isinstance(matrix, vtkMatrix4x4):
             trans = matrix
@@ -821,7 +821,7 @@ class Light(vtkLight):
         self.SetTransformMatrix(trans)
 
     @property
-    def light_type(self):
+    def light_type(self):  # numpydoc ignore=RT01
         """Return the light type.
 
         The default light type is a scene light which lives in world
@@ -871,7 +871,7 @@ class Light(vtkLight):
         return LightType(self.GetLightType())
 
     @light_type.setter
-    def light_type(self, ltype):
+    def light_type(self, ltype):  # numpydoc ignore=GL08
         """Set the light type.
 
         Either an integer code or a class constant enum value must be used.
@@ -885,7 +885,7 @@ class Light(vtkLight):
         self.SetLightType(ltype)
 
     @property
-    def is_headlight(self):
+    def is_headlight(self):  # numpydoc ignore=RT01
         """Return whether the light is a headlight.
 
         Examples
@@ -902,7 +902,7 @@ class Light(vtkLight):
         return bool(self.LightTypeIsHeadlight())
 
     @property
-    def is_camera_light(self):
+    def is_camera_light(self):  # numpydoc ignore=RT01
         """Return whether the light is a camera light.
 
         Examples
@@ -920,7 +920,7 @@ class Light(vtkLight):
         return bool(self.LightTypeIsCameraLight())
 
     @property
-    def is_scene_light(self):
+    def is_scene_light(self):  # numpydoc ignore=RT01
         """Return whether the light is a scene light.
 
         Examples
@@ -1222,7 +1222,7 @@ class Light(vtkLight):
         self.actor.VisibilityOff()
 
     @property
-    def renderers(self):
+    def renderers(self):  # numpydoc ignore=RT01
         """Return the renderers associated with this light."""
         return self._renderers
 
