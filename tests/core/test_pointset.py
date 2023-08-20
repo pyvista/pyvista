@@ -294,6 +294,12 @@ def test_raise_unsupported(pointset):
     with pytest.raises(PointSetCellOperationError):
         pointset.point_is_inside_cell()
 
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_surface()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_geometry()
+
 
 def test_rotate_x():
     np_points = np.array([1, 1, 1], dtype=float)

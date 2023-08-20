@@ -435,6 +435,14 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
+    def extract_surface(self, *args, **kwargs):
+        """Raise extract surface are not supported."""
+        raise PointSetCellOperationError
+
+    def extract_geometry(self, *args, **kwargs):
+        """Raise extract geometry are not supported."""
+        raise PointSetCellOperationError
+
 
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
