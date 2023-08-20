@@ -1749,7 +1749,7 @@ def test_plot_compare_four():
         data_b,
         data_c,
         data_d,
-        disply_kwargs={'color': 'w'},
+        display_kwargs={'color': 'w'},
     )
 
 
