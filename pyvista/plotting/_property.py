@@ -1181,7 +1181,7 @@ class Property(_vtk.vtkProperty):
         new_prop.DeepCopy(self)
         return new_prop
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Representation of this property."""
         from pyvista.core.errors import VTKVersionError
 

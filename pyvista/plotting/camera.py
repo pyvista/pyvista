@@ -39,7 +39,7 @@ class Camera(_vtk.vtkCamera):
 
     """
 
-    def __init__(self, renderer=None):  # numpydoc ignore=PR01,RT01
+    def __init__(self, renderer=None):
         """Initialize a new camera descriptor."""
         self._parallel_projection = False
         self._elevation = 0.0
@@ -55,11 +55,11 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""
         return f'<{self.__class__.__name__} at {hex(id(self))}>'
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
 
@@ -90,7 +90,7 @@ class Camera(_vtk.vtkCamera):
 
         return True
 
-    def __del__(self):  # numpydoc ignore=PR01,RT01
+    def __del__(self):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None

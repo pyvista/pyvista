@@ -71,7 +71,7 @@ class AxesActor(_vtk.vtkAxesActor):
         CONE = 0
         SPHERE = 1
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize actor."""
         super().__init__()
 

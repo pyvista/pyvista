@@ -374,7 +374,7 @@ class MultiBlock(
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105  # numpydoc ignore=GL08
+    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
         ...  # pragma: no cover
 
     def __getitem__(self, index):
@@ -605,7 +605,7 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self) -> List[Optional[str]]:  # numpydoc ignore=GL08
+    def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
     def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:

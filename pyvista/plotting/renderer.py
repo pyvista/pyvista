@@ -176,7 +176,7 @@ class CameraPosition:
 
     """
 
-    def __init__(self, position, focal_point, viewup):  # numpydoc ignore=PR01,RT01
+    def __init__(self, position, focal_point, viewup):
         """Initialize a new camera position descriptor."""
         self._position = position
         self._focal_point = focal_point
@@ -200,15 +200,15 @@ class CameraPosition:
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """List representation method."""
         return "[{},\n {},\n {}]".format(*self.to_list())
 
-    def __getitem__(self, index):  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, index):
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         """Comparison operator to act on list version of CameraPosition object."""
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
@@ -445,7 +445,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
-        def _update_bounds(bounds):  # numpydoc ignore=PR01,RT01
+        def _update_bounds(bounds):
             def update_axis(ax):
                 if bounds[ax * 2] < the_bounds[ax * 2]:
                     the_bounds[ax * 2] = bounds[ax * 2]
@@ -509,7 +509,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.set_background(color)
         self.Modified()
 
-    def _before_render_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    def _before_render_event(self, *args, **kwargs):
         """Notify all charts about render event."""
         for chart in self._charts:
             chart._render_event(*args, **kwargs)
@@ -593,12 +593,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-    def _enable_fxaa(self):  # numpydoc ignore=PR01,RT01
+    def _enable_fxaa(self):
         """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def _disable_fxaa(self):  # numpydoc ignore=PR01,RT01
+    def _disable_fxaa(self):
         """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
@@ -706,7 +706,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
 
     @wraps(Charts.get_charts_by_pos)
-    def _get_charts_by_pos(self, pos):  # numpydoc ignore=PR01,RT01
+    def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
         # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []
@@ -3191,7 +3191,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # remove reference to parent last
         self.parent = None
 
-    def __del__(self):  # numpydoc ignore=PR01,RT01
+    def __del__(self):
         """Delete the renderer."""
         self.deep_clean()
 
@@ -3781,7 +3781,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
 
-def _line_for_legend():  # numpydoc ignore=PR01,RT01
+def _line_for_legend():
     """Create a simple line-like rectangle for the legend."""
     points = [
         [0, 0, 0],

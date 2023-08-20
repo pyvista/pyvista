@@ -13,7 +13,7 @@ from .dataset import DataObject
 from .utilities.cells import ncells_from_cells, numpy_to_idarr
 
 
-def _get_vtk_id_type():  # numpydoc ignore=PR01,RT01
+def _get_vtk_id_type():
     """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
@@ -89,7 +89,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):  # numpydoc ignore=PR01,RT01
+    def __init__(self, vtk_cell=None, cell_type=None, deep=False):
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
@@ -472,7 +472,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         self.EvaluateLocation(sub_id, para_center, center, weights)
         return cast(Tuple[float, float, float], tuple(center))
 
-    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+    def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("Type", repr(self.type), "{}" * len(repr(self.type))))
@@ -489,11 +489,11 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         return attrs
 
-    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __repr__(self) -> str:
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __str__(self) -> str:
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
@@ -570,14 +570,14 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):  # numpydoc ignore=PR01,RT01
+    def __init__(self, cells=None, n_cells=None, deep=False):
         """Initialize a vtkCellArray."""
         self.__offsets = None
         self.__connectivity = None
         if cells is not None:
             self._set_cells(cells, n_cells, deep)
 
-    def _set_cells(self, cells, n_cells, deep):  # numpydoc ignore=PR01,RT01
+    def _set_cells(self, cells, n_cells, deep):
         """Set a vtkCellArray."""
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
 
@@ -637,7 +637,7 @@ class CellArray(_vtk.vtkCellArray):
         """
         return _get_offset_array(self)
 
-    def _set_data(self, offsets, connectivity, deep=False):  # numpydoc ignore=PR01,RT01
+    def _set_data(self, offsets, connectivity, deep=False):
         """Set the offsets and connectivity arrays."""
         offsets = numpy_to_idarr(offsets, deep=deep)
         connectivity = numpy_to_idarr(connectivity, deep=deep)
@@ -721,17 +721,17 @@ class CellArray(_vtk.vtkCellArray):
 # returned as CellArrays
 
 
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray):  # numpydoc ignore=PR01,RT01
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
     """Return the array with the point ids that define the cells' connectivity."""
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray):  # numpydoc ignore=PR01,RT01
+def _get_offset_array(cellarr: _vtk.vtkCellArray):
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
 
-def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:  # numpydoc ignore=PR01,RT01
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
     """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:

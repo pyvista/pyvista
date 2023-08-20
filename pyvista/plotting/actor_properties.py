@@ -32,7 +32,7 @@ class ActorProperties:
 
     """
 
-    def __init__(self, properties: _vtk.vtkProperty) -> None:  # numpydoc ignore=PR01,RT01
+    def __init__(self, properties: _vtk.vtkProperty) -> None:
         super().__init__()
         self.properties = properties
 

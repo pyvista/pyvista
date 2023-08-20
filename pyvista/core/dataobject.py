@@ -36,7 +36,7 @@ class DataObject:
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
-    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
@@ -46,7 +46,7 @@ class DataObject:
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: DefaultDict = collections.defaultdict(set)
 
-    def __getattr__(self, item: str) -> Any:  # numpydoc ignore=PR01,RT01
+    def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
@@ -72,7 +72,7 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self, filename: Union[str, Path], **kwargs):  # numpydoc ignore=PR01,RT01
+    def _from_file(self, filename: Union[str, Path], **kwargs):
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
@@ -156,7 +156,7 @@ class DataObject:
                 writer.SetEnableAlpha(True)
         writer.Write()
 
-    def _store_metadata(self):  # numpydoc ignore=PR01,RT01
+    def _store_metadata(self):
         """Store metadata as field data."""
         fdata = self.field_data
         for assoc_name in ('bitarray', 'complex'):
@@ -167,7 +167,7 @@ class DataObject:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
 
-    def _restore_metadata(self):  # numpydoc ignore=PR01,RT01
+    def _restore_metadata(self):
         """Restore PyVista metadata from field data.
 
         Metadata is stored using ``_store_metadata`` and contains entries in
@@ -318,7 +318,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -532,7 +532,7 @@ class DataObject:
         """
         self.CopyAttributes(dataset)
 
-    def __getstate__(self):  # numpydoc ignore=PR01,RT01
+    def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
 
         The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
@@ -583,7 +583,7 @@ class DataObject:
         state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
-    def __setstate__(self, state):  # numpydoc ignore=PR01,RT01
+    def __setstate__(self, state):
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(

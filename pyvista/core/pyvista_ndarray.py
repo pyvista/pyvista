@@ -68,7 +68,7 @@ class pyvista_ndarray(np.ndarray):
             obj.dataset.Set(dataset)
         return obj
 
-    def __array_finalize__(self, obj):  # numpydoc ignore=PR01,RT01
+    def __array_finalize__(self, obj):
         """Finalize array (associate with parent metadata)."""
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
@@ -87,7 +87,7 @@ class pyvista_ndarray(np.ndarray):
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, np.ndarray], value):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key: Union[int, np.ndarray], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -103,7 +103,7 @@ class pyvista_ndarray(np.ndarray):
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None):  # numpydoc ignore=PR01,RT01
+    def __array_wrap__(self, out_arr, context=None):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819

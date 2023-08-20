@@ -115,7 +115,7 @@ class Axes(_vtk.vtkAxes):
         """
         self.SymmetricOff()
 
-    def __del__(self):  # numpydoc ignore=PR01,RT01
+    def __del__(self):
         """Clean the attributes of the class."""
         self.axes_actor = None
         self.actor = None

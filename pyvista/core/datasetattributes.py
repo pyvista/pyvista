@@ -131,7 +131,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.dataset = dataset
         self.association = association
 
-    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __repr__(self) -> str:
         """Printable representation of DataSetAttributes."""
         info = ['pyvista DataSetAttributes']
         array_info = ' None'
@@ -197,11 +197,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self[key]
         return value
 
-    def __bool__(self) -> bool:  # numpydoc ignore=PR01,RT01
+    def __bool__(self) -> bool:
         """Return ``True`` when there are arrays present."""
         return bool(self.GetNumberOfArrays())
 
-    def __getitem__(self, key: str) -> pyvista_ndarray:  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, key: str) -> pyvista_ndarray:
         """Implement ``[]`` operator.
 
         Accepts an array name.
@@ -236,22 +236,22 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         ):
             self.active_scalars_name = key
 
-    def __delitem__(self, key: str):  # numpydoc ignore=PR01,RT01
+    def __delitem__(self, key: str):
         """Implement del with array name or index."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
 
         self.remove(key)
 
-    def __contains__(self, name: str) -> bool:  # numpydoc ignore=PR01,RT01
+    def __contains__(self, name: str) -> bool:
         """Implement the ``in`` operator."""
         return name in self.keys()
 
-    def __iter__(self) -> Iterator[str]:  # numpydoc ignore=PR01,RT01
+    def __iter__(self) -> Iterator[str]:
         """Implement for loop iteration."""
         yield from self.keys()
 
-    def __len__(self) -> int:  # numpydoc ignore=PR01,RT01
+    def __len__(self) -> int:
         """Return the number of arrays."""
         return self.VTKObject.GetNumberOfArrays()
 
@@ -520,7 +520,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         return self._patch_type(narray)
 
-    def _patch_type(self, narray):  # numpydoc ignore=PR01,RT01
+    def _patch_type(self, narray):
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
         if name in self.dataset._association_bitarray_names[self.association.name]:
@@ -1072,14 +1072,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for name, array in array_dict.items():
             self[name] = array.copy()
 
-    def _raise_index_out_of_bounds(self, index: Any):  # numpydoc ignore=PR01,RT01
+    def _raise_index_out_of_bounds(self, index: Any):
         """Raise a KeyError if array index is out of bounds."""
         if isinstance(index, int):
             max_index = self.VTKObject.GetNumberOfArrays()
             if not 0 <= index < max_index:
                 raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
-    def _raise_field_data_no_scalars_vectors(self):  # numpydoc ignore=PR01,RT01
+    def _raise_field_data_no_scalars_vectors(self):
         """Raise a TypeError if FieldData."""
         if self.association == FieldAssociation.NONE:
             raise TypeError('FieldData does not have active scalars or vectors.')
@@ -1189,7 +1189,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise ValueError(f'{name} needs 3 components, has ({n_comp})')
         self.SetActiveVectors(name)
 
-    def __eq__(self, other: Any) -> bool:  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other: Any) -> bool:
         """Test dict-like equivalency."""
         # here we check if other is the same class or a subclass of self.
         if not isinstance(other, type(self)):
@@ -1338,12 +1338,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_no_normals()
         self.SetActiveNormals(name)
 
-    def _raise_no_normals(self):  # numpydoc ignore=PR01,RT01
+    def _raise_no_normals(self):
         """Raise AttributeError when attempting access normals for field data."""
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active normals.')
 
-    def _raise_no_t_coords(self):  # numpydoc ignore=PR01,RT01
+    def _raise_no_t_coords(self):
         """Raise AttributeError when attempting access t_coords for field data."""
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active texture coordinates.')

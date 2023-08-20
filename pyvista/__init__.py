@@ -60,7 +60,7 @@ MAX_N_COLOR_BARS = 10
 
 
 # Lazily import/access the plotting module
-def __getattr__(name):  # numpydoc ignore=PR01,RT01
+def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
     This override is implemented to prevent importing all of the plotting module

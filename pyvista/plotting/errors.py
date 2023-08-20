@@ -17,7 +17,7 @@ A string containing the plane orthogonal to the view direction.  For example:
 class InvalidCameraError(ValueError):
     """Exception when passed an invalid camera."""
 
-    def __init__(self, message=CAMERA_ERROR_MESSAGE):  # numpydoc ignore=PR01,RT01
+    def __init__(self, message=CAMERA_ERROR_MESSAGE):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -25,7 +25,7 @@ class InvalidCameraError(ValueError):
 class RenderWindowUnavailable(RuntimeError):
     """Exception when the render window is not available."""
 
-    def __init__(self, message="Render window is not available."):  # numpydoc ignore=PR01,RT01
+    def __init__(self, message="Render window is not available."):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 

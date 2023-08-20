@@ -468,13 +468,13 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._n_zlabels = value
         self._update_z_labels()
 
-    def _update_labels(self):  # numpydoc ignore=PR01,RT01
+    def _update_labels(self):
         """Update all labels."""
         self._update_x_labels()
         self._update_y_labels()
         self._update_z_labels()
 
-    def _update_x_labels(self):  # numpydoc ignore=PR01,RT01
+    def _update_x_labels(self):
         """Regenerate X axis labels."""
         if self.x_axis_visibility:
             self.SetXTitle(self._x_title)
@@ -488,7 +488,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetXTitle('')
             self.SetAxisLabels(0, self._empty_str)
 
-    def _update_y_labels(self):  # numpydoc ignore=PR01,RT01
+    def _update_y_labels(self):
         """Regenerate Y axis labels."""
         if self.y_axis_visibility:
             self.SetYTitle(self._y_title)
@@ -502,7 +502,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetYTitle('')
             self.SetAxisLabels(1, self._empty_str)
 
-    def _update_z_labels(self):  # numpydoc ignore=PR01,RT01
+    def _update_z_labels(self):
         """Regenerate Z axis labels."""
         if self.z_axis_visibility:
             self.SetZTitle(self._z_title)

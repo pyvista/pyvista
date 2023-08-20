@@ -47,7 +47,7 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 
-def _set_plot_theme_from_env():  # numpydoc ignore=PR01,RT01
+def _set_plot_theme_from_env():
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
@@ -171,7 +171,7 @@ class _ThemeConfig:
                 dict_[key] = value
         return dict_
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         if not isinstance(other, _ThemeConfig):
             return False
 
@@ -187,14 +187,14 @@ class _ThemeConfig:
 
         return True
 
-    def __getitem__(self, key):  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, key):
         """Get a value via a key.
 
         Implemented here for backwards compatibility.
         """
         return getattr(self, key)
 
-    def __setitem__(self, key, value):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key, value):
         """Set a value via a key.
 
         Implemented here for backwards compatibility.
@@ -230,7 +230,7 @@ class _LightingConfig(_ThemeConfig):
         '_emissive',
     ]
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._interpolation = InterpolationType.FLAT.value
         self._metallic = 0.0
         self._roughness = 0.5
@@ -458,7 +458,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._number_of_peels = 4
         self._occlusion_ratio = 0.0
         self._enabled = False
@@ -511,7 +511,7 @@ class _DepthPeelingConfig(_ThemeConfig):
     def enabled(self, enabled: bool):  # numpydoc ignore=GL08
         self._enabled = bool(enabled)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['']
         parm = {
             'Number': 'number_of_peels',
@@ -541,7 +541,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
@@ -645,7 +645,7 @@ class _SilhouetteConfig(_ThemeConfig):
             _check_range(decimate, (0, 1), 'decimate')
             self._decimate = float(decimate)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['']
         parm = {
             'Color': 'color',
@@ -674,7 +674,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     __slots__ = ['_width', '_height', '_position_x', '_position_y']
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._width = None
         self._height = None
         self._position_x = None
@@ -744,7 +744,7 @@ class _ColorbarConfig(_ThemeConfig):
     def position_y(self, position_y: float):  # numpydoc ignore=GL08
         self._position_y = float(position_y)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['']
         parm = {
             'Width': 'width',
@@ -781,14 +781,14 @@ class _AxesConfig(_ThemeConfig):
 
     __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['Axes configuration']
         parm = {
             'X Color': 'x_color',
@@ -918,7 +918,7 @@ class _Font(_ThemeConfig):
 
     __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._family = 'arial'
         self._size = 12
         self._title_size = None
@@ -926,7 +926,7 @@ class _Font(_ThemeConfig):
         self._color = Color('white')
         self._fmt = None
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['']
         parm = {
             'Family': 'family',
@@ -1072,7 +1072,7 @@ class _SliderStyleConfig(_ThemeConfig):
         '_cap_width',
     ]
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the slider style configuration."""
         self._name = None
         self._slider_length = None
@@ -1221,7 +1221,7 @@ class _SliderStyleConfig(_ThemeConfig):
     def slider_length(self, slider_length: float):  # numpydoc ignore=GL08
         self._slider_length = float(slider_length)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['']
         parm = {
             'Slider length': 'slider_length',
@@ -1272,7 +1272,7 @@ class _SliderConfig(_ThemeConfig):
 
     __slots__ = ['_classic', '_modern']
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the slider configuration."""
         self._classic = _SliderStyleConfig()
         self._classic.name = 'classic'
@@ -1318,7 +1318,7 @@ class _SliderConfig(_ThemeConfig):
             raise TypeError('Configuration type must be `_SliderStyleConfig`')
         self._modern = config
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         txt = ['']
         parm = {
             'Classic': 'classic',
@@ -1329,7 +1329,7 @@ class _SliderConfig(_ThemeConfig):
             txt.append(f'    {name:<21}: {setting}')
         return '\n'.join(txt)
 
-    def __iter__(self):  # numpydoc ignore=PR01,RT01
+    def __iter__(self):
         for style in [self._classic, self._modern]:
             yield style.name
 
@@ -1357,7 +1357,7 @@ class _TrameConfig(_ThemeConfig):
         '_default_mode',
     ]
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
@@ -1547,7 +1547,7 @@ class Theme(_ThemeConfig):
         '_opacity',
     ]
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the theme."""
         self._name = 'default'
         self._background = Color([0.3, 0.3, 0.3])
@@ -2744,7 +2744,7 @@ class Theme(_ThemeConfig):
         """
         self.__init__()
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """User friendly representation of the current theme."""
         txt = [f'{self.name.capitalize()} Theme']
         txt.append('-' * len(txt[0]))
@@ -2947,7 +2947,7 @@ class DefaultTheme(Theme):
 
     """
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the theme."""
         super().__init__()
         warnings.warn(
@@ -2975,7 +2975,7 @@ class DarkTheme(Theme):
 
     """
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the theme."""
         super().__init__()
         self.name = 'dark'
@@ -3008,7 +3008,7 @@ class ParaViewTheme(Theme):
 
     """
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
@@ -3053,7 +3053,7 @@ class DocumentTheme(Theme):
 
     """
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the theme."""
         super().__init__()
         self.name = 'document'
@@ -3084,7 +3084,7 @@ class DocumentProTheme(DocumentTheme):
 
     """
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         """Initialize the theme."""
         super().__init__()
         self.anti_aliasing = 'ssaa'
@@ -3108,7 +3108,7 @@ class _TestingTheme(Theme):
 
     """
 
-    def __init__(self):  # numpydoc ignore=PR01,RT01
+    def __init__(self):
         super().__init__()
         self.name = 'testing'
         self.multi_samples = 1

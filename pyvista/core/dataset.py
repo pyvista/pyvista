@@ -62,7 +62,7 @@ class ActiveArrayInfo:
         The name of the array.
     """
 
-    def __init__(self, association, name):  # numpydoc ignore=PR01,RT01
+    def __init__(self, association, name):
         """Initialize."""
         self.association = association
         self.name = name
@@ -78,43 +78,43 @@ class ActiveArrayInfo:
         """
         return ActiveArrayInfo(self.association, self.name)
 
-    def __getstate__(self):  # numpydoc ignore=PR01,RT01
+    def __getstate__(self):
         """Support pickling."""
         state = self.__dict__.copy()
         state['association'] = int(self.association.value)
         return state
 
-    def __setstate__(self, state):  # numpydoc ignore=PR01,RT01
+    def __setstate__(self, state):
         """Support unpickling."""
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
 
     @property
-    def _namedtuple(self):  # numpydoc ignore=PR01,RT01
+    def _namedtuple(self):
         """Build a namedtuple on the fly to provide legacy support."""
         return ActiveArrayInfoTuple(self.association, self.name)
 
-    def __iter__(self):  # numpydoc ignore=PR01,RT01
+    def __iter__(self):
         """Provide namedtuple-like __iter__."""
         return self._namedtuple.__iter__()
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
 
-    def __getitem__(self, item):  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, item):
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
 
-    def __setitem__(self, key, value):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key, value):
         """Provide namedtuple-like __setitem__."""
         self._namedtuple.__setitem__(key, value)
 
-    def __getattr__(self, item):  # numpydoc ignore=PR01,RT01
+    def __getattr__(self, item):
         """Provide namedtuple-like __getattr__."""
         self._namedtuple.__getattr__(item)
 
-    def __eq__(self, other):  # numpydoc ignore=PR01,RT01
+    def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
         same_association = int(self.association.value) == int(other.association.value)
         return self.name == other.name and same_association
@@ -136,7 +136,7 @@ class DataSet(DataSetFilters, DataObject):
 
     plot = pyvista._plot.plot
 
-    def __init__(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
         self._last_active_scalars_name: Optional[str] = None
@@ -144,7 +144,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
 
-    def __getattr__(self, item) -> Any:  # numpydoc ignore=PR01,RT01
+    def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
@@ -1899,7 +1899,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
@@ -1913,7 +1913,7 @@ class DataSet(DataSetFilters, DataObject):
             )
         return self.get_array(name, preference=preference)
 
-    def _ipython_key_completions_(self) -> List[str]:  # numpydoc ignore=PR01,RT01
+    def _ipython_key_completions_(self) -> List[str]:
         """Tab completion of IPython."""
         return self.array_names
 
@@ -1991,7 +1991,7 @@ class DataSet(DataSetFilters, DataObject):
             pass
         return names
 
-    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+    def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
@@ -2007,7 +2007,7 @@ class DataSet(DataSetFilters, DataObject):
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
-    def _repr_html_(self) -> str:  # numpydoc ignore=PR01,RT01
+    def _repr_html_(self) -> str:
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -2055,11 +2055,11 @@ class DataSet(DataSetFilters, DataObject):
             fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __repr__(self) -> str:
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self) -> str:  # numpydoc ignore=PR01,RT01
+    def __str__(self) -> str:
         """Return the object string representation."""
         return self.head(display=False, html=False)
 

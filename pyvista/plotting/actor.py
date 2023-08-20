@@ -81,7 +81,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     _new_attr_exceptions = ['_name']
 
-    def __init__(self, mapper=None, prop=None, name=None):  # numpydoc ignore=PR01,RT01
+    def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -318,7 +318,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             new_actor.ShallowCopy(self)
         return new_actor
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Representation of the actor."""
         mat_info = 'Unset' if self.user_matrix is None else 'Set'
         bnd = self.bounds

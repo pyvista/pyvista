@@ -261,7 +261,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     """
 
-    def __new__(cls, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __new__(cls, *args, **kwargs):
         """Construct a new PointSet object.
 
         Wrapping this is necessary for us to show an informative error
@@ -275,7 +275,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, var_inp=None, deep=False, force_float=True):  # numpydoc ignore=PR01,RT01
+    def __init__(self, var_inp=None, deep=False, force_float=True):
         """Initialize the pointset."""
         super().__init__()
 
@@ -289,11 +289,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         else:
             self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
@@ -658,7 +658,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             # here we use CellArray since we must specify deep and n_lines
             self.lines = CellArray(lines, n_lines, deep)
 
-    def _post_file_load_processing(self):  # numpydoc ignore=PR01,RT01
+    def _post_file_load_processing(self):
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and
         # set the polydata vertices
@@ -666,16 +666,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             verts = self._make_vertex_cells(self.n_points)
             self.verts = CellArray(verts, self.n_points, deep=False)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
     @staticmethod
-    def _make_vertex_cells(npoints):  # numpydoc ignore=PR01,RT01
+    def _make_vertex_cells(npoints):
         cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
         cells[:, 0] = 1
         cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
@@ -968,17 +968,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         # next, check if there are three points per face
         return (np.diff(self._offset_array) == 3).all()
 
-    def __sub__(self, cutting_mesh):  # numpydoc ignore=PR01,RT01
+    def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
         return self.boolean_difference(cutting_mesh)
 
     @property
-    def _offset_array(self):  # numpydoc ignore=PR01,RT01
+    def _offset_array(self):
         """Return the array used to store cell offsets."""
         return _get_offset_array(self.GetPolys())
 
     @property
-    def _connectivity_array(self):  # numpydoc ignore=PR01,RT01
+    def _connectivity_array(self):
         """Return the array with the point ids that define the cells' connectivity."""
         return _get_connectivity_array(self.GetPolys())
 
@@ -1358,7 +1358,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """
         return self.n_open_edges == 0
 
-    def __del__(self):  # numpydoc ignore=PR01,RT01
+    def __del__(self):
         """Delete the object."""
         if hasattr(self, '_obbTree'):
             del self._obbTree
@@ -1503,15 +1503,15 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 'following arrays:\n`cells`, `cell_type`, `points`'
             )
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_cells_dict(self, cells_dict, points, deep=True):  # numpydoc ignore=PR01,RT01
+    def _from_cells_dict(self, cells_dict, points, deep=True):
         if points.ndim != 2 or points.shape[-1] != 3:
             raise ValueError("Points array must be a [M, 3] array")
 
@@ -1614,7 +1614,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         self.SetCells(cell_type, vtkcells)
 
-    def _check_for_consistency(self):  # numpydoc ignore=PR01,RT01
+    def _check_for_consistency(self):
         """Check if size of offsets and celltypes match the number of cells.
 
         Checks if the number of offsets and celltypes correspond to
@@ -2098,15 +2098,15 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 " - Three `numpy.ndarray` as the first three arguments"
             )
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, x, y, z, force_float=True):  # numpydoc ignore=PR01,RT01
+    def _from_arrays(self, x, y, z, force_float=True):
         """Create VTK structured grid directly from numpy arrays.
 
         Parameters
@@ -2214,13 +2214,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
 
-    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+    def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = PointGrid._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
-    def __getitem__(self, key):  # numpydoc ignore=PR01,RT01
+    def __getitem__(self, key):
         """Slice subsets of the StructuredGrid, or extract an array field."""
         # legacy behavior which looks for a point or cell array
         if not isinstance(key, tuple):
@@ -2342,11 +2342,11 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())
 
-    def _reshape_point_array(self, array):  # numpydoc ignore=PR01,RT01
+    def _reshape_point_array(self, array):
         """Reshape point data to a 3-D matrix."""
         return array.reshape(self.dimensions, order='F')
 
-    def _reshape_cell_array(self, array):  # numpydoc ignore=PR01,RT01
+    def _reshape_cell_array(self, array):
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
@@ -2406,7 +2406,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
-    def __init__(self, *args, deep=False, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, deep=False, **kwargs):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
@@ -2437,11 +2437,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             if all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(arg0, arg1)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the standard ``str`` representation."""
         return DataSet.__str__(self)
 
@@ -2655,7 +2655,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             grid.show_cells(inplace=True)
             return grid
 
-    def _dimensions(self):  # numpydoc ignore=PR01,RT01
+    def _dimensions(self):
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         # K directions.

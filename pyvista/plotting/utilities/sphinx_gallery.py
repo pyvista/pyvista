@@ -12,7 +12,7 @@ BUILDING_GALLERY_ERROR_MSG = (
 )
 
 
-def _get_sg_image_scraper():  # numpydoc ignore=PR01,RT01
+def _get_sg_image_scraper():
     """Return the callable scraper to be used by Sphinx-Gallery.
 
     It allows PyVista users to just use strings as they already can for
@@ -66,7 +66,7 @@ class Scraper:
 
     """
 
-    def __call__(self, block, block_vars, gallery_conf):  # numpydoc ignore=PR01,RT01
+    def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.
@@ -106,7 +106,7 @@ class DynamicScraper:
 
     """
 
-    def __call__(self, block, block_vars, gallery_conf):  # numpydoc ignore=PR01,RT01
+    def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.

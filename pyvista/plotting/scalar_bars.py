@@ -36,7 +36,7 @@ class ScalarBars:
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Nice representation of this class."""
         lines = []
         lines.append('Scalar Bar Title     Interactive')
@@ -149,7 +149,7 @@ class ScalarBars:
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key):  # numpydoc ignore=PR01,RT01
+    def __contains__(self, key):
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 

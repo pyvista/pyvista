@@ -11,7 +11,7 @@ class NotAllTrianglesError(ValueError):
 
     """
 
-    def __init__(self, message='Mesh must consist of only triangles'):  # numpydoc ignore=PR01,RT01
+    def __init__(self, message='Mesh must consist of only triangles'):
         """Empty init."""
         ValueError.__init__(self, message)
 
@@ -26,7 +26,7 @@ class DeprecationError(RuntimeError):
 
     """
 
-    def __init__(self, message='This feature has been deprecated'):  # numpydoc ignore=PR01,RT01
+    def __init__(self, message='This feature has been deprecated'):
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -109,7 +109,7 @@ class MissingDataError(ValueError):
 
     """
 
-    def __init__(self, message='No data available.'):  # numpydoc ignore=PR01,RT01
+    def __init__(self, message='No data available.'):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -124,7 +124,7 @@ class AmbiguousDataError(ValueError):
 
     """
 
-    def __init__(self, message="Multiple data available."):  # numpydoc ignore=PR01,RT01
+    def __init__(self, message="Multiple data available."):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 

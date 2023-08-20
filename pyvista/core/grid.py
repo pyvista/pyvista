@@ -20,7 +20,7 @@ from .utilities.misc import abstract_class, assert_empty_kwargs
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
-    def __init__(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    def __init__(self, *args, **kwargs):
         """Initialize the grid."""
         super().__init__()
 
@@ -169,15 +169,15 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the default representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the str representation."""
         return DataSet.__str__(self)
 
-    def _update_dimensions(self):  # numpydoc ignore=PR01,RT01
+    def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
@@ -595,11 +595,11 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
 
-    def __repr__(self):  # numpydoc ignore=PR01,RT01
+    def __repr__(self):
         """Return the default representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):  # numpydoc ignore=PR01,RT01
+    def __str__(self):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
@@ -803,7 +803,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.SetSpacing(*spacing)
         self.Modified()
 
-    def _get_attrs(self):  # numpydoc ignore=PR01,RT01
+    def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
         fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT] * 3)

@@ -183,7 +183,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, name: str, preference: str = 'point'):  # numpydoc ignore=PR01,RT01
+    def __init__(self, name: str, preference: str = 'point'):
         """Initialize algorithm."""
         super().__init__()
         self.scalars_name = name
@@ -286,7 +286,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         If neither point IDs nor cell IDs are set.
     """
 
-    def __init__(self, point_ids=True, cell_ids=True):  # numpydoc ignore=PR01,RT01
+    def __init__(self, point_ids=True, cell_ids=True):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
