@@ -355,7 +355,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return next(self._color_cycle)['color']
 
     @property
-    def _charts(self):  # numpydoc ignore=RT01
+    def _charts(self):
         """Return the charts collection."""
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:

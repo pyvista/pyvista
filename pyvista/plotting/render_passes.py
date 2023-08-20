@@ -54,7 +54,7 @@ class RenderPasses:
         self.__camera_pass = None
 
     @property
-    def _pass_collection(self):  # numpydoc ignore=RT01
+    def _pass_collection(self):
         """Initialize (when necessary) the pass collection and return it.
 
         This lets us lazily generate the pass collection only when we need it
@@ -66,7 +66,7 @@ class RenderPasses:
         return self.__pass_collection
 
     @property
-    def _seq_pass(self):  # numpydoc ignore=RT01
+    def _seq_pass(self):
         """Initialize (when necessary) the sequence collection and return it.
 
         This lets us lazily generate the sequence collection only when we need it
@@ -78,7 +78,7 @@ class RenderPasses:
         return self.__seq_pass
 
     @property
-    def _camera_pass(self):  # numpydoc ignore=RT01
+    def _camera_pass(self):
         """Initialize (when necessary) the camera pass and return it.
 
         This lets us lazily generate the camera pass only when we need it
@@ -103,7 +103,7 @@ class RenderPasses:
         self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
-    def _renderer(self):  # numpydoc ignore=RT01
+    def _renderer(self):
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()

@@ -90,7 +90,7 @@ class ActiveArrayInfo:
         self.association = FieldAssociation(state['association'])
 
     @property
-    def _namedtuple(self):  # numpydoc ignore=RT01
+    def _namedtuple(self):
         """Build a namedtuple on the fly to provide legacy support."""
         return ActiveArrayInfoTuple(self.association, self.name)
 

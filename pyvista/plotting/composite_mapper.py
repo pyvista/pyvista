@@ -75,27 +75,27 @@ class BlockAttributes:
         self.__attr = weakref.ref(attr)
 
     @property
-    def _attr(self):  # numpydoc ignore=RT01
+    def _attr(self):
         """Return the CompositeAttributes."""
         return self.__attr()
 
     @property
-    def _has_color(self):  # numpydoc ignore=RT01
+    def _has_color(self):
         """Return if a block has its color set."""
         return self._attr.HasBlockColor(self._block)
 
     @property
-    def _has_visibility(self):  # numpydoc ignore=RT01
+    def _has_visibility(self):
         """Return if a block has its visibility set."""
         return self._attr.HasBlockVisibility(self._block)
 
     @property
-    def _has_opacity(self):  # numpydoc ignore=RT01
+    def _has_opacity(self):
         """Return if a block has its opacity set."""
         return self._attr.HasBlockOpacity(self._block)
 
     @property
-    def _has_pickable(self):  # numpydoc ignore=RT01
+    def _has_pickable(self):
         """Return if a block has its pickability set."""
         return self._attr.HasBlockPickability(self._block)
 

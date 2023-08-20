@@ -975,12 +975,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.boolean_difference(cutting_mesh)
 
     @property
-    def _offset_array(self):  # numpydoc ignore=RT01
+    def _offset_array(self):
         """Return the array used to store cell offsets."""
         return _get_offset_array(self.GetPolys())
 
     @property
-    def _connectivity_array(self):  # numpydoc ignore=RT01
+    def _connectivity_array(self):
         """Return the array with the point ids that define the cells' connectivity."""
         return _get_connectivity_array(self.GetPolys())
 

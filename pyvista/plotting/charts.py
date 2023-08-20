@@ -1051,12 +1051,12 @@ class _Chart(DocSubs):
             self.loc = loc
 
     @property
-    def _scene(self):  # numpydoc ignore=RT01
+    def _scene(self):
         """Get a reference to the vtkScene in which this chart is drawn."""
         return self.GetScene()
 
     @property
-    def _renderer(self):  # numpydoc ignore=RT01
+    def _renderer(self):
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
@@ -1095,17 +1095,17 @@ class _Chart(DocSubs):
         return resize
 
     @property
-    def _geometry(self):  # numpydoc ignore=RT01
+    def _geometry(self):
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
         return tuple(self.GetSize())
 
     @_geometry.setter
-    def _geometry(self, val):  # numpydoc ignore=GL08
+    def _geometry(self, val):
         """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))
 
     @property
-    def _interactive(self):  # numpydoc ignore=RT01
+    def _interactive(self):
         """Return or set the chart's interactivity.
 
         Notes
@@ -1117,7 +1117,7 @@ class _Chart(DocSubs):
         return self.GetInteractive()
 
     @_interactive.setter
-    def _interactive(self, val):  # numpydoc ignore=GL08
+    def _interactive(self, val):
         self.SetInteractive(val)
 
     def _is_within(self, pos):
@@ -3719,14 +3719,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             super()._render_event(*args, **kwargs)
 
     @property
-    def _geometry(self):  # numpydoc ignore=RT01
+    def _geometry(self):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
             return _Chart._geometry.fget(self)
 
     @_geometry.setter
-    def _geometry(self, value):  # numpydoc ignore=GL08
+    def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
@@ -4012,14 +4012,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             super()._render_event(*args, **kwargs)
 
     @property
-    def _geometry(self):  # numpydoc ignore=RT01
+    def _geometry(self):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
             return _Chart._geometry.fget(self)
 
     @_geometry.setter
-    def _geometry(self, value):  # numpydoc ignore=GL08
+    def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
@@ -4300,14 +4300,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._redraw()
 
     @property
-    def _geometry(self):  # numpydoc ignore=RT01
+    def _geometry(self):
         r_w, r_h = self._renderer.GetSize()
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
         return (*self.position, t_w, t_h)
 
     @_geometry.setter
-    def _geometry(self, value):  # numpydoc ignore=GL08
+    def _geometry(self, value):
         raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
@@ -4420,7 +4420,7 @@ class Charts:
         self.__renderer = weakref.ref(renderer)
 
     @property
-    def _renderer(self):  # numpydoc ignore=RT01
+    def _renderer(self):
         """Return the weakly dereferenced renderer, maybe None."""
         return self.__renderer()
 

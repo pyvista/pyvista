@@ -897,13 +897,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._scalar_bars
 
     @property
-    def _before_close_callback(self):  # numpydoc ignore=RT01
+    def _before_close_callback(self):
         """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
 
     @_before_close_callback.setter
-    def _before_close_callback(self, func):  # numpydoc ignore=GL08
+    def _before_close_callback(self, func):
         """Store a weakref.ref of the function being called."""
         if func is not None:
             self.__before_close_callback = weakref.ref(func)
@@ -1608,22 +1608,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.center
 
     @property
-    def _scalar_bar_slots(self):  # numpydoc ignore=RT01
+    def _scalar_bar_slots(self):
         """Return the scalar bar slots of the active renderer."""
         return self.renderer._scalar_bar_slots
 
     @_scalar_bar_slots.setter
-    def _scalar_bar_slots(self, value):  # numpydoc ignore=GL08
+    def _scalar_bar_slots(self, value):
         """Set the scalar bar slots of the active renderer."""
         self.renderer._scalar_bar_slots = value
 
     @property
-    def _scalar_bar_slot_lookup(self):  # numpydoc ignore=RT01
+    def _scalar_bar_slot_lookup(self):
         """Return the scalar bar slot lookup of the active renderer."""
         return self.renderer._scalar_bar_slot_lookup
 
     @_scalar_bar_slot_lookup.setter
-    def _scalar_bar_slot_lookup(self, value):  # numpydoc ignore=GL08
+    def _scalar_bar_slot_lookup(self, value):
         self.renderer._scalar_bar_slot_lookup = value
 
     @property
@@ -6086,7 +6086,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.Write()
 
     @property
-    def _datasets(self):  # numpydoc ignore=RT01
+    def _datasets(self):
         """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
