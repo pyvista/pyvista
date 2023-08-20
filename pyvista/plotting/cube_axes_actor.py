@@ -186,7 +186,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.z_axis_visibility = z_axis_visibility
 
     @property
-    def tick_location(self) -> str:
+    def tick_location(self) -> str:  # numpydoc ignore=RT01
         """Return or set how the ticks are drawn on the axes grid.
 
         Options include: ``'inside', 'outside', 'both'``.
@@ -216,7 +216,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             )
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return or set the bounding box."""
         return self.GetBounds()
 
@@ -229,7 +229,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.z_axis_range = float(bounds[4]), float(bounds[5])
 
     @property
-    def x_axis_range(self) -> Tuple[float, float]:
+    def x_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the X axis range."""
         return self.GetXAxisRange()
 
@@ -238,7 +238,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetXAxisRange(value)
 
     @property
-    def y_axis_range(self) -> Tuple[float, float]:
+    def y_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the Y axis range."""
         return self.GetYAxisRange()
 
@@ -247,7 +247,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetYAxisRange(value)
 
     @property
-    def z_axis_range(self) -> Tuple[float, float]:
+    def z_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the Z axis range."""
         return self.GetZAxisRange()
 
@@ -256,7 +256,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetZAxisRange(value)
 
     @property
-    def label_offset(self) -> float:
+    def label_offset(self) -> float:  # numpydoc ignore=RT01
         """Return or set the distance between labels and the axis."""
         return self.GetLabelOffset()
 
@@ -265,7 +265,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetLabelOffset(offset)
 
     @property
-    def title_offset(self) -> float:
+    def title_offset(self) -> float:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
         return self.GetTitleOffset()
 
@@ -274,7 +274,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetTitleOffset(offset)
 
     @property
-    def camera(self) -> 'pv.Camera':
+    def camera(self) -> 'pv.Camera':  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
@@ -283,7 +283,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetCamera(camera)
 
     @property
-    def x_axis_minor_tick_visibility(self) -> bool:
+    def x_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set visibility of the X axis minior tick."""
         return bool(self.GetXAxisMinorTickVisibility())
 
@@ -292,7 +292,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetXAxisMinorTickVisibility(value)
 
     @property
-    def y_axis_minor_tick_visibility(self) -> bool:
+    def y_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set visibility of the Y axis minior tick."""
         return bool(self.GetYAxisMinorTickVisibility())
 
@@ -301,7 +301,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetYAxisMinorTickVisibility(value)
 
     @property
-    def z_axis_minor_tick_visibility(self) -> bool:
+    def z_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set visibility of the Z axis minior tick."""
         return bool(self.GetZAxisMinorTickVisibility())
 
@@ -310,7 +310,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetZAxisMinorTickVisibility(value)
 
     @property
-    def x_label_visibility(self) -> bool:
+    def x_label_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the X axis labels."""
         return self._x_label_visibility
 
@@ -320,7 +320,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_x_labels()
 
     @property
-    def y_label_visibility(self) -> bool:
+    def y_label_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Y axis labels."""
         return self._y_label_visibility
 
@@ -330,7 +330,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_y_labels()
 
     @property
-    def z_label_visibility(self) -> bool:
+    def z_label_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Z axis labels."""
         return self._z_label_visibility
 
@@ -340,7 +340,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_z_labels()
 
     @property
-    def x_axis_visibility(self) -> bool:
+    def x_axis_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the X axis."""
         return bool(self.GetXAxisVisibility())
 
@@ -349,7 +349,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetXAxisVisibility(value)
 
     @property
-    def y_axis_visibility(self) -> bool:
+    def y_axis_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Y axis."""
         return bool(self.GetYAxisVisibility())
 
@@ -358,7 +358,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetYAxisVisibility(value)
 
     @property
-    def z_axis_visibility(self) -> bool:
+    def z_axis_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Y axis."""
         return bool(self.GetZAxisVisibility())
 
@@ -367,7 +367,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetZAxisVisibility(value)
 
     @property
-    def x_label_format(self) -> str:
+    def x_label_format(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label of the X axis."""
         return self.GetXLabelFormat()
 
@@ -377,7 +377,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_x_labels()
 
     @property
-    def y_label_format(self) -> str:
+    def y_label_format(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label of the Y axis."""
         return self.GetYLabelFormat()
 
@@ -387,7 +387,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_y_labels()
 
     @property
-    def z_label_format(self) -> str:
+    def z_label_format(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label of the Z axis."""
         return self.GetZLabelFormat()
 
@@ -397,7 +397,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_z_labels()
 
     @property
-    def x_title(self) -> str:
+    def x_title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the title of the X axis."""
         return self._x_title
 
@@ -407,7 +407,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_x_labels()
 
     @property
-    def y_title(self) -> str:
+    def y_title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the title of the Y axis."""
         return self._y_title
 
@@ -417,7 +417,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_y_labels()
 
     @property
-    def z_title(self) -> str:
+    def z_title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the title of the Z axis."""
         return self._z_title
 
@@ -427,7 +427,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_z_labels()
 
     @property
-    def use_2d_mode(self) -> bool:
+    def use_2d_mode(self) -> bool:  # numpydoc ignore=RT01
         """Use the 2d render mode.
 
         This can be enabled for smoother plotting.
@@ -439,7 +439,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetUse2DMode(value)
 
     @property
-    def n_xlabels(self):
+    def n_xlabels(self):  # numpydoc ignore=RT01
         """Number of labels on the X axis."""
         return self._n_xlabels
 
@@ -449,7 +449,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_x_labels()
 
     @property
-    def n_ylabels(self):
+    def n_ylabels(self):  # numpydoc ignore=RT01
         """Number of labels on the Y axis."""
         return self._n_ylabels
 
@@ -459,7 +459,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._update_y_labels()
 
     @property
-    def n_zlabels(self):
+    def n_zlabels(self):  # numpydoc ignore=RT01
         """Number of labels on the Z axis."""
         return self._n_zlabels
 
@@ -517,17 +517,17 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetAxisLabels(2, self._empty_str)
 
     @property
-    def x_labels(self) -> List[str]:
+    def x_labels(self) -> List[str]:  # numpydoc ignore=RT01
         """Return the x axis labels."""
         return convert_string_array(self.GetAxisLabels(0))
 
     @property
-    def y_labels(self) -> List[str]:
+    def y_labels(self) -> List[str]:  # numpydoc ignore=RT01
         """Return the y axis labels."""
         return convert_string_array(self.GetAxisLabels(1))
 
     @property
-    def z_labels(self) -> List[str]:
+    def z_labels(self) -> List[str]:  # numpydoc ignore=RT01
         """Return the z axis labels."""
         return convert_string_array(self.GetAxisLabels(2))
 

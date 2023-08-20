@@ -74,7 +74,7 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):
+    def n_rows(self):  # numpydoc ignore=RT01
         """Return the number of rows.
 
         Returns
@@ -98,7 +98,7 @@ class Table(_vtk.vtkTable, DataObject):
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):
+    def n_columns(self):  # numpydoc ignore=RT01
         """Return the number of columns.
 
         Returns
@@ -110,7 +110,7 @@ class Table(_vtk.vtkTable, DataObject):
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):
+    def n_arrays(self):  # numpydoc ignore=RT01
         """Return the number of columns.
 
         Alias for: ``n_columns``.
@@ -140,7 +140,7 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):
+    def row_arrays(self):  # numpydoc ignore=RT01
         """Return the all row arrays.
 
         Returns

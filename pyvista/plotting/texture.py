@@ -157,7 +157,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(image)
 
     @property
-    def interpolate(self) -> bool:
+    def interpolate(self) -> bool:  # numpydoc ignore=RT01
         """Return if interpolate is enabled or disabled.
 
         Examples
@@ -183,7 +183,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self.SetInterpolate(value)
 
     @property
-    def mipmap(self) -> bool:
+    def mipmap(self) -> bool:  # numpydoc ignore=RT01
         """Return if mipmap is enabled or disabled."""
         return bool(self.GetMipmap())
 
@@ -218,7 +218,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(grid)
 
     @property
-    def repeat(self) -> bool:
+    def repeat(self) -> bool:  # numpydoc ignore=RT01
         """Repeat the texture.
 
         This is provided for convenience and backwards compatibility.
@@ -398,7 +398,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture(np.rot90(self.to_array(), k=3))
 
     @property
-    def cube_map(self) -> bool:
+    def cube_map(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if cube mapping is enabled and ``False`` otherwise."""
         return self.GetCubeMap()
 
@@ -443,7 +443,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return attrs
 
     @property
-    def n_components(self) -> int:
+    def n_components(self) -> int:  # numpydoc ignore=RT01
         """Return the number of components in the image.
 
         In textures, 3 or 4 components are used for representing RGB and RGBA
@@ -465,7 +465,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> tuple:
+    def dimensions(self) -> tuple:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples
@@ -537,7 +537,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         pl.show(**kwargs)
 
     @property
-    def wrap(self) -> 'Texture.WrapType':
+    def wrap(self) -> 'Texture.WrapType':  # numpydoc ignore=RT01
         """Return or set the Wrap mode for the texture coordinates.
 
         Wrap mode for the texture coordinates valid values are:

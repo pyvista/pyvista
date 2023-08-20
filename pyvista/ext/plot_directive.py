@@ -298,7 +298,7 @@ class ImageFile:
         self.dirname = dirname
 
     @property
-    def filename(self):
+    def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
 

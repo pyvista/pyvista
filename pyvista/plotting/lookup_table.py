@@ -941,7 +941,7 @@ class LookupTable(_vtk.vtkLookupTable):
                 self.SetAnnotation(float(val), str(anno))
 
     @property
-    def _lookup_type(self) -> str:
+    def _lookup_type(self) -> str:  # numpydoc ignore=RT01
         """Return the lookup type."""
         if self.cmap:
             if hasattr(self.cmap, 'name'):

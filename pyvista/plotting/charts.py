@@ -194,7 +194,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.style = style
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the pen's color.
 
         Examples
@@ -216,7 +216,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.SetColor(*self._color.int_rgba)
 
     @property
-    def width(self):
+    def width(self):  # numpydoc ignore=RT01
         """Return or set the pen's width.
 
         Examples
@@ -237,7 +237,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.SetWidth(float(val))
 
     @property
-    def style(self):
+    def style(self):  # numpydoc ignore=RT01
         """Return or set the pen's line style.
 
         See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles.
@@ -295,7 +295,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self._repeat = False
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the brush's color.
 
         Examples
@@ -317,7 +317,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self.SetColor(*self._color.int_rgba)
 
     @property
-    def texture(self):
+    def texture(self):  # numpydoc ignore=RT01
         """Return or set the brush's texture.
 
         Examples
@@ -344,7 +344,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self.SetTexture(self._texture.to_image())
 
     @property
-    def texture_interpolate(self):
+    def texture_interpolate(self):  # numpydoc ignore=RT01
         """Set texture interpolation mode.
 
         There are two modes:
@@ -377,7 +377,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self._update_textureprops()
 
     @property
-    def texture_repeat(self):
+    def texture_repeat(self):  # numpydoc ignore=RT01
         """Return or set the texture repeat mode.
 
         There are two modes:
@@ -471,7 +471,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.grid = grid
 
     @property
-    def label(self):
+    def label(self):  # numpydoc ignore=RT01
         """Return or set the axis label.
 
         Examples
@@ -492,7 +492,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetTitle(val)
 
     @property
-    def label_visible(self):
+    def label_visible(self):  # numpydoc ignore=RT01
         """Return or set the axis label's visibility.
 
         Examples
@@ -513,7 +513,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetTitleVisible(bool(val))
 
     @property
-    def label_size(self):
+    def label_size(self):  # numpydoc ignore=RT01
         """Return or set the size of the axis label font.
 
         Examples
@@ -536,7 +536,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.GetTitleProperties().SetFontSize(size)
 
     @property
-    def range(self):
+    def range(self):  # numpydoc ignore=RT01
         """Return or set the axis range.
 
         This will automatically set the axis behavior to ``"fixed"``
@@ -572,7 +572,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             self.SetRange(*val)
 
     @property
-    def behavior(self):
+    def behavior(self):  # numpydoc ignore=RT01
         """Set the axis' scaling behavior.
 
         Allowed behaviors are ``'auto'`` to automatically rescale the
@@ -609,7 +609,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
 
     @property
-    def margin(self):
+    def margin(self):  # numpydoc ignore=RT01
         """Return or set the axis margin.
 
         Examples
@@ -639,7 +639,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetMargins(val, m[1])
 
     @property
-    def log_scale(self):
+    def log_scale(self):  # numpydoc ignore=RT01
         """Flag denoting whether a log scale is used for this axis.
 
         Note that setting this property to ``True`` will not guarantee
@@ -671,7 +671,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetLogScale(bool(val))
 
     @property
-    def grid(self):
+    def grid(self):  # numpydoc ignore=RT01
         """Return or set the axis' grid line visibility.
 
         Examples
@@ -692,7 +692,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetGridVisible(bool(val))
 
     @property
-    def visible(self):
+    def visible(self):  # numpydoc ignore=RT01
         """Return or set the axis' visibility.
 
         Examples
@@ -734,7 +734,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     # --- Ticks ---
     @property
-    def tick_count(self):
+    def tick_count(self):  # numpydoc ignore=RT01
         """Return or set the number of ticks drawn on this axis.
 
         Setting this property to a negative value or ``None`` will
@@ -766,7 +766,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetNumberOfTicks(int(val))
 
     @property
-    def tick_locations(self):
+    def tick_locations(self):  # numpydoc ignore=RT01
         """Return or set the tick locations for this axis.
 
         Setting this to ``None`` will revert back to the default,
@@ -804,7 +804,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self._update_ticks()
 
     @property
-    def tick_labels(self):
+    def tick_labels(self):  # numpydoc ignore=RT01
         """Return or set the tick labels for this axis.
 
         You can specify a sequence, to provide a unique label to every
@@ -866,7 +866,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self._update_ticks()
 
     @property
-    def tick_label_size(self):
+    def tick_label_size(self):  # numpydoc ignore=RT01
         """Return or set the size of the axis tick label font.
 
         Examples
@@ -889,7 +889,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.GetLabelProperties().SetFontSize(size)
 
     @property
-    def tick_size(self):
+    def tick_size(self):  # numpydoc ignore=RT01
         """Return or set the size of this axis' ticks.
 
         Examples
@@ -912,7 +912,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetTickLength(val)
 
     @property
-    def tick_labels_offset(self):
+    def tick_labels_offset(self):  # numpydoc ignore=RT01
         """Return or set the offset of the tick labels for this axis.
 
         Examples
@@ -935,7 +935,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetLabelOffset(float(val))
 
     @property
-    def tick_labels_visible(self):
+    def tick_labels_visible(self):  # numpydoc ignore=RT01
         """Return or set the tick label visibility for this axis.
 
         Examples
@@ -957,7 +957,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetRangeLabelsVisible(bool(val))
 
     @property
-    def ticks_visible(self):
+    def ticks_visible(self):  # numpydoc ignore=RT01
         """Return or set the tick visibility for this axis.
 
         Examples
@@ -1051,12 +1051,12 @@ class _Chart(DocSubs):
             self.loc = loc
 
     @property
-    def _scene(self):
+    def _scene(self):  # numpydoc ignore=RT01
         """Get a reference to the vtkScene in which this chart is drawn."""
         return self.GetScene()
 
     @property
-    def _renderer(self):
+    def _renderer(self):  # numpydoc ignore=RT01
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
@@ -1095,7 +1095,7 @@ class _Chart(DocSubs):
         return resize
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=RT01
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
         return tuple(self.GetSize())
 
@@ -1105,7 +1105,7 @@ class _Chart(DocSubs):
         self.SetSize(_vtk.vtkRectf(*val))
 
     @property
-    def _interactive(self):
+    def _interactive(self):  # numpydoc ignore=RT01
         """Return or set the chart's interactivity.
 
         Notes
@@ -1127,7 +1127,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def size(self):
+    def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -1154,7 +1154,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def loc(self):
+    def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -1181,7 +1181,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def border_color(self):
+    def border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color.
 
         Examples
@@ -1204,7 +1204,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def border_width(self):
+    def border_width(self):  # numpydoc ignore=RT01
         """Return or set the chart's border width.
 
         Examples
@@ -1228,7 +1228,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def border_style(self):
+    def border_style(self):  # numpydoc ignore=RT01
         """Return or set the chart's border style.
 
         Examples
@@ -1252,7 +1252,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def active_border_color(self):
+    def active_border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color in interactive mode.
 
         Examples
@@ -1280,7 +1280,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def background_color(self):
+    def background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color.
 
         Examples
@@ -1301,7 +1301,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def background_texture(self):
+    def background_texture(self):  # numpydoc ignore=RT01
         """Return or set the chart's background texture.
 
         Examples
@@ -1324,7 +1324,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def active_background_color(self):
+    def active_background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color in interactive mode.
 
         Examples
@@ -1350,7 +1350,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def visible(self):
+    def visible(self):  # numpydoc ignore=RT01
         """Return or set the chart's visibility.
 
         Examples
@@ -1395,7 +1395,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def title(self):
+    def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
 
         Examples
@@ -1416,7 +1416,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def legend_visible(self):
+    def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
         Examples
@@ -1544,7 +1544,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
 
         This is the color used by the plot's pen and brush to draw lines and shapes.
@@ -1569,7 +1569,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def pen(self):
+    def pen(self):  # numpydoc ignore=RT01
         """Pen object controlling how lines in this plot are drawn.
 
         Returns
@@ -1593,7 +1593,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def brush(self):
+    def brush(self):  # numpydoc ignore=RT01
         """Brush object controlling how shapes in this plot are filled.
 
         Returns
@@ -1617,7 +1617,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def line_width(self):
+    def line_width(self):  # numpydoc ignore=RT01
         """Return or set the line width of all lines drawn in this plot.
 
         This is equivalent to accessing/modifying the width of this plot's pen.
@@ -1642,7 +1642,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def line_style(self):
+    def line_style(self):  # numpydoc ignore=RT01
         """Return or set the line style of all lines drawn in this plot.
 
         This is equivalent to accessing/modifying the style of this plot's pen.
@@ -1666,7 +1666,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def label(self):
+    def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
 
         Examples
@@ -1689,7 +1689,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def visible(self):
+    def visible(self):  # numpydoc ignore=RT01
         """Return or set the this plot's visibility.
 
         Examples
@@ -1756,7 +1756,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def color_scheme(self):
+    def color_scheme(self):  # numpydoc ignore=RT01
         """Return or set the plot's color scheme.
 
         This scheme defines the colors of the different
@@ -1793,7 +1793,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def colors(self):
+    def colors(self):  # numpydoc ignore=RT01
         """Return or set the plot's colors.
 
         These are the colors used for the different
@@ -1840,7 +1840,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
 
         This is the color used by the plot's brush
@@ -1867,7 +1867,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def labels(self):
+    def labels(self):  # numpydoc ignore=RT01
         """Return or set the this plot's labels, as shown in the chart's legend.
 
         Examples
@@ -1901,7 +1901,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def label(self):
+    def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
 
         Examples
@@ -1996,7 +1996,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         self.label = label
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the points through which a line is drawn.
 
         Examples
@@ -2014,7 +2014,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         return self._table["x"]
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points through which a line is drawn.
 
         Examples
@@ -2145,7 +2145,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         self.label = label
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of this plot's points.
 
         Examples
@@ -2163,7 +2163,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         return self._table["x"]
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of this plot's points.
 
         Examples
@@ -2213,7 +2213,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
             self.visible = False
 
     @property
-    def marker_size(self):
+    def marker_size(self):  # numpydoc ignore=RT01
         """Return or set the plot's marker size.
 
         Examples
@@ -2238,7 +2238,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         self.SetMarkerSize(val)
 
     @property
-    def marker_style(self):
+    def marker_style(self):  # numpydoc ignore=RT01
         """Return or set the plot's marker style.
 
         Examples
@@ -2342,7 +2342,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         self.label = label
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the points outlining the drawn area.
 
         Examples
@@ -2360,7 +2360,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         return self._table["x"]
 
     @property
-    def y1(self):
+    def y1(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points on the first outline of the drawn area.
 
         Examples
@@ -2378,7 +2378,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         return self._table["y1"]
 
     @property
-    def y2(self):
+    def y2(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points on the second outline of the drawn area.
 
         Examples
@@ -2526,7 +2526,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         self.orientation = orientation
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the positions of the drawn bars.
 
         Examples
@@ -2544,7 +2544,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         return self._table["x"]
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn bars.
 
         Examples
@@ -2597,7 +2597,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.visible = False
 
     @property
-    def orientation(self):
+    def orientation(self):  # numpydoc ignore=RT01
         """Return or set the orientation of the bars in this plot.
 
         Examples
@@ -2710,7 +2710,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         self.pen.style = None  # Hide lines by default
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the drawn stacks.
 
         Examples
@@ -2728,7 +2728,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         return self._table["x"]
 
     @property
-    def ys(self):
+    def ys(self):  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn stacks.
 
         Examples
@@ -3349,7 +3349,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
                 self.remove_plot(plot)
 
     @property
-    def x_axis(self):
+    def x_axis(self):  # numpydoc ignore=RT01
         """Return this chart's horizontal (x) :class:`Axis <plotting.charts.Axis>`.
 
         Examples
@@ -3366,7 +3366,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self._x_axis
 
     @property
-    def y_axis(self):
+    def y_axis(self):  # numpydoc ignore=RT01
         """Return this chart's vertical (y) :class:`Axis <plotting.charts.Axis>`.
 
         Examples
@@ -3383,7 +3383,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self._y_axis
 
     @property
-    def x_label(self):
+    def x_label(self):  # numpydoc ignore=RT01
         """Return or set the label of this chart's x axis.
 
         Examples
@@ -3405,7 +3405,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.x_axis.label = val
 
     @property
-    def y_label(self):
+    def y_label(self):  # numpydoc ignore=RT01
         """Return or set the label of this chart's y axis.
 
         Examples
@@ -3427,7 +3427,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.y_axis.label = val
 
     @property
-    def x_range(self):
+    def x_range(self):  # numpydoc ignore=RT01
         """Return or set the range of this chart's x axis.
 
         Examples
@@ -3449,7 +3449,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.x_axis.range = val
 
     @property
-    def y_range(self):
+    def y_range(self):  # numpydoc ignore=RT01
         """Return or set the range of this chart's y axis.
 
         Examples
@@ -3471,7 +3471,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.y_axis.range = val
 
     @property
-    def grid(self):
+    def grid(self):  # numpydoc ignore=RT01
         """Enable or disable the chart grid.
 
         Examples
@@ -3584,7 +3584,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         self.labels = labels
 
     @property
-    def data(self):
+    def data(self):  # numpydoc ignore=RT01
         """Retrieve the datasets of which the boxplots are drawn.
 
         Examples
@@ -3601,7 +3601,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         return tuple(self._table[f"data_{i}"] for i in range(self._table.n_arrays))
 
     @property
-    def stats(self):
+    def stats(self):  # numpydoc ignore=RT01
         """Retrieve the statistics (quartiles and extremum values) of the datasets of which the boxplots are drawn.
 
         Examples
@@ -3719,7 +3719,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             super()._render_event(*args, **kwargs)
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
@@ -3733,7 +3733,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             _Chart._geometry.fset(self, value)
 
     @property
-    def plot(self):
+    def plot(self):  # numpydoc ignore=RT01
         """Return the :class:`BoxPlot <plotting.charts.BoxPlot>` instance associated with this chart.
 
         Examples
@@ -3755,7 +3755,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         return self._plot
 
     @property
-    def size(self):
+    def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -3794,7 +3794,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             _Chart.size.fset(self, val)
 
     @property
-    def loc(self):
+    def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -3895,7 +3895,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         self.colors = colors
 
     @property
-    def data(self):
+    def data(self):  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn segments.
 
         Examples
@@ -4012,7 +4012,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             super()._render_event(*args, **kwargs)
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=RT01
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
@@ -4026,7 +4026,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             _Chart._geometry.fset(self, value)
 
     @property
-    def plot(self):
+    def plot(self):  # numpydoc ignore=RT01
         """Return the :class:`PiePlot <plotting.charts.PiePlot>` instance associated with this chart.
 
         Examples
@@ -4046,7 +4046,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         return self._plot
 
     @property
-    def size(self):
+    def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -4085,7 +4085,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             _Chart.size.fset(self, val)
 
     @property
-    def loc(self):
+    def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -4221,7 +4221,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             plt.close(self._fig)
 
     @property
-    def figure(self):
+    def figure(self):  # numpydoc ignore=RT01
         """Retrieve the matplotlib figure associated with this chart.
 
         Examples
@@ -4242,7 +4242,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return self._fig
 
     @property
-    def redraw_on_render(self):
+    def redraw_on_render(self):  # numpydoc ignore=RT01
         """Return or set the chart's redraw-on-render behavior.
 
         Notes
@@ -4300,7 +4300,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._redraw()
 
     @property
-    def _geometry(self):
+    def _geometry(self):  # numpydoc ignore=RT01
         r_w, r_h = self._renderer.GetSize()
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
@@ -4312,7 +4312,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
     # @property
-    # def background_color(self):
+    # def background_color(self):  # numpydoc ignore=RT01
     #     return self._bg_color
     #
     # @background_color.setter
@@ -4326,7 +4326,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     #         ax.patch.set_alpha(0 if opacity < 1 else 1)  # Make axes fully transparent if opacity is lower than 1
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Chart position w.r.t the bottom left corner (in pixels)."""
         return self.GetPosition()
 
@@ -4337,7 +4337,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self.SetPosition(*val)
 
     @property
-    def title(self):
+    def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
 
         Examples
@@ -4362,7 +4362,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self._fig.suptitle(val)
 
     @property
-    def legend_visible(self):
+    def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
         Examples
@@ -4420,7 +4420,7 @@ class Charts:
         self.__renderer = weakref.ref(renderer)
 
     @property
-    def _renderer(self):
+    def _renderer(self):  # numpydoc ignore=RT01
         """Return the weakly dereferenced renderer, maybe None."""
         return self.__renderer()
 

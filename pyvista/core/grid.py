@@ -25,7 +25,7 @@ class Grid(DataSet):
         super().__init__()
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
@@ -230,7 +230,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> list:
+    def meshgrid(self) -> list:  # numpydoc ignore=RT01
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -246,7 +246,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore
+    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
         Returns
@@ -296,7 +296,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         )
 
     @property
-    def x(self) -> np.ndarray:
+    def x(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return or set the coordinates along the X-direction.
 
         Returns
@@ -333,7 +333,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self.Modified()
 
     @property
-    def y(self) -> np.ndarray:
+    def y(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return or set the coordinates along the Y-direction.
 
         Returns
@@ -370,7 +370,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self.Modified()
 
     @property
-    def z(self) -> np.ndarray:
+    def z(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return or set the coordinates along the Z-direction.
 
         Returns
@@ -632,7 +632,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.spacing = (spacing[0], spacing[1], spacing[2])
 
     @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore
+    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
         """Build a copy of the implicitly defined points as a numpy array.
 
         Returns

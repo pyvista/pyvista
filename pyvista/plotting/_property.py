@@ -232,7 +232,7 @@ class Property(_vtk.vtkProperty):
             self.culling = culling
 
     @property
-    def style(self) -> str:
+    def style(self) -> str:  # numpydoc ignore=RT01
         """Return or set Visualization style of the mesh.
 
         One of the following (case insensitive):
@@ -290,7 +290,7 @@ class Property(_vtk.vtkProperty):
             )
 
     @property
-    def color(self) -> Color:
+    def color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the color of this property.
 
         Either a string, RGB list, or hex color string.  For example:
@@ -328,7 +328,7 @@ class Property(_vtk.vtkProperty):
         self.SetColor(rgb_color.float_rgb)
 
     @property
-    def edge_color(self) -> Color:
+    def edge_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the edge color of this property.
 
         The solid color to give the edges when ``show_edges=True``.
@@ -358,7 +358,7 @@ class Property(_vtk.vtkProperty):
         self.SetEdgeColor(rgb_color.float_rgb)
 
     @property
-    def opacity(self) -> float:
+    def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity of this property.
 
         Opacity of the mesh. A single float value that will be applied globally
@@ -399,7 +399,7 @@ class Property(_vtk.vtkProperty):
         self.SetOpacity(value)
 
     @property
-    def show_edges(self) -> bool:
+    def show_edges(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of edges.
 
         Shows or hides the edges.  Does not apply to a wireframe
@@ -431,7 +431,7 @@ class Property(_vtk.vtkProperty):
         self.SetEdgeVisibility(value)
 
     @property
-    def lighting(self) -> bool:
+    def lighting(self) -> bool:  # numpydoc ignore=RT01
         """Return or set view direction lighting.
 
         Examples
@@ -458,7 +458,7 @@ class Property(_vtk.vtkProperty):
         self.SetLighting(value)
 
     @property
-    def ambient(self) -> float:
+    def ambient(self) -> float:  # numpydoc ignore=RT01
         """Return or set ambient.
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.ambient`.
@@ -499,7 +499,7 @@ class Property(_vtk.vtkProperty):
         self.SetAmbient(value)
 
     @property
-    def diffuse(self) -> float:
+    def diffuse(self) -> float:  # numpydoc ignore=RT01
         """Return or set the diffuse lighting coefficient.
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.diffuse`.
@@ -541,7 +541,7 @@ class Property(_vtk.vtkProperty):
         self.SetDiffuse(value)
 
     @property
-    def specular(self) -> float:
+    def specular(self) -> float:  # numpydoc ignore=RT01
         """Return or set specular.
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.specular`.
@@ -581,7 +581,7 @@ class Property(_vtk.vtkProperty):
         self.SetSpecular(value)
 
     @property
-    def specular_power(self) -> float:
+    def specular_power(self) -> float:  # numpydoc ignore=RT01
         """Return or set specular power.
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.specular_power`.
@@ -628,7 +628,7 @@ class Property(_vtk.vtkProperty):
         self.SetSpecularPower(value)
 
     @property
-    def metallic(self) -> float:
+    def metallic(self) -> float:  # numpydoc ignore=RT01
         """Return or set metallic.
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.metallic`.
@@ -672,7 +672,7 @@ class Property(_vtk.vtkProperty):
         self.SetMetallic(value)
 
     @property
-    def roughness(self) -> float:
+    def roughness(self) -> float:  # numpydoc ignore=RT01
         """Return or set roughness.
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.roughness`.
@@ -717,7 +717,7 @@ class Property(_vtk.vtkProperty):
         self.SetRoughness(value)
 
     @property
-    def interpolation(self) -> InterpolationType:
+    def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
         """Return or set the method of shading.
 
         Defaults to :attr:`pyvista.plotting.themes._LightingConfig.interpolation`.
@@ -774,7 +774,7 @@ class Property(_vtk.vtkProperty):
             self.SetInterpolation(value)
 
     @property
-    def render_points_as_spheres(self) -> bool:
+    def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01
         """Return or set rendering points as spheres.
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`.
@@ -811,7 +811,7 @@ class Property(_vtk.vtkProperty):
         self.SetRenderPointsAsSpheres(value)
 
     @property
-    def render_lines_as_tubes(self) -> bool:
+    def render_lines_as_tubes(self) -> bool:  # numpydoc ignore=RT01
         """Return or set rendering lines as tubes.
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
@@ -848,7 +848,7 @@ class Property(_vtk.vtkProperty):
         self.SetRenderLinesAsTubes(value)
 
     @property
-    def line_width(self) -> float:
+    def line_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the line width.
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.line_width`.
@@ -882,7 +882,7 @@ class Property(_vtk.vtkProperty):
         self.SetLineWidth(value)
 
     @property
-    def point_size(self):
+    def point_size(self):  # numpydoc ignore=RT01
         """Return or set the point size.
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.point_size`.
@@ -916,7 +916,7 @@ class Property(_vtk.vtkProperty):
         self.SetPointSize(new_size)
 
     @property
-    def culling(self) -> str:
+    def culling(self) -> str:  # numpydoc ignore=RT01
         """Return or set face culling.
 
         Does not render faces that are culled. This can be helpful for dense
@@ -989,7 +989,7 @@ class Property(_vtk.vtkProperty):
             )
 
     @property
-    def ambient_color(self) -> Color:
+    def ambient_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the ambient color of this property.
 
         Either a string, RGB list, or hex color string.  For example:
@@ -1021,7 +1021,7 @@ class Property(_vtk.vtkProperty):
         self.SetAmbientColor(Color(value).float_rgb)
 
     @property
-    def specular_color(self) -> Color:
+    def specular_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the specular color of this property.
 
         Either a string, RGB list, or hex color string.  For example:
@@ -1052,7 +1052,7 @@ class Property(_vtk.vtkProperty):
         self.SetSpecularColor(Color(value).float_rgb)
 
     @property
-    def diffuse_color(self) -> Color:
+    def diffuse_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the diffuse color of this property.
 
         Either a string, RGB list, or hex color string.  For example:
@@ -1083,7 +1083,7 @@ class Property(_vtk.vtkProperty):
         self.SetDiffuseColor(Color(value).float_rgb)
 
     @property
-    def anisotropy(self):
+    def anisotropy(self):  # numpydoc ignore=RT01
         """Return or set the anisotropy coefficient.
 
         This value controls the anisotropy of the material (0.0 means

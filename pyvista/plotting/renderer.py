@@ -355,7 +355,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return next(self._color_cycle)['color']
 
     @property
-    def _charts(self):
+    def _charts(self):  # numpydoc ignore=RT01
         """Return the charts collection."""
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
@@ -364,7 +364,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.__charts
 
     @property
-    def camera_position(self):
+    def camera_position(self):  # numpydoc ignore=RT01
         """Return or set the camera position of active render window.
 
         Returns
@@ -473,7 +473,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def length(self):
+    def length(self):  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box of the scene.
 
         Returns
@@ -484,7 +484,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):
+    def center(self):  # numpydoc ignore=RT01
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
@@ -2067,7 +2067,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         light.add_renderer(self)
 
     @property
-    def lights(self):
+    def lights(self):  # numpydoc ignore=RT01
         """Return a list of all lights in the renderer.
 
         Returns
@@ -3213,7 +3213,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetLayer(layer)
 
     @property
-    def viewport(self):
+    def viewport(self):  # numpydoc ignore=RT01
         """Viewport of the renderer.
 
         Viewport describes the ``(xstart, ystart, xend, yend)`` square

@@ -75,32 +75,32 @@ class BlockAttributes:
         self.__attr = weakref.ref(attr)
 
     @property
-    def _attr(self):
+    def _attr(self):  # numpydoc ignore=RT01
         """Return the CompositeAttributes."""
         return self.__attr()
 
     @property
-    def _has_color(self):
+    def _has_color(self):  # numpydoc ignore=RT01
         """Return if a block has its color set."""
         return self._attr.HasBlockColor(self._block)
 
     @property
-    def _has_visibility(self):
+    def _has_visibility(self):  # numpydoc ignore=RT01
         """Return if a block has its visibility set."""
         return self._attr.HasBlockVisibility(self._block)
 
     @property
-    def _has_opacity(self):
+    def _has_opacity(self):  # numpydoc ignore=RT01
         """Return if a block has its opacity set."""
         return self._attr.HasBlockOpacity(self._block)
 
     @property
-    def _has_pickable(self):
+    def _has_pickable(self):  # numpydoc ignore=RT01
         """Return if a block has its pickability set."""
         return self._attr.HasBlockPickability(self._block)
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Get or set the color of a block.
 
         Examples
@@ -134,7 +134,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:
+    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -167,7 +167,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:
+    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -210,7 +210,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:
+    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples
@@ -559,7 +559,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':
+    def dataset(self) -> 'pv.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -581,7 +581,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._dataset
 
     @property
-    def block_attr(self) -> CompositeAttributes:
+    def block_attr(self) -> CompositeAttributes:  # numpydoc ignore=RT01
         """Return the block attributes.
 
         Notes
@@ -625,7 +625,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._attr
 
     @property
-    def color_missing_with_nan(self) -> bool:
+    def color_missing_with_nan(self) -> bool:  # numpydoc ignore=RT01
         """Color missing arrays with the NaN color.
 
         Examples

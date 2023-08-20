@@ -258,7 +258,7 @@ class PickingInterface:
             self.remove_actor(name)
 
     @property
-    def picked_point(self):
+    def picked_point(self):  # numpydoc ignore=RT01
         """Return the picked point.
 
         This returns the picked point after selecting a point.
@@ -654,7 +654,7 @@ class PickingMethods(PickingInterface):
         self._picked_block_index = None
 
     @property
-    def picked_actor(self):
+    def picked_actor(self):  # numpydoc ignore=RT01
         """Return the picked mesh.
 
         This returns the picked actor after selecting a mesh with
@@ -670,7 +670,7 @@ class PickingMethods(PickingInterface):
         return self._picked_actor
 
     @property
-    def picked_mesh(self):
+    def picked_mesh(self):  # numpydoc ignore=RT01
         """Return the picked mesh.
 
         This returns the picked mesh after selecting a mesh with
@@ -686,7 +686,7 @@ class PickingMethods(PickingInterface):
         return self._picked_mesh
 
     @property
-    def picked_cell(self):
+    def picked_cell(self):  # numpydoc ignore=RT01
         """Return the picked cell.
 
         This returns the picked cell after selecting a cell.
@@ -700,7 +700,7 @@ class PickingMethods(PickingInterface):
         return self._picked_cell
 
     @property
-    def picked_cells(self):
+    def picked_cells(self):  # numpydoc ignore=RT01
         """Return the picked cells.
 
         This returns the picked cells after selecting cells.
@@ -714,7 +714,7 @@ class PickingMethods(PickingInterface):
         return self._picked_cell
 
     @property
-    def picked_block_index(self):
+    def picked_block_index(self):  # numpydoc ignore=RT01
         """Return the picked block index.
 
         This returns the picked block index after selecting a point with

@@ -47,7 +47,7 @@ class Axes(_vtk.vtkAxes):
         self.actor.prop.line_width = line_width
 
     @property
-    def origin(self):
+    def origin(self):  # numpydoc ignore=RT01
         """Origin of the axes in world coordinates.
 
         Examples

@@ -895,7 +895,7 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:
+    def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA integer tuple.
 
         Examples
@@ -921,7 +921,7 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:
+    def int_rgb(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGB integer tuple.
 
         Examples
@@ -947,7 +947,7 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:
+    def float_rgba(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA float tuple.
 
         Examples
@@ -973,7 +973,7 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:
+    def float_rgb(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGB float tuple.
 
         Examples
@@ -999,7 +999,7 @@ class Color:
         return self.float_rgba[:3]
 
     @property
-    def hex_rgba(self) -> str:
+    def hex_rgba(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGBA hexadecimal value.
 
         Examples
@@ -1027,7 +1027,7 @@ class Color:
         )
 
     @property
-    def hex_rgb(self) -> str:
+    def hex_rgb(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGB hexadecimal value.
 
         Examples
@@ -1053,7 +1053,7 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Get the color name.
 
         Returns
@@ -1080,7 +1080,7 @@ class Color:
         return self._name
 
     @property
-    def vtk_c3ub(self) -> _vtk.vtkColor3ub:
+    def vtk_c3ub(self) -> _vtk.vtkColor3ub:  # numpydoc ignore=RT01
         """Get the color value as a VTK Color3ub instance.
 
         Examples
@@ -1137,7 +1137,7 @@ class Color:
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
     @property
-    def opacity(self):
+    def opacity(self):  # numpydoc ignore=RT01
         """Return the opacity of this color in the range of ``(0-255)``.
 
         Examples

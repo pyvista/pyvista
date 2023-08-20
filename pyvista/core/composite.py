@@ -152,7 +152,7 @@ class MultiBlock(
                 self.SetBlock(i, wrap(block))
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Find min/max for bounds across blocks.
 
         Returns
@@ -192,7 +192,7 @@ class MultiBlock(
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def center(self) -> Any:
+    def center(self) -> Any:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
@@ -217,7 +217,7 @@ class MultiBlock(
         return np.reshape(cast(list, self.bounds), (3, 2)).mean(axis=1)
 
     @property
-    def length(self) -> float:
+    def length(self) -> float:  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box.
 
         Returns
@@ -241,7 +241,7 @@ class MultiBlock(
         return Box(self.bounds).length
 
     @property
-    def n_blocks(self) -> int:
+    def n_blocks(self) -> int:  # numpydoc ignore=RT01
         """Return the total number of blocks set.
 
         Returns
@@ -278,7 +278,7 @@ class MultiBlock(
         self.Modified()
 
     @property
-    def volume(self) -> float:
+    def volume(self) -> float:  # numpydoc ignore=RT01
         """Return the total volume of all meshes in this dataset.
 
         Returns
@@ -1160,7 +1160,7 @@ class MultiBlock(
         return dataset
 
     @property
-    def is_all_polydata(self) -> bool:
+    def is_all_polydata(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also

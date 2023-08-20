@@ -37,7 +37,7 @@ class ActorProperties:
         self.properties = properties
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the color of the actor."""
         return self.properties.GetColor()
 
@@ -46,7 +46,7 @@ class ActorProperties:
         self.properties.SetColor(color[0], color[1], color[2])
 
     @property
-    def metallic(self):
+    def metallic(self):  # numpydoc ignore=RT01
         """Return or set the metallic coefficient of the surface."""
         return self.properties.GetMetallic()
 
@@ -55,7 +55,7 @@ class ActorProperties:
         self.properties.SetMetallic(value)
 
     @property
-    def roughness(self):
+    def roughness(self):  # numpydoc ignore=RT01
         """Return or set the roughness of the surface."""
         return self.properties.GetRoughness()
 
@@ -64,7 +64,7 @@ class ActorProperties:
         self.properties.SetRoughness(value)
 
     @property
-    def anisotropy(self):
+    def anisotropy(self):  # numpydoc ignore=RT01
         """Return or set the anisotropy coefficient."""
         return self.properties.GetAnisotropy()
 
@@ -73,7 +73,7 @@ class ActorProperties:
         self.properties.SetAnisotropy(value)
 
     @property
-    def anisotropy_rotation(self):
+    def anisotropy_rotation(self):  # numpydoc ignore=RT01
         """Return or set the anisotropy rotation coefficient."""
         return self.properties.GetAnisotropyRotation()
 
@@ -82,7 +82,7 @@ class ActorProperties:
         self.properties.SetAnisotropyRotation(value)
 
     @property
-    def lighting(self):
+    def lighting(self):  # numpydoc ignore=RT01
         """Return or set the lighting activation flag."""
         return self.properties.GetLighting()
 
@@ -91,7 +91,7 @@ class ActorProperties:
         self.properties.SetLighting(flag)
 
     @property
-    def interpolation_model(self):
+    def interpolation_model(self):  # numpydoc ignore=RT01
         """Return or set the interpolation model.
 
         Can be any of the options in :class:`pyvista.plotting.opts.InterpolationType` enum.
@@ -103,7 +103,7 @@ class ActorProperties:
         self.properties.SetInterpolation(model.value)
 
     @property
-    def index_of_refraction(self):
+    def index_of_refraction(self):  # numpydoc ignore=RT01
         """Return or set the Index Of Refraction of the base layer."""
         return self.properties.GetBaseIOR()
 
@@ -112,7 +112,7 @@ class ActorProperties:
         self.properties.SetBaseIOR(value)
 
     @property
-    def opacity(self):
+    def opacity(self):  # numpydoc ignore=RT01
         """Return or set the opacity of the actor."""
         return self.properties.GetOpacity()
 
@@ -121,7 +121,7 @@ class ActorProperties:
         self.properties.SetOpacity(value)
 
     @property
-    def shading(self):
+    def shading(self):  # numpydoc ignore=RT01
         """Return or set the flag to activate the shading."""
         return self.properties.GetShading()
 
@@ -130,7 +130,7 @@ class ActorProperties:
         self.properties.SetShading(is_active)
 
     @property
-    def representation(self) -> RepresentationType:
+    def representation(self) -> RepresentationType:  # numpydoc ignore=RT01
         """Return or set the representation of the actor.
 
         Can be any of the options in :class:`pyvista.plotting.opts.RepresentationType` enum.

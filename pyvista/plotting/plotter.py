@@ -340,7 +340,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._suppress_rendering = False
 
     @property
-    def suppress_rendering(self):
+    def suppress_rendering(self):  # numpydoc ignore=RT01
         """Get or set whether to suppress render calls.
 
         Returns
@@ -356,7 +356,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._suppress_rendering = bool(value)
 
     @property
-    def render_window(self):
+    def render_window(self):  # numpydoc ignore=RT01
         """Access the vtkRenderWindow attached to this plotter.
 
         If the plotter is closed, this will return ``None``.
@@ -375,7 +375,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.ren_win
 
     @property
-    def theme(self):
+    def theme(self):  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
         Returns
@@ -857,7 +857,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderer.disable_hidden_line_removal()
 
     @property
-    def scalar_bar(self):
+    def scalar_bar(self):  # numpydoc ignore=RT01
         """First scalar bar (kept for backwards compatibility).
 
         Returns
@@ -869,7 +869,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return list(self.scalar_bars.values())[0]
 
     @property
-    def scalar_bars(self):
+    def scalar_bars(self):  # numpydoc ignore=RT01
         """Scalar bars.
 
         Returns
@@ -897,7 +897,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._scalar_bars
 
     @property
-    def _before_close_callback(self):
+    def _before_close_callback(self):  # numpydoc ignore=RT01
         """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
@@ -911,7 +911,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self):
+    def shape(self):  # numpydoc ignore=RT01
         """Return the shape of the plotter.
 
         Returns
@@ -931,7 +931,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers._shape
 
     @property
-    def renderer(self):
+    def renderer(self):  # numpydoc ignore=RT01
         """Return the active renderer.
 
         Returns
@@ -950,7 +950,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers.active_renderer
 
     @property
-    def store_image(self):
+    def store_image(self):  # numpydoc ignore=RT01
         """Store last rendered frame on close.
 
         .. deprecated:: 0.38.0
@@ -1023,7 +1023,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.remove_legend(*args, **kwargs)
 
     @property
-    def legend(self):
+    def legend(self):  # numpydoc ignore=RT01
         """Legend actor.
 
         There can only be one legend actor per renderer.  If
@@ -1537,7 +1537,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
-    def actors(self):
+    def actors(self):  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
 
         Returns
@@ -1549,7 +1549,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.actors
 
     @property
-    def camera(self):
+    def camera(self):  # numpydoc ignore=RT01
         """Return the active camera of the active renderer.
 
         Returns
@@ -1578,7 +1578,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera.is_set = is_set
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of the active renderer.
 
         Returns
@@ -1608,7 +1608,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.center
 
     @property
-    def _scalar_bar_slots(self):
+    def _scalar_bar_slots(self):  # numpydoc ignore=RT01
         """Return the scalar bar slots of the active renderer."""
         return self.renderer._scalar_bar_slots
 
@@ -1618,7 +1618,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer._scalar_bar_slots = value
 
     @property
-    def _scalar_bar_slot_lookup(self):
+    def _scalar_bar_slot_lookup(self):  # numpydoc ignore=RT01
         """Return the scalar bar slot lookup of the active renderer."""
         return self.renderer._scalar_bar_slot_lookup
 
@@ -1822,7 +1822,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return data[:, :, :-1]
 
     @property
-    def image_scale(self) -> int:
+    def image_scale(self) -> int:  # numpydoc ignore=RT01
         """Get or set the scale factor when saving a screenshot.
 
         This will scale up the screenshots taken of the render window to save a
@@ -1975,7 +1975,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.untrack_click_position(*args, **kwargs)
 
     @property
-    def pickable_actors(self):
+    def pickable_actors(self):  # numpydoc ignore=RT01
         """Return or set the pickable actors.
 
         When setting, this will be the list of actors to make
@@ -6086,7 +6086,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.Write()
 
     @property
-    def _datasets(self):
+    def _datasets(self):  # numpydoc ignore=RT01
         """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
@@ -6940,7 +6940,7 @@ class Plotter(BasePlotter):
         return actor
 
     @property
-    def meshes(self):
+    def meshes(self):  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns

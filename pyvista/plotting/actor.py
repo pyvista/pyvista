@@ -91,7 +91,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._name = name
 
     @property
-    def name(self) -> str:
+    def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
         if self._name is None:
             self._name = f'{type(self).__name__}({self.memory_address})'
@@ -104,7 +104,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._name = value
 
     @property
-    def mapper(self) -> _BaseMapper:
+    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
         """Return or set the mapper of the actor.
 
         Examples
@@ -141,7 +141,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.SetMapper(obj)
 
     @property
-    def prop(self):
+    def prop(self):  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -163,7 +163,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self.SetProperty(obj)
 
     @property
-    def texture(self):
+    def texture(self):  # numpydoc ignore=RT01
         """Return or set the actor texture.
 
         Notes
@@ -198,12 +198,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         self.SetTexture(obj)
 
     @property
-    def memory_address(self):
+    def memory_address(self):  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
         return self.GetAddressAsString("")
 
     @property
-    def pickable(self) -> bool:
+    def pickable(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor pickability.
 
         Examples
@@ -226,7 +226,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.SetPickable(value)
 
     @property
-    def visibility(self) -> bool:
+    def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor visibility.
 
         Examples
@@ -343,7 +343,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def user_matrix(self) -> Optional[np.ndarray]:
+    def user_matrix(self) -> Optional[np.ndarray]:  # numpydoc ignore=RT01
         """Return or set the orientation matrix.
 
         Examples
@@ -390,7 +390,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self.SetUserMatrix(value)
 
     @property
-    def backface_prop(self) -> Optional['pv.Property']:
+    def backface_prop(self) -> Optional['pv.Property']:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property

@@ -291,7 +291,7 @@ class Renderers:
         yield from self._renderers
 
     @property
-    def active_index(self):
+    def active_index(self):  # numpydoc ignore=RT01
         """Return the active index.
 
         Returns
@@ -324,7 +324,7 @@ class Renderers:
         return args[0]
 
     @property
-    def active_renderer(self):
+    def active_renderer(self):  # numpydoc ignore=RT01
         """Return the active renderer.
 
         Returns
@@ -335,7 +335,7 @@ class Renderers:
         return self._renderers[self._active_index]
 
     @property
-    def shape(self):
+    def shape(self):  # numpydoc ignore=RT01
         """Return the shape of the renderers.
 
         Returns
@@ -466,7 +466,7 @@ class Renderers:
         return renderer
 
     @property
-    def has_active_background_renderer(self):
+    def has_active_background_renderer(self):  # numpydoc ignore=RT01
         """Return ``True`` when Renderer has an active background renderer.
 
         Returns
@@ -512,7 +512,7 @@ class Renderers:
             renderer.remove_all_lights()
 
     @property
-    def shadow_renderer(self):
+    def shadow_renderer(self):  # numpydoc ignore=RT01
         """Shadow renderer.
 
         Returns

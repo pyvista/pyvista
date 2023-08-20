@@ -43,7 +43,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         )
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of this mapper.
 
         Examples
@@ -80,7 +80,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return new_mapper
 
     @property
-    def scalar_range(self) -> tuple:
+    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the scalar range.
 
         Examples
@@ -116,7 +116,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetScalarRange(*clim)
 
     @property
-    def lookup_table(self) -> 'pv.LookupTable':
+    def lookup_table(self) -> 'pv.LookupTable':  # numpydoc ignore=RT01
         """Return or set the lookup table.
 
         Examples
@@ -158,7 +158,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetLookupTable(table)
 
     @property
-    def color_mode(self) -> str:
+    def color_mode(self) -> str:  # numpydoc ignore=RT01
         """Return or set the color mode.
 
         Either ``'direct'``, or ``'map'``.
@@ -184,7 +184,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             raise ValueError('Color mode must be either "default", "direct" or "map"')
 
     @property
-    def interpolate_before_map(self) -> bool:
+    def interpolate_before_map(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the interpolation of scalars before mapping.
 
         Enabling makes for a smoother scalars display.  When ``False``,
@@ -234,7 +234,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
-    def array_name(self) -> str:
+    def array_name(self) -> str:  # numpydoc ignore=RT01
         """Return or set the array name or number and component to color by.
 
         Examples
@@ -259,7 +259,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetArrayName(name)
 
     @property
-    def scalar_map_mode(self) -> str:
+    def scalar_map_mode(self) -> str:  # numpydoc ignore=RT01
         """Return or set the scalar map mode.
 
         Examples
@@ -317,7 +317,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             )
 
     @property
-    def scalar_visibility(self) -> bool:
+    def scalar_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the scalar visibility.
 
         Examples
@@ -927,7 +927,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._scalar_range = (0.0, 256.0)
 
     @property
-    def interpolate_before_map(self):
+    def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
         return None
 
@@ -936,7 +936,7 @@ class _BaseVolumeMapper(_BaseMapper):
         pass
 
     @property
-    def dataset(self):
+    def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         # GetInputAsDataSet unavailable on volume mappers
         return wrap(self.GetDataSetInput())
@@ -948,7 +948,7 @@ class _BaseVolumeMapper(_BaseMapper):
         set_algorithm_input(self, obj)
 
     @property
-    def lookup_table(self):  # numpydoc ignore=GL08
+    def lookup_table(self):  # numpydoc ignore=GL08  # numpydoc ignore=RT01
         return self._lut
 
     @lookup_table.setter
@@ -956,7 +956,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = lut
 
     @property
-    def scalar_range(self) -> tuple:
+    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the scalar range."""
         return self._scalar_range
 
@@ -967,7 +967,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._scalar_range = tuple(clim)
 
     @property
-    def blend_mode(self) -> str:
+    def blend_mode(self) -> str:  # numpydoc ignore=RT01
         """Return or set the blend mode.
 
         One of the following:

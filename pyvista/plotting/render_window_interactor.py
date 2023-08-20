@@ -81,7 +81,7 @@ class RenderWindowInteractor:
         self.picker = PickerType.POINT
 
     @property
-    def _plotter(self):
+    def _plotter(self):  # numpydoc ignore=RT01
         """Return the plotter."""
         return self.__plotter()
 
@@ -1026,7 +1026,7 @@ class RenderWindowInteractor:
         self.picker = picker
 
     @property
-    def picker(self):
+    def picker(self):  # numpydoc ignore=RT01
         """Get/set the picker.
 
         Returns

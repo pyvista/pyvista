@@ -71,7 +71,7 @@ class Viewer:
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
 
     @property
-    def views(self):
+    def views(self):  # numpydoc ignore=RT01
         """Get a set of all associate trame views for this viewer."""
         return self._html_views
 
@@ -239,7 +239,7 @@ class Viewer:
             self.update_camera()
 
     @property
-    def actors(self):
+    def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
         return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
 

@@ -96,7 +96,7 @@ class Camera(_vtk.vtkCamera):
         self.parent = None
 
     @property
-    def is_set(self) -> bool:
+    def is_set(self) -> bool:  # numpydoc ignore=RT01
         """Get or set whether this camera has been configured."""
         return self._is_set
 
@@ -229,7 +229,7 @@ class Camera(_vtk.vtkCamera):
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Return or set the position of the camera in world coordinates.
 
         Examples
@@ -275,7 +275,7 @@ class Camera(_vtk.vtkCamera):
         self._renderer.reset_camera_clipping_range()
 
     @property
-    def focal_point(self):
+    def focal_point(self):  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates.
 
         Examples
@@ -297,7 +297,7 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def model_transform_matrix(self):
+    def model_transform_matrix(self):  # numpydoc ignore=RT01
         """Return or set the camera's model transformation matrix.
 
         Examples
@@ -338,7 +338,7 @@ class Camera(_vtk.vtkCamera):
         self.SetModelTransformMatrix(vtk_matrix)
 
     @property
-    def distance(self):
+    def distance(self):  # numpydoc ignore=RT01
         """Return or set the distance of the focal point from the camera.
 
         Notes
@@ -365,7 +365,7 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def thickness(self):
+    def thickness(self):  # numpydoc ignore=RT01
         """Return or set the distance between clipping planes.
 
         Examples
@@ -387,7 +387,7 @@ class Camera(_vtk.vtkCamera):
         self.SetThickness(length)
 
     @property
-    def parallel_scale(self):
+    def parallel_scale(self):  # numpydoc ignore=RT01
         """Return or set the scaling used for a parallel projection.
 
         Examples
@@ -460,7 +460,7 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def up(self):
+    def up(self):  # numpydoc ignore=RT01
         """Return or set the "up" of the camera.
 
         Examples
@@ -518,7 +518,7 @@ class Camera(_vtk.vtkCamera):
         self.SetParallelProjection(False)
 
     @property
-    def parallel_projection(self):
+    def parallel_projection(self):  # numpydoc ignore=RT01
         """Return the state of the parallel projection.
 
         Examples
@@ -551,7 +551,7 @@ class Camera(_vtk.vtkCamera):
             self.disable_parallel_projection()
 
     @property
-    def clipping_range(self):
+    def clipping_range(self):  # numpydoc ignore=RT01
         """Return or set the location of the clipping planes.
 
         Clipping planes are the near and far clipping planes along
@@ -578,7 +578,7 @@ class Camera(_vtk.vtkCamera):
         self.SetClippingRange(points[0], points[1])
 
     @property
-    def view_angle(self):
+    def view_angle(self):  # numpydoc ignore=RT01
         """Return or set the camera view angle.
 
         Examples
@@ -600,7 +600,7 @@ class Camera(_vtk.vtkCamera):
         self.SetViewAngle(value)
 
     @property
-    def direction(self):
+    def direction(self):  # numpydoc ignore=RT01
         """Vector from the camera position to the focal point.
 
         Examples
@@ -651,7 +651,7 @@ class Camera(_vtk.vtkCamera):
         return frustum
 
     @property
-    def roll(self):
+    def roll(self):  # numpydoc ignore=RT01
         """Rotate the camera about the direction of projection.
 
         This will spin the camera about its axis.
@@ -675,7 +675,7 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def elevation(self):
+    def elevation(self):  # numpydoc ignore=RT01
         """Vertical rotation of the scene.
 
         Rotate the camera about the cross product of the negative of
@@ -705,7 +705,7 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def azimuth(self):
+    def azimuth(self):  # numpydoc ignore=RT01
         """Azimuth of the camera.
 
         Rotate the camera about the view up vector centered at the
