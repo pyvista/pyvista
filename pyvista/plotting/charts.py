@@ -121,7 +121,7 @@ class DocSubs:
         return mem_sub
 
 
-def doc_subs(member):
+def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """Doc subs wrapper.
 
     Only common attribute between methods and properties that we can
@@ -160,11 +160,6 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         Style of the lines drawn using this pen. See
         :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed
         line styles.
-
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkPen, optional
-        Wrap an existing VTK Pen instance. Defaults to ``None`` (no wrapping).
 
     Notes
     -----
@@ -278,11 +273,6 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Texture used to fill shapes drawn using this brush. Any object
         convertible to a :class:`pyvista.Texture` is allowed. Defaults to
         ``None``.
-
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkBrush, optional
-        Wrap an existing VTK Brush instance. Defaults to ``None`` (no wrapping).
 
     """
 
@@ -440,11 +430,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     grid_pen : Pen
         Pen used to draw the grid lines.
-
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkAxis, optional
-        Wrap an existing VTK Axis instance. Defaults to ``None`` (no wrapping).
 
     """
 
@@ -3856,11 +3841,6 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend.
 
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkPlotPie, optional
-        Wrap an existing VTK PlotPie instance (no wrapping when ``None``).
-
     Examples
     --------
     Create a pie plot showing the usage of tax money.
@@ -4403,6 +4383,11 @@ class Charts:
     Users should typically not directly create new instances of this
     class, but use the dedicated ``Plotter.add_chart`` method.
 
+    Parameters
+    ----------
+    renderer : pyvista.Renderer
+        The renderer to which the charts should be added.
+
     """
 
     def __init__(self, renderer):
@@ -4445,7 +4430,14 @@ class Charts:
         self._actor = None
 
     def add_chart(self, *charts):
-        """Add charts to the collection."""
+        """Add charts to the collection.
+
+        Parameters
+        ----------
+        *charts : Chart2D | Chart3D
+            One or more chart objects to be added to the collection.
+
+        """
         if self._scene is None:
             self._setup_scene()
         for chart in charts:
@@ -4456,8 +4448,7 @@ class Charts:
             chart._interactive = False  # Charts are not interactive by default
 
     def set_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for this renderer.
+        """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``
         is ``False``.
@@ -4512,7 +4503,19 @@ class Charts:
         return interactive_charts
 
     def remove_chart(self, chart_or_index):
-        """Remove a chart from the collection."""
+        """Remove a chart from the collection.
+
+        Parameters
+        ----------
+        chart_or_index : int or Chart
+            The index or the chart object to be removed from the collection.
+
+        Raises
+        ------
+        ValueError
+            If the specified chart index is not present in the charts collection.
+
+        """
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         if chart not in self._charts:  # pragma: no cover
             raise ValueError('chart_index not present in charts collection.')

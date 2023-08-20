@@ -222,6 +222,16 @@ exclude = [  # don't report on objects that match any of these regex
     '\.boolean_cut$',
     '\.add_field_array$',
     '\.DataSetAttributes\.append$',
+    # will be removed or refactored
+    '^pv_pythreejs\..*$',
+    '^pv_ipygany\..*$',
+    '^notebook\..*$',
+    # Documentation extensions
+    '^viewer_directive\..*$',
+    '^plot_directive\..*$',
+    '^coverage\..*$',
+    # Internal
+    '^observers\..*$',
     # methods we probably should make private
     '\.store_click_position$',
     '\.store_mouse_position$',

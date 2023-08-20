@@ -246,7 +246,7 @@ class PointPickingElementHandler:
             try_callback(self.callback, picked)
 
 
-class PickingInterface:  # numpydoc ignore=GL08
+class PickingInterface:  # numpydoc ignore=PR01
     """An internal class to hold core picking related features."""
 
     def __init__(self, *args, **kwargs):
@@ -1154,7 +1154,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, self_().picked_cells)
 
-        def through_pick_callback(selection):
+        def through_pick_callback(selection):  # numpydoc ignore=GL08
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()
             for actor in renderer.actors.values():

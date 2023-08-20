@@ -59,7 +59,7 @@ def plot_compare_four(
     data_b,
     data_c,
     data_d,
-    disply_kwargs=None,
+    display_kwargs=None,
     plotter_kwargs=None,
     show_kwargs=None,
     screenshot=None,
@@ -72,8 +72,42 @@ def plot_compare_four(
 ):
     """Plot a 2 by 2 comparison of data objects.
 
-    Plotting parameters and camera positions will all be the same.
+    Parameters
+    ----------
+    data_a : pyvista.DataSet
+        The data object to display in the top-left corner.
+    data_b : pyvista.DataSet
+        The data object to display in the top-right corner.
+    data_c : pyvista.DataSet
+        The data object to display in the bottom-left corner.
+    data_d : pyvista.DataSet
+        The data object to display in the bottom-right corner.
+    display_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``add_mesh`` method.
+    plotter_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``Plotter`` constructor.
+    show_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``show`` method.
+    screenshot : str or bool, default: None
+        File name or path to save screenshot of the plot, or ``True`` to return
+        a screenshot array.
+    camera_position : list, default: None
+        The camera position to use in the plot.
+    outline : pyvista.DataSet, default: None
+        An outline to plot around the data objects.
+    outline_color : str, default: 'k'
+        The color of the outline.
+    labels : tuple of str, default: ('A', 'B', 'C', 'D')
+        The labels to display for each data object.
+    link : bool, default: True
+        If ``True``, link the views of the subplots.
+    notebook : bool, default: None
+        If ``True``, display the plot in a Jupyter notebook.
 
+    Returns
+    -------
+    pyvista.Plotter
+        The plotter object.
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]
@@ -122,10 +156,10 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndar
     Returns
     -------
     vec : numpy.ndarray
-        ``[x, y, z]`` vector that points in the viewing direction
+        ``[x, y, z]`` vector that points in the viewing direction.
 
     viewup : numpy.ndarray
-        ``[x, y, z]`` vector that points to the viewup direction
+        ``[x, y, z]`` vector that points to the viewup direction.
 
     """
     if view == 'xy':

@@ -116,6 +116,11 @@ class Camera(_vtk.vtkCamera):
         filename : str or pathlib.Path
             Path to Paraview camera file (.pvcc).
 
+        Returns
+        -------
+        pyvista.Camera
+            Camera from the camera file.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -247,7 +252,6 @@ class Camera(_vtk.vtkCamera):
 
     @position.setter
     def position(self, value):  # numpydoc ignore=GL08
-        """Set the position of the camera."""
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
@@ -292,7 +296,6 @@ class Camera(_vtk.vtkCamera):
 
     @focal_point.setter
     def focal_point(self, point):  # numpydoc ignore=GL08
-        """Set the location of the camera's focus in world coordinates."""
         self.SetFocalPoint(point)
         self.is_set = True
 
@@ -332,7 +335,6 @@ class Camera(_vtk.vtkCamera):
 
     @model_transform_matrix.setter
     def model_transform_matrix(self, matrix):  # numpydoc ignore=GL08
-        """Set the camera's model transformation matrix."""
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
@@ -360,7 +362,6 @@ class Camera(_vtk.vtkCamera):
 
     @distance.setter
     def distance(self, distance):  # numpydoc ignore=GL08
-        """Set the distance from the camera position to the focal point."""
         self.SetDistance(distance)
         self.is_set = True
 
@@ -383,7 +384,6 @@ class Camera(_vtk.vtkCamera):
 
     @thickness.setter
     def thickness(self, length):  # numpydoc ignore=GL08
-        """Set the distance between clipping planes."""
         self.SetThickness(length)
 
     @property
@@ -405,7 +405,6 @@ class Camera(_vtk.vtkCamera):
 
     @parallel_scale.setter
     def parallel_scale(self, scale):  # numpydoc ignore=GL08
-        """Set the scaling used for parallel projection."""
         self.SetParallelScale(scale)
 
     def zoom(self, value):
@@ -478,7 +477,6 @@ class Camera(_vtk.vtkCamera):
 
     @up.setter
     def up(self, vector):  # numpydoc ignore=GL08
-        """Set the "up" of the camera."""
         self.SetViewUp(vector)
         self.is_set = True
 
@@ -534,17 +532,6 @@ class Camera(_vtk.vtkCamera):
 
     @parallel_projection.setter
     def parallel_projection(self, state):  # numpydoc ignore=GL08
-        """Return the state of the parallel projection.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import demos
-        >>> pl = pyvista.Plotter()
-        >>> pl.disable_parallel_projection()
-        >>> pl.parallel_projection
-        False
-        """
         if state:
             self.enable_parallel_projection()
         else:
@@ -572,7 +559,6 @@ class Camera(_vtk.vtkCamera):
 
     @clipping_range.setter
     def clipping_range(self, points):  # numpydoc ignore=GL08
-        """Set the clipping planes."""
         if points[0] > points[1]:
             raise ValueError('Near point must be lower than the far point.')
         self.SetClippingRange(points[0], points[1])
@@ -596,7 +582,6 @@ class Camera(_vtk.vtkCamera):
 
     @view_angle.setter
     def view_angle(self, value):  # numpydoc ignore=GL08
-        """Set the camera view angle."""
         self.SetViewAngle(value)
 
     @property
@@ -652,7 +637,7 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def roll(self):  # numpydoc ignore=RT01
-        """Rotate the camera about the direction of projection.
+        """Return or set the roll of the camera about the direction of projection.
 
         This will spin the camera about its axis.
 
@@ -670,13 +655,12 @@ class Camera(_vtk.vtkCamera):
 
     @roll.setter
     def roll(self, angle):  # numpydoc ignore=GL08
-        """Set the rotate of the camera about the direction of projection."""
         self.SetRoll(angle)
         self.is_set = True
 
     @property
     def elevation(self):  # numpydoc ignore=RT01
-        """Vertical rotation of the scene.
+        """Return or set the vertical rotation of the scene.
 
         Rotate the camera about the cross product of the negative of
         the direction of projection and the view up vector, using the
@@ -697,7 +681,6 @@ class Camera(_vtk.vtkCamera):
 
     @elevation.setter
     def elevation(self, angle):  # numpydoc ignore=GL08
-        """Set the vertical rotation of the scene."""
         if self._elevation:
             self.Elevation(-self._elevation)
         self._elevation = angle
@@ -706,7 +689,7 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def azimuth(self):  # numpydoc ignore=RT01
-        """Azimuth of the camera.
+        """Return or set the azimuth of the camera.
 
         Rotate the camera about the view up vector centered at the
         focal point. Note that the view up vector is whatever was set
@@ -728,7 +711,6 @@ class Camera(_vtk.vtkCamera):
 
     @azimuth.setter
     def azimuth(self, angle):  # numpydoc ignore=GL08
-        """Set the azimuth rotation of the camera."""
         if self._azimuth:
             self.Azimuth(-self._azimuth)
         self._azimuth = angle

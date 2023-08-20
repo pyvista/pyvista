@@ -46,6 +46,15 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     By default, the input mesh is considered centered at the origin
     and facing in the x direction.
 
+    Parameters
+    ----------
+    surf : pyvista.core.pointset.PolyData
+        Mesh to be translated and oriented.
+    center : tuple, optional, default: (0.0, 0.0, 0.0)
+        Center point to which the mesh should be translated.
+    direction : tuple, optional, default: (1.0, 0.0, 0.0)
+        Direction vector along which the mesh should be oriented.
+
     """
     normx = np.array(direction) / np.linalg.norm(direction)
     # assume temporary normy to calculate normz

@@ -13,6 +13,17 @@ def assert_empty_kwargs(**kwargs):
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Keyword arguments passed to the function.
+
+    Raises
+    ------
+    TypeError
+        If any keyword arguments are passed, a ``TypeError`` is raised.
+
     """
     n = len(kwargs)
     if n == 0:
@@ -29,7 +40,24 @@ def assert_empty_kwargs(**kwargs):
 
 
 def check_valid_vector(point, name=''):
-    """Check if a vector contains three components."""
+    """
+    Check if a vector contains three components.
+
+    Parameters
+    ----------
+    point : Iterable[float|int]
+        Input vector to check. Must be an iterable with exactly three components.
+    name : str, optional
+        Name to use in the error messages. If not provided, "Vector" will be used.
+
+    Raises
+    ------
+    TypeError
+        If the input is not an iterable.
+    ValueError
+        If the input does not have exactly three components.
+
+    """
     if not isinstance(point, Iterable):
         raise TypeError(f'{name} must be a length three iterable of floats.')
     if len(point) != 3:
@@ -38,11 +66,17 @@ def check_valid_vector(point, name=''):
         raise ValueError(f'{name} must be a length three iterable of floats.')
 
 
-def abstract_class(cls_):
+def abstract_class(cls_):  # numpydoc ignore=RT01
     """Decorate a class, overriding __new__.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
     but does not require an abstract method.
+
+    Parameters
+    ----------
+    cls_ : type
+        The class to be decorated as abstract.
+
     """
 
     def __new__(cls, *args, **kwargs):
@@ -55,7 +89,16 @@ def abstract_class(cls_):
 
 
 class AnnotatedIntEnum(int, enum.Enum):
-    """Annotated enum type."""
+    """Annotated enum type.
+
+    Parameters
+    ----------
+    value : int
+        The integer value of the enum member.
+    annotation : str
+        The annotation associated with the enum member.
+
+    """
 
     def __new__(cls, value, annotation):
         """Initialize."""
@@ -66,7 +109,23 @@ class AnnotatedIntEnum(int, enum.Enum):
 
     @classmethod
     def from_str(cls, input_str):
-        """Create from string."""
+        """Create an enum member from a string.
+        
+        Parameters
+        ----------
+        input_str : str
+            The string representation of the annotation for the enum member.
+        
+        Returns
+        -------
+        AnnotatedIntEnum
+            The enum member with the specified annotation.
+        
+        Raises
+        ------
+        ValueError
+            If there is no enum member with the specified annotation.
+        """
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
@@ -74,7 +133,23 @@ class AnnotatedIntEnum(int, enum.Enum):
 
     @classmethod
     def from_any(cls, value):
-        """Create from string, int, etc."""
+        """Create an enum member from a string, int, etc.
+        
+        Parameters
+        ----------
+        value : int | str | AnnotatedIntEnum
+            The value used to determine the corresponding enum member.
+        
+        Returns
+        -------
+        AnnotatedIntEnum
+            The enum member matching the specified value.
+        
+        Raises
+        ------
+        ValueError
+            If there is no enum member matching the specified value.
+        """
         if isinstance(value, cls):
             return value
         elif isinstance(value, int):
@@ -87,7 +162,18 @@ class AnnotatedIntEnum(int, enum.Enum):
 
 @lru_cache(maxsize=None)
 def has_module(module_name):
-    """Return if a module can be imported."""
+    """Return if a module can be imported.
+
+    Parameters
+    ----------
+    module_name : str
+        Name of the module to check.
+
+    Returns
+    -------
+    bool
+        ``True`` if the module can be imported, otherwise ``False``.
+    """
     module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None
 
@@ -130,7 +216,7 @@ def threaded(fn):
 
     """
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):    # numpydoc ignore=GL08
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
@@ -143,10 +229,11 @@ class conditional_decorator:
 
     Parameters
     ----------
-    dec
-        Decorator
-    condition
-        Condition to match.
+    dec : callable
+        The decorator to be applied conditionally.
+    condition : bool
+        Condition to match. If ``True``, the decorator is applied. If
+        ``False``, the function is returned unchanged.
 
     """
 
@@ -171,7 +258,7 @@ def _check_range(value, rng, parm_name):
         )
 
 
-def no_new_attr(cls):
+def no_new_attr(cls):    # numpydoc ignore=RT01
     """Override __setattr__ to not permit new attributes."""
     if not hasattr(cls, '_new_attr_exceptions'):
         cls._new_attr_exceptions = []

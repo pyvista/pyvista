@@ -1192,7 +1192,28 @@ PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap):
-    """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
+    """
+    Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+
+    Parameters
+    ----------
+    cmap : str or list of str
+        Name of the colormap to fetch. If the input is a list of strings,
+        it will create a ``ListedColormap`` with the input list.
+
+    Returns
+    -------
+    matplotlib.colors.Colormap
+        The requested colormap if available.
+
+    Raises
+    ------
+    ValueError
+        If the input colormap name is not valid.
+    TypeError
+        If the input is a list of items that are not strings.
+
+    """
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
@@ -1239,7 +1260,14 @@ def get_cmap_safe(cmap):
 
 
 def get_default_cycler():
-    """Return the default color cycler (matches matplotlib's default)."""
+    """Return the default color cycler (matches matplotlib's default).
+
+    Returns
+    -------
+    cycler.Cycler
+        A cycler object for color that matches matplotlib's default colors.
+
+    """
     return cycler('color', matplotlib_default_colors)
 
 
@@ -1247,17 +1275,51 @@ def get_hexcolors_cycler():
     """Return a color cycler for all of the available hexcolors.
 
     See ``pyvista.plotting.colors.hexcolors``.
+
+    Returns
+    -------
+    cycler.Cycler
+        A cycler object for color using all the available hexcolors from
+        ``pyvista.plotting.colors.hexcolors``.
+
     """
     return cycler('color', hexcolors.keys())
 
 
 def get_matplotlib_theme_cycler():
-    """Return matplotlib's current theme's color cycler."""
+    """
+    Return the color cycler of the current matplotlib theme.
+
+    Returns
+    -------
+    cycler.Cycler
+        Color cycler of the current matplotlib theme.
+
+    """
     return plt.rcParams['axes.prop_cycle']
 
 
 def color_scheme_to_cycler(scheme):
-    """Convert a color scheme to a Cycler."""
+    """Convert a color scheme to a Cycler.
+
+    Parameters
+    ----------
+    scheme : str, int, or _vtk.vtkColorSeries
+        Color scheme to be converted. If a string, it should correspond to a
+        valid color scheme name (e.g., 'viridis'). If an integer, it should
+        correspond to a valid color scheme ID. If an instance of
+        `_vtk.vtkColorSeries`, it should be a valid color series.
+
+    Returns
+    -------
+    cycler.Cycler
+        A Cycler object with the color scheme.
+
+    Raises
+    ------
+    ValueError
+        If the provided `scheme` is not a valid color scheme.
+    """
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
@@ -1275,15 +1337,29 @@ def color_scheme_to_cycler(scheme):
 def get_cycler(color_cycler):
     """Return a color cycler based on the input value.
 
-    The value must be either a list of color-like objects,
-    or a cycler of color-like objects. If the value passed is a single
-    string, it must be one of:
+    Parameters
+    ----------
+    color_cycler : str, list, tuple, or Cycler
+        Specifies the desired color cycler. The value must be one of the following:
+        - A list or tuple of color-like objects
+        - A Cycler object with color-like objects
+        - One of the following string values:
+            - ``'default'``: Use the default color cycler (matches matplotlib's default)
+            - ``'matplotlib'``: Dynamically get matplotlib's current theme's color cycler.
+            - ``'all'``: Cycle through all available colors in ``pyvista.plotting.colors.hexcolors``
+        - A named color scheme from ``pyvista.plotting.colors.COLOR_SCHEMES``
 
-    * ``'default'`` - Use the default color cycler (matches matplotlib's default)
-    * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-    * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+    Returns
+    -------
+    Cycler
+        The color cycler corresponding to the input value.
 
-    A named color scheme is also supported. See ``pyvista.plotting.colors.COLOR_SCHEMES``
+    Raises
+    ------
+    ValueError
+        Raised if the input is a string not found in named color schemes.
+    TypeError
+        Raised if the input is of an unsupported type.
 
     """
     if color_cycler is None:

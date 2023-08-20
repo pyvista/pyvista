@@ -48,7 +48,7 @@ class Axes(_vtk.vtkAxes):
 
     @property
     def origin(self):  # numpydoc ignore=RT01
-        """Origin of the axes in world coordinates.
+        """Return or set th origin of the axes in world coordinates.
 
         Examples
         --------
@@ -68,7 +68,6 @@ class Axes(_vtk.vtkAxes):
 
     @origin.setter
     def origin(self, value):  # numpydoc ignore=GL08
-        """Set the origin of the camera."""
         self.SetOrigin(value)
 
     def show_actor(self):

@@ -11,7 +11,26 @@ from . import _vtk
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
-    """Create a axis labels as a vtkStringArray."""
+    """
+    Create axis labels as a vtkStringArray.
+
+    Parameters
+    ----------
+    vmin : float
+        The minimum value for the axis labels.
+    vmax : float
+        The maximum value for the axis labels.
+    n : int
+        The number of labels to create.
+    fmt : str
+        A format string for the labels. If the string starts with '%', the label will be formatted using the old-style string formatting method.
+        Otherwise, the label will be formatted using the new-style string formatting method.
+
+    Returns
+    -------
+    vtkStringArray
+        The created labels as a vtkStringArray object.
+    """
     labels = _vtk.vtkStringArray()
     for v in np.linspace(vmin, vmax, n):
         if fmt:

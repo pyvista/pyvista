@@ -427,24 +427,24 @@ class PointCellDataSelection:
     """
 
     @property
-    def number_point_arrays(self):  # numpydoc ignore=RT01
+    def number_point_arrays(self):
         """Return the number of point arrays.
 
         Returns
         -------
         int
-
+            Number of point arrays
         """
         return self.reader.GetNumberOfPointArrays()
 
     @property
-    def point_array_names(self):  # numpydoc ignore=RT01
+    def point_array_names(self):
         """Return the list of all point array names.
 
         Returns
         -------
         list[str]
-
+            List of all point array names
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
@@ -499,35 +499,35 @@ class PointCellDataSelection:
             self.disable_point_array(name)
 
     @property
-    def all_point_arrays_status(self):  # numpydoc ignore=RT01
+    def all_point_arrays_status(self):
         """Return the status of all point arrays.
 
         Returns
         -------
         dict[str, bool]
-
+            Status of all point arrays
         """
         return {name: self.point_array_status(name) for name in self.point_array_names}
 
     @property
-    def number_cell_arrays(self):  # numpydoc ignore=RT01
+    def number_cell_arrays(self):
         """Return the number of cell arrays.
 
         Returns
         -------
         int
-
+            number of cell arrays
         """
         return self.reader.GetNumberOfCellArrays()
 
     @property
-    def cell_array_names(self):  # numpydoc ignore=RT01
+    def cell_array_names(self):
         """Return the list of all cell array names.
 
         Returns
         -------
         list[str]
-
+            List of all cell array names
         """
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]
 
@@ -580,12 +580,13 @@ class PointCellDataSelection:
             self.disable_cell_array(name)
 
     @property
-    def all_cell_arrays_status(self):  # numpydoc ignore=RT01
+    def all_cell_arrays_status(self):
         """Return the status of all cell arrays.
 
         Returns
         -------
         dict[str, bool]
+            Name and if the cell array is available.
         """
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 

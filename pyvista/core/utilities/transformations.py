@@ -55,6 +55,11 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
         Whether the angle is specified in degrees. ``False`` implies
         radians.
 
+    Returns
+    -------
+    numpy.ndarray
+        The ``(4, 4)`` rotation matrix.
+
     Examples
     --------
     Generate a transformation matrix for rotation around a cube's body
@@ -165,6 +170,12 @@ def reflection(normal, point=None):
         The origin of the reflection (a reference point through which
         the reflection plane passes). By default the reflection plane
         contains the origin.
+
+    Returns
+    -------
+    ndarray
+        A ``(4, 4)`` transformation matrix for reflecting points across the
+        plane defined by the given normal and point.
 
     Examples
     --------

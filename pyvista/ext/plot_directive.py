@@ -38,8 +38,7 @@ The source code for the plot may be included in one of two ways:
    Animations will not be saved, only the last frame will be shown.
 
 
-Options
--------
+**Options**
 The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
@@ -70,8 +69,7 @@ directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
 
-Configuration options
----------------------
+**Configuration options**
 The plot directive has the following configuration options:
 
     plot_include_source : bool

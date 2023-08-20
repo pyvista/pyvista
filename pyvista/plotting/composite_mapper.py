@@ -200,7 +200,6 @@ class BlockAttributes:
 
     @opacity.setter
     def opacity(self, new_opacity: float):  # numpydoc ignore=GL08
-        """Get or set the visibility of a block."""
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
             self._attr.Modified()
