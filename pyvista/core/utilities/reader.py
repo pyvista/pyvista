@@ -343,7 +343,7 @@ class BaseReader:
         return self.__directory
 
     @path.setter
-    def path(self, path: str):
+    def path(self, path: str):  # numpydoc ignore=GL08
         if os.path.isdir(path):
             self._set_directory(path)
         elif os.path.isfile(path):
@@ -917,7 +917,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetDecomposePolyhedra())
 
     @decompose_polyhedra.setter
-    def decompose_polyhedra(self, value):
+    def decompose_polyhedra(self, value):  # numpydoc ignore=GL08
         self.reader.SetDecomposePolyhedra(value)
 
     @property
@@ -943,7 +943,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetSkipZeroTime())
 
     @skip_zero_time.setter
-    def skip_zero_time(self, value):
+    def skip_zero_time(self, value):  # numpydoc ignore=GL08
         self.reader.SetSkipZeroTime(value)
         self._update_information()
         self.reader.SetRefresh()
@@ -976,7 +976,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetCreateCellToPoint())
 
     @cell_to_point_creation.setter
-    def cell_to_point_creation(self, value):
+    def cell_to_point_creation(self, value):  # numpydoc ignore=GL08
         self.reader.SetCreateCellToPoint(value)
 
     @property
@@ -1182,7 +1182,7 @@ class POpenFOAMReader(OpenFOAMReader):
         return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
 
     @case_type.setter
-    def case_type(self, value):
+    def case_type(self, value):  # numpydoc ignore=GL08
         if value == 'reconstructed':
             self.reader.SetCaseType(1)
         elif value == 'decomposed':
@@ -1465,7 +1465,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return bool(self.reader.GetAutoDetectFormat())
 
     @auto_detect_format.setter
-    def auto_detect_format(self, value):
+    def auto_detect_format(self, value):  # numpydoc ignore=GL08
         self.reader.SetAutoDetectFormat(value)
 
     def add_function(self, value: Union[int, Plot3DFunctionEnum]):
@@ -1528,7 +1528,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetPreserveIntermediateFunctions()
 
     @preserve_intermediate_functions.setter
-    def preserve_intermediate_functions(self, val):
+    def preserve_intermediate_functions(self, val):  # numpydoc ignore=GL08
         self.reader.SetPreserveIntermediateFunctions(val)
 
     @property
@@ -1537,7 +1537,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetGamma()
 
     @gamma.setter
-    def gamma(self, val):
+    def gamma(self, val):  # numpydoc ignore=GL08
         self.reader.SetGamma(val)
 
     @property
@@ -1546,7 +1546,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetR()
 
     @r_gas_constant.setter
-    def r_gas_constant(self, val):
+    def r_gas_constant(self, val):  # numpydoc ignore=GL08
         self.reader.SetR(val)
 
 
@@ -1624,7 +1624,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self._reader.GetDistributeBlocks())
 
     @distribute_blocks.setter
-    def distribute_blocks(self, value: str):
+    def distribute_blocks(self, value: str):  # numpydoc ignore=GL08
         self._reader.SetDistributeBlocks(value)
 
     def base_array_status(self, name: str) -> bool:
@@ -1794,7 +1794,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetUseUnsteadyPattern()
 
     @unsteady_pattern.setter
-    def unsteady_pattern(self, enabled: bool):
+    def unsteady_pattern(self, enabled: bool):  # numpydoc ignore=GL08
         self._reader.SetUseUnsteadyPattern(bool(enabled))
 
     @property
@@ -1817,7 +1817,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetUse3DVector()
 
     @vector_3d.setter
-    def vector_3d(self, enabled: bool):
+    def vector_3d(self, enabled: bool):  # numpydoc ignore=GL08
         self._reader.SetUse3DVector(bool(enabled))
 
     @property
@@ -1844,7 +1844,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetLoadBndPatch()
 
     @load_boundary_patch.setter
-    def load_boundary_patch(self, enabled: bool):
+    def load_boundary_patch(self, enabled: bool):  # numpydoc ignore=GL08
         self._reader.SetLoadBndPatch(bool(enabled))
 
 

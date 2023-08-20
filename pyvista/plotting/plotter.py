@@ -903,7 +903,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return self.__before_close_callback()
 
     @_before_close_callback.setter
-    def _before_close_callback(self, func):
+    def _before_close_callback(self, func):  # numpydoc ignore=GL08
         """Store a weakref.ref of the function being called."""
         if func is not None:
             self.__before_close_callback = weakref.ref(func)
@@ -1613,7 +1613,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer._scalar_bar_slots
 
     @_scalar_bar_slots.setter
-    def _scalar_bar_slots(self, value):
+    def _scalar_bar_slots(self, value):  # numpydoc ignore=GL08
         """Set the scalar bar slots of the active renderer."""
         self.renderer._scalar_bar_slots = value
 
@@ -1623,7 +1623,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer._scalar_bar_slot_lookup
 
     @_scalar_bar_slot_lookup.setter
-    def _scalar_bar_slot_lookup(self, value):
+    def _scalar_bar_slot_lookup(self, value):  # numpydoc ignore=GL08
         self.renderer._scalar_bar_slot_lookup = value
 
     @property

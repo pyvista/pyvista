@@ -126,7 +126,7 @@ class BlockAttributes:
         return Color(tuple(self._attr.GetBlockColor(self._block)))
 
     @color.setter
-    def color(self, new_color):
+    def color(self, new_color):  # numpydoc ignore=GL08
         if new_color is None:
             self._attr.RemoveBlockColor(self._block)
             self._attr.Modified()
@@ -159,7 +159,7 @@ class BlockAttributes:
         return self._attr.GetBlockVisibility(self._block)
 
     @visible.setter
-    def visible(self, new_visible: bool):
+    def visible(self, new_visible: bool):  # numpydoc ignore=GL08
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
             self._attr.Modified()
@@ -199,7 +199,7 @@ class BlockAttributes:
         return self._attr.GetBlockOpacity(self._block)
 
     @opacity.setter
-    def opacity(self, new_opacity: float):
+    def opacity(self, new_opacity: float):  # numpydoc ignore=GL08
         """Get or set the visibility of a block."""
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
@@ -239,7 +239,7 @@ class BlockAttributes:
         return self._attr.GetBlockPickability(self._block)
 
     @pickable.setter
-    def pickable(self, new_pickable: bool):
+    def pickable(self, new_pickable: bool):  # numpydoc ignore=GL08
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
             self._attr.Modified()
@@ -649,7 +649,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self.GetColorMissingArraysWithNanColor()
 
     @color_missing_with_nan.setter
-    def color_missing_with_nan(self, value: bool):
+    def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
     def set_unique_colors(self):

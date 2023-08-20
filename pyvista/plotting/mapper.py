@@ -112,7 +112,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim):
+    def scalar_range(self, clim):  # numpydoc ignore=GL08
         self.SetScalarRange(*clim)
 
     @property
@@ -154,7 +154,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetLookupTable()
 
     @lookup_table.setter
-    def lookup_table(self, table):
+    def lookup_table(self, table):  # numpydoc ignore=GL08
         self.SetLookupTable(table)
 
     @property
@@ -175,7 +175,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return 'direct'
 
     @color_mode.setter
-    def color_mode(self, value: str):
+    def color_mode(self, value: str):  # numpydoc ignore=GL08
         if value == 'direct':
             self.SetColorModeToDirectScalars()
         elif value == 'map':
@@ -230,7 +230,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return bool(self.GetInterpolateScalarsBeforeMapping())
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):
+    def interpolate_before_map(self, value: bool):  # numpydoc ignore=GL08
         self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
@@ -254,7 +254,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetArrayName()
 
     @array_name.setter
-    def array_name(self, name: str):
+    def array_name(self, name: str):  # numpydoc ignore=GL08
         """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)
 
@@ -406,7 +406,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
-    def as_rgba(self):
+    def as_rgba(self):  # numpydoc ignore=GL08
         """Convert the active scalars to RGBA.
 
         This method is used to convert the active scalars to a fixed RGBA array
@@ -932,7 +932,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, *args):
+    def interpolate_before_map(self, *args):  # numpydoc ignore=GL08
         pass
 
     @property
@@ -948,11 +948,11 @@ class _BaseVolumeMapper(_BaseMapper):
         set_algorithm_input(self, obj)
 
     @property
-    def lookup_table(self):
+    def lookup_table(self):  # numpydoc ignore=GL08
         return self._lut
 
     @lookup_table.setter
-    def lookup_table(self, lut):
+    def lookup_table(self, lut):  # numpydoc ignore=GL08
         self._lut = lut
 
     @property
@@ -961,7 +961,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return self._scalar_range
 
     @scalar_range.setter
-    def scalar_range(self, clim):
+    def scalar_range(self, clim):  # numpydoc ignore=GL08
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
         self._scalar_range = tuple(clim)
@@ -1000,7 +1000,7 @@ class _BaseVolumeMapper(_BaseMapper):
         )  # pragma: no cover
 
     @blend_mode.setter
-    def blend_mode(self, value: Union[str, int]):
+    def blend_mode(self, value: Union[str, int]):  # numpydoc ignore=GL08
         if isinstance(value, int):
             self.SetBlendMode(value)
         elif isinstance(value, str):

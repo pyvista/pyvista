@@ -721,7 +721,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
-    def verts(self, verts):
+    def verts(self, verts):  # numpydoc ignore=GL08
         """Set the vertex cells."""
         if isinstance(verts, CellArray):
             self.SetVerts(verts)
@@ -747,7 +747,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
-    def lines(self, lines):
+    def lines(self, lines):  # numpydoc ignore=GL08
         """Set the lines of the polydata."""
         if isinstance(lines, CellArray):
             self.SetLines(lines)
@@ -819,7 +819,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return array
 
     @faces.setter
-    def faces(self, faces):
+    def faces(self, faces):  # numpydoc ignore=GL08
         """Set the face cells."""
         if isinstance(faces, CellArray):
             self.SetPolys(faces)
@@ -862,7 +862,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_regular_cells(self.GetPolys())
 
     @regular_faces.setter
-    def regular_faces(self, faces: Union[np.ndarray, Sequence[Sequence[int]]]):
+    def regular_faces(
+        self, faces: Union[np.ndarray, Sequence[Sequence[int]]]
+    ):  # numpydoc ignore=GL08
         """Set the face cells from an (n_faces, face_size) array."""
         self.faces = CellArray.from_regular_cells(faces)
 
@@ -922,7 +924,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetStrips().GetData())
 
     @strips.setter
-    def strips(self, strips):
+    def strips(self, strips):  # numpydoc ignore=GL08
         """Set the strip cells."""
         if isinstance(strips, CellArray):
             self.SetStrips(strips)
@@ -1687,7 +1689,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return array
 
     @cells.setter
-    def cells(self, cells):
+    def cells(self, cells):  # numpydoc ignore=GL08
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
@@ -2170,7 +2172,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         return tuple(self.GetDimensions())
 
     @dimensions.setter
-    def dimensions(self, dims):
+    def dimensions(self, dims):  # numpydoc ignore=GL08
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()

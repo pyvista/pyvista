@@ -98,7 +98,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self._name
 
     @name.setter
-    def name(self, value: str):
+    def name(self, value: str):  # numpydoc ignore=GL08
         if not value:
             raise ValueError('Name must be truthy.')
         self._name = value
@@ -137,7 +137,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()
 
     @mapper.setter
-    def mapper(self, obj):
+    def mapper(self, obj):  # numpydoc ignore=GL08
         return self.SetMapper(obj)
 
     @property
@@ -159,7 +159,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):
+    def prop(self, obj: Property):  # numpydoc ignore=GL08
         self.SetProperty(obj)
 
     @property
@@ -194,7 +194,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetTexture()
 
     @texture.setter
-    def texture(self, obj):
+    def texture(self, obj):  # numpydoc ignore=GL08
         self.SetTexture(obj)
 
     @property
@@ -222,7 +222,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value):
+    def pickable(self, value):  # numpydoc ignore=GL08
         return self.SetPickable(value)
 
     @property
@@ -245,7 +245,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):
+    def visibility(self, value: bool):  # numpydoc ignore=GL08
         return self.SetVisibility(value)
 
     def plot(self, **kwargs):
@@ -384,7 +384,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return mat
 
     @user_matrix.setter
-    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):
+    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             value = vtkmatrix_from_array(value)
         self.SetUserMatrix(value)
@@ -431,5 +431,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()
 
     @backface_prop.setter
-    def backface_prop(self, value: 'pv.Property'):
+    def backface_prop(self, value: 'pv.Property'):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)

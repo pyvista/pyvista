@@ -111,7 +111,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):
+    def visibility(self, value: bool):  # numpydoc ignore=GL08
         return self.SetVisibility(value)
 
     @property
@@ -135,7 +135,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetTotalLength()
 
     @total_length.setter
-    def total_length(self, length):
+    def total_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetTotalLength(length[0], length[1], length[2])
         else:
@@ -162,7 +162,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length):
+    def shaft_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
@@ -189,7 +189,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length):
+    def tip_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
@@ -216,7 +216,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length):
+    def label_position(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
@@ -240,7 +240,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetConeResolution()
 
     @cone_resolution.setter
-    def cone_resolution(self, res: int):
+    def cone_resolution(self, res: int):  # numpydoc ignore=GL08
         self.SetConeResolution(res)
 
     @property
@@ -261,7 +261,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetSphereResolution()
 
     @sphere_resolution.setter
-    def sphere_resolution(self, res: int):
+    def sphere_resolution(self, res: int):  # numpydoc ignore=GL08
         self.SetSphereResolution(res)
 
     @property
@@ -282,7 +282,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetCylinderResolution()
 
     @cylinder_resolution.setter
-    def cylinder_resolution(self, res: int):
+    def cylinder_resolution(self, res: int):  # numpydoc ignore=GL08
         self.SetCylinderResolution(res)
 
     @property
@@ -303,7 +303,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetConeRadius()
 
     @cone_radius.setter
-    def cone_radius(self, rad: float):
+    def cone_radius(self, rad: float):  # numpydoc ignore=GL08
         self.SetConeRadius(rad)
 
     @property
@@ -324,7 +324,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetSphereRadius()
 
     @sphere_radius.setter
-    def sphere_radius(self, rad: float):
+    def sphere_radius(self, rad: float):  # numpydoc ignore=GL08
         self.SetSphereRadius(rad)
 
     @property
@@ -345,7 +345,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetCylinderRadius()
 
     @cylinder_radius.setter
-    def cylinder_radius(self, rad: float):
+    def cylinder_radius(self, rad: float):  # numpydoc ignore=GL08
         self.SetCylinderRadius(rad)
 
     @property
@@ -366,7 +366,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: Union[ShaftType, int]):
+    def shaft_type(self, shaft_type: Union[ShaftType, int]):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -391,7 +391,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[TipType, int]):
+    def tip_type(self, tip_type: Union[TipType, int]):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
@@ -414,7 +414,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetXAxisLabelText()
 
     @x_axis_label.setter
-    def x_axis_label(self, label: str):
+    def x_axis_label(self, label: str):  # numpydoc ignore=GL08
         self.SetXAxisLabelText(label)
 
     @property
@@ -433,7 +433,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetYAxisLabelText()
 
     @y_axis_label.setter
-    def y_axis_label(self, label: str):
+    def y_axis_label(self, label: str):  # numpydoc ignore=GL08
         self.SetYAxisLabelText(label)
 
     @property
@@ -452,7 +452,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetZAxisLabelText()
 
     @z_axis_label.setter
-    def z_axis_label(self, label: str):
+    def z_axis_label(self, label: str):  # numpydoc ignore=GL08
         self.SetZAxisLabelText(label)
 
     @property
@@ -476,7 +476,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return ActorProperties(self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
-    def x_axis_tip_properties(self, properties: ActorProperties):
+    def x_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.x_axis_tip_properties = properties
 
     @property
@@ -485,7 +485,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return ActorProperties(self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
-    def y_axis_tip_properties(self, properties: ActorProperties):
+    def y_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.y_axis_tip_properties = properties
 
     @property
@@ -494,5 +494,5 @@ class AxesActor(_vtk.vtkAxesActor):
         return ActorProperties(self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter
-    def z_axis_tip_properties(self, properties: ActorProperties):
+    def z_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.z_axis_tip_properties = properties

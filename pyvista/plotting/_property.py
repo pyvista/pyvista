@@ -270,7 +270,7 @@ class Property(_vtk.vtkProperty):
         return self.GetRepresentationAsString()
 
     @style.setter
-    def style(self, new_style: str):
+    def style(self, new_style: str):  # numpydoc ignore=GL08
         new_style = new_style.lower()
 
         if new_style == 'wireframe':
@@ -322,7 +322,7 @@ class Property(_vtk.vtkProperty):
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, value):
+    def color(self, value):  # numpydoc ignore=GL08
         self._color_set = value is not None
         rgb_color = Color(value, default_color=self._theme.color)
         self.SetColor(rgb_color.float_rgb)
@@ -353,7 +353,7 @@ class Property(_vtk.vtkProperty):
         return Color(self.GetEdgeColor())
 
     @edge_color.setter
-    def edge_color(self, value):
+    def edge_color(self, value):  # numpydoc ignore=GL08
         rgb_color = Color(value, default_color=self._theme.edge_color)
         self.SetEdgeColor(rgb_color.float_rgb)
 
@@ -394,7 +394,7 @@ class Property(_vtk.vtkProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, value: float):
+    def opacity(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'opacity')
         self.SetOpacity(value)
 
@@ -427,7 +427,7 @@ class Property(_vtk.vtkProperty):
         return bool(self.GetEdgeVisibility())
 
     @show_edges.setter
-    def show_edges(self, value: bool):
+    def show_edges(self, value: bool):  # numpydoc ignore=GL08
         self.SetEdgeVisibility(value)
 
     @property
@@ -452,7 +452,7 @@ class Property(_vtk.vtkProperty):
         return self.GetLighting()
 
     @lighting.setter
-    def lighting(self, value: bool):
+    def lighting(self, value: bool):  # numpydoc ignore=GL08
         if value is None:
             value = self._theme.lighting
         self.SetLighting(value)
@@ -494,7 +494,7 @@ class Property(_vtk.vtkProperty):
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):
+    def ambient(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'ambient')
         self.SetAmbient(value)
 
@@ -536,7 +536,7 @@ class Property(_vtk.vtkProperty):
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):
+    def diffuse(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'diffuse')
         self.SetDiffuse(value)
 
@@ -576,7 +576,7 @@ class Property(_vtk.vtkProperty):
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):
+    def specular(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'specular')
         self.SetSpecular(value)
 
@@ -623,7 +623,7 @@ class Property(_vtk.vtkProperty):
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):
+    def specular_power(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 128), 'specular_power')
         self.SetSpecularPower(value)
 
@@ -667,7 +667,7 @@ class Property(_vtk.vtkProperty):
         return self.GetMetallic()
 
     @metallic.setter
-    def metallic(self, value: float):
+    def metallic(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'metallic')
         self.SetMetallic(value)
 
@@ -712,7 +712,7 @@ class Property(_vtk.vtkProperty):
         return self.GetRoughness()
 
     @roughness.setter
-    def roughness(self, value: bool):
+    def roughness(self, value: bool):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'roughness')
         self.SetRoughness(value)
 
@@ -766,7 +766,7 @@ class Property(_vtk.vtkProperty):
         return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: Union[str, int, InterpolationType]):
+    def interpolation(self, value: Union[str, int, InterpolationType]):  # numpydoc ignore=GL08
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
@@ -807,7 +807,7 @@ class Property(_vtk.vtkProperty):
         return self.GetRenderPointsAsSpheres()
 
     @render_points_as_spheres.setter
-    def render_points_as_spheres(self, value: bool):
+    def render_points_as_spheres(self, value: bool):  # numpydoc ignore=GL08
         self.SetRenderPointsAsSpheres(value)
 
     @property
@@ -844,7 +844,7 @@ class Property(_vtk.vtkProperty):
         return self.GetRenderLinesAsTubes()
 
     @render_lines_as_tubes.setter
-    def render_lines_as_tubes(self, value: bool):
+    def render_lines_as_tubes(self, value: bool):  # numpydoc ignore=GL08
         self.SetRenderLinesAsTubes(value)
 
     @property
@@ -878,7 +878,7 @@ class Property(_vtk.vtkProperty):
         return self.GetLineWidth()
 
     @line_width.setter
-    def line_width(self, value: float):
+    def line_width(self, value: float):  # numpydoc ignore=GL08
         self.SetLineWidth(value)
 
     @property
@@ -912,7 +912,7 @@ class Property(_vtk.vtkProperty):
         return self.GetPointSize()
 
     @point_size.setter
-    def point_size(self, new_size):
+    def point_size(self, new_size):  # numpydoc ignore=GL08
         self.SetPointSize(new_size)
 
     @property
@@ -964,7 +964,7 @@ class Property(_vtk.vtkProperty):
         return 'none'
 
     @culling.setter
-    def culling(self, value):
+    def culling(self, value):  # numpydoc ignore=GL08
         if isinstance(value, str):
             value = value.lower()
 
@@ -1017,7 +1017,7 @@ class Property(_vtk.vtkProperty):
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, value):
+    def ambient_color(self, value):  # numpydoc ignore=GL08
         self.SetAmbientColor(Color(value).float_rgb)
 
     @property
@@ -1048,7 +1048,7 @@ class Property(_vtk.vtkProperty):
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, value):
+    def specular_color(self, value):  # numpydoc ignore=GL08
         self.SetSpecularColor(Color(value).float_rgb)
 
     @property
@@ -1079,7 +1079,7 @@ class Property(_vtk.vtkProperty):
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, value):
+    def diffuse_color(self, value):  # numpydoc ignore=GL08
         self.SetDiffuseColor(Color(value).float_rgb)
 
     @property
@@ -1115,7 +1115,7 @@ class Property(_vtk.vtkProperty):
         return self.GetAnisotropy()
 
     @anisotropy.setter
-    def anisotropy(self, value: float):
+    def anisotropy(self, value: float):  # numpydoc ignore=GL08
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 

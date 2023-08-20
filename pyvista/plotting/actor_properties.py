@@ -42,7 +42,7 @@ class ActorProperties:
         return self.properties.GetColor()
 
     @color.setter
-    def color(self, color: tuple):
+    def color(self, color: tuple):  # numpydoc ignore=GL08
         self.properties.SetColor(color[0], color[1], color[2])
 
     @property
@@ -51,7 +51,7 @@ class ActorProperties:
         return self.properties.GetMetallic()
 
     @metallic.setter
-    def metallic(self, value: float):
+    def metallic(self, value: float):  # numpydoc ignore=GL08
         self.properties.SetMetallic(value)
 
     @property
@@ -60,7 +60,7 @@ class ActorProperties:
         return self.properties.GetRoughness()
 
     @roughness.setter
-    def roughness(self, value: float):
+    def roughness(self, value: float):  # numpydoc ignore=GL08
         self.properties.SetRoughness(value)
 
     @property
@@ -69,7 +69,7 @@ class ActorProperties:
         return self.properties.GetAnisotropy()
 
     @anisotropy.setter
-    def anisotropy(self, value: float):
+    def anisotropy(self, value: float):  # numpydoc ignore=GL08
         self.properties.SetAnisotropy(value)
 
     @property
@@ -78,7 +78,7 @@ class ActorProperties:
         return self.properties.GetAnisotropyRotation()
 
     @anisotropy_rotation.setter
-    def anisotropy_rotation(self, value: float):
+    def anisotropy_rotation(self, value: float):  # numpydoc ignore=GL08
         self.properties.SetAnisotropyRotation(value)
 
     @property
@@ -87,7 +87,7 @@ class ActorProperties:
         return self.properties.GetLighting()
 
     @lighting.setter
-    def lighting(self, flag: bool):
+    def lighting(self, flag: bool):  # numpydoc ignore=GL08
         self.properties.SetLighting(flag)
 
     @property
@@ -99,7 +99,7 @@ class ActorProperties:
         return InterpolationType.from_any(self.properties.GetInterpolation())
 
     @interpolation_model.setter
-    def interpolation_model(self, model: InterpolationType):
+    def interpolation_model(self, model: InterpolationType):  # numpydoc ignore=GL08
         self.properties.SetInterpolation(model.value)
 
     @property
@@ -108,7 +108,7 @@ class ActorProperties:
         return self.properties.GetBaseIOR()
 
     @index_of_refraction.setter
-    def index_of_refraction(self, value: float):
+    def index_of_refraction(self, value: float):  # numpydoc ignore=GL08
         self.properties.SetBaseIOR(value)
 
     @property
@@ -117,7 +117,7 @@ class ActorProperties:
         return self.properties.GetOpacity()
 
     @opacity.setter
-    def opacity(self, value: float):
+    def opacity(self, value: float):  # numpydoc ignore=GL08
         self.properties.SetOpacity(value)
 
     @property
@@ -126,7 +126,7 @@ class ActorProperties:
         return self.properties.GetShading()
 
     @shading.setter
-    def shading(self, is_active: bool):
+    def shading(self, is_active: bool):  # numpydoc ignore=GL08
         self.properties.SetShading(is_active)
 
     @property
@@ -138,5 +138,5 @@ class ActorProperties:
         return RepresentationType.from_any(self.properties.GetRepresentation())
 
     @representation.setter
-    def representation(self, value: RepresentationType):
+    def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
         self.properties.SetRepresentation(RepresentationType.from_any(value).value)

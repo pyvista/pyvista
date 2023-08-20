@@ -265,7 +265,7 @@ class MultiBlock(
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n):
+    def n_blocks(self, n):  # numpydoc ignore=GL08
         """Change the total number of blocks set.
 
         Parameters

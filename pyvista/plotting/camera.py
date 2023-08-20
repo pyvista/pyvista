@@ -101,7 +101,7 @@ class Camera(_vtk.vtkCamera):
         return self._is_set
 
     @is_set.setter
-    def is_set(self, value: bool):
+    def is_set(self, value: bool):  # numpydoc ignore=GL08
         self._is_set = bool(value)
 
     @classmethod
@@ -246,7 +246,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value):
+    def position(self, value):  # numpydoc ignore=GL08
         """Set the position of the camera."""
         self.SetPosition(value)
         self._elevation = 0.0
@@ -291,7 +291,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, point):
+    def focal_point(self, point):  # numpydoc ignore=GL08
         """Set the location of the camera's focus in world coordinates."""
         self.SetFocalPoint(point)
         self.is_set = True
@@ -331,7 +331,7 @@ class Camera(_vtk.vtkCamera):
         return matrix
 
     @model_transform_matrix.setter
-    def model_transform_matrix(self, matrix):
+    def model_transform_matrix(self, matrix):  # numpydoc ignore=GL08
         """Set the camera's model transformation matrix."""
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
@@ -359,7 +359,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetDistance()
 
     @distance.setter
-    def distance(self, distance):
+    def distance(self, distance):  # numpydoc ignore=GL08
         """Set the distance from the camera position to the focal point."""
         self.SetDistance(distance)
         self.is_set = True
@@ -382,7 +382,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetThickness()
 
     @thickness.setter
-    def thickness(self, length):
+    def thickness(self, length):  # numpydoc ignore=GL08
         """Set the distance between clipping planes."""
         self.SetThickness(length)
 
@@ -404,7 +404,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetParallelScale()
 
     @parallel_scale.setter
-    def parallel_scale(self, scale):
+    def parallel_scale(self, scale):  # numpydoc ignore=GL08
         """Set the scaling used for parallel projection."""
         self.SetParallelScale(scale)
 
@@ -477,7 +477,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetViewUp()
 
     @up.setter
-    def up(self, vector):
+    def up(self, vector):  # numpydoc ignore=GL08
         """Set the "up" of the camera."""
         self.SetViewUp(vector)
         self.is_set = True
@@ -533,7 +533,7 @@ class Camera(_vtk.vtkCamera):
         return self._parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):
+    def parallel_projection(self, state):  # numpydoc ignore=GL08
         """Return the state of the parallel projection.
 
         Examples
@@ -571,7 +571,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetClippingRange()
 
     @clipping_range.setter
-    def clipping_range(self, points):
+    def clipping_range(self, points):  # numpydoc ignore=GL08
         """Set the clipping planes."""
         if points[0] > points[1]:
             raise ValueError('Near point must be lower than the far point.')
@@ -595,7 +595,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetViewAngle()
 
     @view_angle.setter
-    def view_angle(self, value):
+    def view_angle(self, value):  # numpydoc ignore=GL08
         """Set the camera view angle."""
         self.SetViewAngle(value)
 
@@ -669,7 +669,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetRoll()
 
     @roll.setter
-    def roll(self, angle):
+    def roll(self, angle):  # numpydoc ignore=GL08
         """Set the rotate of the camera about the direction of projection."""
         self.SetRoll(angle)
         self.is_set = True
@@ -696,7 +696,7 @@ class Camera(_vtk.vtkCamera):
         return self._elevation
 
     @elevation.setter
-    def elevation(self, angle):
+    def elevation(self, angle):  # numpydoc ignore=GL08
         """Set the vertical rotation of the scene."""
         if self._elevation:
             self.Elevation(-self._elevation)
@@ -727,7 +727,7 @@ class Camera(_vtk.vtkCamera):
         return self._azimuth
 
     @azimuth.setter
-    def azimuth(self, angle):
+    def azimuth(self, angle):  # numpydoc ignore=GL08
         """Set the azimuth rotation of the camera."""
         if self._azimuth:
             self.Azimuth(-self._azimuth)

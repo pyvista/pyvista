@@ -67,7 +67,7 @@ class Axes(_vtk.vtkAxes):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value):
+    def origin(self, value):  # numpydoc ignore=GL08
         """Set the origin of the camera."""
         self.SetOrigin(value)
 

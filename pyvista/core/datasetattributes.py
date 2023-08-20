@@ -395,7 +395,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: np.ndarray):
+    def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
         """Set the active texture coordinates array.
 
         Parameters
@@ -445,7 +445,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_t_coords_name.setter
-    def active_t_coords_name(self, name: str) -> None:
+    def active_t_coords_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set the name of the active texture coordinates array.
 
         Parameters
@@ -1122,7 +1122,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str) -> None:
+    def active_scalars_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set name of the active scalars.
 
         Parameters
@@ -1167,7 +1167,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str) -> None:
+    def active_vectors_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set name of the active vectors.
 
         Parameters
@@ -1271,7 +1271,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: Union[Sequence[Number], np.ndarray]):
+    def active_normals(self, normals: Union[Sequence[Number], np.ndarray]):  # numpydoc ignore=GL08
         """Set the normals.
 
         Parameters
@@ -1322,7 +1322,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals_name.setter
-    def active_normals_name(self, name: str) -> None:
+    def active_normals_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set the name of the normals array.
 
         Parameters

@@ -283,7 +283,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self, points):  # numpydoc ignore=PR01
+    def points(self, points):  # numpydoc ignore=PR01  # numpydoc ignore=GL08
         """Raise an AttributeError.
 
         This setter overrides the base class's setter to ensure a user
@@ -407,7 +407,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore
-    def dimensions(self, dims):
+    def dimensions(self, dims):  # numpydoc ignore=GL08
         """Set Dimensions.
 
         Parameters
@@ -675,7 +675,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self, points):  # numpydoc ignore=PR01
+    def points(self, points):  # numpydoc ignore=PR01  # numpydoc ignore=GL08
         """Points cannot be set.
 
         This setter overrides the base class's setter to ensure a user does not

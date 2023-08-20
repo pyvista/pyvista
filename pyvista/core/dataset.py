@@ -346,7 +346,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name: str):
+    def active_tensors_name(self, name: str):  # numpydoc ignore=GL08
         """Set the name of the active tensor array.
 
         Parameters
@@ -382,7 +382,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str):
+    def active_vectors_name(self, name: str):  # numpydoc ignore=GL08
         """Set the name of the active vectors array.
 
         Parameters
@@ -417,7 +417,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str):
+    def active_scalars_name(self, name: str):  # numpydoc ignore=GL08
         """Set the name of the active scalars.
 
         Parameters
@@ -494,7 +494,9 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]):
+    def points(
+        self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]
+    ):  # numpydoc ignore=GL08
         """Set a reference to the points as a numpy object.
 
         Parameters
@@ -594,7 +596,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.point_data.active_t_coords
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: np.ndarray):
+    def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters
