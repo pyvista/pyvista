@@ -261,7 +261,8 @@ def test_plot_update(sphere):
     pl.close()
 
 
-def test_plot(sphere, tmpdir, verify_image_cache):
+@pytest.mark.parametrize('anti_aliasing', [True, "msaa", False])
+def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
@@ -284,6 +285,7 @@ def test_plot(sphere, tmpdir, verify_image_cache):
         screenshot=filename,
         return_img=True,
         return_cpos=True,
+        anti_aliasing=anti_aliasing,
     )
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)

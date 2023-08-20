@@ -1219,6 +1219,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(
                 f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"'
             )
+        else:
+            # disable MSAA as SSAA or FXAA is being enabled
+            self.render_window.SetMultiSamples(0)
 
         if all_renderers:
             for renderer in self.renderers:
