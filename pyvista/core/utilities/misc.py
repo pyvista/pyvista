@@ -110,17 +110,17 @@ class AnnotatedIntEnum(int, enum.Enum):
     @classmethod
     def from_str(cls, input_str):
         """Create an enum member from a string.
-        
+
         Parameters
         ----------
         input_str : str
             The string representation of the annotation for the enum member.
-        
+
         Returns
         -------
         AnnotatedIntEnum
             The enum member with the specified annotation.
-        
+
         Raises
         ------
         ValueError
@@ -134,17 +134,17 @@ class AnnotatedIntEnum(int, enum.Enum):
     @classmethod
     def from_any(cls, value):
         """Create an enum member from a string, int, etc.
-        
+
         Parameters
         ----------
         value : int | str | AnnotatedIntEnum
             The value used to determine the corresponding enum member.
-        
+
         Returns
         -------
         AnnotatedIntEnum
             The enum member matching the specified value.
-        
+
         Raises
         ------
         ValueError
@@ -216,7 +216,7 @@ def threaded(fn):
 
     """
 
-    def wrapper(*args, **kwargs):    # numpydoc ignore=GL08
+    def wrapper(*args, **kwargs):  # numpydoc ignore=GL08
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
@@ -258,7 +258,7 @@ def _check_range(value, rng, parm_name):
         )
 
 
-def no_new_attr(cls):    # numpydoc ignore=RT01
+def no_new_attr(cls):  # numpydoc ignore=RT01
     """Override __setattr__ to not permit new attributes."""
     if not hasattr(cls, '_new_attr_exceptions'):
         cls._new_attr_exceptions = []
