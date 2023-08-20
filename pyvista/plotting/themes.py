@@ -1594,10 +1594,11 @@ class Theme(_ThemeConfig):
         self._before_close_callback = None
 
         # Grab system flag for anti-aliasing
+        # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 4))
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
         except ValueError:  # pragma: no cover
-            self._multi_samples = 4
+            self._multi_samples = 8
 
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
@@ -1613,7 +1614,7 @@ class Theme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._anti_aliasing = None
+        self._anti_aliasing = 'msaa'
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
@@ -3079,7 +3080,7 @@ class DocumentProTheme(DocumentTheme):
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
-        self.multi_samples = 2
+        self.multi_samples = 8
         self.depth_peeling.number_of_peels = 4
         self.depth_peeling.occlusion_ratio = 0.0
         self.depth_peeling.enabled = True
