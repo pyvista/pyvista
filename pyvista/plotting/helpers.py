@@ -114,8 +114,8 @@ def plot_compare_four(
 
     if plotter_kwargs is None:
         plotter_kwargs = {}
-    if disply_kwargs is None:
-        disply_kwargs = {}
+    if display_kwargs is None:
+        display_kwargs = {}
     if show_kwargs is None:
         show_kwargs = {}
 
@@ -126,7 +126,7 @@ def plot_compare_four(
     for i in range(2):
         for j in range(2):
             pl.subplot(i, j)
-            pl.add_mesh(datasets[i][j], **disply_kwargs)
+            pl.add_mesh(datasets[i][j], **display_kwargs)
             pl.add_text(labels[i][j])
             if is_pyvista_dataset(outline):
                 pl.add_mesh(outline, color=outline_color)
