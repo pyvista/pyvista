@@ -115,6 +115,7 @@ class PointPickingElementHandler:
         Returns
         -------
         pyvista.DataSet
+            Picked mesh.
 
         """
         ds = self.picker.GetDataSet()
@@ -132,6 +133,7 @@ class PointPickingElementHandler:
         Returns
         -------
         pyvista.UnstructuredGrid
+            UnstructuredGrid containing the picked cell.
 
         """
         mesh = self.get_mesh()
@@ -154,6 +156,7 @@ class PointPickingElementHandler:
         Returns
         -------
         pyvista.UnstructuredGrid
+            UnstructuredGrid containing the picked face.
 
         """
         cell = self.get_cell(picked_point).get_cell(0)
@@ -184,6 +187,7 @@ class PointPickingElementHandler:
         Returns
         -------
         pyvista.UnstructuredGrid
+            UnstructuredGrid containing the picked edge.
 
         """
         cell = self.get_cell(picked_point).get_cell(0)
@@ -209,6 +213,7 @@ class PointPickingElementHandler:
         Returns
         -------
         pyvista.PolyData
+            Picked mesh containing the point.
 
         """
         mesh = self.get_mesh()
@@ -241,7 +246,7 @@ class PointPickingElementHandler:
             try_callback(self.callback, picked)
 
 
-class PickingInterface:
+class PickingInterface:  # numpydoc ignore=GL08
     """An internal class to hold core picking related features."""
 
     def __init__(self, *args, **kwargs):
@@ -641,7 +646,7 @@ class PickingInterface:
             self.iren._style_class.StartSelect()
 
 
-class PickingMethods(PickingInterface):
+class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     """Internal class to contain picking utilities."""
 
     def __init__(self, *args, **kwargs):
@@ -1010,7 +1015,7 @@ class PickingMethods(PickingInterface):
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(_, picker):
+        def end_pick_call_back(_, picker):  # numpydoc ignore=GL08
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)
@@ -1122,7 +1127,7 @@ class PickingMethods(PickingInterface):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):
+        def finalize(picked):  # numpydoc ignore=GL08
             if picked is None:
                 # Inidcates invalid pick
                 with self_().iren.poked_subplot():
@@ -1238,7 +1243,7 @@ class PickingMethods(PickingInterface):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):
+        def finalize(picked):  # numpydoc ignore=GL08
             if picked is None:
                 # Inidcates invalid pick
                 with self_().iren.poked_subplot():
@@ -1263,7 +1268,7 @@ class PickingMethods(PickingInterface):
             if callback is not None:
                 _poked_context_callback(self_(), callback, picked)
 
-        def visible_pick_callback(selection):
+        def visible_pick_callback(selection):  # numpydoc ignore=GL08
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()
             x0, y0, x1, y1 = renderer.get_pick_position()
@@ -1609,7 +1614,7 @@ class PickingMethods(PickingInterface):
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):
+        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position
             selector = _vtk.vtkOpenGLHardwareSelector()

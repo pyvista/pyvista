@@ -35,6 +35,11 @@ class InterpolationType(AnnotatedIntEnum):
             The string representation of the interpolation type.  Accepts
             aliases such as ``'pbr'`` for ``'Physically based rendering'``.
 
+        Returns
+        -------
+        InterpolationType
+            Interpolation type as defined by the input string.
+
         """
         aliases = {
             'pbr': 'Physically based rendering',

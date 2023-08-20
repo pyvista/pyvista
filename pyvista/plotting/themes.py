@@ -273,7 +273,7 @@ class _LightingConfig(_ThemeConfig):
         self._interpolation = InterpolationType.from_any(interpolation).value
 
     @property
-    def metallic(self) -> float:  # numpydoc ignore=RT01  # numpydoc ignore=GL08
+    def metallic(self) -> float:  # numpydoc ignore=RT01
         """Return or set the metallic value.
 
         This requires that the interpolation be set to ``'Physically based
@@ -2588,7 +2588,7 @@ class Theme(_ThemeConfig):
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
     @property
-    def volume_mapper(self) -> str:  # numpydoc ignore=RT01  # numpydoc ignore=GL08
+    def volume_mapper(self) -> str:  # numpydoc ignore=RT01
         """Return or set the default ``volume_mapper`` parameter.
 
         Must be one of the following strings, which are mapped to the
