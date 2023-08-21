@@ -722,7 +722,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @verts.setter
     def verts(self, verts):  # numpydoc ignore=GL08
-        """Set the vertex cells."""
         if isinstance(verts, CellArray):
             self.SetVerts(verts)
         else:
@@ -748,7 +747,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @lines.setter
     def lines(self, lines):  # numpydoc ignore=GL08
-        """Set the lines of the polydata."""
         if isinstance(lines, CellArray):
             self.SetLines(lines)
         else:
@@ -820,7 +818,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @faces.setter
     def faces(self, faces):  # numpydoc ignore=GL08
-        """Set the face cells."""
         if isinstance(faces, CellArray):
             self.SetPolys(faces)
         else:
@@ -864,7 +861,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     @regular_faces.setter
     def regular_faces(
         self, faces: Union[np.ndarray, Sequence[Sequence[int]]]
-    ):  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
         self.faces = CellArray.from_regular_cells(faces)
 
@@ -925,7 +922,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @strips.setter
     def strips(self, strips):  # numpydoc ignore=GL08
-        """Set the strip cells."""
         if isinstance(strips, CellArray):
             self.SetStrips(strips)
         else:
@@ -2849,7 +2845,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
 
-        def connectivity(ind):
+        def connectivity(ind):  # numpydoc ignore=GL08
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_points = self.get_cell(ind).points
@@ -2874,7 +2870,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                                 indices.append(ind)
             return indices
 
-        def topological(ind):
+        def topological(ind):  # numpydoc ignore=GL08
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
@@ -2885,7 +2881,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                     indices.append(ind)
             return indices
 
-        def geometric(ind):
+        def geometric(ind):  # numpydoc ignore=GL08
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_points = self.get_cell(ind).points

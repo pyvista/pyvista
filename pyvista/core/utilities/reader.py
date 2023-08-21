@@ -433,7 +433,7 @@ class PointCellDataSelection:
         Returns
         -------
         int
-            Number of point arrays
+            Number of point arrays.
         """
         return self.reader.GetNumberOfPointArrays()
 
@@ -444,7 +444,7 @@ class PointCellDataSelection:
         Returns
         -------
         list[str]
-            List of all point array names
+            List of all point array names.
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
@@ -505,7 +505,7 @@ class PointCellDataSelection:
         Returns
         -------
         dict[str, bool]
-            Status of all point arrays
+            Status of all point arrays.
         """
         return {name: self.point_array_status(name) for name in self.point_array_names}
 
@@ -516,7 +516,7 @@ class PointCellDataSelection:
         Returns
         -------
         int
-            number of cell arrays
+            Number of cell arrays.
         """
         return self.reader.GetNumberOfCellArrays()
 
@@ -527,7 +527,7 @@ class PointCellDataSelection:
         Returns
         -------
         list[str]
-            List of all cell array names
+            List of all cell array names.
         """
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]
 

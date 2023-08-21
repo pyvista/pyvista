@@ -226,10 +226,11 @@ exclude = [  # don't report on objects that match any of these regex
     '^pv_pythreejs\..*$',
     '^pv_ipygany\..*$',
     '^notebook\..*$',
-    # Documentation extensions
+    # Documentation extensions or utilities
     '^viewer_directive\..*$',
     '^plot_directive\..*$',
     '^coverage\..*$',
+    '\.pv_html_page_context$',    
     # Internal
     '^observers\..*$',
     # methods we probably should make private

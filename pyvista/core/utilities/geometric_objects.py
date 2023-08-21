@@ -1,7 +1,6 @@
 """Provides an easy way of generating several geometric objects.
 
-CONTAINS
---------
+**CONTAINS**
 vtkArrowSource
 vtkCylinderSource
 vtkSphereSource

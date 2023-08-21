@@ -19,6 +19,11 @@ def assert_empty_kwargs(**kwargs):
     **kwargs : dict
         Keyword arguments passed to the function.
 
+    Returns
+    -------
+    bool
+        ``True`` when successful.
+
     Raises
     ------
     TypeError
@@ -89,16 +94,7 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
 
 
 class AnnotatedIntEnum(int, enum.Enum):
-    """Annotated enum type.
-
-    Parameters
-    ----------
-    value : int
-        The integer value of the enum member.
-    annotation : str
-        The annotation associated with the enum member.
-
-    """
+    """Annotated enum type."""
 
     def __new__(cls, value, annotation):
         """Initialize."""
