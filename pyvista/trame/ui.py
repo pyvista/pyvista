@@ -24,7 +24,7 @@ VALID_UI_MODES = [
 _VIEWERS = {}
 
 
-def button(click, icon, tooltip):
+def button(click, icon, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify button."""
     with vuetify.VTooltip(bottom=True):
         with vuetify.Template(v_slot_activator='{ on, attrs }'):
@@ -33,7 +33,7 @@ def button(click, icon, tooltip):
         html.Span(tooltip)
 
 
-def checkbox(model, icons, tooltip):
+def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify checkbox."""
     with vuetify.VTooltip(bottom=True):
         with vuetify.Template(v_slot_activator='{ on, attrs }'):
@@ -71,7 +71,7 @@ class Viewer:
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
 
     @property
-    def views(self):
+    def views(self):  # numpydoc ignore=RT01
         """Get a set of all associate trame views for this viewer."""
         return self._html_views
 
@@ -239,7 +239,7 @@ class Viewer:
             self.update_camera()
 
     @property
-    def actors(self):
+    def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
         return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
 

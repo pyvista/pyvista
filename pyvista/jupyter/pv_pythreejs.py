@@ -164,8 +164,7 @@ def to_surf_mesh(
 ):
     """Convert a pyvista surface to a buffer geometry.
 
-    General Notes
-    -------------
+    **General Notes**
 
     * THREE.BufferGeometry expects position and index attributes
       representing a triangulated mesh points and face indices or just
@@ -174,8 +173,7 @@ def to_surf_mesh(
       but not for the other mesh types.
     * Colors must be a RGB array with one value per point.
 
-    Shading Notes
-    -------------
+    **Shading Notes**
     To match VTK, the following materials are used to match VTK's shading:
 
     * MeshPhysicalMaterial when physically based rendering is enabled

@@ -21,7 +21,7 @@ def linkcode_resolve(domain, info, edit=False):
 
     Returns
     -------
-    url : str
+    str
         The code URL.
 
     Notes

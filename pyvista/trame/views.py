@@ -9,8 +9,22 @@ from trame_vtk.tools.vtksz2html import write_html
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
-def get_server(*args, **kwargs):
-    """Override trame's get_server."""
+def get_server(*args, **kwargs):  # numpydoc ignore=RT01
+    """Override trame's get_server.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to the server instance.
+
+    **kwargs :
+        Any extra keyword args are passed as option to the server instance.
+
+    Returns
+    -------
+    trame_server.core.Server
+        Trame server.
+    """
     server = trame_get_server(*args, **kwargs)
     server.client_type = 'vue2'
     return server
@@ -18,6 +32,7 @@ def get_server(*args, **kwargs):
 
 class _BasePyVistaView:
     def __init__(self, plotter):
+        """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
         self._plotter_render_callback = lambda *args: self.update()
@@ -99,7 +114,9 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(
+        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -208,7 +225,9 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(
+        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:

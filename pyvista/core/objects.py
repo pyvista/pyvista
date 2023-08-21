@@ -74,25 +74,51 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):
-        """Return the number of rows."""
+    def n_rows(self):  # numpydoc ignore=RT01
+        """Return the number of rows.
+
+        Returns
+        -------
+        int
+            The number of rows.
+
+        """
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n):
-        """Set the number of rows."""
+    def n_rows(self, n):  # numpydoc ignore=GL08
+        """Set the number of rows.
+
+        Parameters
+        ----------
+        n : int
+            The number of rows.
+
+        """
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):
-        """Return the number of columns."""
+    def n_columns(self):  # numpydoc ignore=RT01
+        """Return the number of columns.
+
+        Returns
+        -------
+        int
+            The number of columns.
+
+        """
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):
+    def n_arrays(self):  # numpydoc ignore=RT01
         """Return the number of columns.
 
         Alias for: ``n_columns``.
+
+        Returns
+        -------
+        int
+            The number of columns.
 
         """
         return self.n_columns
@@ -114,8 +140,15 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):
-        """Return the all row arrays."""
+    def row_arrays(self):  # numpydoc ignore=RT01
+        """Return the all row arrays.
+
+        Returns
+        -------
+        int
+            The all row arrays.
+
+        """
         return DataSetAttributes(
             vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
         )
