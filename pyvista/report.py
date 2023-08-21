@@ -10,7 +10,14 @@ from vtkmodules.vtkCommonCore import vtkVersion
 
 
 def VTKVersionInfo():
-    """Return the vtk version as a namedtuple."""
+    """Return the vtk version as a namedtuple.
+
+    Returns
+    -------
+    collections.namedtuple
+        Version information as a named tuple.
+
+    """
     version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
 
     try:
@@ -39,7 +46,7 @@ plotter.close()\
 """
 
 
-def get_gpu_info():
+def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
     proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
@@ -55,7 +62,7 @@ class GPUInfo:
         self._gpu_info = get_gpu_info()
 
     @property
-    def renderer(self):
+    def renderer(self):  # numpydoc ignore=RT01
         """GPU renderer name."""
         regex = re.compile("OpenGL renderer string:(.+)\n")
         try:
@@ -65,7 +72,7 @@ class GPUInfo:
         return renderer.strip()
 
     @property
-    def version(self):
+    def version(self):  # numpydoc ignore=RT01
         """GPU renderer version."""
         regex = re.compile("OpenGL version string:(.+)\n")
         try:
@@ -75,7 +82,7 @@ class GPUInfo:
         return version.strip()
 
     @property
-    def vendor(self):
+    def vendor(self):  # numpydoc ignore=RT01
         """GPU renderer vendor."""
         regex = re.compile("OpenGL vendor string:(.+)\n")
         try:
@@ -85,7 +92,14 @@ class GPUInfo:
         return vendor.strip()
 
     def get_info(self):
-        """All GPU information as tuple pairs."""
+        """All GPU information as tuple pairs.
+
+        Returns
+        -------
+        tuple
+            Tuples of ``(key, info)``.
+
+        """
         return [
             ("GPU Vendor", self.vendor),
             ("GPU Renderer", self.renderer),

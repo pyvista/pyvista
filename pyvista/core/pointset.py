@@ -360,12 +360,12 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
 
     @property
-    def area(self) -> float:
+    def area(self) -> float:  # numpydoc ignore=RT01
         """Return 0.0 since a PointSet has no area."""
         return 0.0
 
     @property
-    def volume(self) -> float:
+    def volume(self) -> float:  # numpydoc ignore=RT01
         """Return 0.0 since a PointSet has no volume."""
         return 0.0
 
@@ -682,7 +682,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return cells
 
     @property
-    def verts(self) -> np.ndarray:
+    def verts(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Get the vertex cells.
 
         Returns
@@ -721,15 +721,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
-    def verts(self, verts):
-        """Set the vertex cells."""
+    def verts(self, verts):  # numpydoc ignore=GL08
         if isinstance(verts, CellArray):
             self.SetVerts(verts)
         else:
             self.SetVerts(CellArray(verts))
 
     @property
-    def lines(self) -> np.ndarray:
+    def lines(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return a pointer to the lines as a numpy array.
 
         Examples
@@ -747,15 +746,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
-    def lines(self, lines):
-        """Set the lines of the polydata."""
+    def lines(self, lines):  # numpydoc ignore=GL08
         if isinstance(lines, CellArray):
             self.SetLines(lines)
         else:
             self.SetLines(CellArray(lines))
 
     @property
-    def faces(self) -> np.ndarray:
+    def faces(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return the connectivity array of the faces of this PolyData.
 
         The faces array is organized as::
@@ -819,8 +817,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return array
 
     @faces.setter
-    def faces(self, faces):
-        """Set the face cells."""
+    def faces(self, faces):  # numpydoc ignore=GL08
         if isinstance(faces, CellArray):
             self.SetPolys(faces)
         else:
@@ -828,7 +825,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetPolys(CellArray(faces))
 
     @property
-    def regular_faces(self) -> np.ndarray:
+    def regular_faces(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return a face array of point indices when all faces have the same size.
 
         Returns
@@ -862,7 +859,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_regular_cells(self.GetPolys())
 
     @regular_faces.setter
-    def regular_faces(self, faces: Union[np.ndarray, Sequence[Sequence[int]]]):
+    def regular_faces(
+        self, faces: Union[np.ndarray, Sequence[Sequence[int]]]
+    ):  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
         self.faces = CellArray.from_regular_cells(faces)
 
@@ -903,7 +902,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return p
 
     @property
-    def strips(self) -> np.ndarray:
+    def strips(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return a pointer to the strips as a numpy array.
 
         Returns
@@ -922,15 +921,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetStrips().GetData())
 
     @strips.setter
-    def strips(self, strips):
-        """Set the strip cells."""
+    def strips(self, strips):  # numpydoc ignore=GL08
         if isinstance(strips, CellArray):
             self.SetStrips(strips)
         else:
             self.SetStrips(CellArray(strips))
 
     @property
-    def is_all_triangles(self):
+    def is_all_triangles(self):  # numpydoc ignore=RT01
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
         Returns
@@ -983,7 +981,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_connectivity_array(self.GetPolys())
 
     @property
-    def n_lines(self) -> int:
+    def n_lines(self) -> int:  # numpydoc ignore=RT01
         """Return the number of lines.
 
         Examples
@@ -997,7 +995,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.GetNumberOfLines()
 
     @property
-    def n_verts(self) -> int:
+    def n_verts(self) -> int:  # numpydoc ignore=RT01
         """Return the number of vertices.
 
         A vertex is a 0D cell, which is usually a cell that references one point,
@@ -1028,7 +1026,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.GetNumberOfVerts()
 
     @property
-    def n_strips(self) -> int:
+    def n_strips(self) -> int:  # numpydoc ignore=RT01
         """Return the number of strips.
 
         Examples
@@ -1050,7 +1048,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.GetNumberOfStrips()
 
     @property
-    def n_faces(self) -> int:
+    def n_faces(self) -> int:  # numpydoc ignore=RT01
         """Return the number of cells.
 
         Alias for ``n_cells``.
@@ -1175,7 +1173,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         super().save(filename, binary, texture=texture)
 
     @property
-    def volume(self) -> float:
+    def volume(self) -> float:  # numpydoc ignore=RT01
         """Return the approximate volume of the dataset.
 
         This will throw a VTK error/warning if not a closed surface.
@@ -1198,7 +1196,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pyvista.pyvista_ndarray':
+    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the point normals.
 
         If the point data already contains an array named ``'Normals'``, this
@@ -1233,7 +1231,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def cell_normals(self) -> 'pyvista.pyvista_ndarray':
+    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         If the cell data already contains an array named ``'Normals'``, this
@@ -1267,7 +1265,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def face_normals(self) -> 'pyvista.pyvista_ndarray':
+    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
@@ -1294,7 +1292,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.cell_normals
 
     @property
-    def obbTree(self):
+    def obbTree(self):  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
         An obbTree is an object to generate oriented bounding box (OBB)
@@ -1311,7 +1309,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self._obbTree
 
     @property
-    def n_open_edges(self) -> int:
+    def n_open_edges(self) -> int:  # numpydoc ignore=RT01
         """Return the number of open edges on this mesh.
 
         Examples
@@ -1339,7 +1337,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return alg.GetOutput().GetNumberOfCells()
 
     @property
-    def is_manifold(self) -> bool:
+    def is_manifold(self) -> bool:  # numpydoc ignore=RT01
         """Return if the mesh is manifold (no open edges).
 
         Examples
@@ -1634,7 +1632,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             )
 
     @property
-    def cells(self) -> np.ndarray:
+    def cells(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return the cell data as a numpy object.
 
         This is the old style VTK data layout::
@@ -1687,12 +1685,12 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return array
 
     @cells.setter
-    def cells(self, cells):
+    def cells(self, cells):  # numpydoc ignore=GL08
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
-    def cells_dict(self) -> dict:
+    def cells_dict(self) -> dict:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -1735,7 +1733,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> np.ndarray:
+    def cell_connectivity(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return a the vtk cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
@@ -1828,7 +1826,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return lgrid
 
     @property
-    def celltypes(self) -> np.ndarray:
+    def celltypes(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return the cell types array.
 
         Returns
@@ -1895,7 +1893,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
 
     @property
-    def offset(self) -> np.ndarray:
+    def offset(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return the cell locations array.
 
         This is the location of the start of each cell in
@@ -2146,7 +2144,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         self.SetPoints(vtk_points(points, force_float=force_float))
 
     @property
-    def dimensions(self):
+    def dimensions(self):  # numpydoc ignore=RT01
         """Return a length 3 tuple of the grid's dimensions.
 
         Returns
@@ -2170,13 +2168,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         return tuple(self.GetDimensions())
 
     @dimensions.setter
-    def dimensions(self, dims):
+    def dimensions(self, dims):  # numpydoc ignore=GL08
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Return the X coordinates of all points.
 
         Returns
@@ -2200,17 +2198,17 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         return self._reshape_point_array(self.points[:, 0])
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Return the Y coordinates of all points."""
         return self._reshape_point_array(self.points[:, 1])
 
     @property
-    def z(self):
+    def z(self):  # numpydoc ignore=RT01
         """Return the Z coordinates of all points."""
         return self._reshape_point_array(self.points[:, 2])
 
     @property
-    def points_matrix(self):
+    def points_matrix(self):  # numpydoc ignore=RT01
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
 
@@ -2666,7 +2664,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return int(dims[0]), int(dims[1]), int(dims[2])
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the topological dimensions of the grid.
 
         Returns
@@ -2685,7 +2683,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> BoundsLike:
+    def visible_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the
@@ -2847,7 +2845,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
 
-        def connectivity(ind):
+        def connectivity(ind):  # numpydoc ignore=GL08
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_points = self.get_cell(ind).points
@@ -2872,7 +2870,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                                 indices.append(ind)
             return indices
 
-        def topological(ind):
+        def topological(ind):  # numpydoc ignore=GL08
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
@@ -2883,7 +2881,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                     indices.append(ind)
             return indices
 
-        def geometric(ind):
+        def geometric(ind):  # numpydoc ignore=GL08
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_points = self.get_cell(ind).points

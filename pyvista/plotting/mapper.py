@@ -43,7 +43,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         )
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of this mapper.
 
         Examples
@@ -80,7 +80,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return new_mapper
 
     @property
-    def scalar_range(self) -> tuple:
+    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the scalar range.
 
         Examples
@@ -112,11 +112,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim):
+    def scalar_range(self, clim):  # numpydoc ignore=GL08
         self.SetScalarRange(*clim)
 
     @property
-    def lookup_table(self) -> 'pv.LookupTable':
+    def lookup_table(self) -> 'pv.LookupTable':  # numpydoc ignore=RT01
         """Return or set the lookup table.
 
         Examples
@@ -154,11 +154,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetLookupTable()
 
     @lookup_table.setter
-    def lookup_table(self, table):
+    def lookup_table(self, table):  # numpydoc ignore=GL08
         self.SetLookupTable(table)
 
     @property
-    def color_mode(self) -> str:
+    def color_mode(self) -> str:  # numpydoc ignore=RT01
         """Return or set the color mode.
 
         Either ``'direct'``, or ``'map'``.
@@ -175,7 +175,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return 'direct'
 
     @color_mode.setter
-    def color_mode(self, value: str):
+    def color_mode(self, value: str):  # numpydoc ignore=GL08
         if value == 'direct':
             self.SetColorModeToDirectScalars()
         elif value == 'map':
@@ -184,7 +184,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             raise ValueError('Color mode must be either "default", "direct" or "map"')
 
     @property
-    def interpolate_before_map(self) -> bool:
+    def interpolate_before_map(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the interpolation of scalars before mapping.
 
         Enabling makes for a smoother scalars display.  When ``False``,
@@ -230,11 +230,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return bool(self.GetInterpolateScalarsBeforeMapping())
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):
+    def interpolate_before_map(self, value: bool):  # numpydoc ignore=GL08
         self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
-    def array_name(self) -> str:
+    def array_name(self) -> str:  # numpydoc ignore=RT01
         """Return or set the array name or number and component to color by.
 
         Examples
@@ -254,12 +254,12 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetArrayName()
 
     @array_name.setter
-    def array_name(self, name: str):
+    def array_name(self, name: str):  # numpydoc ignore=GL08
         """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)
 
     @property
-    def scalar_map_mode(self) -> str:
+    def scalar_map_mode(self) -> str:  # numpydoc ignore=RT01
         """Return or set the scalar map mode.
 
         Examples
@@ -294,7 +294,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):
+    def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):  # numpydoc ignore=GL08
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()  # type: ignore
@@ -317,7 +317,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             )
 
     @property
-    def scalar_visibility(self) -> bool:
+    def scalar_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the scalar visibility.
 
         Examples
@@ -350,7 +350,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return bool(self.GetScalarVisibility())
 
     @scalar_visibility.setter
-    def scalar_visibility(self, value: bool):
+    def scalar_visibility(self, value: bool):  # numpydoc ignore=GL08
         return self.SetScalarVisibility(value)
 
     def update(self):
@@ -396,17 +396,17 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pv.core.dataset.DataSet']:
+    def dataset(self) -> Optional['pv.core.dataset.DataSet']:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         return wrap(self.GetInputAsDataSet())
 
     @dataset.setter
     def dataset(
         self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
-    ):
+    ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
-    def as_rgba(self):
+    def as_rgba(self):  # numpydoc ignore=GL08
         """Convert the active scalars to RGBA.
 
         This method is used to convert the active scalars to a fixed RGBA array
@@ -749,7 +749,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.as_rgba()
 
     @property
-    def cmap(self):
+    def cmap(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Colormap assigned to this mapper."""
         return self._cmap
 
@@ -817,7 +817,19 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
 @no_new_attr
 class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
-    """Wrap vtkPointGaussianMapper."""
+    """Wrap vtkPointGaussianMapper.
+
+    Parameters
+    ----------
+    theme : pyvista.Theme, optional
+        The theme to be used.
+    emissive : bool, optional
+        Whether or not the point should appear emissive. Default is set by the
+        theme's ``lighting_params.emissive``.
+    scale_factor : float, default: 1.0
+        Scale factor applied to the point size.
+
+    """
 
     def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:
         super().__init__(theme=theme)
@@ -827,7 +839,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         self.scale_factor = scale_factor
 
     @property
-    def emissive(self) -> bool:
+    def emissive(self) -> bool:  # numpydoc ignore=RT01
         """Set or return emissive.
 
         This treats points as emissive light sources. Two points that overlap
@@ -836,11 +848,11 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         return bool(self.GetEmissive())
 
     @emissive.setter
-    def emissive(self, value: bool):
+    def emissive(self, value: bool):  # numpydoc ignore=GL08
         return self.SetEmissive(value)
 
     @property
-    def scale_factor(self) -> float:
+    def scale_factor(self) -> float:  # numpydoc ignore=RT01
         """Set or return the scale factor.
 
         Ranges from 0 to 1. A value of 0 will cause the splats to be rendered
@@ -850,7 +862,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         return self.GetScaleFactor()
 
     @scale_factor.setter
-    def scale_factor(self, value: float):
+    def scale_factor(self, value: float):  # numpydoc ignore=GL08
         return self.SetScaleFactor(value)
 
     def use_circular_splat(self, opacity: float = 1.0):
@@ -915,16 +927,16 @@ class _BaseVolumeMapper(_BaseMapper):
         self._scalar_range = (0.0, 256.0)
 
     @property
-    def interpolate_before_map(self):
+    def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
         return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, *args):
+    def interpolate_before_map(self, *args):  # numpydoc ignore=GL08
         pass
 
     @property
-    def dataset(self):
+    def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         # GetInputAsDataSet unavailable on volume mappers
         return wrap(self.GetDataSetInput())
@@ -936,26 +948,26 @@ class _BaseVolumeMapper(_BaseMapper):
         set_algorithm_input(self, obj)
 
     @property
-    def lookup_table(self):
+    def lookup_table(self):  # numpydoc ignore=GL08  # numpydoc ignore=RT01
         return self._lut
 
     @lookup_table.setter
-    def lookup_table(self, lut):
+    def lookup_table(self, lut):  # numpydoc ignore=GL08
         self._lut = lut
 
     @property
-    def scalar_range(self) -> tuple:
+    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the scalar range."""
         return self._scalar_range
 
     @scalar_range.setter
-    def scalar_range(self, clim):
+    def scalar_range(self, clim):  # numpydoc ignore=GL08
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
         self._scalar_range = tuple(clim)
 
     @property
-    def blend_mode(self) -> str:
+    def blend_mode(self) -> str:  # numpydoc ignore=RT01
         """Return or set the blend mode.
 
         One of the following:
@@ -988,7 +1000,7 @@ class _BaseVolumeMapper(_BaseMapper):
         )  # pragma: no cover
 
     @blend_mode.setter
-    def blend_mode(self, value: Union[str, int]):
+    def blend_mode(self, value: Union[str, int]):  # numpydoc ignore=GL08
         if isinstance(value, int):
             self.SetBlendMode(value)
         elif isinstance(value, str):

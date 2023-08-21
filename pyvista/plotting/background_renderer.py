@@ -7,7 +7,20 @@ from .renderer import Renderer
 
 
 class BackgroundRenderer(Renderer):
-    """BackgroundRenderer for visualizing a background image."""
+    """BackgroundRenderer for visualizing a background image.
+
+    Parameters
+    ----------
+    parent : Renderer
+        The parent renderer for the background renderer.
+    image_path : str
+        Path to the image to use as a background.
+    scale : float, default: 1
+        Scaling factor for the background image.
+    view_port : tuple[float], optional
+        Viewport for the background renderer.
+
+    """
 
     def __init__(self, parent, image_path, scale=1, view_port=None):
         """Initialize BackgroundRenderer with an image."""
@@ -37,7 +50,14 @@ class BackgroundRenderer(Renderer):
         self.resize()
 
     def resize(self, *args):
-        """Resize a background renderer."""
+        """Resize a background renderer.
+
+        Parameters
+        ----------
+        *args : tuple
+            Ignored arguments.
+
+        """
         if self.parent is None:  # when deleted
             return
         if self.parent.render_window is None:  # BasePlotter

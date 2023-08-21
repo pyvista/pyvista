@@ -300,6 +300,40 @@ Note the following:
 * The examples section references the "full example" in the gallery if it
   exists.
 
+These standards will be enforced using ``pre-commit`` using
+``numpydoc-validate``, with errors being reported as:
+
+.. code-block:: text
+
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | file            | item                     | check   | description                                     |
+   +=================+==========================+=========+=================================================+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | features.py:250 | features.merge           | PR09    | Parameter "datasets" description should finish  |
+   |                 |                          |         | with "."                                        |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+
+If for whatever reason you feel that your function should have an exception to
+any of the rules, add an exception to the function either in the
+``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
+comment to exclude a certain check. For example, we do not enforce
+documentation strings for setters and skip the GL08 check.
+
+.. code:: python
+
+    @strips.setter
+    def strips(self, strips):  # numpydoc ignore=GL08
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
+
+See the available validation checks in `numpydoc Validation
+<https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
+
 
 Deprecating Features or other Backwards-Breaking Changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

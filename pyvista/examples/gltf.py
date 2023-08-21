@@ -1,4 +1,4 @@
-"""glTF examples."""
+"""Contains glTF examples."""
 
 import pooch
 

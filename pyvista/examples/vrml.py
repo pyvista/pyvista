@@ -1,4 +1,4 @@
-"""vrml examples."""
+"""Contains vrml examples."""
 
 from .downloads import download_file
 

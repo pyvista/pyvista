@@ -309,7 +309,7 @@ class WidgetHelper:
 
         self.box_clipped_meshes.append(box_clipped_mesh)
 
-        def callback(planes):
+        def callback(planes):  # numpydoc ignore=GL08
             bounds = []
             for i in range(planes.GetNumberOfPlanes()):
                 plane = planes.GetPlane(i)
@@ -686,7 +686,7 @@ class WidgetHelper:
             plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, loc):
+        def callback(normal, loc):  # numpydoc ignore=GL08
             function = generate_plane(normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
@@ -814,7 +814,7 @@ class WidgetHelper:
 
         plane = _vtk.vtkPlane()
 
-        def callback(normal, origin):
+        def callback(normal, origin):  # numpydoc ignore=PR01
             """Update the plane used to clip the volume."""
             plane.SetNormal(normal)
             plane.SetOrigin(origin)
@@ -943,7 +943,7 @@ class WidgetHelper:
         plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
-        def callback(normal, origin):
+        def callback(normal, origin):  # numpydoc ignore=GL08
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
@@ -1237,7 +1237,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, event):
+        def title_callback(widget, event):  # numpydoc ignore=GL08
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1391,7 +1391,7 @@ class WidgetHelper:
         if fmt is None:
             fmt = pyvista.global_theme.font.fmt
 
-        def normalize(point, viewport):
+        def normalize(point, viewport):  # numpydoc ignore=GL08
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())
@@ -1599,7 +1599,7 @@ class WidgetHelper:
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
-        def callback(value):
+        def callback(value):  # numpydoc ignore=GL08
             _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
@@ -1746,7 +1746,7 @@ class WidgetHelper:
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
-        def callback(value):
+        def callback(value):  # numpydoc ignore=GL08
             alg.SetValue(0, value)
             alg.Update()
             isovalue_mesh.shallow_copy(alg.GetOutput())
@@ -1997,7 +1997,7 @@ class WidgetHelper:
         spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline):
+        def callback(spline):  # numpydoc ignore=GL08
             polyline = spline.GetCell(0)
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
@@ -2076,7 +2076,7 @@ class WidgetHelper:
 
         self.iren.picker = PickerType.POINT
 
-        def place_point(*_):
+        def place_point(*_):  # numpydoc ignore=GL08
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
             representation.GetPoint1DisplayPosition(p1)
@@ -2324,7 +2324,7 @@ class WidgetHelper:
         if self.iren is None:  # pragma: no cover
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
-        def create_button(color1, color2, color3, dims=(size, size, 1)):
+        def create_button(color1, color2, color3, dims=(size, size, 1)):  # numpydoc ignore=GL08
             color1 = np.array(Color(color1).int_rgb)
             color2 = np.array(Color(color2).int_rgb)
             color3 = np.array(Color(color3).int_rgb)

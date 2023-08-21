@@ -100,7 +100,7 @@ class BlockAttributes:
         return self._attr.HasBlockPickability(self._block)
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Get or set the color of a block.
 
         Examples
@@ -126,7 +126,7 @@ class BlockAttributes:
         return Color(tuple(self._attr.GetBlockColor(self._block)))
 
     @color.setter
-    def color(self, new_color):
+    def color(self, new_color):  # numpydoc ignore=GL08
         if new_color is None:
             self._attr.RemoveBlockColor(self._block)
             self._attr.Modified()
@@ -134,7 +134,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:
+    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -159,7 +159,7 @@ class BlockAttributes:
         return self._attr.GetBlockVisibility(self._block)
 
     @visible.setter
-    def visible(self, new_visible: bool):
+    def visible(self, new_visible: bool):  # numpydoc ignore=GL08
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
             self._attr.Modified()
@@ -167,7 +167,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:
+    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -199,8 +199,7 @@ class BlockAttributes:
         return self._attr.GetBlockOpacity(self._block)
 
     @opacity.setter
-    def opacity(self, new_opacity: float):
-        """Get or set the visibility of a block."""
+    def opacity(self, new_opacity: float):  # numpydoc ignore=GL08
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
             self._attr.Modified()
@@ -210,7 +209,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:
+    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples
@@ -239,7 +238,7 @@ class BlockAttributes:
         return self._attr.GetBlockPickability(self._block)
 
     @pickable.setter
-    def pickable(self, new_pickable: bool):
+    def pickable(self, new_pickable: bool):  # numpydoc ignore=GL08
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
             self._attr.Modified()
@@ -559,7 +558,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':
+    def dataset(self) -> 'pv.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -581,7 +580,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._dataset
 
     @property
-    def block_attr(self) -> CompositeAttributes:
+    def block_attr(self) -> CompositeAttributes:  # numpydoc ignore=RT01
         """Return the block attributes.
 
         Notes
@@ -625,7 +624,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._attr
 
     @property
-    def color_missing_with_nan(self) -> bool:
+    def color_missing_with_nan(self) -> bool:  # numpydoc ignore=RT01
         """Color missing arrays with the NaN color.
 
         Examples
@@ -649,7 +648,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self.GetColorMissingArraysWithNanColor()
 
     @color_missing_with_nan.setter
-    def color_missing_with_nan(self, value: bool):
+    def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
     def set_unique_colors(self):
