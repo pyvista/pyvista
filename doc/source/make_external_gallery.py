@@ -204,6 +204,12 @@ articles = dict(
         link="https://docs.sunpy.org/projects/sunkit-pyvista/en/latest/",
         image="sunkit-pyvista.png",
     ),
+    gemgis=Example(
+        title="GemGIS",
+        description="Spatial data processing for geomodeling.",
+        link="https://gemgis.readthedocs.io/en/latest",
+        image="gemgis.png",
+    ),
     # entry=Example(title="",
     #     description="",
     #     link="",

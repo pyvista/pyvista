@@ -325,53 +325,108 @@ def test_append_raises(sphere: pyvista.PolyData):
 
 
 def test_merge(sphere, sphere_shifted, hexbeam):
-    merged = sphere.merge(hexbeam, progress_bar=True)
+    merged = sphere.merge(hexbeam, merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
     assert isinstance(merged, pyvista.UnstructuredGrid)
+    assert merged.active_scalars_name is None
 
     # list with unstructuredgrid case
     merged = sphere.merge([hexbeam, hexbeam], merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points * 2)
     assert isinstance(merged, pyvista.UnstructuredGrid)
+    assert merged.active_scalars_name is None
 
     # with polydata
     merged = sphere.merge(sphere_shifted, progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.active_scalars_name is None
 
     # with polydata list (no merge)
     merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False, progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points * 2
+    assert merged.active_scalars_name is None
 
     # with polydata list (merge)
     merged = sphere.merge([sphere_shifted, sphere_shifted], progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.active_scalars_name is None
 
     # test in-place merge
     mesh = sphere.copy()
     merged = mesh.merge(sphere_shifted, inplace=True)
     assert merged is mesh
+    assert merged.active_scalars_name is None
 
     # test merge with lines
     arc_1 = pyvista.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
     arc_2 = pyvista.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
     merged = arc_1 + arc_2
     assert merged.n_lines == 2
+    assert merged.active_scalars_name == 'Distance'
 
     # test merge with lines as iterable
     merged = arc_1.merge((arc_2, arc_2))
     assert merged.n_lines == 3
+    assert merged.active_scalars_name == 'Distance'
 
-    # test main_has_priority
-    mesh = sphere.copy()
+
+@pytest.mark.parametrize('input', [examples.load_hexbeam(), pyvista.Sphere()])
+def test_merge_active_scalars(input):
+    mesh1 = input.copy()
+    mesh1['foo'] = np.arange(mesh1.n_points)
+    mesh2 = mesh1.copy()
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = None
+    b.active_scalars_name = None
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = 'foo'
+    b.active_scalars_name = None
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = None
+    b.active_scalars_name = 'foo'
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = 'foo'
+    b.active_scalars_name = 'foo'
+    merged = a.merge(b)
+    assert merged.active_scalars_name == 'foo'
+    merged = b.merge(a)
+    assert merged.active_scalars_name == 'foo'
+
+
+@pytest.mark.parametrize('input', [examples.load_hexbeam(), pyvista.Sphere()])
+def test_merge_main_has_priority(input):
+    mesh = input.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
+    mesh.set_active_scalars('present_in_both')
+
     other = mesh.copy()
     data_other = -data_main
     other.point_data['present_in_both'] = data_other
-    merged = mesh.merge(other, main_has_priority=True)
+    other.set_active_scalars('present_in_both')
 
     # note: order of points can change after point merging
     def matching_point_data(this, that, scalars_name):
@@ -382,9 +437,13 @@ def test_merge(sphere, sphere_shifted, hexbeam):
             for j in (this.points == point).all(-1).nonzero()
         )
 
+    merged = mesh.merge(other, main_has_priority=True)
     assert matching_point_data(merged, mesh, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
+
     merged = mesh.merge(other, main_has_priority=False)
     assert matching_point_data(merged, other, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
 
 
 def test_add(sphere, sphere_shifted):
@@ -912,3 +971,40 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
 
     with pytest.raises(ValueError, match=match):
         combined.geodesic_distance(start_vertex, end_vertex)
+
+
+def test_tetrahedron_regular_faces():
+    tetra = pyvista.Tetrahedron()
+    assert np.array_equal(tetra.faces.reshape(-1, 4)[:, 1:], tetra.regular_faces)
+
+
+@pytest.mark.parametrize('deep', [False, True])
+def test_regular_faces(deep):
+    points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
+    faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
+    mesh = pyvista.PolyData.from_regular_faces(points, faces, deep=deep)
+    expected_faces = (
+        np.hstack([np.full((len(faces), 1), 3), faces]).astype(pyvista.ID_TYPE).flatten()
+    )
+    assert np.array_equal(mesh.faces, expected_faces)
+    assert np.array_equal(mesh.regular_faces, faces)
+
+
+def test_set_regular_faces():
+    mesh = pyvista.Tetrahedron()
+    flipped_faces = mesh.regular_faces[:, ::-1]
+    mesh.regular_faces = flipped_faces
+    assert np.array_equal(mesh.regular_faces, flipped_faces)
+
+
+def test_empty_regular_faces():
+    mesh = pyvista.PolyData()
+    assert np.array_equal(mesh.regular_faces, np.array([], dtype=pyvista.ID_TYPE))
+
+
+def test_regular_faces_mutable():
+    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2]]
+    mesh = pyvista.PolyData.from_regular_faces(points, faces)
+    mesh.regular_faces[0, 2] = 3
+    assert np.array_equal(mesh.faces, [3, 0, 1, 3])

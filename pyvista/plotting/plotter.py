@@ -342,19 +342,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._suppress_rendering = False
 
     @property
-    def suppress_rendering(self):
-        """Get or set whether to suppress render calls."""
+    def suppress_rendering(self):  # numpydoc ignore=RT01
+        """Get or set whether to suppress render calls.
+
+        Returns
+        -------
+        bool
+            ``True`` when rendering is suppressed.
+
+        """
         return self._suppress_rendering
 
     @suppress_rendering.setter
-    def suppress_rendering(self, value):
+    def suppress_rendering(self, value):  # numpydoc ignore=GL08
         self._suppress_rendering = bool(value)
 
     @property
-    def render_window(self):
-        """Access the vtkRenderWindow.
+    def render_window(self):  # numpydoc ignore=RT01
+        """Access the vtkRenderWindow attached to this plotter.
 
         If the plotter is closed, this will return ``None``.
+
+        Returns
+        -------
+        vtk.vtkRenderWindow or None
+            Render window if the plotter is not closed.
 
         Notes
         -----
@@ -365,8 +377,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.ren_win
 
     @property
-    def theme(self):
+    def theme(self):  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
+
+        Returns
+        -------
+        pyvista.Theme
+            Theme of this plotter.
 
         Examples
         --------
@@ -383,7 +400,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._theme
 
     @theme.setter
-    def theme(self, theme):
+    def theme(self, theme):  # numpydoc ignore=GL08
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             raise TypeError(
                 'Expected a pyvista theme like '
@@ -555,10 +572,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from trame.app import get_server
-
             from pyvista.trame import PyVistaLocalView
             from pyvista.trame.jupyter import elegantly_launch
+            from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame to export')
 
@@ -808,13 +824,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderer.disable_hidden_line_removal()
 
     @property
-    def scalar_bar(self):
-        """First scalar bar (kept for backwards compatibility)."""
+    def scalar_bar(self):  # numpydoc ignore=RT01
+        """First scalar bar (kept for backwards compatibility).
+
+        Returns
+        -------
+        vtk.vtkScalarBarActor
+            First scalar bar actor.
+
+        """
         return list(self.scalar_bars.values())[0]
 
     @property
-    def scalar_bars(self):
+    def scalar_bars(self):  # numpydoc ignore=RT01
         """Scalar bars.
+
+        Returns
+        -------
+        pyvista.ScalarBars
+            Scalar bar object.
 
         Examples
         --------
@@ -850,8 +878,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self):
-        """Shape of the plotter.
+    def shape(self):  # numpydoc ignore=RT01
+        """Return the shape of the plotter.
+
+        Returns
+        -------
+        tuple
+            Shape of the plotter.
 
         Examples
         --------
@@ -865,8 +898,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers._shape
 
     @property
-    def renderer(self):
+    def renderer(self):  # numpydoc ignore=RT01
         """Return the active renderer.
+
+        Returns
+        -------
+        pyvista.Renderer
+            Active render.
 
         Examples
         --------
@@ -879,7 +917,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers.active_renderer
 
     @property
-    def store_image(self):
+    def store_image(self):  # numpydoc ignore=RT01
         """Store last rendered frame on close.
 
         .. deprecated:: 0.38.0
@@ -895,7 +933,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
     @store_image.setter
-    def store_image(self, value):
+    def store_image(self, value):  # numpydoc ignore=GL08
         from pyvista.core.errors import DeprecationError
 
         raise DeprecationError(
@@ -932,42 +970,47 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.set_active_renderer(index_row, index_column)
 
     @wraps(Renderer.add_ruler)
-    def add_ruler(self, *args, **kwargs):
+    def add_ruler(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_ruler``."""
         return self.renderer.add_ruler(*args, **kwargs)
 
     @wraps(Renderer.add_legend_scale)
-    def add_legend_scale(self, *args, **kwargs):
+    def add_legend_scale(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend_scale``."""
         return self.renderer.add_legend_scale(*args, **kwargs)
 
     @wraps(Renderer.add_legend)
-    def add_legend(self, *args, **kwargs):
+    def add_legend(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend``."""
         return self.renderer.add_legend(*args, **kwargs)
 
     @wraps(Renderer.remove_legend)
-    def remove_legend(self, *args, **kwargs):
+    def remove_legend(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_legend``."""
         return self.renderer.remove_legend(*args, **kwargs)
 
     @property
-    def legend(self):
+    def legend(self):  # numpydoc ignore=RT01
         """Legend actor.
 
         There can only be one legend actor per renderer.  If
         ``legend`` is ``None``, there is no legend actor.
 
+        Returns
+        -------
+        vtk.vtkLegendBoxActor
+            Legend actor.
+
         """
         return self.renderer.legend
 
     @wraps(Renderer.add_floor)
-    def add_floor(self, *args, **kwargs):
+    def add_floor(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_floor``."""
         return self.renderer.add_floor(*args, **kwargs)
 
     @wraps(Renderer.remove_floors)
-    def remove_floors(self, *args, **kwargs):
+    def remove_floors(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
 
@@ -1143,6 +1186,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(
                 f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"'
             )
+        else:
+            # disable MSAA as SSAA or FXAA is being enabled
+            self.render_window.SetMultiSamples(0)
 
         if all_renderers:
             for renderer in self.renderers:
@@ -1180,7 +1226,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderer.disable_anti_aliasing()
 
     @wraps(Renderer.set_focus)
-    def set_focus(self, *args, render=True, **kwargs):
+    def set_focus(self, *args, render=True, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_focus``."""
         log.debug('set_focus: %s, %s', str(args), str(kwargs))
         self.renderer.set_focus(*args, **kwargs)
@@ -1188,242 +1234,240 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.render()
 
     @wraps(Renderer.set_position)
-    def set_position(self, *args, render=True, **kwargs):
+    def set_position(self, *args, render=True, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_position``."""
         self.renderer.set_position(*args, **kwargs)
         if render:
             self.render()
 
     @wraps(Renderer.set_viewup)
-    def set_viewup(self, *args, render=True, **kwargs):
+    def set_viewup(self, *args, render=True, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_viewup``."""
         self.renderer.set_viewup(*args, **kwargs)
         if render:
             self.render()
 
     @wraps(Renderer.add_orientation_widget)
-    def add_orientation_widget(self, *args, **kwargs):
+    def add_orientation_widget(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_orientation_widget``."""
         return self.renderer.add_orientation_widget(*args, **kwargs)
 
     @wraps(Renderer.add_axes)
-    def add_axes(self, *args, **kwargs):
+    def add_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
 
     @wraps(Renderer.hide_axes)
-    def hide_axes(self, *args, **kwargs):
+    def hide_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.hide_axes``."""
         return self.renderer.hide_axes(*args, **kwargs)
 
     @wraps(Renderer.show_axes)
-    def show_axes(self, *args, **kwargs):
+    def show_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_axes``."""
         return self.renderer.show_axes(*args, **kwargs)
 
     @wraps(Renderer.update_bounds_axes)
-    def update_bounds_axes(self, *args, **kwargs):
+    def update_bounds_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.update_bounds_axes``."""
         return self.renderer.update_bounds_axes(*args, **kwargs)
 
     @wraps(Renderer.add_chart)
-    def add_chart(self, *args, **kwargs):
+    def add_chart(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_chart``."""
         return self.renderer.add_chart(*args, **kwargs)
 
     @wraps(Renderer.remove_chart)
-    def remove_chart(self, *args, **kwargs):
+    def remove_chart(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_chart``."""
         return self.renderer.remove_chart(*args, **kwargs)
 
     @wraps(Renderers.set_chart_interaction)
-    def set_chart_interaction(self, *args, **kwargs):
+    def set_chart_interaction(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_chart_interaction``."""
         return self.renderers.set_chart_interaction(*args, **kwargs)
 
     @wraps(Renderer.add_actor)
-    def add_actor(self, *args, **kwargs):
+    def add_actor(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
     @wraps(Renderer.enable_parallel_projection)
-    def enable_parallel_projection(self, *args, **kwargs):
+    def enable_parallel_projection(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_parallel_projection``."""
         return self.renderer.enable_parallel_projection(*args, **kwargs)
 
     @wraps(Renderer.disable_parallel_projection)
-    def disable_parallel_projection(self, *args, **kwargs):
+    def disable_parallel_projection(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
     @wraps(Renderer.enable_ssao)
-    def enable_ssao(self, *args, **kwargs):
+    def enable_ssao(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_ssao``."""
         return self.renderer.enable_ssao(*args, **kwargs)
 
     @wraps(Renderer.disable_ssao)
-    def disable_ssao(self, *args, **kwargs):
+    def disable_ssao(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_ssao``."""
         return self.renderer.disable_ssao(*args, **kwargs)
 
     @wraps(Renderer.enable_shadows)
-    def enable_shadows(self, *args, **kwargs):
+    def enable_shadows(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_shadows``."""
         return self.renderer.enable_shadows(*args, **kwargs)
 
     @wraps(Renderer.disable_shadows)
-    def disable_shadows(self, *args, **kwargs):
+    def disable_shadows(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_shadows``."""
         return self.renderer.disable_shadows(*args, **kwargs)
 
     @property
-    def parallel_projection(self):
-        """Return parallel projection state of active render window."""
+    def parallel_projection(self):  # numpydoc ignore=RT01
+        """Return or set parallel projection state of active render window."""
         return self.renderer.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):
-        """Set parallel projection state of all active render windows."""
+    def parallel_projection(self, state):  # numpydoc ignore=GL08
         self.renderer.parallel_projection = state
 
     @property
-    def parallel_scale(self):
-        """Return parallel scale of active render window."""
+    def parallel_scale(self):  # numpydoc ignore=RT01
+        """Return or set parallel scale of active render window."""
         return self.renderer.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value):
-        """Set parallel scale of all active render windows."""
+    def parallel_scale(self, value):  # numpydoc ignore=GL08
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
-    def add_axes_at_origin(self, *args, **kwargs):
+    def add_axes_at_origin(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
     @wraps(Renderer.show_bounds)
-    def show_bounds(self, *args, **kwargs):
+    def show_bounds(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_bounds``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
     @wraps(Renderer.add_bounding_box)
-    def add_bounding_box(self, *args, **kwargs):
+    def add_bounding_box(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_bounding_box``."""
         return self.renderer.add_bounding_box(*args, **kwargs)
 
     @wraps(Renderer.remove_bounding_box)
-    def remove_bounding_box(self, *args, **kwargs):
+    def remove_bounding_box(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_bounding_box``."""
         return self.renderer.remove_bounding_box(*args, **kwargs)
 
     @wraps(Renderer.remove_bounds_axes)
-    def remove_bounds_axes(self, *args, **kwargs):
+    def remove_bounds_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_bounds_axes``."""
         return self.renderer.remove_bounds_axes(*args, **kwargs)
 
     @wraps(Renderer.show_grid)
-    def show_grid(self, *args, **kwargs):
+    def show_grid(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_grid``."""
         return self.renderer.show_grid(*args, **kwargs)
 
     @wraps(Renderer.set_scale)
-    def set_scale(self, *args, **kwargs):
+    def set_scale(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_scale``."""
         return self.renderer.set_scale(*args, **kwargs)
 
     @wraps(Renderer.enable_depth_of_field)
-    def enable_depth_of_field(self, *args, **kwargs):
+    def enable_depth_of_field(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_depth_of_field``."""
         return self.renderer.enable_depth_of_field(*args, **kwargs)
 
     @wraps(Renderer.disable_depth_of_field)
-    def disable_depth_of_field(self, *args, **kwargs):
+    def disable_depth_of_field(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_depth_of_field``."""
         return self.renderer.disable_depth_of_field(*args, **kwargs)
 
     @wraps(Renderer.add_blurring)
-    def add_blurring(self, *args, **kwargs):
+    def add_blurring(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_blurring``."""
         return self.renderer.add_blurring(*args, **kwargs)
 
     @wraps(Renderer.remove_blurring)
-    def remove_blurring(self, *args, **kwargs):
+    def remove_blurring(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
 
     @wraps(Renderer.enable_eye_dome_lighting)
-    def enable_eye_dome_lighting(self, *args, **kwargs):
+    def enable_eye_dome_lighting(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_eye_dome_lighting``."""
         return self.renderer.enable_eye_dome_lighting(*args, **kwargs)
 
     @wraps(Renderer.disable_eye_dome_lighting)
-    def disable_eye_dome_lighting(self, *args, **kwargs):
+    def disable_eye_dome_lighting(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_eye_dome_lighting``."""
         self.renderer.disable_eye_dome_lighting(*args, **kwargs)
 
     @wraps(Renderer.reset_camera)
-    def reset_camera(self, *args, **kwargs):
+    def reset_camera(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.reset_camera``."""
         self.renderer.reset_camera(*args, **kwargs)
         self.render()
 
     @wraps(Renderer.isometric_view)
-    def isometric_view(self, *args, **kwargs):
+    def isometric_view(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.isometric_view``."""
         self.renderer.isometric_view(*args, **kwargs)
 
     @wraps(Renderer.view_isometric)
-    def view_isometric(self, *args, **kwarg):
+    def view_isometric(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_isometric``."""
         self.renderer.view_isometric(*args, **kwarg)
 
     @wraps(Renderer.view_vector)
-    def view_vector(self, *args, **kwarg):
+    def view_vector(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_vector``."""
         self.renderer.view_vector(*args, **kwarg)
 
     @wraps(Renderer.view_xy)
-    def view_xy(self, *args, **kwarg):
+    def view_xy(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_xy``."""
         self.renderer.view_xy(*args, **kwarg)
 
     @wraps(Renderer.view_yx)
-    def view_yx(self, *args, **kwarg):
+    def view_yx(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_yx``."""
         self.renderer.view_yx(*args, **kwarg)
 
     @wraps(Renderer.view_xz)
-    def view_xz(self, *args, **kwarg):
+    def view_xz(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_xz``."""
         self.renderer.view_xz(*args, **kwarg)
 
     @wraps(Renderer.view_zx)
-    def view_zx(self, *args, **kwarg):
+    def view_zx(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_zx``."""
         self.renderer.view_zx(*args, **kwarg)
 
     @wraps(Renderer.view_yz)
-    def view_yz(self, *args, **kwarg):
+    def view_yz(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_yz``."""
         self.renderer.view_yz(*args, **kwarg)
 
     @wraps(Renderer.view_zy)
-    def view_zy(self, *args, **kwarg):
+    def view_zy(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_zy``."""
         self.renderer.view_zy(*args, **kwarg)
 
     @wraps(Renderer.disable)
-    def disable(self, *args, **kwarg):
+    def disable(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable``."""
         self.renderer.disable(*args, **kwarg)
 
     @wraps(Renderer.enable)
-    def enable(self, *args, **kwarg):
+    def enable(self, *args, **kwarg):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable``."""
         self.renderer.enable(*args, **kwarg)
 
     @wraps(Renderer.enable_depth_peeling)
-    def enable_depth_peeling(self, *args, **kwargs):
+    def enable_depth_peeling(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_depth_peeling``."""
         if self.render_window is not None:
             result = self.renderer.enable_depth_peeling(*args, **kwargs)
@@ -1432,44 +1476,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return result
 
     @wraps(Renderer.disable_depth_peeling)
-    def disable_depth_peeling(self):
+    def disable_depth_peeling(self):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_depth_peeling``."""
         if self.render_window is not None:
             self.render_window.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
 
     @wraps(Renderer.get_default_cam_pos)
-    def get_default_cam_pos(self, *args, **kwargs):
+    def get_default_cam_pos(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
     @wraps(Renderer.remove_actor)
-    def remove_actor(self, *args, **kwargs):
+    def remove_actor(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_actor``."""
         for renderer in self.renderers:
             renderer.remove_actor(*args, **kwargs)
         return True
 
     @wraps(Renderer.set_environment_texture)
-    def set_environment_texture(self, *args, **kwargs):
+    def set_environment_texture(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_environment_texture``."""
         return self.renderer.set_environment_texture(*args, **kwargs)
 
     @wraps(Renderer.remove_environment_texture)
-    def remove_environment_texture(self, *args, **kwargs):
+    def remove_environment_texture(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_environment_texture``."""
         return self.renderer.remove_environment_texture(*args, **kwargs)
 
     #### Properties from Renderer ####
 
     @property
-    def actors(self):
-        """Return the actors of the active renderer."""
+    def actors(self):  # numpydoc ignore=RT01
+        """Return the actors of the active renderer.
+
+        Returns
+        -------
+        dict
+            Dictionary of active actors.
+
+        """
         return self.renderer.actors
 
     @property
-    def camera(self):
-        """Return the active camera of the active renderer."""
+    def camera(self):  # numpydoc ignore=RT01
+        """Return the active camera of the active renderer.
+
+        Returns
+        -------
+        pyvista.Camera
+            Camera from the active renderer.
+
+        """
         if not self.renderer.camera.is_set:
             self.camera_position = self.get_default_cam_pos()
             self.reset_camera()
@@ -1477,22 +1535,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera
 
     @camera.setter
-    def camera(self, camera):
-        """Set the active camera for the rendering scene."""
+    def camera(self, camera):  # numpydoc ignore=GL08
         self.renderer.camera = camera
 
     @property
-    def camera_set(self):
-        """Return if the camera of the active renderer has been set."""
+    def camera_set(self):  # numpydoc ignore=RT01
+        """Return or set if the camera of the active renderer has been set."""
         return self.renderer.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set):
-        """Set if the camera has been set on the active renderer."""
+    def camera_set(self, is_set):  # numpydoc ignore=GL08
         self.renderer.camera.is_set = is_set
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of the active renderer.
 
         Returns
@@ -1512,12 +1568,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.bounds
 
     @property
-    def length(self):
+    def length(self):  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box of the scene."""
         return self.renderer.length
 
     @property
-    def center(self):
+    def center(self):  # numpydoc ignore=RT01
         """Return the center of the active renderer."""
         return self.renderer.center
 
@@ -1538,21 +1594,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @_scalar_bar_slot_lookup.setter
     def _scalar_bar_slot_lookup(self, value):
-        """Set the scalar bar slot lookup of the active renderer."""
         self.renderer._scalar_bar_slot_lookup = value
 
     @property
-    def scale(self):
+    def scale(self):  # numpydoc ignore=RT01
         """Return the scaling of the active renderer."""
         return self.renderer.scale
 
     @scale.setter
-    def scale(self, scale):
-        """Set the scaling of the active renderer."""
+    def scale(self, scale):  # numpydoc ignore=GL08
         self.renderer.set_scale(*scale)
 
     @property
-    def camera_position(self):
+    def camera_position(self):  # numpydoc ignore=RT01
         """Return camera position of the active render window.
 
         Examples
@@ -1595,12 +1649,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location):
-        """Set camera position of the active render window."""
+    def camera_position(self, camera_location):  # numpydoc ignore=GL08
         self.renderer.camera_position = camera_location
 
     @property
-    def background_color(self):
+    def background_color(self):  # numpydoc ignore=RT01
         """Return the background color of the active render window.
 
         Examples
@@ -1619,12 +1672,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
-    def background_color(self, color):
-        """Set the background color of all the render windows."""
+    def background_color(self, color):  # numpydoc ignore=GL08
         self.set_background(color)
 
     @property
-    def window_size(self):
+    def window_size(self):  # numpydoc ignore=RT01
         """Return the render window size in ``(width, height)``.
 
         Examples
@@ -1643,8 +1695,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return list(self.render_window.GetSize())
 
     @window_size.setter
-    def window_size(self, window_size):
-        """Set the render window size."""
+    def window_size(self, window_size):  # numpydoc ignore=GL08
         self.render_window.SetSize(window_size[0], window_size[1])
         self._window_size_unset = False
         self.render()
@@ -1694,7 +1745,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.window_size = size_before
 
     @property
-    def image_depth(self):
+    def image_depth(self):  # numpydoc ignore=RT01
         """Return a depth image representing current render window.
 
         Helper attribute for ``get_image_depth``.
@@ -1725,7 +1776,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.render_window.MakeCurrent()  # pragma: no cover
 
     @property
-    def image(self):
+    def image(self):  # numpydoc ignore=RT01
         """Return an image array of current render window."""
         if self.render_window is None and self.last_image is not None:
             return self.last_image
@@ -1741,7 +1792,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return data[:, :, :-1]
 
     @property
-    def image_scale(self) -> int:
+    def image_scale(self) -> int:  # numpydoc ignore=RT01
         """Get or set the scale factor when saving a screenshot.
 
         This will scale up the screenshots taken of the render window to save a
@@ -1749,6 +1800,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Image sizes will be the :py:attr:`window_size
         <pyvista.Plotter.window_size>` multiplied by this scale factor.
+
+        Returns
+        -------
+        int
+            Image scale factor.
 
         Examples
         --------
@@ -1771,7 +1827,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._image_scale
 
     @image_scale.setter
-    def image_scale(self, value: int):
+    def image_scale(self, value: int):  # numpydoc ignore=GL08
         value = int(value)
         if value < 1:
             raise ValueError('Scale factor must be a positive integer.')
@@ -1840,13 +1896,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._on_render_callbacks = set()
 
     @wraps(RenderWindowInteractor.add_key_event)
-    def add_key_event(self, *args, **kwargs):
+    def add_key_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_key_event."""
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.clear_events_for_key)
-    def clear_events_for_key(self, *args, **kwargs):
+    def clear_events_for_key(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
         if hasattr(self, 'iren'):
             self.iren.clear_events_for_key(*args, **kwargs)
@@ -1879,17 +1935,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.untrack_mouse_position()
 
     @wraps(RenderWindowInteractor.track_click_position)
-    def track_click_position(self, *args, **kwargs):
+    def track_click_position(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.track_click_position."""
         self.iren.track_click_position(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.untrack_click_position)
-    def untrack_click_position(self, *args, **kwargs):
+    def untrack_click_position(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Stop tracking the click position."""
         self.iren.untrack_click_position(*args, **kwargs)
 
     @property
-    def pickable_actors(self):
+    def pickable_actors(self):  # numpydoc ignore=RT01
         """Return or set the pickable actors.
 
         When setting, this will be the list of actors to make
@@ -1899,6 +1955,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Returns
         -------
         list[pyvista.Actor]
+            List of actors.
 
         Examples
         --------
@@ -1935,8 +1992,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return pickable
 
     @pickable_actors.setter
-    def pickable_actors(self, actors=None):
-        """Set the pickable actors."""
+    def pickable_actors(self, actors=None):  # numpydoc ignore=GL08
         actors = [] if actors is None else actors
         if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
@@ -2004,7 +2060,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
     @wraps(RenderWindowInteractor.key_press_event)
-    def key_press_event(self, *args, **kwargs):
+    def key_press_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.key_press_event."""
         self.iren.key_press_event(*args, **kwargs)
 
@@ -2025,47 +2081,47 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.pickpoint[:] = 0
 
     @wraps(RenderWindowInteractor.enable_trackball_style)
-    def enable_trackball_style(self):
+    def enable_trackball_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self.iren.enable_trackball_style()
 
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
-    def enable_trackball_actor_style(self):
+    def enable_trackball_actor_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
         self.iren.enable_trackball_actor_style()
 
     @wraps(RenderWindowInteractor.enable_image_style)
-    def enable_image_style(self):
+    def enable_image_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_image_style."""
         self.iren.enable_image_style()
 
     @wraps(RenderWindowInteractor.enable_joystick_style)
-    def enable_joystick_style(self):
+    def enable_joystick_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_style."""
         self.iren.enable_joystick_style()
 
     @wraps(RenderWindowInteractor.enable_joystick_actor_style)
-    def enable_joystick_actor_style(self):
+    def enable_joystick_actor_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
         self.iren.enable_joystick_actor_style()
 
     @wraps(RenderWindowInteractor.enable_zoom_style)
-    def enable_zoom_style(self):
+    def enable_zoom_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_zoom_style."""
         self.iren.enable_zoom_style()
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
-    def enable_terrain_style(self, *args, **kwargs):
+    def enable_terrain_style(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_terrain_style."""
         self.iren.enable_terrain_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
-    def enable_rubber_band_style(self):
+    def enable_rubber_band_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_style."""
         self.iren.enable_rubber_band_style()
 
     @wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
-    def enable_rubber_band_2d_style(self):
+    def enable_rubber_band_2d_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
 
@@ -3409,7 +3465,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=self.mapper)
 
-        if texture:
+        if texture is not None:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
@@ -4465,7 +4521,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
     @wraps(ScalarBars.add_scalar_bar)
-    def add_scalar_bar(self, *args, **kwargs):
+    def add_scalar_bar(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
         render = kwargs.get('render', None)
@@ -5136,7 +5192,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return actor
 
     @wraps(ScalarBars.remove_scalar_bar)
-    def remove_scalar_bar(self, *args, **kwargs):
+    def remove_scalar_bar(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
@@ -5755,12 +5811,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 return self._save_image(self.image, filename, return_img)
 
     @wraps(Renderers.set_background)
-    def set_background(self, *args, **kwargs):
+    def set_background(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_background``."""
         self.renderers.set_background(*args, **kwargs)
 
     @wraps(Renderers.set_color_cycler)
-    def set_color_cycler(self, *args, **kwargs):
+    def set_color_cycler(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_color_cycler``."""
         self.renderers.set_color_cycler(*args, **kwargs)
 
@@ -6074,7 +6130,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.iren.add_observer('ModifiedEvent', renderer.resize)
 
     @wraps(Renderers.remove_background_image)
-    def remove_background_image(self):
+    def remove_background_image(self):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.remove_background_image``."""
         self.renderers.remove_background_image()
 
@@ -6840,6 +6896,22 @@ class Plotter(BasePlotter):
         prop.SetColor(Color(color).float_rgb)
 
         return actor
+
+    @property
+    def meshes(self):  # numpydoc ignore=RT01
+        """Return plotter meshes.
+
+        Returns
+        -------
+        List[Union[pyvista.DataSet, PyVista.MultiBlock]]
+            List of mesh objects such as pv.PolyData, pv.UnstructuredGrid, etc.
+        """
+        meshes = []
+        for actor in self.actors.values():
+            if hasattr(actor, 'mapper'):
+                meshes.append(actor.mapper.dataset)
+
+        return meshes
 
 
 # Tracks created plotters.  This is the end of the module as we need to

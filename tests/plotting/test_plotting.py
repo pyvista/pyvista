@@ -98,7 +98,7 @@ def verify_image_cache_wrapper(verify_image_cache):
 @pytest.fixture()
 def multicomp_poly():
     """Create a dataset with vector values on points and cells."""
-    data = pyvista.Plane()
+    data = pyvista.Plane(direction=(0, 0, -1))
 
     vector_values_points = np.empty((data.n_points, 3))
     vector_values_points[:, 0] = np.arange(data.n_points)
@@ -261,7 +261,8 @@ def test_plot_update(sphere):
     pl.close()
 
 
-def test_plot(sphere, tmpdir, verify_image_cache):
+@pytest.mark.parametrize('anti_aliasing', [True, "msaa", False])
+def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
@@ -284,6 +285,7 @@ def test_plot(sphere, tmpdir, verify_image_cache):
         screenshot=filename,
         return_img=True,
         return_cpos=True,
+        anti_aliasing=anti_aliasing,
     )
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
@@ -1240,6 +1242,15 @@ def test_plot_texture():
 
 
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
+def test_plot_numpy_texture():
+    """Text adding a np.ndarray texture to a plot"""
+    globe = examples.load_globe()
+    texture_np = np.asarray(imageio.imread(examples.mapfile))
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(globe, texture=texture_np)
+
+
+@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -1738,7 +1749,7 @@ def test_plot_compare_four():
         data_b,
         data_c,
         data_d,
-        disply_kwargs={'color': 'w'},
+        display_kwargs={'color': 'w'},
     )
 
 
@@ -2190,7 +2201,7 @@ def test_plot_shadows():
 
     # add several planes
     for plane_y in [2, 5, 10]:
-        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, -1, 0), i_size=5, j_size=5)
         plotter.add_mesh(screen, color='white')
 
     light = pyvista.Light(
@@ -2224,7 +2235,7 @@ def test_plot_shadows_enable_disable():
 
     # add several planes
     for plane_y in [2, 5, 10]:
-        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+        screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, -1, 0), i_size=5, j_size=5)
         plotter.add_mesh(screen, color='white')
 
     light = pyvista.Light(
@@ -2921,7 +2932,7 @@ def test_export_obj(tmpdir, sphere):
 def test_multi_plot_scalars(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     res = 5
-    plane = pyvista.Plane(j_resolution=res, i_resolution=res)
+    plane = pyvista.Plane(j_resolution=res, i_resolution=res, direction=(0, 0, -1))
     plane.clear_data()
     kek = np.arange(res + 1)
     kek = np.tile(kek, (res + 1, 1))

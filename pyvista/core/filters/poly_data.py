@@ -550,9 +550,19 @@ class PolyDataFilters(DataSetFilters):
                 polydata_merged = pyvista.PolyData(
                     merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
                 )
+                # Calling update() will modify the active scalars in this specific
+                # case. Store values to restore after updating.
+                active_point_scalars_name = merged.point_data.active_scalars_name
+                active_cell_scalars_name = merged.cell_data.active_scalars_name
+
                 polydata_merged.point_data.update(merged.point_data)
                 polydata_merged.cell_data.update(merged.cell_data)
                 polydata_merged.field_data.update(merged.field_data)
+
+                # restore active scalars
+                polydata_merged.point_data.active_scalars_name = active_point_scalars_name
+                polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+
                 merged = polydata_merged
 
         if inplace:
@@ -3408,7 +3418,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        pyvista_ndarray([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+        pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are

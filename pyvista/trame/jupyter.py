@@ -4,7 +4,6 @@ import logging
 import os
 import warnings
 
-from trame.app import get_server
 from trame.ui.vuetify import VAppLayout
 from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
 
@@ -16,7 +15,7 @@ except ImportError:
 
 import pyvista
 from pyvista.trame.ui import UI_TITLE, get_or_create_viewer
-from pyvista.trame.views import CLOSED_PLOTTER_ERROR
+from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
@@ -43,7 +42,7 @@ If this issue persists, please open an issue in PyVista: https://github.com/pyvi
 logger = logging.getLogger(__name__)
 
 
-class TrameServerDownError(RuntimeError):
+class TrameServerDownError(RuntimeError):  # numpydoc ignore=PR01
     """Exception when trame server is down for Jupyter."""
 
     def __init__(self, server_name):
@@ -63,7 +62,7 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(HTML):
+class Widget(HTML):  # numpydoc ignore=PR01
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width, height, **kwargs):
@@ -76,12 +75,12 @@ class Widget(HTML):
         self._src = src
 
     @property
-    def viewer(self):
+    def viewer(self):  # numpydoc ignore=RT01
         """Get the associated viewer instance."""
         return self._viewer
 
     @property
-    def src(self):
+    def src(self):  # numpydoc ignore=RT01
         """Get the src URL."""
         return self._src
 
@@ -129,7 +128,7 @@ def launch_server(server=None, port=None, host=None):
     vtk_widgets.initialize(server)
     vuetify_widgets.initialize(server)
 
-    def on_ready(**_):
+    def on_ready(**_):  # numpydoc ignore=GL08
         logger.debug(f'Server ready: {server}')
 
     if server._running_stage == 0:
@@ -154,7 +153,7 @@ def build_url(
     server_proxy_prefix=None,
     host='localhost',
     protocol='http',
-):
+):  # numpydoc ignore=PR01,RT01
     """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
@@ -174,7 +173,7 @@ def build_url(
 
 def initialize(
     server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
-):
+):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
     state = server.state
     state.trame__title = UI_TITLE
@@ -326,7 +325,7 @@ def show_trame(
     return Widget(viewer, src, **kwargs)
 
 
-def elegantly_launch(*args, **kwargs):
+def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     """Elegantly launch the Trame server without await.
 
     This provides a mechanism to launch the Trame Jupyter backend in
@@ -359,7 +358,7 @@ def elegantly_launch(*args, **kwargs):
 """
         )
 
-    async def launch_it():
+    async def launch_it():  # numpydoc ignore=GL08
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this

@@ -392,3 +392,13 @@ def test_plotter_add_volume_clim(uniform: pyvista.ImageData):
     pl = pyvista.Plotter()
     vol = pl.add_volume(uniform, clim=clim_val)
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
+
+
+def test_plotter_meshes(sphere, cube):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_mesh(cube)
+
+    assert sphere in pl.meshes
+    assert cube in pl.meshes
+    assert len(pl.meshes) == 2

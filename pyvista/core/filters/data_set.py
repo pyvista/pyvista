@@ -403,6 +403,11 @@ class DataSetFilters:
         nodes of this mesh to a given surface. This distance will be
         added as a point array called ``'implicit_distance'``.
 
+        Nodes of this mesh which are interior to the input surface
+        geometry have a negative distance, and nodes on the exterior
+        have a positive distance. Nodes which intersect the input
+        surface has a distance of zero.
+
         Parameters
         ----------
         surface : pyvista.DataSet
@@ -426,20 +431,40 @@ class DataSetFilters:
         plane.
 
         >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
+        >>> sphere = pv.Sphere(radius=0.35)
         >>> plane = pv.Plane()
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
         <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
 
-        Plot these distances as a heatmap
+        Plot these distances as a heatmap. Note how distances above the
+        plane are positive, and distances below the plane are negative.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere, scalars='implicit_distance', cmap='bwr'
         ... )
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
+        >>> pl.show()
+
+        We can also compute the distance from all the points on the
+        plane to the sphere.
+
+        >>> _ = plane.compute_implicit_distance(sphere, inplace=True)
+
+        Again, we can plot these distances as a heatmap. Note how
+        distances inside the sphere are negative and distances outside
+        the sphere are positive.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
+        ...     plane,
+        ...     scalars='implicit_distance',
+        ...     cmap='bwr',
+        ...     clim=[-0.35, 0.35],
+        ... )
+        >>> _ = pl.add_mesh(sphere, color='w', style='wireframe')
         >>> pl.show()
 
         See :ref:`clip_with_surface_example` and
@@ -3030,9 +3055,9 @@ class DataSetFilters:
         """Sample data values at specified point locations.
 
         .. deprecated:: 0.41.0
-          `probe` will be removed in a future version. Use
-          :func:`pyvista.DataSetFilters.sample` instead.
-          If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
+           `probe` will be removed in a future version. Use
+           :func:`pyvista.DataSetFilters.sample` instead.
+           If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
 
         This uses :class:`vtkProbeFilter`.
 
@@ -3121,6 +3146,8 @@ class DataSetFilters:
         categorical=False,
         progress_bar=False,
         locator=None,
+        pass_field_data=True,
+        mark_blank=True,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3130,6 +3157,10 @@ class DataSetFilters:
         :function`pyvista.DataSetFilters.interpolate` that uses a distance
         weighting for nearby points.  If there is cell topology, `sample` is
         usually preferred.
+
+        The point data 'vtkValidPointMask' stores whether the point could be sampled
+        with a value of 1 meaning successful sampling. And a value of 0 means
+        unsuccessful.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
 
@@ -3158,9 +3189,21 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        locator : vtkAbstractCellLocator, optional
+        locator : vtkAbstractCellLocator or str, optional
             Prototype cell locator to perform the ``FindCell()``
             operation.  Default uses the DataSet ``FindCell`` method.
+            Valid strings with mapping to vtk cell locators are
+
+                * 'cell' - vtkCellLocator
+                * 'cell_tree' - vtkCellTreeLocator
+                * 'obb_tree' - vtkOBBTree
+                * 'static_cell' - vtkStaticCellLocator
+
+        pass_field_data : bool, default: True
+            Preserve source mesh's original field data arrays.
+
+        mark_blank : bool, default: True
+            Whether to mark blank points and cells in "vtkGhostType".
 
         Returns
         -------
@@ -3204,11 +3247,28 @@ class DataSetFilters:
         alg.SetSourceData(target)
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
+        alg.SetPassFieldArrays(pass_field_data)
+
+        alg.SetMarkBlankPointsAndCells(mark_blank)
         alg.SetCategoricalData(categorical)
+
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
         if locator:
+            if isinstance(locator, str):
+                locator_map = {
+                    "cell": _vtk.vtkCellLocator(),
+                    "cell_tree": _vtk.vtkCellTreeLocator(),
+                    "obb_tree": _vtk.vtkOBBTree(),
+                    "static_cell": _vtk.vtkStaticCellLocator(),
+                }
+                try:
+                    locator = locator_map[locator]
+                except KeyError as err:
+                    raise ValueError(
+                        f"locator must be a string from {locator_map.keys()}, got {locator}"
+                    ) from err
             alg.SetCellLocatorPrototype(locator)
 
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
@@ -4881,7 +4941,7 @@ class DataSetFilters:
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if inplace:
-            if type(self) == type(merged):
+            if type(self) is type(merged):
                 self.deep_copy(merged)
                 return self
             else:

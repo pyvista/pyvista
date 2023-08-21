@@ -107,6 +107,8 @@ class CompositeFilters:
 
     point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
 
+    sample = DataSetFilters.sample
+
     triangulate = DataSetFilters.triangulate
 
     def outline(self, generate_faces=False, nested=False, progress_bar=False):

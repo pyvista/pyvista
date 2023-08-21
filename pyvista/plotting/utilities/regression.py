@@ -8,7 +8,19 @@ from pyvista.plotting import _vtk
 
 
 def remove_alpha(img):
-    """Remove the alpha channel from ``vtk.vtkImageData``."""
+    """Remove the alpha channel from a ``vtk.vtkImageData``.
+
+    Parameters
+    ----------
+    img : vtk.vtkImageData
+        The input image data with an alpha channel.
+
+    Returns
+    -------
+    pyvista.ImageData
+        The output image data with the alpha channel removed.
+
+    """
     ec = _vtk.vtkImageExtractComponents()
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
@@ -22,8 +34,20 @@ def wrap_image_array(arr):
     Parameters
     ----------
     arr : np.ndarray
-        A ``np.uint8`` ``(X, Y, (3 or 4)`` array.  For example
-        ``(768, 1024, 3)``.
+        A numpy array of shape (X, Y, (3 or 4)) and dtype ``np.uint8``. For
+        example, an array of shape ``(768, 1024, 3)``.
+
+    Raises
+    ------
+    ValueError
+        If the input array does not have 3 dimensions, the third dimension of
+        the input array is not 3 or 4, or the input array is not of type
+        ``np.uint8``.
+
+    Returns
+    -------
+    pyvista.ImageData
+        A PyVista ImageData object with the wrapped array data.
 
     """
     if arr.ndim != 3:
@@ -41,7 +65,21 @@ def wrap_image_array(arr):
 
 
 def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
-    """Run a ``vtkWindowToImageFilter`` and get output as array."""
+    """Run a ``vtkWindowToImageFilter`` and get output as array.
+
+    Parameters
+    ----------
+    imfilter : _vtk.vtkWindowToImageFilter
+        The ``vtkWindowToImageFilter`` instance to be processed.
+
+    Returns
+    -------
+    numpy.ndarray
+        An array containing the filtered image data. The shape of the array
+        is given by (height, width, -1) where height and width are the
+        dimensions of the image.
+
+    """
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
@@ -54,7 +92,30 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
 
 
 def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
-    """Extract the image from the render window as an array."""
+    """Extract the image from the render window as an array.
+
+    Parameters
+    ----------
+    render_window : vtk.vtkRenderWindow
+        The render window to extract the image from.
+
+    as_vtk : bool, default: False
+        If set to True, the image will be returned as a VTK object.
+
+    ignore_alpha : bool, default: False
+        If set to True, the image will be returned in RGB format,
+        otherwise, it will be returned in RGBA format.
+
+    scale : int, default: 1
+        The scaling factor of the extracted image. The default value is 1
+        which means that no scaling is applied.
+
+    Returns
+    -------
+    ndarray | vtk.vtkImageData
+        The image as an array or as a VTK object depending on the ``as_vtk`` parameter.
+
+    """
     off = not render_window.GetInteractor().GetEnableRender()
     if off:
         render_window.GetInteractor().EnableRenderOn()
@@ -130,7 +191,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     """
     from pyvista import ImageData, Plotter, read, wrap
 
-    def to_img(img):
+    def to_img(img):  # numpydoc ignore=GL08
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):

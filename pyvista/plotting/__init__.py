@@ -58,7 +58,7 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 
-class QtDeprecationError(Exception):
+class QtDeprecationError(Exception):  # numpydoc ignore=PR01
     """Deprecation Error for features that moved to `pyvistaqt`."""
 
     message = """`{}` has moved to pyvistaqt.
@@ -73,7 +73,7 @@ class QtDeprecationError(Exception):
         Exception.__init__(self, self.message.format(*[feature_name] * 4))
 
 
-class BackgroundPlotter:
+class BackgroundPlotter:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""
 
     def __init__(self, *args, **kwargs):
@@ -81,7 +81,7 @@ class BackgroundPlotter:
         raise QtDeprecationError('BackgroundPlotter')
 
 
-class QtInteractor:
+class QtInteractor:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""
 
     def __init__(self, *args, **kwargs):

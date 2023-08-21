@@ -41,7 +41,25 @@ ACTOR_LOC_MAP = [
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
 
-    Attempt to place 2d actor in a sensible position.
+    Parameters
+    ----------
+    loc : str
+        Location of the actor. Can be a string with values such as 'right',
+        'left', 'upper', or 'lower'.
+    size : Sequence of length 2
+        Size of the actor. It must be a list of length 2.
+    border : float, default: 0.05
+        Size of the border around the actor.
+
+    Returns
+    -------
+    tuple
+        The VTK position and position2 coordinates. Tuple of the form (x, y, size).
+
+    Raises
+    ------
+    ValueError
+        If the ``size`` parameter is not a list of length 2.
 
     """
     if not isinstance(size, Sequence) or len(size) != 2:
@@ -65,7 +83,26 @@ def map_loc_to_pos(loc, size, border=0.05):
 
 
 def make_legend_face(face):
-    """Create the legend face."""
+    """
+    Create the legend face based on the given face.
+
+    Parameters
+    ----------
+    face : str | None | pyvista.PolyData
+        The shape of the legend face. Valid strings are:
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
+        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        The legend face as a PolyData object.
+
+    Raises
+    ------
+    ValueError
+        If the provided face value is invalid.
+    """
     if face is None:
         legendface = pyvista.PolyData([0.0, 0.0, 0.0])
     elif face in ["-", "line"]:
@@ -178,30 +215,30 @@ class CameraPosition:
         return self.to_list() == other
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""
         return self._position
 
     @position.setter
-    def position(self, value):
+    def position(self, value):  # numpydoc ignore=GL08
         self._position = value
 
     @property
-    def focal_point(self):
+    def focal_point(self):  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates."""
         return self._focal_point
 
     @focal_point.setter
-    def focal_point(self, value):
+    def focal_point(self, value):  # numpydoc ignore=GL08
         self._focal_point = value
 
     @property
-    def viewup(self):
+    def viewup(self):  # numpydoc ignore=RT01
         """Viewup vector of the camera."""
         return self._viewup
 
     @viewup.setter
-    def viewup(self, value):
+    def viewup(self, value):  # numpydoc ignore=GL08
         self._viewup = value
 
 
@@ -219,7 +256,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color='w', border_width=2.0):
+    def __init__(
+        self, parent, border=True, border_color='w', border_width=2.0
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
@@ -255,14 +294,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.set_color_cycler(self._theme.color_cycler)
 
     @property
-    def camera_set(self) -> bool:
+    def camera_set(self) -> bool:  # numpydoc ignore=RT01
         """Get or set whether this camera has been configured."""
         if self.camera is None:  # pragma: no cover
             return False
         return self.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set: bool):
+    def camera_set(self, is_set: bool):  # numpydoc ignore=GL08
         self.camera.is_set = is_set
 
     def set_color_cycler(self, color_cycler):
@@ -309,7 +348,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._color_cycle = None
 
     @property
-    def next_color(self):
+    def next_color(self):  # numpydoc ignore=RT01
         """Return next color from this renderer's color cycler."""
         if self._color_cycle is None:
             return self._theme.color
@@ -325,8 +364,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.__charts
 
     @property
-    def camera_position(self):
-        """Return camera position of active render window.
+    def camera_position(self):  # numpydoc ignore=RT01
+        """Return or set the camera position of active render window.
 
         Returns
         -------
@@ -341,8 +380,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
     @camera_position.setter
-    def camera_position(self, camera_location):
-        """Set camera position of all active render windows."""
+    def camera_position(self, camera_location):  # numpydoc ignore=GL08
         if camera_location is None:
             return
         elif isinstance(camera_location, str):
@@ -386,13 +424,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.ResetCameraClippingRange()
 
     @property
-    def camera(self):
+    def camera(self):  # numpydoc ignore=RT01
         """Return the active camera for the rendering scene."""
         return self._camera
 
     @camera.setter
-    def camera(self, source):
-        """Set the active camera for the rendering scene."""
+    def camera(self, source):  # numpydoc ignore=GL08
         self._camera = source
         self.SetActiveCamera(self._camera)
         self.camera_position = CameraPosition(
@@ -404,7 +441,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -436,7 +473,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def length(self):
+    def length(self):  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box of the scene.
 
         Returns
@@ -447,7 +484,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):
+    def center(self):  # numpydoc ignore=RT01
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
@@ -463,13 +500,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return [x, y, z]
 
     @property
-    def background_color(self):
+    def background_color(self):  # numpydoc ignore=RT01
         """Return the background color of this renderer."""
         return Color(self.GetBackground())
 
     @background_color.setter
-    def background_color(self, color):
-        """Set the background color of this renderer."""
+    def background_color(self, color):  # numpydoc ignore=GL08
         self.set_background(color)
         self.Modified()
 
@@ -611,19 +647,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return actor
 
     @property
-    def has_border(self):
+    def has_border(self):  # numpydoc ignore=RT01
         """Return if the renderer has a border."""
         return self._border_actor is not None
 
     @property
-    def border_width(self):
+    def border_width(self):  # numpydoc ignore=RT01
         """Return the border width."""
         if self.has_border:
             return self._border_actor.GetProperty().GetLineWidth()
         return 0
 
     @property
-    def border_color(self):
+    def border_color(self):  # numpydoc ignore=RT01
         """Return the border color."""
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())
@@ -659,12 +695,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._charts.add_chart(chart, *charts)
 
     @property
-    def has_charts(self):
+    def has_charts(self):  # numpydoc ignore=RT01
         """Return whether this renderer has charts."""
         return self.__charts is not None
 
     @wraps(Charts.set_interaction)
-    def set_chart_interaction(self, interactive, toggle=False):
+    def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
         # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
@@ -720,7 +756,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._charts.remove_chart(chart_or_index)
 
     @property
-    def actors(self):
+    def actors(self):  # numpydoc ignore=RT01
         """Return a dictionary of actors assigned to this renderer."""
         return self._actors
 
@@ -1175,7 +1211,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def axes_enabled(self):
+    def axes_enabled(self):  # numpydoc ignore=RT01
         """Return ``True`` when axes are enabled.
 
         Examples
@@ -2031,7 +2067,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         light.add_renderer(self)
 
     @property
-    def lights(self):
+    def lights(self):  # numpydoc ignore=RT01
         """Return a list of all lights in the renderer.
 
         Returns
@@ -2233,7 +2269,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def parallel_projection(self):
+    def parallel_projection(self):  # numpydoc ignore=RT01
         """Return parallel projection state of active render window.
 
         Examples
@@ -2247,13 +2283,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):
-        """Set parallel projection state of all active render windows."""
+    def parallel_projection(self, state):  # numpydoc ignore=GL08
         self.camera.parallel_projection = state
         self.Modified()
 
     @property
-    def parallel_scale(self):
+    def parallel_scale(self):  # numpydoc ignore=RT01
         """Return parallel scale of active render window.
 
         Examples
@@ -2265,8 +2300,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value):
-        """Set parallel scale of all active render windows."""
+    def parallel_scale(self, value):  # numpydoc ignore=GL08
         self.camera.parallel_scale = value
         self.Modified()
 
@@ -3170,16 +3204,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.UseHiddenLineRemovalOff()
 
     @property
-    def layer(self):
+    def layer(self):  # numpydoc ignore=RT01
         """Return or set the current layer of this renderer."""
         return self.GetLayer()
 
     @layer.setter
-    def layer(self, layer):
+    def layer(self, layer):  # numpydoc ignore=GL08
         self.SetLayer(layer)
 
     @property
-    def viewport(self):
+    def viewport(self):  # numpydoc ignore=RT01
         """Viewport of the renderer.
 
         Viewport describes the ``(xstart, ystart, xend, yend)`` square
@@ -3209,13 +3243,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.GetViewport()
 
     @property
-    def width(self):
+    def width(self):  # numpydoc ignore=RT01
         """Width of the renderer."""
         xmin, _, xmax, _ = self.viewport
         return self.parent.window_size[0] * (xmax - xmin)
 
     @property
-    def height(self):
+    def height(self):  # numpydoc ignore=RT01
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1] * (ymax - ymin)
@@ -3401,7 +3435,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend = None
 
     @property
-    def legend(self):
+    def legend(self):  # numpydoc ignore=RT01
         """Legend actor."""
         return self._legend
 

@@ -3,8 +3,8 @@
 By inheriting these classes into the wrapped VTK data structures, a user
 can easily apply common filters in an intuitive manner.
 
-Example
--------
+Examples
+--------
 >>> import pyvista
 >>> from pyvista import examples
 >>> dataset = examples.load_uniform()

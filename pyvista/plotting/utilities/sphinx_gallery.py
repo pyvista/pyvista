@@ -26,7 +26,9 @@ def _get_sg_image_scraper():
     return Scraper()
 
 
-def html_rst(figure_list, sources_dir, fig_titles='', srcsetpaths=None):
+def html_rst(
+    figure_list, sources_dir, fig_titles='', srcsetpaths=None
+):  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st
 

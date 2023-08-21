@@ -133,7 +133,7 @@ through a range of examples and tutorials.
 
          from pyvista import examples
          mesh = examples.download_bunny()
-         mesh.plot(cpos=bunny_cpos, anti_aliasing='ssao')
+         mesh.plot(cpos=bunny_cpos)
 
 
    .. grid-item-card:: Authors & Citation
