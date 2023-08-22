@@ -223,14 +223,15 @@ class RenderWindowInteractor:
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
 
-        This will potentially slow down the interactor. No callbacks supported
-        here - use :func:`pyvista.Plotter.track_click_position` instead.
-
         Parameters
         ----------
         callback : callable
             A function to call back when the mouse moves. This function will be
             passed the current mouse position.
+
+        Notes
+        -----
+        This will potentially slow down the interactor.
 
         """
         self.add_observer(_vtk.vtkCommand.MouseMoveEvent, callback)
@@ -780,6 +781,29 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
+    def enable_user_style(self):
+        """Set the interactive style to user.
+
+        This interaction style allows you to customize interaction events. By
+        default, this interaction style does nothing.
+
+        Examples
+        --------
+        Create a simple scene with a plotter and enable the user interaction style.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_user_style()
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
+        self._style = 'User'
+        self._style_class = None
+        self.update_style()
+
     def _simulate_keypress(self, key):  # pragma:
         """Simulate a keypress."""
         if len(key) > 1:
@@ -1141,6 +1165,11 @@ def _style_factory(klass):
                 self._parent = weakref.ref(parent)
 
                 self._observers = []
+
+                # User class raises a maximum recursion depth error
+                if klass == 'User':
+                    return
+
                 self._observers.append(
                     self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
                 )

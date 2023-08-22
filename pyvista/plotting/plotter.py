@@ -2123,6 +2123,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
         self.iren.enable_trackball_actor_style()
 
+    @wraps(RenderWindowInteractor.enable_user_style)
+    def enable_user_style(self):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_user_style."""
+        self.iren.enable_user_style()
+
     @wraps(RenderWindowInteractor.enable_image_style)
     def enable_image_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_image_style."""
