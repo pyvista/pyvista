@@ -63,13 +63,13 @@ repos:
       ]
 
 - repo: https://github.com/numpy/numpydoc
-  rev: 803a9bd3e7f9aef71cefe67adc554e1dd022a892
+  rev: v1.6.0rc2
   hooks:
   - id: numpydoc-validation
     files: ^pyvista/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.5.0
+  rev: v1.5.1
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
