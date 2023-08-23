@@ -2776,15 +2776,6 @@ def labeled_image():
     return image
 
 
-def test_temp():
-    d = examples.download_frog_tissue()
-    d.get_data_range()
-
-    label_numbers = np.unique(d.active_scalars)
-    label_max = np.max(label_numbers)
-    x = set(range(label_max)) - set(label_numbers)
-
-
 def test_sort_labels(labeled_image):
     sorted_ = labeled_image.sort_labels()
     assert np.array_equal(sorted_['labels'], [2, 0, 0, 0, 0, 2, 1, 1])

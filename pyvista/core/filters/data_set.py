@@ -5912,7 +5912,7 @@ class DataSetFilters:
         array([30805713,    35279,    19172,    38129], dtype=int64)
 
         # Sort labels
-        >>> sorted_labels = image_labels.pack_labels()
+        >>> sorted_labels = image_labels.sort_labels()
 
         # Show sorted label info for the four largest labels. Note the
         # difference in label size after sorting.
