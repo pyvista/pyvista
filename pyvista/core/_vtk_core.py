@@ -232,6 +232,7 @@ from vtkmodules.vtkFiltersCore import (
     vtkImplicitPolyDataDistance,
     vtkMarchingCubes,
     vtkMassProperties,
+    vtkPackLabels,
     vtkPointDataToCellData,
     vtkPolyDataNormals,
     vtkProbeFilter,

@@ -5850,6 +5850,214 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 
+    def sort_labels(
+        self,
+        scalars=None,
+        preference='point',
+        output_scalars=None,
+        progress_bar=False,
+        inplace=False,
+    ):
+        """Sort labeled data by number of points or cells.
+
+        This filter renumbers scalar label data of any type with ``N`` labels
+        such that the output labels are contiguous from ``[0, N)`` and
+        sorted in descending order from largest to smallest (by label count).
+        I.e., the largest label will have a value of ``0`` and the smallest
+        label will have a value of ``N-1``.
+
+        The filter is a convenience method for :func:`pyvista.DatasetFilter.pack_labels`
+        with ``sort=True``.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to sort. Defaults to currently active scalars.
+
+        preference : str, default: "point"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, None
+            Name of the sorted output scalars. By default, the output is
+            saved to currently active scalars.
+
+        progress_bar : bool, default: False
+            If ``True``, display a progress bar.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.Dataset
+            Dataset with sorted labels.
+
+        Examples
+        --------
+        Sort segmented image labels.
+
+        # Load image labels
+        >>> from pyvista import examples
+        >>> image_labels = examples.download_frog_tissue()
+
+        # Show label info for first four labels
+        >>> label_number, label_size = np.unique(
+        ...     image_labels['MetaImage'], return_counts=True
+        ... )
+        >>> label_number[:4]
+        pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
+        >>> label_size[:4]
+        array([30805713,    35279,    19172,    38129], dtype=int64)
+
+        # Sort labels
+        >>> sorted_labels = image_labels.pack_labels()
+
+        # Show sorted label info for the four largest labels. Note the
+        # difference in label size after sorting.
+        >>> sorted_label_number, sorted_label_size = np.unique(
+        ...     sorted_labels["MetaImage"], return_counts=True
+        ... )
+        >>> sorted_label_number[:4]
+        pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
+        >>> sorted_label_size[:4]
+        array([30805713,   438052,   204672,   133880], dtype=int64)
+
+        """
+        return self.pack_labels(
+            scalars=scalars,
+            output_scalars=output_scalars,
+            preference=preference,
+            progress_bar=progress_bar,
+            inplace=inplace,
+            sort=True,
+        )
+
+    def pack_labels(
+        self,
+        sort=False,
+        scalars=None,
+        preference='point',
+        output_scalars=None,
+        progress_bar=False,
+        inplace=False,
+    ):
+        """Renumber labeled data such that labels are contiguous.
+
+        This filter renumbers scalar label data of any type with ``N`` labels
+        such that the output labels are contiguous from ``[0, N)``. The
+        output may optionally be sorted by label count.
+
+        See also :func:`pyvista.DatasetFilters.sort_labels`.
+
+        Parameters
+        ----------
+        sort : bool, default: False
+            Whether to sort the output by label count in descending order
+            (i.e. from largest to smallest).
+
+        scalars : str, optional
+            Name of scalars to pack. Defaults to currently active scalars.
+
+        preference : str, default: "point"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, None
+            Name of the packed output scalars. By default, the output is
+            saved to currently active scalars.
+
+        progress_bar : bool, default: False
+            If ``True``, display a progress bar.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.Dataset
+            Dataset with packed labels.
+
+        Examples
+        --------
+        Pack segmented image labels.
+
+        >>> # Load non-contiguous image labels
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.download_frog_tissue()
+        >>>
+        >>> # Show range of labels
+        >>> image_labels.get_data_range()
+        (0, 29)
+        >>>
+        >>> # Find 'gaps' in the labels
+        >>> label_numbers = np.unique(image_labels.active_scalars)
+        >>> label_max = np.max(label_numbers)
+        >>> missing_labels = set(range(label_max)) - set(label_numbers)
+        >>> len(missing_labels)
+        4
+        >>>
+        >>> # Pack labels to remove gaps
+        >>> packed_labels = image_labels.pack_labels()
+        >>>
+        >>> # Show range of packed labels
+        >>> packed_labels.get_data_range()
+        (0, 25)
+
+        """
+        if scalars is None:
+            set_default_active_scalars(self)
+            _, scalars = self.active_scalars_info
+        arr = get_array(self, scalars, preference=preference, err=False)
+        if arr is None:
+            raise ValueError('No arrays present to sort.')
+
+        field = get_array_association(self, scalars, preference=preference)
+
+        alg = _vtk.vtkPackLabels()
+        alg.SetInputDataObject(self)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+        if sort:
+            alg.SortByLabelCount()
+        # vtkPackLabels does not always pass data correctly and will sometimes
+        # replace input data. Instead, turn off data passing and copy the output later
+        alg.PassFieldDataOff()
+        alg.PassCellDataOff()
+        alg.PassPointDataOff()
+        _update_alg(alg, progress_bar, 'Sorting')
+        output = _get_output(alg)
+
+        # Get sorted data array
+        if field == FieldAssociation.POINT:
+            sorted_array = output.point_data['PackedLabels']
+        else:
+            sorted_array = output.cell_data['PackedLabels']
+
+        # Determine output scalars
+        if output_scalars is None:
+            output_scalars = scalars
+        elif isinstance(output_scalars, str):
+            output_scalars = output_scalars
+        else:
+            raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
+
+        if inplace:
+            result = self
+        else:
+            result = self.copy()
+
+        # Add output to mesh
+        if field == FieldAssociation.POINT:
+            result.point_data[output_scalars] = sorted_array
+            result.set_active_scalars(output_scalars, preference='point')
+        else:
+            result.cell_data[output_scalars] = sorted_array
+            result.set_active_scalars(output_scalars, preference='cell')
+        return result
+
 
 def _set_threshold_limit(alg, value, method, invert):
     """Set vtkThreshold limits and function.
