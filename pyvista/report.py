@@ -176,7 +176,7 @@ class Report(scooby.Report):
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch']
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
         # Optional packages.
         optional = [
@@ -198,6 +198,7 @@ class Report(scooby.Report):
             'trame_client',
             'trame_server',
             'trame_vtk',
+            'trame_vuetify',
             'jupyter_server_proxy',
             'nest_asyncio',
         ]
