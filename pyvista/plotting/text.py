@@ -16,9 +16,23 @@ from .tools import FONTS
 
 @no_new_attr
 class CornerAnnotation(_vtk.vtkCornerAnnotation):
-    """text annotation in four corners.
+    """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+
+    Parameters
+    ----------
+    position : str | bool
+        Position of the text.
+
+    text : str
+        Text input.
+
+    prop : TextProperty
+        Text property.
+
+    linear_font_scale_factor : float
+        Linear font scale factor.
 
     Examples
     --------
