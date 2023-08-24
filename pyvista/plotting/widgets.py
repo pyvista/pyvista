@@ -9,7 +9,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
 from . import _vtk
-from .affline_widget import AfflineWidget3D
+from .affine_widget import AffineWidget3D
 from .colors import Color
 from .opts import PickerType
 from .utilities.algorithms import (
@@ -2256,7 +2256,7 @@ class WidgetHelper:
         """Remove all of the sphere widgets."""
         self.sphere_widgets.clear()
 
-    def add_affline_transform_widget(
+    def add_affine_transform_widget(
         self,
         actor,
         center=None,
@@ -2267,7 +2267,7 @@ class WidgetHelper:
         axes_colors=None,
         callback=None,
     ):
-        """Add a 3D affline transform widget.
+        """Add a 3D affine transform widget.
 
         This widget allows interactive transformations including translation and
         rotation using the left mouse button.
@@ -2297,8 +2297,8 @@ class WidgetHelper:
 
         Returns
         -------
-        pyvista.widgets.AfflineWidget3D
-            The affline widget.
+        pyvista.widgets.AffineWidget3D
+            The affine widget.
 
         Notes
         -----
@@ -2309,12 +2309,12 @@ class WidgetHelper:
 
         Examples
         --------
-        Add the 3d affline widget.
+        Add the 3d affine widget.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> widget = pl.add_affline_transform_widget(actor)
+        >>> widget = pl.add_affine_transform_widget(actor)
         >>> pl.show()
 
         Access the transform from the actor.
@@ -2325,7 +2325,7 @@ class WidgetHelper:
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
         """
-        return AfflineWidget3D(
+        return AffineWidget3D(
             self, actor, center, start, scale, line_radius, always_visible, axes_colors, callback
         )
 

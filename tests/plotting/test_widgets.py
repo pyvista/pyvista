@@ -4,7 +4,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.plotting.affline_widget import DARK_YELLOW, get_angle, ray_plane_intersection
+from pyvista.plotting.affine_widget import DARK_YELLOW, get_angle, ray_plane_intersection
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -442,7 +442,7 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
-def test_affline_widget(sphere):
+def test_affine_widget(sphere):
     calls = []
 
     def callback(transform):
@@ -452,9 +452,9 @@ def test_affline_widget(sphere):
     actor = pl.add_mesh(sphere)
 
     with pytest.raises(TypeError, match='callable'):
-        pl.add_affline_transform_widget(actor, callback='foo')
+        pl.add_affine_transform_widget(actor, callback='foo')
 
-    widget = pl.add_affline_transform_widget(actor, callback=callback)
+    widget = pl.add_affine_transform_widget(actor, callback=callback)
     pl.show(auto_close=False)
 
     assert not widget._selected_actor

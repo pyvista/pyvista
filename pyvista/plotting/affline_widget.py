@@ -1,4 +1,4 @@
-"""Affline widget module."""
+"""Affine widget module."""
 import numpy as np
 
 import pyvista as pv
@@ -65,7 +65,7 @@ def ray_plane_intersection(start_point, direction, plane_point, normal):
     return start_point + t_value * direction
 
 
-class AfflineWidget3D:
+class AffineWidget3D:
     """3D affine transform widget.
 
     This widget allows interactive transformations including translation and
@@ -94,7 +94,7 @@ class AfflineWidget3D:
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
     callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the
-        ``user_matrix`` of the actor .
+        ``user_matrix`` of the actor.
 
     Notes
     -----
@@ -105,12 +105,12 @@ class AfflineWidget3D:
 
     Examples
     --------
-    Create the affline widget outside of the plotter and add it.
+    Create the affine widget outside of the plotter and add it.
 
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
     >>> actor = pl.add_mesh(pv.Sphere())
-    >>> widget = pv.AfflineWidget3D(pl, actor)
+    >>> widget = pv.AffineWidget3D(pl, actor)
     >>> pl.show()
 
     Access the transform from the actor.
