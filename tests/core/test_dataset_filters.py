@@ -2776,22 +2776,35 @@ def labeled_image():
     return image
 
 
+def test_pack_labels_raises_import_error(labeled_image):
+    if _vtk_core.VTK93:
+        packed = labeled_image.pack_labels()
+        assert packed.n_cells
+    else:
+        with pytest.raises(ImportError):
+            labeled_image.pack_labels()
+
+
+@pytest.mark.skipif(not _vtk_core.VTK93, reason="requires VTK>=9.3")
 def test_sort_labels(labeled_image):
     sorted_ = labeled_image.sort_labels()
     assert np.array_equal(sorted_['labels'], [2, 0, 0, 0, 0, 2, 1, 1])
 
 
+@pytest.mark.skipif(not _vtk_core.VTK93, reason="requires VTK>=9.3")
 def test_pack_labels(labeled_image):
     packed = labeled_image.pack_labels(progress_bar=True)
     assert np.array_equal(packed['labels'], [0, 2, 2, 2, 2, 0, 1, 1])
 
 
+@pytest.mark.skipif(not _vtk_core.VTK93, reason="requires VTK>=9.3")
 def test_pack_labels_inplace(uniform):
     assert uniform.pack_labels() is not uniform  # default False
     assert uniform.pack_labels(inplace=False) is not uniform
     assert uniform.pack_labels(inplace=True) is uniform
 
 
+@pytest.mark.skipif(not _vtk_core.VTK93, reason="requires VTK>=9.3")
 def test_pack_labels_output_scalars(labeled_image):
     packed = labeled_image.pack_labels(output_scalars='foo')
     assert np.array_equal(packed['foo'], [0, 2, 2, 2, 2, 0, 1, 1])
@@ -2802,6 +2815,7 @@ def test_pack_labels_output_scalars(labeled_image):
         labeled_image.pack_labels(output_scalars=1)
 
 
+@pytest.mark.skipif(not _vtk_core.VTK93, reason="requires VTK>=9.3")
 def test_pack_labels_preference(uniform):
     uniform.rename_array('Spatial Point Data', 'labels')
     uniform.rename_array('Spatial Cell Data', 'labels')

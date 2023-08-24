@@ -11,6 +11,10 @@ the entire library.
 
 from vtkmodules.vtkCommonCore import vtkVersion
 
+VTK93 = vtkVersion().GetVTKMajorVersion() >= 9 and vtkVersion().GetVTKMinorVersion() >= 3
+if VTK93:
+    from vtkmodules.vtkFiltersCore import vtkPackLabels
+
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
 try:
@@ -232,7 +236,6 @@ from vtkmodules.vtkFiltersCore import (
     vtkImplicitPolyDataDistance,
     vtkMarchingCubes,
     vtkMassProperties,
-    vtkPackLabels,
     vtkPointDataToCellData,
     vtkPolyDataNormals,
     vtkProbeFilter,

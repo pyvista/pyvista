@@ -6008,6 +6008,9 @@ class DataSetFilters:
         (0, 25)
 
         """
+        if not _vtk.VTK93:
+            raise ImportError("VTK version >= 9.3 is required to use this filter.")
+
         if scalars is None:
             set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
