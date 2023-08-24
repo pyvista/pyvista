@@ -1676,12 +1676,15 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     Examples
     --------
-    # Load data
+    Load data
+
     >>> from pyvista import examples
     >>> data = examples.download_frog_tissue()
 
-    # Plot tissue labels as a volume
-    >>> # First, define plotting parameters
+    Plot tissue labels as a volume
+
+    First, define plotting parameters
+
     >>> # Configure colors / color bar
     >>> clim = data.get_data_range()  # Set color bar limits to match data
     >>> cmap = 'glasbey'  # Use a categorical colormap
@@ -1691,10 +1694,12 @@ def download_frog_tissue(load=True):  # pragma: no cover
     ... )
     >>> opacity_unit_distance = 1
 
-    >>> # Set plotting resolution to half the image's spacing
+    Set plotting resolution to half the image's spacing
+
     >>> res = np.array(data.spacing) / 2
 
-    >>> # Define rendering parameters
+    Define rendering parameters
+
     >>> mapper = 'gpu'
     >>> shade = True
     >>> ambient = 0.3
@@ -1702,7 +1707,8 @@ def download_frog_tissue(load=True):  # pragma: no cover
     >>> specular = 0.5
     >>> specular_power = 40
 
-    # Make and show plot
+    Make and show plot
+
     >>> p = pyvista.Plotter()
     >>> _ = p.add_volume(
     ...     data,
