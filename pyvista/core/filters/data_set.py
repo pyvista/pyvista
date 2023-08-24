@@ -5898,11 +5898,11 @@ class DataSetFilters:
         --------
         Sort segmented image labels.
 
-        # Load image labels
+        >>> # Load image labels
         >>> from pyvista import examples
         >>> image_labels = examples.download_frog_tissue()
-
-        # Show label info for first four labels
+        >>>
+        >>> # Show label info for first four labels
         >>> label_number, label_size = np.unique(
         ...     image_labels['MetaImage'], return_counts=True
         ... )
@@ -5911,17 +5911,17 @@ class DataSetFilters:
         >>> label_size[:4]
         array([30805713,    35279,    19172,    38129], dtype=int64)
 
-        # Sort labels
-        >>> sorted_labels = image_labels.sort_labels()  # doctest:+SKIP
-
-        # Show sorted label info for the four largest labels. Note the
-        # difference in label size after sorting.
+        >>> # Sort labels
+        >>> sorted_labels = image_labels.sort_labels()
+        >>>
+        >>> # Show sorted label info for the four largest labels. Note
+        >>> # the difference in label size after sorting.
         >>> sorted_label_number, sorted_label_size = np.unique(
         ...     sorted_labels["MetaImage"], return_counts=True
-        ... )  # doctest:+SKIP
-        >>> sorted_label_number[:4]  # doctest:+SKIP
+        ... )
+        >>> sorted_label_number[:4]
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
-        >>> sorted_label_size[:4]  # doctest:+SKIP
+        >>> sorted_label_size[:4]
         array([30805713,   438052,   204672,   133880], dtype=int64)
 
         """
@@ -5951,6 +5951,13 @@ class DataSetFilters:
 
         See also :func:`pyvista.DatasetFilters.sort_labels`.
 
+        Notes
+        -----
+        This filter uses ``vtkPackLabels`` as the underlying method which
+        requires VTK version 9.3 or higher. If ``vtkPackLabels`` is not
+        available, packing is done with ``NumPy`` instead which may be
+        slower. For best performance, consider upgrading VTK.
+
         Parameters
         ----------
         sort : bool, default: False
@@ -5970,7 +5977,8 @@ class DataSetFilters:
             saved to currently active scalars.
 
         progress_bar : bool, default: False
-            If ``True``, display a progress bar.
+            If ``True``, display a progress bar. Has no effect if VTK
+            version is lower than 9.3.
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -6001,16 +6009,14 @@ class DataSetFilters:
         4
         >>>
         >>> # Pack labels to remove gaps
-        >>> packed_labels = image_labels.pack_labels()  # doctest:+SKIP
+        >>> packed_labels = image_labels.pack_labels()
         >>>
         >>> # Show range of packed labels
-        >>> packed_labels.get_data_range()  # doctest:+SKIP
+        >>> packed_labels.get_data_range()
         (0, 25)
 
         """
-        if not _vtk.VTK93:
-            raise ImportError("VTK version >= 9.3 is required to use this filter.")
-
+        # Determine input scalars
         if scalars is None:
             set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
@@ -6020,25 +6026,6 @@ class DataSetFilters:
 
         field = get_array_association(self, scalars, preference=preference)
 
-        alg = _vtk.vtkPackLabels()
-        alg.SetInputDataObject(self)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-        if sort:
-            alg.SortByLabelCount()
-        # vtkPackLabels does not always pass data correctly and will sometimes
-        # replace input data. Instead, turn off data passing and copy the output later
-        alg.PassFieldDataOff()
-        alg.PassCellDataOff()
-        alg.PassPointDataOff()
-        _update_alg(alg, progress_bar, 'Sorting')
-        output = _get_output(alg)
-
-        # Get sorted data array
-        if field == FieldAssociation.POINT:
-            sorted_array = output.point_data['PackedLabels']
-        else:
-            sorted_array = output.cell_data['PackedLabels']
-
         # Determine output scalars
         if output_scalars is None:
             output_scalars = scalars
@@ -6047,6 +6034,39 @@ class DataSetFilters:
         else:
             raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
 
+        # Do packing
+        if _vtk.VTK93:
+            alg = _vtk.vtkPackLabels()
+            alg.SetInputDataObject(self)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+            if sort:
+                alg.SortByLabelCount()
+            # vtkPackLabels does not always pass data correctly and will sometimes
+            # replace input data. Instead, turn off data passing and copy the output later
+            alg.PassFieldDataOff()
+            alg.PassCellDataOff()
+            alg.PassPointDataOff()
+            _update_alg(alg, progress_bar, 'Sorting')
+            output = _get_output(alg)
+
+            # Get sorted data array
+            if field == FieldAssociation.POINT:
+                packed_array = output.point_data['PackedLabels']
+            else:
+                packed_array = output.cell_data['PackedLabels']
+        else:
+            # Get mapping from input ID to output ID
+            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
+            if sort:
+                label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
+            label_range_in = np.arange(0, np.max(label_numbers_in))
+            label_numbers_out = label_range_in[: len(label_numbers_in)]
+
+            # Pack/sort array
+            packed_array = np.zeros_like(arr)
+            for num_in, num_out in zip(label_numbers_in, label_numbers_out):
+                packed_array[arr == num_in] = num_out
+
         if inplace:
             result = self
         else:
@@ -6054,10 +6074,10 @@ class DataSetFilters:
 
         # Add output to mesh
         if field == FieldAssociation.POINT:
-            result.point_data[output_scalars] = sorted_array
+            result.point_data[output_scalars] = packed_array
             result.set_active_scalars(output_scalars, preference='point')
         else:
-            result.cell_data[output_scalars] = sorted_array
+            result.cell_data[output_scalars] = packed_array
             result.set_active_scalars(output_scalars, preference='cell')
         return result
 
