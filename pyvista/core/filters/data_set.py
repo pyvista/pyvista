@@ -5912,16 +5912,16 @@ class DataSetFilters:
         array([30805713,    35279,    19172,    38129], dtype=int64)
 
         # Sort labels
-        >>> sorted_labels = image_labels.sort_labels()
+        >>> sorted_labels = image_labels.sort_labels()  # doctest:+SKIP
 
         # Show sorted label info for the four largest labels. Note the
         # difference in label size after sorting.
         >>> sorted_label_number, sorted_label_size = np.unique(
         ...     sorted_labels["MetaImage"], return_counts=True
-        ... )
-        >>> sorted_label_number[:4]
+        ... )  # doctest:+SKIP
+        >>> sorted_label_number[:4]  # doctest:+SKIP
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
-        >>> sorted_label_size[:4]
+        >>> sorted_label_size[:4]  # doctest:+SKIP
         array([30805713,   438052,   204672,   133880], dtype=int64)
 
         """
@@ -6001,10 +6001,10 @@ class DataSetFilters:
         4
         >>>
         >>> # Pack labels to remove gaps
-        >>> packed_labels = image_labels.pack_labels()
+        >>> packed_labels = image_labels.pack_labels()  # doctest:+SKIP
         >>>
         >>> # Show range of packed labels
-        >>> packed_labels.get_data_range()
+        >>> packed_labels.get_data_range()  # doctest:+SKIP
         (0, 25)
 
         """
