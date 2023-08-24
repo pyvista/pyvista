@@ -81,6 +81,7 @@ class. For additional details, see the
    :toctree: _autosummary
 
    plotting.widgets.WidgetHelper
+   plotting.widgets.AfflineWidget3D
 
 
 Picking API
