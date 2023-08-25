@@ -1811,34 +1811,27 @@ class Theme(_ThemeConfig):
         Jupyter backend to use when plotting.  Must be one of the
         following:
 
-        * ``'ipyvtklink'`` : DEPRECATED. Render remotely and stream the
-          resulting VTK images back to the client.  Supports all VTK
-          methods, but suffers from lag due to remote rendering.
-          Requires that a virtual framebuffer be set up when displaying
-          on a headless server.  Must have ``ipyvtklink`` installed.
-
-        * ``'panel'`` : Convert the VTK render window to a vtkjs
-          object and then visualize that within jupyterlab. Supports
-          most VTK objects.  Requires that a virtual framebuffer be
-          set up when displaying on a headless server.  Must have
-          ``panel`` installed.
-
-        * ``'ipygany'`` : Convert all the meshes into ``ipygany``
-          meshes and streams those to be rendered on the client side.
-          Supports VTK meshes, but few others.  Aside from ``none``,
-          this is the only method that does not require a virtual
-          framebuffer.  Must have ``ipygany`` installed.
-
-        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
-          meshes and streams those to be rendered on the client side.
-          Aside from ``ipygany``, this is the only method that does
-          not require a virtual framebuffer.  Must have ``pythreejs``
-          installed.
-
         * ``'static'`` : Display a single static image within the
-          JupyterLab environment.  Still requires that a virtual
+          Jupyterlab environment.  Still requires that a virtual
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
+
+        * ``'client'`` : Export/serialize the scene graph to be rendered
+          with VTK.js client-side through ``trame``. Requires ``trame``
+          and ``jupyter-server-proxy`` to be installed.
+
+        * ``'server'``: Render remotely and stream the resulting VTK
+          images back to the client using ``trame``. This replaces the
+          ``'ipyvtklink'`` backend with better performance.
+          Supports the most VTK features, but suffers from minor lag due
+          to remote rendering. Requires that a virtual framebuffer be set
+          up when displaying on a headless server. Must have at least ``trame``
+          and ``jupyter-server-proxy`` installed for cloud/remote Jupyter
+          instances. This mode is also aliased by ``'trame'``.
+
+        * ``'trame'``: The full Trame-based backend that combines both
+          ``'server'`` and ``'client'`` into one backend. This requires a
+          virtual frame buffer.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
@@ -1847,23 +1840,6 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Enable the pythreejs backend.
-
-        >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
-
-        Enable the ipygany backend.
-
-        >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
-
-        Enable the panel backend.
-
-        >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
-
-        Enable the ipyvtklink backend (DEPRECATED).
-
-        >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
-
         Just show static images.
 
         >>> pv.set_jupyter_backend('static')  # doctest:+SKIP

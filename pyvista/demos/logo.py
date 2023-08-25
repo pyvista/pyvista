@@ -273,9 +273,6 @@ def plot_logo(
 
     # letter 't'
     mesh = mesh_letters['t'].clean().compute_normals()
-    # strange behavior with pythreejs
-    if pyvista.global_theme.jupyter_backend == 'pythreejs':
-        mesh.flip_normals()
     scalars = mesh.points[:, 0]
     plotter.add_mesh(mesh, scalars=scalars, show_edges=True, cmap='autumn', show_scalar_bar=False)
 
