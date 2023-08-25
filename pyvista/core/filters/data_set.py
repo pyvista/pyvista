@@ -5996,22 +5996,22 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.download_frog_tissue()
-        >>>
-        >>> # Show range of labels
+
+        Show range of labels
         >>> image_labels.get_data_range()
         (0, 29)
-        >>>
-        >>> # Find 'gaps' in the labels
+
+        Find 'gaps' in the labels
         >>> label_numbers = np.unique(image_labels.active_scalars)
         >>> label_max = np.max(label_numbers)
         >>> missing_labels = set(range(label_max)) - set(label_numbers)
         >>> len(missing_labels)
         4
-        >>>
-        >>> # Pack labels to remove gaps
+
+        Pack labels to remove gaps
         >>> packed_labels = image_labels.pack_labels()
-        >>>
-        >>> # Show range of packed labels
+
+        Show range of packed labels
         >>> packed_labels.get_data_range()
         (0, 25)
 
@@ -6035,7 +6035,7 @@ class DataSetFilters:
             raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
 
         # Do packing
-        if _vtk.VTK93:
+        if _vtk.VTK93:  # pragma: no cover 
             alg = _vtk.vtkPackLabels()
             alg.SetInputDataObject(self)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
