@@ -3050,7 +3050,7 @@ def test_tight_multiple_objects():
 def test_backface_params():
     mesh = pv.ParametricCatalanMinimal()
 
-    with pytest.raises(TypeError, match="pv.Property or a dict"):
+    with pytest.raises(TypeError, match="pyvista.Property or a dict"):
         mesh.plot(backface_params="invalid")
 
     params = dict(color="blue", smooth_shading=True)
