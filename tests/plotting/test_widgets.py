@@ -442,6 +442,7 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
+@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_affine_widget(sphere):
     calls = []
 

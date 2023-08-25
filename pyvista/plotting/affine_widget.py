@@ -2,6 +2,7 @@
 import numpy as np
 
 import pyvista as pv
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -103,6 +104,8 @@ class AffineWidget3D:
     dataset. Use this matrix in conjunction with
     :func:`pyvista.DataSetFilters.transform` to transform the dataset.
 
+    Requires VTK >= v9.2
+
     Examples
     --------
     Create the affine widget outside of the plotter and add it.
@@ -136,6 +139,10 @@ class AffineWidget3D:
         callback=None,
     ):
         """Initialize the widget."""
+        # needs VTK v9.2.0 due to the hardware picker
+        if pv.vtk_version_info < (9, 2):
+            VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
+
         self._pl = plotter
         self._main_actor = actor
         self._selected_actor = None
