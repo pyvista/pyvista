@@ -91,20 +91,20 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._name = name
 
     @property
-    def name(self) -> str:
+    def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
         if self._name is None:
             self._name = f'{type(self).__name__}({self.memory_address})'
         return self._name
 
     @name.setter
-    def name(self, value: str):
+    def name(self, value: str):  # numpydoc ignore=GL08
         if not value:
             raise ValueError('Name must be truthy.')
         self._name = value
 
     @property
-    def mapper(self) -> _BaseMapper:
+    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
         """Return or set the mapper of the actor.
 
         Examples
@@ -137,11 +137,11 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()
 
     @mapper.setter
-    def mapper(self, obj):
+    def mapper(self, obj):  # numpydoc ignore=GL08
         return self.SetMapper(obj)
 
     @property
-    def prop(self):
+    def prop(self):  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -159,11 +159,11 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):
+    def prop(self, obj: Property):  # numpydoc ignore=GL08
         self.SetProperty(obj)
 
     @property
-    def texture(self):
+    def texture(self):  # numpydoc ignore=RT01
         """Return or set the actor texture.
 
         Notes
@@ -194,16 +194,16 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetTexture()
 
     @texture.setter
-    def texture(self, obj):
+    def texture(self, obj):  # numpydoc ignore=GL08
         self.SetTexture(obj)
 
     @property
-    def memory_address(self):
+    def memory_address(self):  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
         return self.GetAddressAsString("")
 
     @property
-    def pickable(self) -> bool:
+    def pickable(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor pickability.
 
         Examples
@@ -222,11 +222,11 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value):
+    def pickable(self, value):  # numpydoc ignore=GL08
         return self.SetPickable(value)
 
     @property
-    def visibility(self) -> bool:
+    def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor visibility.
 
         Examples
@@ -245,7 +245,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):
+    def visibility(self, value: bool):  # numpydoc ignore=GL08
         return self.SetVisibility(value)
 
     def plot(self, **kwargs):
@@ -343,7 +343,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def user_matrix(self) -> Optional[np.ndarray]:
+    def user_matrix(self) -> Optional[np.ndarray]:  # numpydoc ignore=RT01
         """Return or set the orientation matrix.
 
         Examples
@@ -384,13 +384,13 @@ class Actor(Prop3D, _vtk.vtkActor):
         return mat
 
     @user_matrix.setter
-    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):
+    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             value = vtkmatrix_from_array(value)
         self.SetUserMatrix(value)
 
     @property
-    def backface_prop(self) -> Optional['pv.Property']:
+    def backface_prop(self) -> Optional['pv.Property']:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -431,5 +431,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()
 
     @backface_prop.setter
-    def backface_prop(self, value: 'pv.Property'):
+    def backface_prop(self, value: 'pv.Property'):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)

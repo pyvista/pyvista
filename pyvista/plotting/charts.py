@@ -121,7 +121,7 @@ class DocSubs:
         return mem_sub
 
 
-def doc_subs(member):
+def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """Doc subs wrapper.
 
     Only common attribute between methods and properties that we can
@@ -161,11 +161,6 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed
         line styles.
 
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkPen, optional
-        Wrap an existing VTK Pen instance. Defaults to ``None`` (no wrapping).
-
     Notes
     -----
     .. _pen_line_styles:
@@ -194,7 +189,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.style = style
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the pen's color.
 
         Examples
@@ -211,12 +206,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         return self._color
 
     @color.setter
-    def color(self, val):
+    def color(self, val):  # numpydoc ignore=GL08
         self._color = Color(val, default_color="black")
         self.SetColor(*self._color.int_rgba)
 
     @property
-    def width(self):
+    def width(self):  # numpydoc ignore=RT01
         """Return or set the pen's width.
 
         Examples
@@ -233,11 +228,11 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         return self.GetWidth()
 
     @width.setter
-    def width(self, val):
+    def width(self, val):  # numpydoc ignore=GL08
         self.SetWidth(float(val))
 
     @property
-    def style(self):
+    def style(self):  # numpydoc ignore=RT01
         """Return or set the pen's line style.
 
         See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles.
@@ -254,7 +249,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         return self._line_style
 
     @style.setter
-    def style(self, val):
+    def style(self, val):  # numpydoc ignore=GL08
         if val is None:
             val = ""
         try:
@@ -279,11 +274,6 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         convertible to a :class:`pyvista.Texture` is allowed. Defaults to
         ``None``.
 
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkBrush, optional
-        Wrap an existing VTK Brush instance. Defaults to ``None`` (no wrapping).
-
     """
 
     def __init__(self, color="k", texture=None):
@@ -295,7 +285,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self._repeat = False
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the brush's color.
 
         Examples
@@ -312,12 +302,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._color
 
     @color.setter
-    def color(self, val):
+    def color(self, val):  # numpydoc ignore=GL08
         self._color = Color(val, default_color="black")
         self.SetColor(*self._color.int_rgba)
 
     @property
-    def texture(self):
+    def texture(self):  # numpydoc ignore=RT01
         """Return or set the brush's texture.
 
         Examples
@@ -335,7 +325,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._texture
 
     @texture.setter
-    def texture(self, val):
+    def texture(self, val):  # numpydoc ignore=GL08
         if val is None:
             self._texture = None
             self.SetTexture(None)
@@ -344,7 +334,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self.SetTexture(self._texture.to_image())
 
     @property
-    def texture_interpolate(self):
+    def texture_interpolate(self):  # numpydoc ignore=RT01
         """Set texture interpolation mode.
 
         There are two modes:
@@ -372,12 +362,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._interpolate
 
     @texture_interpolate.setter
-    def texture_interpolate(self, val):
+    def texture_interpolate(self, val):  # numpydoc ignore=GL08
         self._interpolate = bool(val)
         self._update_textureprops()
 
     @property
-    def texture_repeat(self):
+    def texture_repeat(self):  # numpydoc ignore=RT01
         """Return or set the texture repeat mode.
 
         There are two modes:
@@ -405,7 +395,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._repeat
 
     @texture_repeat.setter
-    def texture_repeat(self, val):
+    def texture_repeat(self, val):  # numpydoc ignore=GL08
         self._repeat = bool(val)
         self._update_textureprops()
 
@@ -441,11 +431,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     grid_pen : Pen
         Pen used to draw the grid lines.
 
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkAxis, optional
-        Wrap an existing VTK Axis instance. Defaults to ``None`` (no wrapping).
-
     """
 
     BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
@@ -471,7 +456,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.grid = grid
 
     @property
-    def label(self):
+    def label(self):  # numpydoc ignore=RT01
         """Return or set the axis label.
 
         Examples
@@ -488,11 +473,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTitle()
 
     @label.setter
-    def label(self, val):
+    def label(self, val):  # numpydoc ignore=GL08
         self.SetTitle(val)
 
     @property
-    def label_visible(self):
+    def label_visible(self):  # numpydoc ignore=RT01
         """Return or set the axis label's visibility.
 
         Examples
@@ -509,11 +494,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTitleVisible()
 
     @label_visible.setter
-    def label_visible(self, val):
+    def label_visible(self, val):  # numpydoc ignore=GL08
         self.SetTitleVisible(bool(val))
 
     @property
-    def label_size(self):
+    def label_size(self):  # numpydoc ignore=RT01
         """Return or set the size of the axis label font.
 
         Examples
@@ -532,11 +517,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTitleProperties().GetFontSize()
 
     @label_size.setter
-    def label_size(self, size):
+    def label_size(self, size):  # numpydoc ignore=GL08
         self.GetTitleProperties().SetFontSize(size)
 
     @property
-    def range(self):
+    def range(self):  # numpydoc ignore=RT01
         """Return or set the axis range.
 
         This will automatically set the axis behavior to ``"fixed"``
@@ -564,7 +549,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return r
 
     @range.setter
-    def range(self, val):
+    def range(self, val):  # numpydoc ignore=GL08
         if val is None:
             self.behavior = "auto"
         else:
@@ -572,7 +557,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             self.SetRange(*val)
 
     @property
-    def behavior(self):
+    def behavior(self):  # numpydoc ignore=RT01
         """Set the axis' scaling behavior.
 
         Allowed behaviors are ``'auto'`` to automatically rescale the
@@ -600,7 +585,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self._behavior
 
     @behavior.setter
-    def behavior(self, val):
+    def behavior(self, val):  # numpydoc ignore=GL08
         try:
             self.SetBehavior(self.BEHAVIORS[val])
             self._behavior = val
@@ -609,7 +594,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
 
     @property
-    def margin(self):
+    def margin(self):  # numpydoc ignore=RT01
         """Return or set the axis margin.
 
         Examples
@@ -633,13 +618,13 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetMargins()[0]
 
     @margin.setter
-    def margin(self, val):
+    def margin(self, val):  # numpydoc ignore=GL08
         # Second margin doesn't seem to have any effect? So we only expose the first entry as 'the margin'.
         m = self.GetMargins()
         self.SetMargins(val, m[1])
 
     @property
-    def log_scale(self):
+    def log_scale(self):  # numpydoc ignore=RT01
         """Flag denoting whether a log scale is used for this axis.
 
         Note that setting this property to ``True`` will not guarantee
@@ -666,12 +651,12 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLogScaleActive()
 
     @log_scale.setter
-    def log_scale(self, val):
+    def log_scale(self, val):  # numpydoc ignore=GL08
         # False: log_scale will be disabled, True: axis will attempt to activate log_scale if possible
         self.SetLogScale(bool(val))
 
     @property
-    def grid(self):
+    def grid(self):  # numpydoc ignore=RT01
         """Return or set the axis' grid line visibility.
 
         Examples
@@ -688,11 +673,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetGridVisible()
 
     @grid.setter
-    def grid(self, val):
+    def grid(self, val):  # numpydoc ignore=GL08
         self.SetGridVisible(bool(val))
 
     @property
-    def visible(self):
+    def visible(self):  # numpydoc ignore=RT01
         """Return or set the axis' visibility.
 
         Examples
@@ -709,7 +694,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetAxisVisible()
 
     @visible.setter
-    def visible(self, val):
+    def visible(self, val):  # numpydoc ignore=GL08
         self.SetAxisVisible(bool(val))
 
     def toggle(self):
@@ -734,7 +719,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     # --- Ticks ---
     @property
-    def tick_count(self):
+    def tick_count(self):  # numpydoc ignore=RT01
         """Return or set the number of ticks drawn on this axis.
 
         Setting this property to a negative value or ``None`` will
@@ -760,13 +745,13 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetNumberOfTicks()
 
     @tick_count.setter
-    def tick_count(self, val):
+    def tick_count(self, val):  # numpydoc ignore=GL08
         if val is None or val < 0:
             val = -1
         self.SetNumberOfTicks(int(val))
 
     @property
-    def tick_locations(self):
+    def tick_locations(self):  # numpydoc ignore=RT01
         """Return or set the tick locations for this axis.
 
         Setting this to ``None`` will revert back to the default,
@@ -796,7 +781,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return tuple(positions.GetValue(i) for i in range(positions.GetNumberOfValues()))
 
     @tick_locations.setter
-    def tick_locations(self, val):
+    def tick_locations(self, val):  # numpydoc ignore=GL08
         self._tick_locs.Reset()
         if val is not None:
             for loc in val:
@@ -804,7 +789,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self._update_ticks()
 
     @property
-    def tick_labels(self):
+    def tick_labels(self):  # numpydoc ignore=RT01
         """Return or set the tick labels for this axis.
 
         You can specify a sequence, to provide a unique label to every
@@ -848,7 +833,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return tuple(labels.GetValue(i) for i in range(labels.GetNumberOfValues()))
 
     @tick_labels.setter
-    def tick_labels(self, val):
+    def tick_labels(self, val):  # numpydoc ignore=GL08
         self._tick_labels.Reset()
         self.SetNotation(_vtk.vtkAxis.STANDARD_NOTATION)
         if isinstance(val, str):
@@ -866,7 +851,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self._update_ticks()
 
     @property
-    def tick_label_size(self):
+    def tick_label_size(self):  # numpydoc ignore=RT01
         """Return or set the size of the axis tick label font.
 
         Examples
@@ -885,11 +870,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLabelProperties().GetFontSize()
 
     @tick_label_size.setter
-    def tick_label_size(self, size):
+    def tick_label_size(self, size):  # numpydoc ignore=GL08
         self.GetLabelProperties().SetFontSize(size)
 
     @property
-    def tick_size(self):
+    def tick_size(self):  # numpydoc ignore=RT01
         """Return or set the size of this axis' ticks.
 
         Examples
@@ -908,11 +893,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTickLength()
 
     @tick_size.setter
-    def tick_size(self, val):
+    def tick_size(self, val):  # numpydoc ignore=GL08
         self.SetTickLength(val)
 
     @property
-    def tick_labels_offset(self):
+    def tick_labels_offset(self):  # numpydoc ignore=RT01
         """Return or set the offset of the tick labels for this axis.
 
         Examples
@@ -931,11 +916,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLabelOffset()
 
     @tick_labels_offset.setter
-    def tick_labels_offset(self, val):
+    def tick_labels_offset(self, val):  # numpydoc ignore=GL08
         self.SetLabelOffset(float(val))
 
     @property
-    def tick_labels_visible(self):
+    def tick_labels_visible(self):  # numpydoc ignore=RT01
         """Return or set the tick label visibility for this axis.
 
         Examples
@@ -952,12 +937,12 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLabelsVisible()
 
     @tick_labels_visible.setter
-    def tick_labels_visible(self, val):
+    def tick_labels_visible(self, val):  # numpydoc ignore=GL08
         self.SetLabelsVisible(bool(val))
         self.SetRangeLabelsVisible(bool(val))
 
     @property
-    def ticks_visible(self):
+    def ticks_visible(self):  # numpydoc ignore=RT01
         """Return or set the tick visibility for this axis.
 
         Examples
@@ -974,7 +959,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTicksVisible()
 
     @ticks_visible.setter
-    def ticks_visible(self, val):
+    def ticks_visible(self, val):  # numpydoc ignore=GL08
         self.SetTicksVisible(bool(val))
 
     def _update_ticks(self):
@@ -1127,7 +1112,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def size(self):
+    def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -1147,14 +1132,14 @@ class _Chart(DocSubs):
         return self._size
 
     @size.setter
-    def size(self, val):
+    def size(self, val):  # numpydoc ignore=GL08
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             raise ValueError(f'Invalid size {val}.')
         self._size = val
 
     @property  # type: ignore
     @doc_subs
-    def loc(self):
+    def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -1174,14 +1159,14 @@ class _Chart(DocSubs):
         return self._loc
 
     @loc.setter
-    def loc(self, val):
+    def loc(self, val):  # numpydoc ignore=GL08
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             raise ValueError(f'Invalid loc {val}.')
         self._loc = val
 
     @property  # type: ignore
     @doc_subs
-    def border_color(self):
+    def border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color.
 
         Examples
@@ -1199,12 +1184,12 @@ class _Chart(DocSubs):
         return self._background.BorderPen.color
 
     @border_color.setter
-    def border_color(self, val):
+    def border_color(self, val):  # numpydoc ignore=GL08
         self._background.BorderPen.color = val
 
     @property  # type: ignore
     @doc_subs
-    def border_width(self):
+    def border_width(self):  # numpydoc ignore=RT01
         """Return or set the chart's border width.
 
         Examples
@@ -1222,13 +1207,13 @@ class _Chart(DocSubs):
         return self._background.BorderPen.width
 
     @border_width.setter
-    def border_width(self, val):
+    def border_width(self, val):  # numpydoc ignore=GL08
         self._background.BorderPen.width = val
         self._background.ActiveBorderPen.width = val
 
     @property  # type: ignore
     @doc_subs
-    def border_style(self):
+    def border_style(self):  # numpydoc ignore=RT01
         """Return or set the chart's border style.
 
         Examples
@@ -1246,13 +1231,13 @@ class _Chart(DocSubs):
         return self._background.BorderPen.style
 
     @border_style.setter
-    def border_style(self, val):
+    def border_style(self, val):  # numpydoc ignore=GL08
         self._background.BorderPen.style = val
         self._background.ActiveBorderPen.style = val
 
     @property  # type: ignore
     @doc_subs
-    def active_border_color(self):
+    def active_border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color in interactive mode.
 
         Examples
@@ -1275,12 +1260,12 @@ class _Chart(DocSubs):
         return self._background.ActiveBorderPen.color
 
     @active_border_color.setter
-    def active_border_color(self, val):
+    def active_border_color(self, val):  # numpydoc ignore=GL08
         self._background.ActiveBorderPen.color = val
 
     @property  # type: ignore
     @doc_subs
-    def background_color(self):
+    def background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color.
 
         Examples
@@ -1296,12 +1281,12 @@ class _Chart(DocSubs):
         return self._background.BackgroundBrush.color
 
     @background_color.setter
-    def background_color(self, val):
+    def background_color(self, val):  # numpydoc ignore=GL08
         self._background.BackgroundBrush.color = val
 
     @property  # type: ignore
     @doc_subs
-    def background_texture(self):
+    def background_texture(self):  # numpydoc ignore=RT01
         """Return or set the chart's background texture.
 
         Examples
@@ -1318,13 +1303,13 @@ class _Chart(DocSubs):
         return self._background.BackgroundBrush.texture
 
     @background_texture.setter
-    def background_texture(self, val):
+    def background_texture(self, val):  # numpydoc ignore=GL08
         self._background.BackgroundBrush.texture = val
         self._background.ActiveBackgroundBrush.texture = val
 
     @property  # type: ignore
     @doc_subs
-    def active_background_color(self):
+    def active_background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color in interactive mode.
 
         Examples
@@ -1345,12 +1330,12 @@ class _Chart(DocSubs):
         return self._background.ActiveBackgroundBrush.color
 
     @active_background_color.setter
-    def active_background_color(self, val):
+    def active_background_color(self, val):  # numpydoc ignore=GL08
         self._background.ActiveBackgroundBrush.color = val
 
     @property  # type: ignore
     @doc_subs
-    def visible(self):
+    def visible(self):  # numpydoc ignore=RT01
         """Return or set the chart's visibility.
 
         Examples
@@ -1370,7 +1355,7 @@ class _Chart(DocSubs):
         return self.GetVisible()
 
     @visible.setter
-    def visible(self, val):
+    def visible(self, val):  # numpydoc ignore=GL08
         self.SetVisible(val)
 
     @doc_subs
@@ -1395,7 +1380,7 @@ class _Chart(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def title(self):
+    def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
 
         Examples
@@ -1411,12 +1396,12 @@ class _Chart(DocSubs):
         return self.GetTitle()
 
     @title.setter
-    def title(self, val):
+    def title(self, val):  # numpydoc ignore=GL08
         self.SetTitle(val)
 
     @property  # type: ignore
     @doc_subs
-    def legend_visible(self):
+    def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
         Examples
@@ -1437,7 +1422,7 @@ class _Chart(DocSubs):
         return self.GetShowLegend()
 
     @legend_visible.setter
-    def legend_visible(self, val):
+    def legend_visible(self, val):  # numpydoc ignore=GL08
         self.SetShowLegend(val)
 
     @doc_subs
@@ -1544,7 +1529,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
 
         This is the color used by the plot's pen and brush to draw lines and shapes.
@@ -1563,13 +1548,13 @@ class _Plot(DocSubs):
         return self.pen.color
 
     @color.setter
-    def color(self, val):
+    def color(self, val):  # numpydoc ignore=GL08
         self.pen.color = val
         self.brush.color = val
 
     @property  # type: ignore
     @doc_subs
-    def pen(self):
+    def pen(self):  # numpydoc ignore=RT01
         """Pen object controlling how lines in this plot are drawn.
 
         Returns
@@ -1593,7 +1578,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def brush(self):
+    def brush(self):  # numpydoc ignore=RT01
         """Brush object controlling how shapes in this plot are filled.
 
         Returns
@@ -1617,7 +1602,7 @@ class _Plot(DocSubs):
 
     @property  # type: ignore
     @doc_subs
-    def line_width(self):
+    def line_width(self):  # numpydoc ignore=RT01
         """Return or set the line width of all lines drawn in this plot.
 
         This is equivalent to accessing/modifying the width of this plot's pen.
@@ -1637,12 +1622,12 @@ class _Plot(DocSubs):
         return self.pen.width
 
     @line_width.setter
-    def line_width(self, val):
+    def line_width(self, val):  # numpydoc ignore=GL08
         self.pen.width = val
 
     @property  # type: ignore
     @doc_subs
-    def line_style(self):
+    def line_style(self):  # numpydoc ignore=RT01
         """Return or set the line style of all lines drawn in this plot.
 
         This is equivalent to accessing/modifying the style of this plot's pen.
@@ -1661,12 +1646,12 @@ class _Plot(DocSubs):
         return self.pen.style
 
     @line_style.setter
-    def line_style(self, val):
+    def line_style(self, val):  # numpydoc ignore=GL08
         self.pen.style = val
 
     @property  # type: ignore
     @doc_subs
-    def label(self):
+    def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
 
         Examples
@@ -1683,13 +1668,13 @@ class _Plot(DocSubs):
         return self._label
 
     @label.setter
-    def label(self, val):
+    def label(self, val):  # numpydoc ignore=GL08
         self._label = "" if val is None else val
         self.SetLabel(self._label)
 
     @property  # type: ignore
     @doc_subs
-    def visible(self):
+    def visible(self):  # numpydoc ignore=RT01
         """Return or set the this plot's visibility.
 
         Examples
@@ -1710,7 +1695,7 @@ class _Plot(DocSubs):
         return self.GetVisible()
 
     @visible.setter
-    def visible(self, val):
+    def visible(self, val):  # numpydoc ignore=GL08
         self.SetVisible(val)
 
     @doc_subs
@@ -1756,7 +1741,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def color_scheme(self):
+    def color_scheme(self):  # numpydoc ignore=RT01
         """Return or set the plot's color scheme.
 
         This scheme defines the colors of the different
@@ -1786,14 +1771,14 @@ class _MultiCompPlot(_Plot):
         return SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
 
     @color_scheme.setter
-    def color_scheme(self, val):
+    def color_scheme(self, val):  # numpydoc ignore=GL08
         self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES["custom"])["id"])
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
     @property  # type: ignore
     @doc_subs
-    def colors(self):
+    def colors(self):  # numpydoc ignore=RT01
         """Return or set the plot's colors.
 
         These are the colors used for the different
@@ -1816,7 +1801,7 @@ class _MultiCompPlot(_Plot):
         ]
 
     @colors.setter
-    def colors(self, val):
+    def colors(self, val):  # numpydoc ignore=GL08
         if val is None:
             self.color_scheme = self.DEFAULT_COLOR_SCHEME
             # Setting color_scheme already sets brush.color
@@ -1840,7 +1825,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
 
         This is the color used by the plot's brush
@@ -1860,14 +1845,14 @@ class _MultiCompPlot(_Plot):
         return self.brush.color
 
     @color.setter
-    def color(self, val):
+    def color(self, val):  # numpydoc ignore=GL08
         # Override default _Plot behaviour. This makes sure the plot's "color_scheme", "colors" and "color" properties
         # (and their internal representations through color series, lookup tables and brushes) stay synchronized.
         self.colors = [val]
 
     @property  # type: ignore
     @doc_subs
-    def labels(self):
+    def labels(self):  # numpydoc ignore=RT01
         """Return or set the this plot's labels, as shown in the chart's legend.
 
         Examples
@@ -1888,7 +1873,7 @@ class _MultiCompPlot(_Plot):
         return [self._labels.GetValue(i) for i in range(self._labels.GetNumberOfValues())]
 
     @labels.setter
-    def labels(self, val):
+    def labels(self, val):  # numpydoc ignore=GL08
         self._labels.Reset()
         if isinstance(val, str):
             val = [val]
@@ -1901,7 +1886,7 @@ class _MultiCompPlot(_Plot):
 
     @property  # type: ignore
     @doc_subs
-    def label(self):
+    def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
 
         Examples
@@ -1923,7 +1908,7 @@ class _MultiCompPlot(_Plot):
         return self.labels[0] if self._labels.GetNumberOfValues() > 0 else ""
 
     @label.setter
-    def label(self, val):
+    def label(self, val):  # numpydoc ignore=GL08
         # Override default _Plot behaviour. This makes sure the plot's "labels" and "label" properties (and their
         # internal representations) stay synchronized.
         self.labels = None if val is None else [val]
@@ -1982,7 +1967,9 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
-    def __init__(self, chart, x, y, color="b", width=1.0, style="-", label=""):
+    def __init__(
+        self, chart, x, y, color="b", width=1.0, style="-", label=""
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -1994,7 +1981,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         self.label = label
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the points through which a line is drawn.
 
         Examples
@@ -2012,7 +1999,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         return self._table["x"]
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points through which a line is drawn.
 
         Examples
@@ -2129,7 +2116,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
-    def __init__(self, chart, x, y, color="b", size=10, style="o", label=""):
+    def __init__(
+        self, chart, x, y, color="b", size=10, style="o", label=""
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
@@ -2141,7 +2130,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         self.label = label
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of this plot's points.
 
         Examples
@@ -2159,7 +2148,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         return self._table["x"]
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of this plot's points.
 
         Examples
@@ -2209,7 +2198,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
             self.visible = False
 
     @property
-    def marker_size(self):
+    def marker_size(self):  # numpydoc ignore=RT01
         """Return or set the plot's marker size.
 
         Examples
@@ -2230,11 +2219,11 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         return self.GetMarkerSize()
 
     @marker_size.setter
-    def marker_size(self, val):
+    def marker_size(self, val):  # numpydoc ignore=GL08
         self.SetMarkerSize(val)
 
     @property
-    def marker_style(self):
+    def marker_style(self):  # numpydoc ignore=RT01
         """Return or set the plot's marker style.
 
         Examples
@@ -2255,7 +2244,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         return self._marker_style
 
     @marker_style.setter
-    def marker_style(self, val):
+    def marker_style(self, val):  # numpydoc ignore=GL08
         if val is None:
             val = ""
         try:
@@ -2338,7 +2327,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         self.label = label
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the points outlining the drawn area.
 
         Examples
@@ -2356,7 +2345,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         return self._table["x"]
 
     @property
-    def y1(self):
+    def y1(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points on the first outline of the drawn area.
 
         Examples
@@ -2374,7 +2363,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         return self._table["y1"]
 
     @property
-    def y2(self):
+    def y2(self):  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points on the second outline of the drawn area.
 
         Examples
@@ -2497,7 +2486,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
-    def __init__(self, chart, x, y, color=None, orientation="V", label=None):
+    def __init__(
+        self, chart, x, y, color=None, orientation="V", label=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
         if not isinstance(y[0], (Sequence, np.ndarray)):
@@ -2520,7 +2511,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         self.orientation = orientation
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the positions of the drawn bars.
 
         Examples
@@ -2538,7 +2529,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         return self._table["x"]
 
     @property
-    def y(self):
+    def y(self):  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn bars.
 
         Examples
@@ -2591,7 +2582,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.visible = False
 
     @property
-    def orientation(self):
+    def orientation(self):  # numpydoc ignore=RT01
         """Return or set the orientation of the bars in this plot.
 
         Examples
@@ -2612,7 +2603,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         return self._orientation
 
     @orientation.setter
-    def orientation(self, val):
+    def orientation(self, val):  # numpydoc ignore=GL08
         try:
             self.SetOrientation(self.ORIENTATIONS[val])
             self._orientation = val
@@ -2704,7 +2695,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         self.pen.style = None  # Hide lines by default
 
     @property
-    def x(self):
+    def x(self):  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the drawn stacks.
 
         Examples
@@ -2722,7 +2713,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         return self._table["x"]
 
     @property
-    def ys(self):
+    def ys(self):  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn stacks.
 
         Examples
@@ -2849,7 +2840,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
-    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
+    def __init__(
+        self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
@@ -3341,7 +3334,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
                 self.remove_plot(plot)
 
     @property
-    def x_axis(self):
+    def x_axis(self):  # numpydoc ignore=RT01
         """Return this chart's horizontal (x) :class:`Axis <plotting.charts.Axis>`.
 
         Examples
@@ -3358,7 +3351,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self._x_axis
 
     @property
-    def y_axis(self):
+    def y_axis(self):  # numpydoc ignore=RT01
         """Return this chart's vertical (y) :class:`Axis <plotting.charts.Axis>`.
 
         Examples
@@ -3375,7 +3368,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self._y_axis
 
     @property
-    def x_label(self):
+    def x_label(self):  # numpydoc ignore=RT01
         """Return or set the label of this chart's x axis.
 
         Examples
@@ -3393,11 +3386,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self.x_axis.label
 
     @x_label.setter
-    def x_label(self, val):
+    def x_label(self, val):  # numpydoc ignore=GL08
         self.x_axis.label = val
 
     @property
-    def y_label(self):
+    def y_label(self):  # numpydoc ignore=RT01
         """Return or set the label of this chart's y axis.
 
         Examples
@@ -3415,11 +3408,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self.y_axis.label
 
     @y_label.setter
-    def y_label(self, val):
+    def y_label(self, val):  # numpydoc ignore=GL08
         self.y_axis.label = val
 
     @property
-    def x_range(self):
+    def x_range(self):  # numpydoc ignore=RT01
         """Return or set the range of this chart's x axis.
 
         Examples
@@ -3437,11 +3430,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self.x_axis.range
 
     @x_range.setter
-    def x_range(self, val):
+    def x_range(self, val):  # numpydoc ignore=GL08
         self.x_axis.range = val
 
     @property
-    def y_range(self):
+    def y_range(self):  # numpydoc ignore=RT01
         """Return or set the range of this chart's y axis.
 
         Examples
@@ -3459,11 +3452,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self.y_axis.range
 
     @y_range.setter
-    def y_range(self, val):
+    def y_range(self, val):  # numpydoc ignore=GL08
         self.y_axis.range = val
 
     @property
-    def grid(self):
+    def grid(self):  # numpydoc ignore=RT01
         """Enable or disable the chart grid.
 
         Examples
@@ -3488,7 +3481,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self.x_axis.grid and self.y_axis.grid
 
     @grid.setter
-    def grid(self, val):
+    def grid(self, val):  # numpydoc ignore=GL08
         self.x_axis.grid = val
         self.y_axis.grid = val
 
@@ -3576,7 +3569,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         self.labels = labels
 
     @property
-    def data(self):
+    def data(self):  # numpydoc ignore=RT01
         """Retrieve the datasets of which the boxplots are drawn.
 
         Examples
@@ -3593,7 +3586,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         return tuple(self._table[f"data_{i}"] for i in range(self._table.n_arrays))
 
     @property
-    def stats(self):
+    def stats(self):  # numpydoc ignore=RT01
         """Retrieve the statistics (quartiles and extremum values) of the datasets of which the boxplots are drawn.
 
         Examples
@@ -3686,7 +3679,9 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         "chart_set_labels": 'chart.plot.label = "Data label"',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
+    def __init__(
+        self, data, colors=None, labels=None, size=None, loc=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -3723,7 +3718,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             _Chart._geometry.fset(self, value)
 
     @property
-    def plot(self):
+    def plot(self):  # numpydoc ignore=RT01
         """Return the :class:`BoxPlot <plotting.charts.BoxPlot>` instance associated with this chart.
 
         Examples
@@ -3745,7 +3740,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         return self._plot
 
     @property
-    def size(self):
+    def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -3774,7 +3769,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             return _Chart.size.fget(self)
 
     @size.setter
-    def size(self, val):
+    def size(self, val):  # numpydoc ignore=GL08
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
@@ -3784,7 +3779,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             _Chart.size.fset(self, val)
 
     @property
-    def loc(self):
+    def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -3813,7 +3808,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             return _Chart.loc.fget(self)
 
     @loc.setter
-    def loc(self, val):
+    def loc(self, val):  # numpydoc ignore=GL08
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
@@ -3845,11 +3840,6 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     labels : sequence[str], default: []
         Label for each pie segment drawn in this plot, as shown in the
         chart's legend.
-
-    Other Parameters
-    ----------------
-    _wrap : vtk.vtkPlotPie, optional
-        Wrap an existing VTK PlotPie instance (no wrapping when ``None``).
 
     Examples
     --------
@@ -3885,7 +3875,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         self.colors = colors
 
     @property
-    def data(self):
+    def data(self):  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn segments.
 
         Examples
@@ -3972,7 +3962,9 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    def __init__(self, data, colors=None, labels=None, size=None, loc=None):
+    def __init__(
+        self, data, colors=None, labels=None, size=None, loc=None
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4014,7 +4006,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             _Chart._geometry.fset(self, value)
 
     @property
-    def plot(self):
+    def plot(self):  # numpydoc ignore=RT01
         """Return the :class:`PiePlot <plotting.charts.PiePlot>` instance associated with this chart.
 
         Examples
@@ -4034,7 +4026,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         return self._plot
 
     @property
-    def size(self):
+    def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -4063,7 +4055,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             return _Chart.size.fget(self)
 
     @size.setter
-    def size(self, val):
+    def size(self, val):  # numpydoc ignore=GL08
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
@@ -4073,7 +4065,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             _Chart.size.fset(self, val)
 
     @property
-    def loc(self):
+    def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -4102,7 +4094,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
             return _Chart.loc.fget(self)
 
     @loc.setter
-    def loc(self, val):
+    def loc(self, val):  # numpydoc ignore=GL08
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
@@ -4180,7 +4172,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
-    def __init__(self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True):
+    def __init__(
+        self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
         if figure is None:
@@ -4207,7 +4201,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             plt.close(self._fig)
 
     @property
-    def figure(self):
+    def figure(self):  # numpydoc ignore=RT01
         """Retrieve the matplotlib figure associated with this chart.
 
         Examples
@@ -4228,7 +4222,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return self._fig
 
     @property
-    def redraw_on_render(self):
+    def redraw_on_render(self):  # numpydoc ignore=RT01
         """Return or set the chart's redraw-on-render behavior.
 
         Notes
@@ -4244,7 +4238,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return self._redraw_on_render
 
     @redraw_on_render.setter
-    def redraw_on_render(self, val):
+    def redraw_on_render(self, val):  # numpydoc ignore=GL08
         self._redraw_on_render = bool(val)
 
     def _resize(self):
@@ -4298,11 +4292,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
     # @property
-    # def background_color(self):
+    # def background_color(self):  # numpydoc ignore=RT01
     #     return self._bg_color
     #
     # @background_color.setter
-    # def background_color(self, val):
+    # def background_color(self, val):  # numpydoc ignore=GL08
     #     color = Color(val).int_rgba if val is not None else [1.0, 1.0, 1.0, 1.0]
     #     opacity = color[3]
     #     self._bg_color = color
@@ -4312,18 +4306,18 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     #         ax.patch.set_alpha(0 if opacity < 1 else 1)  # Make axes fully transparent if opacity is lower than 1
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Chart position w.r.t the bottom left corner (in pixels)."""
         return self.GetPosition()
 
     @position.setter
-    def position(self, val):
+    def position(self, val):  # numpydoc ignore=GL08
         if len(val) != 2:
             raise ValueError(f'Invalid position {val}, must be length 2.')
         self.SetPosition(*val)
 
     @property
-    def title(self):
+    def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
 
         Examples
@@ -4344,11 +4338,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return self._fig._suptitle.get_text()
 
     @title.setter
-    def title(self, val):
+    def title(self, val):  # numpydoc ignore=GL08
         self._fig.suptitle(val)
 
     @property
-    def legend_visible(self):
+    def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
         Examples
@@ -4376,7 +4370,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return False if legend is None else legend.get_visible()
 
     @legend_visible.setter
-    def legend_visible(self, val):
+    def legend_visible(self, val):  # numpydoc ignore=GL08
         legend = self._fig.axes[0].get_legend()
         if legend is None:
             legend = self._fig.axes[0].legend()
@@ -4388,6 +4382,11 @@ class Charts:
 
     Users should typically not directly create new instances of this
     class, but use the dedicated ``Plotter.add_chart`` method.
+
+    Parameters
+    ----------
+    renderer : pyvista.Renderer
+        The renderer to which the charts should be added.
 
     """
 
@@ -4431,7 +4430,14 @@ class Charts:
         self._actor = None
 
     def add_chart(self, *charts):
-        """Add charts to the collection."""
+        """Add charts to the collection.
+
+        Parameters
+        ----------
+        *charts : Chart2D | Chart3D
+            One or more chart objects to be added to the collection.
+
+        """
         if self._scene is None:
             self._setup_scene()
         for chart in charts:
@@ -4442,8 +4448,7 @@ class Charts:
             chart._interactive = False  # Charts are not interactive by default
 
     def set_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for this renderer.
+        """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``
         is ``False``.
@@ -4498,7 +4503,19 @@ class Charts:
         return interactive_charts
 
     def remove_chart(self, chart_or_index):
-        """Remove a chart from the collection."""
+        """Remove a chart from the collection.
+
+        Parameters
+        ----------
+        chart_or_index : int or Chart
+            The index or the chart object to be removed from the collection.
+
+        Raises
+        ------
+        ValueError
+            If the specified chart index is not present in the charts collection.
+
+        """
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         if chart not in self._charts:  # pragma: no cover
             raise ValueError('chart_index not present in charts collection.')

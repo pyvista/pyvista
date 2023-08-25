@@ -14,7 +14,19 @@ from .observers import Observer
 
 
 def set_pickle_format(format: str):
-    """Set the format used to serialize :class:`pyvista.DataObject` when pickled."""
+    """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
+
+    Parameters
+    ----------
+    format : str
+        The format for serialization. Acceptable values are "xml" or "legacy".
+
+    Raises
+    ------
+    ValueError
+        If the provided format is not supported.
+
+    """
     supported = {'xml', 'legacy'}
     format = format.lower()
     if format not in supported:
@@ -36,6 +48,18 @@ def get_ext(filename):
 
     For files with the .gz suffix, the previous extension is returned as well.
     This is needed e.g. for the compressed NIFTI format (.nii.gz).
+
+    Parameters
+    ----------
+    filename : str
+        The filename from which to extract the extension.
+
+    Returns
+    -------
+    str
+        The extracted extension. For files with the .gz suffix, the previous
+        extension is returned as well.
+
     """
     base, ext = os.path.splitext(filename)
     ext = ext.lower()
@@ -46,7 +70,22 @@ def get_ext(filename):
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
-    """Set any vtk writer to write as binary or ascii."""
+    """Set any vtk writer to write as binary or ascii.
+
+    Parameters
+    ----------
+    vtk_writer : vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+        The vtk writer instance to be configured.
+    use_binary : bool, default: True
+        If ``True``, the writer is set to write files in binary format. If
+        ``False``, the writer is set to write files in ASCII format.
+
+    Returns
+    -------
+    vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+        The configured vtk writer instance.
+
+    """
     from vtkmodules.vtkIOGeometry import vtkSTLWriter
     from vtkmodules.vtkIOLegacy import vtkDataWriter
     from vtkmodules.vtkIOPLY import vtkPLYWriter
@@ -448,7 +487,7 @@ def is_meshio_mesh(obj):
 
     Parameters
     ----------
-    obj
+    obj : object
         Any object.
 
     Returns
@@ -466,7 +505,24 @@ def is_meshio_mesh(obj):
 
 
 def from_meshio(mesh):
-    """Convert a ``meshio`` mesh instance to a PyVista mesh."""
+    """Convert a ``meshio`` mesh instance to a PyVista mesh.
+
+    Parameters
+    ----------
+    mesh : meshio.Mesh
+        A mesh instance from the ``meshio`` library.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        A PyVista unstructured grid representation of the input ``meshio`` mesh.
+
+    Raises
+    ------
+    ImportError
+        If the appropriate version of ``meshio`` library is not found.
+
+    """
     try:  # meshio<5.0 compatibility
         from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
     except ImportError:  # pragma: no cover
@@ -513,7 +569,27 @@ def from_meshio(mesh):
 
 
 def read_meshio(filename, file_format=None):
-    """Read any mesh file using meshio."""
+    """Read any mesh file using meshio.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to read. It should include the file extension.
+    file_format : str, optional
+        The format of the file to read. If not provided, the file format will
+        be inferred from the file extension.
+
+    Returns
+    -------
+    pyvista.Dataset
+        The mesh read from the file.
+
+    Raises
+    ------
+    ImportError
+        If the meshio package is not installed.
+
+    """
     try:
         import meshio
     except ImportError:  # pragma: no cover

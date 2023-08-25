@@ -157,7 +157,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(image)
 
     @property
-    def interpolate(self) -> bool:
+    def interpolate(self) -> bool:  # numpydoc ignore=RT01
         """Return if interpolate is enabled or disabled.
 
         Examples
@@ -179,16 +179,16 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetInterpolate())
 
     @interpolate.setter
-    def interpolate(self, value: bool):
+    def interpolate(self, value: bool):  # numpydoc ignore=GL08
         self.SetInterpolate(value)
 
     @property
-    def mipmap(self) -> bool:
+    def mipmap(self) -> bool:  # numpydoc ignore=RT01
         """Return if mipmap is enabled or disabled."""
         return bool(self.GetMipmap())
 
     @mipmap.setter
-    def mipmap(self, value: bool):
+    def mipmap(self, value: bool):  # numpydoc ignore=GL08
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
@@ -218,7 +218,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(grid)
 
     @property
-    def repeat(self) -> bool:
+    def repeat(self) -> bool:  # numpydoc ignore=RT01
         """Repeat the texture.
 
         This is provided for convenience and backwards compatibility.
@@ -258,7 +258,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetRepeat())
 
     @repeat.setter
-    def repeat(self, flag: bool):
+    def repeat(self, flag: bool):  # numpydoc ignore=GL08
         self.SetRepeat(flag)
 
     def flip(self, axis):
@@ -398,12 +398,12 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture(np.rot90(self.to_array(), k=3))
 
     @property
-    def cube_map(self) -> bool:
+    def cube_map(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if cube mapping is enabled and ``False`` otherwise."""
         return self.GetCubeMap()
 
     @cube_map.setter
-    def cube_map(self, flag: bool):
+    def cube_map(self, flag: bool):  # numpydoc ignore=GL08
         self.SetCubeMap(flag)
 
     def copy(self):
@@ -443,7 +443,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return attrs
 
     @property
-    def n_components(self) -> int:
+    def n_components(self) -> int:  # numpydoc ignore=RT01
         """Return the number of components in the image.
 
         In textures, 3 or 4 components are used for representing RGB and RGBA
@@ -465,7 +465,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> tuple:
+    def dimensions(self) -> tuple:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples
@@ -537,7 +537,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         pl.show(**kwargs)
 
     @property
-    def wrap(self) -> 'Texture.WrapType':
+    def wrap(self) -> 'Texture.WrapType':  # numpydoc ignore=RT01
         """Return or set the Wrap mode for the texture coordinates.
 
         Wrap mode for the texture coordinates valid values are:
@@ -608,7 +608,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture.WrapType(self.GetWrap())  # type: ignore
 
     @wrap.setter
-    def wrap(self, value: Union['Texture.WrapType', int]):
+    def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
