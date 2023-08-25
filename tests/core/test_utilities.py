@@ -704,7 +704,7 @@ def test_convert_array():
     arr2 = pv.core.utilities.arrays.convert_array(arr, array_type=np.dtype('O'))
     assert arr2.GetNumberOfValues() == 4
 
-    # https://github.com/pv/pv/issues/2370
+    # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pv.core.utilities.arrays.convert_array(
         pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
     )
