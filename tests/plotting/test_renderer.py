@@ -1,12 +1,12 @@
 import pytest
 from pytest import raises
 
-import pyvista
+import pyvista as pv
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
 def test_show_bounds_axes_ranges():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
 
     # test empty call
     plotter.show_bounds()
@@ -33,7 +33,7 @@ def test_show_bounds_axes_ranges():
 
 
 def test_show_bounds_with_scaling(sphere):
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     actor0 = plotter.show_bounds()
     assert actor0.GetUseTextActor3D()
@@ -43,7 +43,7 @@ def test_show_bounds_with_scaling(sphere):
 
 
 def test_show_bounds_invalid_axes_ranges():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
 
     # send incorrect axes_ranges types
     with raises(TypeError, match='numeric sequence'):
@@ -61,39 +61,39 @@ def test_show_bounds_invalid_axes_ranges():
 
 @pytest.mark.skip_plotting
 def test_camera_position():
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(pyvista.Sphere())
+    plotter = pv.Plotter()
+    plotter.add_mesh(pv.Sphere())
     plotter.show()
-    assert isinstance(plotter.camera_position, pyvista.CameraPosition)
+    assert isinstance(plotter.camera_position, pv.CameraPosition)
 
 
 @pytest.mark.skip_plotting
 def test_plotter_camera_position():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.set_position([1, 1, 1], render=True)
 
 
 def test_renderer_set_viewup():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.renderer.set_viewup([1, 1, 1])
 
 
 def test_reset_camera():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_camera_is_set():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     assert not plotter.camera_set
     assert not plotter.renderer.camera_set
 
-    renderer = pyvista.Renderer(plotter)
+    renderer = pv.Renderer(plotter)
     assert not renderer.camera_set
 
 
 def test_layer():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.renderer.layer = 1
     assert plotter.renderer.layer == 1
     plotter.renderer.layer = 0
@@ -104,7 +104,7 @@ def test_layer():
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
-    plotter = pyvista.Plotter(
+    plotter = pv.Plotter(
         border=has_border, border_color=border_color, border_width=border_width
     )
     assert plotter.renderer.has_border is has_border
@@ -122,7 +122,7 @@ def test_border(has_border):
 
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
@@ -136,8 +136,8 @@ def test_bad_legend_origin_and_size(sphere):
 
 @pytest.mark.parametrize('loc', ACTOR_LOC_MAP)
 def test_add_legend_loc(loc):
-    pl = pyvista.Plotter()
-    pl.add_mesh(pyvista.PolyData([0.0, 0.0, 0.0]), label='foo')
+    pl = pv.Plotter()
+    pl.add_mesh(pv.PolyData([0.0, 0.0, 0.0]), label='foo')
     legend = pl.add_legend(loc=loc)
 
     # note: this is only valid with the defaults:
@@ -157,25 +157,25 @@ def test_add_legend_loc(loc):
 
 
 def test_add_legend_no_face(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     sphere.point_data["Z"] = sphere.points[:, 2]
     pl.add_mesh(sphere, scalars='Z', label='sphere')
     pl.add_legend(face=None)
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.add_legend(labels=[['sphere', 'k']], face=None)
 
 
 def test_add_remove_legend(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend()
     pl.remove_legend()
 
 
-@pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pyvista.PolyData([0.0, 0.0, 0.0])])
+@pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
 def test_legend_face(sphere, face):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)

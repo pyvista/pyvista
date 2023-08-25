@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 try:
@@ -21,7 +21,7 @@ def test_table_init(tmpdir):
     arrays = np.random.rand(nr, nc)
 
     # Create from 2D array
-    table = pyvista.Table(arrays)
+    table = pv.Table(arrays)
     assert table.n_rows == nr
     assert table.n_columns == nc
     assert table.n_arrays == nc
@@ -31,10 +31,10 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(ValueError):
-        pyvista.Table(np.random.rand(100, 2, 3))
+        pv.Table(np.random.rand(100, 2, 3))
 
     # Create from 1D array
-    table = pyvista.Table(arrays[:, 0])
+    table = pv.Table(arrays[:, 0])
     assert table.n_rows == nr
     assert table.n_columns == 1
 
@@ -45,7 +45,7 @@ def test_table_init(tmpdir):
     array_dict = {}
     for i in range(nc):
         array_dict[f'foo{i}'] = arrays[:, i].copy()
-    table = pyvista.Table(array_dict)
+    table = pv.Table(array_dict)
     assert table.n_rows == nr
     assert table.n_columns == nc
 
@@ -55,7 +55,7 @@ def test_table_init(tmpdir):
 
     dataset = examples.load_hexbeam()
     array_dict = dict(dataset.point_data)
-    table = pyvista.Table(array_dict)
+    table = pv.Table(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
 
@@ -75,18 +75,18 @@ def test_table_init(tmpdir):
     reader.Update()
 
     # Test init
-    table = pyvista.Table(reader.GetOutput(), deep=True)
+    table = pv.Table(reader.GetOutput(), deep=True)
     assert isinstance(table, vtk.vtkTable)
-    assert isinstance(table, pyvista.Table)
+    assert isinstance(table, pv.Table)
 
-    table = pyvista.Table(reader.GetOutput(), deep=False)
+    table = pv.Table(reader.GetOutput(), deep=False)
     assert isinstance(table, vtk.vtkTable)
-    assert isinstance(table, pyvista.Table)
+    assert isinstance(table, pv.Table)
 
     # Test wrap
-    table = pyvista.wrap(reader.GetOutput())
+    table = pv.wrap(reader.GetOutput())
     assert isinstance(table, vtk.vtkTable)
-    assert isinstance(table, pyvista.Table)
+    assert isinstance(table, pv.Table)
 
     assert table.n_rows == nr
     assert table.n_columns == nc
@@ -96,7 +96,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(TypeError):
-        pyvista.Table("foo")
+        pv.Table("foo")
 
     return
 
@@ -104,7 +104,7 @@ def test_table_init(tmpdir):
 def test_table_row_arrays():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
-    table = pyvista.Table()
+    table = pv.Table()
     for i in range(nc):
         table[f'foo{i}'] = arrays[:, i]
     assert table.n_columns == nc
@@ -112,7 +112,7 @@ def test_table_row_arrays():
     for i in range(nc):
         assert np.allclose(table[f'foo{i}'], arrays[:, i])
     # Multi component
-    table = pyvista.Table()
+    table = pv.Table()
     table['multi'] = arrays
     assert table.n_columns == 1
     assert table.n_rows == nr
@@ -124,7 +124,7 @@ def test_table_row_arrays():
     dataset = examples.load_hexbeam()
     array_dict = dataset.point_data
     # Test dict methods
-    table = pyvista.Table()
+    table = pv.Table()
     table.update(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
@@ -156,7 +156,7 @@ def test_table_row_arrays():
 
 def test_table_row_np_bool():
     n = 50
-    table = pyvista.Table()
+    table = pv.Table()
     bool_arr = np.zeros(n, np.bool_)
     table.row_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
@@ -167,7 +167,7 @@ def test_table_row_np_bool():
 
 def test_table_row_uint8():
     n = 50
-    table = pyvista.Table()
+    table = pv.Table()
     arr = np.zeros(n, np.uint8)
     table.row_arrays['arr'] = arr
     arr[:] = np.arange(n)
@@ -177,7 +177,7 @@ def test_table_row_uint8():
 def test_table_repr():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
-    table = pyvista.Table(arrays)
+    table = pv.Table(arrays)
     text = table._repr_html_()
     assert isinstance(text, str)
     text = table.__repr__()
@@ -193,7 +193,7 @@ def test_table_pandas():
     df = pd.DataFrame()
     for i in range(nc):
         df[f'foo{i}'] = arrays[:, i].copy()
-    table = pyvista.Table(df)
+    table = pv.Table(df)
     assert table.n_rows == nr
     assert table.n_columns == nc
     for i in range(nc):
@@ -204,7 +204,7 @@ def test_table_pandas():
 def test_table_iter():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
-    table = pyvista.Table(arrays)
+    table = pv.Table(arrays)
     for i, array in enumerate(table):
         assert np.allclose(array, arrays[:, i])
 
@@ -212,7 +212,7 @@ def test_table_iter():
 def test_get_data_range():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
-    table = pyvista.Table(arrays)
+    table = pv.Table(arrays)
     nanmin, nanmax = table.get_data_range()
     assert nanmin == np.nanmin(arrays[:, 0])
     assert nanmax == np.nanmax(arrays[:, 0])
