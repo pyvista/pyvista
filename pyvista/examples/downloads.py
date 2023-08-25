@@ -1678,6 +1678,8 @@ def download_frog_tissue(load=True):  # pragma: no cover
     --------
     Load data
 
+    >>> import numpy as np
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> data = examples.download_frog_tissue()
 
@@ -1709,7 +1711,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     Make and show plot
 
-    >>> p = pyvista.Plotter()
+    >>> p = pv.Plotter()
     >>> _ = p.add_volume(
     ...     data,
     ...     clim=clim,
