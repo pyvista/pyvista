@@ -1661,7 +1661,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
     """Download frog tissue dataset.
 
     This dataset contains tissue segmentation labels for the frog dataset
-    (see :ref:`download_frog`).
+    (see :func:`download_frog`).
 
     Parameters
     ----------
