@@ -104,9 +104,7 @@ def test_layer():
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
-    plotter = pv.Plotter(
-        border=has_border, border_color=border_color, border_width=border_width
-    )
+    plotter = pv.Plotter(border=has_border, border_color=border_color, border_width=border_width)
     assert plotter.renderer.has_border is has_border
 
     if has_border:

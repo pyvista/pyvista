@@ -193,9 +193,7 @@ def test_clip_box(datasets):
         dataset.clip_box(bounds={5, 6, 7}, progress_bar=True)
     # Test with a poly data box
     mesh = examples.load_airplane()
-    box = pv.Cube(
-        center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500
-    )
+    box = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
     box.rotate_z(33, inplace=True)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
     assert result.n_cells
@@ -1175,12 +1173,8 @@ def test_sample():
 
 
 def test_sample_composite():
-    mesh0 = pv.ImageData(
-        dimensions=(11, 11, 1), origin=(0.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0)
-    )
-    mesh1 = pv.ImageData(
-        dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0)
-    )
+    mesh0 = pv.ImageData(dimensions=(11, 11, 1), origin=(0.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
+    mesh1 = pv.ImageData(dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
     mesh0["common_data"] = np.zeros(mesh0.n_points)
     mesh1["common_data"] = np.ones(mesh1.n_points)
     mesh0["partial_data"] = np.zeros(mesh0.n_points)
@@ -2741,9 +2735,7 @@ def test_subdivide_tetra(tetbeam):
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
-    hex_cells = combined.extract_cells_by_type(
-        [pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID]
-    )
+    hex_cells = combined.extract_cells_by_type([pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID])
     assert np.alltrue(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)

@@ -219,9 +219,7 @@ def test_disc():
     center = (1.2, 3.4, 5.6)
     geom = pv.Disc(center=center)
 
-    assert np.allclose(
-        geom.bounds, pv.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6])
-    )
+    assert np.allclose(geom.bounds, pv.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6]))
 
 
 def test_superquadric():

@@ -203,9 +203,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     # Incorrect size
     with pytest.raises(ValueError):
-        pv.UnstructuredGrid(
-            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False
-        )
+        pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False)
 
     # Unknown cell type
     with pytest.raises(ValueError):
