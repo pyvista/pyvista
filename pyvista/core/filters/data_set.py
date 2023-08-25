@@ -6035,7 +6035,7 @@ class DataSetFilters:
             raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
 
         # Do packing
-        if _vtk.VTK93:  # pragma: no cover 
+        if _vtk.VTK93:  # pragma: no cover
             alg = _vtk.vtkPackLabels()
             alg.SetInputDataObject(self)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
