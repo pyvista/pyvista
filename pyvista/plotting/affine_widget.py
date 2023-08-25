@@ -77,8 +77,8 @@ class AffineWidget3D:
         The plotter object.
     actor : pyvista.Actor
         The actor to which the widget is attached to.
-    center : sequence[float], optional
-        Center of the widget. Default is the center of the main actor.
+    origin : sequence[float], optional
+        Origin of the widget. Default is the center of the main actor.
     start : bool, default: True
         If True, start the widget immediately.
     scale : float, default: 0.15
@@ -127,7 +127,7 @@ class AffineWidget3D:
         self,
         plotter,
         actor,
-        center=None,
+        origin=None,
         start=True,
         scale=0.15,
         line_radius=0.02,
@@ -148,7 +148,8 @@ class AffineWidget3D:
         self._arrows = []
         self._circles = []
         self._pressing_down = False
-        self._center = center if center else actor.center
+        origin = origin if origin else actor.center
+        self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (
                 pv.global_theme.axes.x_color,
@@ -162,7 +163,7 @@ class AffineWidget3D:
         if callback:
             if not callable(callback):
                 raise TypeError(f"`callback` must be a callable, not {type(callback)}.")
-            self._callback = callback
+        self._callback = callback
 
         self._init_actors(scale, always_visible)
 
@@ -173,7 +174,7 @@ class AffineWidget3D:
         """Initialize the widget's actors."""
         for ii, color in zip(range(3), self._axes_colors):
             arrow = pv.Arrow(
-                self._center,
+                self._origin,
                 direction=AXES[ii],
                 scale=self._actor_length * scale * 1.15,
                 tip_radius=0.05,
@@ -186,7 +187,7 @@ class AffineWidget3D:
             elif ii == 1:
                 axis_circ = axis_circ.rotate_x(90)
             axis_circ.points *= self._main_actor.GetLength() * (scale * 1.6)
-            axis_circ.points += np.array(self._center)
+            axis_circ.points += self._origin
             axis_circ = axis_circ.tube(
                 radius=self._line_radius * self._actor_length * scale,
                 absolute=True,
@@ -221,10 +222,8 @@ class AffineWidget3D:
             else:
                 # map the axis to the next axis (wrap around
                 index = INDEX_MAPPER[self._arrows.index(self._selected_actor)]
-            plane_point = np.array(self._center)
-            plane_normal = AXES[index]
             view_vec = np.array(ren.camera.direction)
-            point = ray_plane_intersection(point, view_vec, plane_point, plane_normal)
+            point = ray_plane_intersection(point, view_vec, self._origin, AXES[index])
         return point
 
     def _move_callback(self, interactor, event):
@@ -245,8 +244,8 @@ class AffineWidget3D:
                 matrix[index, -1] += diff[index]
             elif self._selected_actor in self._circles:
                 index = self._circles.index(self._selected_actor)
-                vec_current = current_pos - self._center
-                vec_init = self.init_position - self._center
+                vec_current = current_pos - self._origin
+                vec_init = self.init_position - self._origin
                 normal = AXES[index]
                 vec_current = vec_current - np.dot(vec_current, normal) * normal
                 vec_init = vec_init - np.dot(vec_init, normal) * normal
@@ -257,14 +256,14 @@ class AffineWidget3D:
                 if cross[index] < 0:
                     angle = -angle
                 trans = _vtk.vtkTransform()
-                trans.Translate(np.array(self._center))
+                trans.Translate(self._origin)
                 if index == 0:
                     trans.RotateX(angle)
                 elif index == 1:
                     trans.RotateY(angle)
                 elif index == 2:
                     trans.RotateZ(angle)
-                trans.Translate(-np.array(self._center))
+                trans.Translate(-self._origin)
                 trans.Update()
                 rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = np.dot(rot_matrix, self._cached_matrix)
@@ -315,9 +314,39 @@ class AffineWidget3D:
         self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = np.eye(4)
 
+    @property
+    def origin(self) -> tuple:
+        """Origin of the widget.
+
+        This is where the origin of the widget will be located and where the
+        actor will be rotated about.
+
+        Returns
+        -------
+        numpy.ndarray
+            Widget origin.
+
+        """
+        return tuple(self._origin)
+
+    @origin.setter
+    def origin(self, value):  # numpydoc ignore=GL08
+        value = np.array(value)
+        diff = value - self._origin
+
+        for actor in self._circles + self._arrows:
+            if actor.user_matrix is None:
+                actor.user_matrix = np.eye(4)
+            matrix = actor.user_matrix
+            matrix[:3, -1] += diff
+            actor.user_matrix = matrix
+
+        self._origin = value
+
     def enable(self):
         """Enable the widget."""
-        self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
+        if not self._pl._picker_in_use:
+            self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
             "MouseMoveEvent", self._move_callback
         )

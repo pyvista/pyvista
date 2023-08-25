@@ -2259,7 +2259,7 @@ class WidgetHelper:
     def add_affine_transform_widget(
         self,
         actor,
-        center=None,
+        origin=None,
         start=True,
         scale=0.15,
         line_radius=0.02,
@@ -2276,8 +2276,8 @@ class WidgetHelper:
         ----------
         actor : pyvista.Actor
             The actor to which the widget is attached to.
-        center : sequence[float], optional
-            Center of the widget. Default is the center of the main actor.
+        origin : sequence[float], optional
+            Origin of the widget. Default is the origin of the main actor.
         start : bool, default: True
             If True, start the widget immediately.
         scale : float, default: 0.15
@@ -2326,7 +2326,7 @@ class WidgetHelper:
                [0., 0., 0., 1.]])
         """
         return AffineWidget3D(
-            self, actor, center, start, scale, line_radius, always_visible, axes_colors, callback
+            self, actor, origin, start, scale, line_radius, always_visible, axes_colors, callback
         )
 
     def add_checkbox_button_widget(
