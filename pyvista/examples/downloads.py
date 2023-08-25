@@ -1649,8 +1649,10 @@ def download_frog(load=True):  # pragma: no cover
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
 
-    See :ref:`volume_rendering_example` for an example using
-    this dataset.
+    See :func:`download_frog_tissue` for segmentation labels associated
+    with this dataset.
+
+    See :ref:`volume_rendering_example` for an example using this dataset.
 
     """
     download_file('froggy/frog.zraw')
