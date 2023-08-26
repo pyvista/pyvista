@@ -1,6 +1,6 @@
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 
@@ -91,7 +91,7 @@ def test_metadata_save(hexbeam, tmpdir):
 
     # verify that complex data is restored
     hexbeam.save(filename)
-    hexbeam_in = pyvista.read(filename)
+    hexbeam_in = pv.read(filename)
     assert hexbeam_in.point_data['pt_data0'].dtype == np.complex128
     assert hexbeam_in.point_data['bool_data'].dtype == bool
     assert hexbeam_in.cell_data['my_complex_cell_data'].dtype == np.complex128

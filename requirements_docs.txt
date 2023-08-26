@@ -4,8 +4,6 @@ colorcet==3.0.1
 enum-tools==0.10.0
 imageio==2.31.1
 imageio-ffmpeg==0.4.8
-ipygany==0.5.0
-ipyvtklink==0.2.3
 jupyter_sphinx==0.4.0
 jupyterlab==4.0.5
 lxml==4.9.3
@@ -14,12 +12,9 @@ mypy==1.5.1
 mypy-extensions==1.0.0
 numpydoc==1.5.0
 osmnx==1.6.0
-panel==0.14.2
-param==1.13.0  # due to panel bug
 pydata-sphinx-theme==0.13.3
 pypandoc==1.11
 pytest-sphinx==0.5.0
-pythreejs==2.4.2
 scipy==1.11.2
 Sphinx==7.1.2
 sphinx-autobuild==2021.3.14
