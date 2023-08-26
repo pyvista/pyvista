@@ -7,7 +7,7 @@ All other tests requiring rendering should to in
 import numpy as np
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista.core.errors import DeprecationError, MissingDataError
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
@@ -16,13 +16,13 @@ from pyvista.plotting.utilities.gl_checks import uses_egl
 
 @pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
 def test_plotter_image_before_show():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
         plotter.image
 
 
 def test_has_render_window_fail():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.close()
     with pytest.raises(RenderWindowUnavailable, match='not available'):
         pl._check_has_ren_win()
@@ -31,7 +31,7 @@ def test_has_render_window_fail():
 
 
 def test_render_lines_as_tubes_show_edges_warning(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     with pytest.warns(UserWarning, match='not supported'):
         actor = pl.add_mesh(sphere, render_lines_as_tubes=True, show_edges=True)
     assert not actor.prop.show_edges
@@ -40,26 +40,26 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
 
 @pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
 def test_screenshot_fail_suppressed_rendering():
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.suppress_rendering = True
     with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
         plotter.show(screenshot='tmp.png')
 
 
 def test_plotter_line_point_smoothing():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     assert bool(pl.render_window.GetLineSmoothing()) is False
     assert bool(pl.render_window.GetPointSmoothing()) is False
     assert bool(pl.render_window.GetPolygonSmoothing()) is False
 
-    pl = pyvista.Plotter(line_smoothing=True, point_smoothing=True, polygon_smoothing=True)
+    pl = pv.Plotter(line_smoothing=True, point_smoothing=True, polygon_smoothing=True)
     assert bool(pl.render_window.GetLineSmoothing()) is True
     assert bool(pl.render_window.GetPointSmoothing()) is True
     assert bool(pl.render_window.GetPolygonSmoothing()) is True
 
 
 def test_enable_hidden_line_removal():
-    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter = pv.Plotter(shape=(1, 2))
     plotter.enable_hidden_line_removal(False)
     assert plotter.renderers[0].GetUseHiddenLineRemoval()
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
@@ -69,7 +69,7 @@ def test_enable_hidden_line_removal():
 
 
 def test_disable_hidden_line_removal():
-    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter = pv.Plotter(shape=(1, 2))
     plotter.enable_hidden_line_removal(True)
 
     plotter.disable_hidden_line_removal(False)
@@ -81,9 +81,9 @@ def test_disable_hidden_line_removal():
 
 
 def test_pickable_actors():
-    plotter = pyvista.Plotter()
-    sphere = plotter.add_mesh(pyvista.Sphere(), pickable=True)
-    cube = plotter.add_mesh(pyvista.Cube(), pickable=False)
+    plotter = pv.Plotter()
+    sphere = plotter.add_mesh(pv.Sphere(), pickable=True)
+    cube = plotter.add_mesh(pv.Cube(), pickable=False)
 
     pickable = plotter.pickable_actors
     assert sphere in pickable
@@ -109,7 +109,7 @@ def test_pickable_actors():
 
 
 def test_plotter_image_scale():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     assert isinstance(pl.image_scale, int)
     with pytest.raises(ValueError, match='must be a positive integer'):
         pl.image_scale = 0
@@ -151,7 +151,7 @@ def test_smooth_shading_shallow_copy(sphere):
     assert np.array_equal(sphere['numbers'], sphere2['numbers'])
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, scalars=None, smooth_shading=True)
     # Modify after adding and using compute_normals via smooth_shading
     sphere['numbers'] *= -1
@@ -161,8 +161,8 @@ def test_smooth_shading_shallow_copy(sphere):
 
 
 def test_get_datasets(sphere, hexbeam):
-    """Test pyvista.Plotter._datasets."""
-    pl = pyvista.Plotter()
+    """Test pv.Plotter._datasets."""
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.add_mesh(hexbeam)
     datasets = pl._datasets
@@ -175,7 +175,7 @@ def test_remove_scalars_single(sphere, hexbeam):
     # test single component scalars
     sphere.clear_data()
     hexbeam.clear_data()
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_points), copy_mesh=True)
     pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells), copy_mesh=True)
 
@@ -200,7 +200,7 @@ def test_active_scalars_remain(sphere, hexbeam):
     assert sphere.point_data.active_scalars_name == point_data_name
     assert hexbeam.cell_data.active_scalars_name == cell_data_name
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_points), copy_mesh=True)
     pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells), copy_mesh=True)
     pl.close()
@@ -212,13 +212,13 @@ def test_active_scalars_remain(sphere, hexbeam):
 def test_no_added_with_scalar_bar(sphere):
     point_data_name = "data"
     sphere[point_data_name] = np.random.random(sphere.n_points)
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
     assert sphere.n_arrays == 1
 
 
 def test_plotter_remains_shallow():
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)
 
@@ -227,7 +227,7 @@ def test_plotter_remains_shallow():
     assert np.array_equal(sphere['numbers'], sphere2['numbers'])
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(sphere, scalars=None)
 
     sphere[
@@ -241,7 +241,7 @@ def test_plotter_remains_shallow():
 def test_add_multiple(sphere):
     point_data_name = 'data'
     sphere[point_data_name] = np.random.random(sphere.n_points)
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere, copy_mesh=True)
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_points), copy_mesh=True)
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_cells), copy_mesh=True)
@@ -251,7 +251,7 @@ def test_add_multiple(sphere):
 
 
 def test_deep_clean(cube):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     cube_orig = cube.copy()
     pl.add_mesh(cube)
     pl.deep_clean()
@@ -263,7 +263,7 @@ def test_deep_clean(cube):
 
 
 def test_disable_depth_of_field(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.enable_depth_of_field()
     assert pl.renderer.GetPass() is not None
     pl.disable_depth_of_field()
@@ -271,7 +271,7 @@ def test_disable_depth_of_field(sphere):
 
 
 def test_remove_blurring(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_blurring()
     assert pl.renderer.GetPass() is not None
     pl.remove_blurring()
@@ -279,14 +279,14 @@ def test_remove_blurring(sphere):
 
 
 def test_add_points_invalid_style(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(ValueError, match='Should be either "points"'):
         pl.add_points(sphere, style='wireframe')
 
 
 @pytest.mark.parametrize("connected, n_lines", [(False, 2), (True, 3)])
 def test_add_lines(connected, n_lines):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
     actor = pl.add_lines(points, connected=connected)
     dataset = actor.mapper.dataset
@@ -294,7 +294,7 @@ def test_add_lines(connected, n_lines):
 
 
 def test_clear_actors(cube, sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(cube)
     pl.add_mesh(sphere)
     assert len(pl.renderer.actors) == 2
@@ -303,7 +303,7 @@ def test_clear_actors(cube, sphere):
 
 
 def test_anti_aliasing_multiplot(sphere):
-    pl = pyvista.Plotter(shape=(1, 2))
+    pl = pv.Plotter(shape=(1, 2))
     pl.enable_anti_aliasing('ssaa', all_renderers=False)
     assert 'vtkSSAAPass' in pl.renderers[0]._render_passes._passes
     assert 'vtkSSAAPass' not in pl.renderers[1]._render_passes._passes
@@ -321,24 +321,24 @@ def test_anti_aliasing_multiplot(sphere):
 
 
 def test_anti_aliasing_invalid():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(ValueError, match='Should be either "fxaa" or "ssaa"'):
         pl.renderer.enable_anti_aliasing('invalid')
 
 
-def test_plot_return_img_without_cpos(sphere: pyvista.PolyData):
+def test_plot_return_img_without_cpos(sphere: pv.PolyData):
     img = sphere.plot(return_cpos=False, return_img=True, screenshot=True)
     assert isinstance(img, np.ndarray)
 
 
-def test_plot_return_img_with_cpos(sphere: pyvista.PolyData):
+def test_plot_return_img_with_cpos(sphere: pv.PolyData):
     cpos, img = sphere.plot(return_cpos=True, return_img=True, screenshot=True)
-    assert isinstance(cpos, pyvista.CameraPosition)
+    assert isinstance(cpos, pv.CameraPosition)
     assert isinstance(img, np.ndarray)
 
 
 def test_plotter_actors(sphere, cube):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     actor_a = pl.add_mesh(sphere)
     actor_b = pl.add_mesh(cube)
     assert len(pl.actors) == 2
@@ -347,7 +347,7 @@ def test_plotter_actors(sphere, cube):
 
 
 def test_plotter_suppress_rendering():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     assert isinstance(pl.suppress_rendering, bool)
     pl.suppress_rendering = True
     assert pl.suppress_rendering is True
@@ -355,10 +355,10 @@ def test_plotter_suppress_rendering():
     assert pl.suppress_rendering is False
 
 
-def test_plotter_add_volume_raises(uniform: pyvista.ImageData, sphere: pyvista.PolyData):
+def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
     """Test edge case where add_volume has no scalars."""
     uniform.clear_data()
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(MissingDataError):
         pl.add_volume(uniform, cmap="coolwarm", opacity="linear")
 
@@ -368,7 +368,7 @@ def test_plotter_add_volume_raises(uniform: pyvista.ImageData, sphere: pyvista.P
 
 def test_deprecated_store_image():
     """Test to make sure store_image is deprecated."""
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(DeprecationError):
         assert isinstance(pl.store_image, bool)
 
@@ -376,26 +376,26 @@ def test_deprecated_store_image():
         pl.store_image = True
 
 
-def test_plotter_add_volume_clim(uniform: pyvista.ImageData):
+def test_plotter_add_volume_clim(uniform: pv.ImageData):
     """Verify clim is set correctly for volume."""
     arr = uniform.x.astype(np.uint8)
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     vol = pl.add_volume(uniform, scalars=arr)
     assert vol.mapper.scalar_range == (0, 255)
 
     clim = [-10, 20]
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     vol = pl.add_volume(uniform, clim=clim)
     assert vol.mapper.scalar_range == tuple(clim)
 
     clim_val = 2.0
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     vol = pl.add_volume(uniform, clim=clim_val)
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
 
 
 def test_plotter_meshes(sphere, cube):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.add_mesh(cube)
 
