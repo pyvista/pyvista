@@ -224,7 +224,7 @@ def test_poked_subplot_context(verify_image_cache):
 
 
 def test_user_interaction_style():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.enable_user_style()
     assert pl.iren._style == 'User'
     assert isinstance(pl.iren.interactor.GetInteractorStyle(), vtk.vtkInteractorStyleUser)
