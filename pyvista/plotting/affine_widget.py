@@ -147,6 +147,9 @@ class AffineWidget3D:
         self._main_actor = actor
         self._selected_actor = None
         self._init_position = None
+        self._mouse_move_observer = None
+        self._left_press_observer = None
+        self._left_release_observer = None
 
         if self._main_actor.user_matrix is None:
             self._main_actor.user_matrix = np.eye(4)
@@ -215,8 +218,14 @@ class AffineWidget3D:
                 actor.mapper.SetResolveCoincidentTopologyToPolygonOffset()
                 actor.mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
 
-    def _get_world_coord(self, interactor):
-        """Get the world coordinates given an interactor."""
+    def _get_world_coord_rot(self, interactor):
+        """Get the world coordinates given an interactor.
+
+        Unlike ``_get_world_coord_trans``, these coordinates are physically
+        accurate, but sensitive to the position of the camera. Rotation is zoom
+        independent.
+
+        """
         x, y = interactor.GetLastEventPosition()
         coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToDisplay()
@@ -224,13 +233,45 @@ class AffineWidget3D:
         ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
         point = np.array(coordinate.GetComputedWorldValue(ren))
         if self._selected_actor:
-            if self._selected_actor in self._circles:
-                index = self._circles.index(self._selected_actor)
-            else:
-                # map the axis to the next axis (wrap around
-                index = INDEX_MAPPER[self._arrows.index(self._selected_actor)]
+            index = self._circles.index(self._selected_actor)
             view_vec = np.array(ren.camera.direction)
             point = ray_plane_intersection(point, view_vec, self._origin, AXES[index])
+        return point
+
+    def _get_world_coord_trans(self, interactor):
+        """Get the world coordinates given an interactor.
+
+        This uses a modified scaled approach to get the world coordinates that
+        are not physically accurate, but ignores zoom and works for
+        translation.
+
+        """
+        x, y = interactor.GetLastEventPosition()
+        ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
+
+        # Get normalized view coordinates (-1, 1)
+        width, height = ren.GetSize()
+        ndc_x = 2 * (x / width) - 1
+        ndc_y = 2 * (y / height) - 1
+        ndc_z = 1
+
+        # convert
+        camera = ren.GetActiveCamera()
+        projection_matrix = pv.array_from_vtkmatrix(
+            camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1)
+        )
+        inverse_projection_matrix = np.linalg.inv(projection_matrix)
+        camera_coords = np.dot(inverse_projection_matrix, [ndc_x, ndc_y, ndc_z, 1])
+        modelview_matrix = pv.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
+        inverse_modelview_matrix = np.linalg.inv(modelview_matrix)
+        world_coords = np.dot(inverse_modelview_matrix, camera_coords)
+        point = world_coords[:3] * self._actor_length
+
+        # map the axis to the next axis (wrap around)
+        index = INDEX_MAPPER[self._arrows.index(self._selected_actor)]
+        view_vec = np.array(ren.camera.direction)
+        point = ray_plane_intersection(point, view_vec, self._origin, AXES[index])
+
         return point
 
     def _move_callback(self, interactor, event):
@@ -243,13 +284,14 @@ class AffineWidget3D:
         actor = picker.GetActor()
 
         if self._pressing_down:
-            current_pos = self._get_world_coord(interactor)
             if self._selected_actor in self._arrows:
+                current_pos = self._get_world_coord_trans(interactor)
                 index = self._arrows.index(self._selected_actor)
                 diff = current_pos - self.init_position
                 matrix = self._cached_matrix.copy()
                 matrix[index, -1] += diff[index]
             elif self._selected_actor in self._circles:
+                current_pos = self._get_world_coord_rot(interactor)
                 index = self._circles.index(self._selected_actor)
                 vec_current = current_pos - self._origin
                 vec_init = self.init_position - self._origin
@@ -306,7 +348,10 @@ class AffineWidget3D:
         if self._selected_actor:
             self._pl.enable_trackball_actor_style()
             self._pressing_down = True
-            self.init_position = self._get_world_coord(interactor)
+            if self._selected_actor in self._circles:
+                self.init_position = self._get_world_coord_rot(interactor)
+            else:
+                self.init_position = self._get_world_coord_trans(interactor)
 
     def _release_callback(self, interactor, event):
         """Process actions for the mouse button release event."""
@@ -367,6 +412,15 @@ class AffineWidget3D:
     def disable(self):
         """Disable the widget."""
         self._pl.disable_picking()
-        self._pl.iren.remove_observer(self._mouse_move_observer)
-        self._pl.iren.remove_observer(self._left_press_observer)
-        self._pl.iren.remove_observer(self._left_release_observer)
+        if self._mouse_move_observer:
+            self._pl.iren.remove_observer(self._mouse_move_observer)
+        if self._left_press_observer:
+            self._pl.iren.remove_observer(self._left_press_observer)
+        if self._left_release_observer:
+            self._pl.iren.remove_observer(self._left_release_observer)
+
+    def remove(self):
+        """Disable and delete all actors of this widget."""
+        self.disable()
+        for actor in self._circles + self._arrows:
+            self._pl.remove_actor(actor)
