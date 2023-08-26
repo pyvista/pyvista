@@ -140,8 +140,8 @@ class AffineWidget3D:
     ):
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
-        if pv.vtk_version_info < (9, 2):
-            VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
+        if pv.vtk_version_info < (9, 2):  # pragma: no cover
+            raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
         self._pl = plotter
         self._main_actor = actor
@@ -402,10 +402,10 @@ class AffineWidget3D:
         self._mouse_move_observer = self._pl.iren.add_observer(
             "MouseMoveEvent", self._move_callback
         )
-        self._pl._left_press_observer = self._pl.iren.add_observer(
+        self._left_press_observer = self._pl.iren.add_observer(
             "LeftButtonPressEvent", self._press_callback
         )
-        self._pl._left_release_observer = self._pl.iren.add_observer(
+        self._left_release_observer = self._pl.iren.add_observer(
             "LeftButtonReleaseEvent", self._release_callback
         )
 
@@ -424,3 +424,5 @@ class AffineWidget3D:
         self.disable()
         for actor in self._circles + self._arrows:
             self._pl.remove_actor(actor)
+        self._circles = []
+        self._arrows = []

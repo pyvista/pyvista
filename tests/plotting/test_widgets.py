@@ -4,6 +4,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.affine_widget import DARK_YELLOW, get_angle, ray_plane_intersection
 
 # skip all tests if unable to render
@@ -442,7 +443,6 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_affine_widget(sphere):
     calls = []
 
@@ -451,6 +451,11 @@ def test_affine_widget(sphere):
 
     pl = pv.Plotter(window_size=(400, 400))
     actor = pl.add_mesh(sphere)
+
+    if pv.vtk_version_info < (9, 2):
+        with pytest.raises(VTKVersionError):
+            pl.add_affine_transform_widget(actor, callback=callback)
+        return
 
     with pytest.raises(TypeError, match='callable'):
         pl.add_affine_transform_widget(actor, callback='foo')
@@ -540,4 +545,10 @@ def test_affine_widget(sphere):
     assert np.allclose(widget.origin, origin)
 
     # test disable
+    assert pl._picker_in_use
     widget.disable()
+    assert not pl._picker_in_use
+
+    widget.remove()
+    assert not widget._circles
+    assert not widget._arrows
