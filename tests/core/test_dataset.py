@@ -133,7 +133,7 @@ def test_cell_data_bad_value(grid):
 
 def test_point_cell_data_single_scalar_no_exception_raised():
     try:
-        m = pyvista.PolyData([0, 0, 0.0])
+        m = pv.PolyData([0, 0, 0.0])
         m.point_data["foo"] = 1
         m.cell_data["bar"] = 1
         m["baz"] = 1
