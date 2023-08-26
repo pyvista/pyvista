@@ -53,11 +53,35 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
             self.linear_font_scale_factor = linear_font_scale_factor
 
     def get_text(self, position):
-        """Get the text to be displayed for each corner."""
+        """Get the text to be displayed for each corner.
+
+        Parameters
+        ----------
+        position : str | bool
+            Position of the text.
+
+        Returns
+        -------
+        str
+            Text to be displayed for each corner.
+        """
         return self.GetText(position)
 
     def set_text(self, position, obj):
-        """Set the text to be displayed for each corner."""
+        """Set the text to be displayed for each corner.
+
+        Parameters
+        ----------
+        position : str | bool
+            Position of the text.
+
+        obj : str
+            Text to be displayed for each corner.
+
+        Returns
+        -------
+        None
+        """
         corner_mappings = {
             'lower_left': self.LowerLeft,
             'lower_right': self.LowerRight,
