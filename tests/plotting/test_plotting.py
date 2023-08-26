@@ -1864,9 +1864,9 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
     mapping = pv.opacity_transfer_function('sigmoid_10', n)
     assert len(mapping) == n
-    mapping = pyvista.opacity_transfer_function('foreground', n)
+    mapping = pv.opacity_transfer_function('foreground', n)
     assert len(mapping) == n
-    mapping = pyvista.opacity_transfer_function('foreground', 5)
+    mapping = pv.opacity_transfer_function('foreground', 5)
     assert np.array_equal(mapping, [0, 255, 255, 255, 255])
     with pytest.raises(ValueError):
         mapping = pv.opacity_transfer_function('foo', n)
