@@ -11,7 +11,7 @@ import pytest
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataset import DataSet
 from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
@@ -30,12 +30,12 @@ HYPOTHESIS_MAX_EXAMPLES = 20
 
 @pytest.fixture()
 def grid():
-    return pyvista.UnstructuredGrid(examples.hexbeamfile)
+    return pv.UnstructuredGrid(examples.hexbeamfile)
 
 
 def test_invalid_overwrite(grid):
     with pytest.raises(TypeError):
-        grid.copy_from(pyvista.Plane())
+        grid.copy_from(pv.Plane())
 
 
 def test_overwrite_deprecation(grid):
@@ -248,7 +248,7 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     grid_c = grid.copy()
     grid_a.transform(trans)
     grid_b.transform(trans.GetMatrix())
-    grid_c.transform(pyvista.array_from_vtkmatrix(trans.GetMatrix()))
+    grid_c.transform(pv.array_from_vtkmatrix(trans.GetMatrix()))
 
     # treat INF as NAN (necessary for allclose)
     grid_a.points[np.isinf(grid_a.points)] = np.nan
@@ -265,7 +265,7 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-    trans_arr = pyvista.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
+    trans_arr = pv.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
     trans_pts = apply_transformation_to_points(trans_arr, grid.points)
     assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
 
@@ -276,9 +276,9 @@ def test_translate_should_fail_given_none(grid):
 
 
 def test_set_points():
-    dataset = pyvista.UnstructuredGrid()
+    dataset = pv.UnstructuredGrid()
     points = np.random.random((10, 3))
-    dataset.points = pyvista.vtk_points(points)
+    dataset.points = pv.vtk_points(points)
 
 
 def test_translate_should_fail_bad_points_or_transform(grid):
@@ -287,10 +287,10 @@ def test_translate_should_fail_bad_points_or_transform(grid):
     trans = np.random.random((4, 4))
     bad_trans = np.random.random((2, 4))
     with pytest.raises(ValueError):
-        pyvista.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
+        pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
 
     with pytest.raises(ValueError):
-        pyvista.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
+        pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 
 @settings(
@@ -328,7 +328,7 @@ def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     trans_filter.SetTransform(trans)
     trans_filter.SetInputData(grid)
     trans_filter.Update()
-    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
+    grid_a = pv.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
     getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
@@ -483,7 +483,7 @@ def test_no_arrows(grid):
 
 
 def test_arrows():
-    sphere = pyvista.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=3.14)
 
     # make cool swirly pattern
     vectors = np.vstack(
@@ -498,7 +498,7 @@ def test_arrows():
 
     assert sphere.active_vectors_info[1] == 'vectors'
     arrows = sphere.arrows
-    assert isinstance(arrows, pyvista.PolyData)
+    assert isinstance(arrows, pv.PolyData)
     assert np.any(arrows.points)
     assert arrows.active_vectors_name == 'GlyphVector'
 
@@ -656,7 +656,7 @@ def test_change_name_fail(grid):
 
 
 def test_get_cell_array_fail():
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     with pytest.raises(TypeError):
         sphere.cell_data[None]
 
@@ -695,30 +695,30 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pv.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.axis_rotation(p, 1, False, axis='x')
+    p_out = pv.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
 def test_bad_instantiation():
     with pytest.raises(TypeError):
-        pyvista.DataSet()
+        pv.DataSet()
     with pytest.raises(TypeError):
-        pyvista.Grid()
+        pv.Grid()
     with pytest.raises(TypeError):
-        pyvista.DataSetFilters()
+        pv.DataSetFilters()
     with pytest.raises(TypeError):
-        pyvista.PointGrid()
+        pv.PointGrid()
     with pytest.raises(TypeError):
-        pyvista.DataObject()
+        pv.DataObject()
 
 
 def test_string_arrays():
-    poly = pyvista.PolyData(np.random.rand(10, 3))
+    poly = pv.PolyData(np.random.rand(10, 3))
     arr = np.array([f'foo{i}' for i in range(10)])
     poly['foo'] = arr
     back = poly['foo']
@@ -727,7 +727,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.ImageData(dimensions=(10, 10, 10))
+    grid = pv.ImageData(dimensions=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -748,7 +748,7 @@ def test_scalars_dict_update():
     assert len(mesh.point_data) == n + 2
 
     # Test update from Table
-    table = pyvista.Table(arrays)
+    table = pv.Table(arrays)
     mesh = examples.load_uniform()
     mesh.point_data.update(table)
     assert 'foo' in mesh.array_names
@@ -757,23 +757,23 @@ def test_scalars_dict_update():
 
 
 def test_handle_array_with_null_name():
-    poly = pyvista.PolyData()
+    poly = pv.PolyData()
     # Add point array with no name
-    poly.GetPointData().AddArray(pyvista.convert_array(np.array([])))
+    poly.GetPointData().AddArray(pv.convert_array(np.array([])))
     html = poly._repr_html_()
     assert html is not None
     pdata = poly.point_data
     assert pdata is not None
     assert len(pdata) == 1
     # Add cell array with no name
-    poly.GetCellData().AddArray(pyvista.convert_array(np.array([])))
+    poly.GetCellData().AddArray(pv.convert_array(np.array([])))
     html = poly._repr_html_()
     assert html is not None
     cdata = poly.cell_data
     assert cdata is not None
     assert len(cdata) == 1
     # Add field array with no name
-    poly.GetFieldData().AddArray(pyvista.convert_array(np.array([5, 6])))
+    poly.GetFieldData().AddArray(pv.convert_array(np.array([5, 6])))
     html = poly._repr_html_()
     assert html is not None
     fdata = poly.field_data
@@ -800,20 +800,20 @@ def test_shallow_copy_back_propagation():
     points.InsertNextPoint(2.0, 0.0, 0.0)
     original = vtk.vtkPolyData()
     original.SetPoints(points)
-    wrapped = pyvista.PolyData(original, deep=False)
+    wrapped = pv.PolyData(original, deep=False)
     wrapped.points[:] = 2.8
     orig_points = vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
     # Case 2
     original = vtk.vtkPolyData()
-    wrapped = pyvista.PolyData(original, deep=False)
+    wrapped = pv.PolyData(original, deep=False)
     wrapped.points = np.random.rand(5, 3)
     orig_points = vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
 
 
 def test_find_closest_point():
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     node = np.array([0, 0.2, 0.2])
 
     with pytest.raises(TypeError):
@@ -841,14 +841,14 @@ def test_find_closest_point():
 
 
 def test_find_closest_cell():
-    mesh = pyvista.Wavelet()
+    mesh = pv.Wavelet()
     node = np.array([0, 0.2, 0.2])
     index = mesh.find_closest_cell(node)
     assert isinstance(index, int)
 
 
 def test_find_closest_cells():
-    mesh = pyvista.Sphere()
+    mesh = pv.Sphere()
     # simply get the face centers, ordered by cell Id
     fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
     fcent_copy = fcent.copy()
@@ -862,7 +862,7 @@ def test_find_closest_cells():
 
 
 def test_find_closest_cell_surface_point():
-    mesh = pyvista.Rectangle()
+    mesh = pv.Rectangle()
 
     point = np.array([0.5, 0.5, -1.0])
     point2 = np.array([1.0, 1.0, -1.0])
@@ -876,14 +876,14 @@ def test_find_closest_cell_surface_point():
 
 
 def test_find_containing_cell():
-    mesh = pyvista.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pv.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     node = np.array([0.3, 0.3, 0.0])
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
-    mesh = pyvista.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
+    mesh = pv.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     points_copy = points.copy()
     indices = mesh.find_containing_cell(points)
@@ -892,17 +892,17 @@ def test_find_containing_cells():
 
 
 def test_find_cells_along_line():
-    mesh = pyvista.Cube()
+    mesh = pv.Cube()
     indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
     assert len(indices) == 2
 
 
 def test_find_cells_intersecting_line():
-    mesh = pyvista.Plane(center=(0.01, 0.5, 1), i_resolution=2, j_resolution=2)
+    mesh = pv.Plane(center=(0.01, 0.5, 1), i_resolution=2, j_resolution=2)
     linea = [0, 0, 0.0]
     lineb = [0.0, 0, 1.0]
 
-    if pyvista.vtk_version_info >= (9, 2, 0):
+    if pv.vtk_version_info >= (9, 2, 0):
         indices = mesh.find_cells_intersecting_line(linea, lineb)
         assert len(indices) == 1
 
@@ -923,7 +923,7 @@ def test_find_cells_intersecting_line():
 
 
 def test_find_cells_within_bounds():
-    mesh = pyvista.Cube()
+    mesh = pv.Cube()
 
     bounds = [
         mesh.bounds[0] * 2.0,
@@ -959,7 +959,7 @@ def test_setting_points_by_different_types(grid):
     grid.points = grid_copy.points.tolist()
     assert np.array_equal(grid.points, grid_copy.points)
 
-    pgrid = pyvista.PolyData([0.0, 0.0, 0.0])
+    pgrid = pv.PolyData([0.0, 0.0, 0.0])
     pgrid.points = [1.0, 1.0, 1.0]
     assert np.array_equal(pgrid.points, [[1.0, 1.0, 1.0]])
 
@@ -968,12 +968,12 @@ def test_setting_points_by_different_types(grid):
 
 
 def test_empty_points():
-    pdata = pyvista.PolyData()
+    pdata = pv.PolyData()
     assert np.allclose(pdata.points, np.empty(3))
 
 
 def test_no_active():
-    pdata = pyvista.PolyData()
+    pdata = pv.PolyData()
     assert pdata.active_scalars is None
 
     with pytest.raises(TypeError):
@@ -982,7 +982,7 @@ def test_no_active():
 
 def test_get_data_range(grid):
     # Test with blank mesh
-    mesh = pyvista.Sphere()
+    mesh = pv.Sphere()
     mesh.clear_data()
     rng = mesh.get_data_range()
     assert all(np.isnan(rng))
@@ -1012,7 +1012,7 @@ def test_actual_memory_size(grid):
 
 def test_copy_structure(grid):
     classname = grid.__class__.__name__
-    copy = eval(f'pyvista.{classname}')()
+    copy = eval(f'pv.{classname}')()
     copy.copy_structure(grid)
     assert copy.n_cells == grid.n_cells
     assert copy.n_points == grid.n_points
@@ -1023,7 +1023,7 @@ def test_copy_structure(grid):
 
 def test_copy_attributes(grid):
     classname = grid.__class__.__name__
-    copy = eval(f'pyvista.{classname}')()
+    copy = eval(f'pv.{classname}')()
     copy.copy_attributes(grid)
     assert copy.n_cells == 0
     assert copy.n_points == 0
@@ -1035,7 +1035,7 @@ def test_copy_attributes(grid):
 def test_cell_n_points(grid):
     with pytest.warns(PyVistaDeprecationWarning):
         npoints = grid.cell_n_points(0)
-    if pyvista._version.version_info >= (0, 43):
+    if pv._version.version_info >= (0, 43):
         raise RuntimeError('Remove this deprecated method')
     assert isinstance(npoints, int)
     assert npoints >= 0
@@ -1044,7 +1044,7 @@ def test_cell_n_points(grid):
 def test_cell_points(grid):
     with pytest.warns(PyVistaDeprecationWarning):
         points = grid.cell_points(0)
-    if pyvista._version.version_info >= (0, 43):
+    if pv._version.version_info >= (0, 43):
         raise RuntimeError('Remove this deprecated method')
     assert isinstance(points, np.ndarray)
     assert points.ndim == 2
@@ -1055,7 +1055,7 @@ def test_cell_points(grid):
 def test_cell_point_ids(grid):
     with pytest.warns(PyVistaDeprecationWarning):
         point_ids = grid.cell_point_ids(0)
-    if pyvista._version.version_info >= (0, 43):
+    if pv._version.version_info >= (0, 43):
         raise RuntimeError('Remove this deprecated method')
     assert isinstance(point_ids, list)
     with pytest.warns(PyVistaDeprecationWarning):
@@ -1067,7 +1067,7 @@ def test_cell_point_ids(grid):
 def test_cell_bounds(grid):
     with pytest.warns(PyVistaDeprecationWarning):
         bounds = grid.cell_bounds(0)
-    if pyvista._version.version_info >= (0, 43):
+    if pv._version.version_info >= (0, 43):
         raise RuntimeError('Remove this deprecated method')
     assert isinstance(bounds, tuple)
     assert len(bounds) == 6
@@ -1076,13 +1076,13 @@ def test_cell_bounds(grid):
 def test_cell_type(grid):
     with pytest.warns(PyVistaDeprecationWarning):
         ctype = grid.cell_type(0)
-    if pyvista._version.version_info >= (0, 43):
+    if pv._version.version_info >= (0, 43):
         raise RuntimeError('Remove this deprecated method')
     assert isinstance(ctype, int)
 
 
 def test_point_is_inside_cell():
-    grid = pyvista.ImageData(dimensions=(2, 2, 2))
+    grid = pv.ImageData(dimensions=(2, 2, 2))
     assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
     assert not grid.point_is_inside_cell(0, [-0.5, -0.5, -0.5])
 
@@ -1111,7 +1111,7 @@ def test_point_is_inside_cell():
 
 @pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
 def test_serialize_deserialize(datasets, pickle_format):
-    pyvista.set_pickle_format(pickle_format)
+    pv.set_pickle_format(pickle_format)
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
@@ -1154,7 +1154,7 @@ def n_points(dataset):
 @pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
 def test_multiprocessing(datasets, pickle_format):
     # exercise pickling via multiprocessing
-    pyvista.set_pickle_format(pickle_format)
+    pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
     for res, dataset in zip(res, datasets):
@@ -1201,7 +1201,7 @@ def test_rotate_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
         out = mesh.rotate_x(30, point=5)
     with pytest.raises(ValueError):
@@ -1212,7 +1212,7 @@ def test_rotate_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
         out = mesh.rotate_y(30, point=5)
     with pytest.raises(ValueError):
@@ -1223,7 +1223,7 @@ def test_rotate_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
         out = mesh.rotate_z(30, point=5)
     with pytest.raises(ValueError):
@@ -1234,7 +1234,7 @@ def test_rotate_vector():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(ValueError):
         out = mesh.rotate_vector([1, 1], 33)
     with pytest.raises(TypeError):
@@ -1250,8 +1250,8 @@ def test_transform_integers():
     ]
     # build vtkPolyData from scratch to enforce int data
     poly = vtk.vtkPolyData()
-    poly.SetPoints(pyvista.vtk_points(points))
-    poly = pyvista.wrap(poly)
+    poly.SetPoints(pv.vtk_points(points))
+    poly = pv.wrap(poly)
     poly.verts = [1, 0, 1, 1, 1, 2]
     # define active and inactive vectors with int values
     for dataset_attrs in poly.point_data, poly.cell_data:
@@ -1293,18 +1293,18 @@ def test_transform_integers_vtkbug_present():
     ]
     # build vtkPolyData from scratch to enforce int data
     poly = vtk.vtkPolyData()
-    poly.SetPoints(pyvista.vtk_points(points))
+    poly.SetPoints(pv.vtk_points(points))
 
     # manually put together a rotate_x(10) transform
-    trans_arr = pyvista.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
-    trans_mat = pyvista.vtkmatrix_from_array(trans_arr)
+    trans_arr = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
+    trans_mat = pv.vtkmatrix_from_array(trans_arr)
     trans = vtk.vtkTransform()
     trans.SetMatrix(trans_mat)
     trans_filt = vtk.vtkTransformFilter()
     trans_filt.SetInputDataObject(poly)
     trans_filt.SetTransform(trans)
     trans_filt.Update()
-    poly = pyvista.wrap(trans_filt.GetOutputDataObject(0))
+    poly = pv.wrap(trans_filt.GetOutputDataObject(0))
     # the bug is that e.g. 0.98 gets truncated to 0
     assert poly.points[-1, 1] != 0
 
@@ -1330,7 +1330,7 @@ def test_scale():
     # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_flip_x():
@@ -1343,7 +1343,7 @@ def test_flip_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_x()
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_flip_y():
@@ -1356,7 +1356,7 @@ def test_flip_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_y()
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_flip_z():
@@ -1369,7 +1369,7 @@ def test_flip_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_z()
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_flip_normal():
@@ -1395,7 +1395,7 @@ def test_flip_normal():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
-    assert isinstance(out, pyvista.StructuredGrid)
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_active_normals(sphere):
@@ -1408,12 +1408,12 @@ def test_active_normals(sphere):
 
 
 @pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
-    assert isinstance(pointset, pyvista.PointSet)
+    assert isinstance(pointset, pv.PointSet)
 
     assert not np.may_share_memory(sphere.points, pointset.points)
     assert not np.may_share_memory(sphere.active_scalars, pointset.active_scalars)
@@ -1428,11 +1428,11 @@ def test_cast_to_pointset(sphere):
 
 
 @pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
-    assert isinstance(pointset, pyvista.PointSet)
+    assert isinstance(pointset, pv.PointSet)
     assert pointset.n_arrays == uniform.n_arrays
 
     assert not np.may_share_memory(uniform.active_scalars, pointset.active_scalars)
@@ -1449,7 +1449,7 @@ def test_cast_to_pointset_implicit(uniform):
 
 def test_cast_to_poly_points_implicit(uniform):
     points = uniform.cast_to_poly_points(pass_cell_data=True)
-    assert isinstance(points, pyvista.PolyData)
+    assert isinstance(points, pv.PolyData)
     assert points.n_arrays == uniform.n_arrays
     assert len(points.cell_data) == len(uniform.cell_data)
     assert len(points.point_data) == len(uniform.point_data)
@@ -1467,19 +1467,19 @@ def test_cast_to_poly_points_implicit(uniform):
 
 
 def test_partition(hexbeam):
-    if pyvista.vtk_version_info < (9, 1, 0):
+    if pv.vtk_version_info < (9, 1, 0):
         with pytest.raises(VTKVersionError):
             hexbeam.partition(2)
         return
     # split as composite
     n_part = 2
     out = hexbeam.partition(n_part)
-    assert isinstance(out, pyvista.MultiBlock)
+    assert isinstance(out, pv.MultiBlock)
     assert len(out) == 2
 
     # split as unstrucutred grid
     out = hexbeam.partition(hexbeam.n_cells, as_composite=False)
-    assert isinstance(hexbeam, pyvista.UnstructuredGrid)
+    assert isinstance(hexbeam, pv.UnstructuredGrid)
     assert out.n_points > hexbeam.n_points
 
 
@@ -1506,11 +1506,11 @@ def test_volume_area():
         assert np.isclose(grid.area, 16.0)
 
     # ImageData 3D size 4x4x4
-    vol_grid = pyvista.ImageData(dimensions=(5, 5, 5))
+    vol_grid = pv.ImageData(dimensions=(5, 5, 5))
     assert_volume(vol_grid)
 
     # 2D grid size 4x4
-    surf_grid = pyvista.ImageData(dimensions=(5, 5, 1))
+    surf_grid = pv.ImageData(dimensions=(5, 5, 1))
     assert_area(surf_grid)
 
     # UnstructuredGrid
@@ -1528,7 +1528,7 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pyvista.ImageData(dimensions=(5, 5, 5)).extract_surface()
+    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
 

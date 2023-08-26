@@ -136,7 +136,9 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pyvista.global_theme.jupyter_backend in ['ipygany', 'pythreejs']:
+        if pyvista.global_theme.jupyter_backend in [
+            'client',
+        ]:
             return
 
         # Check if VTK has EGL support
@@ -498,11 +500,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
-        You have the option of exposing the scene using either vtk.js (using
-        ``panel``) or three.js (using ``pythreejs``), both of which are
-        excellent JavaScript libraries to visualize small to moderately complex
-        scenes for scientific visualization.
-
         Parameters
         ----------
         filename : str
@@ -601,36 +598,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             f.write(content)
 
         return filename
-
-    def _save_panel(self, filename):
-        """Save the render window as a ``panel.pane.vtk`` html file.
-
-        See https://panel.holoviz.org/api/panel.pane.vtk.html
-
-        Parameters
-        ----------
-        filename : str
-            Path to export the plotter as a panel scene to.
-
-        """
-        from pyvista.jupyter.notebook import handle_plotter
-
-        pane = handle_plotter(self, backend='panel', title=self.title)
-        pane.save(filename)
-
-    def to_pythreejs(self):
-        """Convert this plotting scene to a pythreejs widget.
-
-        Returns
-        -------
-        ipywidgets.Widget
-            Widget containing pythreejs renderer.
-
-        """
-        self._on_first_render_request()  # set up camera
-        from pyvista.jupyter.pv_pythreejs import convert_plotter
-
-        return convert_plotter(self)
 
     def export_gltf(self, filename, inline_data=True, rotate_scene=True, save_normals=True):
         """Export the current rendering scene as a glTF file.
@@ -6578,10 +6545,8 @@ class Plotter(BasePlotter):
             following:
 
             * ``'none'`` : Do not display in the notebook.
-            * ``'pythreejs'`` : Show a ``pythreejs`` widget
             * ``'static'`` : Display a static figure.
-            * ``'ipygany'`` : Show a ``ipygany`` widget
-            * ``'panel'`` : Show a ``panel`` widget.
+            * ``'trame'`` : Display a dynamic figure with Trame.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
@@ -6656,16 +6621,6 @@ class Plotter(BasePlotter):
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
-
-        Display a ``pythreejs`` scene within a jupyter notebook
-
-        >>> pl.show(jupyter_backend='pythreejs')  # doctest:+SKIP
-
-        Return a ``pythreejs`` scene.
-
-        >>> pl.show(
-        ...     jupyter_backend='pythreejs', return_viewer=True
-        ... )  # doctest:+SKIP
 
         Obtain the camera position when using ``show``.
 

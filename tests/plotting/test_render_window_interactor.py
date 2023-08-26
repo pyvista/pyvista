@@ -5,7 +5,7 @@ import time
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista import _vtk
 
 
@@ -15,7 +15,7 @@ def empty_callback():
 
 @pytest.mark.needs_vtk_version(9, 1)
 def test_observers():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
 
     # Key events
     with pytest.raises(TypeError):
@@ -61,13 +61,13 @@ def test_observers():
 
 
 def test_clear_key_event_callbacks():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.reset_key_events()
 
 
 @pytest.mark.skip_plotting
 def test_track_mouse_position():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.track_mouse_position()
     pl.show(auto_close=False)
     assert pl.mouse_position is None
@@ -86,7 +86,7 @@ def test_track_click_position_multi_render():
     def callback(mouse_point):
         points.append(mouse_point)
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(TypeError):
         pl.track_click_position(side='dark')
 
@@ -113,7 +113,7 @@ def test_track_click_position():
     def double_click_callback(mouse_position):
         events.append("double")
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.track_click_position(callback=single_click_callback, side='left', double=False)
     pl.track_click_position(callback=double_click_callback, side='left', double=True)
     pl.show(auto_close=False)
@@ -142,8 +142,8 @@ def test_track_click_position():
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)
-    pl = pyvista.Plotter()
-    iren = pyvista.plotting.render_window_interactor.RenderWindowInteractor(pl)
+    pl = pv.Plotter()
+    iren = pv.plotting.render_window_interactor.RenderWindowInteractor(pl)
     iren.set_render_window(pl.render_window)
 
     duration = 50  # Duration of created timers
@@ -183,7 +183,7 @@ def test_timer():
 
 @pytest.mark.skip_plotting
 def test_poked_subplot_loc():
-    pl = pyvista.Plotter(shape=(2, 2), window_size=(800, 800))
+    pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
     pl.iren._mouse_left_button_press(200, 600)
     assert tuple(pl.iren.get_event_subplot_loc()) == (0, 0)
@@ -202,23 +202,23 @@ def test_poked_subplot_loc():
 
 @pytest.mark.skip_plotting
 def test_poked_subplot_context(verify_image_cache):
-    pl = pyvista.Plotter(shape=(2, 2), window_size=(800, 800))
+    pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
     pl.iren._mouse_left_button_press(200, 600)
     with pl.iren.poked_subplot():
-        pl.add_mesh(pyvista.Cone(), color=True)
+        pl.add_mesh(pv.Cone(), color=True)
 
     pl.iren._mouse_left_button_press(200, 200)
     with pl.iren.poked_subplot():
-        pl.add_mesh(pyvista.Cube(), color=True)
+        pl.add_mesh(pv.Cube(), color=True)
 
     pl.iren._mouse_left_button_press(600, 600)
     with pl.iren.poked_subplot():
-        pl.add_mesh(pyvista.Sphere(), color=True)
+        pl.add_mesh(pv.Sphere(), color=True)
 
     pl.iren._mouse_left_button_press(600, 200)
     with pl.iren.poked_subplot():
-        pl.add_mesh(pyvista.Arrow(), color=True)
+        pl.add_mesh(pv.Arrow(), color=True)
 
     pl.show()
 

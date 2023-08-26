@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista.plotting.errors import PyVistaPickingError
 
 # skip all tests if unable to render
@@ -12,7 +12,7 @@ pytestmark = pytest.mark.skip_plotting
 
 
 def test_single_cell_picking():
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     width, height = 100, 100
 
     class PickCallback:
@@ -22,7 +22,7 @@ def test_single_cell_picking():
         def __call__(self, *args, **kwargs):
             self.called = True
 
-    plotter = pyvista.Plotter(
+    plotter = pv.Plotter(
         window_size=(width, height),
     )
 
@@ -43,13 +43,13 @@ def test_single_cell_picking():
     plotter.close()
 
     assert callback.called
-    assert isinstance(plotter.picked_cells, pyvista.UnstructuredGrid)
+    assert isinstance(plotter.picked_cells, pv.UnstructuredGrid)
     assert plotter.picked_cells.n_cells == 1
 
 
 @pytest.mark.parametrize('through', [False, True])
 def test_multi_cell_picking(through):
-    cube = pyvista.Cube()
+    cube = pv.Cube()
 
     # Test with algorithm source to make sure connections work with picking
     src = vtk.vtkSphereSource()
@@ -60,7 +60,7 @@ def test_multi_cell_picking(through):
     actor.SetMapper(mapper)
     actor.SetPickable(True)
 
-    plotter = pyvista.Plotter(window_size=(1024, 768))
+    plotter = pv.Plotter(window_size=(1024, 768))
     plotter.add_mesh(cube, pickable=True)
     plotter.add_actor(actor)
     plotter.enable_cell_picking(
@@ -81,12 +81,12 @@ def test_multi_cell_picking(through):
 
     plotter.close()
 
-    assert isinstance(plotter.picked_cells, pyvista.MultiBlock)
+    assert isinstance(plotter.picked_cells, pv.MultiBlock)
     # Selection should return 2 submeshes
     assert len(plotter.picked_cells) == 2
 
     merged = plotter.picked_cells.combine()
-    n_sphere_cells = pyvista.wrap(src.GetOutput()).n_cells
+    n_sphere_cells = pv.wrap(src.GetOutput()).n_cells
     if through:
         # all cells should have been selected
         assert merged.n_cells == cube.n_cells + n_sphere_cells
@@ -101,7 +101,7 @@ def test_mesh_picking(sphere, left_clicking):
     def callback(picked_mesh):
         picked.append(picked_mesh)
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     actor = pl.add_mesh(sphere)
     pl.enable_mesh_picking(callback=callback, left_clicking=left_clicking)
     pl.show(auto_close=False)
@@ -132,7 +132,7 @@ def test_actor_picking(sphere):
     def callback(picked_actor):
         picked.append(picked_actor)
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     actor = pl.add_mesh(sphere)
     pl.enable_mesh_picking(callback=callback, use_actor=True)
     pl.show(auto_close=False)
@@ -157,7 +157,7 @@ def test_surface_point_picking(sphere, left_clicking):
     def callback(point):
         picked.append(point)
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.enable_surface_point_picking(callback=callback, left_clicking=left_clicking)
     pl.show(auto_close=False)
@@ -183,7 +183,7 @@ def test_surface_point_picking(sphere, left_clicking):
 
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_disable_picking(sphere, left_clicking):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.enable_surface_point_picking(left_clicking=left_clicking)
     pl.disable_picking()
@@ -210,8 +210,8 @@ def test_cell_picking_interactive():
     def callback(picked_cells):
         n_cells.append(picked_cells.n_cells)
 
-    pl = pyvista.Plotter()
-    pl.add_mesh(pyvista.Sphere())
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
     pl.enable_cell_picking(callback=callback)
     pl.show(auto_close=False, interactive=False)
 
@@ -232,11 +232,11 @@ def test_cell_picking_interactive_subplot():
     def callback(picked_cells):
         n_cells.append(picked_cells.n_cells)
 
-    pl = pyvista.Plotter(shape=(1, 2))
-    pl.add_mesh(pyvista.Sphere())  # TRIANGLE cells
+    pl = pv.Plotter(shape=(1, 2))
+    pl.add_mesh(pv.Sphere())  # TRIANGLE cells
     pl.enable_cell_picking(callback=callback)
     pl.subplot(0, 1)
-    pl.add_mesh(pyvista.Box(level=4), show_edges=True)  # QUAD cells
+    pl.add_mesh(pv.Box(level=4), show_edges=True)  # QUAD cells
 
     pl.show(auto_close=False, interactive=False)
 
@@ -251,7 +251,7 @@ def test_cell_picking_interactive_subplot():
 
     assert n_cells[0]
     assert pl.picked_cells
-    assert pl.picked_cells.get_cell(0).type == pyvista.CellType.TRIANGLE
+    assert pl.picked_cells.get_cell(0).type == pv.CellType.TRIANGLE
 
     # select just the right-hand side
     pl.iren._mouse_left_button_press(width - width // 4, height // 2)
@@ -259,7 +259,7 @@ def test_cell_picking_interactive_subplot():
 
     assert n_cells[0]
     assert pl.picked_cells
-    assert pl.picked_cells.get_cell(0).type == pyvista.CellType.QUAD
+    assert pl.picked_cells.get_cell(0).type == pv.CellType.QUAD
 
 
 @pytest.mark.parametrize('left_clicking', [False, True])
@@ -269,8 +269,8 @@ def test_point_picking(left_clicking):
     def callback(picked_point):
         picked.append(picked_point)
 
-    sphere = pyvista.Sphere()
-    pl = pyvista.Plotter(
+    sphere = pv.Sphere()
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
     pl.add_mesh(sphere)
@@ -294,7 +294,7 @@ def test_point_picking(left_clicking):
 
 
 @pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 2, 0), reason='Hardware picker unavailable for VTK<9.2'
+    pv.vtk_version_info < (9, 2, 0), reason='Hardware picker unavailable for VTK<9.2'
 )
 @pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 @pytest.mark.parametrize('pickable_window', [False, True])
@@ -306,12 +306,12 @@ def test_point_picking_window(pickable_window):
         def __call__(self, picked_point):
             self.last_picked = picked_point
 
-    pl = pyvista.Plotter(
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
 
     # bottom left corner, pickable
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     sphere.translate([-1, -1, 0], inplace=True)
     pl.add_mesh(sphere, pickable=True)
 
@@ -346,8 +346,8 @@ def test_point_picking_window(pickable_window):
 
 
 def test_path_picking():
-    sphere = pyvista.Sphere()
-    pl = pyvista.Plotter(
+    sphere = pv.Sphere()
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
     pl.add_mesh(sphere)
@@ -368,8 +368,8 @@ def test_path_picking():
 
 
 def test_geodesic_picking():
-    sphere = pyvista.Sphere()
-    pl = pyvista.Plotter(
+    sphere = pv.Sphere()
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
     pl.add_mesh(sphere)
@@ -395,8 +395,8 @@ def test_geodesic_picking():
 
 
 def test_horizon_picking():
-    sphere = pyvista.Sphere()
-    pl = pyvista.Plotter(
+    sphere = pv.Sphere()
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
     pl.add_mesh(sphere)
@@ -426,7 +426,7 @@ def test_fly_to_right_click(verify_image_cache, sphere):
     def callback(click_point):
         point.append(click_point)
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.enable_fly_to_right_click(callback=callback)
     pl.show(auto_close=False)
@@ -447,7 +447,7 @@ def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
     def callback(click_point):
         point.append(click_point)
 
-    pl = pyvista.Plotter(shape=(1, 2))
+    pl = pv.Plotter(shape=(1, 2))
     pl.add_mesh(sphere)
     pl.enable_fly_to_right_click(callback=callback)
     pl.show(auto_close=False)
@@ -462,7 +462,7 @@ def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
 
 def test_fly_to_mouse_position(verify_image_cache, sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show(auto_close=False)
     width, height = pl.window_size
@@ -476,7 +476,7 @@ def test_fly_to_mouse_position(verify_image_cache, sphere):
 def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
 
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     width, height = pl.window_size
     actor, mapper = pl.add_composite(multiblock_poly)
 
@@ -512,8 +512,8 @@ def test_element_picking(mode):
 
     tracker = Tracker()
 
-    mesh = pyvista.Wavelet()
-    plotter = pyvista.Plotter(
+    mesh = pv.Wavelet()
+    plotter = pv.Plotter(
         window_size=(100, 100),
     )
     plotter.add_mesh(mesh)
@@ -544,14 +544,14 @@ def test_element_picking(mode):
     elif mode == 'edge':
         assert tracker.last_picked.n_points == 2
     elif mode == 'point':
-        assert isinstance(tracker.last_picked, pyvista.PolyData)
+        assert isinstance(tracker.last_picked, pv.PolyData)
         assert tracker.last_picked.n_points == 1
 
 
 def test_switch_picking_type():
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     width, height = pl.window_size
-    pl.add_mesh(pyvista.Sphere())
+    pl.add_mesh(pv.Sphere())
 
     cells = []
 
@@ -568,7 +568,7 @@ def test_switch_picking_type():
     pl.iren._mouse_left_button_release(width, height)
 
     assert cells
-    assert isinstance(cells[0], pyvista.UnstructuredGrid)
+    assert isinstance(cells[0], pv.UnstructuredGrid)
     assert pl.picked_cells is not None
 
     # Now switch to point picking
