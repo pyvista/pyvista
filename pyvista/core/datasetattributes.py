@@ -211,7 +211,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.get_array(key)
 
     def __setitem__(
-        self, key: str, value: Union[np.ndarray, Sequence]
+        self, key: str, value: Union[np.ndarray, Sequence, float]
     ):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
@@ -749,6 +749,24 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if data is None:
             raise TypeError('``data`` cannot be None.')
 
+        # convert to numpy type if necessary
+        data = np.asanyarray(data)
+
+        if self.association == FieldAssociation.POINT:
+            array_len = self.dataset.GetNumberOfPoints()
+        elif self.association == FieldAssociation.CELL:
+            array_len = self.dataset.GetNumberOfCells()
+        else:
+            array_len = 1 if data.ndim == 0 else data.shape[0]
+
+        # Fixup input array length for scalar input
+        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
+            tmparray = np.empty(array_len)
+            tmparray.fill(data)
+            data = tmparray
+        if data.shape[0] != array_len:
+            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object
@@ -767,24 +785,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if isinstance(name, str):
                         vtk_arr.SetName(name)
                     return vtk_arr
-
-        # convert to numpy type if necessary
-        data = np.asanyarray(data)
-
-        if self.association == FieldAssociation.POINT:
-            array_len = self.dataset.GetNumberOfPoints()
-        elif self.association == FieldAssociation.CELL:
-            array_len = self.dataset.GetNumberOfCells()
-        else:
-            array_len = data.shape[0] if isinstance(data, np.ndarray) else 1
-
-        # Fixup input array length for scalar input
-        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
-            tmparray = np.empty(array_len)
-            tmparray.fill(data)
-            data = tmparray
-        if data.shape[0] != array_len:
-            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
 
         # reset data association
         if name in self.dataset._association_bitarray_names[self.association.name]:
