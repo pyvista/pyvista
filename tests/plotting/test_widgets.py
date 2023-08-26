@@ -17,12 +17,7 @@ def r_mat_to_euler_angles(R):
     """
 
     # Check for gimbal lock: singular cases
-    if abs(R[2, 0]) != 1:
-        # Not at the singularities
-        pitch = -np.arcsin(R[2, 0])
-        roll = np.arctan2(R[2, 1] / np.cos(pitch), R[2, 2] / np.cos(pitch))
-        yaw = np.arctan2(R[1, 0] / np.cos(pitch), R[0, 0] / np.cos(pitch))
-    else:
+    if abs(R[2, 0]) == 1:
         # Gimbal lock exists
         yaw = 0  # Set yaw to 0 and compute the others
         if R[2, 0] == -1:  # Directly looking up
@@ -31,6 +26,11 @@ def r_mat_to_euler_angles(R):
         else:  # Directly looking down
             pitch = -np.pi / 2
             roll = -yaw + np.arctan2(-R[0, 1], -R[0, 2])
+    else:
+        # Not at the singularities
+        pitch = -np.arcsin(R[2, 0])
+        roll = np.arctan2(R[2, 1] / np.cos(pitch), R[2, 2] / np.cos(pitch))
+        yaw = np.arctan2(R[1, 0] / np.cos(pitch), R[0, 0] / np.cos(pitch))
 
     if np.isclose(roll, np.pi):
         roll = 0
@@ -533,3 +533,11 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
+
+    # test origin
+    origin = np.random.random(3)
+    widget.origin = origin
+    assert np.allclose(widget.origin, origin)
+
+    # test disable
+    widget.disable()

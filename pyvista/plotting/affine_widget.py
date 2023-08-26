@@ -39,7 +39,7 @@ def get_angle(v1, v2):
     float
         Angle between vectors in degrees.
     """
-    theta = (np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0))) * (180 / np.pi)
+    theta = np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
     return theta
 
 
@@ -182,7 +182,7 @@ class AffineWidget3D:
 
     def _init_actors(self, scale, always_visible):
         """Initialize the widget's actors."""
-        for ii, color in zip(range(3), self._axes_colors):
+        for ii, color in enumerate(self._axes_colors):
             arrow = pv.Arrow(
                 self._origin,
                 direction=AXES[ii],
