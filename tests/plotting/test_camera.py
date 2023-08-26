@@ -3,7 +3,7 @@ import io
 import numpy as np
 import pytest
 
-import pyvista
+import pyvista as pv
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
@@ -21,7 +21,7 @@ configuration = [
 
 @pytest.fixture()
 def camera():
-    return pyvista.Camera()
+    return pv.Camera()
 
 
 @pytest.fixture()
@@ -78,11 +78,11 @@ def paraview_pvcc():
 
 def test_invalid_init():
     with pytest.raises(TypeError):
-        pyvista.Camera(1)
+        pv.Camera(1)
 
 
 def test_camera_fom_paraview_pvcc(paraview_pvcc):
-    camera = pyvista.Camera.from_paraview_pvcc(paraview_pvcc[0])
+    camera = pv.Camera.from_paraview_pvcc(paraview_pvcc[0])
     assert camera.position == pytest.approx(paraview_pvcc[1])
     assert camera.focal_point == pytest.approx(paraview_pvcc[2])
     assert camera.up == pytest.approx(paraview_pvcc[3])
@@ -95,7 +95,7 @@ def test_camera_to_paraview_pvcc(camera, tmp_path):
     fname = tmp_path / "test.pvcc"
     camera.to_paraview_pvcc(fname)
     assert fname.exists()
-    ocamera = pyvista.Camera.from_paraview_pvcc(fname)
+    ocamera = pv.Camera.from_paraview_pvcc(fname)
     assert ocamera == camera
 
 
@@ -190,8 +190,8 @@ def test_reset_clipping_range(camera):
 
     # requires renderer for this method
     crng = (1, 2)
-    pl = pyvista.Plotter()
-    pl.add_mesh(pyvista.Sphere())
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
     pl.camera.clipping_range = crng
     assert pl.camera.clipping_range == crng
     pl.camera.reset_clipping_range()
@@ -259,8 +259,8 @@ def test_azimuth(camera):
 
 
 def test_eq():
-    camera = pyvista.Camera()
-    other = pyvista.Camera()
+    camera = pv.Camera()
+    other = pv.Camera()
     for camera_now in camera, other:
         for name, value, _ in configuration:
             setattr(camera_now, name, value)
@@ -287,7 +287,7 @@ def test_eq():
 
 
 def test_copy():
-    camera = pyvista.Camera()
+    camera = pv.Camera()
     for name, value, _ in configuration:
         setattr(camera, name, value)
 

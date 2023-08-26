@@ -5,7 +5,7 @@ import pytest
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
-import pyvista
+import pyvista as pv
 from pyvista import Cell, CellType
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import (
@@ -80,7 +80,7 @@ def test_cell_get_cell():
     hexbeam = grids[0]
     with pytest.raises(IndexError, match='Invalid index'):
         hexbeam.get_cell(hexbeam.n_cells)
-    assert isinstance(hexbeam.get_cell(0), pyvista.Cell)
+    assert isinstance(hexbeam.get_cell(0), pv.Cell)
 
 
 @pytest.mark.parametrize("cell", cells, ids=cell_ids)
@@ -155,7 +155,7 @@ def test_cell_copy_generic(cell):
 
 def test_cell_copy():
     cell = cells[0].get_face(0)
-    assert isinstance(cell, pyvista.Cell)
+    assert isinstance(cell, pv.Cell)
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
     cell_copy.points[:] = 0
@@ -210,7 +210,7 @@ def test_cell_center(grid):
 def test_cell_center_value():
     points = [[0, 0, 0], [1, 0, 0], [0.5, np.sqrt(3) / 2, 0]]
     cell = [3, 0, 1, 2]
-    mesh = pyvista.PolyData(points, cell)
+    mesh = pv.PolyData(points, cell)
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
@@ -258,7 +258,7 @@ FCONTIG_ARR = np.array(np.vstack(([3, 0, 1, 2], [3, 3, 4, 5])), order='F')
     ],
 )
 def test_init_cell_array(cells, n_cells, deep):
-    cell_array = pyvista.core.cell.CellArray(cells, n_cells, deep)
+    cell_array = pv.core.cell.CellArray(cells, n_cells, deep)
     assert np.allclose(np.array(cells).ravel(), cell_array.cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == NCELLS
 
@@ -287,7 +287,7 @@ OFFSETS_LIST = [0, 3, 6]
 )
 @pytest.mark.parametrize('deep', [False, True])
 def test_init_cell_array_from_arrays(offsets, connectivity, deep):
-    cell_array = pyvista.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
+    cell_array = pv.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
     assert np.array_equal(np.array(connectivity), cell_array.connectivity_array)
     assert np.array_equal(np.array(offsets), cell_array.offset_array)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(offsets) - 1
@@ -308,7 +308,7 @@ REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
 )
 @pytest.mark.parametrize('deep', [False, True])
 def test_init_cell_array_from_regular_cells(cells, deep):
-    cell_array = pyvista.core.cell.CellArray.from_regular_cells(cells, deep=deep)
+    cell_array = pv.core.cell.CellArray.from_regular_cells(cells, deep=deep)
     assert np.array_equal(np.array(cells), cell_array.regular_cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
 
@@ -316,7 +316,7 @@ def test_init_cell_array_from_regular_cells(cells, deep):
 def test_set_shallow_regular_cells():
     points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
     faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
-    meshes = [pyvista.PolyData.from_regular_faces(points, faces, deep=False) for _ in range(2)]
+    meshes = [pv.PolyData.from_regular_faces(points, faces, deep=False) for _ in range(2)]
 
     for m in meshes:
         assert np.array_equal(m.regular_faces, faces)
@@ -397,4 +397,4 @@ def test_cell_types():
     ]
     for cell_type in cell_types:
         if hasattr(vtk, "VTK_" + cell_type):
-            assert getattr(pyvista.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
+            assert getattr(pv.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)

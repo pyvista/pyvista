@@ -6,12 +6,12 @@ import inspect
 
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests
-pyvista.global_theme.load_theme(pyvista.plotting.themes._TestingTheme())
-pyvista.OFF_SCREEN = True
+pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
+pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
 
 
@@ -59,7 +59,7 @@ def check_gc():
     if gc_handler.skip:
         return
 
-    pyvista.close_all()
+    pv.close_all()
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
@@ -93,7 +93,7 @@ def check_gc():
 
 @pytest.fixture()
 def colorful_tetrahedron():
-    mesh = pyvista.Tetrahedron()
+    mesh = pv.Tetrahedron()
     mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
     return mesh
 
@@ -106,17 +106,17 @@ def make_two_char_img(text):
     """
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
-    pl = pyvista.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
+    pl = pv.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
     pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
     pl.background_color = 'k'
     pl.camera.zoom = 'tight'
-    return pyvista.Texture(pl.screenshot()).to_image()
+    return pv.Texture(pl.screenshot()).to_image()
 
 
 @pytest.fixture()
 def cubemap(texture):
     """Sample texture as a cubemap."""
-    return pyvista.Texture(
+    return pv.Texture(
         [
             make_two_char_img('X+'),
             make_two_char_img('X-'),
