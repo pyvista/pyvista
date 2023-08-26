@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista.core.errors import (
     PointSetCellOperationError,
     PointSetDimensionReductionError,
@@ -13,13 +13,13 @@ from pyvista.core.errors import (
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
 
 
 def test_pointset_basic():
     # create empty pointset
-    pset = pyvista.PointSet()
+    pset = pv.PointSet()
     assert pset.n_points == 0
     assert pset.n_cells == 0
     assert 'PointSet' in str(pset)
@@ -32,10 +32,10 @@ def test_pointset_from_vtk():
     vtk_pset = vtk.vtkPointSet()
 
     np_points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
-    points = pyvista.vtk_points(np_points, deep=False)
+    points = pv.vtk_points(np_points, deep=False)
     vtk_pset.SetPoints(points)
 
-    pset = pyvista.PointSet(vtk_pset, deep=False)
+    pset = pv.PointSet(vtk_pset, deep=False)
     assert pset.n_points == 2
 
     # test that data is shallow copied
@@ -47,10 +47,10 @@ def test_pointset_from_vtk():
 
     np_points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
     point_copy = np_points.copy()
-    points = pyvista.vtk_points(np_points, deep=False)
+    points = pv.vtk_points(np_points, deep=False)
     vtk_pset.SetPoints(points)
 
-    pset = pyvista.PointSet(vtk_pset, deep=True)
+    pset = pv.PointSet(vtk_pset, deep=True)
 
     np_points[:] = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
     assert not np.array_equal(np_points, pset.points)
@@ -60,11 +60,11 @@ def test_pointset_from_vtk():
 def test_pointset_wrap():
     vtk_pset = vtk.vtkPointSet()
     np_points = np.array([[0.0, 0.0, 0.0]])
-    points = pyvista.vtk_points(np_points, deep=False)
+    points = pv.vtk_points(np_points, deep=False)
     vtk_pset.SetPoints(points)
 
-    pset = pyvista.wrap(vtk_pset)
-    assert type(pset) is pyvista.PointSet
+    pset = pv.wrap(vtk_pset)
+    assert type(pset) is pv.PointSet
 
     # test that wrapping is shallow copied
     pset.points[:] = np.array([[1.0, 0.0, 0.0]])
@@ -112,7 +112,7 @@ def test_cast_to_polydata(pointset, deep):
 def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
-    assert isinstance(clipped, pyvista.PointSet)
+    assert isinstance(clipped, pv.PointSet)
 
 
 @pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
@@ -120,42 +120,42 @@ def test_pointset_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], np.int64)
     if force_float:
         with pytest.warns(UserWarning, match='Points is not a float type'):
-            pset = pyvista.PointSet(np_points, force_float=force_float)
+            pset = pv.PointSet(np_points, force_float=force_float)
     else:
-        pset = pyvista.PointSet(np_points, force_float=force_float)
+        pset = pv.PointSet(np_points, force_float=force_float)
     assert pset.points.dtype == expected_data_type
 
 
 def test_center_of_mass():
     np_points = np.array([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     assert np.allclose(pset.center_of_mass(), [0.5, 0.0, 0.5])
 
 
 def test_points_to_double():
     np_points = np.array([[1, 2, 3]], np.int64)
-    pset = pyvista.PointSet(np_points, force_float=False)
+    pset = pv.PointSet(np_points, force_float=False)
     assert pset.points_to_double().points.dtype == np.double
 
 
 def test_translate():
     np_points = np.array([1, 2, 3], np.int64)
     with pytest.warns(UserWarning, match='Points is not a float type'):
-        pset = pyvista.PointSet(np_points)
+        pset = pv.PointSet(np_points)
     pset.translate((4, 3, 2), inplace=True)
     assert np.allclose(pset.center, [5, 5, 5])
 
 
 def test_scale():
     np_points = np.array([1, 2, 3], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.scale(2, inplace=True)
     assert np.allclose(pset.points, [2.0, 4.0, 6.0])
 
 
 def test_flip_x():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.flip_x(inplace=True)
     assert np.allclose(
         pset.points,
@@ -171,7 +171,7 @@ def test_flip_x():
 
 def test_flip_y():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.flip_y(inplace=True)
     assert np.allclose(
         pset.points,
@@ -187,7 +187,7 @@ def test_flip_y():
 
 def test_flip_z():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.flip_z(inplace=True)
     assert np.allclose(
         pset.points,
@@ -203,7 +203,7 @@ def test_flip_z():
 
 def test_flip_normal():
     np_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.flip_normal([1.0, 1.0, 1.0], inplace=True)
     assert np.allclose(
         pset.points,
@@ -220,20 +220,20 @@ def test_flip_normal():
 def test_threshold(pointset):
     pointset['scalars'] = range(pointset.n_points)
     out = pointset.threshold(pointset.n_points // 2)
-    assert isinstance(out, pyvista.PointSet)
+    assert isinstance(out, pv.PointSet)
     assert out.n_points == pointset.n_points // 2
 
 
 def test_threshold_percent(pointset):
     pointset['scalars'] = range(pointset.n_points)
     out = pointset.threshold_percent(50)
-    assert isinstance(out, pyvista.PointSet)
+    assert isinstance(out, pv.PointSet)
     assert out.n_points == pointset.n_points // 2
 
 
 def test_explode(pointset):
     out = pointset.explode(1)
-    assert isinstance(out, pyvista.PointSet)
+    assert isinstance(out, pv.PointSet)
     ori_xlen = pointset.bounds[1] - pointset.bounds[0]
     new_xlen = out.bounds[1] - out.bounds[0]
     assert np.isclose(2 * ori_xlen, new_xlen)
@@ -241,7 +241,7 @@ def test_explode(pointset):
 
 def test_delaunay_3d(pointset):
     out = pointset.delaunay_3d()
-    assert isinstance(out, pyvista.UnstructuredGrid)
+    assert isinstance(out, pv.UnstructuredGrid)
     assert out.n_cells > 10
 
 
@@ -303,27 +303,27 @@ def test_raise_unsupported(pointset):
 
 def test_rotate_x():
     np_points = np.array([1, 1, 1], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.rotate_x(45, inplace=True)
     assert np.allclose(pset.points, [1.0, 0.0, 1.4142135])
 
 
 def test_rotate_y():
     np_points = np.array([1, 1, 1], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.rotate_y(45, inplace=True)
     assert np.allclose(pset.points, [1.4142135, 1.0, 0.0])
 
 
 def test_rotate_z():
     np_points = np.array([1, 1, 1], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.rotate_z(45, inplace=True)
     assert np.allclose(pset.points, [0.0, 1.4142135, 1.0])
 
 
 def test_rotate_vector():
     np_points = np.array([1, 1, 1], dtype=float)
-    pset = pyvista.PointSet(np_points)
+    pset = pv.PointSet(np_points)
     pset.rotate_vector([1, 2, 1], 45, inplace=True)
     assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])

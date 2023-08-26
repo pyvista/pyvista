@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from vtkmodules.vtkRenderingContext2D import vtkPen
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
@@ -25,7 +25,7 @@ def skip_check_gc(skip_check_gc):
 
 
 # skip all tests if VTK<9.2.0
-if pyvista.vtk_version_info < (9, 2):
+if pv.vtk_version_info < (9, 2):
     pytestmark = pytest.mark.skip
 
 
@@ -56,31 +56,31 @@ class PlotterChanged:
 
     def __call__(self):
         cur = self._capture()
-        changed = pyvista.compare_images(self._prev, cur) > 0
+        changed = pv.compare_images(self._prev, cur) > 0
         self._prev = cur
         return changed
 
 
 @pytest.fixture
 def pl():
-    p = pyvista.Plotter(window_size=(600, 600))
+    p = pv.Plotter(window_size=(600, 600))
     p.background_color = 'w'
     return p
 
 
 @pytest.fixture
 def chart_2d():
-    return pyvista.Chart2D()
+    return pv.Chart2D()
 
 
 @pytest.fixture
 def chart_box():
-    return pyvista.ChartBox([[1, 2, 3]])
+    return pv.ChartBox([[1, 2, 3]])
 
 
 @pytest.fixture
 def chart_pie():
-    return pyvista.ChartPie([1, 2, 3])
+    return pv.ChartPie([1, 2, 3])
 
 
 @pytest.fixture
@@ -89,7 +89,7 @@ def chart_mpl():
 
     f, ax = plt.subplots()
     ax.plot([0, 1, 2], [3, 1, 2])
-    return pyvista.ChartMPL(f)
+    return pv.ChartMPL(f)
 
 
 @pytest.fixture
@@ -197,7 +197,7 @@ def test_brush():
     assert np.allclose(color, c_blue)
 
     brush.texture = t_puppy
-    t = pyvista.Texture(brush.GetTexture())
+    t = pv.Texture(brush.GetTexture())
     assert np.allclose(brush.texture.to_array(), t_puppy.to_array())
     assert np.allclose(t.to_array(), t_puppy.to_array())
 
@@ -534,7 +534,7 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]["id"]
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
-        pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
+        pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
     ]
     assert np.allclose(series_colors, cs_colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(cs_colors))]
@@ -548,7 +548,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.colors = colors
     assert all(pc == c for pc, c in zip(plot.colors, colors))
     series_colors = [
-        pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
+        pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
     ]
     assert np.allclose(series_colors, colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(colors))]
@@ -765,7 +765,7 @@ def test_chart_2d(pl, chart_2d):
     ori = "V"
 
     # Test constructor
-    chart = pyvista.Chart2D(size, loc, lx, ly, False)
+    chart = pv.Chart2D(size, loc, lx, ly, False)
     assert chart.size == size
     assert chart.loc == loc
     assert chart.x_label == lx
@@ -785,9 +785,7 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ["#fa09b6", "0xa53a8d", "#b02239f0", "0xcee6927f"]
-    colors = itertools.chain(
-        pyvista.hexcolors, pyvista.plotting.colors.color_synonyms, [*hex_colors, ""]
-    )
+    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ""])
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
@@ -920,7 +918,7 @@ def test_chart_box(pl, chart_box, box_plot):
     ls = ["Datalabel"]
 
     # Test constructor
-    chart = pyvista.ChartBox(data, cs, ls, size, loc)
+    chart = pv.ChartBox(data, cs, ls, size, loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -955,7 +953,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     ls = ["Tic", "Tac", "Toe"]
 
     # Test constructor
-    chart = pyvista.ChartPie(data, cs, ls, size, loc)
+    chart = pv.ChartPie(data, cs, ls, size, loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -989,7 +987,7 @@ def test_chart_mpl(pl, chart_mpl):
 
     # Test constructor
     f, ax = plt.subplots()
-    chart = pyvista.ChartMPL(f, size, loc)
+    chart = pv.ChartMPL(f, size, loc)
     assert chart.size == size
     assert chart.loc == loc
 
@@ -1021,7 +1019,7 @@ def test_chart_mpl_update(pl):
     x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]
     f, ax = plt.subplots()
     line = ax.plot(x0, y0)[0]
-    chart = pyvista.ChartMPL(f, redraw_on_render=False)
+    chart = pv.ChartMPL(f, redraw_on_render=False)
     pl.add_chart(chart)
     pl_changed = PlotterChanged(pl)
 
@@ -1045,8 +1043,8 @@ def test_chart_mpl_update(pl):
 @pytest.mark.skip_plotting
 def test_charts(pl):
     win_size = pl.window_size
-    top_left = pyvista.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
-    bottom_right = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.5, 0))
+    top_left = pv.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
+    bottom_right = pv.Chart2D(size=(0.5, 0.5), loc=(0.5, 0))
 
     # Test add_chart
     pl.add_chart(top_left)
@@ -1085,7 +1083,7 @@ def test_charts(pl):
 
 @pytest.mark.skip_plotting
 def test_iren_context_style(pl):
-    chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
+    chart = pv.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
     win_size = pl.window_size
     pl.add_chart(chart)
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
@@ -1114,17 +1112,17 @@ def test_iren_context_style(pl):
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts
     # in the bottom renderer.
-    pl = pyvista.Plotter(shape=(2, 1))
+    pl = pv.Plotter(shape=(2, 1))
     pl.subplot(0, 0)
-    chart_t = pyvista.ChartPie([1, 2, 3])
+    chart_t = pv.ChartPie([1, 2, 3])
     # Ensure set_chart_interaction does not create the __charts object:
     assert not pl.set_chart_interaction(True)
     assert not pl.renderer.has_charts
     pl.add_chart(chart_t)
     assert pl.renderer.has_charts
     pl.subplot(1, 0)
-    chart_bl = pyvista.ChartPie([1, 1, 1], size=(0.5, 1), loc=(0, 0))
-    chart_br = pyvista.ChartPie([3, 2, 1], size=(0.5, 1), loc=(0.5, 0))
+    chart_bl = pv.ChartPie([1, 1, 1], size=(0.5, 1), loc=(0, 0))
+    chart_br = pv.ChartPie([3, 2, 1], size=(0.5, 1), loc=(0.5, 0))
     pl.add_chart(chart_bl, chart_br)
 
     # Check set_chart_interaction bool
