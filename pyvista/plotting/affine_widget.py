@@ -140,7 +140,7 @@ class AffineWidget3D:
     ):
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
-        if pv.vtk_version_info < (9, 2):  # pragma: no cover
+        if pv.vtk_version_info < (9, 2):
             raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
         self._pl = plotter
