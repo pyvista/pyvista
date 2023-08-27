@@ -45,3 +45,8 @@ def test_boolean_intersect_edge_case():
 
     with pytest.warns(UserWarning, match='contained within another'):
         a.boolean_intersection(b)
+
+
+def test_identical_boolean(sphere):
+    with pytest.raises(ValueError, match='identical points'):
+        sphere.boolean_intersection(sphere.copy())
