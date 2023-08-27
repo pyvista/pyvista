@@ -16,6 +16,14 @@ AXES = {
 }
 
 
+def _check_callable(func, name='callback'):
+    """Check if a variable is callable."""
+    if func:
+        if not callable(func):
+            raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
+    return func
+
+
 def _make_quarter_arc():
     """Make a quarter circle centered at the origin."""
     circ = pv.Circle(resolution=100)
@@ -93,8 +101,12 @@ class AffineWidget3D:
         Uses the theme by default. Configure the individual axis colors by
         modifying either the theme with ``pv.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-    callback : callable, optional
+    release_callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the
+        ``user_matrix`` of the actor.
+    interact_callback : callable, optional
+        Call this method when moving the mouse with the left mouse button
+        pressed down and a valid movement actor selected. It is passed the
         ``user_matrix`` of the actor.
 
     Notes
@@ -136,7 +148,8 @@ class AffineWidget3D:
         line_radius=0.02,
         always_visible=True,
         axes_colors=None,
-        callback=None,
+        release_callback=None,
+        interact_callback=None,
     ):
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
@@ -170,10 +183,8 @@ class AffineWidget3D:
         self._circ = _make_quarter_arc()
         self._actor_length = self._main_actor.GetLength()
         self._line_radius = line_radius
-        if callback:
-            if not callable(callback):
-                raise TypeError(f"`callback` must be a callable, not {type(callback)}.")
-        self._callback = callback
+        self._user_interact_callback = _check_callable(interact_callback)
+        self._user_release_callback = _check_callable(release_callback)
 
         self._init_actors(scale, always_visible)
 
@@ -317,6 +328,9 @@ class AffineWidget3D:
                 rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = np.dot(rot_matrix, self._cached_matrix)
 
+            if self._user_interact_callback:
+                try_callback(self._user_interact_callback, self._main_actor.user_matrix)
+
             self._main_actor.user_matrix = matrix
 
         elif self._selected_actor and self._selected_actor is not actor:
@@ -358,8 +372,8 @@ class AffineWidget3D:
         self._pl.enable_trackball_style()
         self._pressing_down = False
         self._cached_matrix = self._main_actor.user_matrix
-        if self._callback:
-            try_callback(self._callback, self._main_actor.user_matrix)
+        if self._user_release_callback:
+            try_callback(self._user_release_callback, self._main_actor.user_matrix)
 
     def _reset(self):
         """Reset the actor and cached transform."""

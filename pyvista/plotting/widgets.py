@@ -2265,7 +2265,8 @@ class WidgetHelper:
         line_radius=0.02,
         always_visible=True,
         axes_colors=None,
-        callback=None,
+        release_callback=None,
+        interact_callback=None,
     ):
         """Add a 3D affine transform widget.
 
@@ -2291,9 +2292,13 @@ class WidgetHelper:
             Uses the theme by default. Configure the individual axis colors by
             modifying either the theme with ``pv.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-        callback : callable, optional
-            Call this method when releasing the left mouse button. It is passed the
-            ``user_matrix`` of the actor .
+        release_callback : callable, optional
+            Call this method when releasing the left mouse button. It is passed
+            the ``user_matrix`` of the actor.
+        interact_callback : callable, optional
+            Call this method when moving the mouse with the left mouse button
+            pressed down and a valid movement actor selected. It is passed the
+            ``user_matrix`` of the actor.
 
         Returns
         -------
@@ -2326,7 +2331,16 @@ class WidgetHelper:
                [0., 0., 0., 1.]])
         """
         return AffineWidget3D(
-            self, actor, origin, start, scale, line_radius, always_visible, axes_colors, callback
+            self,
+            actor,
+            origin,
+            start,
+            scale,
+            line_radius,
+            always_visible,
+            axes_colors,
+            release_callback,
+            interact_callback,
         )
 
     def add_checkbox_button_widget(

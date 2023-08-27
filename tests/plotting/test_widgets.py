@@ -444,23 +444,29 @@ def test_get_angle():
 
 
 def test_affine_widget(sphere):
-    calls = []
+    interact_calls = []
+    release_calls = []
 
-    def callback(transform):
-        calls.append(transform)
+    def interact_callback(transform):
+        interact_calls.append(transform)
+
+    def release_callback(transform):
+        release_calls.append(transform)
 
     pl = pv.Plotter(window_size=(400, 400))
     actor = pl.add_mesh(sphere)
 
     if pv.vtk_version_info < (9, 2):
         with pytest.raises(VTKVersionError):
-            pl.add_affine_transform_widget(actor, callback=callback)
+            pl.add_affine_transform_widget(actor)
         return
 
     with pytest.raises(TypeError, match='callable'):
-        pl.add_affine_transform_widget(actor, callback='foo')
+        pl.add_affine_transform_widget(actor, interact_callback='foo')
 
-    widget = pl.add_affine_transform_widget(actor, callback=callback)
+    widget = pl.add_affine_transform_widget(
+        actor, interact_callback=interact_callback, release_callback=release_callback
+    )
     pl.show(auto_close=False)
 
     assert not widget._selected_actor
@@ -485,7 +491,8 @@ def test_affine_widget(sphere):
     assert actor.user_matrix[0, 3] < 0
 
     # test callback called
-    assert len(calls) == 1 and calls[0].shape == (4, 4)
+    assert len(interact_calls) == 2 and interact_calls[0].shape == (4, 4)
+    assert len(release_calls) == 1 and release_calls[0].shape == (4, 4)
 
     # test Y axis translation
     pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
