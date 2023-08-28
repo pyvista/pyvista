@@ -26,7 +26,8 @@ def get_server(*args, **kwargs):  # numpydoc ignore=RT01
         Trame server.
     """
     server = trame_get_server(*args, **kwargs)
-    server.client_type = 'vue2'
+    if 'client_type' in kwargs:
+        server.client_type = kwargs['client_type']
     return server
 
 
