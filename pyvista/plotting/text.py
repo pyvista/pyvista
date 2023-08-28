@@ -9,6 +9,7 @@ import pyvista as pv
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
+from ._typing import ColorLike
 from .colors import Color
 from .themes import Theme
 from .tools import FONTS
@@ -67,7 +68,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         """
         return self.GetText(position)
 
-    def set_text(self, position, obj):
+    def set_text(self, position, text):
         """Set the text to be displayed for each corner.
 
         Parameters
@@ -75,12 +76,8 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         position : str | bool
             Position of the text.
 
-        obj : str
+        text : str
             Text to be displayed for each corner.
-
-        Returns
-        -------
-        None
         """
         corner_mappings = {
             'lower_left': self.LowerLeft,
@@ -106,30 +103,69 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
             position = corner_mappings[position]
         elif position is True:
             position = corner_mappings['upper_left']
-        self.SetText(position, obj)
+        self.SetText(position, text)
 
     @property
     def prop(self):
-        """Return or set the property of this actor."""
+        """Return or set the property of this actor.
+
+        Returns
+        -------
+        TextProperty
+            Property of this actor.
+        """
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, obj: TextProperty):
-        self.SetTextProperty(obj)
+    def prop(self, prop: TextProperty):
+        """Set the property of this actor.
+
+        Parameters
+        ----------
+        prop : TextProperty
+            Property of this actor.
+        """
+        self.SetTextProperty(prop)
 
     @property
     def linear_font_scale_factor(self):
-        """Set/Get font scaling factors."""
+        """Get font scaling factors.
+
+        Returns
+        -------
+        float
+            Font scaling factors.
+        """
         return self.GetLinearFontScaleFactor()
 
     @linear_font_scale_factor.setter
-    def linear_font_scale_factor(self, obj: float):
-        return self.SetLinearFontScaleFactor(obj)
+    def linear_font_scale_factor(self, factor: float):
+        """Set font scaling factors.
+
+        Parameters
+        ----------
+        factor : float
+            Font scaling factor.
+        """
+        self.SetLinearFontScaleFactor(factor)
 
 
 @no_new_attr
 class Text(_vtk.vtkTextActor):
-    """Define text by default theme.
+    r"""Define text by default theme.
+
+    Parameters
+    ----------
+    text : str
+        Text string to be displayed.
+        "\n" is recognized as a carriage return/linefeed (line separator).
+        The characters must be in the UTF-8 encoding.
+
+    position : Sequence[float]
+        The position coordinate.
+
+    prop : TextProperty
+        The property of this actor.
 
     Examples
     --------
@@ -152,39 +188,102 @@ class Text(_vtk.vtkTextActor):
 
     @property
     def input(self):
-        r"""Set the text string to be displayed.
+        """Get the text string to be displayed.
 
-        "\n" is recognized as a carriage return/linefeed (line separator).
-        The characters must be in the UTF-8 encoding.
+        Returns
+        -------
+        str
+            Text string to be displayed.
         """
         return self.GetInput()
 
     @input.setter
-    def input(self, obj: str):
-        self.SetInput(obj)
+    def input(self, text: str):
+        r"""Set the text string to be displayed.
+
+        Parameters
+        ----------
+        text : str
+            Text string to be displayed.
+            "\n" is recognized as a carriage return/linefeed (line separator).
+            The characters must be in the UTF-8 encoding.
+        """
+        self.SetInput(text)
 
     @property
     def prop(self):
-        """Return or set the property of this actor."""
+        """Return the property of this actor.
+
+        Returns
+        -------
+        str
+            The property of this actor.
+        """
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, obj: TextProperty):
-        self.SetTextProperty(obj)
+    def prop(self, prop: TextProperty):
+        """Set the property of this actor.
+
+        Parameters
+        ----------
+        prop : TextProperty
+            The property of this actor.
+        """
+        self.SetTextProperty(prop)
 
     @property
     def position(self):
-        """Get/Set the position coordinate."""
+        """Get the position coordinate.
+
+        Returns
+        -------
+        Sequence[float]
+            The position coordinate.
+        """
         return self.GetPosition()
 
     @position.setter
-    def position(self, obj: Sequence[float]):
-        self.SetPosition(obj[0], obj[1])
+    def position(self, position: Sequence[float]):
+        """Set the position coordinate.
+
+        Parameters
+        ----------
+        position : Sequence[float]
+            The position coordinate.
+        """
+        self.SetPosition(position[0], position[1])
 
 
 @no_new_attr
 class TextProperty(_vtk.vtkTextProperty):
     """Define text's property.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    color : ColorLike
+        Either a string, RGB list, or hex color string.  For example:
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+        ``color='#FFFFFF'``. Color will be overridden if scalars are
+        specified.
+
+    font_family : str | None, optional
+        Font family or None.
+
+    orientation : float, optional
+        Text's orientation (in degrees).
+
+    font_size : int, optional
+        Font size.
+
+    font_file : str, optional
+        Font file path.
+
+    shadow : bool, optional
+        If enable the shadow.
 
     Examples
     --------
@@ -238,132 +337,235 @@ class TextProperty(_vtk.vtkTextProperty):
             self.enable_shadow()
 
     @property
-    def color(self) -> Color:
-        """Return or set the color of text's property.
+    def color(self) -> ColorLike:
+        """Return the color of text's property.
 
-        Either a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
+        Returns
+        -------
+        ColorLike
+            The color of text's property.
 
         """
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, value):
-        self._color_set = value is not None
-        rgb_color = Color(value, default_color=self._theme.font.color)
+    def color(self, color):
+        """Set the color of text's property.
+
+        Parameters
+        ----------
+        color : ColorLike
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
+
+        """
+        self._color_set = color is not None
+        rgb_color = Color(color, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
 
     @property
     def opacity(self) -> float:
         """Return or set the opacity of text's property.
 
-        Opacity of the text. A single float value that will be applied globally
-        opacity of the text and uniformly applied everywhere. Between 0 and 1.
+        Returns
+        -------
+        float
+            Opacity of the text. A single float value that will be applied globally
+            opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
         return self.GetOpacity()
 
     @opacity.setter
     def opacity(self, value: float):
+        """Set the opacity of text's property.
+
+        Parameters
+        ----------
+        value : float
+            Opacity of the text. A single float value that will be applied globally
+            opacity of the text and uniformly applied everywhere. Between 0 and 1.
+
+        """
         _check_range(value, (0, 1), 'opacity')
         self.SetOpacity(value)
 
     @property
     def background_color(self):
-        """Return or set the background color of text's property.
+        """Return the background color of text's property.
 
-        Either a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
+        Returns
+        -------
+        Color
+            The background color of text's property.
 
         """
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
     def background_color(self, value):
+        """Return or set the background color of text's property.
+
+        Parameters
+        ----------
+        value : str | Color
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
+
+        """
         self._background_color_set = value is not None
         rgb_color = Color(value)
         self.SetBackgroundColor(rgb_color.float_rgb)
 
     @property
-    def background_opacity(self):
+    def background_opacity(self) -> float:
         """Return or set the background opacity of text's property.
 
-        Background opacity of the text. A single float value that will be applied globally
-        background opacity of the text and uniformly applied everywhere. Between 0 and 1.
+        Returns
+        -------
+        float
+            Background opacity of the text. A single float value that will be applied globally.
+            background opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
         return self.GetBackgroundOpacity()
 
     @background_opacity.setter
     def background_opacity(self, value: float):
+        """Set the background opacity of text's property.
+
+        Parameters
+        ----------
+        value : float
+            Background opacity of the text. A single float value that will be applied globally.
+            background opacity of the text and uniformly applied everywhere. Between 0 and 1.
+
+        """
         _check_range(value, (0, 1), 'background_opacity')
         self.SetBackgroundOpacity(value)
 
     @property
     def show_frame(self) -> bool:
-        """Return or set the visibility of frame.
+        """Return the visibility of frame.
 
-        Shows or hides the frame.
+        Returns
+        -------
+        bool:
+            If shows the frame.
 
         """
         return bool(self.GetFrame())
 
     @show_frame.setter
     def show_frame(self, value: bool):
+        """Set the visibility of frame.
+
+        Parameters
+        ----------
+        value : bool
+            If shows the frame.
+
+        """
         self.SetFrame(value)
 
     @property
     def frame_color(self) -> Color:
-        """Return or set the frame color of this property.
+        """Get the frame color of text property.
 
-        Either a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-        ``color='#FFFFFF'``. Color will be overridden if scalars are
-        specified.
-
+        Returns
+        -------
+        Color
+            The frame color of text property.
         """
         return Color(self.GetFrameColor())
 
     @frame_color.setter
     def frame_color(self, value):
+        """Set the frame color of text property.
+
+        Parameters
+        ----------
+        value : str | Color
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
+        """
         self.SetFrameColor(Color(value).float_rgb)
 
     @property
     def frame_width(self) -> int:
-        """Set/Get the width of the frame.
+        """Get the width of the frame.
 
-        The width is expressed in pixels. The default is 1 pixel.
-
+        Returns
+        -------
+        int
+            The width of the frame. The width is expressed in pixels.
+            The default is 1 pixel.
         """
         return self.GetFrameWidth()
 
     @frame_width.setter
     def frame_width(self, value: int):
+        """Set the width of the frame.
+
+        Parameters
+        ----------
+        value : int
+            The width of the frame. The width is expressed in pixels.
+            The default is 1 pixel.
+        """
         self.SetFrameWidth(value)
 
     @property
     def font_family(self) -> str | None:
-        """Set/Get the font family."""
+        """Get the font family.
+
+        Returns
+        -------
+        str | None
+            Font family or None.
+        """
         return self._font_family
 
     @font_family.setter
-    def font_family(self, font: str | None):
-        if font is None:
-            font = self._theme.font.family
-        self._font_family = font
+    def font_family(self, font_family: str | None):
+        """Set the font family.
+
+        Parameters
+        ----------
+        font_family : str | None
+            Font family or None.
+        """
+        if font_family is None:
+            font_family = self._theme.font.family
+        self._font_family = font_family
         self.SetFontFamily(FONTS[self._font_family].value)
 
     @property
     def font_size(self) -> int:
-        """Set/Get the font size."""
+        """Get the font size.
+
+        Returns
+        -------
+        int
+            Font size.
+        """
         return self.GetFontSize()
 
     @font_size.setter
     def font_size(self, font_size: int):
+        """Set the font size.
+
+        Parameters
+        ----------
+        font_size : int
+            Font size.
+        """
         self.SetFontSize(font_size)
 
     def enable_shadow(self) -> None:
@@ -372,16 +574,36 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @property
     def orientation(self) -> float:
-        """Set/Get the text's orientation (in degrees)."""
+        """Return the text's orientation (in degrees).
+
+        Returns
+        -------
+        float
+            Text's orientation (in degrees).
+        """
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: float):
-        self.SetOrientation(value)
+    def orientation(self, orientation: float):
+        """Set the text's orientation (in degrees).
 
-    def set_font_file(self, filename: str):
-        """Set the font file."""
-        path = pathlib.Path(filename)
+        Parameters
+        ----------
+        orientation : float
+            Text's orientation (in degrees).
+
+        """
+        self.SetOrientation(orientation)
+
+    def set_font_file(self, font_file: str):
+        """Set the font file.
+
+        Parameters
+        ----------
+        font_file : str
+            Font file path.
+        """
+        path = pathlib.Path(font_file)
         path = path.resolve()
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Unable to locate {path}')
