@@ -43,9 +43,11 @@ def test_trame_server_launch():
     assert server.running
 
 
-def test_trame():
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+def test_trame(client_type):
     pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
+    server.client_type = client_type
     assert server.running
 
     pl = pv.Plotter(notebook=True)
