@@ -393,7 +393,7 @@ class TextProperty(_vtk.vtkTextProperty):
         self.SetOpacity(value)
 
     @property
-    def background_color(self):
+    def background_color(self) -> Color:
         """Return the background color of text's property.
 
         Returns
@@ -405,20 +405,20 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
-    def background_color(self, value):
+    def background_color(self, color: ColorLike):
         """Return or set the background color of text's property.
 
         Parameters
         ----------
-        value : ColorLike
+        color : ColorLike
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
         """
-        self._background_color_set = value is not None
-        rgb_color = Color(value)
+        self._background_color_set = color is not None
+        rgb_color = Color(color)
         self.SetBackgroundColor(rgb_color.float_rgb)
 
     @property
