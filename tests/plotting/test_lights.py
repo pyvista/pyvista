@@ -2,11 +2,11 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
-    ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
+    ('light_type', pv.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
     ('position', (1, 1, 1), 'SetPosition'),
     ('focal_point', (2, 2, 2), 'SetFocalPoint'),
     ('ambient_color', (1.0, 0.0, 0.0), 'SetAmbientColor'),
@@ -34,7 +34,7 @@ def test_init():
     positional = True
     show_actor = False
     shadow_attenuation = 0.5
-    light = pyvista.Light(
+    light = pv.Light(
         position=position,
         focal_point=focal_point,
         color=color,
@@ -46,7 +46,7 @@ def test_init():
         positional=positional,
         shadow_attenuation=shadow_attenuation,
     )
-    assert isinstance(light, pyvista.Light)
+    assert isinstance(light, pv.Light)
     assert light.position == position
     assert light.focal_point == focal_point
     assert light.ambient_color == color
@@ -65,8 +65,8 @@ def test_init():
 
 
 def test_eq():
-    light = pyvista.Light()
-    other = pyvista.Light()
+    light = pv.Light()
+    other = pv.Light()
     for light_now in light, other:
         for name, value, _ in configuration:
             setattr(light_now, name, value)
@@ -77,8 +77,8 @@ def test_eq():
     for name, value, _ in configuration:
         original_value = getattr(other, name)
         restore_transform = False
-        if value is pyvista.Light.CAMERA_LIGHT:
-            changed_value = pyvista.Light.HEADLIGHT
+        if value is pv.Light.CAMERA_LIGHT:
+            changed_value = pv.Light.HEADLIGHT
             restore_transform = True
         elif isinstance(value, bool):
             changed_value = not value
@@ -105,7 +105,7 @@ def test_eq():
 
 
 def test_copy():
-    light = pyvista.Light()
+    light = pv.Light()
     for name, value, _ in configuration:
         setattr(light, name, value)
 
@@ -118,7 +118,7 @@ def test_copy():
 
 
 def test_colors():
-    light = pyvista.Light()
+    light = pv.Light()
 
     color = (0.0, 1.0, 0.0)
     light.diffuse_color = color
@@ -144,7 +144,7 @@ def test_colors():
 
 
 def test_positioning():
-    light = pyvista.Light()
+    light = pv.Light()
 
     position = (1, 1, 1)
     light.position = position
@@ -175,16 +175,16 @@ def test_positioning():
 def test_transforms():
     position = (1, 2, 3)
     focal_point = (4, 5, 6)
-    light = pyvista.Light(position=position)
+    light = pv.Light(position=position)
     light.focal_point = focal_point
 
     trans_array = np.arange(4 * 4).reshape(4, 4)
-    trans_matrix = pyvista.vtkmatrix_from_array(trans_array)
+    trans_matrix = pv.vtkmatrix_from_array(trans_array)
 
     assert light.transform_matrix is None
     light.transform_matrix = trans_array
     assert isinstance(light.transform_matrix, vtk.vtkMatrix4x4)
-    array = pyvista.array_from_vtkmatrix(light.transform_matrix)
+    array = pv.array_from_vtkmatrix(light.transform_matrix)
     assert np.array_equal(array, trans_array)
     light.transform_matrix = trans_matrix
     matrix = light.transform_matrix
@@ -204,7 +204,7 @@ def test_transforms():
 
 
 def test_intensity():
-    light = pyvista.Light()
+    light = pv.Light()
 
     intensity = 0.5
     light.intensity = intensity
@@ -212,7 +212,7 @@ def test_intensity():
 
 
 def test_switch_state():
-    light = pyvista.Light()
+    light = pv.Light()
 
     light.switch_on()
     assert light.on
@@ -223,7 +223,7 @@ def test_switch_state():
 
 
 def test_positional():
-    light = pyvista.Light()
+    light = pv.Light()
 
     # default is directional light
     assert not light.positional
@@ -234,7 +234,7 @@ def test_positional():
 
 
 def test_shape():
-    light = pyvista.Light()
+    light = pv.Light()
 
     exponent = 1.5
     light.exponent = exponent
@@ -252,13 +252,13 @@ def test_shape():
 @pytest.mark.parametrize(
     'int_code,enum_code',
     [
-        (1, pyvista.Light.HEADLIGHT),
-        (2, pyvista.Light.CAMERA_LIGHT),
-        (3, pyvista.Light.SCENE_LIGHT),
+        (1, pv.Light.HEADLIGHT),
+        (2, pv.Light.CAMERA_LIGHT),
+        (3, pv.Light.SCENE_LIGHT),
     ],
 )
 def test_type_properties(int_code, enum_code):
-    light = pyvista.Light()
+    light = pv.Light()
 
     # test that the int and enum codes match up
     assert int_code == enum_code
@@ -271,7 +271,7 @@ def test_type_properties(int_code, enum_code):
 
 
 def test_type_setters():
-    light = pyvista.Light()
+    light = pv.Light()
 
     light.set_headlight()
     assert light.is_headlight
@@ -283,11 +283,11 @@ def test_type_setters():
 
 def test_type_invalid():
     with pytest.raises(TypeError):
-        light = pyvista.Light(light_type=['invalid'])
+        light = pv.Light(light_type=['invalid'])
     with pytest.raises(ValueError):
-        light = pyvista.Light(light_type='invalid')
+        light = pv.Light(light_type='invalid')
 
-    light = pyvista.Light()
+    light = pv.Light()
 
     with pytest.raises(TypeError):
         light.light_type = ['invalid']
@@ -301,31 +301,31 @@ def test_from_vtk():
         vtk_setter = getattr(vtk_light, vtkname)
         if isinstance(value, np.ndarray):
             # we can't pass the array to vtkLight directly
-            value = pyvista.vtkmatrix_from_array(value)
+            value = pv.vtkmatrix_from_array(value)
         vtk_setter(value)
-    light = pyvista.Light.from_vtk(vtk_light)
+    light = pv.Light.from_vtk(vtk_light)
     for pvname, value, _ in configuration:
         if isinstance(value, np.ndarray):
-            trans_arr = pyvista.array_from_vtkmatrix(getattr(light, pvname))
+            trans_arr = pv.array_from_vtkmatrix(getattr(light, pvname))
             assert np.array_equal(trans_arr, value)
         else:
             assert getattr(light, pvname) == value
 
     # invalid case
     with pytest.raises(TypeError):
-        pyvista.Light.from_vtk('invalid')
+        pv.Light.from_vtk('invalid')
     with pytest.raises(TypeError):
-        pyvista.Light('invalid')
+        pv.Light('invalid')
 
 
 def test_add_vtk_light():
-    pl = pyvista.Plotter(lighting=None)
+    pl = pv.Plotter(lighting=None)
     pl.add_light(vtk.vtkLight())
     assert len(pl.renderer.lights) == 1
 
 
 def test_actors():
-    light = pyvista.Light()
+    light = pv.Light()
     actor = light.actor
 
     # test showing

@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-import pyvista
+import pyvista as pv
 
 # Use cleaned data to avoid things like `np`, `os`, etc
 # This prevents testing against things that are not intended
@@ -16,4 +16,4 @@ with open(namespace_data) as f:
 
 @pytest.mark.parametrize("name", namespace)
 def test_public_namespace(name):
-    assert hasattr(pyvista, name)
+    assert hasattr(pv, name)
