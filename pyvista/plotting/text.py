@@ -156,15 +156,15 @@ class Text(_vtk.vtkTextActor):
 
     Parameters
     ----------
-    text : str
+    text : str, optional
         Text string to be displayed.
         "\n" is recognized as a carriage return/linefeed (line separator).
         The characters must be in the UTF-8 encoding.
 
-    position : Sequence[float]
+    position : Sequence[float], optional
         The position coordinate.
 
-    prop : TextProperty
+    prop : TextProperty, optional
         The property of this actor.
 
     Examples
@@ -264,7 +264,7 @@ class TextProperty(_vtk.vtkTextProperty):
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    color : ColorLike
+    color : ColorLike, optional
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
