@@ -45,11 +45,11 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
             # TODO: warn user?
         return viewer
 
-    CLIENT_TYPE = get_server().client_type
-    if CLIENT_TYPE == 'vue2':
-        return Vue2Viewer(plotter, suppress_rendering=suppress_rendering)
+    server = get_server()
+    if server.client_type == 'vue2':
+        return Vue2Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
     else:
-        return Vue3Viewer(plotter, suppress_rendering=suppress_rendering)
+        return Vue3Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
 
 
 def plotter_ui(

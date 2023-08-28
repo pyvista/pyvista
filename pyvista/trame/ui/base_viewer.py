@@ -7,6 +7,7 @@ See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived
 """
 import io
 
+from trame.app import get_server
 from trame.widgets import html
 
 import pyvista
@@ -19,14 +20,19 @@ class BaseViewer:
     ----------
     plotter : pyvista.Plotter
         Target Plotter instance to view.
+    server : trame.Server, optional
+        Current Server for Trame Application.
     suppress_rendering : bool, default=False
         Whether to suppress rendering on the Plotter.
     """
 
-    def __init__(self, plotter, suppress_rendering=False):
+    def __init__(self, plotter, server=None, suppress_rendering=False):
         """Initialize Viewer."""
         self._html_views = set()
 
+        if server is None:
+            server = get_server()
+        self.server = server
         self.plotter = plotter
         self.plotter.suppress_rendering = suppress_rendering
 

@@ -216,8 +216,7 @@ class Viewer(BaseViewer):
             default_server_rendering = mode == 'server'
 
         with vuetify.VContainer(
-            fluid=True,
-            classes='pa-0 fill-height',
+            fluid=True, classes='pa-0 fill-height', trame_server=self.server
         ) as container:
             server = container.server
             # Initialize state variables
