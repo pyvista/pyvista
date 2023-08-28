@@ -3702,13 +3702,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shaped ``(N, 4)`` where ``N`` is the number of points, and of
             datatype ``np.uint8``.
 
-        clim : sequence[float], optional
+        clim : sequence[float] | float, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
             ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
 
             If the scalars datatype is ``np.uint8``, this parameter defaults to
             ``[0, 256]``.
+
+            If a single value is given, the range ``[-clim, clim]`` is used.
 
         resolution : list, optional
             Block resolution. For example ``[1, 1, 1]``. Resolution must be
@@ -3740,6 +3742,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``'sigmoid_8'`` - Linear map between -8.0 and 8.0
             * ``'sigmoid_9'`` - Linear map between -9.0 and 9.0
             * ``'sigmoid_10'`` - Linear map between -10.0 and 10.0
+            * ``'foreground'`` - Transparent background and opaque foreground.
+                Intended for use with segmentation labels. Assumes the smallest
+                scalar value of the array is the background value (e.g. 0).
 
             If RGBA scalars are provided, this parameter is set to ``'linear'``
             to ensure the opacity transfer function has no effect on the input
@@ -3800,7 +3805,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         blending : str, optional
             Blending mode for visualisation of the input object(s). Can be
             one of 'additive', 'maximum', 'minimum', 'composite', or
-            'average'. Defaults to 'additive'.
+            'average'. Defaults to 'composite'.
 
         mapper : str, optional
             Volume mapper to use given by name. Options include:
