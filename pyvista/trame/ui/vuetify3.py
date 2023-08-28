@@ -58,14 +58,14 @@ class Viewer(BaseViewer):
             The UI view mode. Options are:
 
             * ``'trame'``: Uses a view that can switch between client and server
-            rendering modes.
+              rendering modes.
             * ``'server'``: Uses a view that is purely server rendering.
             * ``'client'``: Uses a view that is purely client rendering (generally
-            safe without a virtual frame buffer)
+              safe without a virtual frame buffer)
 
         default_server_rendering : bool, default: True
             Whether to use server-side or client-side rendering on-start when
-            using the ``'trame'`` mode.
+              using the ``'trame'`` mode.
 
         v_show : bool, optional
             Conditionally show the viewer controls.
@@ -190,14 +190,14 @@ class Viewer(BaseViewer):
             The UI view mode. Options are:
 
             * ``'trame'``: Uses a view that can switch between client and server
-            rendering modes.
+              rendering modes.
             * ``'server'``: Uses a view that is purely server rendering.
             * ``'client'``: Uses a view that is purely client rendering (generally
-            safe without a virtual frame buffer)
+              safe without a virtual frame buffer)
 
         default_server_rendering : bool, default: True
             Whether to use server-side or client-side rendering on-start when
-            using the ``'trame'`` mode.
+              using the ``'trame'`` mode.
 
         collapse_menu : bool, default: False
             Collapse the UI menu (camera controls, etc.) on start.
