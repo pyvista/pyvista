@@ -410,7 +410,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Parameters
         ----------
-        value : str | Color
+        value : ColorLike
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
