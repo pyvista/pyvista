@@ -379,18 +379,18 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, value: float):
+    def opacity(self, opacity: float):
         """Set the opacity of text's property.
 
         Parameters
         ----------
-        value : float
+        opacity : float
             Opacity of the text. A single float value that will be applied globally
             opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
-        _check_range(value, (0, 1), 'opacity')
-        self.SetOpacity(value)
+        _check_range(opacity, (0, 1), 'opacity')
+        self.SetOpacity(opacity)
 
     @property
     def background_color(self) -> Color:
@@ -435,18 +435,18 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetBackgroundOpacity()
 
     @background_opacity.setter
-    def background_opacity(self, value: float):
+    def background_opacity(self, opacity: float):
         """Set the background opacity of text's property.
 
         Parameters
         ----------
-        value : float
+        opacity : float
             Background opacity of the text. A single float value that will be applied globally.
             background opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
-        _check_range(value, (0, 1), 'background_opacity')
-        self.SetBackgroundOpacity(value)
+        _check_range(opacity, (0, 1), 'background_opacity')
+        self.SetBackgroundOpacity(opacity)
 
     @property
     def show_frame(self) -> bool:
@@ -461,16 +461,16 @@ class TextProperty(_vtk.vtkTextProperty):
         return bool(self.GetFrame())
 
     @show_frame.setter
-    def show_frame(self, value: bool):
+    def show_frame(self, frame: bool):
         """Set the visibility of frame.
 
         Parameters
         ----------
-        value : bool
+        frame : bool
             If shows the frame.
 
         """
-        self.SetFrame(value)
+        self.SetFrame(frame)
 
     @property
     def frame_color(self) -> Color:
@@ -484,18 +484,18 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetFrameColor())
 
     @frame_color.setter
-    def frame_color(self, value):
+    def frame_color(self, color):
         """Set the frame color of text property.
 
         Parameters
         ----------
-        value : str | Color
+        color : str | Color
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
         """
-        self.SetFrameColor(Color(value).float_rgb)
+        self.SetFrameColor(Color(color).float_rgb)
 
     @property
     def frame_width(self) -> int:
@@ -510,16 +510,16 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetFrameWidth()
 
     @frame_width.setter
-    def frame_width(self, value: int):
+    def frame_width(self, width: int):
         """Set the width of the frame.
 
         Parameters
         ----------
-        value : int
+        width : int
             The width of the frame. The width is expressed in pixels.
             The default is 1 pixel.
         """
-        self.SetFrameWidth(value)
+        self.SetFrameWidth(width)
 
     @property
     def font_family(self) -> str | None:
