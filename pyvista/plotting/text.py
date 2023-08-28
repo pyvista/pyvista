@@ -349,7 +349,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, colo: ColorLiker):
+    def color(self, color: ColorLike):
         """Set the color of text's property.
 
         Parameters
