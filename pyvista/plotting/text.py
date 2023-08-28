@@ -337,7 +337,7 @@ class TextProperty(_vtk.vtkTextProperty):
             self.enable_shadow()
 
     @property
-    def color(self) -> ColorLike:
+    def color(self) -> Color:
         """Return the color of text's property.
 
         Returns
