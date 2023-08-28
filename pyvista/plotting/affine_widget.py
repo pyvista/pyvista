@@ -9,11 +9,35 @@ from . import _vtk
 
 DARK_YELLOW = (0.9647058823529412, 0.7450980392156863, 0)
 INDEX_MAPPER = {0: 1, 1: 2, 2: 0}
-AXES = {
-    0: np.array([1, 0, 0], dtype=float),
-    1: np.array([0, 1, 0], dtype=float),
-    2: np.array([0, 0, 1], dtype=float),
-}
+GLOBAL_AXES = np.eye(3)
+
+
+def _validate_axes(new_axes):
+    """Validate and normalize input axes.
+
+    Axes are expected to follow the right-hand rule (e.g. third axis is the
+    cross product of the first two.
+
+    Parameters
+    ----------
+    new_axes : sequence
+        The axes to be validated and normalized. Should be of shape (3, 3).
+
+    Returns
+    -------
+    dict
+        The validated and normalized axes.
+
+    """
+    new_axes = np.array(new_axes)
+    if new_axes.shape != (3, 3):
+        raise ValueError("`new_axes` must be a (3, 3) array.")
+
+    new_axes = new_axes / np.linalg.norm(new_axes, axis=1, keepdims=True)
+    if not np.allclose(np.cross(new_axes[0], new_axes[1]), new_axes[2]):
+        raise ValueError("`new_axes` do not follow the right hand rule.")
+
+    return new_axes
 
 
 def _check_callable(func, name='callback'):
@@ -101,6 +125,9 @@ class AffineWidget3D:
         Uses the theme by default. Configure the individual axis colors by
         modifying either the theme with ``pv.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
+    axes : numpy.ndarray, optional
+        ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default this
+        matches the default coordinate system.
     release_callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the
         ``user_matrix`` of the actor.
@@ -148,6 +175,7 @@ class AffineWidget3D:
         line_radius=0.02,
         always_visible=True,
         axes_colors=None,
+        axes=None,
         release_callback=None,
         interact_callback=None,
     ):
@@ -156,6 +184,8 @@ class AffineWidget3D:
         if pv.vtk_version_info < (9, 2):
             raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
+        self._axes = np.eye(4)
+        self._axes_inv = np.eye(4)
         self._pl = plotter
         self._main_actor = actor
         self._selected_actor = None
@@ -187,6 +217,8 @@ class AffineWidget3D:
         self._user_release_callback = _check_callable(release_callback)
 
         self._init_actors(scale, always_visible)
+        if axes is not None:
+            self.axes = axes
 
         if start:
             self.enable()
@@ -195,20 +227,20 @@ class AffineWidget3D:
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
             arrow = pv.Arrow(
-                self._origin,
-                direction=AXES[ii],
+                (0, 0, 0),
+                direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
                 tip_radius=0.05,
                 shaft_radius=self._line_radius,
             )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False))
+            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
             axis_circ = self._circ.copy()
             if ii == 0:
                 axis_circ = axis_circ.rotate_y(-90)
             elif ii == 1:
                 axis_circ = axis_circ.rotate_x(90)
             axis_circ.points *= self._main_actor.GetLength() * (scale * 1.6)
-            axis_circ.points += self._origin
+            # axis_circ.points += self._origin
             axis_circ = axis_circ.tube(
                 radius=self._line_radius * self._actor_length * scale,
                 absolute=True,
@@ -221,8 +253,15 @@ class AffineWidget3D:
                     color=color,
                     lighting=False,
                     render_lines_as_tubes=True,
+                    render=False,
                 )
             )
+
+        # update origin and assign a default user_matrix
+        for actor in self._arrows + self._circles:
+            matrix = np.eye(4)
+            matrix[:3, -1] = self._origin
+            actor.user_matrix = matrix
 
         if always_visible:
             for actor in self._arrows + self._circles:
@@ -246,7 +285,7 @@ class AffineWidget3D:
         if self._selected_actor:
             index = self._circles.index(self._selected_actor)
             view_vec = np.array(ren.camera.direction)
-            point = ray_plane_intersection(point, view_vec, self._origin, AXES[index])
+            point = ray_plane_intersection(point, view_vec, self._origin, self.axes[index])
         return point
 
     def _get_world_coord_trans(self, interactor):
@@ -278,10 +317,11 @@ class AffineWidget3D:
         world_coords = np.dot(inverse_modelview_matrix, camera_coords)
         point = world_coords[:3] * self._actor_length
 
-        # map the axis to the next axis (wrap around)
+        # map the axis to the next axis (wrap around) to ensure we project on a
+        # plane orthogonal to the selected axis
         index = INDEX_MAPPER[self._arrows.index(self._selected_actor)]
         view_vec = np.array(ren.camera.direction)
-        point = ray_plane_intersection(point, view_vec, self._origin, AXES[index])
+        point = ray_plane_intersection(point, view_vec, self._origin, self.axes[index])
 
         return point
 
@@ -299,14 +339,15 @@ class AffineWidget3D:
                 current_pos = self._get_world_coord_trans(interactor)
                 index = self._arrows.index(self._selected_actor)
                 diff = current_pos - self.init_position
-                matrix = self._cached_matrix.copy()
-                matrix[index, -1] += diff[index]
+                trans_matrix = np.eye(4)
+                trans_matrix[:3, -1] = self.axes[index] * np.dot(diff, self.axes[index])
+                matrix = trans_matrix @ self._cached_matrix
             elif self._selected_actor in self._circles:
                 current_pos = self._get_world_coord_rot(interactor)
                 index = self._circles.index(self._selected_actor)
                 vec_current = current_pos - self._origin
                 vec_init = self.init_position - self._origin
-                normal = AXES[index]
+                normal = self.axes[index]
                 vec_current = vec_current - np.dot(vec_current, normal) * normal
                 vec_init = vec_init - np.dot(vec_init, normal) * normal
                 vec_current /= np.linalg.norm(vec_current)
@@ -315,18 +356,16 @@ class AffineWidget3D:
                 cross = np.cross(vec_init, vec_current)
                 if cross[index] < 0:
                     angle = -angle
+
                 trans = _vtk.vtkTransform()
                 trans.Translate(self._origin)
-                if index == 0:
-                    trans.RotateX(angle)
-                elif index == 1:
-                    trans.RotateY(angle)
-                elif index == 2:
-                    trans.RotateZ(angle)
+                trans.RotateWXYZ(
+                    angle, self._axes[index][0], self._axes[index][1], self._axes[index][2]
+                )
                 trans.Translate(-self._origin)
                 trans.Update()
                 rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
-                matrix = np.dot(rot_matrix, self._cached_matrix)
+                matrix = rot_matrix @ self._cached_matrix
 
             if self._user_interact_callback:
                 try_callback(self._user_interact_callback, self._main_actor.user_matrix)
@@ -379,6 +418,34 @@ class AffineWidget3D:
         """Reset the actor and cached transform."""
         self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = np.eye(4)
+
+    @property
+    def axes(self):
+        """Return or set the axes of the widget.
+
+        The axes will be checked for orthogonality. Non-orthogonal axes will
+        raise a ``ValueError``
+
+        Returns
+        -------
+        numpy.ndarray
+            ``(3, 3)`` array of axes.
+
+        """
+        return self._axes[:3, :3]
+
+    @axes.setter
+    def axes(self, new_axes):  # numpydoc ignore=GL08
+        mat = np.eye(4)
+        mat[:3, :3] = _validate_axes(new_axes)
+        mat[:3, -1] = self.origin
+        self._axes = mat
+        self._axes_inv = np.linalg.inv(self._axes)
+        for actor in self._arrows + self._circles:
+            matrix = actor.user_matrix
+            # Be sure to use the inverse here
+            matrix[:3, :3] = self._axes_inv[:3, :3]
+            actor.user_matrix = matrix
 
     @property
     def origin(self) -> tuple:

@@ -464,6 +464,13 @@ def test_affine_widget(sphere):
     with pytest.raises(TypeError, match='callable'):
         pl.add_affine_transform_widget(actor, interact_callback='foo')
 
+    with pytest.raises(ValueError, match='(3, 3)'):
+        pl.add_affine_transform_widget(actor, axes=np.eye(5))
+
+    with pytest.raises(ValueError, match='right hand'):
+        axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
+        pl.add_affine_transform_widget(actor, axes=axes)
+
     widget = pl.add_affine_transform_widget(
         actor, interact_callback=interact_callback, release_callback=release_callback
     )
@@ -545,6 +552,13 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
+
+    # test change axes
+    axes = np.array(
+        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]]
+    )
+    widget.axes = axes
+    assert np.allclose(widget.axes, axes)
 
     # test origin
     origin = np.random.random(3)

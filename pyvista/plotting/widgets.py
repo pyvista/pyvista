@@ -2265,6 +2265,7 @@ class WidgetHelper:
         line_radius=0.02,
         always_visible=True,
         axes_colors=None,
+        axes=None,
         release_callback=None,
         interact_callback=None,
     ):
@@ -2292,6 +2293,9 @@ class WidgetHelper:
             Uses the theme by default. Configure the individual axis colors by
             modifying either the theme with ``pv.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
+        axes : numpy.ndarray, optional
+            ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default
+            this matches the default coordinate system.
         release_callback : callable, optional
             Call this method when releasing the left mouse button. It is passed
             the ``user_matrix`` of the actor.
@@ -2339,6 +2343,7 @@ class WidgetHelper:
             line_radius,
             always_visible,
             axes_colors,
+            axes,
             release_callback,
             interact_callback,
         )
