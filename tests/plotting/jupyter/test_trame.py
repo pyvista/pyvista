@@ -12,8 +12,13 @@ try:
     from trame.app import get_server
 
     from pyvista.trame.jupyter import Widget
-    from pyvista.trame.ui import get_or_create_viewer
-    from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
+    from pyvista.trame.ui import get_or_create_viewer, plotter_ui
+    from pyvista.trame.views import (
+        PyVistaLocalView,
+        PyVistaRemoteLocalView,
+        PyVistaRemoteView,
+        _BasePyVistaView,
+    )
 except:  # noqa: E722
     has_trame = False
 
@@ -41,6 +46,20 @@ def test_trame_server_launch():
     pv.set_jupyter_backend('trame')
     server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     assert server.running
+
+
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+@pytest.mark.parametrize('mode', ['trame', 'client', 'server'])
+def test_trame_plotter_ui(client_type, mode):
+    # give different names for servers so different instances are created
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    server = get_server(name=name)
+    assert server.running
+
+    pl = pv.Plotter(notebook=True)
+    ui = plotter_ui(pl, mode=mode, server=server)
+    assert isinstance(ui, _BasePyVistaView)
 
 
 @pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
