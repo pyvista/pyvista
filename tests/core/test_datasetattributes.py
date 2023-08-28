@@ -9,8 +9,8 @@ from hypothesis.strategies import integers, lists, text
 import numpy as np
 from pytest import fixture, mark, raises
 
-import pyvista
-from pyvista.core.utilities.arrays import FieldAssociation
+import pyvista as pv
+from pyvista.core.utilities.arrays import FieldAssociation, convert_array
 
 skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = mark.skipif(
@@ -54,7 +54,7 @@ def insert_string_array(hexbeam_point_attributes):
 
 
 def test_init(hexbeam):
-    attributes = pyvista.DataSetAttributes(
+    attributes = pv.DataSetAttributes(
         hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT
     )
     assert attributes.VTKObject == hexbeam.GetPointData()
@@ -148,7 +148,7 @@ def test_set_scalars(sphere):
 
 
 def test_eq(sphere):
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     sphere.clear_data()
 
     # check wrong type
@@ -178,6 +178,22 @@ def test_add_matrix(hexbeam):
     hexbeam.point_data.set_array(mat, 'mat')
     matout = hexbeam.point_data['mat'].reshape(mat_shape)
     assert np.allclose(mat, matout)
+
+
+def test_set_fails_with_wrong_shape(hexbeam):
+    with raises(ValueError):
+        hexbeam['foo'] = [1, 2, 3]
+    with raises(ValueError):
+        hexbeam.point_data['foo'] = [1, 2, 3]
+    with raises(ValueError):
+        hexbeam.cell_data['foo'] = [1, 2, 3]
+
+    # Use vtk methods directly to add bad data. This can simulate
+    # cases where buggy vtk methods may set arrays with incorrect shape
+    bad_data = convert_array([1, 2, 3], 'foo')
+    hexbeam.cell_data.VTKObject.AddArray(bad_data)
+    with raises(ValueError):
+        hexbeam.cell_data['foo'] = hexbeam.cell_data['foo']
 
 
 def test_set_active_scalars_fail(hexbeam):
@@ -213,7 +229,7 @@ def test_set_invalid_vectors(hexbeam):
 
 
 def test_set_tcoords_name():
-    mesh = pyvista.Cube()
+    mesh = pv.Cube()
     old_name = mesh.point_data.active_t_coords_name
     assert mesh.point_data.active_t_coords_name is not None
     mesh.point_data.active_t_coords_name = None
@@ -447,7 +463,7 @@ def test_key_should_exist(insert_arange_narray):
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for arr in dsa.values():
-        assert type(arr) is pyvista.pyvista_ndarray
+        assert type(arr) is pv.pyvista_ndarray
 
 
 def test_value_should_exist(insert_arange_narray):
@@ -507,7 +523,7 @@ def test_normals_get(plane):
 
 
 def test_normals_set():
-    plane = pyvista.Plane(i_resolution=1, j_resolution=1)
+    plane = pv.Plane(i_resolution=1, j_resolution=1)
     plane.point_data.normals = plane.point_normals
     assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
 
@@ -536,7 +552,7 @@ def test_normals_raise_field(plane):
 
 def test_add_two_vectors():
     """Ensure we can add two vectors"""
-    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
     mesh.point_data.set_array(range(5, 9), 'my-other-scalars')
     vectors0 = np.random.random((4, 3))
@@ -549,7 +565,7 @@ def test_add_two_vectors():
 
 
 def test_active_vectors_name_setter():
-    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
     vectors0 = np.random.random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
@@ -568,7 +584,7 @@ def test_active_vectors_name_setter():
 
 
 def test_active_vectors_eq():
-    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
     vectors0 = np.random.random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
     vectors1 = np.random.random((4, 3))

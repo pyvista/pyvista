@@ -691,39 +691,29 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
                 self._cmap = cmap
-            # ipygany uses different colormaps
-            if self._theme is None:
-                jupyter_backend = pv.global_theme.jupyter_backend
-            else:
-                jupyter_backend = self._theme.jupyter_backend
-            if jupyter_backend == 'ipygany':  # pragma: no cover
-                from pyvista.jupyter.pv_ipygany import check_colormap
+            if categories:
+                if categories is True:
+                    n_colors = len(np.unique(scalars))
+                elif isinstance(categories, int):
+                    n_colors = categories
 
-                check_colormap(cmap)
-            else:
-                if categories:
-                    if categories is True:
-                        n_colors = len(np.unique(scalars))
-                    elif isinstance(categories, int):
-                        n_colors = categories
+            self.lookup_table.apply_cmap(cmap, n_colors)
 
-                self.lookup_table.apply_cmap(cmap, n_colors)
+            # Set opactities
+            if isinstance(opacity, np.ndarray) and not custom_opac:
+                self.lookup_table.apply_opacity(opacity)
 
-                # Set opactities
-                if isinstance(opacity, np.ndarray) and not custom_opac:
-                    self.lookup_table.apply_opacity(opacity)
+            if flip_scalars:
+                self.lookup_table.values[:] = self.lookup_table.values[::-1]
 
-                if flip_scalars:
-                    self.lookup_table.values[:] = self.lookup_table.values[::-1]
-
-                if custom_opac:
-                    # need to round the colors here since we're
-                    # directly displaying the colors
-                    hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                    scalars = np.round(hue * n_colors) / n_colors
-                    scalars = get_cmap_safe(cmap)(scalars) * 255
-                    scalars[:, -1] *= opacity
-                    scalars = scalars.astype(np.uint8)
+            if custom_opac:
+                # need to round the colors here since we're
+                # directly displaying the colors
+                hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                scalars = np.round(hue * n_colors) / n_colors
+                scalars = get_cmap_safe(cmap)(scalars) * 255
+                scalars[:, -1] *= opacity
+                scalars = scalars.astype(np.uint8)
 
             # configure the lookup table
             if nan_color:

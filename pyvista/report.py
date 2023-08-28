@@ -176,12 +176,10 @@ class Report(scooby.Report):
                IPython : 7.31.0
               colorcet : 3.0.1
                cmocean : 2.0
-            ipyvtklink : 0.2.3
                  scipy : 1.9.1
                   tqdm : 4.64.1
                 meshio : 5.3.4
             jupyterlab : 3.4.7
-             pythreejs : Version unknown
 
     """
 
@@ -190,7 +188,7 @@ class Report(scooby.Report):
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch']
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
         # Optional packages.
         optional = [
@@ -200,18 +198,17 @@ class Report(scooby.Report):
             'IPython',
             'colorcet',
             'cmocean',
-            'ipyvtklink',
             'ipywidgets',
             'scipy',
             'tqdm',
             'meshio',
             'jupyterlab',
-            'pythreejs',
             'pytest_pyvista',
             'trame',
             'trame_client',
             'trame_server',
             'trame_vtk',
+            'trame_vuetify',
             'jupyter_server_proxy',
             'nest_asyncio',
         ]

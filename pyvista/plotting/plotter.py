@@ -136,7 +136,9 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pyvista.global_theme.jupyter_backend in ['ipygany', 'pythreejs']:
+        if pyvista.global_theme.jupyter_backend in [
+            'client',
+        ]:
             return
 
         # Check if VTK has EGL support
@@ -498,11 +500,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
-        You have the option of exposing the scene using either vtk.js (using
-        ``panel``) or three.js (using ``pythreejs``), both of which are
-        excellent JavaScript libraries to visualize small to moderately complex
-        scenes for scientific visualization.
-
         Parameters
         ----------
         filename : str
@@ -601,36 +598,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             f.write(content)
 
         return filename
-
-    def _save_panel(self, filename):
-        """Save the render window as a ``panel.pane.vtk`` html file.
-
-        See https://panel.holoviz.org/api/panel.pane.vtk.html
-
-        Parameters
-        ----------
-        filename : str
-            Path to export the plotter as a panel scene to.
-
-        """
-        from pyvista.jupyter.notebook import handle_plotter
-
-        pane = handle_plotter(self, backend='panel', title=self.title)
-        pane.save(filename)
-
-    def to_pythreejs(self):
-        """Convert this plotting scene to a pythreejs widget.
-
-        Returns
-        -------
-        ipywidgets.Widget
-            Widget containing pythreejs renderer.
-
-        """
-        self._on_first_render_request()  # set up camera
-        from pyvista.jupyter.pv_pythreejs import convert_plotter
-
-        return convert_plotter(self)
 
     def export_gltf(self, filename, inline_data=True, rotate_scene=True, save_normals=True):
         """Export the current rendering scene as a glTF file.
@@ -3734,13 +3701,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shaped ``(N, 4)`` where ``N`` is the number of points, and of
             datatype ``np.uint8``.
 
-        clim : sequence[float], optional
+        clim : sequence[float] | float, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
             ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
 
             If the scalars datatype is ``np.uint8``, this parameter defaults to
             ``[0, 256]``.
+
+            If a single value is given, the range ``[-clim, clim]`` is used.
 
         resolution : list, optional
             Block resolution. For example ``[1, 1, 1]``. Resolution must be
@@ -3772,6 +3741,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``'sigmoid_8'`` - Linear map between -8.0 and 8.0
             * ``'sigmoid_9'`` - Linear map between -9.0 and 9.0
             * ``'sigmoid_10'`` - Linear map between -10.0 and 10.0
+            * ``'foreground'`` - Transparent background and opaque foreground.
+                Intended for use with segmentation labels. Assumes the smallest
+                scalar value of the array is the background value (e.g. 0).
 
             If RGBA scalars are provided, this parameter is set to ``'linear'``
             to ensure the opacity transfer function has no effect on the input
@@ -3832,7 +3804,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         blending : str, optional
             Blending mode for visualisation of the input object(s). Can be
             one of 'additive', 'maximum', 'minimum', 'composite', or
-            'average'. Defaults to 'additive'.
+            'average'. Defaults to 'composite'.
 
         mapper : str, optional
             Volume mapper to use given by name. Options include:
@@ -6573,10 +6545,8 @@ class Plotter(BasePlotter):
             following:
 
             * ``'none'`` : Do not display in the notebook.
-            * ``'pythreejs'`` : Show a ``pythreejs`` widget
             * ``'static'`` : Display a static figure.
-            * ``'ipygany'`` : Show a ``ipygany`` widget
-            * ``'panel'`` : Show a ``panel`` widget.
+            * ``'trame'`` : Display a dynamic figure with Trame.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
@@ -6651,16 +6621,6 @@ class Plotter(BasePlotter):
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
-
-        Display a ``pythreejs`` scene within a jupyter notebook
-
-        >>> pl.show(jupyter_backend='pythreejs')  # doctest:+SKIP
-
-        Return a ``pythreejs`` scene.
-
-        >>> pl.show(
-        ...     jupyter_backend='pythreejs', return_viewer=True
-        ... )  # doctest:+SKIP
 
         Obtain the camera position when using ``show``.
 

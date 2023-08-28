@@ -75,9 +75,8 @@ might want to use PyVista:
 .. jupyter-execute::
    :hide-code:
 
-   # Configure for panel
    import pyvista
-   pyvista.set_jupyter_backend('panel')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
