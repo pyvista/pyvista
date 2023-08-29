@@ -20,7 +20,7 @@ def _validate_axes(axes):
 
     Parameters
     ----------
-    new_axes : sequence
+    axes : sequence
         The axes to be validated and normalized. Should be of shape (3, 3).
 
     Returns
