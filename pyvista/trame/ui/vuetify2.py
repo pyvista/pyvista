@@ -180,7 +180,7 @@ class Viewer(BaseViewer):
 
         default_server_rendering : bool, default: True
             Whether to use server-side or client-side rendering on-start when
-              using the ``'trame'`` mode.
+            using the ``'trame'`` mode.
 
         collapse_menu : bool, default: False
             Collapse the UI menu (camera controls, etc.) on start.
