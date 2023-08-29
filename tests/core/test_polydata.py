@@ -280,9 +280,9 @@ def test_boolean_difference(sphere, sphere_shifted):
     assert np.isclose(difference.volume, expected_volume, atol=1e-3)
 
 
-def test_boolean_difference_fail(plane):
+def test_boolean_difference_fail(plane, sphere):
     with pytest.raises(NotAllTrianglesError):
-        plane - plane
+        plane - sphere
 
 
 def test_subtract(sphere, sphere_shifted):
