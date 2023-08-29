@@ -2763,7 +2763,7 @@ def test_merge_points():
 
 @pytest.fixture
 def labeled_image():
-    image = pyvista.ImageData(dimensions=(2, 2, 2))
+    image = pv.ImageData(dimensions=(2, 2, 2))
     image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
     return image
 
@@ -2774,7 +2774,7 @@ def test_sort_labels(labeled_image):
 
     # test no data
     with pytest.raises(ValueError):
-        pyvista.ImageData(dimensions=(2, 2, 2)).sort_labels()
+        pv.ImageData(dimensions=(2, 2, 2)).sort_labels()
 
     # test single label
     labeled_image['labels'] = [0, 0, 0, 0, 0, 0, 0, 0]
