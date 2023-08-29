@@ -29,10 +29,10 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     text : str
         Text input.
 
-    prop : TextProperty
+    prop : TextProperty, optional
         Text property.
 
-    linear_font_scale_factor : float
+    linear_font_scale_factor : float, optional
         Linear font scale factor.
 
     Examples
