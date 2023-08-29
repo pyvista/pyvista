@@ -188,70 +188,49 @@ class Text(_vtk.vtkTextActor):
 
     @property
     def input(self):
-        """Get the text string to be displayed.
+        r"""Text string to be displayed.
 
         Returns
         -------
         str
-            Text string to be displayed.
-        """
-        return self.GetInput()
-
-    @input.setter
-    def input(self, text: str):
-        r"""Set the text string to be displayed.
-
-        Parameters
-        ----------
-        text : str
             Text string to be displayed.
             "\n" is recognized as a carriage return/linefeed (line separator).
             The characters must be in the UTF-8 encoding.
         """
+        return self.GetInput()
+
+    @input.setter
+    def input(self, text: str):   # numpydoc ignore=GL08
         self.SetInput(text)
 
     @property
     def prop(self):
-        """Return the property of this actor.
+        """Property of this actor.
 
         Returns
         -------
         str
-            The property of this actor.
+            Property of this actor.
         """
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):
-        """Set the property of this actor.
-
-        Parameters
-        ----------
-        prop : TextProperty
-            The property of this actor.
-        """
+    def prop(self, prop: TextProperty):   # numpydoc ignore=GL08
         self.SetTextProperty(prop)
 
     @property
     def position(self):
-        """Get the position coordinate.
+        """Position coordinate.
 
         Returns
         -------
         Sequence[float]
-            The position coordinate.
+            Position coordinate.
         """
         return self.GetPosition()
 
     @position.setter
-    def position(self, position: Sequence[float]):
-        """Set the position coordinate.
-
-        Parameters
-        ----------
-        position : Sequence[float]
-            The position coordinate.
-        """
+    def position(self, position: Sequence[float]):   # numpydoc ignore=GL08
         self.SetPosition(position[0], position[1])
 
 
@@ -338,36 +317,25 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @property
     def color(self) -> Color:
-        """Return the color of text's property.
+        """Color of text's property.
 
         Returns
         -------
         Color
-            The color of text's property.
+            Color of text's property.
 
         """
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, color: ColorLike):
-        """Set the color of text's property.
-
-        Parameters
-        ----------
-        color : ColorLike
-            Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-            ``color='#FFFFFF'``. Color will be overridden if scalars are
-            specified.
-
-        """
+    def color(self, color: ColorLike):   # numpydoc ignore=GL08
         self._color_set = color is not None
         rgb_color = Color(color, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
 
     @property
     def opacity(self) -> float:
-        """Return or set the opacity of text's property.
+        """Opacity of text's property.
 
         Returns
         -------
@@ -379,51 +347,31 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, opacity: float):
-        """Set the opacity of text's property.
-
-        Parameters
-        ----------
-        opacity : float
-            Opacity of the text. A single float value that will be applied globally
-            opacity of the text and uniformly applied everywhere. Between 0 and 1.
-
-        """
+    def opacity(self, opacity: float):   # numpydoc ignore=GL08
         _check_range(opacity, (0, 1), 'opacity')
         self.SetOpacity(opacity)
 
     @property
     def background_color(self) -> Color:
-        """Return the background color of text's property.
+        """Background color of text's property.
 
         Returns
         -------
         Color
-            The background color of text's property.
+            Background color of text's property.
 
         """
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
-    def background_color(self, color: ColorLike):
-        """Return or set the background color of text's property.
-
-        Parameters
-        ----------
-        color : ColorLike
-            Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-            ``color='#FFFFFF'``. Color will be overridden if scalars are
-            specified.
-
-        """
+    def background_color(self, color: ColorLike):   # numpydoc ignore=GL08
         self._background_color_set = color is not None
         rgb_color = Color(color)
         self.SetBackgroundColor(rgb_color.float_rgb)
 
     @property
     def background_opacity(self) -> float:
-        """Return or set the background opacity of text's property.
+        """Background opacity of text's property.
 
         Returns
         -------
@@ -435,22 +383,13 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetBackgroundOpacity()
 
     @background_opacity.setter
-    def background_opacity(self, opacity: float):
-        """Set the background opacity of text's property.
-
-        Parameters
-        ----------
-        opacity : float
-            Background opacity of the text. A single float value that will be applied globally.
-            background opacity of the text and uniformly applied everywhere. Between 0 and 1.
-
-        """
+    def background_opacity(self, opacity: float):   # numpydoc ignore=GL08
         _check_range(opacity, (0, 1), 'background_opacity')
         self.SetBackgroundOpacity(opacity)
 
     @property
     def show_frame(self) -> bool:
-        """Return the visibility of frame.
+        """Visibility of frame.
 
         Returns
         -------
@@ -461,69 +400,43 @@ class TextProperty(_vtk.vtkTextProperty):
         return bool(self.GetFrame())
 
     @show_frame.setter
-    def show_frame(self, frame: bool):
-        """Set the visibility of frame.
-
-        Parameters
-        ----------
-        frame : bool
-            If shows the frame.
-
-        """
+    def show_frame(self, frame: bool):   # numpydoc ignore=GL08
         self.SetFrame(frame)
 
     @property
     def frame_color(self) -> Color:
-        """Get the frame color of text property.
+        """Frame color of text property.
 
         Returns
         -------
         Color
-            The frame color of text property.
+            Frame color of text property.
         """
         return Color(self.GetFrameColor())
 
     @frame_color.setter
-    def frame_color(self, color):
-        """Set the frame color of text property.
-
-        Parameters
-        ----------
-        color : str | Color
-            Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
-            ``color='#FFFFFF'``. Color will be overridden if scalars are
-            specified.
-        """
+    def frame_color(self, color):   # numpydoc ignore=GL08
         self.SetFrameColor(Color(color).float_rgb)
 
     @property
     def frame_width(self) -> int:
-        """Get the width of the frame.
+        """Width of the frame.
 
         Returns
         -------
         int
-            The width of the frame. The width is expressed in pixels.
+            Width of the frame. The width is expressed in pixels.
             The default is 1 pixel.
         """
         return self.GetFrameWidth()
 
     @frame_width.setter
-    def frame_width(self, width: int):
-        """Set the width of the frame.
-
-        Parameters
-        ----------
-        width : int
-            The width of the frame. The width is expressed in pixels.
-            The default is 1 pixel.
-        """
+    def frame_width(self, width: int):   # numpydoc ignore=GL08
         self.SetFrameWidth(width)
 
     @property
     def font_family(self) -> str | None:
-        """Get the font family.
+        """Font family.
 
         Returns
         -------
@@ -533,14 +446,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self._font_family
 
     @font_family.setter
-    def font_family(self, font_family: str | None):
-        """Set the font family.
-
-        Parameters
-        ----------
-        font_family : str | None
-            Font family or None.
-        """
+    def font_family(self, font_family: str | None):   # numpydoc ignore=GL08
         if font_family is None:
             font_family = self._theme.font.family
         self._font_family = font_family
@@ -548,7 +454,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @property
     def font_size(self) -> int:
-        """Get the font size.
+        """Font size.
 
         Returns
         -------
@@ -558,14 +464,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetFontSize()
 
     @font_size.setter
-    def font_size(self, font_size: int):
-        """Set the font size.
-
-        Parameters
-        ----------
-        font_size : int
-            Font size.
-        """
+    def font_size(self, font_size: int):   # numpydoc ignore=GL08
         self.SetFontSize(font_size)
 
     def enable_shadow(self) -> None:
@@ -574,7 +473,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @property
     def orientation(self) -> float:
-        """Return the text's orientation (in degrees).
+        """Text's orientation (in degrees).
 
         Returns
         -------
@@ -584,15 +483,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, orientation: float):
-        """Set the text's orientation (in degrees).
-
-        Parameters
-        ----------
-        orientation : float
-            Text's orientation (in degrees).
-
-        """
+    def orientation(self, orientation: float):   # numpydoc ignore=GL08
         self.SetOrientation(orientation)
 
     def set_font_file(self, font_file: str):
