@@ -18,7 +18,7 @@ _VIEWERS: Dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 
-def get_or_create_viewer(plotter, suppress_rendering=False):
+def get_or_create_viewer(plotter, server=None, suppress_rendering=False):
     """Get or create a Viewer instance for a given Plotter.
 
     There should be only one Viewer instance per plotter. A Viewer
@@ -28,6 +28,9 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
     ----------
     plotter : pyvista.Plotter
         Plotter to return or create the viewer instance for.
+
+    server : trame.Server, optional
+        Current server for Trame application.
 
     suppress_rendering : bool, default: False
         Suppress rendering on the plotter.
@@ -45,11 +48,15 @@ def get_or_create_viewer(plotter, suppress_rendering=False):
             # TODO: warn user?
         return viewer
 
-    server = get_server()
+    if not server:
+        server = get_server()
     if server.client_type == 'vue2':
-        return Vue2Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
+        viewer = Vue2Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
     else:
-        return Vue3Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
+        viewer = Vue3Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
+
+    _VIEWERS[plotter._id_name] = viewer
+    return viewer
 
 
 def plotter_ui(
@@ -90,7 +97,9 @@ def plotter_ui(
         Trame view interface for pyvista.
 
     """
-    viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
+    viewer = get_or_create_viewer(
+        plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client'
+    )
     return viewer.ui(
         mode=mode,
         default_server_rendering=default_server_rendering,

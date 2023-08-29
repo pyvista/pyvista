@@ -65,15 +65,6 @@ class Viewer(BaseViewer):
             Conditionally show the viewer controls.
 
         """
-        if mode is None:
-            mode = self.plotter._theme.trame.default_mode
-        if mode not in self.VALID_UI_MODES:
-            raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
-            )
-        if mode != 'trame':
-            default_server_rendering = mode == 'server'
-
         with vuetify.VRow(
             v_show=v_show,
             classes='pa-0 ma-0 align-center',
@@ -216,7 +207,9 @@ class Viewer(BaseViewer):
             default_server_rendering = mode == 'server'
 
         with vuetify.VContainer(
-            fluid=True, classes='pa-0 fill-height', trame_server=self.server
+            fluid=True,
+            classes='pa-0 fill-height',
+            trame_server=self.server,
         ) as container:
             server = container.server
             # Initialize state variables

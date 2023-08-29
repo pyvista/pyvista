@@ -200,9 +200,15 @@ class BaseViewer:
             else:
                 renderer.hide_axes()
         for view in self._html_views:
-            view.set_widgets(
-                [ren.axes_widget for ren in self.plotter.renderers if hasattr(ren, 'axes_widget')]
-            )
+            if view.set_widgets:
+                # VtkRemoteView does not have set_widgets function, but VtkRemoteLocalView and VtkLocalView do.
+                view.set_widgets(
+                    [
+                        ren.axes_widget
+                        for ren in self.plotter.renderers
+                        if hasattr(ren, 'axes_widget')
+                    ]
+                )
         self.update()
 
     def on_rendering_mode_change(self, **kwargs):
