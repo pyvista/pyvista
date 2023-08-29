@@ -93,7 +93,7 @@ def plotter_ui(
 
     Returns
     -------
-    PyVistaRemoteLocalView, PyVistaRemoteView, or PyVistaLocalView
+    PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
         Trame view interface for pyvista.
 
     """
