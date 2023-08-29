@@ -42,9 +42,8 @@ def _validate_axes(axes):
 
 def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
-    if func:
-        if not callable(func):
-            raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
+    if func and not callable(func):
+        raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
     return func
 
 
