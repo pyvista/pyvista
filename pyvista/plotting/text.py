@@ -106,8 +106,8 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         self.SetText(position, text)
 
     @property
-    def prop(self):
-        """Return or set the property of this actor.
+    def prop(self) -> TextProperty:
+        """Property of this actor.
 
         Returns
         -------
@@ -117,19 +117,12 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):
-        """Set the property of this actor.
-
-        Parameters
-        ----------
-        prop : TextProperty
-            Property of this actor.
-        """
+    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
         self.SetTextProperty(prop)
 
     @property
-    def linear_font_scale_factor(self):
-        """Get font scaling factors.
+    def linear_font_scale_factor(self) -> float:
+        """Font scaling factors.
 
         Returns
         -------
@@ -139,14 +132,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         return self.GetLinearFontScaleFactor()
 
     @linear_font_scale_factor.setter
-    def linear_font_scale_factor(self, factor: float):
-        """Set font scaling factors.
-
-        Parameters
-        ----------
-        factor : float
-            Font scaling factor.
-        """
+    def linear_font_scale_factor(self, factor: float):  # numpydoc ignore=GL08
         self.SetLinearFontScaleFactor(factor)
 
 
