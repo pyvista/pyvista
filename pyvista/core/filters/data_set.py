@@ -6020,9 +6020,7 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
-        arr = get_array(self, scalars, preference=preference, err=False)
-        if arr is None:
-            raise ValueError('No arrays present to sort.')
+        arr = get_array(self, scalars, preference=preference, err=True)
 
         field = get_array_association(self, scalars, preference=preference)
 
