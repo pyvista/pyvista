@@ -12,7 +12,7 @@ INDEX_MAPPER = {0: 1, 1: 2, 2: 0}
 GLOBAL_AXES = np.eye(3)
 
 
-def _validate_axes(new_axes):
+def _validate_axes(axes):
     """Validate and normalize input axes.
 
     Axes are expected to follow the right-hand rule (e.g. third axis is the
@@ -29,15 +29,15 @@ def _validate_axes(new_axes):
         The validated and normalized axes.
 
     """
-    new_axes = np.array(new_axes)
-    if new_axes.shape != (3, 3):
-        raise ValueError("`new_axes` must be a (3, 3) array.")
+    axes = np.array(axes)
+    if axes.shape != (3, 3):
+        raise ValueError("`axes` must be a (3, 3) array.")
 
-    new_axes = new_axes / np.linalg.norm(new_axes, axis=1, keepdims=True)
-    if not np.allclose(np.cross(new_axes[0], new_axes[1]), new_axes[2]):
-        raise ValueError("`new_axes` do not follow the right hand rule.")
+    axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
+    if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
+        raise ValueError("`axes` do not follow the right hand rule.")
 
-    return new_axes
+    return axes
 
 
 def _check_callable(func, name='callback'):
@@ -435,9 +435,9 @@ class AffineWidget3D:
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, new_axes):  # numpydoc ignore=GL08
+    def axes(self, axes):  # numpydoc ignore=GL08
         mat = np.eye(4)
-        mat[:3, :3] = _validate_axes(new_axes)
+        mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
         self._axes_inv = np.linalg.inv(self._axes)
