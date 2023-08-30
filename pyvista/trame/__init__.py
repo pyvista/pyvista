@@ -10,7 +10,7 @@ from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVist
 # __all__ only left for mypy --strict to work when pyvista is a dependency
 __all__ = [
     'elegantly_launch',
-    'get_or_create_viewer',
+    'get_viewer',
     'launch_server',
     'plotter_ui',
     'show_trame',
