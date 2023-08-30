@@ -20,6 +20,13 @@ def test_observers():
     with pytest.raises(TypeError):
         pl.add_key_event('w', 1)
 
+    # Callback must takes no arguments.
+    def callback(arguments):
+        return
+
+    with pytest.raises(TypeError):
+        pl.add_key_event('w', callback)
+
     key = 'w'
     pl.add_key_event(key, empty_callback)
     assert key in pl.iren._key_press_event_callbacks

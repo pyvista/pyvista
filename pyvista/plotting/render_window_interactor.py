@@ -2,6 +2,7 @@
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
+from inspect import signature
 import logging
 import time
 import warnings
@@ -102,6 +103,8 @@ class RenderWindowInteractor:
         """
         if not callable(callback):
             raise TypeError('callback must be callable.')
+        if len(signature(callback).parameters) > 0:
+            raise TypeError('callback must not have any arguments.')
         self._key_press_event_callbacks[key].append(callback)
 
     @staticmethod
