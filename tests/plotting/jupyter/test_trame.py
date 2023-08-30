@@ -12,7 +12,7 @@ try:
     from trame.app import get_server
 
     from pyvista.trame.jupyter import Widget
-    from pyvista.trame.ui import base_viewer, get_or_create_viewer, plotter_ui
+    from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
     from pyvista.trame.views import (
         PyVistaLocalView,
         PyVistaRemoteLocalView,
