@@ -303,7 +303,7 @@ class AffineWidget3D:
         ndc_y = 2 * (y / height) - 1
         ndc_z = 1
 
-        # convert camera coordinates to to world coordinates
+        # convert camera coordinates to world coordinates
         camera = ren.GetActiveCamera()
         projection_matrix = pv.array_from_vtkmatrix(
             camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1)
