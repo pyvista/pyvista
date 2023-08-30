@@ -97,7 +97,7 @@ def plotter_ui(
         Trame view interface for pyvista.
 
     """
-    viewer = get_or_create_viewer(
+    viewer = get_viewer(
         plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client'
     )
     return viewer.ui(
