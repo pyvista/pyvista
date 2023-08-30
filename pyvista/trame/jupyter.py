@@ -19,7 +19,7 @@ except ImportError:
 
 
 import pyvista
-from pyvista.trame.ui import UI_TITLE, get_or_create_viewer
+from pyvista.trame.ui import UI_TITLE, get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
@@ -189,7 +189,7 @@ def initialize(
     state = server.state
     state.trame__title = UI_TITLE
 
-    viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
+    viewer = get_viewer(plotter, suppress_rendering=mode == 'client')
 
     with VAppLayout(server, template_name=plotter._id_name):
         viewer.ui(
