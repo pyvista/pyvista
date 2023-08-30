@@ -8,7 +8,6 @@ from pyvista.core.utilities.misc import try_callback
 from . import _vtk
 
 DARK_YELLOW = (0.9647058823529412, 0.7450980392156863, 0)
-INDEX_MAPPER = {0: 1, 1: 2, 2: 0}
 GLOBAL_AXES = np.eye(3)
 
 
@@ -304,7 +303,7 @@ class AffineWidget3D:
         ndc_y = 2 * (y / height) - 1
         ndc_z = 1
 
-        # convert
+        # convert camera coordinates to to world coordinates
         camera = ren.GetActiveCamera()
         projection_matrix = pv.array_from_vtkmatrix(
             camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1)
@@ -314,15 +313,9 @@ class AffineWidget3D:
         modelview_matrix = pv.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
         inverse_modelview_matrix = np.linalg.inv(modelview_matrix)
         world_coords = np.dot(inverse_modelview_matrix, camera_coords)
-        point = world_coords[:3] * self._actor_length
 
-        # map the axis to the next axis (wrap around) to ensure we project on a
-        # plane orthogonal to the selected axis
-        index = INDEX_MAPPER[self._arrows.index(self._selected_actor)]
-        view_vec = np.array(ren.camera.direction)
-        point = ray_plane_intersection(point, view_vec, self._origin, self.axes[index])
-
-        return point
+        # Scale by twice actor length (experimentally determined for good UX)
+        return world_coords[:3] * self._actor_length * 2
 
     def _move_callback(self, interactor, event):
         """Process actions for the move mouse event."""
