@@ -7,13 +7,13 @@ environments and provides a starting point for custom user-built
 applications.
 """
 from typing import Dict
+import warnings
 
 from trame.app import get_server
 
 from .base_viewer import BaseViewer
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
-import warnings
 
 _VIEWERS: Dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
@@ -46,7 +46,10 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
         viewer = _VIEWERS[plotter._id_name]
         if suppress_rendering != plotter.suppress_rendering:
             plotter.suppress_rendering = suppress_rendering
-            warnings.warn("Suppress rendering on the plotter is changed to " + str(suppress_rendering), UserWarning)
+            warnings.warn(
+                "Suppress rendering on the plotter is changed to " + str(suppress_rendering),
+                UserWarning,
+            )
         return viewer
 
     if not server:
@@ -98,9 +101,7 @@ def plotter_ui(
         Trame view interface for pyvista.
 
     """
-    viewer = get_viewer(
-        plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client'
-    )
+    viewer = get_viewer(plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client')
     return viewer.ui(
         mode=mode,
         default_server_rendering=default_server_rendering,
