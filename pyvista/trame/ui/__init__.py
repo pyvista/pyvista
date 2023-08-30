@@ -13,6 +13,7 @@ from trame.app import get_server
 from .base_viewer import BaseViewer
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
+import warnings
 
 _VIEWERS: Dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
