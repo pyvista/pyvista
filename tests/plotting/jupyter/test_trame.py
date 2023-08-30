@@ -97,7 +97,7 @@ def test_trame(client_type):
     else:
         assert 'http://' in widget.src
 
-    viewer = get_or_create_viewer(pl)
+    viewer = get_viewer(pl)
 
     for cp in ['xy', 'xz', 'yz', 'isometric']:
         exec(f'viewer.view_{cp}()')
