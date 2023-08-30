@@ -560,6 +560,15 @@ def test_affine_widget(sphere):
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
 
+    # test X axis translation with new axes
+    pl.iren._mouse_left_button_press(width // 2, height // 2 - 30)
+    assert widget._selected_actor is widget._arrows[0]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width // 2, height // 2 - 32)
+    assert actor.user_matrix[0, 3] > 0
+    pl.iren._mouse_left_button_release(width, height // 2 - 32)
+    assert actor.user_matrix[0, 3] > 0
+
     # test origin
     origin = np.random.random(3)
     widget.origin = origin

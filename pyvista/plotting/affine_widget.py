@@ -215,7 +215,15 @@ class AffineWidget3D:
         self._user_release_callback = _check_callable(release_callback)
 
         self._init_actors(scale, always_visible)
+
+        # axes must be set after initializing actors
         if axes is not None:
+            try:
+                _validate_axes(axes)
+            except ValueError:
+                for actor in self._arrows + self._circles:
+                    self._pl.remove_actor(actor)
+                raise
             self.axes = axes
 
         if start:
