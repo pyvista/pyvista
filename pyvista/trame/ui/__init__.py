@@ -18,8 +18,8 @@ _VIEWERS: Dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 
-def get_or_create_viewer(plotter, server=None, suppress_rendering=False):
-    """Get or create a Viewer instance for a given Plotter.
+def get_viewer(plotter, server=None, suppress_rendering=False):
+    """Get a Viewer instance for a given Plotter.
 
     There should be only one Viewer instance per plotter. A Viewer
     can have multiple UI views though.
