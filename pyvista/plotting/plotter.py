@@ -4797,10 +4797,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             corner of the text.  The default is horizontal (0.0 degrees).
 
         font_file : str, default: None
-            The absolute file path to a local file containing a free type readable font.
+            The absolute file path to a local file containing a freetype
+            readable font.
 
-        render : bool, optional
-            Force a render when ``True`` (default).
+        render : bool, default: True
+            Force a render when ``True``.
 
         Returns
         -------
@@ -4809,6 +4810,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
+        Add blue text to the upper right of the plotter.
+
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_text(
@@ -4819,6 +4822,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     font_size=26,
         ... )
         >>> pl.show()
+
+        Add text and use a custom freetype readable font file.
+
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_text(
+        ...     'Text',
+        ...     font_file='/home/user/Mplus2-Regular.ttf',
+        ... )  # doctest:+SKIP
+
 
         """
         if font_size is None:
