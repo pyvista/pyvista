@@ -9,6 +9,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
 from . import _vtk
+from .affine_widget import AffineWidget3D
 from .colors import Color
 from .opts import PickerType
 from .utilities.algorithms import (
@@ -2254,6 +2255,98 @@ class WidgetHelper:
     def clear_sphere_widgets(self):
         """Remove all of the sphere widgets."""
         self.sphere_widgets.clear()
+
+    def add_affine_transform_widget(
+        self,
+        actor,
+        origin=None,
+        start=True,
+        scale=0.15,
+        line_radius=0.02,
+        always_visible=True,
+        axes_colors=None,
+        axes=None,
+        release_callback=None,
+        interact_callback=None,
+    ):
+        """Add a 3D affine transform widget.
+
+        This widget allows interactive transformations including translation and
+        rotation using the left mouse button.
+
+        Parameters
+        ----------
+        actor : pyvista.Actor
+            The actor to which the widget is attached to.
+        origin : sequence[float], optional
+            Origin of the widget. Default is the origin of the main actor.
+        start : bool, default: True
+            If True, start the widget immediately.
+        scale : float, default: 0.15
+            Scale factor for the widget relative to the length of the actor.
+        line_radius : float, default: 0.02
+            Relative radius of the lines composing the widget.
+        always_visible : bool, default: True
+            Make the widget always visible. Setting this to ``False`` will cause
+            the widget geometry to be hidden by other actors in the plotter.
+        axes_colors : tuple[ColorLike], optional
+            Uses the theme by default. Configure the individual axis colors by
+            modifying either the theme with ``pv.global_theme.axes.x_color =
+            <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
+        axes : numpy.ndarray, optional
+            ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default
+            this matches the default coordinate system.
+        release_callback : callable, optional
+            Call this method when releasing the left mouse button. It is passed
+            the ``user_matrix`` of the actor.
+        interact_callback : callable, optional
+            Call this method when moving the mouse with the left mouse button
+            pressed down and a valid movement actor selected. It is passed the
+            ``user_matrix`` of the actor.
+
+        Returns
+        -------
+        pyvista.widgets.AffineWidget3D
+            The affine widget.
+
+        Notes
+        -----
+        After interacting with the actor, the transform will be stored within
+        :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+        dataset. Use this matrix in conjunction with
+        :func:`pyvista.DataSetFilters.transform` to transform the dataset.
+
+        Examples
+        --------
+        Add the 3d affine widget.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> widget = pl.add_affine_transform_widget(actor)
+        >>> pl.show()
+
+        Access the transform from the actor.
+
+        >>> actor.user_matrix
+        array([[1., 0., 0., 0.],
+               [0., 1., 0., 0.],
+               [0., 0., 1., 0.],
+               [0., 0., 0., 1.]])
+        """
+        return AffineWidget3D(
+            self,
+            actor,
+            origin,
+            start,
+            scale,
+            line_radius,
+            always_visible,
+            axes_colors,
+            axes,
+            release_callback,
+            interact_callback,
+        )
 
     def add_checkbox_button_widget(
         self,
