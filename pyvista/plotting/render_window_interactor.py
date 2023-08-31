@@ -103,7 +103,8 @@ class RenderWindowInteractor:
         """
         if not callable(callback):
             raise TypeError('callback must be callable.')
-        if len(signature(callback).parameters) > 0:
+        for param in signature(callback).parameters.values():
+            if (param.default is param.empty):
             raise TypeError('callback must not have any arguments.')
         self._key_press_event_callbacks[key].append(callback)
 
