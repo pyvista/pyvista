@@ -12,8 +12,13 @@ try:
     from trame.app import get_server
 
     from pyvista.trame.jupyter import Widget
-    from pyvista.trame.ui import get_or_create_viewer
-    from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
+    from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
+    from pyvista.trame.views import (
+        PyVistaLocalView,
+        PyVistaRemoteLocalView,
+        PyVistaRemoteView,
+        _BasePyVistaView,
+    )
 except:  # noqa: E722
     has_trame = False
 
@@ -43,9 +48,43 @@ def test_trame_server_launch():
     assert server.running
 
 
-def test_trame():
-    pv.set_jupyter_backend('trame')
-    server = get_server(name=pv.global_theme.trame.jupyter_server_name)
+def test_base_viewer_ui():
+    pl = pv.Plotter(notebook=True)
+    viewer = base_viewer.BaseViewer(pl)
+    with pytest.raises(NotImplementedError):
+        viewer.ui()
+
+
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+def test_trame_plotter_ui(client_type):
+    # give different names for servers so different instances are created
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    server = get_server(name=name)
+    assert server.running
+
+    pl = pv.Plotter(notebook=True)
+
+    for mode in ['trame', 'client', 'server']:
+        ui = plotter_ui(pl, mode=mode, server=server)
+        assert isinstance(ui, _BasePyVistaView)
+
+    # Test invalid mode
+    mode = 'invalid'
+    with pytest.raises(ValueError, match=f"`{mode}` is not a valid mode choice. Use one of: (.*)"):
+        ui = plotter_ui(pl, mode=mode, server=server)
+
+    # Test when mode and server are None
+    ui = plotter_ui(pl)
+    assert isinstance(ui, _BasePyVistaView)
+
+
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+def test_trame(client_type):
+    # give different names for servers so different instances are created
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    server = get_server(name=name)
     assert server.running
 
     pl = pv.Plotter(notebook=True)
@@ -58,7 +97,7 @@ def test_trame():
     else:
         assert 'http://' in widget.src
 
-    viewer = get_or_create_viewer(pl)
+    viewer = get_viewer(pl)
 
     for cp in ['xy', 'xz', 'yz', 'isometric']:
         exec(f'viewer.view_{cp}()')
@@ -101,6 +140,15 @@ def test_trame():
     viewer.on_rendering_mode_change(**server.state.to_dict())
 
     assert viewer.actors == pl.actors
+
+    # Test update methods
+    viewer.update_image()
+    viewer.reset_camera()
+    viewer.push_camera()
+    assert len(viewer.views) == 1
+
+    with pytest.raises(ValueError, match="No data to write"):
+        viewer.export()
 
     assert isinstance(viewer.screenshot(), memoryview)
 
