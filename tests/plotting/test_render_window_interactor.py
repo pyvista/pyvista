@@ -20,9 +20,9 @@ def test_observers():
     with pytest.raises(TypeError):
         pl.add_key_event('w', 1)
 
-    # Callback must not have any arguments.
-    def callback(arguments):
-        return
+    # Callback must not have any  empty arguments.
+    def callback(a, b, *, c, d=1.0):
+        pass
 
     with pytest.raises(TypeError):
         pl.add_key_event('w', callback)
