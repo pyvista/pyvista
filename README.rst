@@ -109,7 +109,7 @@ PyVista.
 .. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
-Share this project on Twitter: |tweet|
+Share this project on X: |tweet|
 
 
 PyVista is a NumFOCUS affiliated project
