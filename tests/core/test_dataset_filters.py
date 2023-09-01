@@ -1528,7 +1528,7 @@ def test_probe(categorical, use_points, locator):
         dataset = np.array(mesh.points)
     else:
         dataset = mesh
-    with pytest.warns(PyvistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning):
         result = data_to_probe.probe(
             dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator
         )
