@@ -265,6 +265,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkOBBTree,
     vtkRectilinearGridToPointSet,
     vtkRectilinearGridToTetrahedra,
+    vtkRemovePolyData,
     vtkShrinkFilter,
     vtkTableBasedClipDataSet,
     vtkTableToPolyData,
