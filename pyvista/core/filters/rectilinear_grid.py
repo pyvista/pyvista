@@ -14,7 +14,6 @@ from pyvista.core.utilities.misc import abstract_class
 class RectilinearGridFilters:
     """An internal class to manage filters/algorithms for rectilinear grid datasets."""
 
-    # Note remove kwargs when removing deprecation for pass_cell_data
     def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
