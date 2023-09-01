@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 @pytest.fixture
@@ -74,11 +73,6 @@ def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
 
     # automatically added
     assert 'vtkOriginalCellIds' in tet_grid.cell_data
-
-    with pytest.warns(PyVistaDeprecationWarning):
-        tiny_rectilinear.to_tetrahedra(pass_cell_data=True)
-        if pv._version.version_info >= (0, 43, 0):
-            raise RuntimeError('Remove this deprecated kwarg')
 
     # Test point data active
     tiny_rectilinear.set_active_scalars("point_data")
