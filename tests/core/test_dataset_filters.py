@@ -901,7 +901,7 @@ def test_glyph_settings(sphere):
     sphere['active_arr_points'] = np.ones(sphere.n_points)
     sphere['active_vectors_points'] = np.ones([sphere.n_points, 3])
 
-    with patch('pv.core.filters.data_set._get_output', GetOutput()) as go:
+    with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
         # no orient with cell scale
         sphere.glyph(scale='arr_cell', orient=False)
         alg = InterrogateVTKGlyph3D(go.latest_algorithm)
@@ -1528,7 +1528,7 @@ def test_probe(categorical, use_points, locator):
         dataset = np.array(mesh.points)
     else:
         dataset = mesh
-    with pytest.warns(pvDeprecationWarning):
+    with pytest.warns(PyvistaDeprecationWarning):
         result = data_to_probe.probe(
             dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator
         )
