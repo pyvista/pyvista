@@ -1042,55 +1042,6 @@ def test_copy_attributes(grid):
     assert copy.point_data.keys() == grid.point_data.keys()
 
 
-def test_cell_n_points(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        npoints = grid.cell_n_points(0)
-    if pv._version.version_info >= (0, 43):
-        raise RuntimeError('Remove this deprecated method')
-    assert isinstance(npoints, int)
-    assert npoints >= 0
-
-
-def test_cell_points(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        points = grid.cell_points(0)
-    if pv._version.version_info >= (0, 43):
-        raise RuntimeError('Remove this deprecated method')
-    assert isinstance(points, np.ndarray)
-    assert points.ndim == 2
-    assert points.shape[0] > 0
-    assert points.shape[1] == 3
-
-
-def test_cell_point_ids(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        point_ids = grid.cell_point_ids(0)
-    if pv._version.version_info >= (0, 43):
-        raise RuntimeError('Remove this deprecated method')
-    assert isinstance(point_ids, list)
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert len(point_ids) == grid.cell_n_points(0)
-    assert all([isinstance(id, int) for id in point_ids])
-    assert all([0 <= id < grid.n_points for id in point_ids])
-
-
-def test_cell_bounds(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        bounds = grid.cell_bounds(0)
-    if pv._version.version_info >= (0, 43):
-        raise RuntimeError('Remove this deprecated method')
-    assert isinstance(bounds, tuple)
-    assert len(bounds) == 6
-
-
-def test_cell_type(grid):
-    with pytest.warns(PyVistaDeprecationWarning):
-        ctype = grid.cell_type(0)
-    if pv._version.version_info >= (0, 43):
-        raise RuntimeError('Remove this deprecated method')
-    assert isinstance(ctype, int)
-
-
 def test_point_is_inside_cell():
     grid = pv.ImageData(dimensions=(2, 2, 2))
     assert grid.point_is_inside_cell(0, [0.5, 0.5, 0.5])
