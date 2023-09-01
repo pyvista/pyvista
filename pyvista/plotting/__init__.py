@@ -55,7 +55,7 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper
 from .volume import Volume
 from .volume_property import VolumeProperty
-from .widgets import WidgetHelper
+from .widgets import AffineWidget3D, WidgetHelper
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01

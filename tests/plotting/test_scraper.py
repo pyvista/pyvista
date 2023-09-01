@@ -3,7 +3,7 @@ import os.path as op
 
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
@@ -13,10 +13,10 @@ pytestmark = pytest.mark.skip_plotting
 @pytest.mark.parametrize('n_win', [1, 2])
 def test_scraper(tmpdir, monkeypatch, n_win):
     pytest.importorskip('sphinx_gallery')
-    monkeypatch.setattr(pyvista, 'BUILDING_GALLERY', True)
-    pyvista.close_all()
-    plotters = [pyvista.Plotter(off_screen=True) for _ in range(n_win)]
-    plotter_gif = pyvista.Plotter()
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    pv.close_all()
+    plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
+    plotter_gif = pv.Plotter()
 
     scraper = Scraper()
     src_dir = str(tmpdir)
@@ -57,8 +57,8 @@ def test_scraper(tmpdir, monkeypatch, n_win):
 
 def test_scraper_raise(tmpdir):
     pytest.importorskip('sphinx_gallery')
-    pyvista.close_all()
-    plotter = pyvista.Plotter(off_screen=True)
+    pv.close_all()
+    plotter = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = op.join(str(tmpdir), '_build', 'html')
@@ -82,4 +82,4 @@ def test_scraper_raise(tmpdir):
 
 
 def test_namespace_contract():
-    assert hasattr(pyvista, '_get_sg_image_scraper')
+    assert hasattr(pv, '_get_sg_image_scraper')

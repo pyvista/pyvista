@@ -1920,7 +1920,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.array_names
 
     def __setitem__(
-        self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence]
+        self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence, float]
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -1932,8 +1932,13 @@ class DataSet(DataSetFilters, DataObject):
         #   the data to be on the nodes.
         if scalars is None:
             raise TypeError('Empty array unable to be added.')
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
+        else:
+            scalars = np.asanyarray(scalars)
+
+        # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
+        if scalars.ndim == 0:
+            scalars = scalars.reshape((1,))
+
         # Now check array size to determine which field to place array
         if scalars.shape[0] == self.n_points:
             self.point_data[name] = scalars

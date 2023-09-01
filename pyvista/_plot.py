@@ -112,8 +112,6 @@ def plot(
 
         * ``'none'`` : Do not display in the notebook.
         * ``'static'`` : Display a static figure.
-        * ``'ipygany'`` : Show a ``ipygany`` widget
-        * ``'panel'`` : Show a ``panel`` widget.
         * ``'trame'`` : Display using ``trame``.
 
         This can also be set globally with

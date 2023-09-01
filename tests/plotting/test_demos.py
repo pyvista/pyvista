@@ -4,7 +4,7 @@ import platform
 import numpy as np
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista import demos
 from pyvista.plotting import system_supports_plotting
 
@@ -68,5 +68,5 @@ def test_plot_ants_plane():
 @skip_no_plotting
 def test_orientation_cube():
     pl = demos.orientation_plotter()
-    assert isinstance(pl, pyvista.Plotter)
+    assert isinstance(pl, pv.Plotter)
     pl.show()
