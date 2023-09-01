@@ -2,14 +2,12 @@
 
 import collections
 from typing import Sequence, Union
-import warnings
 
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class
@@ -24,7 +22,6 @@ class RectilinearGridFilters:
         pass_cell_ids: bool = True,
         pass_data: bool = True,
         progress_bar: bool = False,
-        **kwargs,
     ):
         """Create a tetrahedral mesh structured grid.
 
@@ -60,9 +57,6 @@ class RectilinearGridFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        **kwargs : dict, optional
-            Deprecated keyword argument ``pass_cell_data``.
-
         Returns
         -------
         pyvista.UnstructuredGrid
@@ -95,15 +89,6 @@ class RectilinearGridFilters:
         >>> tet_grid.explode(factor=0.5).plot(show_edges=True)
 
         """
-        # Note remove this section when deprecation is done
-        pass_cell_data = kwargs.pop("pass_cell_data", None)
-        assert_empty_kwargs(**kwargs)
-        if pass_cell_data is not None:
-            warnings.warn(
-                "pass_cell_data is a deprecated option, use pass_data", PyVistaDeprecationWarning
-            )
-            pass_data = pass_cell_data
-
         alg = _vtk.vtkRectilinearGridToTetrahedra()
         alg.SetRememberVoxelId(pass_cell_ids or pass_data)
         if mixed is not False:
