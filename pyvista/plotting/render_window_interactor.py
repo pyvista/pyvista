@@ -2,6 +2,7 @@
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
+from inspect import signature
 import logging
 import time
 import warnings
@@ -97,11 +98,14 @@ class RenderWindowInteractor:
             The key to trigger the event.
 
         callback : callable
-            A callable that takes no arguments.
+            A callable that takes no arguments (keyword arguments are allowed).
 
         """
         if not callable(callback):
             raise TypeError('callback must be callable.')
+        for param in signature(callback).parameters.values():
+            if param.default is param.empty:
+                raise TypeError('`callback` must not have any arguments without default values.')
         self._key_press_event_callbacks[key].append(callback)
 
     @staticmethod
