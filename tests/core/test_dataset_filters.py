@@ -901,7 +901,7 @@ def test_glyph_settings(sphere):
     sphere['active_arr_points'] = np.ones(sphere.n_points)
     sphere['active_vectors_points'] = np.ones([sphere.n_points, 3])
 
-    with patch('pyvista.core.filters.data_set._get_output', GetOutput()) as go:
+    with patch('pv.core.filters.data_set._get_output', GetOutput()) as go:
         # no orient with cell scale
         sphere.glyph(scale='arr_cell', orient=False)
         alg = InterrogateVTKGlyph3D(go.latest_algorithm)
@@ -1010,7 +1010,7 @@ def connected_datasets():
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_hexbeam(),  # UnstructuredGrid
-        pyvista.Sphere(),  # PolyData
+        pv.Sphere(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
 
@@ -1027,7 +1027,7 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
     # scalar value to all other cells in the dataset
     for i, dataset in enumerate(connected_datasets):
         dataset.clear_data()
-        dataset_composite = pyvista.MultiBlock()
+        dataset_composite = pv.MultiBlock()
         single_cell_id = dataset.n_cells - 1
         single_cell_point_ids = dataset.get_cell(single_cell_id).point_ids
         for association in ['point', 'cell']:
@@ -1076,7 +1076,7 @@ def test_connectivity_inplace_and_output_type(
     if scalar_range:
         if len(dataset.array_names) == 0:
             dataset.point_data['data'] = np.arange(0, dataset.n_points)
-        pyvista.set_default_active_scalars(dataset)
+        pv.set_default_active_scalars(dataset)
         scalar_range = [np.mean(dataset.active_scalars), np.max(dataset.active_scalars)]
     else:
         scalar_range = None
@@ -1094,16 +1094,16 @@ def test_connectivity_inplace_and_output_type(
     assert conn is not dataset
 
     conn = dataset.connectivity(inplace=True, **common_args)
-    if isinstance(dataset, (pyvista.UnstructuredGrid, pyvista.PolyData)):
+    if isinstance(dataset, (pv.UnstructuredGrid, pv.PolyData)):
         assert conn is dataset
     else:
         assert conn is not dataset
 
     # test correct output type
-    if isinstance(dataset, pyvista.PolyData):
-        assert isinstance(conn, pyvista.PolyData)
+    if isinstance(dataset, pv.PolyData):
+        assert isinstance(conn, pv.PolyData)
     else:
-        assert isinstance(conn, pyvista.UnstructuredGrid)
+        assert isinstance(conn, pv.UnstructuredGrid)
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
@@ -1528,7 +1528,7 @@ def test_probe(categorical, use_points, locator):
         dataset = np.array(mesh.points)
     else:
         dataset = mesh
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(pvDeprecationWarning):
         result = data_to_probe.probe(
             dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator
         )
