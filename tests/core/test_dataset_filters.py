@@ -1060,13 +1060,16 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
         connected_datasets[i] = dataset_composite
     return connected_datasets
 
+
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
     'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
 )
 @pytest.mark.parametrize('label_regions', [True, False])
 @pytest.mark.parametrize('scalar_range', [True, False])
-def test_connectivity_inplace_and_output_type(datasets, dataset_index, extraction_mode, label_regions, scalar_range):
+def test_connectivity_inplace_and_output_type(
+    datasets, dataset_index, extraction_mode, label_regions, scalar_range
+):
     # paramaterize with label_regions and scalar_range as these parameters
     # have branches which may modify input / input type
     dataset = datasets[dataset_index]
@@ -1087,13 +1090,13 @@ def test_connectivity_inplace_and_output_type(datasets, dataset_index, extractio
         region_ids=0,
         closest_point=(0, 0, 0),
         label_regions=label_regions,
-        scalar_range=scalar_range
+        scalar_range=scalar_range,
     )
     conn = dataset.connectivity(inplace=False, **common_args)
     assert conn is not dataset
 
     conn = dataset.connectivity(inplace=True, **common_args)
-    if isinstance(dataset,(pyvista.UnstructuredGrid, pyvista.PolyData)):
+    if isinstance(dataset, (pyvista.UnstructuredGrid, pyvista.PolyData)):
         assert conn is dataset
     else:
         assert conn is not dataset
@@ -1104,12 +1107,13 @@ def test_connectivity_inplace_and_output_type(datasets, dataset_index, extractio
     else:
         assert isinstance(conn, pyvista.UnstructuredGrid)
 
+
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
     'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
 )
 def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
-    # the connectivty filter is known to output incorrectly sized scalars
+    # the connectivity filter is known to output incorrectly sized scalars
     # test all modes and datasets for correct scalar size
     dataset = datasets[dataset_index]
     common_args = dict(
@@ -1176,7 +1180,7 @@ def test_connectivity_scalar_range(
     assert conn_with_full_range.n_cells == dataset.n_cells
 
     # test input scalars are passed to output
-    assert len(conn_no_range.array_names) == 3 # ['data', 'RegionId', 'RegionId']
+    assert len(conn_no_range.array_names) == 3  # ['data', 'RegionId', 'RegionId']
     assert len(conn_with_range.array_names) == 3
     assert len(conn_with_full_range.array_names) == 3
 
@@ -1299,7 +1303,6 @@ def test_connectivity_closest_point(foot_bones):
     region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
     assert region_ids == [0]
     assert counts == [598]
-
 
 
 def test_split_bodies():

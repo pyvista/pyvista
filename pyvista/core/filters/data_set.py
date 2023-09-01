@@ -2379,15 +2379,16 @@ class DataSetFilters:
             'all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'
         ] = 'all',
         variable_input=None,
-        scalars=None,
         scalar_range=None,
+        scalars=None,
         label_regions=True,
         region_ids=None,
         point_ids=None,
         cell_ids=None,
         closest_point=None,
-        progress_bar=False,
         inplace=False,
+        progress_bar=False,
+        **kwargs,
     ):
         """Find and label connected regions.
 
@@ -2401,6 +2402,12 @@ class DataSetFilters:
         must also have at least one point with scalar values in the
         specified range to be considered connected.
 
+        See :ref:`connectivity_example` and :ref:`volumetric_example` for
+        more examples using this filter.
+
+        .. seealso::
+            :func:`pyvista.DataSetFilter.connectivity`
+
         .. versionadded:: 0.42.0
         * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
         and ``'closest'``.
@@ -2409,8 +2416,8 @@ class DataSetFilters:
         * Region connectivity can be controlled using ``scalar_range``.
 
         .. deprecated:: 0.42.0
-        Parameter ``largest`` is deprecated. Use ``extraction_mode='largest'
-        instead.
+        Parameter ``largest`` is deprecated. Use ``'largest'`` or
+        `extraction_mode='largest' instead.
 
         Parameters
         ----------
@@ -2486,6 +2493,9 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar.
+
+        **kwargs : dict, optional
+            Used for handling deprecated parameters.
 
         Returns
         -------
@@ -2604,6 +2614,15 @@ class DataSetFilters:
         >>> p.show()
 
         """
+        # Deprecated on v0.42.0
+        keep_largest = kwargs.pop('largest', False)
+        if keep_largest:  # pragma: no cover
+            warnings.warn(
+                "Use of `largest=True` is deprecated. Use 'largest' or "
+                "`extraction_mode='largest'` instead.",
+                PyVistaDeprecationWarning,
+            )
+            extraction_mode = 'largest'
 
         def _unravel_and_validate_ids(ids):
             ids = np.asarray(ids).ravel()
@@ -2633,9 +2652,11 @@ class DataSetFilters:
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(_input)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
-                    remove.Update()
+                    _update_alg(remove, progress_bar, "Removing Cells.")
                     _output = _get_output(remove)
-                    _output.clean(point_merging=False, inplace=True, progress_bar=True)  # remove unused points
+                    _output.clean(
+                        point_merging=False, inplace=True, progress_bar=True
+                    )  # remove unused points
             _output.point_data.remove('vtkOriginalPointIds')
             _output.cell_data.remove('vtkOriginalCellIds')
             return _output
@@ -2835,18 +2856,18 @@ class DataSetFilters:
         >>> import pyvista
         >>> mesh = pyvista.Sphere() + pyvista.Cube()
         >>> largest = mesh.extract_largest()
-        >>> largest.point_data.clear()
-        >>> largest.cell_data.clear()
         >>> largest.plot()
 
-        See :ref:`volumetric_example` for more examples using this filter.
+        See :ref:`connectivity_example` and :ref:`volumetric_example` for
+        more examples using this filter.
+
+        .. seealso::
+            :func:`pyvista.DataSetFilter.connectivity`
 
         """
-        mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=progress_bar)
-        if inplace:
-            self.copy_from(mesh, deep=False)
-            return self
-        return mesh
+        return DataSetFilters.connectivity(
+            self, 'largest', label_regions=False, inplace=inplace, progress_bar=progress_bar
+        )
 
     def split_bodies(self, label=False, progress_bar=False):
         """Find, label, and split connected bodies/volumes.
