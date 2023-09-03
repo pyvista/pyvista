@@ -847,7 +847,11 @@ created the following will occur:
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-11. Announce the new release in the PyVista Slack workspace and
+11. Update
+    `version.json <https://github.com/pyvista/pyvista-docs/blob/gh-pages/versions.json>`_
+    to change the stable version to new release.
+
+12. Announce the new release in the PyVista Slack workspace and
     celebrate.
 
 Patch Release Steps
