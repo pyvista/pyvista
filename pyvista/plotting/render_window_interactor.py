@@ -846,7 +846,7 @@ class RenderWindowInteractor:
 
     def _mouse_left_button_press(
         self, x=None, y=None
-    ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
+    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
         """Simulate a left mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
