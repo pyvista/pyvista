@@ -1177,6 +1177,7 @@ class RenderWindowInteractor:
         self.terminate_app()
         self.interactor = None
         self._click_event_callbacks = None
+        self._timer_event = None
 
 
 def _style_factory(klass):
