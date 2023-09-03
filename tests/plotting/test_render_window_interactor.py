@@ -187,6 +187,21 @@ def test_timer():
     assert len(events) == E
 
 
+def test_add_timer_event():
+    sphere = pv.Sphere()
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere)
+
+    def callback(step):
+        actor.position = [step / 100.0, step / 100.0, 0]
+
+    pl.iren.add_timer_event(max_steps=200, duration=500, callback=callback)
+
+    cpos = [(0.0, 0.0, 10.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl.show(cpos=cpos)
+
+
 @pytest.mark.skip_plotting
 def test_poked_subplot_loc():
     pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
