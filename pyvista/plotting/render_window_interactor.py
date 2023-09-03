@@ -45,7 +45,7 @@ class Timer:
         self.id = None
         self.callback = callback
 
-    def execute(self, obj, event):  # numpydoc ignore=PR01,RT01
+    def execute(self, obj, event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
         while self.step < self.max_steps:
             self.callback(self.step)
