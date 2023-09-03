@@ -21,7 +21,7 @@ class TimerCallback:
         self.iren = iren
         self.timer_id = None
 
-    def execute(self, obj, event):
+    def call(self, obj, event):
         step = 0
         while step < self.steps:
             self.actor.SetPosition(self.timer_count / 100.0, self.timer_count / 100.0, 0)
@@ -39,7 +39,7 @@ pl = pv.Plotter()
 actor = pl.add_mesh(sphere)
 
 cb = TimerCallback(200, actor, pl.iren)
-obs_enter = pl.iren.add_observer("TimerEvent", cb.execute)
+obs_enter = pl.iren.add_observer("TimerEvent", cb.call)
 cb.timer_id = pl.iren.create_timer(500)
 
 cpos = [(0.0, 0.0, 10.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
