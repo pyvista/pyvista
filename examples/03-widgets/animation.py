@@ -12,35 +12,17 @@ Inspired by https://examples.vtk.org/site/Python/Utilities/Animation/.
 
 import pyvista as pv
 
-
-class TimerCallback:
-    def __init__(self, steps, actor, iren):
-        self.timer_count = 0
-        self.steps = steps
-        self.actor = actor
-        self.iren = iren
-        self.timer_id = None
-
-    def call(self, obj, event):
-        step = 0
-        while step < self.steps:
-            self.actor.SetPosition(self.timer_count / 100.0, self.timer_count / 100.0, 0)
-            iren = obj
-            iren.GetRenderWindow().Render()
-            self.timer_count += 1
-            step += 1
-        if self.timer_id:
-            iren.DestroyTimer(self.timer_id)
-
-
 sphere = pv.Sphere()
 
 pl = pv.Plotter()
 actor = pl.add_mesh(sphere)
 
-cb = TimerCallback(200, actor, pl.iren)
-obs_enter = pl.iren.add_observer("TimerEvent", cb.call)
-cb.timer_id = pl.iren.create_timer(500)
+
+def callback(step):
+    actor.position = [step / 100.0, step / 100.0, 0]
+
+
+pl.iren.add_timer_event(max_steps=200, duration=500, callback=callback)
 
 cpos = [(0.0, 0.0, 10.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 pl.show(cpos=cpos)

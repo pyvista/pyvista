@@ -22,6 +22,40 @@ log.addHandler(logging.StreamHandler())
 _CLASSES = {}
 
 
+class Timer:
+    """Timer class.
+
+    Parameters
+    ----------
+    max_steps : int
+        Maximum number of steps for integrating a timer.
+
+    iren : RenderWindowInteractor
+        Rendering win and interactor.
+
+    callback : callable
+        A callable that takes one arguments (step argument is need).
+    """
+
+    def __init__(self, max_steps, iren, callback):
+        """Initialize."""
+        self.step = 0
+        self.max_steps = max_steps
+        self.iren = iren
+        self.id = None
+        self.callback = callback
+
+    def execute(self, obj, event):  # numpydoc ignore=PR01,RT01
+        """Execute Timer."""
+        while self.step < self.max_steps:
+            self.callback(self.step)
+            iren = obj
+            iren.GetRenderWindow().Render()
+            self.step += 1
+        if self.id:
+            iren.DestroyTimer(self.id)
+
+
 class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
 
@@ -62,6 +96,7 @@ class RenderWindowInteractor:
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ("LeftButtonPressEvent", "RightButtonPressEvent")
         }
+        self._timer_event = None
         self._click_time = 0
         self._MAX_CLICK_DELAY = 0.8  # seconds
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
@@ -107,6 +142,24 @@ class RenderWindowInteractor:
             if param.default is param.empty:
                 raise TypeError('`callback` must not have any arguments without default values.')
         self._key_press_event_callbacks[key].append(callback)
+
+    def add_timer_event(self, max_steps, duration, callback):
+        """Add a function to callback as timer event.
+
+        Parameters
+        ----------
+        max_steps : int
+            Maximum number of steps for integrating a timer.
+
+        duration : int
+            Time (in milliseconds) before the timer emits a TimerEvent.
+
+        callback : callable
+            A callable that takes one arguments (step argument is need).
+        """
+        self._timer = Timer(max_steps, self, callback)
+        self.add_observer("TimerEvent", self._timer.execute)
+        self._timer.id = self.create_timer(duration)
 
     @staticmethod
     def _get_event_str(event):
@@ -793,7 +846,7 @@ class RenderWindowInteractor:
 
     def _mouse_left_button_press(
         self, x=None, y=None
-    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
