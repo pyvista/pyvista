@@ -37,6 +37,8 @@ all plotting functionality in PyVista.
    Plotter
    Property
    Renderer
+   RenderWindowInteractor
+   Timer
    plotting.mapper._BaseMapper
    plotting.opts.InterpolationType
    plotting.opts.RepresentationType
