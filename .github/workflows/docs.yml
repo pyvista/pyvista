@@ -128,7 +128,7 @@ jobs:
           path: .
 
       - name: Deploy Dev Docs
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
