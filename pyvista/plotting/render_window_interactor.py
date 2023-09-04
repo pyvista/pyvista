@@ -153,10 +153,12 @@ class RenderWindowInteractor:
             Maximum number of steps for integrating a timer.
 
         duration : int
-            Time (in milliseconds) before the timer emits a TimerEvent.
+            Time (in milliseconds) before the timer emits a TimerEvent and
+            ``callback`` is called.
 
         callback : callable
-            A callable that takes one arguments (step argument is need).
+            A callable that takes one argument. It will be passed
+            `step`, which is the number of times the timer event has occurred.
         """
         self._timer = Timer(max_steps, self, callback)
         self.add_observer("TimerEvent", self._timer.execute)
