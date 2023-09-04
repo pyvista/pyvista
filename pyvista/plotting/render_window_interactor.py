@@ -34,7 +34,7 @@ class Timer:
         Rendering window interactor.
 
     callback : callable
-        A callable that takes one argument. It will be passed `step`, 
+        A callable that takes one argument. It will be passed `step`,
         which is the number of times the timer event has occurred.
     """
 
