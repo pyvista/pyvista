@@ -28,13 +28,14 @@ class Timer:
     Parameters
     ----------
     max_steps : int
-        Maximum number of steps for integrating a timer.
+        Maximum number of steps to allow for the timer before destroying it.
 
     iren : RenderWindowInteractor
-        Rendering win and interactor.
+        Rendering window interactor.
 
     callback : callable
-        A callable that takes one arguments (step argument is need).
+        A callable that takes one argument. It will be passed `step`, 
+        which is the number of times the timer event has occurred.
     """
 
     def __init__(self, max_steps, iren, callback):
