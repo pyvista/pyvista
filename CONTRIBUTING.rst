@@ -847,9 +847,8 @@ created the following will occur:
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-11. Update
-    `version.json <https://github.com/pyvista/pyvista-docs/blob/gh-pages/versions.json>`_
-    to change the stable version to new release.
+11. Check that `version.json <https://github.com/pyvista/pyvista-docs/blob/gh-pages/versions.json>`_
+    is changed from the stable version to the new release automatically by [.github/workflows/docs.yml](.github/workflows/docs.yml).
 
 12. Announce the new release in the PyVista Slack workspace and
     celebrate.
