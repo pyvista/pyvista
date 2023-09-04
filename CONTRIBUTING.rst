@@ -848,7 +848,7 @@ created the following will occur:
     Merge that pull request.
 
 11. Check that `version.json <https://github.com/pyvista/pyvista-docs/blob/gh-pages/versions.json>`_
-    is changed from the stable version to the new release automatically by [.github/workflows/docs.yml](.github/workflows/docs.yml).
+    is changed from the stable version to the new release automatically by `.github/workflows/docs.yml <.github/workflows/docs.yml>`_.
 
 12. Announce the new release in the PyVista Slack workspace and
     celebrate.
