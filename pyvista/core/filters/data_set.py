@@ -2405,70 +2405,62 @@ class DataSetFilters:
         See :ref:`connectivity_example` and :ref:`volumetric_example` for
         more examples using this filter.
 
-        .. seealso::
-            :func:`pyvista.DataSetFilter.connectivity`
-
         .. versionadded:: 0.42.0
-        * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
-        and ``'closest'``.
-        * Extracted regions are now sorted in descending order by
-        cell count.
-        * Region connectivity can be controlled using ``scalar_range``.
+           * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
+             and ``'closest'``.
+           * Extracted regions are now sorted in descending order by
+             cell count.
+           * Region connectivity can be controlled using ``scalar_range``.
 
         .. deprecated:: 0.42.0
-        Parameter ``largest`` is deprecated. Use ``'largest'`` or
-        `extraction_mode='largest' instead.
+           Parameter ``largest`` is deprecated. Use ``'largest'`` or
+           ``extraction_mode='largest'`` instead.
 
         Parameters
         ----------
         extraction_mode : str, default: "all"
-            * ``'all'``:
-             Extract all connected regions.
-            * ``'largest'`` :
-             Extract the largest connected region (by cell count).
-            * ``'specified'``:
-             Extract specific region IDs. Use ``region_ids`` to
-             specify the region IDs to extract.
-            * ``'cell_seed'``:
-             Extract all regions sharing the specified cell ids. Use
-             ``cell_ids`` specify the cell ids.
-            * ``'point_seed'``
-             Extract all regions sharing the specified point ids. Use
-             ``point_ids`` specify the point ids.
-            * ``'closest'``
-             Extract the region closest to the specified point. Use
-             ``closest_point`` to specify the point.
+            * ``'all'``: Extract all connected regions.
+            * ``'largest'`` : Extract the largest connected region (by cell
+              count).
+            * ``'specified'``: Extract specific region IDs. Use ``region_ids``
+              to specify the region IDs to extract.
+            * ``'cell_seed'``: Extract all regions sharing the specified cell
+              ids. Use ``cell_ids`` specify the cell ids.
+            * ``'point_seed'`` : Extract all regions sharing the specified
+              point ids. Use ``point_ids`` specify the point ids.
+            * ``'closest'`` : Extract the region closest to the specified
+              point. Use ``closest_point`` to specify the point.
 
         variable_input : float | sequence[float], optional
-            Convenience parameter used for specifying any required input
-            values for some values of ``extraction_mode``. Setting
+            Convenience parameter used for specifying any required input values
+            for some values of ``extraction_mode``. Setting
             ``extraction_input`` is equivalent to setting:
-                * ``'region_ids'`` if mode is ``'specified'``
-                * ``'cell_ids'`` if mode is ``'cell_seed'``
-                * ``'point_ids'`` if mode is ``'point_seed'``
-                * ``'closest_point'`` if mode is ``'closest'``
-            Has no effect if mode is ``'all'`` or ``'largest'``.
+            * ``'region_ids'`` if mode is ``'specified'``
+            * ``'cell_ids'`` if mode is ``'cell_seed'``
+            * ``'point_ids'`` if mode is ``'point_seed'``
+            * ``'closest_point'`` if mode is ``'closest'``. Has no effect if mode is ``'all'`` or ``'largest'``.
 
         scalar_range : float | sequence[float], optional
             Single value or ``(min, max)``. If set, the connectivity is
-            restricted to cells with at least one point with scalar values
-            in the specified range.
+            restricted to cells with at least one point with scalar values in
+            the specified range.
 
         scalars : str, optional
-            Name of scalars to use if ``scalar_range`` is specified.
-            Defaults to currently active scalars.
+            Name of scalars to use if ``scalar_range`` is specified. Defaults
+            to currently active scalars.
+
             .. note::
-            This filter requires point scalars to determine region
-            connectivity. If cell scalars are provided, they are first
-            converted to point scalars with :func:`cell_data_to_point_data`
-            before applying the filter. The converted point scalars are
-            removed from the output after applying the filter.
+               This filter requires point scalars to determine region
+               connectivity. If cell scalars are provided, they are first
+               converted to point scalars with :func:`cell_data_to_point_data`
+               before applying the filter. The converted point scalars are
+               removed from the output after applying the filter.
 
         label_regions : bool, default: True
             If ``True``, scalar point and cell arrays ``RegionId`` are stored.
-            Each region is assigned a unique ID. IDs are zero-indexed
-            and are assigned by region cell count in descending order
-            (i.e. the largest region has ID ``0``).
+            Each region is assigned a unique ID. IDs are zero-indexed and are
+            assigned by region cell count in descending order (i.e. the largest
+            region has ID ``0``).
 
         region_ids : sequence[int], optional
             Region ids to extract. Only used if ``extraction_mode`` is
@@ -2504,20 +2496,27 @@ class DataSetFilters:
             ``pyvista.PolyData`` if input type is ``pyvista.PolyData`` and
             ``pyvista.UnstructuredGrid`` otherwise.
 
+        See Also
+        --------
+            :func:`pyvista.DataSetFilter.connectivity`
+
         Examples
         --------
-        Label all connected regions
-        ===========================
-        Load data
+        **Label all connected regions**
+
+        Load data.
+
         >>> import numpy as np
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> mesh = examples.download_foot_bones()
 
-        Extract all disconnected regions
+        Extract all disconnected regions.
+
         >>> conn = mesh.connectivity()
 
-        Configure plotting parameters
+        Configure plotting parameters.
+
         >>> # Use a categorical colormap
         >>> categories = True
         >>> cmap = 'glasbey'
@@ -2530,7 +2529,8 @@ class DataSetFilters:
         >>> # Set the plot's camera position
         >>> cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
-        Plot the regions by ID
+        Plot the regions by ID.
+
         >>> # Note that region IDs are sorted in descending order by
         >>> # cell count
         >>> conn.plot(
@@ -2540,19 +2540,22 @@ class DataSetFilters:
         ...     cpos=cpos,
         ... )
 
-        Extract specific regions by size
-        ================================
-        Calculate region sizes
-        # Get counts using the previous `connectivity('all')` results
+        **Extract specific regions by size**
+
+        Calculate region sizes.
+
+        >>> # Get counts using the previous `connectivity('all')` results
         >>> regions, region_sizes = np.unique(
         ...     conn['RegionId'], return_counts=True
         ... )
 
-        Extract regions with fewer than 150 cells
+        Extract regions with fewer than 150 cells.
+
         >>> region_ids = regions[np.flatnonzero(region_sizes < 150)]
         >>> conn = mesh.connectivity('specified', region_ids)
 
-        Plot result with plotting parameters defined earlier
+        Plot result with plotting parameters defined earlier.
+
         >>> conn.plot(
         ...     categories=categories,
         ...     cmap=cmap,
@@ -2560,24 +2563,26 @@ class DataSetFilters:
         ...     cpos=cpos,
         ... )
 
-        Extract the largest region
-        ==========================
+        **Extract the largest region**
+
         >>> conn = mesh.connectivity('largest', label_regions=False)
 
-        # Plot largest region and show input mesh for reference
+        >>> # Plot largest region and show input mesh for reference
         >>> p = pv.Plotter()
         >>> _ = p.add_mesh(conn)
         >>> _ = p.add_mesh(mesh, style='wireframe')
         >>> p.show(cpos=cpos)
 
-        Extract regions using seed points
-        =================================
+        **Extract regions using seed points**
+
         Create hills and use curvature to define its peaks and valleys
+
         >>> import pyvista as pv
         >>> mesh = pv.ParametricRandomHills()
         >>> mesh["Curvature"] = mesh.curvature()
 
         Visualize the peaks and valleys
+
         >>> # Peaks have large positive curvature (i.e. are convex)
         >>> # Valleys have large negative curvature (i.e. are concave)
         >>> # Flat regions have curvature close to zero
@@ -2589,6 +2594,7 @@ class DataSetFilters:
         ... )
 
         Extract the steepest peak using a seed point
+
         >>> data_min, data_max = mesh.get_data_range()
         >>> peak_range = [0.2, data_max]  # Peak if curvature > 0.2
         >>> peak_point_id = np.argmax(mesh['Curvature'])  # Steepest point
@@ -2597,13 +2603,15 @@ class DataSetFilters:
         ... )
 
         Extract the valley region closest to the steepest peak
+
         >>> valley_range = [data_min, -0.2]  # Valley if curvature < 0.2
         >>> peak_point = mesh.points[peak_point_id]
         >>> valley_mesh = mesh.connectivity(
         ...     'closest', peak_point, scalar_range=valley_range
         ... )
 
-        Plot extracted regions
+        Plot extracted regions.
+
         >>> p = pv.Plotter()
         >>> _ = p.add_mesh(mesh, style='wireframe', color='lightgray')
         >>> _ = p.add_mesh(peak_mesh, color='red', label='Steepest Peak')
@@ -2636,7 +2644,7 @@ class DataSetFilters:
             # This method is similar to `mesh.extract_points` but the
             # output arrays are removed and the output type is PolyData
             # if input type is PolyData
-            _output = _input.extract_points(points, progress_bar=True)
+            _output = _input.extract_points(points, progress_bar=progress_bar)
             if isinstance(_input, pyvista.PolyData):
                 # Output is UnstructuredGrid, so apply vtkRemovePolyData
                 # to input to make output as PolyData type instead
@@ -2646,27 +2654,28 @@ class DataSetFilters:
                 if len(ids_to_remove) == 0:
                     _output = _input
                 else:
-                    # _output.BuildLinks()
-                    # [_output.DeleteCell(i) for i in ids_to_remove]
-                    # _output.RemoveDeletedCells()
+                    if pyvista.vtk_version_info < (9, 1, 0):
+                        raise VTKVersionError(
+                            '`connectivity` with PolyData requires vtk>=9.1.0'
+                        )  # pragma: no cover
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(_input)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
                     _update_alg(remove, progress_bar, "Removing Cells.")
                     _output = _get_output(remove)
                     _output.clean(
-                        point_merging=False, inplace=True, progress_bar=True
+                        point_merging=False, inplace=True, progress_bar=progress_bar
                     )  # remove unused points
             _output.point_data.remove('vtkOriginalPointIds')
             _output.cell_data.remove('vtkOriginalCellIds')
             return _output
 
         # Store active scalars info to restore later if needed
-        active_field, active_name = self.active_scalars_info
+        active_field, active_name = self.active_scalars_info  # type: ignore
 
         # Set scalars
         if scalar_range is None:
-            input_mesh = self.copy(deep=False)
+            input_mesh = self.copy(deep=False)  # type: ignore
         else:
             if scalar_range[0] > scalar_range[1]:
                 raise ValueError(
@@ -2674,7 +2683,7 @@ class DataSetFilters:
                 )
 
             # Input will be modified, so copy first
-            input_mesh = self.copy()
+            input_mesh = self.copy()  # type: ignore
             if scalars is None:
                 set_default_active_scalars(input_mesh)
             else:
@@ -2823,7 +2832,7 @@ class DataSetFilters:
 
         if inplace:
             try:
-                self.copy_from(output, deep=False)
+                self.copy_from(output, deep=False)  # type: ignore
                 return self
             except:
                 pass

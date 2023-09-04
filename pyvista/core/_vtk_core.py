@@ -252,6 +252,11 @@ from vtkmodules.vtkFiltersExtraction import (
     vtkExtractSelection,
 )
 from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
+
+try:  # Introduced VTK v9.1.0
+    from vtkmodules.vtkFiltersGeneral import vtkRemovePolyData
+except ImportError:  # pragma: no cover
+    pass
 from vtkmodules.vtkFiltersGeneral import (
     vtkAxes,
     vtkBooleanOperationPolyDataFilter,
