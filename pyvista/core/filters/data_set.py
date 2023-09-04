@@ -2634,8 +2634,8 @@ class DataSetFilters:
 
         def _unravel_and_validate_ids(ids):
             ids = np.asarray(ids).ravel()
-            is_all_integers = np.all(np.mod(ids, 1) == 0)
-            is_all_positive = np.all(ids >= 0)
+            is_all_integers = np.issubdtype(ids.dtype, np.integer)
+            is_all_positive = not np.any(ids < 0)
             if not (is_all_positive and is_all_integers):
                 raise ValueError('IDs must be positive integer values.')
             return np.unique(ids)
@@ -2733,7 +2733,9 @@ class DataSetFilters:
         elif extraction_mode == 'specified':
             if region_ids is None:
                 if variable_input is None:
-                    raise TypeError("Region ids must be specified.")
+                    raise ValueError(
+                        "`region_ids` must be specified when `extraction_mode='specified'`."
+                    )
                 else:
                     region_ids = variable_input
             # this mode returns scalar data with shape that may not match
@@ -2746,7 +2748,9 @@ class DataSetFilters:
         elif extraction_mode == 'cell_seed':
             if cell_ids is None:
                 if variable_input is None:
-                    raise TypeError("Cell ids must be specified.")
+                    raise ValueError(
+                        "`cell_ids` must be specified when `extraction_mode='cell_seed'`."
+                    )
                 else:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
@@ -2756,7 +2760,9 @@ class DataSetFilters:
         elif extraction_mode == 'point_seed':
             if point_ids is None:
                 if variable_input is None:
-                    raise TypeError("Point ids must be specified.")
+                    raise ValueError(
+                        "`point_ids` must be specified when `extraction_mode='point_seed'`."
+                    )
                 else:
                     point_ids = variable_input
             alg.SetExtractionModeToPointSeededRegions()
@@ -2766,14 +2772,18 @@ class DataSetFilters:
         elif extraction_mode == 'closest':
             if closest_point is None:
                 if variable_input is None:
-                    raise TypeError("Closest point must be specified.")
+                    raise ValueError(
+                        "`closest_point` must be specified when `extraction_mode='closest'`."
+                    )
                 else:
                     closest_point = variable_input
             alg.SetExtractionModeToClosestPointRegion()
             alg.SetClosestPoint(*closest_point)
 
         else:
-            raise ValueError("Invalid extraction mode.")
+            raise ValueError(
+                f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
+            )
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
         output = _get_output(alg)

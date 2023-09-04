@@ -1147,6 +1147,32 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
+def test_connectivity_raises(
+    connected_datasets_single_disconnected_cell,
+):
+    dataset = connected_datasets_single_disconnected_cell[0]['point']
+    with pytest.raises(ValueError, match='Lower value'):
+        dataset.connectivity(scalar_range=[1, 0])
+
+    with pytest.raises(ValueError, match='Invalid value for `extraction_mode`'):
+        dataset.connectivity(extraction_mode='foo')
+
+    with pytest.raises(ValueError, match='`closest_point` must be specified'):
+        dataset.connectivity(extraction_mode='closest')
+
+    with pytest.raises(ValueError, match='`point_ids` must be specified'):
+        dataset.connectivity(extraction_mode='point_seed')
+
+    with pytest.raises(ValueError, match='`cell_ids` must be specified'):
+        dataset.connectivity(extraction_mode='cell_seed')
+
+    with pytest.raises(ValueError, match='`region_ids` must be specified'):
+        dataset.connectivity(extraction_mode='specified')
+
+    with pytest.raises(ValueError, match='positive integer values'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
+
+
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
     'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
