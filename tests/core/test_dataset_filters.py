@@ -1065,6 +1065,7 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
 )
 @pytest.mark.parametrize('label_regions', [True, False])
 @pytest.mark.parametrize('scalar_range', [True, False])
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_inplace_and_output_type(
     datasets, dataset_index, extraction_mode, label_regions, scalar_range
 ):
@@ -1110,6 +1111,7 @@ def test_connectivity_inplace_and_output_type(
 @pytest.mark.parametrize(
     'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
 )
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     # the connectivity filter is known to output incorrectly sized scalars
     # test all modes and datasets for correct scalar size
@@ -1147,6 +1149,7 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
@@ -1178,6 +1181,7 @@ def test_connectivity_raises(
     'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
 )
 @pytest.mark.parametrize('association', ['cell', 'point'])
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_scalar_range(
     connected_datasets_single_disconnected_cell, dataset_index, extraction_mode, association
 ):
@@ -1209,6 +1213,7 @@ def test_connectivity_scalar_range(
     assert len(conn_with_full_range.array_names) == 3
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_all(foot_bones):
     conn = foot_bones.connectivity('all')
     assert conn.n_cells == foot_bones.n_cells
@@ -1250,6 +1255,7 @@ def test_connectivity_all(foot_bones):
     )
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_largest(foot_bones):
     conn = foot_bones.connectivity('largest')
     assert conn.n_cells == 598
@@ -1261,6 +1267,7 @@ def test_connectivity_largest(foot_bones):
     assert counts == [598]
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_specified(foot_bones):
     # test all regions
     all_regions = list(range(26))
@@ -1285,6 +1292,7 @@ def test_connectivity_specified(foot_bones):
     assert np.array_equal(counts, [586, 392, 228, 212])
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_point_seed(foot_bones):
     conn = foot_bones.connectivity('point_seed', point_ids=1598)
     assert conn.n_cells == 598
@@ -1299,6 +1307,7 @@ def test_connectivity_point_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_cell_seed(foot_bones):
     conn = foot_bones.connectivity('cell_seed', cell_ids=3122)
     assert conn.n_cells == 598
@@ -1314,6 +1323,7 @@ def test_connectivity_cell_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_closest_point(foot_bones):
     conn = foot_bones.connectivity('closest', closest_point=(-3.5, -0.5, -0.5))
     assert conn.n_cells == 598
