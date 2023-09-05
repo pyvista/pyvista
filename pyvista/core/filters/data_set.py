@@ -5929,7 +5929,7 @@ class DataSetFilters:
         >>> label_number[:4]
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
         >>> label_size[:4]
-        array([30805713,    35279,    19172,    38129], dtype=int64)
+        array([30805713,    35279,    19172,    38129])
 
         Sort labels
         >>> sorted_labels = image_labels.sort_labels()
