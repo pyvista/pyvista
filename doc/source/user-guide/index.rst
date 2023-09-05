@@ -43,9 +43,6 @@ identically locally.
     >>> mesh.plot(cpos='xy', cmap='plasma', pbr=True, metallic=1.0, roughness=0.6,
     ...           zoom=1.7)
 
-.. note::
-   This example (and many others) is interactive.
-
 With just a few lines of code we downloaded a sample mesh from the
 web, added scalars to it based on the points of the mesh, and plotted
 it while controlling the orientation, color, and data presented in the

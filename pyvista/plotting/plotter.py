@@ -61,9 +61,10 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .text import CornerAnnotation, Text, TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
+from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa
 from .utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
@@ -4696,8 +4697,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 _kill_display(disp_id)
             self.iren = None
 
-        if hasattr(self, 'textActor'):
-            del self.textActor
+        if hasattr(self, 'text'):
+            del self.text
 
         # end movie
         if hasattr(self, 'mwriter'):
@@ -4723,7 +4724,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mesh = None
         self.mapper = None
         self.volume = None
-        self.textActor = None
+        self.text = None
 
     def add_text(
         self,
@@ -4736,6 +4737,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         name=None,
         viewport=False,
         orientation=0.0,
+        font_file=None,
         *,
         render=True,
     ):
@@ -4772,8 +4774,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             Defaults to :attr:`pyvista.global_theme.font.color <pyvista.plotting.themes._Font.color>`.
 
-        font : str, optional
+        font : str, default: 'arial'
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
+            This is ignored if the `font_file` is set.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
@@ -4793,8 +4796,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             is rotated around an anchor point that may be on the edge or
             corner of the text.  The default is horizontal (0.0 degrees).
 
-        render : bool, optional
-            Force a render when ``True`` (default).
+        font_file : str, default: None
+            The absolute file path to a local file containing a freetype
+            readable font.
+
+        render : bool, default: True
+            Force a render when ``True``.
 
         Returns
         -------
@@ -4803,6 +4810,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
+        Add blue text to the upper right of the plotter.
+
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_text(
@@ -4814,9 +4823,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
         >>> pl.show()
 
+        Add text and use a custom freetype readable font file.
+
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_text(
+        ...     'Text',
+        ...     font_file='/home/user/Mplus2-Regular.ttf',
+        ... )  # doctest:+SKIP
+
+
         """
-        if font is None:
-            font = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
         if position is None:
@@ -4825,54 +4841,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             x = (window_size[0] * 0.02) / self.shape[0]
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
-
-        corner_mappings = {
-            'lower_left': _vtk.vtkCornerAnnotation.LowerLeft,
-            'lower_right': _vtk.vtkCornerAnnotation.LowerRight,
-            'upper_left': _vtk.vtkCornerAnnotation.UpperLeft,
-            'upper_right': _vtk.vtkCornerAnnotation.UpperRight,
-            'lower_edge': _vtk.vtkCornerAnnotation.LowerEdge,
-            'upper_edge': _vtk.vtkCornerAnnotation.UpperEdge,
-            'left_edge': _vtk.vtkCornerAnnotation.LeftEdge,
-            'right_edge': _vtk.vtkCornerAnnotation.RightEdge,
-        }
-        corner_mappings['ll'] = corner_mappings['lower_left']
-        corner_mappings['lr'] = corner_mappings['lower_right']
-        corner_mappings['ul'] = corner_mappings['upper_left']
-        corner_mappings['ur'] = corner_mappings['upper_right']
-        corner_mappings['top'] = corner_mappings['upper_edge']
-        corner_mappings['bottom'] = corner_mappings['lower_edge']
-        corner_mappings['right'] = corner_mappings['right_edge']
-        corner_mappings['r'] = corner_mappings['right_edge']
-        corner_mappings['left'] = corner_mappings['left_edge']
-        corner_mappings['l'] = corner_mappings['left_edge']
-
+        text_prop = TextProperty(
+            color=color,
+            font_family=font,
+            orientation=orientation,
+            font_file=font_file,
+            shadow=shadow,
+        )
         if isinstance(position, (int, str, bool)):
-            if isinstance(position, str):
-                position = corner_mappings[position]
-            elif position is True:
-                position = corner_mappings['upper_left']
-            self.textActor = _vtk.vtkCornerAnnotation()
-            # This is how you set the font size with this actor
-            self.textActor.SetLinearFontScaleFactor(font_size // 2)
-            self.textActor.SetText(position, text)
+            self.text = CornerAnnotation(position, text, linear_font_scale_factor=font_size // 2)
         else:
-            self.textActor = _vtk.vtkTextActor()
-            self.textActor.SetInput(text)
-            self.textActor.SetPosition(position)
+            self.text = Text(text=text, position=position)
             if viewport:
-                self.textActor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
-                self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
-            self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
-
-        text_prop = self.textActor.GetTextProperty()
-        text_prop.SetColor(Color(color, default_color=self._theme.font.color).float_rgb)
-        text_prop.SetFontFamily(FONTS[font].value)
-        text_prop.SetShadow(shadow)
-        text_prop.SetOrientation(orientation)
-
-        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False, render=render)
-        return self.textActor
+                self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+            text_prop.font_size = int(font_size * 2)
+        self.text.prop = text_prop
+        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)
+        return self.text
 
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.

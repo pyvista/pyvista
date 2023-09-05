@@ -4,9 +4,43 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import VTKVersionError
+from pyvista.plotting.affine_widget import DARK_YELLOW, get_angle, ray_plane_intersection
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
+
+
+def r_mat_to_euler_angles(R):
+    """
+    Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
+    Returns the angles in radians.
+    """
+
+    # Check for gimbal lock: singular cases
+    if abs(R[2, 0]) == 1:
+        # Gimbal lock exists
+        yaw = 0  # Set yaw to 0 and compute the others
+        if R[2, 0] == -1:  # Directly looking up
+            pitch = np.pi / 2
+            roll = yaw + np.arctan2(R[0, 1], R[0, 2])
+        else:  # Directly looking down
+            pitch = -np.pi / 2
+            roll = -yaw + np.arctan2(-R[0, 1], -R[0, 2])
+    else:
+        # Not at the singularities
+        pitch = -np.arcsin(R[2, 0])
+        roll = np.arctan2(R[2, 1] / np.cos(pitch), R[2, 2] / np.cos(pitch))
+        yaw = np.arctan2(R[1, 0] / np.cos(pitch), R[0, 0] / np.cos(pitch))
+
+    if np.isclose(roll, np.pi):
+        roll = 0
+    if np.isclose(pitch, np.pi):
+        pitch = 0
+    if np.isclose(yaw, np.pi):
+        yaw = 0
+
+    return roll, pitch, yaw
 
 
 def test_widget_box(uniform):
@@ -367,3 +401,184 @@ def test_plot_pointset_widgets(pointset):
     pl = pv.Plotter()
     pl.add_mesh_slice_spline(pointset)
     pl.close()
+
+
+def test_ray_plane_intersection():
+    # Test data
+    start_point = np.array([0, 0, 0])
+    direction = np.array([0, 0, 1])
+    plane_point = np.array([0, 0, 5])
+    normal = np.array([0, 0, 1])
+
+    # Expected result
+    expected_result = np.array([0, 0, 5])
+    result = ray_plane_intersection(start_point, direction, plane_point, normal)
+    np.testing.assert_array_almost_equal(result, expected_result)
+
+
+def test_get_angle():
+    v1 = np.array([1, 0, 0])
+    v2 = np.array([0, 1, 0])
+
+    # Expect 90 degrees between these two orthogonal vectors
+    expected_angle = 90.0
+    result_angle = get_angle(v1, v2)
+
+    assert np.isclose(result_angle, expected_angle, atol=1e-8)
+
+    # Test with parallel vectors
+    v1 = np.array([1, 2, 3])
+    v2 = np.array([1, 2, 3])
+    expected_angle = 0.0  # angle between two identical vectors should be 0
+    result_angle = get_angle(v1, v2)
+
+    assert np.isclose(result_angle, expected_angle, atol=1e-8)
+
+    # Test with opposite vectors
+    v1 = np.array([1, 0, 0])
+    v2 = np.array([-1, 0, 0])
+    expected_angle = 180.0  # angle between two opposite vectors should be 180
+    result_angle = get_angle(v1, v2)
+
+    assert np.isclose(result_angle, expected_angle, atol=1e-8)
+
+
+def test_affine_widget(sphere):
+    interact_calls = []
+    release_calls = []
+
+    def interact_callback(transform):
+        interact_calls.append(transform)
+
+    def release_callback(transform):
+        release_calls.append(transform)
+
+    pl = pv.Plotter(window_size=(400, 400))
+    actor = pl.add_mesh(sphere)
+
+    if pv.vtk_version_info < (9, 2):
+        with pytest.raises(VTKVersionError):
+            pl.add_affine_transform_widget(actor)
+        return
+
+    with pytest.raises(TypeError, match='callable'):
+        pl.add_affine_transform_widget(actor, interact_callback='foo')
+
+    with pytest.raises(ValueError, match='(3, 3)'):
+        pl.add_affine_transform_widget(actor, axes=np.eye(5))
+
+    with pytest.raises(ValueError, match='right hand'):
+        axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
+        pl.add_affine_transform_widget(actor, axes=axes)
+
+    widget = pl.add_affine_transform_widget(
+        actor, interact_callback=interact_callback, release_callback=release_callback
+    )
+    pl.show(auto_close=False)
+
+    assert not widget._selected_actor
+
+    # move in the center and ensure that an actor is selected
+    width, height = pl.window_size
+    pl.iren._mouse_move(width // 2, height // 2)
+    assert widget._selected_actor in widget._arrows + widget._circles
+    assert widget._selected_actor.prop.color == pv.Color(DARK_YELLOW)
+
+    # ensure that the actor gets deselected
+    pl.iren._mouse_move(0, 0)
+    assert not widget._selected_actor
+
+    # test X axis translation
+    pl.iren._mouse_left_button_press(width // 2 - 1, height // 2 - 1)
+    assert widget._selected_actor is widget._arrows[0]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width, height // 2)
+    assert actor.user_matrix[0, 3] < 0
+    pl.iren._mouse_left_button_release(width, height // 2)
+    assert actor.user_matrix[0, 3] < 0
+
+    # test callback called
+    assert len(interact_calls) == 2 and interact_calls[0].shape == (4, 4)
+    assert len(release_calls) == 1 and release_calls[0].shape == (4, 4)
+
+    # test Y axis translation
+    pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
+    assert widget._selected_actor is widget._arrows[1]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width, height // 2)
+    assert actor.user_matrix[1, 3] < 0
+    pl.iren._mouse_left_button_release()
+    assert actor.user_matrix[1, 3] < 0
+
+    # test Z axis translation
+    pl.iren._mouse_left_button_press(width // 2, height // 2 + 5)
+    assert widget._selected_actor is widget._arrows[2]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width // 2, 0)
+    assert actor.user_matrix[3, 3] > 0
+    pl.iren._mouse_left_button_release()
+    assert actor.user_matrix[3, 3] > 0
+
+    # test X axis rotation
+    pl.iren._mouse_left_button_press(width // 2 + 30, height // 2)
+    assert widget._selected_actor is widget._circles[0]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width // 2 + 30, height // 2 + 1)
+    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
+    assert x_r > 0 and np.allclose([y_r, z_r], 0)
+    pl.iren._mouse_left_button_release()
+    assert not widget._pressing_down
+    widget._reset()
+    assert np.allclose(widget._cached_matrix, np.eye(4))
+
+    # test Y axis rotation
+    pl.iren._mouse_left_button_press(width // 2 - 30, height // 2)
+    assert widget._selected_actor is widget._circles[1]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width // 2 - 30, height // 2 - 1)
+    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
+    assert y_r > 0 and np.allclose([x_r, z_r], 0)
+    pl.iren._mouse_left_button_release()
+    assert not widget._pressing_down
+    widget._reset()
+
+    # test Z axis rotation
+    pl.iren._mouse_left_button_press(width // 2, height // 2 - 28)
+    assert widget._selected_actor is widget._circles[2]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
+    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
+    assert z_r > 0 and np.allclose([x_r, y_r], 0)
+    pl.iren._mouse_left_button_release()
+    assert not widget._pressing_down
+    widget._reset()
+
+    # test change axes
+    axes = np.array(
+        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]]
+    )
+    widget.axes = axes
+    assert np.allclose(widget.axes, axes)
+
+    # test X axis translation with new axes
+    pl.iren._mouse_left_button_press(width // 2, height // 2 - 30)
+    assert widget._selected_actor is widget._arrows[0]
+    assert widget._pressing_down
+    pl.iren._mouse_move(width // 2, height // 2 - 32)
+    assert actor.user_matrix[0, 3] > 0
+    pl.iren._mouse_left_button_release(width, height // 2 - 32)
+    assert actor.user_matrix[0, 3] > 0
+
+    # test origin
+    origin = np.random.random(3)
+    widget.origin = origin
+    assert np.allclose(widget.origin, origin)
+
+    # test disable
+    assert pl._picker_in_use
+    widget.disable()
+    assert not pl._picker_in_use
+
+    widget.remove()
+    assert not widget._circles
+    assert not widget._arrows

@@ -790,10 +790,16 @@ created the following will occur:
 1.  Create a new branch from the ``main`` branch with name
     ``release/MAJOR.MINOR`` (for example ``release/0.25``).
 
-2.  Locally run all tests as outlined in the `Testing
+2.  Update the development version numbers in ``pyvista/_version.py``
+    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
+    and create a new PR for this release that merges it to main.
+    Development to main should be limited at this point while effort
+    is focused on the release.
+
+3.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-3.  Locally test and build the documentation with link checking to make
+4.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
@@ -804,14 +810,8 @@ created the following will occur:
        make doctest-modules
        make html -b linkcheck
 
-4.  After building the documentation, open the local build and examine
+5.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
-
-5.  Update the development version numbers in ``pyvista/_version.py``
-    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
-    and create a new PR for this release that merges it to main.
-    Development to main should be limited at this point while effort
-    is focused on the release.
 
 6.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install

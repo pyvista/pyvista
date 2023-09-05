@@ -2,7 +2,7 @@
 cmocean==3.0.3
 colorcet==3.0.1
 enum-tools==0.10.0
-imageio==2.31.1
+imageio==2.31.2
 imageio-ffmpeg==0.4.8
 jupyter_sphinx==0.4.0
 jupyterlab==4.0.5
@@ -20,8 +20,8 @@ Sphinx==7.1.2
 sphinx-autobuild==2021.3.14
 sphinx-copybutton==0.5.2
 sphinx-design==0.5.0
-sphinx-gallery==0.13.0
-sphinx-notfound-page==0.8.3
+sphinx-gallery==0.14.0
+sphinx-notfound-page==1.0.0
 sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.6
@@ -29,4 +29,4 @@ sympy==1.12
 trame==3.2.4
 trame-vtk==2.5.8
 trame-vuetify==2.3.1
-trimesh==3.23.3
+trimesh==3.23.5

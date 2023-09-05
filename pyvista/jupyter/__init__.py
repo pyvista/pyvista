@@ -49,7 +49,7 @@ def _validate_jupyter_backend(backend):
     return backend
 
 
-def set_jupyter_backend(backend):
+def set_jupyter_backend(backend, name=None, **kwargs):
     """Set the plotting backend for a jupyter notebook.
 
     Parameters
@@ -83,6 +83,10 @@ def set_jupyter_backend(backend):
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
           virtual framebuffer.
+    name : str, optional
+        The unique name identifier for the server.
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to the server launch.
 
     Examples
     --------
@@ -105,4 +109,6 @@ def set_jupyter_backend(backend):
         # Launch the trame server
         from pyvista.trame.jupyter import elegantly_launch
 
-        elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)
+        if not name:
+            name = pyvista.global_theme.trame.jupyter_server_name
+        elegantly_launch(name, **kwargs)
