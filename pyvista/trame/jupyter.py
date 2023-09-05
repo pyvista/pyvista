@@ -74,7 +74,10 @@ class Widget(HTML):  # numpydoc ignore=PR01
         """Initialize."""
         if HTML is object:
             raise ImportError('Please install `ipywidgets`.')
-        value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
+        # eventually we could maybe expose this, but for now make sure we're at least
+        # consistent with matplotlib's color (light gray)
+        border = "border: 1px solid rgb(221,221,221);"
+        value = f"<iframe src='{src}' class='pyvista' style='width: {width}; height: {height}; {border}'></iframe>"
         super().__init__(value, **kwargs)
         self._viewer = viewer
         self._src = src
