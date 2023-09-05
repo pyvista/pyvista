@@ -2,6 +2,7 @@
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
+from inspect import signature
 import logging
 import time
 import warnings
@@ -97,11 +98,14 @@ class RenderWindowInteractor:
             The key to trigger the event.
 
         callback : callable
-            A callable that takes no arguments.
+            A callable that takes no arguments (keyword arguments are allowed).
 
         """
         if not callable(callback):
             raise TypeError('callback must be callable.')
+        for param in signature(callback).parameters.values():
+            if param.default is param.empty:
+                raise TypeError('`callback` must not have any arguments without default values.')
         self._key_press_event_callbacks[key].append(callback)
 
     @staticmethod
@@ -789,7 +793,7 @@ class RenderWindowInteractor:
 
     def _mouse_left_button_press(
         self, x=None, y=None
-    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -802,7 +806,7 @@ class RenderWindowInteractor:
 
     def _mouse_left_button_release(
         self, x=None, y=None
-    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
@@ -815,7 +819,7 @@ class RenderWindowInteractor:
 
     def _mouse_right_button_press(
         self, x=None, y=None
-    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -828,7 +832,7 @@ class RenderWindowInteractor:
 
     def _mouse_right_button_release(
         self, x=None, y=None
-    ):  # pragma:  # numpydoc ignore=PR01,RT01 no cover
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)

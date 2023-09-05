@@ -258,7 +258,7 @@ def test_deep_clean(cube):
     assert pl.mesh is None
     assert pl.mapper is None
     assert pl.volume is None
-    assert pl.textActor is None
+    assert pl.text is None
     assert cube == cube_orig
 
 
