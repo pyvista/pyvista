@@ -189,7 +189,11 @@ def initialize(
     state = server.state
     state.trame__title = UI_TITLE
 
-    viewer = get_viewer(plotter, suppress_rendering=mode == 'client')
+    viewer = get_viewer(
+        plotter,
+        server=server,
+        suppress_rendering=mode == 'client',
+    )
 
     with VAppLayout(server, template_name=plotter._id_name):
         viewer.ui(
