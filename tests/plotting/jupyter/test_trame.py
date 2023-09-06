@@ -210,7 +210,7 @@ def test_trame_custom_menu_items(client_type):
             mode="trame",
             default_server_rendering=True,
             collapse_menu=False,
-            add_menu_items=custom_tools(),
+            add_menu_items=custom_tools,
         )
 
     src = build_url(server, ui=pl._id_name, host='localhost', protocol='http')
