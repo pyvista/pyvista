@@ -43,6 +43,33 @@ def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
         html.Span(tooltip)
 
 
+def slider(model, tooltip, **kwargs):  # numpydoc ignore=PR01
+    """Create a vuetify slider."""
+    with vuetify.VTooltip(bottom=True):
+        with vuetify.Template(v_slot_activator='{ props }'):
+            with html.Div(v_bind='props'):
+                vuetify.VSlider(v_model=model, **kwargs)
+        html.Span(tooltip)
+
+
+def text_field(model, tooltip, **kwargs):  # numpydoc ignore=PR01
+    """Create a vuetify text field."""
+    with vuetify.VTooltip(bottom=True):
+        with vuetify.Template(v_slot_activator='{ props }'):
+            with html.Div(v_bind='props'):
+                vuetify.VTextField(v_model=model, **kwargs)
+        html.Span(tooltip)
+
+
+def select(model, tooltip, **kwargs):  # numpydoc ignore=PR01
+    """Create a vuetify select menu."""
+    with vuetify.VTooltip(bottom=True):
+        with vuetify.Template(v_slot_activator='{ props }'):
+            with html.Div(v_bind='props'):
+                vuetify.VSelect(v_model=model, **kwargs)
+        html.Span(tooltip)
+
+
 class Viewer(BaseViewer):
     """Viewer implementation compatible with Vue 3 Trame Applications."""
 
