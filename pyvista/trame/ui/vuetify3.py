@@ -171,6 +171,7 @@ class Viewer(BaseViewer):
         default_server_rendering=True,
         collapse_menu=False,
         add_menu=True,
+        add_menu_items=None,
         **kwargs,
     ):
         """Generate VContainer for PyVista Plotter.
@@ -195,6 +196,10 @@ class Viewer(BaseViewer):
 
         add_menu : bool, default: True
             Add a UI controls VCard to the VContainer.
+
+        add_menu_items : callable, default: None
+            Append more UI controls to the VCard menu. Should be a function similar to
+            `Viewer.ui_controls()`.
 
         **kwargs : dict, optional
             Additional keyword arguments are passed to the view being created.
@@ -248,6 +253,12 @@ class Viewer(BaseViewer):
                             default_server_rendering=default_server_rendering,
                             v_show=(f'{self.SHOW_UI}',),
                         )
+                        if callable(add_menu_items):
+                            with vuetify.VRow(
+                                v_show=(f'{self.SHOW_UI}',),
+                                classes='pa-0 ma-0 align-center',
+                            ):
+                                add_menu_items()
             if mode == 'trame':
                 view = PyVistaRemoteLocalView(
                     self.plotter,
