@@ -946,9 +946,7 @@ def Cone(
     >>> mesh = pyvista.Cone()
     >>> mesh.plot(show_edges=True, line_width=5)
     """
-    algo = ConeSource(
-        capping=capping, direction=direction, center=center, height=height
-    )
+    algo = ConeSource(capping=capping, direction=direction, center=center, height=height)
     if angle and radius:
         raise ValueError("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
@@ -957,7 +955,7 @@ def Cone(
         algo.radius = radius
     elif not angle and not radius:
         algo.radius = 0.5
-    algo.resolution=resolution
+    algo.resolution = resolution
     return algo.output
 
 
