@@ -70,7 +70,7 @@ def custom_tools():
 ###############################################################################
 # Here is an explanation of the Plotting.
 
-pl = pv.Plotter()
+pl = pv.Plotter(notebook=True)
 algo = vtk.vtkConeSource()
 mesh_actor = pl.add_mesh(algo)
 
