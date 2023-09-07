@@ -842,7 +842,7 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-10.  Place your release notes from step 8 in the description for `the new
+10. Place your release notes from step 8 in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
