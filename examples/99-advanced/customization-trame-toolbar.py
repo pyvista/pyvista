@@ -72,7 +72,7 @@ def custom_tools():
 # function here otherwise the server will complain ``btn_play`` does not exist.
 
 
-def btn_play():
+def button_play():
     state.play = not state.play
     state.flush()
 
