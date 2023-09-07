@@ -2037,7 +2037,7 @@ class DataSetFilters:
             alg.SetCenter(center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Maping texture to sphere')
+        _update_alg(alg, progress_bar, 'Mapping texture to sphere')
         output = _get_output(alg)
         if not inplace:
             return output
