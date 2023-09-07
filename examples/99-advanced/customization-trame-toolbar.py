@@ -27,7 +27,7 @@ from pyvista.trame.ui.vuetify2 import button, select, slider, text_field
 def custom_tools():
     vuetify.VDivider(vertical=True, classes='mx-1')
     button(
-        click=btn_play,
+        click=button_play,
         icon='mdi-play',
         tooltip='Play',
     )
