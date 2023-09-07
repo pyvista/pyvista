@@ -58,11 +58,11 @@ Phong
 Postprocessing
 Protobuf
 Ptera
+PyInstaller
 PyPI
 PyThreeJS
 PyVista
 Pydocstyle
-PyInstaller
 Python
 Pytorch
 Resampling
