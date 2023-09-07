@@ -15,16 +15,13 @@ import pyvista as pv
 from pyvista.trame.ui.vuetify2 import button, select, slider, text_field
 
 ###############################################################################
-# Here is an explanation of the `btn_play`.
-
-
-def btn_play():
-    state.play = not state.play
-    state.flush()
-
-
-###############################################################################
-# Here is an explanation of the custom tools.
+# Let's first create the menu items we want to add to the trame's toolbar.
+# Here we want a "play" button that will be later connected to a slider
+# through the ``btn_play`` function. The slider itself will represent the
+# "resolution" of the model we will render, a text field where the value of
+# the "resolution" will be displayed.
+# We will also add a dropdown menu to toggle the visibility of the model.
+# The dividers are the same already used to divide and organize the toolbar.
 
 
 def custom_tools():
@@ -36,7 +33,7 @@ def custom_tools():
     )
 
     slider(
-        model=("resolution", 0),
+        model=("resolution", 10),
         tooltip="Resolution slider",
         min=3,
         max=20,
@@ -47,7 +44,7 @@ def custom_tools():
         classes='my-0 py-0 ml-1 mr-1',
     )
     text_field(
-        model=("resolution", 0),
+        model=("resolution", 10),
         tooltip="Resolution value",
         readonly=True,
         type="number",
@@ -68,23 +65,67 @@ def custom_tools():
 
 
 ###############################################################################
-# Here is an explanation of the Plotting.
+# The button callback function ``btn_play`` needs to be created before starting
+# the server. This function will toggle the boolean state variable ``play``
+# and flush the server, i.e. "force" the server to see the change.
+# We will see more on the state variables in a bit, but we need to create the
+# function here otherwise the server will complain ``btn_play`` does not exist.
+
+
+def btn_play():
+    state.play = not state.play
+    state.flush()
+
+
+###############################################################################
+# We will do a simple rendering of a Cone using the vtk `vtkConeSouce`
+# algorithm.
+#
+# When using the ``pl.show`` method. The function we created ``custom_tools``
+# should be passed as a ``jupyter_kwargs`` argument under the key
+# ``add_menu_items``.
 
 pl = pv.Plotter(notebook=True)
 algo = vtk.vtkConeSource()
 mesh_actor = pl.add_mesh(algo)
 
-viewer = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
+widget = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
 
 ###############################################################################
-# Here is an explanation of the setting.
+# To interact with ``trame``'s server we need to get the server's state.
+#
+# We initialize the ``play`` variable in the shared state and this will be
+# controlled by the play button we created. Note that when creating the
+# ``slider``, the ``text_field`` and the ``select`` tools, we passed something
+# like ``model=("variable", value). This will automatically create the variable
+# "variable" with value ``value`` in the server's shared state, so we do not need
+# to create ``state.resolution`` or ``state.visibility``.
 
-state, ctrl = viewer.viewer.server.state, viewer.viewer.server.controller
+state, ctrl = widget.viewer.server.state, widget.viewer.server.controller
 state.play = False
-ctrl.view_update = viewer.viewer.update
+ctrl.view_update = widget.viewer.update
 
 ###############################################################################
-# Here is an explanation of trame callbacks.
+# Now we can create the callback functions for our menu items.
+#
+# The functions are decorated with a ``state.change("variable")``. This means
+# they will be called when this specific variable has its value changed in the
+# server's shared state. When ``resolution`` changes, we want to update the
+# resolution of our cone algorithm. When ``visibility`` changes, we want to toggle the
+# visibility of our cone.
+#
+# The ``play`` variable is a little bit trickier. We want to start something like
+# a timer so that an animation can be set to play. To do that with ``trame`` we need
+# to have an asynchronous function so we can continue to do stuff while the
+# "timer" function is running. The ``_play`` function will be called when the ``play``
+# variable is changed (when we click the play button, through the ``btn_play``
+# callback). While ``state.play`` is ``True`` we want to play the animation. We
+# change the ``state.resolution`` value, but to really call the ``update_resolution``
+# function we need to ``flush`` the server and force it to see the change in
+# the shared variables. When ``state.play`` changes to ``False``, the animation stops.
+#
+# Note that using ``while play: ...`` would not work here because it is not the
+# actual state variable, but only an argument value passed to the callback function.
 
 
 # trame callbacks
@@ -111,4 +152,4 @@ def set_visibility(visibility, **kwargs):
     ctrl.view_update()
 
 
-viewer
+widget
