@@ -21,7 +21,7 @@ from pyvista.trame.ui.vuetify2 import button, select, slider, text_field
 # "resolution" of the model we will render, a text field where the value of
 # the "resolution" will be displayed.
 # We will also add a dropdown menu to toggle the visibility of the model.
-# The dividers are the same already used to divide and organize the toolbar.
+# The dividers are the same as already used to divide and organize the toolbar.
 
 
 def custom_tools():
