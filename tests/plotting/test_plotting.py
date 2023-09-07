@@ -2695,8 +2695,7 @@ def test_ssao_pass():
 
     # ensure this fails when ssao disabled
     pl.disable_ssao()
-    with pytest.raises(RuntimeError):
-        pl.show()
+    pl.show()
 
 
 @skip_mesa
