@@ -81,7 +81,7 @@ def test_invalid_init():
         pv.Camera(1)
 
 
-def test_camera_fom_paraview_pvcc(paraview_pvcc):
+def test_camera_from_paraview_pvcc(paraview_pvcc):
     camera = pv.Camera.from_paraview_pvcc(paraview_pvcc[0])
     assert camera.position == pytest.approx(paraview_pvcc[1])
     assert camera.focal_point == pytest.approx(paraview_pvcc[2])
