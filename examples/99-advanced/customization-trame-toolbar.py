@@ -1,3 +1,11 @@
+"""
+.. _customize_trame_toolbar_example
+
+Customize Trame toolbar
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bring more of the power of trame to the jupyter view.
+"""
 import asyncio
 
 import pyvista as pv
@@ -6,9 +14,15 @@ import vtk
 from pyvista.trame.ui.vuetify2 import button, slider, text_field, select
 from trame.widgets import vuetify
 
+###############################################################################
+# Here is an explanation of the `btn_play`.
+
 def btn_play():
     state.play = not state.play
     state.flush()
+
+###############################################################################
+# Here is an explanation of the custom tools.
 
 def custom_tools():
     vuetify.VDivider(vertical=True, classes='mx-1')
@@ -48,6 +62,9 @@ def custom_tools():
         hide_details=True,
         dense=True,
         )
+
+###############################################################################
+# Here is an explanation of the Plotting.
     
 pl = pv.Plotter()
 algo = vtk.vtkConeSource()
@@ -55,9 +72,15 @@ mesh_actor = pl.add_mesh(algo)
 
 viewer = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
 
+###############################################################################
+# Here is an explanation of the setting.
+
 state, ctrl = viewer.viewer.server.state, viewer.viewer.server.controller
 state.play = False
 ctrl.view_update = viewer.viewer.update
+
+###############################################################################
+# Here is an explanation of trame callbacks.
 
 # trame callbacks
 @state.change("play")
@@ -79,6 +102,5 @@ def set_visibility(visibility, **kwargs):
     toggle = {"Hide": 0, "Show":1}
     mesh_actor.SetVisibility(toggle[visibility])
     ctrl.view_update()
-
 
 viewer
