@@ -13,16 +13,17 @@ try:
     from trame.app import get_server
     from trame.ui.vuetify3 import VAppLayout as vue3_VAppLayout
     from trame.ui.vuetify import VAppLayout as vue2_VAppLayout
-    from trame.widgets import vuetify as vue2_vuetify, vuetify3 as vue3_vuetify
 
     from pyvista.trame.jupyter import Widget, build_url
     from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
     from pyvista.trame.ui.vuetify2 import (
+        divider as vue2_divider,
         select as vue2_select,
         slider as vue2_slider,
         text_field as vue2_text_field,
     )
     from pyvista.trame.ui.vuetify3 import (
+        divider as vue3_divider,
         select as vue3_select,
         slider as vue3_slider,
         text_field as vue3_text_field,
@@ -182,14 +183,14 @@ def test_trame_custom_menu_items(client_type):
 
     # setup vuetify items
     VAppLayout = vue2_VAppLayout if client_type == "vue2" else vue3_VAppLayout
-    vuetify = vue2_vuetify if client_type == "vue2" else vue3_vuetify
     slider = vue2_slider if client_type == "vue2" else vue3_slider
     text_field = vue2_text_field if client_type == "vue2" else vue3_text_field
     select = vue2_select if client_type == "vue2" else vue3_select
+    divider = vue2_divider if client_type == "vue2" else vue3_divider
 
     # vuetify items to pass as argument
     def custom_tools():
-        vuetify.VDivider(vertical=True, classes='mx-1')
+        divider(vertical=True, classes='mx-1')
         slider(
             ("resolution", 3),
             "Resolution slider",
@@ -198,7 +199,7 @@ def test_trame_custom_menu_items(client_type):
             step=1,
         )
         text_field(("resolution", 3), "Resolution value", type="number")
-        vuetify.VDivider(vertical=True, classes='mx-1')
+        divider(vertical=True, classes='mx-1')
         select(
             model=("visibility", "Show"),
             tooltip="Toggle visibility",

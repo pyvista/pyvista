@@ -8,16 +8,15 @@ Bring more of the power of trame to the jupyter view.
 """
 import asyncio
 
-from trame.widgets import vuetify
 import vtk
 
 import pyvista as pv
-from pyvista.trame.ui.vuetify2 import button, select, slider, text_field
+from pyvista.trame.ui.vuetify2 import button, divider, select, slider, text_field
 
 ###############################################################################
 # Let's first create the menu items we want to add to the trame's toolbar.
 # Here we want a "play" button that will be later connected to a slider
-# through the ``btn_play`` function. The slider itself will represent the
+# through the ``button_play`` function. The slider itself will represent the
 # "resolution" of the model we will render, a text field where the value of
 # the "resolution" will be displayed.
 # We will also add a dropdown menu to toggle the visibility of the model.
@@ -25,7 +24,7 @@ from pyvista.trame.ui.vuetify2 import button, select, slider, text_field
 
 
 def custom_tools():
-    vuetify.VDivider(vertical=True, classes='mx-1')
+    divider(vertical=True, classes='mx-1')
     button(
         click=button_play,
         icon='mdi-play',
@@ -54,7 +53,7 @@ def custom_tools():
         classes='my-0 py-0 ml-1 mr-1',
     )
 
-    vuetify.VDivider(vertical=True, classes='mx-1')
+    divider(vertical=True, classes='mx-1')
     select(
         model=("visibility", "Show"),
         tooltip="Toggle visibility",

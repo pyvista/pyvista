@@ -64,6 +64,11 @@ def select(model, tooltip, **kwargs):  # numpydoc ignore=PR01
         html.Span(tooltip)
 
 
+def divider(**kwargs):  # numpydoc ignore=PR01
+    """Create a vuetify divider."""
+    vuetify.VDivider(**kwargs)
+
+
 class Viewer(BaseViewer):
     """Viewer implementation compatible with Vue 2 Trame Applications."""
 
