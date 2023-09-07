@@ -118,7 +118,7 @@ ctrl.view_update = widget.viewer.update
 # a timer so that an animation can be set to play. To do that with ``trame`` we need
 # to have an asynchronous function so we can continue to do stuff while the
 # "timer" function is running. The ``_play`` function will be called when the ``play``
-# variable is changed (when we click the play button, through the ``btn_play``
+# variable is changed (when we click the play button, through the ``button_play``
 # callback). While ``state.play`` is ``True`` we want to play the animation. We
 # change the ``state.resolution`` value, but to really call the ``update_resolution``
 # function we need to ``flush`` the server and force it to see the change in
