@@ -147,8 +147,7 @@ def test_trame(client_type):
     viewer.push_camera()
     assert len(viewer.views) == 1
 
-    with pytest.raises(ValueError, match="No data to write"):
-        viewer.export()
+    viewer.export()
 
     assert isinstance(viewer.screenshot(), memoryview)
 
