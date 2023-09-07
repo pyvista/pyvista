@@ -55,6 +55,7 @@ from .geometric_objects import (
     CircularArc,
     CircularArcFromNormal,
     Cone,
+    ConeSource,
     Cube,
     Cylinder,
     CylinderStructured,
