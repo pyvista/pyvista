@@ -104,4 +104,5 @@ repos:
 - repo: https://github.com/crate-ci/typos
   rev: v1.16.11
   hooks:
-    - id: typos
+  - id: typos
+    exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|pyvista/examples/.*\.vti)
