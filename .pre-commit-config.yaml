@@ -100,3 +100,8 @@ repos:
   rev: 0.26.3
   hooks:
     - id: check-github-workflows
+
+- repo: https://github.com/crate-ci/typos
+  rev: v1.16.11
+  hooks:
+    - id: typos
