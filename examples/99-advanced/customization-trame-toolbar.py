@@ -65,11 +65,11 @@ def custom_tools():
 
 
 ###############################################################################
-# The button callback function ``btn_play`` needs to be created before starting
+# The button callback function ``button_play`` needs to be created before starting
 # the server. This function will toggle the boolean state variable ``play``
 # and flush the server, i.e. "force" the server to see the change.
 # We will see more on the state variables in a bit, but we need to create the
-# function here otherwise the server will complain ``btn_play`` does not exist.
+# function here otherwise the server will complain ``button_play`` does not exist.
 
 
 def button_play():
