@@ -72,11 +72,6 @@ class ConeSource(_vtk.vtkConeSource):
     resolution : int, default: 6
         Number of facets used to represent the cone.
 
-    Returns
-    -------
-    pyvista.PolyData
-        Cone mesh.
-
     Examples
     --------
     Create a default ConeSource.
