@@ -2526,8 +2526,9 @@ class DataSetFilters:
         >>> scalar_bar_args = dict(
         ...     fmt='%.f',  # Do not show decimals
         ... )
-        >>>
-        >>> # Set the plot's camera position
+
+        Set the plot's camera position
+
         >>> cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
         Plot the regions by ID.
