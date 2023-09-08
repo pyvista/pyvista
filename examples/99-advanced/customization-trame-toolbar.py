@@ -145,7 +145,7 @@ def update_resolution(resolution, **kwargs):
 @state.change("visibility")
 def set_visibility(visibility, **kwargs):
     toggle = {"Hide": 0, "Show": 1}
-    mesh_actor.SetVisibility(toggle[visibility])
+    mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()
 
 
