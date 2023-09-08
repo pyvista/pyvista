@@ -6,6 +6,16 @@ import pytest
 import pyvista as pv
 
 
+def test_cone_source():
+    algo = pv.ConeSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+    assert algo.height == 1.0
+    assert algo.radius == 0.5
+    assert algo.capping
+    assert algo.resolution == 6
+
+
 def test_cylinder():
     surf = pv.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
     assert np.any(surf.points)

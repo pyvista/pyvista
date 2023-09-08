@@ -25,6 +25,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
@@ -40,6 +41,7 @@ NORMALS = {
 }
 
 
+@no_new_attr
 class ConeSource(_vtk.vtkConeSource):
     """Create a cone source algorism class.
 
@@ -99,9 +101,15 @@ class ConeSource(_vtk.vtkConeSource):
         self.center = center
         self.direction = direction
         self.height = height
-        self.radius = radius
         self.capping = capping
-        self.angle = angle
+        if angle and radius:
+            raise ValueError("Both radius and angle specified. They are mutually exclusive.")
+        elif angle and not radius:
+            self.angle = angle
+        elif not angle and radius:
+            self.radius = radius
+        elif not angle and not radius:
+            self.radius = 0.5
         self.resolution = resolution
 
     @property
@@ -173,6 +181,76 @@ class ConeSource(_vtk.vtkConeSource):
             Height of the cylinder.
         """
         self.SetHeight(height)
+
+    @property
+    def radius(self) -> bool:
+        """Get base radius of the cone.
+
+        Returns
+        -------
+        float
+            Base radius of the cone.
+        """
+        return self.GetRadius()
+
+    @radius.setter
+    def radius(self, radius: float):
+        """Set base radius of the cone.
+
+        Parameters
+        ----------
+        radius : float
+            Base radius of the cone.
+        """
+        self.SetRadius(radius)
+
+    @property
+    def capping(self) -> bool:
+        """Enable or disable the capping the base of the cone with a polygon.
+
+        Returns
+        -------
+        bool
+            Enable or disable the capping the base of the cone with a
+            polygon.
+        """
+        return self.GetCapping()
+
+    @capping.setter
+    def capping(self, capping: bool):
+        """Set base capping of the cone.
+
+        Parameters
+        ----------
+        capping : bool, optional
+            Enable or disable the capping the base of the cone with a
+            polygon.
+        """
+        self.SetCapping(capping)
+
+    @property
+    def angle(self) -> float:
+        """Get the angle in degrees between the axis of the cone and a generatrix.
+
+        Returns
+        -------
+        float
+            The angle in degrees between the axis of the cone and a
+            generatrix.
+        """
+        return self.GetAngle()
+
+    @angle.setter
+    def angle(self, angle: float):
+        """Set the angle in degrees between the axis of the cone and a generatrix.
+
+        Parameters
+        ----------
+        angle : float, optional
+            The angle in degrees between the axis of the cone and a
+            generatrix.
+        """
+        self.SetAngle(angle)
 
     @property
     def resolution(self) -> int:
@@ -946,16 +1024,9 @@ def Cone(
     >>> mesh = pyvista.Cone()
     >>> mesh.plot(show_edges=True, line_width=5)
     """
-    algo = ConeSource(capping=capping, direction=direction, center=center, height=height)
-    if angle and radius:
-        raise ValueError("Both radius and angle specified. They are mutually exclusive.")
-    elif angle and not radius:
-        algo.angle = angle
-    elif not angle and radius:
-        algo.radius = radius
-    elif not angle and not radius:
-        algo.radius = 0.5
-    algo.resolution = resolution
+    algo = ConeSource(
+        capping=capping, direction=direction, center=center, height=height, resolution=resolution
+    )
     return algo.output
 
 
