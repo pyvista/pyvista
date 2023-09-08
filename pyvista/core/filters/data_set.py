@@ -2533,8 +2533,9 @@ class DataSetFilters:
 
         Plot the regions by ID.
 
-        >>> # Note that region IDs are sorted in descending order by
-        >>> # cell count
+        Note that region IDs are sorted in descending order by
+        cell count
+
         >>> conn.plot(
         ...     categories=categories,
         ...     cmap=cmap,
