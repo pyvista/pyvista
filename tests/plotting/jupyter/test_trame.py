@@ -3,6 +3,7 @@ import os
 from IPython.display import IFrame
 import numpy as np
 import pytest
+from vtk import vtkConeSource
 
 import pyvista as pv
 from pyvista import examples
@@ -10,9 +11,23 @@ from pyvista import examples
 has_trame = True
 try:
     from trame.app import get_server
+    from trame.ui.vuetify3 import VAppLayout as vue3_VAppLayout
+    from trame.ui.vuetify import VAppLayout as vue2_VAppLayout
 
-    from pyvista.trame.jupyter import Widget
+    from pyvista.trame.jupyter import Widget, build_url
     from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
+    from pyvista.trame.ui.vuetify2 import (
+        divider as vue2_divider,
+        select as vue2_select,
+        slider as vue2_slider,
+        text_field as vue2_text_field,
+    )
+    from pyvista.trame.ui.vuetify3 import (
+        divider as vue3_divider,
+        select as vue3_select,
+        slider as vue3_slider,
+        text_field as vue3_text_field,
+    )
     from pyvista.trame.views import (
         PyVistaLocalView,
         PyVistaRemoteLocalView,
@@ -150,6 +165,77 @@ def test_trame(client_type):
     viewer.export()
 
     assert isinstance(viewer.screenshot(), memoryview)
+
+
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+def test_trame_custom_menu_items(client_type):
+    # give different names for servers so different instances are created
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    server = get_server(name=name)
+    assert server.running
+
+    pl = pv.Plotter(notebook=True)
+    algo = vtkConeSource()
+    mesh_actor = pl.add_mesh(algo)
+
+    viewer = get_viewer(pl, server=server)
+
+    # setup vuetify items
+    VAppLayout = vue2_VAppLayout if client_type == "vue2" else vue3_VAppLayout
+    slider = vue2_slider if client_type == "vue2" else vue3_slider
+    text_field = vue2_text_field if client_type == "vue2" else vue3_text_field
+    select = vue2_select if client_type == "vue2" else vue3_select
+    divider = vue2_divider if client_type == "vue2" else vue3_divider
+
+    # vuetify items to pass as argument
+    def custom_tools():
+        divider(vertical=True, classes='mx-1')
+        slider(
+            ("resolution", 3),
+            "Resolution slider",
+            min=3,
+            max=20,
+            step=1,
+        )
+        text_field(("resolution", 3), "Resolution value", type="number")
+        divider(vertical=True, classes='mx-1')
+        select(
+            model=("visibility", "Show"),
+            tooltip="Toggle visibility",
+            items=['Visibility', ["Hide", "Show"]],
+        )
+
+    with VAppLayout(server, template_name=pl._id_name):
+        viewer.ui(
+            mode="trame",
+            default_server_rendering=True,
+            collapse_menu=False,
+            add_menu_items=custom_tools,
+        )
+
+    src = build_url(server, ui=pl._id_name, host='localhost', protocol='http')
+    widget = Widget(viewer, src, '99%', '600px')
+
+    state, ctrl = server.state, server.controller
+    ctrl.view_update = widget.viewer.update
+
+    @state.change("resolution")
+    def update_resolution(resolution, **kwargs):
+        algo.SetResolution(resolution)
+        ctrl.view_update()
+
+    @state.change("visibility")
+    def set_visibility(visibility, **kwargs):
+        toggle = {"Hide": 0, "Show": 1}
+        mesh_actor.SetVisibility(toggle[visibility])
+        ctrl.view_update()
+
+    assert server.state["resolution"] == 3
+    server.state.update({"resolution": 5, "visibility": "Hide"})
+    server.state.flush()
+    assert algo.GetResolution() == 5
+    assert not mesh_actor.GetVisibility()
 
 
 def test_trame_jupyter_modes():
