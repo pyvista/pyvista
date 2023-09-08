@@ -827,9 +827,14 @@ created the following will occur:
     .. code:: bash
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
+
+8.  Please check again that the tag has been created correctly and push the tag.
+
+    .. code:: bash
+
        git push origin --tags
 
-8.  Create a list of all changes for the release. It is often helpful to
+9.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
     feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
@@ -837,17 +842,17 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-9.  Place your release notes from step 8 in the description for `the new
+10. Place your release notes from step 8 in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
-10. Go grab a beer/coffee/water and wait for
+11. Go grab a beer/coffee/water and wait for
     `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-11. Announce the new release in the PyVista Slack workspace and
+12. Announce the new release in the PyVista Slack workspace and
     celebrate.
 
 Patch Release Steps
