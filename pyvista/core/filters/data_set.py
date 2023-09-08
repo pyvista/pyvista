@@ -4640,7 +4640,9 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> extracted = sphere.extract_points(sphere.points[:, 2] > 0)
+        >>> extracted = sphere.extract_points(
+        ...     sphere.points[:, 2] > 0, include_cells=False
+        ... )
         >>> extracted.clear_data()  # clear for plotting
         >>> extracted.plot()
 
