@@ -8,8 +8,6 @@ Bring more of the power of trame to the jupyter view.
 """
 import asyncio
 
-import vtk
-
 import pyvista as pv
 from pyvista.trame.ui.vuetify2 import button, divider, select, slider, text_field
 
@@ -85,7 +83,7 @@ def button_play():
 # ``add_menu_items``.
 
 pl = pv.Plotter(notebook=True)
-algo = vtk.vtkConeSource()
+algo = pv.ConeSource()
 mesh_actor = pl.add_mesh(algo)
 
 widget = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
@@ -140,7 +138,7 @@ async def _play(play, **kwargs):
 
 @state.change("resolution")
 def update_resolution(resolution, **kwargs):
-    algo.SetResolution(resolution)
+    algo.resolution = resolution
     ctrl.view_update()
 
 
