@@ -74,7 +74,10 @@ class Widget(HTML):  # numpydoc ignore=PR01
         """Initialize."""
         if HTML is object:
             raise ImportError('Please install `ipywidgets`.')
-        value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
+        # eventually we could maybe expose this, but for now make sure we're at least
+        # consistent with matplotlib's color (light gray)
+        border = "border: 1px solid rgb(221,221,221);"
+        value = f"<iframe src='{src}' class='pyvista' style='width: {width}; height: {height}; {border}'></iframe>"
         super().__init__(value, **kwargs)
         self._viewer = viewer
         self._src = src
@@ -214,6 +217,7 @@ def show_trame(
     server_proxy_prefix=None,
     collapse_menu=False,
     add_menu=True,
+    add_menu_items=None,
     default_server_rendering=True,
     handler=None,
     **kwargs,
@@ -250,6 +254,10 @@ def show_trame(
 
     add_menu : bool, default: True
         Add a UI controls VCard to the VContainer.
+
+    add_menu_items : callable, default: None
+        Append more UI controls to the VCard menu. Should be a function similar to
+        Viewer.ui_controls().
 
     default_server_rendering : bool, default: True
         Whether to use server-side or client-side rendering on-start when
@@ -314,6 +322,7 @@ def show_trame(
         default_server_rendering=default_server_rendering,
         collapse_menu=collapse_menu,
         add_menu=add_menu,
+        add_menu_items=add_menu_items,
     )
 
     # Show as cell result
