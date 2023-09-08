@@ -3,7 +3,6 @@ import os
 from IPython.display import IFrame
 import numpy as np
 import pytest
-from vtk import vtkConeSource
 
 import pyvista as pv
 from pyvista import examples
@@ -176,7 +175,7 @@ def test_trame_custom_menu_items(client_type):
     assert server.running
 
     pl = pv.Plotter(notebook=True)
-    algo = vtkConeSource()
+    algo = pv.ConeSource()
     mesh_actor = pl.add_mesh(algo)
 
     viewer = get_viewer(pl, server=server)
