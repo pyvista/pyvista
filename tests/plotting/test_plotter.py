@@ -402,3 +402,22 @@ def test_plotter_meshes(sphere, cube):
     assert sphere in pl.meshes
     assert cube in pl.meshes
     assert len(pl.meshes) == 2
+
+
+@pytest.mark.parametrize(
+    'face, normal',
+    [
+        ('-Z', (0, 0, 1)),
+        ('-Y', (0, 1, 0)),
+        ('-X', (1, 0, 0)),
+        ('+Z', (0, 0, -1)),
+        ('+Y', (0, -1, 0)),
+        ('+X', (-1, 0, 0)),
+    ],
+)
+def test_plotter_add_floor(face, normal):
+    pl = pv.Plotter()
+    pl.add_floor(face=face)
+    assert np.allclose(pl.renderer._floor.face_normals[0], normal)
+    with pytest.raises(NotImplementedError, match='not implemented'):
+        pl.add_floor(face='invalid')
