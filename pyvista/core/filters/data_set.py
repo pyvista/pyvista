@@ -2405,14 +2405,14 @@ class DataSetFilters:
         See :ref:`connectivity_example` and :ref:`volumetric_example` for
         more examples using this filter.
 
-        .. versionadded:: 0.42.0
+        .. versionadded:: 0.43.0
            * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
              and ``'closest'``.
            * Extracted regions are now sorted in descending order by
              cell count.
            * Region connectivity can be controlled using ``scalar_range``.
 
-        .. deprecated:: 0.42.0
+        .. deprecated:: 0.43.0
            Parameter ``largest`` is deprecated. Use ``'largest'`` or
            ``extraction_mode='largest'`` instead.
 
@@ -2425,20 +2425,20 @@ class DataSetFilters:
             * ``'specified'``: Extract specific region IDs. Use ``region_ids``
               to specify the region IDs to extract.
             * ``'cell_seed'``: Extract all regions sharing the specified cell
-              ids. Use ``cell_ids`` specify the cell ids.
+              ids. Use ``cell_ids``to specify the cell ids.
             * ``'point_seed'`` : Extract all regions sharing the specified
-              point ids. Use ``point_ids`` specify the point ids.
+              point ids. Use ``point_ids``to specify the point ids.
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
         variable_input : float | sequence[float], optional
-            Convenience parameter used for specifying any required input values
+            The convenience parameter used for specifying any required input values
             for some values of ``extraction_mode``. Setting
             ``extraction_input`` is equivalent to setting:
             * ``'region_ids'`` if mode is ``'specified'``
             * ``'cell_ids'`` if mode is ``'cell_seed'``
             * ``'point_ids'`` if mode is ``'point_seed'``
-            * ``'closest_point'`` if mode is ``'closest'``. Has no effect if mode is ``'all'`` or ``'largest'``.
+            * ``'closest_point'`` if mode is ``'closest'``. It has no effect if the mode is ``'all'`` or ``'largest'``.
 
         scalar_range : float | sequence[float], optional
             Single value or ``(min, max)``. If set, the connectivity is
@@ -2520,8 +2520,9 @@ class DataSetFilters:
         >>> # Use a categorical colormap
         >>> categories = True
         >>> cmap = 'glasbey'
-        >>>
-        >>> # Format scalar bar text for integer values
+
+        Format scalar bar text for integer values
+
         >>> scalar_bar_args = dict(
         ...     fmt='%.f',  # Do not show decimals
         ... )
@@ -2544,7 +2545,8 @@ class DataSetFilters:
 
         Calculate region sizes.
 
-        >>> # Get counts using the previous `connectivity('all')` results
+        Get counts using the previous `connectivity('all')` results
+
         >>> regions, region_sizes = np.unique(
         ...     conn['RegionId'], return_counts=True
         ... )
@@ -2567,7 +2569,8 @@ class DataSetFilters:
 
         >>> conn = mesh.connectivity('largest', label_regions=False)
 
-        >>> # Plot largest region and show input mesh for reference
+        Plot the largest region and show the input mesh for reference
+
         >>> p = pv.Plotter()
         >>> _ = p.add_mesh(conn)
         >>> _ = p.add_mesh(mesh, style='wireframe')
@@ -2575,7 +2578,7 @@ class DataSetFilters:
 
         **Extract regions using seed points**
 
-        Create hills and use curvature to define its peaks and valleys
+        Create hills and use curvature to define their peaks and valleys
 
         >>> import pyvista as pv
         >>> mesh = pv.ParametricRandomHills()
@@ -2583,9 +2586,10 @@ class DataSetFilters:
 
         Visualize the peaks and valleys
 
-        >>> # Peaks have large positive curvature (i.e. are convex)
-        >>> # Valleys have large negative curvature (i.e. are concave)
-        >>> # Flat regions have curvature close to zero
+        Peaks have large positive curvature (i.e. are convex)
+        Valleys have large negative curvature (i.e. are concave)
+        Flat regions have curvature close to zero
+
         >>> mesh.plot(
         ...     clim=[-0.5, 0.5],
         ...     cmap='bwr',
@@ -2622,7 +2626,7 @@ class DataSetFilters:
         >>> p.show()
 
         """
-        # Deprecated on v0.42.0
+        # Deprecated on v0.43.0
         keep_largest = kwargs.pop('largest', False)
         if keep_largest:  # pragma: no cover
             warnings.warn(
@@ -2643,11 +2647,11 @@ class DataSetFilters:
         def _extract_points(_input, points):
             # This method is similar to `mesh.extract_points` but the
             # output arrays are removed and the output type is PolyData
-            # if input type is PolyData
+            # if the input type is PolyData
             _output = _input.extract_points(points, progress_bar=progress_bar)
             if isinstance(_input, pyvista.PolyData):
                 # Output is UnstructuredGrid, so apply vtkRemovePolyData
-                # to input to make output as PolyData type instead
+                # to input to make the output as PolyData type instead
                 all_ids = set(range(_input.n_cells))
                 ids_to_keep = set(_output['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
@@ -2713,7 +2717,7 @@ class DataSetFilters:
         alg = _vtk.vtkConnectivityFilter()
         alg.SetInputDataObject(input_mesh)
 
-        # Due to inconsistent / buggy output, always keep this on and
+        # Due to inconsistent/buggy output, always keep this on and
         # remove scalars later as needed
         alg.ColorRegionsOn()  # This will create 'RegionId' scalars
 

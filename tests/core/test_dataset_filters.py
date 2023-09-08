@@ -1005,7 +1005,7 @@ def test_glyph_orient_and_scale():
 
 @pytest.fixture
 def connected_datasets():
-    # This is similar to datasets fixture, but the PolyData is fully connected
+    # This is similar to the datasets fixture, but the PolyData is fully connected
     return [
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
@@ -1070,7 +1070,7 @@ def test_connectivity_inplace_and_output_type(
     datasets, dataset_index, extraction_mode, label_regions, scalar_range
 ):
     # paramaterize with label_regions and scalar_range as these parameters
-    # have branches which may modify input / input type
+    # have branches which may modify input/input type
     dataset = datasets[dataset_index]
 
     # ensure we have scalars and set a restricted range
