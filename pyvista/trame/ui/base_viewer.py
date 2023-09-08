@@ -48,6 +48,11 @@ class BaseViewer:
             'client',
             'server',
         ]
+        server.state[self.SHOW_UI] = True
+        server.state[self.GRID] = False
+        server.state[self.OUTLINE] = False
+        server.state[self.EDGES] = False
+        server.state[self.AXIS] = False
 
     @property
     def views(self):  # numpydoc ignore=RT01
