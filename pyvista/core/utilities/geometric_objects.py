@@ -1025,7 +1025,13 @@ def Cone(
     >>> mesh.plot(show_edges=True, line_width=5)
     """
     algo = ConeSource(
-        capping=capping, direction=direction, center=center, height=height, resolution=resolution
+        capping=capping,
+        direction=direction,
+        center=center,
+        height=height,
+        angle=angle,
+        radius=radius,
+        resolution=resolution,
     )
     return algo.output
 
