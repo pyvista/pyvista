@@ -2425,9 +2425,9 @@ class DataSetFilters:
             * ``'specified'``: Extract specific region IDs. Use ``region_ids``
               to specify the region IDs to extract.
             * ``'cell_seed'``: Extract all regions sharing the specified cell
-              ids. Use ``cell_ids``to specify the cell ids.
+              ids. Use ``cell_ids`` to specify the cell ids.
             * ``'point_seed'`` : Extract all regions sharing the specified
-              point ids. Use ``point_ids``to specify the point ids.
+              point ids. Use ``point_ids`` to specify the point ids.
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
