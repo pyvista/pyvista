@@ -2567,18 +2567,18 @@ class DataSetFilters:
         ...     cpos=cpos,
         ... )
 
-        **Extract the largest region**
+        Extract the largest region.
 
         >>> conn = mesh.connectivity('largest', label_regions=False)
 
-        Plot the largest region and show the input mesh for reference
+        Plot the largest region and show the input mesh for reference.
 
         >>> p = pv.Plotter()
         >>> _ = p.add_mesh(conn)
         >>> _ = p.add_mesh(mesh, style='wireframe')
         >>> p.show(cpos=cpos)
 
-        **Extract regions using seed points**
+        Extract regions using seed points.
 
         Create hills and use curvature to define their peaks and valleys
 
@@ -2599,7 +2599,7 @@ class DataSetFilters:
         ...     above_color='red',
         ... )
 
-        Extract the steepest peak using a seed point
+        Extract the steepest peak using a seed point.
 
         >>> data_min, data_max = mesh.get_data_range()
         >>> peak_range = [0.2, data_max]  # Peak if curvature > 0.2
@@ -2608,7 +2608,7 @@ class DataSetFilters:
         ...     'point_seed', peak_point_id, scalar_range=peak_range
         ... )
 
-        Extract the valley region closest to the steepest peak
+        Extract the valley region closest to the steepest peak.
 
         >>> valley_range = [data_min, -0.2]  # Valley if curvature < 0.2
         >>> peak_point = mesh.points[peak_point_id]
