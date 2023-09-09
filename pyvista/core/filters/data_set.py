@@ -2435,9 +2435,9 @@ class DataSetFilters:
             The convenience parameter used for specifying any required input values
             for some values of ``extraction_mode``. Setting
             ``extraction_input`` is equivalent to setting:
-            * ``'region_ids'`` if mode is ``'specified'``
-            * ``'cell_ids'`` if mode is ``'cell_seed'``
-            * ``'point_ids'`` if mode is ``'point_seed'``
+            * ``'region_ids'`` if mode is ``'specified'``.
+            * ``'cell_ids'`` if mode is ``'cell_seed'``.
+            * ``'point_ids'`` if mode is ``'point_seed'``.
             * ``'closest_point'`` if mode is ``'closest'``. It has no effect if the mode is ``'all'`` or ``'largest'``.
 
         scalar_range : float | sequence[float], optional
@@ -2502,7 +2502,7 @@ class DataSetFilters:
 
         Examples
         --------
-        **Label all connected regions**
+        Label all connected regions.
 
         Load data.
 
@@ -2517,24 +2517,23 @@ class DataSetFilters:
 
         Configure plotting parameters.
 
-        >>> # Use a categorical colormap
         >>> categories = True
         >>> cmap = 'glasbey'
 
-        Format scalar bar text for integer values
+        Format scalar bar text for integer values.
 
         >>> scalar_bar_args = dict(
         ...     fmt='%.f',  # Do not show decimals
         ... )
 
-        Set the plot's camera position
+        Set the plot's camera position.
 
         >>> cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
         Plot the regions by ID.
 
         Note that region IDs are sorted in descending order by
-        cell count
+        cell count.
 
         >>> conn.plot(
         ...     categories=categories,
@@ -2543,11 +2542,10 @@ class DataSetFilters:
         ...     cpos=cpos,
         ... )
 
-        **Extract specific regions by size**
-
+        Extract specific regions by size.
         Calculate region sizes.
 
-        Get counts using the previous `connectivity('all')` results
+        Get counts using the previous `connectivity('all')` results.
 
         >>> regions, region_sizes = np.unique(
         ...     conn['RegionId'], return_counts=True
@@ -2580,17 +2578,17 @@ class DataSetFilters:
 
         Extract regions using seed points.
 
-        Create hills and use curvature to define their peaks and valleys
+        Create hills and use curvature to define their peaks and valleys.
 
         >>> import pyvista as pv
         >>> mesh = pv.ParametricRandomHills()
         >>> mesh["Curvature"] = mesh.curvature()
 
-        Visualize the peaks and valleys
+        Visualize the peaks and valleys.
 
         Peaks have large positive curvature (i.e. are convex)
         Valleys have large negative curvature (i.e. are concave)
-        Flat regions have curvature close to zero
+        Flat regions have curvature close to zero.
 
         >>> mesh.plot(
         ...     clim=[-0.5, 0.5],
