@@ -43,7 +43,7 @@ NORMALS = {
 
 @no_new_attr
 class ConeSource(_vtk.vtkConeSource):
-    """Create a cone source algorism class.
+    """Cone source algorithm class.
 
     Parameters
     ----------
