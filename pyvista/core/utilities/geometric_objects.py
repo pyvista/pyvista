@@ -97,13 +97,13 @@ class ConeSource(_vtk.vtkConeSource):
         self.direction = direction
         self.height = height
         self.capping = capping
-        if angle and radius:
+        if angle is not None and radius is not None:
             raise ValueError("Both radius and angle specified. They are mutually exclusive.")
-        elif angle and not radius:
+        elif angle is not None and radius is None:
             self.angle = angle
-        elif not angle and radius:
+        elif angle is None and radius is not None:
             self.radius = radius
-        elif not angle and not radius:
+        elif angle is not None and radius is None:
             self.radius = 0.5
         self.resolution = resolution
 

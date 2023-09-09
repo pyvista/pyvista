@@ -15,6 +15,13 @@ def test_cone_source():
     assert algo.capping
     assert algo.resolution == 6
 
+    with pytest.raises(ValueError):
+        algo = pv.ConeSource(angle=0.0, radius=0.0)
+    algo = pv.ConeSource(angle=0.0)
+    assert algo.angle == 0.0
+    algo = pv.ConeSource(radius=0.0)
+    assert algo.radius == 0.0
+
 
 def test_cylinder():
     surf = pv.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
