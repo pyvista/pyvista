@@ -27,12 +27,12 @@ p.show(cpos=cpos)
 ###############################################################################
 # The mesh plotted above is very noisy. We can extract the largest connected
 # isosurface in that mesh using the :func:`pyvista.DataSetFilters.connectivity`
-# filter and passing ``largest=True`` to the ``connectivity``
+# filter and passing ``'largest'`` to the ``connectivity``
 # filter or by using the :func:`pyvista.DataSetFilters.extract_largest` filter
 # (both are equivalent).
 
 # Grab the largest connected volume present
-largest = mesh.connectivity(largest=True)
+largest = mesh.connectivity('largest')
 # or: largest = mesh.extract_largest()
 
 p = pv.Plotter()
