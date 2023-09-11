@@ -419,5 +419,8 @@ def test_plotter_add_floor(face, normal):
     pl = pv.Plotter()
     pl.add_floor(face=face)
     assert np.allclose(pl.renderer._floor.face_normals[0], normal)
+
+
+def test_plotter_add_floor_raise_error():
     with pytest.raises(NotImplementedError, match='not implemented'):
         pl.add_floor(face='invalid')
