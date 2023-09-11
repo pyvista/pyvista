@@ -2406,6 +2406,7 @@ class DataSetFilters:
         more examples using this filter.
 
         .. versionadded:: 0.43.0
+
            * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
              and ``'closest'``.
            * Extracted regions are now sorted in descending order by
@@ -2432,16 +2433,19 @@ class DataSetFilters:
               point. Use ``closest_point`` to specify the point.
 
         variable_input : float | sequence[float], optional
-            The convenience parameter used for specifying any required input values
-            for some values of ``extraction_mode``. Setting
-            ``extraction_input`` is equivalent to setting:
+            The convenience parameter used for specifying any required input
+            values for some values of ``extraction_mode``. Setting
+            ``variable_input`` is equivalent to setting:
+
             * ``'region_ids'`` if mode is ``'specified'``.
             * ``'cell_ids'`` if mode is ``'cell_seed'``.
             * ``'point_ids'`` if mode is ``'point_seed'``.
-            * ``'closest_point'`` if mode is ``'closest'``. It has no effect if the mode is ``'all'`` or ``'largest'``.
+            * ``'closest_point'`` if mode is ``'closest'``.
 
-        scalar_range : float | sequence[float], optional
-            Single value or ``(min, max)``. If set, the connectivity is
+            It has no effect if the mode is ``'all'`` or ``'largest'``.
+
+        scalar_range : sequence[float], optional
+            Scalar range in the form ``[min, max]``. If set, the connectivity is
             restricted to cells with at least one point with scalar values in
             the specified range.
 
@@ -2457,7 +2461,7 @@ class DataSetFilters:
                removed from the output after applying the filter.
 
         label_regions : bool, default: True
-            If ``True``, scalar point and cell arrays ``RegionId`` are stored.
+            If ``True``, ``'RegionId'`` point and cell scalar arrays are stored.
             Each region is assigned a unique ID. IDs are zero-indexed and are
             assigned by region cell count in descending order (i.e. the largest
             region has ID ``0``).
@@ -2498,11 +2502,11 @@ class DataSetFilters:
 
         See Also
         --------
-            :func:`pyvista.DataSetFilter.connectivity`
+            :meth:`extract_largest`, :meth:`split_bodies`
 
         Examples
         --------
-        Label all connected regions.
+        **Label all connected regions.**
 
         Load data.
 
@@ -2511,7 +2515,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> mesh = examples.download_foot_bones()
 
-        Extract all disconnected regions.
+        Extract all regions.
 
         >>> conn = mesh.connectivity()
 
@@ -2542,10 +2546,10 @@ class DataSetFilters:
         ...     cpos=cpos,
         ... )
 
-        Extract specific regions by size.
-        Calculate region sizes.
+        **Extract specific regions by size.**
 
-        Get counts using the previous `connectivity('all')` results.
+        Calculate region sizes.
+        Get counts using the previous ``connectivity('all')`` results.
 
         >>> regions, region_sizes = np.unique(
         ...     conn['RegionId'], return_counts=True
@@ -2565,7 +2569,7 @@ class DataSetFilters:
         ...     cpos=cpos,
         ... )
 
-        Extract the largest region.
+        **Extract the largest region.**
 
         >>> conn = mesh.connectivity('largest', label_regions=False)
 
@@ -2576,18 +2580,19 @@ class DataSetFilters:
         >>> _ = p.add_mesh(mesh, style='wireframe')
         >>> p.show(cpos=cpos)
 
-        Extract regions using seed points.
+        **Extract regions using seed points.**
 
         Create hills and use curvature to define their peaks and valleys.
 
         >>> import pyvista as pv
+        >>> import numpy as np
         >>> mesh = pv.ParametricRandomHills()
         >>> mesh["Curvature"] = mesh.curvature()
 
         Visualize the peaks and valleys.
 
-        Peaks have large positive curvature (i.e. are convex)
-        Valleys have large negative curvature (i.e. are concave)
+        Peaks have large positive curvature (i.e. are convex).
+        Valleys have large negative curvature (i.e. are concave).
         Flat regions have curvature close to zero.
 
         >>> mesh.plot(
@@ -2608,7 +2613,7 @@ class DataSetFilters:
 
         Extract the valley region closest to the steepest peak.
 
-        >>> valley_range = [data_min, -0.2]  # Valley if curvature < 0.2
+        >>> valley_range = [data_min, -0.2]  # Valley if curvature < -0.2
         >>> peak_point = mesh.points[peak_point_id]
         >>> valley_mesh = mesh.connectivity(
         ...     'closest', peak_point, scalar_range=valley_range
