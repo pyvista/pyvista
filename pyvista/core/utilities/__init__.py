@@ -55,7 +55,6 @@ from .geometric_objects import (
     CircularArc,
     CircularArcFromNormal,
     Cone,
-    ConeSource,
     Cube,
     Cylinder,
     CylinderStructured,
@@ -82,6 +81,7 @@ from .geometric_objects import (
     Wavelet,
     translate,
 )
+from .geometric_sources import ConeSource
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,
