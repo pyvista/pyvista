@@ -12,7 +12,6 @@ def test_cone_source():
     assert algo.radius == 0.5
     assert algo.capping
     assert algo.resolution == 6
-
     with pytest.raises(ValueError):
         algo = pv.ConeSource(angle=0.0, radius=0.0)
     algo = pv.ConeSource(angle=0.0)
