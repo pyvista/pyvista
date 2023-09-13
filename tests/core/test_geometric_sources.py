@@ -18,3 +18,5 @@ def test_cone_source():
     assert algo.angle == 0.0
     algo = pv.ConeSource(radius=0.0)
     assert algo.radius == 0.0
+    algo = pv.ConeSource(angle=0.0, radius=0.0)
+    assert algo.radius == 0.5
