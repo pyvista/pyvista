@@ -6347,6 +6347,7 @@ class DataSetFilters:
 
         Load image labels
         >>> from pyvista import examples
+        >>> import numpy as np
         >>> image_labels = examples.download_frog_tissue()
 
         Show label info for first four labels
