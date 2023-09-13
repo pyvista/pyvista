@@ -6369,7 +6369,7 @@ class DataSetFilters:
         >>> sorted_label_number[:4]
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
         >>> sorted_label_size[:4]
-        array([30805713,   438052,   204672,   133880], dtype=int64)
+        array([30805713,   438052,   204672,   133880])
 
         """
         return self.pack_labels(
