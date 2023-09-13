@@ -6447,7 +6447,7 @@ class DataSetFilters:
 
         Show range of labels
         >>> image_labels.get_data_range()
-        (0, 29)
+        (0, 255)
 
         Find 'gaps' in the labels
         >>> label_numbers = np.unique(image_labels.active_scalars)
