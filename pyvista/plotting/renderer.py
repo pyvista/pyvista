@@ -1948,7 +1948,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             i_size = ranges[2]
             j_size = ranges[1]
         else:
-            raise NotImplementedError(f'Face ({face}) not implementd')
+            raise NotImplementedError(f'Face ({face}) not implemented')
         self._floor = pyvista.Plane(
             center=center,
             direction=normal,
