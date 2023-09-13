@@ -1003,7 +1003,343 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
-def test_split_and_connectivity():
+@pytest.fixture
+def connected_datasets():
+    # This is similar to the datasets fixture, but the PolyData is fully connected
+    return [
+        examples.load_uniform(),  # ImageData
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.load_hexbeam(),  # UnstructuredGrid
+        pv.Sphere(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+    ]
+
+
+@pytest.fixture
+def foot_bones():
+    return examples.download_foot_bones()
+
+
+@pytest.fixture
+def connected_datasets_single_disconnected_cell(connected_datasets):
+    # Create datasets of MultiBlocks with either 'point' or 'cell' scalar
+    # data, where a single cell (or its points) has a completely different
+    # scalar value to all other cells in the dataset
+    for i, dataset in enumerate(connected_datasets):
+        dataset.clear_data()
+        dataset_composite = pv.MultiBlock()
+        single_cell_id = dataset.n_cells - 1
+        single_cell_point_ids = dataset.get_cell(single_cell_id).point_ids
+        for association in ['point', 'cell']:
+            # Add copy as block
+            dataset_copy = dataset.copy()
+            dataset_composite[association] = dataset_copy
+
+            # Make scalar data such that values for a single cell or its points
+            # fall outside of the extraction range
+
+            if association == 'point':
+                num_scalars = dataset_copy.n_points
+                node_dataset = dataset_copy.point_data
+                ids = single_cell_point_ids
+            else:
+                num_scalars = dataset_copy.n_cells
+                node_dataset = dataset_copy.cell_data
+                ids = single_cell_id
+
+            # Assign non-zero floating point scalar data with range [-10, 10]
+            # which is intended to be extracted later
+            scalar_data = np.linspace(-10, 10, num=num_scalars)
+            node_dataset['data'] = scalar_data
+
+            # Assign a totally different scalar value to the single node
+            node_dataset['data'][ids] = -1000.0
+
+        connected_datasets[i] = dataset_composite
+    return connected_datasets
+
+
+@pytest.mark.parametrize('dataset_index', list(range(5)))
+@pytest.mark.parametrize(
+    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+@pytest.mark.parametrize('scalar_range', [True, False])
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_inplace_and_output_type(
+    datasets, dataset_index, extraction_mode, label_regions, scalar_range
+):
+    # paramaterize with label_regions and scalar_range as these parameters
+    # have branches which may modify input/input type
+    dataset = datasets[dataset_index]
+
+    # ensure we have scalars and set a restricted range
+    if scalar_range:
+        if len(dataset.array_names) == 0:
+            dataset.point_data['data'] = np.arange(0, dataset.n_points)
+        pv.set_default_active_scalars(dataset)
+        scalar_range = [np.mean(dataset.active_scalars), np.max(dataset.active_scalars)]
+    else:
+        scalar_range = None
+
+    common_args = dict(
+        extraction_mode=extraction_mode,
+        point_ids=0,
+        cell_ids=0,
+        region_ids=0,
+        closest_point=(0, 0, 0),
+        label_regions=label_regions,
+        scalar_range=scalar_range,
+    )
+    conn = dataset.connectivity(inplace=False, **common_args)
+    assert conn is not dataset
+
+    conn = dataset.connectivity(inplace=True, **common_args)
+    if isinstance(dataset, (pv.UnstructuredGrid, pv.PolyData)):
+        assert conn is dataset
+    else:
+        assert conn is not dataset
+
+    # test correct output type
+    if isinstance(dataset, pv.PolyData):
+        assert isinstance(conn, pv.PolyData)
+    else:
+        assert isinstance(conn, pv.UnstructuredGrid)
+
+
+@pytest.mark.parametrize('dataset_index', list(range(5)))
+@pytest.mark.parametrize(
+    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
+    # the connectivity filter is known to output incorrectly sized scalars
+    # test all modes and datasets for correct scalar size
+    dataset = datasets[dataset_index]
+    common_args = dict(
+        extraction_mode=extraction_mode,
+        point_ids=0,
+        cell_ids=0,
+        region_ids=0,
+        closest_point=(0, 0, 0),
+    )
+    conn = dataset.connectivity(**common_args, label_regions=True)
+    assert 'RegionId' in conn.point_data.keys()
+    assert 'RegionId' in conn.cell_data.keys()
+
+    expected_cell_scalars_size = conn.n_cells
+    actual_cell_scalars_size = conn.cell_data['RegionId'].size
+    assert expected_cell_scalars_size == actual_cell_scalars_size
+
+    expected_point_scalars_size = conn.n_points
+    actual_point_scalars_size = conn.point_data['RegionId'].size
+    assert expected_point_scalars_size == actual_point_scalars_size
+
+    # test again but without labels
+    active_scalars_info = dataset.active_scalars_info
+    conn = dataset.connectivity(**common_args, label_regions=False)
+    assert 'RegionId' not in conn.point_data.keys()
+    assert 'RegionId' not in conn.cell_data.keys()
+
+    assert conn.n_cells == expected_cell_scalars_size
+    assert conn.n_points == expected_point_scalars_size
+
+    # test previously active scalars are restored
+    assert conn.active_scalars_info[0] == active_scalars_info[0]
+    assert conn.active_scalars_info[1] == active_scalars_info[1]
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_raises(
+    connected_datasets_single_disconnected_cell,
+):
+    dataset = connected_datasets_single_disconnected_cell[0]['point']
+    with pytest.raises(ValueError, match='Lower value'):
+        dataset.connectivity(scalar_range=[1, 0])
+
+    with pytest.raises(ValueError, match='Invalid value for `extraction_mode`'):
+        dataset.connectivity(extraction_mode='foo')
+
+    with pytest.raises(ValueError, match='`closest_point` must be specified'):
+        dataset.connectivity(extraction_mode='closest')
+
+    with pytest.raises(ValueError, match='`point_ids` must be specified'):
+        dataset.connectivity(extraction_mode='point_seed')
+
+    with pytest.raises(ValueError, match='`cell_ids` must be specified'):
+        dataset.connectivity(extraction_mode='cell_seed')
+
+    with pytest.raises(ValueError, match='`region_ids` must be specified'):
+        dataset.connectivity(extraction_mode='specified')
+
+    with pytest.raises(ValueError, match='positive integer values'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
+
+
+@pytest.mark.parametrize('dataset_index', list(range(5)))
+@pytest.mark.parametrize(
+    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+)
+@pytest.mark.parametrize('association', ['cell', 'point'])
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_scalar_range(
+    connected_datasets_single_disconnected_cell, dataset_index, extraction_mode, association
+):
+    dataset = connected_datasets_single_disconnected_cell[dataset_index][association]
+
+    common_args = dict(
+        extraction_mode=extraction_mode,
+        point_ids=dataset.get_cell(0).point_ids[0],
+        cell_ids=0,
+        region_ids=0,
+        closest_point=dataset.get_cell(0).points[0],
+        label_regions=True,
+    )
+
+    # test a single cell is removed
+    conn_no_range = dataset.connectivity(**common_args)
+    conn_with_range = dataset.connectivity(**common_args, scalar_range=[-10, 10])
+    assert conn_with_range.n_cells == conn_no_range.n_cells - 1
+
+    # test no cells are removed
+    conn_with_full_range = dataset.connectivity(
+        **common_args, scalar_range=dataset.get_data_range()
+    )
+    assert conn_with_full_range.n_cells == dataset.n_cells
+
+    # test input scalars are passed to output
+    assert len(conn_no_range.array_names) == 3  # ['data', 'RegionId', 'RegionId']
+    assert len(conn_with_range.array_names) == 3
+    assert len(conn_with_full_range.array_names) == 3
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_all(foot_bones):
+    conn = foot_bones.connectivity('all')
+    assert conn.n_cells == foot_bones.n_cells
+
+    # test correct labels
+    conn = foot_bones.connectivity('all', label_regions=True)
+    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    assert np.array_equal(region_ids, list(range(26)))
+    assert np.array_equal(
+        counts,
+        [
+            598,
+            586,
+            392,
+            360,
+            228,
+            212,
+            154,
+            146,
+            146,
+            146,
+            134,
+            134,
+            134,
+            126,
+            124,
+            74,
+            66,
+            60,
+            60,
+            60,
+            48,
+            46,
+            46,
+            46,
+            46,
+            32,
+        ],
+    )
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_largest(foot_bones):
+    conn = foot_bones.connectivity('largest')
+    assert conn.n_cells == 598
+
+    # test correct labels
+    conn = foot_bones.connectivity('largest', label_regions=True)
+    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    assert region_ids == [0]
+    assert counts == [598]
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_specified(foot_bones):
+    # test all regions
+    all_regions = list(range(26))
+    conn = foot_bones.connectivity('specified', region_ids=all_regions)
+    assert conn.n_cells == foot_bones.n_cells
+
+    # test irrelevant region IDs
+    test_regions = all_regions + [77, 99]
+    conn = foot_bones.connectivity('specified', test_regions)
+    assert conn.n_cells == foot_bones.n_cells
+
+    # test some regions
+    some_regions = [1, 2, 4, 5]
+    expected_n_cells = 586 + 392 + 228 + 212
+    conn = foot_bones.connectivity('specified', some_regions)
+    assert conn.n_cells == expected_n_cells
+
+    # test correct labels
+    conn = foot_bones.connectivity('specified', some_regions, label_regions=True)
+    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    assert np.array_equal(region_ids, [0, 1, 2, 3])
+    assert np.array_equal(counts, [586, 392, 228, 212])
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_point_seed(foot_bones):
+    conn = foot_bones.connectivity('point_seed', point_ids=1598)
+    assert conn.n_cells == 598
+    conn = foot_bones.connectivity('point_seed', [1326, 1598])
+    assert conn.n_cells == 598 + 360
+    assert conn.n_points == 301 + 182
+
+    # test correct labels
+    conn = foot_bones.connectivity('point_seed', [1326, 1598], label_regions=True)
+    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    assert np.array_equal(region_ids, [0, 1])
+    assert np.array_equal(counts, [598, 360])
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_cell_seed(foot_bones):
+    conn = foot_bones.connectivity('cell_seed', cell_ids=3122)
+    assert conn.n_cells == 598
+    assert conn.n_points == 301
+    conn = foot_bones.connectivity('cell_seed', [2588, 3122])
+    assert conn.n_cells == 598 + 360
+    assert conn.n_points == 301 + 182
+
+    # test correct labels
+    conn = foot_bones.connectivity('point_seed', [1326, 1598], label_regions=True)
+    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    assert np.array_equal(region_ids, [0, 1])
+    assert np.array_equal(counts, [598, 360])
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_closest_point(foot_bones):
+    conn = foot_bones.connectivity('closest', closest_point=(-3.5, -0.5, -0.5))
+    assert conn.n_cells == 598
+    assert conn.n_points == 301
+    conn = foot_bones.connectivity('closest', (-1.5, -0.5, 0.05))
+    assert conn.n_cells == 360
+    assert conn.n_points == 182
+
+    # test correct labels
+    conn = foot_bones.connectivity('closest', (-3.5, -0.5, -0.5), label_regions=True)
+    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    assert region_ids == [0]
+    assert counts == [598]
+
+
+def test_split_bodies():
     # Load a simple example mesh
     dataset = examples.load_uniform()
     dataset.set_active_scalars('Spatial Cell Data')
