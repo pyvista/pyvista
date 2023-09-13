@@ -73,7 +73,7 @@ class ConeSource(_vtk.vtkConeSource):
             self.angle = angle
         elif angle is None and radius is not None:
             self.radius = radius
-        elif angle is not None and radius is not None:
+        elif angle is None and radius is None:
             self.radius = 0.5
         self.resolution = resolution
 
