@@ -23,14 +23,9 @@ dependencies:
   - trimesh
   - rtree
   - pyembree
-  - panel
-  - ipygany
-  - ipyvtklink
-  - pythreejs
   - pooch
-  - trame>=2.2.6
-  - trame-client>=2.4.2
-  - trame-server>=2.8.0
-  - trame-vtk>=2.4.0
+  - trame>=2.5.2
+  - trame-vuetify>=2.3.1
+  - trame-vtk>=2.5.8
   - pip:
       - pytest-memprof

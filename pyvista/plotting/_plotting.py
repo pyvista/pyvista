@@ -4,9 +4,10 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.utilities import assert_empty_kwargs, get_array
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
-from ..utilities.misc import PyVistaDeprecationWarning
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
@@ -36,7 +37,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     scalars : sequence
         Sequence of scalars.
 
-    texture : vtk.vtkTexture or np.ndarray or bool, optional
+    texture : pyvista.Texture or np.ndarray, optional
         A texture to apply to the mesh.
 
     split_sharp_edges : bool

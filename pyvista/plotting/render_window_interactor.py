@@ -1,14 +1,19 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
 import collections.abc
+from contextlib import contextmanager
 from functools import partial
+from inspect import signature
 import logging
 import time
 import warnings
 import weakref
 
-from pyvista import _vtk
-from pyvista.utilities import try_callback
-from pyvista.utilities.misc import vtk_version_info
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import try_callback
+from pyvista.report import vtk_version_info
+
+from . import _vtk
+from .opts import PickerType
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -24,6 +29,21 @@ class RenderWindowInteractor:
     we add to the RenderWindowInteractor more python, like certain
     testing methods.
 
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter object upon which the initialization of
+        RenderWindowInteractor is based.
+
+    desired_update_rate : float, default: 30
+        The desired update rate of the interactor.
+
+    light_follow_camera : bool, default: True
+        If set to ``True``, the light follows the camera.
+
+    interactor : vtk.vtkRenderWindowInteractor, default: None
+        The render window interactor. If set to ``None``, a new
+        vtkRenderWindowInteractor instance will be created.
     """
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
@@ -58,6 +78,9 @@ class RenderWindowInteractor:
             self._toggle_chart_interaction, side="left", double=True, viewport=True
         )
 
+        self.reset_picker()
+        self.picker = PickerType.POINT
+
     @property
     def _plotter(self):
         """Return the plotter."""
@@ -75,11 +98,14 @@ class RenderWindowInteractor:
             The key to trigger the event.
 
         callback : callable
-            A callable that takes no arguments.
+            A callable that takes no arguments (keyword arguments are allowed).
 
         """
         if not callable(callback):
             raise TypeError('callback must be callable.')
+        for param in signature(callback).parameters.values():
+            if param.default is param.empty:
+                raise TypeError('`callback` must not have any arguments without default values.')
         self._key_press_event_callbacks[key].append(callback)
 
     @staticmethod
@@ -203,6 +229,12 @@ class RenderWindowInteractor:
 
         This will potentially slow down the interactor. No callbacks supported
         here - use :func:`pyvista.Plotter.track_click_position` instead.
+
+        Parameters
+        ----------
+        callback : callable
+            A function to call back when the mouse moves. This function will be
+            passed the current mouse position.
 
         """
         self.add_observer(_vtk.vtkCommand.MouseMoveEvent, callback)
@@ -752,14 +784,16 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def _simulate_keypress(self, key):  # pragma: no cover
+    def _simulate_keypress(self, key):  # pragma:
         """Simulate a keypress."""
         if len(key) > 1:
             raise ValueError('Only accepts a single key')
         self.interactor.SetKeyCode(key)
         self.interactor.CharEvent()
 
-    def _mouse_left_button_press(self, x=None, y=None):  # pragma: no cover
+    def _mouse_left_button_press(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -770,7 +804,9 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.LeftButtonPressEvent()
 
-    def _mouse_left_button_release(self, x=None, y=None):  # pragma: no cover
+    def _mouse_left_button_release(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
@@ -781,7 +817,9 @@ class RenderWindowInteractor:
             self._mouse_left_button_press(x, y)
             self._mouse_left_button_release()
 
-    def _mouse_right_button_press(self, x=None, y=None):  # pragma: no cover
+    def _mouse_right_button_press(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button press.
 
         If ``x`` and ``y`` are entered then simulates a movement to
@@ -792,7 +830,9 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.RightButtonPressEvent()
 
-    def _mouse_right_button_release(self, x=None, y=None):  # pragma: no cover
+    def _mouse_right_button_release(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
@@ -803,7 +843,7 @@ class RenderWindowInteractor:
             self._mouse_right_button_press(x, y)
             self._mouse_right_button_release()
 
-    def _mouse_move(self, x, y):  # pragma: no cover
+    def _mouse_move(self, x, y):  # pragma:
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
         self.interactor.SetEventInformation(x, y)
         self.interactor.MouseMoveEvent()
@@ -818,6 +858,60 @@ class RenderWindowInteractor:
 
         """
         return self.interactor.GetEventPosition()
+
+    def get_poked_renderer(self, x=None, y=None):
+        """Get poked renderer for last or specific event position.
+
+        Parameters
+        ----------
+        x : float, default: None
+            The x-coordinate for a user-defined event position.
+
+        y : float, default: None
+            The y-coordinate for a user-defined event position.
+
+        Returns
+        -------
+        vtk.vtkRenderer
+            The poked renderer for given or last event position.
+        """
+        if x is None or y is None:
+            x, y = self.get_event_position()
+        return self.interactor.FindPokedRenderer(x, y)
+
+    def get_event_subplot_loc(self):
+        """Get the subplot location of the last event.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the location of the subplot.
+
+        Raises
+        ------
+        RuntimeError
+            If the poked renderer is not found in the Plotter.
+
+        """
+        poked_renderer = self.get_poked_renderer()
+        for index in range(len(self._plotter.renderers)):
+            renderer = self._plotter.renderers[index]
+            if renderer is poked_renderer:
+                return self._plotter.renderers.index_to_loc(index)
+        raise RuntimeError('Poked renderer not found in Plotter.')
+
+    @contextmanager
+    def poked_subplot(self):
+        """Activate the sublot that was last interacted."""
+        active_renderer_index = self._plotter.renderers._active_index
+        loc = self.get_event_subplot_loc()
+        self._plotter.subplot(*loc)
+        try:
+            yield
+        finally:
+            # Reset to the active renderer.
+            loc = self._plotter.renderers.index_to_loc(active_renderer_index)
+            self._plotter.subplot(*loc)
 
     def get_interactor_style(self):
         """Get the interactor style.
@@ -865,7 +959,13 @@ class RenderWindowInteractor:
         return timer_id
 
     def destroy_timer(self, timer_id):
-        """Destroy the given timer."""
+        """Destroy the given timer.
+
+        Parameters
+        ----------
+        timer_id : int
+            The ID of the timer to destroy.
+        """
         self.interactor.DestroyTimer(timer_id)
 
     def start(self):
@@ -877,7 +977,13 @@ class RenderWindowInteractor:
         self.interactor.Initialize()
 
     def set_render_window(self, render_window):
-        """Set the render window."""
+        """Set the render window for the interactor.
+
+        Parameters
+        ----------
+        render_window : vtk.vtkRenderWindow
+            Render window to set for the interactor.
+        """
         self.interactor.SetRenderWindow(render_window)
 
     def process_events(self):
@@ -889,7 +995,7 @@ class RenderWindowInteractor:
         self.interactor.ProcessEvents()
 
     @property
-    def initialized(self):
+    def initialized(self):  # numpydoc ignore=RT01
         """Return if the interactor has been initialized."""
         return self.interactor.GetInitialized()
 
@@ -901,14 +1007,94 @@ class RenderWindowInteractor:
         vtk.vtkAbstractPicker
             VTK picker.
         """
-        return self.interactor.GetPicker()
+        # Deprecated on v0.39.0, estimated removal on v0.41.0
+        warnings.warn(
+            "Use of `get_picker` is deprecated. Use `picker` property instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.picker
 
     def set_picker(self, picker):
-        """Set the picker."""
+        """Set the picker for the interactor.
+
+        Parameters
+        ----------
+        picker : vtk.vtkAbstractPicker
+            The picker to set for the interactor.
+        """
+        # Deprecated on v0.39.0, estimated removal on v0.41.0
+        warnings.warn(
+            "Use of `get_picker` is deprecated. Use `picker` property instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.picker = picker
+
+    @property
+    def picker(self):  # numpydoc ignore=RT01
+        """Get/set the picker.
+
+        Returns
+        -------
+        vtk.vtkAbstractPicker
+            VTK picker.
+        """
+        return self.interactor.GetPicker()
+
+    @picker.setter
+    def picker(self, picker):  # numpydoc ignore=GL08
+        pickers = {
+            PickerType.AREA: _vtk.vtkAreaPicker,
+            PickerType.CELL: _vtk.vtkCellPicker,
+            PickerType.POINT: _vtk.vtkPointPicker,
+            PickerType.PROP: _vtk.vtkPropPicker,
+            PickerType.RENDERED: _vtk.vtkRenderedAreaPicker,
+            PickerType.RESLICE: _vtk.vtkResliceCursorPicker,
+            PickerType.SCENE: _vtk.vtkScenePicker,
+            PickerType.VOLUME: _vtk.vtkVolumePicker,
+            PickerType.WORLD: _vtk.vtkWorldPointPicker,
+        }
+        if _vtk.vtkHardwarePicker is not None:
+            # Unavailable on VTK < 9.2
+            pickers[PickerType.HARDWARE] = _vtk.vtkHardwarePicker
+        if isinstance(picker, (str, int, PickerType)):
+            picker = PickerType.from_any(picker)
+            try:
+                picker = pickers[picker]()
+            except KeyError:
+                raise KeyError(f'Picker class `{picker}` is unknown.')
+            # Set default tolerance for internal configurations
+            if hasattr(picker, 'SetTolerance'):
+                picker.SetTolerance(0.025)
         self.interactor.SetPicker(picker)
 
+    def add_pick_obeserver(self, observer):
+        """Add an observer to call back when pick events end.
+
+        Parameters
+        ----------
+        observer : callable
+            The observer function to call when a pick event ends.
+        """
+        self.picker.AddObserver(_vtk.vtkCommand.EndPickEvent, observer)
+
+    def reset_picker(self):
+        """Reset the picker."""
+        # Remove observers
+        self.picker.RemoveObservers(_vtk.vtkCommand.EndPickEvent)
+        # Set default picker to vtkWorldPointPicker
+        self.picker = 'world'
+
     def fly_to(self, renderer, point):
-        """Fly to the given point."""
+        """Fly the interactor to the given point in a renderer.
+
+        Parameters
+        ----------
+        renderer : vtk.vtkRenderer
+            The renderer in which the action will take place.
+
+        point : list or tuple
+            The point to fly to.
+        """
         self.interactor.FlyTo(renderer, *point)
 
     def terminate_app(self):

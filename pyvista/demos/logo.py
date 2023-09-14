@@ -18,7 +18,8 @@ import os
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, examples
+from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 
 THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,7 +27,22 @@ LOGO_TITLE = 'PyVista'
 
 
 def atomize(grid, shift_fac=0.1, scale=0.9):
-    """Break apart and shrink and/or scale the individual cells of a mesh."""
+    """Break apart and shrink and/or scale the individual cells of a mesh.
+
+    Parameters
+    ----------
+    grid : pyvista.UnstructuredGrid
+        The input mesh to atomize.
+    shift_fac : float, default: 0.1
+        Factor by which to shift the individual cells apart.
+    scale : float, default: 0.9
+        Factor by which to scale the individual cells.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        The atomized mesh with individually shifted and scaled cells.
+    """
     cent = grid.center
     cells = []
     for i in range(grid.n_cells):
@@ -40,8 +56,25 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
 
 
 def text_3d(string, depth=0.5):
-    """Create 3D text."""
-    vec_text = _vtk.vtkVectorText()
+    """Create 3D text from a given string.
+
+    Parameters
+    ----------
+    string : str
+        The string of text to convert into 3D text.
+
+    depth : float, default: 0.5
+        The depth of the extrusion used to create the 3D text.
+
+    Returns
+    -------
+    pyvista.DataSet
+        The 3D text in the form of a PyVista DataSet.
+
+    """
+    from vtkmodules.vtkRenderingFreeType import vtkVectorText
+
+    vec_text = vtkVectorText()
     vec_text.SetText(string)
 
     extrude = _vtk.vtkLinearExtrusionFilter()
@@ -57,7 +90,24 @@ def text_3d(string, depth=0.5):
 
 
 def logo_letters(merge=False, depth=0.3):
-    """Generate a mesh for each letter in "PyVista"."""
+    """Generate a mesh for each letter in "PyVista".
+
+    Parameters
+    ----------
+    merge : bool, optional
+        If ``True``, merge the meshes of the individual letters into a single
+        mesh.  If ``False``, return a dictionary where the keys are the letters
+        and the values are the respective meshes.
+    depth : float, optional
+        The depth of the extrusion for each letter in the mesh.
+
+    Returns
+    -------
+    pyvista.PolyData or dict[str, pyvista.PolyData]
+        If merge is ``True``, returns a single merged mesh containing all the
+        letters in "PyVista". If merge is ``False``, returns a dictionary where
+        the keys are the letters and the values are the respective meshes.
+    """
     if merge:
         mesh_letters = pyvista.PolyData()
     else:
@@ -80,12 +130,28 @@ def logo_letters(merge=False, depth=0.3):
 
 
 def logo_voxel(density=0.03):
-    """Create a voxelized PyVista logo."""
+    """Create a voxelized PyVista logo.
+
+    Parameters
+    ----------
+    density : float, default: 0.03
+        Density of the voxelization.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Voxelized PyVista logo as an unstructured grid.
+    """
     return pyvista.voxelize(text_3d(LOGO_TITLE, depth=0.3), density)
 
 
 def logo_basic():
     """Create a basic pyvista logo.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Grid containing the pyvista letters.
 
     Examples
     --------
@@ -119,6 +185,30 @@ def plot_logo(
     **kwargs,
 ):
     """Plot the stylized PyVista logo.
+
+    Parameters
+    ----------
+    window_size : sequence[int], optional
+        Size of the window in the format ``[width, height]``.
+    off_screen : bool, optional
+        Renders off screen when ``True``.
+    screenshot : str, optional
+        Save screenshot to path when specified.
+    cpos : list or str, optional
+        Camera position to use.
+    just_return_plotter : bool, default: False
+        Return the plotter instance without rendering.
+    show_note : bool, default: False
+        Show a text in the plot when ``True``.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
+    Returns
+    -------
+    Plotter or camera position
+        Returns the plotter instance if ``just_return_plotter`` is ``True``,
+        otherwise returns the camera position if ``screenshot`` is specified,
+        otherwise shows the plot.
 
     Examples
     --------
@@ -183,9 +273,6 @@ def plot_logo(
 
     # letter 't'
     mesh = mesh_letters['t'].clean().compute_normals()
-    # strange behavior with pythreejs
-    if pyvista.global_theme.jupyter_backend == 'pythreejs':
-        mesh.flip_normals()
     scalars = mesh.points[:, 0]
     plotter.add_mesh(mesh, scalars=scalars, show_edges=True, cmap='autumn', show_scalar_bar=False)
 
@@ -233,7 +320,23 @@ def plot_logo(
 
 
 def logo_atomized(density=0.05, scale=0.6, depth=0.05):
-    """Generate a voxelized pyvista logo with intra-cell spacing."""
+    """Generate a voxelized pyvista logo with intra-cell spacing.
+
+    Parameters
+    ----------
+    density : float, default: 0.05
+        The spacing between voxels in the generated PyVista logo.
+    scale : float, default: 0.6
+        The scaling factor for the generated PyVista logo.
+    depth : float, default: 0.05
+        The depth of the generated PyVista logo.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        A merged UnstructuredGrid representing the voxelized PyVista logo.
+
+    """
     mesh_letters = logo_letters(depth=depth)
     grids = []
     for letter in mesh_letters.values():

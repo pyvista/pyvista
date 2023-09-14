@@ -4,7 +4,7 @@
    # jupyterlab boiler plate setup
    import pyvista
    pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.anti_aliasing = 'fxaa'
@@ -21,7 +21,7 @@ handful of parameters rather than having to explicitly describe the
 points and geometry of the dataset.
 
 PyVista gridded data is composed of the
-:class:`pyvista.RectilinearGrid` and :class:`pyvista.UniformGrid`
+:class:`pyvista.RectilinearGrid` and :class:`pyvista.ImageData`
 classes. These classes inherit from the `vtkRectilinearGrid`_ and
 `vtkImageData`_ classes and are commonly used to model images or
 volumetric data.
@@ -36,14 +36,14 @@ variable spacing in the three coordinate directions.
    demos.plot_datasets('RectilinearGrid')
 
 
-A :class:`pyvista.UniformGrid` is used for modeling datasets with
+A :class:`pyvista.ImageData` is used for modeling datasets with
 uniform spacing in the three coordinate directions.
 
 .. jupyter-execute::
    :hide-code:
 
    from pyvista import demos
-   demos.plot_datasets('UniformGrid')
+   demos.plot_datasets('ImageData')
 
 
 **Class Descriptions**
@@ -56,7 +56,7 @@ classes inherit all methods from their corresponding VTK
    :toctree: _autosummary
 
    pyvista.RectilinearGrid
-   pyvista.UniformGrid
+   pyvista.ImageData
 
 .. _vtkRectilinearGrid: https://www.vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
 .. _vtkImageData: https://www.vtk.org/doc/nightly/html/classvtkImageData.html

@@ -5,21 +5,26 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import (
-    NORMALS,
-    _vtk,
-    abstract_class,
-    assert_empty_kwargs,
-    generate_plane,
-    get_array_association,
-    vtk_id_list_to_array,
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import (
+    DeprecationError,
+    MissingDataError,
+    NotAllTrianglesError,
+    PyVistaFutureWarning,
+    VTKVersionError,
 )
-from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.errors import MissingDataError
-from pyvista.utilities import FieldAssociation, get_array
-from pyvista.utilities.misc import PyVistaFutureWarning
+from pyvista.core.utilities.arrays import (
+    FieldAssociation,
+    get_array,
+    get_array_association,
+    set_default_active_scalars,
+    vtk_id_list_to_array,
+)
+from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import generate_plane, wrap
+from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -49,9 +54,12 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> mesh = pyvista.Cube().triangulate().subdivide(4)
         >>> mask = mesh.edge_mask(45)
+        >>> mesh.plot(scalars=mask)
+
+        Show the array of masked points.
+
         >>> mask  # doctest:+SKIP
         array([ True,  True,  True, ..., False, False, False])
-        >>> mesh.plot(scalars=mask)
 
         """
         poly_data = self
@@ -73,6 +81,11 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
+        if self.n_points == other_mesh.n_points:
+            if np.allclose(self.points, other_mesh.points):
+                raise ValueError(
+                    "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface."
+                )
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
@@ -179,7 +192,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -252,7 +265,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -329,7 +342,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -351,6 +364,76 @@ class PolyDataFilters(DataSetFilters):
 
         """
         merged = self.merge(dataset, inplace=True)
+        return merged
+
+    def append_polydata(
+        self,
+        *meshes,
+        inplace=False,
+        progress_bar=False,
+    ):
+        """Append one or more PolyData into this one.
+
+        Under the hood, the VTK `vtkAppendPolyDataFilter
+        <https://vtk.org/doc/nightly/html/classvtkAppendPolyData.html#details>`_ filter is used to perform the
+        append operation.
+
+        .. versionadded:: 0.40.0
+
+        .. note::
+            As stated in the VTK documentation of `vtkAppendPolyDataFilter
+            <https://vtk.org/doc/nightly/html/classvtkAppendPolyData.html#details>`_,
+            point and cell data are added to the output PolyData **only** if they are present across **all**
+            input PolyData.
+
+        .. seealso::
+            :func:`pyvista.PolyDataFilters.merge`
+
+        Parameters
+        ----------
+        *meshes : list[pyvista.PolyData]
+            The PolyData(s) to append with the current one.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Appended PolyData(s).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> sp0 = pv.Sphere()
+        >>> sp1 = sp0.translate((1, 0, 0))
+        >>> appended = sp0.append_polydata(sp1)
+        >>> appended.plot()
+
+        Append more than one PolyData.
+
+        >>> sp2 = sp0.translate((-1, 0, 0))
+        >>> appended = sp0.append_polydata(sp1, sp2)
+        >>> appended.plot()
+        """
+        if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
+            raise TypeError("All meshes need to be of PolyData type")
+
+        append_filter = _vtk.vtkAppendPolyData()
+        append_filter.AddInputData(self)
+        for mesh in meshes:
+            append_filter.AddInputData(mesh)
+
+        _update_alg(append_filter, progress_bar, 'Append PolyData')
+        merged = _get_output(append_filter)
+
+        if inplace:
+            self.deep_copy(merged)  # type: ignore
+            return self
+
         return merged
 
     def merge(
@@ -375,6 +458,22 @@ class PolyDataFilters(DataSetFilters):
            the default parameters. When the other mesh is also a
            :class:`pyvista.PolyData`, in-place merging via ``+=`` is
            similarly possible.
+
+        .. versionchanged:: 0.39.0
+            Before version ``0.39.0``, if all input datasets were of type :class:`pyvista.PolyData`,
+            the VTK ``vtkAppendPolyDataFilter`` and ``vtkCleanPolyData`` filters were used to perform merging.
+            Otherwise, :func:`DataSetFilters.merge`, which uses the VTK ``vtkAppendFilter`` filter,
+            was called.
+            To enhance performance and coherence with merging operations available for other datasets in pyvista,
+            the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
+            irrespectively of input datasets types.
+            This induced that points ordering can be altered compared to previous pyvista versions when
+            merging only PolyData together.
+            To obtain similar results as before ``0.39.0`` for multiple PolyData, combine
+            :func:`PolyDataFilters.append_polydata` and :func:`PolyDataFilters.clean`.
+
+        .. seealso::
+            :func:`PolyDataFilters.append_polydata`
 
         Parameters
         ----------
@@ -415,16 +514,16 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_a = pyvista.Sphere()
         >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
         >>> merged = sphere_a.merge(sphere_b)
-        >>> merged.plot(style='wireframe', color='tan')
+        >>> merged.plot(style='wireframe', color='lightblue')
 
         """
         # check if dataset or datasets are not polydata
         if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            is_pd = all(isinstance(data, pyvista.PolyData) for data in dataset)
+            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
         else:
-            is_pd = isinstance(dataset, pyvista.PolyData)
+            is_polydata = isinstance(dataset, pyvista.PolyData)
 
-        if inplace and not is_pd:
+        if inplace and not is_polydata:
             raise TypeError("In-place merge requires both input datasets to be PolyData.")
 
         merged = DataSetFilters.merge(
@@ -438,12 +537,38 @@ class PolyDataFilters(DataSetFilters):
         )
 
         # convert back to a polydata if both inputs were polydata
-        if is_pd:
-            pd_merged = pyvista.PolyData(merged.points, faces=merged.cells, n_faces=merged.n_cells)
-            pd_merged.point_data.update(merged.point_data)
-            pd_merged.cell_data.update(merged.cell_data)
-            pd_merged.field_data.update(merged.field_data)
-            merged = pd_merged
+        if is_polydata:
+            # if either of the input datasets contained lines or strips, we
+            # must use extract_geometry to ensure they get converted back
+            # correctly. This incurrs a performance penalty, but is needed to
+            # maintain data consistency.
+            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+                dataset_has_lines_strips = any(
+                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                )
+            else:
+                dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
+
+            if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
+                merged = merged.extract_geometry()
+            else:
+                polydata_merged = pyvista.PolyData(
+                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                )
+                # Calling update() will modify the active scalars in this specific
+                # case. Store values to restore after updating.
+                active_point_scalars_name = merged.point_data.active_scalars_name
+                active_cell_scalars_name = merged.cell_data.active_scalars_name
+
+                polydata_merged.point_data.update(merged.point_data)
+                polydata_merged.cell_data.update(merged.cell_data)
+                polydata_merged.field_data.update(merged.field_data)
+
+                # restore active scalars
+                polydata_merged.point_data.active_scalars_name = active_point_scalars_name
+                polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+
+                merged = polydata_merged
 
         if inplace:
             self.deep_copy(merged)
@@ -552,17 +677,17 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Calculate the mean curvature of the hills example mesh.
+        Calculate the mean curvature of the hills example mesh and plot it.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> curv = hills.curvature()
+        >>> hills.plot(scalars=curv)
+
+        Show the curvature array.
+
         >>> curv  # doctest:+SKIP
         array([0.20587616, 0.06747695, ..., 0.11781171, 0.15988467])
-
-        Plot it.
-
-        >>> hills.plot(scalars=curv)
 
         """
         curv_type = curv_type.lower()
@@ -846,7 +971,7 @@ class PolyDataFilters(DataSetFilters):
         References
         ----------
         See `Optimal Surface Smoothing as Filter Design
-        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>` for details
+        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>`_ for details
         regarding the implementation of Taubin smoothing.
 
         Examples
@@ -1072,7 +1197,7 @@ class PolyDataFilters(DataSetFilters):
         'Line Cells: 1'
         >>> f'Tube Cells: {tube.n_cells}'
         'Tube Cells: 22'
-        >>> tube.plot(color='tan')
+        >>> tube.plot(color='lightblue')
 
         See :ref:`create_spline_example` for more examples using this filter.
 
@@ -1943,9 +2068,6 @@ class PolyDataFilters(DataSetFilters):
 
         output["vtkOriginalPointIds"] = original_ids
 
-        # Do not copy textures from input
-        output.clear_textures()
-
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:
             output.points[...] = output.points[::-1, :]
@@ -2279,7 +2401,7 @@ class PolyDataFilters(DataSetFilters):
 
         color : ColorLike, optional
             Color of the arrows.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.edge_color`.
+            :attr:`pyvista.plotting.themes.Theme.edge_color`.
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
@@ -2815,7 +2937,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
-        >>> mesh.plot(color='tan')
+        >>> mesh.plot(color='lightblue')
 
         Extrude and cap an 8 sided polygon.
 
@@ -2968,7 +3090,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> spline = pyvista.Spline(points, 30)
         >>> extruded = spline.extrude_rotate(resolution=20, capping=False)
-        >>> extruded.plot(color='tan')
+        >>> extruded.plot(color='lightblue')
 
         """
         if capping is None:
@@ -3005,7 +3127,7 @@ class PolyDataFilters(DataSetFilters):
                 )
 
         _update_alg(alg, progress_bar, 'Extruding')
-        output = pyvista.wrap(alg.GetOutput())
+        output = wrap(alg.GetOutput())
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -3111,7 +3233,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetExtrusionStrategy(extrusion)
         alg.SetCappingStrategy(capping)
         _update_alg(alg, progress_bar, 'Extruding with trimming')
-        output = pyvista.wrap(alg.GetOutput())
+        output = wrap(alg.GetOutput())
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -3301,7 +3423,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        pyvista_ndarray([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+        pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are
@@ -3318,7 +3440,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> _ = pl.add_mesh(
         ...     mesh_b,
-        ...     color='tan',
+        ...     color='lightblue',
         ...     line_width=5,
         ...     opacity=0.7,
         ...     show_edges=True,
@@ -3488,7 +3610,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            pyvista.set_default_active_scalars(self)
+            set_default_active_scalars(self)
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
@@ -3537,7 +3659,7 @@ class PolyDataFilters(DataSetFilters):
                 array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
-            return mesh, pyvista.wrap(alg.GetContourEdgesOutput())
+            return mesh, wrap(alg.GetContourEdgesOutput())
         return mesh
 
     def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar=False):
@@ -3615,5 +3737,5 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar, 'Reconstructing surface')
-        surf = pyvista.wrap(mc.GetOutput())
+        surf = wrap(mc.GetOutput())
         return surf

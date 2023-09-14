@@ -105,7 +105,7 @@ cpos = pv.Sphere().plot()
 ###############################################################################
 # You can reset pyvista to default behavior with ``restore_defaults``.
 # Note that the figure's color was reset to the default "white" color
-# rather than the "tan" color default with the document theme.  Under
+# rather than the 'lightblue' color default with the document theme.  Under
 # the hood, each theme applied changes the global plot defaults stored
 # within ``pyvista.global_theme.``
 
@@ -147,7 +147,7 @@ cpos = pv.Sphere().plot()
 
 from pyvista import themes
 
-my_theme = themes.DefaultTheme()
+my_theme = themes.DocumentTheme()
 my_theme.color = 'black'
 my_theme.lighting = True
 my_theme.show_edges = True

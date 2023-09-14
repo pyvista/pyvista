@@ -26,26 +26,6 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: '1'
 
 jobs:
-  doc-check:
-    name: Check Documentation (Vale)
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-
-    # this is equivalent to
-    # vale --config doc/.vale.ini doc pyvista examples
-    - name: "Run Vale"
-      uses: errata-ai/vale-action@reviewdog
-      with:
-        files: '["doc", "pyvista", "examples"]'
-        vale_flags: "--config=doc/.vale.ini"
-        reporter: github-pr-check
-        level: error
-        filter_mode: nofilter
-        fail_on_error: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   doc:
     name: Build Documentation
     runs-on: ubuntu-20.04
@@ -77,7 +57,11 @@ jobs:
       - name: Install custom OSMesa VTK variant
         run: |
           pip uninstall vtk -y
-          pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_osmesa-9.2.5-cp311-cp311-linux_x86_64.whl
+          aria2c -x5 "https://github.com/pyvista/pyvista-wheels/raw/main/${VTK_OSMESA_WHEEL_NAME}"
+          pip install "$VTK_OSMESA_WHEEL_NAME"
+          rm "$VTK_OSMESA_WHEEL_NAME"
+        env:
+          VTK_OSMESA_WHEEL_NAME: vtk_osmesa-9.2.5-cp311-cp311-linux_x86_64.whl
 
       - name: PyVista Report
         run: |
@@ -148,7 +132,7 @@ jobs:
           path: .
 
       - name: Deploy Dev Docs
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
         uses: pyansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}

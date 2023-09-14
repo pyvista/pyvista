@@ -38,7 +38,9 @@ actor = pl.add_mesh(topo, cmap='gist_earth')
 pl.add_text('Earth Land Altitude')
 
 pl.subplot(1, 1)
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
 pl.add_text('Earth Visible as Globe')
-pl.add_mesh(examples.load_globe(), smooth_shading=True)
+pl.add_mesh(globe, texture=texture, smooth_shading=True)
 
 pl.show()

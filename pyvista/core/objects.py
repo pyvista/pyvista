@@ -6,11 +6,11 @@ The data objects does not have any sort of spatial reference.
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, get_array, row_array
 
+from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
+from .utilities.arrays import FieldAssociation, get_array, row_array
 
 
 class Table(_vtk.vtkTable, DataObject):
@@ -74,25 +74,51 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):
-        """Return the number of rows."""
+    def n_rows(self):  # numpydoc ignore=RT01
+        """Return the number of rows.
+
+        Returns
+        -------
+        int
+            The number of rows.
+
+        """
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n):
-        """Set the number of rows."""
+    def n_rows(self, n):  # numpydoc ignore=GL08
+        """Set the number of rows.
+
+        Parameters
+        ----------
+        n : int
+            The number of rows.
+
+        """
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):
-        """Return the number of columns."""
+    def n_columns(self):  # numpydoc ignore=RT01
+        """Return the number of columns.
+
+        Returns
+        -------
+        int
+            The number of columns.
+
+        """
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):
+    def n_arrays(self):  # numpydoc ignore=RT01
         """Return the number of columns.
 
         Alias for: ``n_columns``.
+
+        Returns
+        -------
+        int
+            The number of columns.
 
         """
         return self.n_columns
@@ -114,8 +140,15 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):
-        """Return the all row arrays."""
+    def row_arrays(self):  # numpydoc ignore=RT01
+        """Return the all row arrays.
+
+        Returns
+        -------
+        int
+            The all row arrays.
+
+        """
         return DataSetAttributes(
             vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
         )
@@ -238,7 +271,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         fmt = ""
         if self.n_arrays > 0:
-            fmt += "<table>"
+            fmt += "<table style='width: 100%;'>"
             fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         # Get the header info
@@ -247,7 +280,7 @@ class Table(_vtk.vtkTable, DataObject):
         if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
-            fmt += "<table>\n"
+            fmt += "<table style='width: 100%;'>\n"
             titles = ["Name", "Type", "N Comp", "Min", "Max"]
             fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"

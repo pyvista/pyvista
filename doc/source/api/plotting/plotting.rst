@@ -63,18 +63,17 @@ It is possible to use the ``Plotter`` class as well.
     plotter.add_mesh(sphere)
     plotter.show(jupyter_backend='static')
 
-Additionally, you can generate interactive plots by leveraging a
-jupyter plotting backend like ``panel``, ``ipygany``, or
-``pythreejs``.  You can even use it to create interactive
-documentation online.
+Additionally, you can generate interactive plots by leveraging our
+jupyter plotting backend ``trame``.  You can even use it to create
+interactive documentation online.
 
 .. jupyter-execute::
 
     plotter = pv.Plotter(window_size=(600, 400))
     plotter.background_color = 'w'
     plotter.enable_anti_aliasing()
-    plotter.add_mesh(sphere, color='tan', show_edges=True)
-    plotter.show(jupyter_backend='pythreejs')
+    plotter.add_mesh(sphere, color='lightblue', show_edges=True)
+    plotter.show(jupyter_backend='static')
 
 For more details, see the section on :ref:`jupyter_plotting`.
 
@@ -122,12 +121,13 @@ values change through time:
 
 
     globe = examples.load_globe()
+    texture = examples.load_globe_texture()
     globe.point_data['scalars'] = np.random.rand(globe.n_points)
     globe.set_active_scalars('scalars')
 
 
     plotter = pvqt.BackgroundPlotter()
-    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
+    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=texture, scalars='scalars')
     plotter.view_isometric()
 
     # shrink globe in the background

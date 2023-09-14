@@ -11,13 +11,15 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, is_pyvista_dataset, wrap
 
-from .._typing import BoundsLike
+from . import _vtk_core as _vtk
+from ._typing_core import BoundsLike
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import FieldAssociation
+from .utilities.geometric_objects import Box
+from .utilities.helpers import is_pyvista_dataset, wrap
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
@@ -40,6 +42,14 @@ class MultiBlock(
        ``MultiBlock`` adheres more closely to being list like, and inherits
        from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
+
+    Parameters
+    ----------
+    *args : dict, optional
+        Data object dictionary.
+
+    **kwargs : dict, optional
+        See :func:`pyvista.read` for additional options.
 
     Examples
     --------
@@ -90,8 +100,8 @@ class MultiBlock(
 
     """
 
-    # Bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
+    plot = pyvista._plot.plot
+
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:
@@ -139,16 +149,16 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, pyvista.wrap(block))
+                self.SetBlock(i, wrap(block))
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Find min/max for bounds across blocks.
 
         Returns
         -------
         tuple[float, float, float, float, float, float]
-            length 6 tuple of floats containing min/max along each axis
+            Length 6 tuple of floats containing min/max along each axis.
 
         Examples
         --------
@@ -182,8 +192,13 @@ class MultiBlock(
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def center(self) -> Any:
+    def center(self) -> Any:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
+
+        Returns
+        -------
+        Any
+            Center of the bounding box.
 
         Examples
         --------
@@ -202,8 +217,13 @@ class MultiBlock(
         return np.reshape(cast(list, self.bounds), (3, 2)).mean(axis=1)
 
     @property
-    def length(self) -> float:
+    def length(self) -> float:  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box.
+
+        Returns
+        -------
+        float
+            Length of the diagonal of the bounding box.
 
         Examples
         --------
@@ -218,11 +238,16 @@ class MultiBlock(
         4.3584
 
         """
-        return pyvista.Box(self.bounds).length
+        return Box(self.bounds).length
 
     @property
-    def n_blocks(self) -> int:
+    def n_blocks(self) -> int:  # numpydoc ignore=RT01
         """Return the total number of blocks set.
+
+        Returns
+        -------
+        int
+            Total number of blocks set.
 
         Examples
         --------
@@ -240,13 +265,20 @@ class MultiBlock(
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n):
-        """Change the total number of blocks set."""
+    def n_blocks(self, n):  # numpydoc ignore=GL08
+        """Change the total number of blocks set.
+
+        Parameters
+        ----------
+        n : int
+            The total number of blocks set.
+
+        """
         self.SetNumberOfBlocks(n)
         self.Modified()
 
     @property
-    def volume(self) -> float:
+    def volume(self) -> float:  # numpydoc ignore=RT01
         """Return the total volume of all meshes in this dataset.
 
         Returns
@@ -336,7 +368,9 @@ class MultiBlock(
         raise KeyError(f'Block name ({name}) not found')
 
     @overload
-    def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
+    def __getitem__(
+        self, index: Union[int, str]
+    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -404,8 +438,8 @@ class MultiBlock(
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
-        if not pyvista.is_pyvista_dataset(dataset):
-            dataset = pyvista.wrap(dataset)
+        if not is_pyvista_dataset(dataset):
+            dataset = wrap(dataset)
         self.n_blocks += 1
         self[index] = dataset
         # No overwrite if name is None
@@ -474,7 +508,7 @@ class MultiBlock(
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> data = {"poly": pv.PolyData(), "uni": pv.UniformGrid()}
+        >>> data = {"poly": pv.PolyData(), "img": pv.ImageData()}
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.get("poly")
         PolyData ...
@@ -607,13 +641,13 @@ class MultiBlock(
     @overload
     def __setitem__(
         self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
-    ):  # noqa: D105
+    ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
-    ):  # noqa: D105
+    ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
@@ -625,8 +659,8 @@ class MultiBlock(
 
         To set the name simultaneously, pass a string name as the 2nd index.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import pyvista
         >>> multi = pyvista.MultiBlock()
         >>> multi.append(pyvista.PolyData())
@@ -892,7 +926,7 @@ class MultiBlock(
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
         fmt = ""
-        fmt += "<table>"
+        fmt += "<table style='width: 100%;'>"
         fmt += "<tr><th>Information</th><th>Blocks</th></tr>"
         fmt += "<tr><td>"
         fmt += "\n"
@@ -929,13 +963,14 @@ class MultiBlock(
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        return fmt
+        return fmt.strip()
 
     def __str__(self) -> str:
         """Return the str representation of the multi block."""
@@ -945,7 +980,7 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    def copy_meta_from(self, ido, deep):
+    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
@@ -1014,7 +1049,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.utilities.helpers.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray
@@ -1110,6 +1145,8 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     dataset.replace(i, block.as_polydata_blocks(copy=copy))
+                elif isinstance(block, pyvista.PointSet):
+                    dataset.replace(i, block.cast_to_polydata(deep=True))
                 elif not isinstance(block, pyvista.PolyData):
                     dataset.replace(i, block.extract_surface())
                 elif copy:
@@ -1123,7 +1160,7 @@ class MultiBlock(
         return dataset
 
     @property
-    def is_all_polydata(self) -> bool:
+    def is_all_polydata(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also
@@ -1224,7 +1261,7 @@ class MultiBlock(
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(self):
-        """Check if there are any consistent active scalars."""
+        """Get if there are any consistent active scalars."""
         point_names = set()
         cell_names = set()
         for block in self:

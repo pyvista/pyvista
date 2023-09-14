@@ -51,7 +51,7 @@ def plot_cell(grid, cpos=None, **kwargs):
 
 
 def Empty() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single Tetrahedron.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single empty cell.
 
     This cell corresponds to the :attr:`pyvista.CellType.EMPTY_CELL` cell type.
 
@@ -383,6 +383,42 @@ def Polygon() -> UnstructuredGrid:
     points = [[0, 0, 0], [1, -0.1, 0], [0.8, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
     cells = [len(points)] + list(range(len(points)))
     return UnstructuredGrid(cells, [CellType.POLYGON], points)
+
+
+def Polyhedron() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single polyhedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.POLYHEDRON` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single polyhedron.
+
+    Examples
+    --------
+    Create and plot a single polyhedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.Polyhedron()
+    >>> examples.plot_cell(grid)
+
+    A polyhedron is defined by it's faces. List the grid's faces.
+
+    >>> grid.get_cell(0).faces  # doctest: +ELLIPSIS
+    [Cell...
+    ..., Cell...
+    ..., Cell...
+    ...]
+
+    >>> grid.celltypes  # same as pyvista.CellType.POLYHEDRON
+    array([42], dtype=uint8)
+
+    """
+    points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
+    cells = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+    cells = [len(cells)] + cells
+    return UnstructuredGrid(cells, [CellType.POLYHEDRON], points)
 
 
 def Pixel() -> UnstructuredGrid:

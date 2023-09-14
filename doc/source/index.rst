@@ -35,7 +35,7 @@ dependent Python modules.
 .. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
-Share this project on Twitter: |tweet|
+Share this project on X: |tweet|
 
 
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
@@ -75,9 +75,8 @@ might want to use PyVista:
 .. jupyter-execute::
    :hide-code:
 
-   # Configure for panel
    import pyvista
-   pyvista.set_jupyter_backend('panel')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False

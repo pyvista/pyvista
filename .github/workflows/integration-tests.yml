@@ -35,9 +35,11 @@ jobs:
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
-        run: pip install numpy scipy matplotlib pyvistaqt nibabel PyQt6 qtpy ipyvtklink ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio-ffmpeg
+        run: pip install numpy scipy matplotlib nibabel PyQt6 qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
       - name: Install PyVista
         run: pip install -ve .  # pyvista
+      - name: Install PyVistaQt main
+        run: pip install -v git+https://github.com/pyvista/pyvistaqt.git
       - name: Install MNE
         run: pip install -ve .  # mne
         working-directory: mne-python
@@ -72,3 +74,35 @@ jobs:
       - run: pip install -ve .
       - run: pytest ./tests
         working-directory: pyvistaqt
+
+  geovista:
+    name: GeoVista
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
+    env:
+      CARTOPY_FEATURE: 'https://raw.githubusercontent.com/SciTools/cartopy/main/tools/cartopy_feature_download.py'
+      CARTOPY_SHARE_DIR: ~/.local/share/cartopy
+      GEOVISTA_POOCH_MUTE: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: git clone https://github.com/bjlittle/geovista.git --single-branch
+      - name: Install PyVista
+        run: pip install -ve . # pyvista
+      - run: sudo apt-get install libgeos-dev
+      - name: Install GeoVista
+        run: pip install -ve . # geovista
+        working-directory: geovista
+      - run: pip install -r requirements/pypi-optional-test.txt
+        working-directory: geovista
+      - name: Download cartopy assets
+        run: |
+          wget --quiet ${CARTOPY_FEATURE}
+          mkdir -p ${CARTOPY_SHARE_DIR}
+          python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
+      - run: pytest -W error
+        working-directory: geovista

@@ -1,5 +1,6 @@
-# see https://github.com/jupyter-widgets/ipywidgets/issues/3729
-import ipykernel.ipkernel  # noqa: F401
+from importlib import metadata
+import re
+
 import numpy as np
 from numpy.random import default_rng
 from pytest import fixture, mark, skip
@@ -79,7 +80,7 @@ def struct_grid():
 
 @fixture()
 def plane():
-    return pyvista.Plane()
+    return pyvista.Plane(direction=(0, 0, -1))
 
 
 @fixture()
@@ -96,7 +97,7 @@ def tri_cylinder():
 @fixture()
 def datasets():
     return [
-        examples.load_uniform(),  # UniformGrid
+        examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_hexbeam(),  # UnstructuredGrid
         examples.load_airplane(),  # PolyData
@@ -107,19 +108,19 @@ def datasets():
 @fixture()
 def multiblock_poly():
     # format and order of data (including missing) is intentional
-    mesh_a = pyvista.Sphere(center=(0, 0, 0))
+    mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
     mesh_a['data_a'] = mesh_a.points[:, 0] * 10
     mesh_a['data_b'] = mesh_a.points[:, 1] * 10
     mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
     mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
 
-    mesh_b = pyvista.Sphere(center=(1, 0, 0))
+    mesh_b = pyvista.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
     mesh_b['data_a'] = mesh_b.points[:, 0] * 10
     mesh_b['data_b'] = mesh_b.points[:, 1] * 10
     mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
     mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
 
-    mesh_c = pyvista.Sphere(center=(2, 0, 0))
+    mesh_c = pyvista.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
     mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
     mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
 
@@ -155,36 +156,6 @@ def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
-
-
-def make_two_char_img(text):
-    """Turn text into an image.
-
-    This is really only here to make a two character black and white image.
-
-    """
-    # create a basic texture by plotting a sphere and converting the image
-    # buffer to a texture
-    pl = pyvista.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
-    pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
-    pl.background_color = 'k'
-    pl.camera.zoom = 'tight'
-    return pyvista.Texture(pl.screenshot()).to_image()
-
-
-@fixture()
-def cubemap(texture):
-    """Sample texture as a cubemap."""
-    return pyvista.Texture(
-        [
-            make_two_char_img('X+'),
-            make_two_char_img('X-'),
-            make_two_char_img('Y+'),
-            make_two_char_img('Y-'),
-            make_two_char_img('Z+'),
-            make_two_char_img('Z-'),
-        ]
-    )
 
 
 @fixture()
@@ -239,3 +210,51 @@ def pytest_runtest_setup(item):
         if pyvista.vtk_version_info < version_needed:
             version_str = '.'.join(map(str, version_needed))
             skip(f'Test needs VTK {version_str} or newer.')
+
+
+def pytest_report_header(config):
+    """Header for pytest to show versions of required and optional packages."""
+
+    required = []
+    extra = {}
+    for item in metadata.requires("pyvista"):
+        pkg_name = re.findall(r"[a-z0-9_\-]+", item, re.IGNORECASE)[0]
+        if pkg_name == "pyvista":
+            continue
+        elif res := re.findall("extra == ['\"](.+)['\"]", item):
+            assert len(res) == 1, item
+            pkg_extra = res[0]
+            if pkg_extra not in extra:
+                extra[pkg_extra] = []
+            extra[pkg_extra].append(pkg_name)
+        else:
+            required.append(pkg_name)
+
+    lines = []
+    items = []
+    for name in required:
+        try:
+            version = metadata.version(name)
+            items.append(f"{name}-{version}")
+        except metadata.PackageNotFoundError:
+            items.append(f"{name} (not found)")
+    lines.append("required packages: " + ", ".join(items))
+
+    not_found = []
+    for pkg_extra in extra.keys():
+        installed = []
+        for name in extra[pkg_extra]:
+            try:
+                version = metadata.version(name)
+                installed.append(f"{name}-{version}")
+            except metadata.PackageNotFoundError:
+                not_found.append(name)
+        if installed:
+            plrl = "s" if len(installed) != 1 else ""
+            comma_lst = ", ".join(installed)
+            lines.append(f"optional {pkg_extra!r} package{plrl}: {comma_lst}")
+    if not_found:
+        plrl = "s" if len(not_found) != 1 else ""
+        comma_lst = ", ".join(not_found)
+        lines.append(f"optional package{plrl} not found: {comma_lst}")
+    return "\n".join(lines)

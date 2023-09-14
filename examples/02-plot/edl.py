@@ -63,7 +63,7 @@ point_cloud = examples.download_lidar()
 
 # Plot a typical point cloud with no EDL
 p = pv.Plotter()
-p.add_mesh(point_cloud, color="tan", point_size=5)
+p.add_mesh(point_cloud, color='lightblue', point_size=5)
 p.show()
 
 
@@ -73,7 +73,7 @@ p.show()
 
 # Plot with EDL
 p = pv.Plotter()
-p.add_mesh(point_cloud, color="tan", point_size=5)
+p.add_mesh(point_cloud, color='lightblue', point_size=5)
 p.enable_eye_dome_lighting()
 p.show()
 

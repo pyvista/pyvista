@@ -9,7 +9,7 @@ Why PyVista?
    # jupyterlab boilerplate setup
    import pyvista
 
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
@@ -140,7 +140,8 @@ field of arrows using :func:`numpy.meshgrid`:
     # Make a grid
     x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
                           np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 5))
+                          np.linspace(-5, 5, 5),
+                          indexing='ij')
 
     points = np.empty((x.size, 3))
     points[:, 0] = x.ravel('F')

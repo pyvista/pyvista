@@ -19,11 +19,13 @@ plotter = pv.Plotter(shape=(2, 2))
 
 plotter.subplot(0, 0)
 plotter.add_text("Render Window 0", font_size=30)
-plotter.add_mesh(examples.load_globe())
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
+plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(0, 1)
 plotter.add_text("Render Window 1", font_size=30)
-plotter.add_mesh(pv.Cube(), show_edges=True, color="tan")
+plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 plotter.subplot(1, 0)
 plotter.add_text("Render Window 2", font_size=30)
@@ -128,7 +130,7 @@ plotter.camera.zoom(10)
 
 plotter.subplot(2, 0)
 plotter.add_text("Group 2")
-plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color="tan")
+plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color='lightblue')
 plotter.view_isometric()
 plotter.camera.zoom(2)
 
@@ -138,7 +140,9 @@ plotter.add_mesh(examples.load_uniform(), show_edges=True)
 
 plotter.subplot(1, 3)
 plotter.add_text("Group 4")
-plotter.add_mesh(examples.load_globe())
+globe = examples.load_globe()
+texture = examples.load_globe_texture()
+plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(1, 1)
 plotter.add_text("Cell (1,1)")
@@ -157,7 +161,7 @@ plotter.add_mesh(examples.load_airplane(), show_edges=False)
 
 plotter.subplot(4, 3)
 plotter.add_text("Cell (4,3)")
-plotter.add_mesh(pv.Cube(), show_edges=True, color="tan")
+plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 # Display the window
 plotter.show()

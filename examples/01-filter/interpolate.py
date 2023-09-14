@@ -4,6 +4,22 @@
 Interpolating
 ~~~~~~~~~~~~~
 
+There are two main methods of interpolating or sampling data from a target mesh
+in PyVista. :func:`pyvista.DataSetFilters.interpolate` uses a distance weighting
+kernel to interpolate point data from nearby points of the target mesh onto
+the desired points.
+:func:`pyvista.DataSetFilters.sample` interpolates data using the
+interpolation scheme of the enclosing cell from the target mesh.
+
+If the target mesh is a point cloud, i.e. there is no connectivity in the cell
+structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
+preferred.  If interpolation is desired within the cells of the target mesh, then
+:func:`pyvista.DataSetFilters.sample` is typically desired.
+
+
+This example uses :func:`pyvista.DataSetFilters.interpolate`.
+For :func:`pyvista.DataSetFilters.sample`, see :ref:`resampling_example`.
+
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
 """
@@ -53,7 +69,7 @@ probes = examples.download_thermal_probes()
 
 ###############################################################################
 # Create the interpolation grid around the sparse data
-grid = pv.UniformGrid()
+grid = pv.ImageData()
 grid.origin = (329700, 4252600, -2700)
 grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)

@@ -38,8 +38,7 @@ The source code for the plot may be included in one of two ways:
    Animations will not be saved, only the last frame will be shown.
 
 
-Options
--------
+**Options**
 The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
@@ -70,8 +69,7 @@ directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
 
-Configuration options
----------------------
+**Configuration options**
 The plot directive has the following configuration options:
 
     plot_include_source : bool
@@ -298,7 +296,7 @@ class ImageFile:
         self.dirname = dirname
 
     @property
-    def filename(self):
+    def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
 
@@ -369,7 +367,7 @@ def render_figures(
             )
 
             images = []
-            figures = pyvista.plotting._ALL_PLOTTERS
+            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):

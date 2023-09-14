@@ -1,9 +1,9 @@
 """Prop3D module."""
 from typing import Tuple
 
-from pyvista import _vtk
+from pyvista.core._typing_core import BoundsLike, Vector
 
-from .._typing import BoundsLike, Vector
+from . import _vtk
 
 
 class Prop3D(_vtk.vtkProp3D):
@@ -19,7 +19,7 @@ class Prop3D(_vtk.vtkProp3D):
         super().__init__()
 
     @property
-    def scale(self) -> Tuple[float, float, float]:
+    def scale(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set entity scale.
 
         Examples
@@ -38,11 +38,11 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Vector):
+    def scale(self, value: Vector):  # numpydoc ignore=GL08
         return self.SetScale(value)
 
     @property
-    def position(self) -> Tuple[float, float, float]:
+    def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity position.
 
         Examples
@@ -63,7 +63,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector):
+    def position(self, value: Vector):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
@@ -160,7 +160,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> tuple:
+    def orientation(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the entity orientation.
 
         Orientation is defined as the rotation from the global axes in degrees
@@ -168,22 +168,6 @@ class Prop3D(_vtk.vtkProp3D):
 
         Examples
         --------
-        Show that the orientation changes with rotation.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh)
-        >>> actor.rotate_x(90)
-        >>> actor.orientation  # doctest:+SKIP
-        (90, 0, 0)
-
-        Set the orientation directly.
-
-        >>> actor.orientation = (0, 45, 45)
-        >>> actor.orientation  # doctest:+SKIP
-        (0, 45, 45)
-
         Reorient just the actor and plot it. Note how the actor is rotated
         about its own axes as defined by its position.
 
@@ -203,15 +187,31 @@ class Prop3D(_vtk.vtkProp3D):
         >>> pl.show_axes()
         >>> pl.show()
 
+        Show that the orientation changes with rotation.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor.rotate_x(90)
+        >>> actor.orientation  # doctest:+SKIP
+        (90, 0, 0)
+
+        Set the orientation directly.
+
+        >>> actor.orientation = (0, 45, 45)
+        >>> actor.orientation  # doctest:+SKIP
+        (0, 45, 45)
+
         """
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: tuple):
+    def orientation(self, value: tuple):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of the entity.
 
         Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
@@ -229,7 +229,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> tuple:
+    def center(self) -> tuple:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples

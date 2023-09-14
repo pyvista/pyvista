@@ -8,10 +8,11 @@ import matplotlib
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
-from pyvista.utilities import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.misc import _check_range
+from pyvista.report import vtk_version_info
 
-from ..utilities.misc import _check_range, vtk_version_info
+from . import _vtk
 from .colors import Color
 from .mapper import _BaseMapper
 
@@ -99,7 +100,7 @@ class BlockAttributes:
         return self._attr.HasBlockPickability(self._block)
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Get or set the color of a block.
 
         Examples
@@ -125,7 +126,7 @@ class BlockAttributes:
         return Color(tuple(self._attr.GetBlockColor(self._block)))
 
     @color.setter
-    def color(self, new_color):
+    def color(self, new_color):  # numpydoc ignore=GL08
         if new_color is None:
             self._attr.RemoveBlockColor(self._block)
             self._attr.Modified()
@@ -133,7 +134,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:
+    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -158,7 +159,7 @@ class BlockAttributes:
         return self._attr.GetBlockVisibility(self._block)
 
     @visible.setter
-    def visible(self, new_visible: bool):
+    def visible(self, new_visible: bool):  # numpydoc ignore=GL08
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
             self._attr.Modified()
@@ -166,7 +167,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:
+    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -198,8 +199,7 @@ class BlockAttributes:
         return self._attr.GetBlockOpacity(self._block)
 
     @opacity.setter
-    def opacity(self, new_opacity: float):
-        """Get or set the visibility of a block."""
+    def opacity(self, new_opacity: float):  # numpydoc ignore=GL08
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
             self._attr.Modified()
@@ -209,7 +209,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:
+    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples
@@ -238,7 +238,7 @@ class BlockAttributes:
         return self._attr.GetBlockPickability(self._block)
 
     @pickable.setter
-    def pickable(self, new_pickable: bool):
+    def pickable(self, new_pickable: bool):  # numpydoc ignore=GL08
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
             self._attr.Modified()
@@ -460,21 +460,21 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.block_attr.get_block(0)  # doctest:+SKIP
+        >>> mapper.block_attr.get_block(0)
         MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         Note this is the same as using ``__getitem__``
 
-        >>> mapper.block_attr[0]  # doctest:+SKIP
-        MultiBlock (...)
-          N Blocks:	2
-          X Bounds:	-0.500, 0.500
-          Y Bounds:	-0.500, 0.500
-          Z Bounds:	-0.500, 1.500
+        >>> mapper.block_attr[0]
+        Composite Block Addr=... Attributes
+        Visible:   None
+        Opacity:   None
+        Color:     None
+        Pickable   None
 
         """
         try:
@@ -524,7 +524,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     dataset : pyvista.MultiBlock
         Multiblock dataset.
 
-    theme : pyvista.themes.DefaultTheme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional
@@ -558,7 +558,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':
+    def dataset(self) -> 'pv.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -569,18 +569,18 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
-        >>> mapper.dataset  # doctest:+SKIP
+        >>> mapper.dataset
         MultiBlock (...)
-          N Blocks:     2
-          X Bounds:     -0.500, 0.500
-          Y Bounds:     -0.500, 0.500
-          Z Bounds:     -0.500, 1.500
+          N Blocks    2
+          X Bounds    -0.500, 0.500
+          Y Bounds    -0.500, 0.500
+          Z Bounds    -0.500, 1.500
 
         """
         return self._dataset
 
     @property
-    def block_attr(self) -> CompositeAttributes:
+    def block_attr(self) -> CompositeAttributes:  # numpydoc ignore=RT01
         """Return the block attributes.
 
         Notes
@@ -624,7 +624,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._attr
 
     @property
-    def color_missing_with_nan(self) -> bool:
+    def color_missing_with_nan(self) -> bool:  # numpydoc ignore=RT01
         """Color missing arrays with the NaN color.
 
         Examples
@@ -648,7 +648,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self.GetColorMissingArraysWithNanColor()
 
     @color_missing_with_nan.setter
-    def color_missing_with_nan(self, value: bool):
+    def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
     def set_unique_colors(self):

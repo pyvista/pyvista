@@ -1,7 +1,7 @@
 """Define types of cells."""
 from enum import IntEnum
 
-from pyvista import _vtk
+from . import _vtk_core as _vtk
 
 
 class CellType(IntEnum):
@@ -37,8 +37,8 @@ class CellType(IntEnum):
     ...     dtype=np.float32,
     ... )
     >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
-    >>> grid  # doctest:+SKIP
-    UnstructuredGrid (0x7f5b0a55e1a0)
+    >>> grid
+    UnstructuredGrid (...)
       N Cells:    1
       N Points:   8
       X Bounds:   0.000e+00, 1.000e+00

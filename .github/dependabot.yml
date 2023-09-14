@@ -4,14 +4,14 @@ updates:
     directory: "/" # Location of package manifests
     insecure-external-code-execution: allow
     schedule:
-      interval: "daily"
+      interval: "monthly"
     labels:
       - "maintenance"
       - "dependencies"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
     labels:
       - "maintenance"
       - "dependencies"

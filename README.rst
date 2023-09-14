@@ -109,7 +109,7 @@ PyVista.
 .. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
-Share this project on Twitter: |tweet|
+Share this project on X: |tweet|
 
 
 PyVista is a NumFOCUS affiliated project
@@ -163,12 +163,10 @@ installation and usage details.
 For general questions about the project, its applications, or about software
 usage, please create a discussion in `pyvista/discussions`_
 where the community can collectively address your questions. You are also
-welcome to join us on Slack_ or send one of the developers an email.
-The project support team can be reached at `info@pyvista.org`_.
+welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
 .. _Slack: http://slack.pyvista.org
-.. _info@pyvista.org: mailto:info@pyvista.org
 
 
 Installation
@@ -202,11 +200,20 @@ by a diverse community of users on our `Connections page`_.
 Authors
 =======
 
+.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/graphs/contributors
+   :alt: contrib.rocks
+
 Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
+|contrib.rocks|
+
+Made with `contrib rocks`_.
+
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
+.. _contrib rocks: https://contrib.rocks
 
 
 Contributing

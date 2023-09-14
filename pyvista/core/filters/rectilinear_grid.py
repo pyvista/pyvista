@@ -5,8 +5,9 @@ from typing import Sequence, Union
 
 import numpy as np
 
-from pyvista import _vtk, abstract_class
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class
@@ -18,7 +19,7 @@ class RectilinearGridFilters:
         tetra_per_cell: int = 5,
         mixed: Union[Sequence[int], bool] = False,
         pass_cell_ids: bool = True,
-        pass_cell_data: bool = True,
+        pass_data: bool = True,
         progress_bar: bool = False,
     ):
         """Create a tetrahedral mesh structured grid.
@@ -46,7 +47,7 @@ class RectilinearGridFilters:
             :class:`pyvista.RectilinearGrid`. The name of this array is
             ``'vtkOriginalCellIds'`` within the ``cell_data``.
 
-        pass_cell_data : bool, default: True
+        pass_data : bool, default: True
             Set to ``True`` to make the tetrahedra mesh have the cell data from
             the original :class:`pyvista.RectilinearGrid`.  This uses
             ``pass_cell_ids=True`` internally. If ``True``, ``pass_cell_ids``
@@ -88,7 +89,7 @@ class RectilinearGridFilters:
 
         """
         alg = _vtk.vtkRectilinearGridToTetrahedra()
-        alg.SetRememberVoxelId(pass_cell_ids or pass_cell_data)
+        alg.SetRememberVoxelId(pass_cell_ids or pass_data)
         if mixed is not False:
             if isinstance(mixed, str):
                 self.cell_data.active_scalars_name = mixed
@@ -116,16 +117,27 @@ class RectilinearGridFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Converting to tetrahedra')
         out = _get_output(alg)
-        if pass_cell_data:
+
+        if pass_data:
             # algorithm stores original cell ids in active scalars
+            # this does not preserve active scalars, but we need to
+            # keep active scalars until they are renamed
             for name in self.cell_data:  # type: ignore
                 if name != out.cell_data.active_scalars_name:
                     out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore
+
+            for name in self.point_data:  # type: ignore
+                out[name] = self.point_data[name]  # type: ignore
 
         if alg.GetRememberVoxelId():
             # original cell_ids are not named and are the active scalars
             out.cell_data.set_array(
                 out.cell_data.pop(out.cell_data.active_scalars_name), 'vtkOriginalCellIds'
             )
+
+        if pass_data:
+            # Now reset active scalars in cast the original mesh had data with active scalars
+            association, name = self.active_scalars_info  # type: ignore
+            out.set_active_scalars(name, preference=association)
 
         return out

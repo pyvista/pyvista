@@ -1,7 +1,7 @@
 """Render passes module for PyVista."""
 import weakref
 
-from pyvista import _vtk
+from . import _vtk
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
@@ -29,6 +29,11 @@ class RenderPasses:
     The primary passes are added as part of a vtk.vtkRenderPassCollection or
     are "stacked", while the post-processing passes are added as a final pass
     to the rendered image.
+
+    Parameters
+    ----------
+    renderer : vtk.vtkRenderer
+        Renderer to initialize render passes for.
 
     """
 
@@ -122,7 +127,14 @@ class RenderPasses:
         self._blur_passes = []
 
     def enable_edl_pass(self):
-        """Enable the EDL pass."""
+        """Enable the EDL pass.
+
+        Returns
+        -------
+        vtk.vtkEDLShading
+            The enabled EDL pass.
+
+        """
         if self._edl_pass is not None:
             return
         self._edl_pass = _vtk.vtkEDLShading()
@@ -141,6 +153,11 @@ class RenderPasses:
 
         This is a vtkImageProcessingPass and delegates to the last pass.
 
+        Returns
+        -------
+        vtk.vtkGaussianBlurPass
+            The added Gaussian blur pass.
+
         """
         blur_pass = _vtk.vtkGaussianBlurPass()
         self._add_pass(blur_pass)
@@ -154,7 +171,14 @@ class RenderPasses:
             self._remove_pass(self._blur_passes.pop())
 
     def enable_shadow_pass(self):
-        """Enable shadow pass."""
+        """Enable shadow pass.
+
+        Returns
+        -------
+        vtk.vtkShadowMapPass
+            The enabled shadow pass.
+
+        """
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
             return
@@ -173,7 +197,20 @@ class RenderPasses:
         self._update_passes()
 
     def enable_depth_of_field_pass(self, automatic_focal_distance=True):
-        """Enable the depth of field pass."""
+        """Enable the depth of field pass.
+
+        Parameters
+        ----------
+        automatic_focal_distance : bool, default: True
+            If ``True``, the depth of field effect will automatically compute
+            the focal distance. If ``False``, the user must specify the distance.
+
+        Returns
+        -------
+        vtk.vtkDepthOfFieldPass
+            The enabled depth of field pass.
+
+        """
         if self._dof_pass is not None:
             return
 
@@ -193,7 +230,25 @@ class RenderPasses:
         self._dof_pass = None
 
     def enable_ssao_pass(self, radius, bias, kernel_size, blur):
-        """Enable the screen space ambient occlusion pass."""
+        """Enable the screen space ambient occlusion pass.
+
+        Parameters
+        ----------
+        radius : float
+            Radius of occlusion generation.
+        bias : float
+            Bias to adjust the occlusion generation.
+        kernel_size : int
+            Size of the kernel for occlusion generation.
+        blur : bool
+            If ``True``, the pass uses a blur stage.
+
+        Returns
+        -------
+        vtk.vtkSSAOPass
+            The enabled screen space ambient occlusion pass.
+
+        """
         if self._dof_pass is not None:
             raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
 
@@ -215,7 +270,14 @@ class RenderPasses:
         self._ssao_pass = None
 
     def enable_ssaa_pass(self):
-        """Enable super-sample anti-aliasing pass."""
+        """Enable super-sample anti-aliasing pass.
+
+        Returns
+        -------
+        vtk.vtkSSAAPass
+            The enabled super-sample anti-aliasing pass.
+
+        """
         if self._ssaa_pass is not None:
             return
         self._ssaa_pass = _vtk.vtkSSAAPass()
