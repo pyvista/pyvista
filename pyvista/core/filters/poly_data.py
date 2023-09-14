@@ -657,6 +657,9 @@ class PolyDataFilters(DataSetFilters):
     def curvature(self, curv_type='mean', progress_bar=False):
         """Return the pointwise curvature of a mesh.
 
+        See :ref:`_connectivity_seed_ref` for more examples using this
+        filter.
+
         Parameters
         ----------
         curv_type : str, default: "mean"
@@ -1973,7 +1976,7 @@ class PolyDataFilters(DataSetFilters):
         output = _get_output(alg)
 
         # Check output so no segfaults occur
-        if output.n_points < 1:
+        if output.n_points < 1 and self.n_cells > 0:
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
