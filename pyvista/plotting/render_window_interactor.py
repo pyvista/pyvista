@@ -42,7 +42,6 @@ class Timer:
         """Initialize."""
         self.step = 0
         self.max_steps = max_steps
-        self.iren = iren
         self.id = None
         self.callback = callback
 
