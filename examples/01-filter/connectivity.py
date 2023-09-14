@@ -56,7 +56,7 @@ p.show()
 # ~~~~~~~~~~~~~~~~~~~~~
 #
 # Use connectivity to extract the smaller 'noisy' regions that were
-# removed in the :ref:`_connectivity_noisy_ref` example above.
+# removed in the remove noisy isosurfaces example above.
 #
 # First, get a list of all region ids.
 all_regions = pine_roots.connectivity('all')
