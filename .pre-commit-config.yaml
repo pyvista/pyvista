@@ -32,6 +32,18 @@ repos:
       "flake8-quotes==3.3.2",
     ]
 
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.2.5
+  hooks:
+  - id: codespell
+    args: [
+      "doc examples examples_trame pyvista tests",
+      "*.py *.rst *.md",
+    ]
+    additional_dependencies: [
+      "tomli"
+    ]
+
 - repo: https://github.com/pycqa/pydocstyle
   rev: 6.3.0
   hooks:
