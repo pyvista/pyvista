@@ -657,7 +657,7 @@ class PolyDataFilters(DataSetFilters):
     def curvature(self, curv_type='mean', progress_bar=False):
         """Return the pointwise curvature of a mesh.
 
-        See :ref:`_connectivity_example` for more examples using this
+        See :ref:`connectivity_example` for more examples using this
         filter.
 
         Parameters
