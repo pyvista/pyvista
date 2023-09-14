@@ -27,7 +27,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.UniformGrid], optional
+    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.ImageData], optional
         Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
@@ -131,10 +131,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             # add each image to the cubemap
             for i, image in enumerate(uinput):
-                if not isinstance(image, pv.UniformGrid):
+                if not isinstance(image, pv.ImageData):
                     raise TypeError(
                         'If a sequence, the each item in the first argument must be a '
-                        'pyvista.UniformGrid'
+                        'pyvista.ImageData'
                     )
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
@@ -157,7 +157,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(image)
 
     @property
-    def interpolate(self) -> bool:
+    def interpolate(self) -> bool:  # numpydoc ignore=RT01
         """Return if interpolate is enabled or disabled.
 
         Examples
@@ -179,21 +179,21 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetInterpolate())
 
     @interpolate.setter
-    def interpolate(self, value: bool):
+    def interpolate(self, value: bool):  # numpydoc ignore=GL08
         self.SetInterpolate(value)
 
     @property
-    def mipmap(self) -> bool:
+    def mipmap(self) -> bool:  # numpydoc ignore=RT01
         """Return if mipmap is enabled or disabled."""
         return bool(self.GetMipmap())
 
     @mipmap.setter
-    def mipmap(self, value: bool):
+    def mipmap(self, value: bool):  # numpydoc ignore=GL08
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
-        if not isinstance(image, pv.UniformGrid):
-            image = pv.UniformGrid(image)
+        if not isinstance(image, pv.ImageData):
+            image = pv.ImageData(image)
         self.SetInputDataObject(image)
         self.Update()
 
@@ -210,7 +210,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         elif image.ndim == 2:
             n_components = 1
 
-        grid = pv.UniformGrid(dimensions=(image.shape[1], image.shape[0], 1))
+        grid = pv.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
             (-1, n_components), order='F'
         )
@@ -218,7 +218,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         self._from_image_data(grid)
 
     @property
-    def repeat(self) -> bool:
+    def repeat(self) -> bool:  # numpydoc ignore=RT01
         """Repeat the texture.
 
         This is provided for convenience and backwards compatibility.
@@ -258,7 +258,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetRepeat())
 
     @repeat.setter
-    def repeat(self, flag: bool):
+    def repeat(self, flag: bool):  # numpydoc ignore=GL08
         self.SetRepeat(flag)
 
     def flip(self, axis):
@@ -323,7 +323,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.UniformGrid
+        pyvista.ImageData
             Texture represented as a uniform grid.
 
         """
@@ -398,12 +398,12 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture(np.rot90(self.to_array(), k=3))
 
     @property
-    def cube_map(self) -> bool:
+    def cube_map(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if cube mapping is enabled and ``False`` otherwise."""
         return self.GetCubeMap()
 
     @cube_map.setter
-    def cube_map(self, flag: bool):
+    def cube_map(self, flag: bool):  # numpydoc ignore=GL08
         self.SetCubeMap(flag)
 
     def copy(self):
@@ -443,7 +443,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return attrs
 
     @property
-    def n_components(self) -> int:
+    def n_components(self) -> int:  # numpydoc ignore=RT01
         """Return the number of components in the image.
 
         In textures, 3 or 4 components are used for representing RGB and RGBA
@@ -465,7 +465,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> tuple:
+    def dimensions(self) -> tuple:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples
@@ -537,7 +537,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         pl.show(**kwargs)
 
     @property
-    def wrap(self) -> 'Texture.WrapType':
+    def wrap(self) -> 'Texture.WrapType':  # numpydoc ignore=RT01
         """Return or set the Wrap mode for the texture coordinates.
 
         Wrap mode for the texture coordinates valid values are:
@@ -608,7 +608,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture.WrapType(self.GetWrap())  # type: ignore
 
     @wrap.setter
-    def wrap(self, value: Union['Texture.WrapType', int]):
+    def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -655,24 +655,24 @@ class Texture(_vtk.vtkTexture, DataObject):
 
 
 def image_to_texture(image):
-    """Convert ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``.
+    """Convert :class:`pyvista.ImageData` to a :class:`pyvista.Texture`.
 
     Parameters
     ----------
-    image : pyvista.UniformGrid | vtkImageData
+    image : pyvista.ImageData | vtkImageData
         Image to convert.
 
     Returns
     -------
-    vtkTexture
-        VTK texture.
+    pyvista.Texture
+        The texture.
 
     """
     return Texture(image)
 
 
 def numpy_to_texture(image):
-    """Convert a NumPy image array to a vtk.vtkTexture.
+    """Convert a NumPy image array to a :class:`pyvista.Texture`.
 
     Parameters
     ----------

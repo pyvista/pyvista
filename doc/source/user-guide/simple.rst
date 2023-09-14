@@ -147,7 +147,7 @@ that is bound to each PyVista data object.
    # must have this here as our global backend may not be static
    import pyvista
    pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.smooth_shading = True
@@ -195,7 +195,7 @@ without having to manually interact with the plotting window:
     # reuse the camera position from the previous plotter
     cpos = plotter.camera_position
     plotter = pv.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='tan')
+    plotter.add_mesh(mesh, color='lightblue')
     plotter.camera_position = cpos
     plotter.show(screenshot='airplane.png')
 

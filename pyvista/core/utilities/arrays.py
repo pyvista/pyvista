@@ -145,13 +145,35 @@ def copy_vtk_array(array, deep=True):
 
 
 def has_duplicates(arr):
-    """Return if an array has any duplicates."""
+    """Return if an array has any duplicates.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        Array to be checked for duplicates.
+
+    Returns
+    -------
+    bool
+        ``True`` if the array has any duplicates, otherwise ``False``.
+    """
     s = np.sort(arr, axis=None)
     return (s[1:] == s[:-1]).any()
 
 
 def raise_has_duplicates(arr):
-    """Raise a ValueError if an array is not unique."""
+    """Raise a ValueError if an array is not unique.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        Array to be checked for duplicates.
+
+    Raises
+    ------
+    ValueError
+        If the array contains duplicate values.
+    """
     if has_duplicates(arr):
         raise ValueError("Array contains duplicate values.")
 
@@ -470,7 +492,7 @@ def get_vtk_type(typ):
     Returns
     -------
     int
-        Integer type id specified in ``vtkType.h``
+        Integer type id specified in ``vtkType.h``.
 
     """
     typ = _vtk.get_vtk_array_type(typ)

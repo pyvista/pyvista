@@ -8,7 +8,7 @@ from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation, convert_array
 
 
-class pyvista_ndarray(np.ndarray):
+class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.

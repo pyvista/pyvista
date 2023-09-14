@@ -1,0 +1,204 @@
+AVSucdReader, <class 'pyvista.utilities.reader.AVSucdReader'>
+AmbiguousDataError, <class 'pyvista.errors.AmbiguousDataError'>
+Arrow, <function Arrow at 0x7f72f5d21ca0>
+BMPReader, <class 'pyvista.utilities.reader.BMPReader'>
+BYUReader, <class 'pyvista.utilities.reader.BYUReader'>
+BaseReader, <class 'pyvista.utilities.reader.BaseReader'>
+BinaryMarchingCubesReader, <class 'pyvista.utilities.reader.BinaryMarchingCubesReader'>
+Box, <function Box at 0x7f72f5cac0d0>
+CGNSReader, <class 'pyvista.utilities.reader.CGNSReader'>
+Circle, <function Circle at 0x7f72f5cac790>
+CircularArc, <function CircularArc at 0x7f72f5cac430>
+CircularArcFromNormal, <function CircularArcFromNormal at 0x7f72f5cac4c0>
+Cone, <function Cone at 0x7f72f5cac160>
+Cube, <function Cube at 0x7f72f5cac040>
+Cylinder, <function Cylinder at 0x7f72f5d21b80>
+CylinderStructured, <function CylinderStructured at 0x7f72f5d21c10>
+DEMReader, <class 'pyvista.utilities.reader.DEMReader'>
+DICOMReader, <class 'pyvista.utilities.reader.DICOMReader'>
+Disc, <function Disc at 0x7f72f5cac280>
+Dodecahedron, <function Dodecahedron at 0x7f72f5cacaf0>
+Ellipse, <function Ellipse at 0x7f72f5cac820>
+EnSightReader, <class 'pyvista.utilities.reader.EnSightReader'>
+FacetReader, <class 'pyvista.utilities.reader.FacetReader'>
+FieldAssociation, <enum 'FieldAssociation'>
+FluentReader, <class 'pyvista.utilities.reader.FluentReader'>
+GIFReader, <class 'pyvista.utilities.reader.GIFReader'>
+GLTFReader, <class 'pyvista.utilities.reader.GLTFReader'>
+GPUInfo, <class 'pyvista.utilities.errors.GPUInfo'>
+HDFReader, <class 'pyvista.utilities.reader.HDFReader'>
+HDRReader, <class 'pyvista.utilities.reader.HDRReader'>
+Icosahedron, <function Icosahedron at 0x7f72f5cacb80>
+Icosphere, <function Icosphere at 0x7f72f5cacc10>
+JPEGReader, <class 'pyvista.utilities.reader.JPEGReader'>
+KochanekSpline, <function KochanekSpline at 0x7f72f5cb0430>
+Line, <function Line at 0x7f72f5d21e50>
+MFIXReader, <class 'pyvista.utilities.reader.MFIXReader'>
+MetaImageReader, <class 'pyvista.utilities.reader.MetaImageReader'>
+MissingDataError, <class 'pyvista.errors.MissingDataError'>
+MultiBlockPlot3DReader, <class 'pyvista.utilities.reader.MultiBlockPlot3DReader'>
+MultipleLines, <function MultipleLines at 0x7f72f5d21ee0>
+NIFTIReader, <class 'pyvista.utilities.reader.NIFTIReader'>
+NORMALS, {'x': [1, 0, 0], 'y': [0, 1, 0], 'z': [0, 0, 1], '-x': [-1, 0, 0], '-y': [0, -1, 0], '-z': [0, 0, -1]}
+NRRDReader, <class 'pyvista.utilities.reader.NRRDReader'>
+OBJReader, <class 'pyvista.utilities.reader.OBJReader'>
+Observer, <class 'pyvista.utilities.errors.Observer'>
+Octahedron, <function Octahedron at 0x7f72f5caca60>
+OpenFOAMReader, <class 'pyvista.utilities.reader.OpenFOAMReader'>
+Optional, typing.Optional
+PLYReader, <class 'pyvista.utilities.reader.PLYReader'>
+PNGReader, <class 'pyvista.utilities.reader.PNGReader'>
+PNMReader, <class 'pyvista.utilities.reader.PNMReader'>
+POpenFOAMReader, <class 'pyvista.utilities.reader.POpenFOAMReader'>
+PTSReader, <class 'pyvista.utilities.reader.PTSReader'>
+PVDDataSet, <class 'pyvista.utilities.reader.PVDDataSet'>
+PVDReader, <class 'pyvista.utilities.reader.PVDReader'>
+ParametricBohemianDome, <function ParametricBohemianDome at 0x7f72f5cb04c0>
+ParametricBour, <function ParametricBour at 0x7f72f5cb0550>
+ParametricBoy, <function ParametricBoy at 0x7f72f5cb05e0>
+ParametricCatalanMinimal, <function ParametricCatalanMinimal at 0x7f72f5cb0670>
+ParametricConicSpiral, <function ParametricConicSpiral at 0x7f72f5cb0700>
+ParametricCrossCap, <function ParametricCrossCap at 0x7f72f5cb0790>
+ParametricDini, <function ParametricDini at 0x7f72f5cb0820>
+ParametricEllipsoid, <function ParametricEllipsoid at 0x7f72f5cb08b0>
+ParametricEnneper, <function ParametricEnneper at 0x7f72f5cb0940>
+ParametricFigure8Klein, <function ParametricFigure8Klein at 0x7f72f5cb09d0>
+ParametricHenneberg, <function ParametricHenneberg at 0x7f72f5cb0a60>
+ParametricKlein, <function ParametricKlein at 0x7f72f5cb0af0>
+ParametricKuen, <function ParametricKuen at 0x7f72f5cb0b80>
+ParametricMobius, <function ParametricMobius at 0x7f72f5cb0c10>
+ParametricPluckerConoid, <function ParametricPluckerConoid at 0x7f72f5cb0ca0>
+ParametricPseudosphere, <function ParametricPseudosphere at 0x7f72f5cb0d30>
+ParametricRandomHills, <function ParametricRandomHills at 0x7f72f5cb0dc0>
+ParametricRoman, <function ParametricRoman at 0x7f72f5cb0e50>
+ParametricSuperEllipsoid, <function ParametricSuperEllipsoid at 0x7f72f5cb0ee0>
+ParametricSuperToroid, <function ParametricSuperToroid at 0x7f72f5cb0f70>
+ParametricTorus, <function ParametricTorus at 0x7f72f5cb4040>
+Plane, <function Plane at 0x7f72f5d21dc0>
+PlatonicSolid, <function PlatonicSolid at 0x7f72f5cac940>
+Plot3DFunctionEnum, <enum 'Plot3DFunctionEnum'>
+Plot3DMetaReader, <class 'pyvista.utilities.reader.Plot3DMetaReader'>
+PointCellDataSelection, <class 'pyvista.utilities.reader.PointCellDataSelection'>
+Polygon, <function Polygon at 0x7f72f5cac1f0>
+ProgressMonitor, <class 'pyvista.utilities.helpers.ProgressMonitor'>
+PyVistaDeprecationWarning, <class 'pyvista.utilities.misc.PyVistaDeprecationWarning'>
+Pyramid, <function Pyramid at 0x7f72f5cac550>
+Quadrilateral, <function Quadrilateral at 0x7f72f5cac700>
+Rectangle, <function Rectangle at 0x7f72f5cac670>
+Report, <class 'pyvista.utilities.errors.Report'>
+SLCReader, <class 'pyvista.utilities.reader.SLCReader'>
+STLReader, <class 'pyvista.utilities.reader.STLReader'>
+Scraper, <class 'pyvista.utilities.sphinx_gallery.Scraper'>
+SegYReader, <class 'pyvista.utilities.reader.SegYReader'>
+Sphere, <function Sphere at 0x7f72f5d21d30>
+Spline, <function Spline at 0x7f72f5cb03a0>
+Superquadric, <function Superquadric at 0x7f72f5cac8b0>
+TIFFReader, <class 'pyvista.utilities.reader.TIFFReader'>
+TecplotReader, <class 'pyvista.utilities.reader.TecplotReader'>
+Tetrahedron, <function Tetrahedron at 0x7f72f5cac9d0>
+Text3D, <function Text3D at 0x7f72f5cac310>
+TimeReader, <class 'pyvista.utilities.reader.TimeReader'>
+Triangle, <function Triangle at 0x7f72f5cac5e0>
+Tube, <function Tube at 0x7f72f5d21f70>
+VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
+VTKPDataSetReader, <class 'pyvista.utilities.reader.VTKPDataSetReader'>
+VtkErrorCatcher, <class 'pyvista.utilities.errors.VtkErrorCatcher'>
+Wavelet, <function Wavelet at 0x7f72f5cac3a0>
+XMLImageDataReader, <class 'pyvista.utilities.reader.XMLImageDataReader'>
+XMLMultiBlockDataReader, <class 'pyvista.utilities.reader.XMLMultiBlockDataReader'>
+XMLPImageDataReader, <class 'pyvista.utilities.reader.XMLPImageDataReader'>
+XMLPRectilinearGridReader, <class 'pyvista.utilities.reader.XMLPRectilinearGridReader'>
+XMLPUnstructuredGridReader, <class 'pyvista.utilities.reader.XMLPUnstructuredGridReader'>
+XMLPolyDataReader, <class 'pyvista.utilities.reader.XMLPolyDataReader'>
+XMLRectilinearGridReader, <class 'pyvista.utilities.reader.XMLRectilinearGridReader'>
+XMLStructuredGridReader, <class 'pyvista.utilities.reader.XMLStructuredGridReader'>
+XMLUnstructuredGridReader, <class 'pyvista.utilities.reader.XMLUnstructuredGridReader'>
+XdmfReader, <class 'pyvista.utilities.reader.XdmfReader'>
+_get_sg_image_scraper, <function _get_sg_image_scraper at 0x7f72f5cb4280>
+abstract_class, <function abstract_class at 0x7f72f5e07700>
+algorithm_to_mesh_handler, <function algorithm_to_mesh_handler at 0x7f72f5de6160>
+algorithms, <module 'pyvista.utilities.algorithms' from 'pyvista/utilities/algorithms.py'>
+array_from_vtkmatrix, <function array_from_vtkmatrix at 0x7f72f5e05f70>
+arrays, <module 'pyvista.utilities.arrays' from 'pyvista/utilities/arrays.py'>
+assert_empty_kwargs, <function assert_empty_kwargs at 0x7f72f5d1f940>
+axis_rotation, <function axis_rotation at 0x7f72f5e07c10>
+cartesian_to_spherical, <function cartesian_to_spherical at 0x7f72f5d21310>
+cell_array, <function cell_array at 0x7f72f5e05940>
+cells, <module 'pyvista.utilities.cells' from 'pyvista/utilities/cells.py'>
+check_depth_peeling, <function check_depth_peeling at 0x7f72f5e075e0>
+check_valid_vector, <function check_valid_vector at 0x7f72f5d1fe50>
+compare_images, <function compare_images at 0x7f72f5cb4790>
+conditional_decorator, <class 'pyvista.utilities.helpers.conditional_decorator'>
+convert_array, <function convert_array at 0x7f72f5e05670>
+convert_string_array, <function convert_string_array at 0x7f72f5e055e0>
+create_grid, <function create_grid at 0x7f72f5d21160>
+cubemap, <function cubemap at 0x7f72f5e07ca0>
+cubemap_from_filenames, <function cubemap_from_filenames at 0x7f72f5e07d30>
+errors, <module 'pyvista.utilities.errors' from 'pyvista/utilities/errors.py'>
+features, <module 'pyvista.utilities.features' from 'pyvista/utilities/features.py'>
+field_array, <function field_array at 0x7f72f5e058b0>
+fileio, <module 'pyvista.utilities.fileio' from 'pyvista/utilities/fileio.py'>
+fit_plane_to_points, <function fit_plane_to_points at 0x7f72f5e073a0>
+from_meshio, <function from_meshio at 0x7f72f5e05280>
+generate_plane, <function generate_plane at 0x7f72f5e074c0>
+geometric_objects, <module 'pyvista.utilities.geometric_objects' from 'pyvista/utilities/geometric_objects.py'>
+get_array, <function get_array at 0x7f72f5e05af0>
+get_array_association, <function get_array_association at 0x7f72f5e05b80>
+get_ext, <function get_ext at 0x7f72f5e02dc0>
+get_gpu_info, <function get_gpu_info at 0x7f72f5d1f8b0>
+get_reader, <function get_reader at 0x7f72f5cc83a0>
+get_vtk_type, <function get_vtk_type at 0x7f72f5de6820>
+grid_from_sph_coords, <function grid_from_sph_coords at 0x7f72f5d211f0>
+helpers, <module 'pyvista.utilities.helpers' from 'pyvista/utilities/helpers.py'>
+image_to_texture, <function image_to_texture at 0x7f72f5e071f0>
+is_inside_bounds, <function is_inside_bounds at 0x7f72f5e07310>
+is_meshio_mesh, <function is_meshio_mesh at 0x7f72f5e070d0>
+is_pyvista_dataset, <function is_pyvista_dataset at 0x7f72f5e05700>
+line_segments_from_points, <function line_segments_from_points at 0x7f72f5e05ca0>
+lines_from_points, <function lines_from_points at 0x7f72f5e05d30>
+make_tri_mesh, <function make_tri_mesh at 0x7f72f5e05dc0>
+merge, <function merge at 0x7f72f5d213a0>
+misc, <module 'pyvista.utilities.misc' from 'pyvista/utilities/misc.py'>
+numpy_to_texture, <function numpy_to_texture at 0x7f72f5e07280>
+parametric_keywords, <function parametric_keywords at 0x7f72f5cb40d0>
+parametric_objects, <module 'pyvista.utilities.parametric_objects' from 'pyvista/utilities/parametric_objects.py'>
+parse_field_choice, <function parse_field_choice at 0x7f72f5e05a60>
+perlin_noise, <function perlin_noise at 0x7f72f5e0ae50>
+point_array, <function point_array at 0x7f72f5e05820>
+raise_not_matching, <function raise_not_matching at 0x7f72f5e07430>
+read, <function read at 0x7f72f5e02f70>
+read_exodus, <function read_exodus at 0x7f72f5e05160>
+read_legacy, <function read_legacy at 0x7f72f5e02ee0>
+read_meshio, <function read_meshio at 0x7f72f5e05310>
+read_plot3d, <function read_plot3d at 0x7f72f5e051f0>
+read_texture, <function read_texture at 0x7f72f5e050d0>
+reader, <module 'pyvista.utilities.reader' from 'pyvista/utilities/reader.py'>
+regression, <module 'pyvista.utilities.regression' from 'pyvista/utilities/regression.py'>
+row_array, <function row_array at 0x7f72f5e059d0>
+sample_function, <function sample_function at 0x7f72f5e0aee0>
+save_meshio, <function save_meshio at 0x7f72f5e053a0>
+send_errors_to_logging, <function send_errors_to_logging at 0x7f72f5d01430>
+set_algorithm_input, <function set_algorithm_input at 0x7f72f5e07f70>
+set_default_active_scalars, <function set_default_active_scalars at 0x7f72f5e07ee0>
+set_default_active_vectors, <function set_default_active_vectors at 0x7f72f5e07e50>
+set_error_output_file, <function set_error_output_file at 0x7f72f5cea3a0>
+set_vtkwriter_mode, <function set_vtkwriter_mode at 0x7f72f5e02e50>
+sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/utilities/sphinx_gallery.py'>
+start_xvfb, <function start_xvfb at 0x7f72f5cb4940>
+surface_from_para, <function surface_from_para at 0x7f72f5cb4160>
+sys, <module 'sys' (built-in)>
+threaded, <function threaded at 0x7f72f5e07670>
+# trans_from_matrix, <function trans_from_matrix at 0x7f72f5e05ee0>
+transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x7f72f5d21280>
+transformations, <module 'pyvista.utilities.transformations' from 'pyvista/utilities/transformations.py'>
+translate, <function translate at 0x7f72f5d21940>
+try_callback, <function try_callback at 0x7f72f5e07550>
+vector_poly_data, <function vector_poly_data at 0x7f72f5e05e50>
+voxelize, <function voxelize at 0x7f72f5d210d0>
+vtk_bit_array_to_char, <function vtk_bit_array_to_char at 0x7f72f5e054c0>
+vtk_id_list_to_array, <function vtk_id_list_to_array at 0x7f72f5e05550>
+vtk_points, <function vtk_points at 0x7f72f5e05c10>
+vtkmatrix_from_array, <function vtkmatrix_from_array at 0x7f72f5e07040>
+wrap, <function wrap at 0x7f72f5e07160>
+wrappers, <module 'pyvista.utilities.wrappers' from 'pyvista/utilities/wrappers.py'>
+xvfb, <module 'pyvista.utilities.xvfb' from 'pyvista/utilities/xvfb.py'>

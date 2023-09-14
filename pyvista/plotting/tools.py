@@ -27,7 +27,17 @@ SUPPORTS_PLOTTING = None
 
 
 def supports_open_gl():
-    """Return if the system supports OpenGL."""
+    """
+    Return if the system supports OpenGL.
+
+    This function checks if the system supports OpenGL by creating a VTK render
+    window and querying its OpenGL support.
+
+    Returns
+    -------
+    bool
+        ``True`` if the system supports OpenGL, ``False`` otherwise.
+    """
     global SUPPORTS_OPENGL
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
@@ -428,7 +438,26 @@ def create_axes_orientation_box(
 
 
 def normalize(x, minimum=None, maximum=None):
-    """Normalize the given value between [minimum, maximum]."""
+    """
+    Normalize the given value between [minimum, maximum].
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        The array of values to normalize.
+    minimum : float, optional
+        The minimum value to which ``x`` should be normalized. If not specified,
+        the minimum value in ``x`` will be used.
+    maximum : float, optional
+        The maximum value to which ``x`` should be normalized. If not specified,
+        the maximum value in ``x`` will be used.
+
+    Returns
+    -------
+    numpy.ndarray
+        The normalized array of values, where the values are scaled to the
+        range ``[minimum, maximum]``.
+    """
     if minimum is None:
         minimum = np.nanmin(x)
     if maximum is None:
@@ -459,13 +488,13 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-        ``'sigmoid_3-10'``. Append an ``'_r'`` to any of those names to
-        reverse that mapping. This can also be a custom array/list of values
-        that will be interpolated across the ``n_color`` range for user
-        defined mappings.
+        ``'sigmoid_1-10'``, and ``foreground``. Append an ``'_r'`` to any
+        of those names (except ``foreground``) to reverse that mapping.
+        The mapping can also be a custom user-defined array/list of values
+        that will be interpolated across the ``n_color`` range.
 
     n_colors : int
-        The amount of colors that the opacities must be mapped to.
+        The number of colors that the opacities must be mapped to.
 
     interpolate : bool
         Flag on whether or not to interpolate the opacity mapping for all
@@ -522,6 +551,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
         'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
         'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
@@ -573,8 +603,28 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 
 
-def parse_font_family(font_family):
-    """Check font name."""
+def parse_font_family(font_family: str) -> int:
+    """
+    Check and validate the given font family name.
+
+    Parameters
+    ----------
+    font_family : str
+        Font family name to validate. Must be one of the font names defined in
+        the ``FONTS`` enum class.
+
+    Returns
+    -------
+    int
+        Corresponding integer value of the valid font family name in the
+        ``FONTS`` enum class.
+
+    Raises
+    ------
+    ValueError
+        If the font_family is not one of the defined font names in the ``FONTS``
+        enum class.
+    """
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
@@ -583,10 +633,12 @@ def parse_font_family(font_family):
 
 
 def check_matplotlib_vtk_compatibility():
-    """Check if VTK and Matplotlib versions are compatible.
+    """
+    Check if VTK and Matplotlib versions are compatible for MathText rendering.
 
-    This is primarily geared towards checking if MathText rendering is
-    supported. These are the version constraints for VTK and Matplotlib:
+    This function is primarily geared towards checking if MathText rendering is
+    supported with the given versions of VTK and Matplotlib. It follows the
+    version constraints:
 
     * VTK <= 9.2.2 requires Matplotlib < 3.6
     * VTK > 9.2.2 requires Matplotlib >= 3.6
@@ -594,6 +646,17 @@ def check_matplotlib_vtk_compatibility():
     Other version combinations of VTK and Matplotlib will work without
     errors, but some features (like MathText/LaTeX rendering) may
     silently fail.
+
+    Returns
+    -------
+    bool
+        True if the versions of VTK and Matplotlib are compatible for MathText
+        rendering, False otherwise.
+
+    Raises
+    ------
+    RuntimeError
+        If the versions of VTK and Matplotlib cannot be checked.
 
     """
     import matplotlib
@@ -611,7 +674,14 @@ def check_matplotlib_vtk_compatibility():
 
 
 def check_math_text_support():
-    """Check if MathText and LaTeX symbols are supported."""
+    """Check if MathText and LaTeX symbols are supported.
+
+    Returns
+    -------
+    bool
+        ``True`` if both MathText and LaTeX symbols are supported, ``False``
+        otherwise.
+    """
     return (
         _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
         and check_matplotlib_vtk_compatibility()

@@ -1,17 +1,8 @@
-"""Downloadable datasets of 3D Celestial Bodies.
-
-Examples
---------
->>> from pyvista import examples
->>> mesh = examples.planets.load_moon()
->>> mesh.plot()
-
-"""
+"""Downloadable datasets of 3D Celestial Bodies."""
 
 import numpy as np
 
 import pyvista
-from pyvista import examples
 
 from .downloads import _download_and_read
 
@@ -66,26 +57,26 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     Returns
     -------
     pyvista.PolyData
-        Sun dataset with texture.
+        Sun dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_sun()
+    >>> texture = examples.planets.download_sun_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_sun())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_sun_surface(texture=True)
-    sphere.textures["atmosphere"] = surface
     return sphere
 
 
@@ -106,26 +97,26 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     Returns
     -------
     pyvista.PolyData
-        Moon dataset with texture.
+        Moon dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_moon()
+    >>> texture = examples.planets.download_moon_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_moon())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_moon_surface(texture=True)
-    sphere.textures["surface"] = surface
     return sphere
 
 
@@ -146,26 +137,26 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     Returns
     -------
     pyvista.PolyData
-        Mercury dataset with texture.
+        Mercury dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_mercury()
+    >>> texture = examples.planets.download_mercury_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_mercury())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_mercury_surface(texture=True)
-    sphere.textures["surface"] = surface
     return sphere
 
 
@@ -186,28 +177,26 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     Returns
     -------
     pyvista.PolyData
-        Venus dataset with texture.
+        Venus dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_venus()
+    >>> texture = examples.planets.download_venus_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_venus())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = download_venus_surface(atmosphere=False, texture=True)
-    sphere.textures["surface"] = surface
-    atmosphere = download_venus_surface(texture=True)
-    sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -228,25 +217,26 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     Returns
     -------
     pyvista.PolyData
-        Earth dataset with texture.
+        Earth dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_earth()
+    >>> texture = examples.load_globe_texture()
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_earth())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    sphere.textures["surface"] = examples.load_globe_texture()
     return sphere
 
 
@@ -267,26 +257,26 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     Returns
     -------
     pyvista.PolyData
-        Mars dataset with texture.
+        Mars dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_mars()
+    >>> texture = examples.planets.download_mars_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_mars())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_mars_surface(texture=True)
-    sphere.textures["surface"] = surface
     return sphere
 
 
@@ -307,26 +297,26 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     Returns
     -------
     pyvista.PolyData
-        Jupiter dataset with texture.
+        Jupiter dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_jupiter()
+    >>> texture = examples.planets.download_jupiter_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_jupiter())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_jupiter_surface(texture=True)
-    sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -347,26 +337,26 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     Returns
     -------
     pyvista.PolyData
-        Saturn dataset with texture.
+        Saturn dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_saturn()
+    >>> texture = examples.planets.download_saturn_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_saturn())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_saturn_surface(texture=True)
-    sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -395,12 +385,14 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_saturn_rings()
+    >>> texture = examples.planets.download_saturn_rings(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_saturn_rings())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
@@ -409,8 +401,6 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     disc.active_t_coords[:, 0] = radius / np.max(radius)
     disc.active_t_coords[:, 1] = 0.0
-    atmosphere = download_saturn_rings(texture=True)
-    disc.textures["atmosphere"] = atmosphere
     return disc
 
 
@@ -431,26 +421,26 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     Returns
     -------
     pyvista.PolyData
-        Uranus dataset with texture.
+        Uranus dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_uranus()
+    >>> texture = examples.planets.download_uranus_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_uranus())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_uranus_surface(texture=True)
-    sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -471,26 +461,26 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     Returns
     -------
     pyvista.PolyData
-        Neptune dataset with texture.
+        Neptune dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_neptune()
+    >>> texture = examples.planets.download_neptune_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_neptune())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    atmosphere = download_neptune_surface(texture=True)
-    sphere.textures["atmosphere"] = atmosphere
     return sphere
 
 
@@ -511,26 +501,26 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     Returns
     -------
     pyvista.PolyData
-        Pluto dataset with texture.
+        Pluto dataset.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> mesh = examples.planets.load_pluto()
+    >>> texture = examples.planets.download_pluto_surface(texture=True)
     >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
     >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(examples.planets.load_pluto())
+    >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
 
     """
     sphere = _sphere_with_texture_map(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
-    surface = examples.planets.download_pluto_surface(texture=True)
-    sphere.textures["surface"] = surface
     return sphere
 
 
@@ -766,7 +756,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.UniformGrid, pyvista.Texture, or str
+    pyvista.ImageData, pyvista.Texture, or str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples

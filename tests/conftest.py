@@ -1,8 +1,6 @@
 from importlib import metadata
 import re
 
-# see https://github.com/jupyter-widgets/ipywidgets/issues/3729
-import ipykernel.ipkernel  # noqa: F401
 import numpy as np
 from numpy.random import default_rng
 from pytest import fixture, mark, skip
@@ -82,7 +80,7 @@ def struct_grid():
 
 @fixture()
 def plane():
-    return pyvista.Plane()
+    return pyvista.Plane(direction=(0, 0, -1))
 
 
 @fixture()
@@ -99,7 +97,7 @@ def tri_cylinder():
 @fixture()
 def datasets():
     return [
-        examples.load_uniform(),  # UniformGrid
+        examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_hexbeam(),  # UnstructuredGrid
         examples.load_airplane(),  # PolyData
@@ -110,19 +108,19 @@ def datasets():
 @fixture()
 def multiblock_poly():
     # format and order of data (including missing) is intentional
-    mesh_a = pyvista.Sphere(center=(0, 0, 0))
+    mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
     mesh_a['data_a'] = mesh_a.points[:, 0] * 10
     mesh_a['data_b'] = mesh_a.points[:, 1] * 10
     mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
     mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
 
-    mesh_b = pyvista.Sphere(center=(1, 0, 0))
+    mesh_b = pyvista.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
     mesh_b['data_a'] = mesh_b.points[:, 0] * 10
     mesh_b['data_b'] = mesh_b.points[:, 1] * 10
     mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
     mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
 
-    mesh_c = pyvista.Sphere(center=(2, 0, 0))
+    mesh_c = pyvista.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
     mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
     mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
 
@@ -158,36 +156,6 @@ def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
-
-
-def make_two_char_img(text):
-    """Turn text into an image.
-
-    This is really only here to make a two character black and white image.
-
-    """
-    # create a basic texture by plotting a sphere and converting the image
-    # buffer to a texture
-    pl = pyvista.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
-    pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
-    pl.background_color = 'k'
-    pl.camera.zoom = 'tight'
-    return pyvista.Texture(pl.screenshot()).to_image()
-
-
-@fixture()
-def cubemap(texture):
-    """Sample texture as a cubemap."""
-    return pyvista.Texture(
-        [
-            make_two_char_img('X+'),
-            make_two_char_img('X-'),
-            make_two_char_img('Y+'),
-            make_two_char_img('Y-'),
-            make_two_char_img('Z+'),
-            make_two_char_img('Z-'),
-        ]
-    )
 
 
 @fixture()

@@ -32,8 +32,8 @@ dem
 ###############################################################################
 # Now let's subsample and extract an area of interest to make this example
 # simple (also the DEM we just load is pretty big).
-# Since the DEM we loaded is a :class:`pyvista.UniformGrid` mesh, we can use
-# the :func:`pyvista.UniformGridFilters.extract_subset` filter:
+# Since the DEM we loaded is a :class:`pyvista.ImageData` mesh, we can use
+# the :func:`pyvista.ImageDataFilters.extract_subset` filter:
 subset = dem.extract_subset((500, 900, 400, 800, 0, 0), (5, 5, 1))
 subset.plot(cpos="xy")
 

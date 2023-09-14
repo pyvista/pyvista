@@ -82,7 +82,7 @@ curvsurf.plot(texture=tex)
 # NumPy Arrays as Textures
 # ++++++++++++++++++++++++
 #
-# Want to use a programmatically built image? :class:`pyvista.UniformGrid`
+# Want to use a programmatically built image? :class:`pyvista.ImageData`
 # objects can be converted to textures using :func:`pyvista.image_to_texture`
 # and 3D NumPy (X by Y by RGB) arrays can be converted to textures using
 # :func:`pyvista.numpy_to_texture`.

@@ -18,6 +18,7 @@ make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
 
 # Manage errors
@@ -48,6 +49,12 @@ warnings.filterwarnings(
     "ignore",
     category=UserWarning,
     message="Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.",
+)
+
+# Prevent deprecated features from being used in examples
+warnings.filterwarnings(
+    "error",
+    category=PyVistaDeprecationWarning,
 )
 
 # -- General configuration ------------------------------------------------
@@ -81,7 +88,7 @@ extensions = [
 coverage_additional_modules = [
     'pyvista',
     'pyvista.errors',
-    'pyvista.report' 'pyvista.themes',
+    'pyvista.report',
     # core
     'pyvista.core.cell',
     'pyvista.core.celltype',
@@ -98,7 +105,7 @@ coverage_additional_modules = [
     'pyvista.core.filters.data_set',
     'pyvista.core.filters.poly_data',
     'pyvista.core.filters.structured_grid',
-    'pyvista.core.filters.uniform_grid',
+    'pyvista.core.filters.image_data',
     'pyvista.core.filters.unstructured_grid',
     'pyvista.core.utilitis.arrays',
     'pyvista.core.utilitis.cell_type_helper',
@@ -135,7 +142,6 @@ coverage_additional_modules = [
     'pyvista.plotting.composite_mapper',
     'pyvista.plotting.cube_axes_actor',
     'pyvista.plotting.errors',
-    'pyvista.plotting.export_vtkjs',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.lookup_table',
@@ -150,7 +156,7 @@ coverage_additional_modules = [
     'pyvista.plotting.renderers',
     'pyvista.plotting.scalar_bars',
     'pyvista.plotting.texture',
-    'pyvista.plotting.theme',
+    'pyvista.plotting.themes',
     'pyvista.plotting.tools',
     'pyvista.plotting.volume_property',
     'pyvista.plotting.volume',
@@ -170,96 +176,6 @@ autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLik
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
-
-# see https://github.com/pyvista/pyvista/pull/1612
-numpydoc_validate = True
-numpydoc_validation_checks = {
-    "all",  # all but the following:
-    "GL01",  # Contradicts numpydoc examples
-    "GL02",  # Permit a blank line after the end of our docstring
-    "GL03",  # Considering enforcing
-    "SA01",  # Not all docstrings need a see also
-    "SA04",  # See also section does not need descriptions
-    "SS05",  # Appears to be broken.
-    "ES01",  # Not all docstrings need an extend summary.
-    "EX01",  # Examples: Will eventually enforce
-    "YD01",  # Yields: No plan to enforce
-}
-numpydoc_validation_exclude = {  # set of regex
-    r'\.BasePlotter$',  # Issue with class parameter documentation
-    r'\.Plotter$',  # Issue with class parameter documentation
-    r'\.WidgetHelper$',
-    r'\.from_dict$',
-    r'\.to_dict$',
-    r'\.__init__$',
-    r'\.__new__$',
-    # parm of abstract classes
-    r'\._BaseMapper$',
-    r'\.CompositeFilters$',
-    r'\.DataObject$',
-    r'\.DataSet$',
-    r'\.DataSetFilters$',
-    r'\.ExplicitStructuredGrid$',
-    r'\.Grid$',
-    r'\.MultiBlock$',
-    r'\.PointGrid$',
-    r'\.PointSet$',
-    r'\.PolyDataFilters$',
-    r'\.RectilinearGrid$',
-    r'\.StructuredGrid$',
-    r'\.Table$',
-    r'\.Table\.save$',
-    r'\.UniformGrid$',
-    r'\.UniformGridFilters$',
-    r'\.UnstructuredGrid$',
-    r'\.UnstructuredGridFilters$',
-    # classes inherit from BaseReader
-    r'.*Reader(\.|$)',
-    # internal
-    r'\.Renderer$',
-    # deprecated
-    r'\.boolean_add$',
-    r'\.boolean_cut$',
-    r'\.add_field_array$',
-    r'\.DataSetAttributes\.append$',
-    # methods we probably should make private
-    r'\.store_click_position$',
-    r'\.store_mouse_position$',
-    r'\.fly_to_mouse_position$',
-    r'\.key_press_event$',
-    r'\.left_button_down$',
-    # MISC
-    r'\.ActiveArrayInfo$',
-    r'\.CellType$',
-    r'\.DataObject\.copy_meta_from$',
-    r'\.FieldAssociation$',
-    r'\.InterpolationType$',
-    r'\.MultiBlock\.copy_meta_from$',
-    # wraps
-    r'\.Plotter\.enable_depth_peeling$',
-    r'\.add_scalar_bar$',
-    # called from inherited
-    r'\.Table\.copy_meta_from$',
-    # Type alias
-    r'\.ColorLike$',
-    r'\.Chart$',
-    # PointSet *args and **kwargs for wrapped parameters
-    r'\.PointSet(\.|$)',
-    # Mixin methods from collections.abc
-    r'\.MultiBlock\.clear$',
-    r'\.MultiBlock\.count$',
-    r'\.MultiBlock\.index$',
-    r'\.MultiBlock\.remove$',
-    # Enumerations
-    r'\.Plot3DFunctionEnum$',
-    # VTK methods
-    r'\.override$',
-    # trame
-    r'\.PyVistaRemoteView(\.|$)',
-    r'\.PyVistaLocalView(\.|$)',
-    r'\.PyVistaRemoteLocalView(\.|$)',
-    r'\.Texture(\.|$)',  # awaiting Texture refactor
-}
 
 # linkcheck ignore entries
 nitpick_ignore_regex = [

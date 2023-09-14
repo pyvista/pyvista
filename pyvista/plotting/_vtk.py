@@ -9,7 +9,43 @@ the entire library.
 """
 # flake8: noqa: F401
 
+from vtkmodules.vtkChartsCore import (
+    vtkAxis,
+    vtkChart,
+    vtkChartBox,
+    vtkChartPie,
+    vtkChartXY,
+    vtkChartXYZ,
+    vtkPlotArea,
+    vtkPlotBar,
+    vtkPlotBox,
+    vtkPlotLine,
+    vtkPlotLine3D,
+    vtkPlotPie,
+    vtkPlotPoints,
+    vtkPlotPoints3D,
+    vtkPlotStacked,
+    vtkPlotSurface,
+)
 from vtkmodules.vtkCommonColor import vtkColorSeries
+from vtkmodules.vtkInteractionWidgets import (
+    vtkBoxWidget,
+    vtkButtonWidget,
+    vtkDistanceRepresentation3D,
+    vtkDistanceWidget,
+    vtkImplicitPlaneWidget,
+    vtkLineWidget,
+    vtkOrientationMarkerWidget,
+    vtkPlaneWidget,
+    vtkPointHandleRepresentation3D,
+    vtkResliceCursorPicker,
+    vtkScalarBarWidget,
+    vtkSliderRepresentation2D,
+    vtkSliderWidget,
+    vtkSphereWidget,
+    vtkSplineWidget,
+    vtkTexturedButtonRepresentation2D,
+)
 from vtkmodules.vtkRenderingAnnotation import (
     vtkAnnotatedCubeActor,
     vtkAxesActor,
@@ -30,20 +66,16 @@ from vtkmodules.vtkRenderingContext2D import (
     vtkPen,
 )
 
-from pyvista.core._vtk_core import *
-
 try:
-    # Necessary for displaying charts, otherwise crashes on rendering
-    import vtkmodules.vtkRenderingContextOpenGL2
-
-    _has_vtkRenderingContextOpenGL2 = True
+    from vtkmodules.vtkRenderingCore import vtkHardwarePicker
 except ImportError:  # pragma: no cover
-    _has_vtkRenderingContextOpenGL2 = False
-
+    # VTK < 9.2 is missing this class
+    vtkHardwarePicker = None
 from vtkmodules.vtkRenderingCore import (
     vtkAbstractMapper,
     vtkActor,
     vtkActor2D,
+    vtkAreaPicker,
     vtkCamera,
     vtkCellPicker,
     vtkColorTransferFunction,
@@ -67,9 +99,11 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
+    vtkScenePicker,
     vtkSelectVisiblePoints,
     vtkSkybox,
     vtkTextActor,
+    vtkTextProperty,
     vtkTexture,
     vtkVolume,
     vtkVolumeProperty,
@@ -78,31 +112,15 @@ from vtkmodules.vtkRenderingCore import (
 )
 from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer, vtkVectorText
 from vtkmodules.vtkRenderingLabel import vtkLabelPlacementMapper, vtkPointSetToLabelHierarchy
-from vtkmodules.vtkRenderingOpenGL2 import (
-    vtkCameraPass,
-    vtkCompositePolyDataMapper2,
-    vtkDepthOfFieldPass,
-    vtkEDLShading,
-    vtkGaussianBlurPass,
-    vtkOpenGLFXAAPass,
-    vtkOpenGLHardwareSelector,
-    vtkOpenGLRenderer,
-    vtkOpenGLTexture,
-    vtkRenderPassCollection,
-    vtkRenderStepsPass,
-    vtkSequencePass,
-    vtkShadowMapPass,
-    vtkSSAAPass,
-    vtkSSAOPass,
-)
 from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
 from vtkmodules.vtkRenderingVolume import (
     vtkFixedPointVolumeRayCastMapper,
     vtkGPUVolumeRayCastMapper,
     vtkUnstructuredGridVolumeRayCastMapper,
-)
-from vtkmodules.vtkRenderingVolumeOpenGL2 import (
-    vtkOpenGLGPUVolumeRayCastMapper,
-    vtkSmartVolumeMapper,
+    vtkVolumePicker,
 )
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+
+from pyvista.core._vtk_core import *
+
+from ._vtk_gl import *

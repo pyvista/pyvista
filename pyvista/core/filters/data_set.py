@@ -1,6 +1,6 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
-from typing import Optional, Sequence, Union
+from typing import Literal, Optional, Sequence, Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -8,7 +8,12 @@ import numpy as np
 
 import pyvista
 import pyvista.core._vtk_core as _vtk
-from pyvista.core.errors import AmbiguousDataError, MissingDataError, VTKVersionError
+from pyvista.core.errors import (
+    AmbiguousDataError,
+    MissingDataError,
+    PyVistaDeprecationWarning,
+    VTKVersionError,
+)
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import (
@@ -398,6 +403,11 @@ class DataSetFilters:
         nodes of this mesh to a given surface. This distance will be
         added as a point array called ``'implicit_distance'``.
 
+        Nodes of this mesh which are interior to the input surface
+        geometry have a negative distance, and nodes on the exterior
+        have a positive distance. Nodes which intersect the input
+        surface has a distance of zero.
+
         Parameters
         ----------
         surface : pyvista.DataSet
@@ -421,20 +431,40 @@ class DataSetFilters:
         plane.
 
         >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
+        >>> sphere = pv.Sphere(radius=0.35)
         >>> plane = pv.Plane()
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
         <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
 
-        Plot these distances as a heatmap
+        Plot these distances as a heatmap. Note how distances above the
+        plane are positive, and distances below the plane are negative.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere, scalars='implicit_distance', cmap='bwr'
         ... )
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
+        >>> pl.show()
+
+        We can also compute the distance from all the points on the
+        plane to the sphere.
+
+        >>> _ = plane.compute_implicit_distance(sphere, inplace=True)
+
+        Again, we can plot these distances as a heatmap. Note how
+        distances inside the sphere are negative and distances outside
+        the sphere are positive.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
+        ...     plane,
+        ...     scalars='implicit_distance',
+        ...     cmap='bwr',
+        ...     clim=[-0.35, 0.35],
+        ... )
+        >>> _ = pl.add_mesh(sphere, color='w', style='wireframe')
         >>> pl.show()
 
         See :ref:`clip_with_surface_example` and
@@ -1763,7 +1793,7 @@ class DataSetFilters:
         ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
-        >>> grid = pv.UniformGrid(
+        >>> grid = pv.ImageData(
         ...     dimensions=(n, n, n),
         ...     spacing=(
         ...         abs(x_min) / n * 2,
@@ -1780,7 +1810,7 @@ class DataSetFilters:
         ...     rng=[0, 0],
         ...     method='flying_edges',
         ... )
-        >>> out.plot(color='tan', smooth_shading=True)
+        >>> out.plot(color='lightblue', smooth_shading=True)
 
         See :ref:`common_filter_example` or
         :ref:`marching_cubes_example` for more examples using this
@@ -2343,58 +2373,483 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Glyphs')
         return _get_output(alg)
 
-    def connectivity(self, largest=False, progress_bar=False):
-        """Find and label connected bodies/volumes.
+    def connectivity(
+        self,
+        extraction_mode: Literal[
+            'all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'
+        ] = 'all',
+        variable_input=None,
+        scalar_range=None,
+        scalars=None,
+        label_regions=True,
+        region_ids=None,
+        point_ids=None,
+        cell_ids=None,
+        closest_point=None,
+        inplace=False,
+        progress_bar=False,
+        **kwargs,
+    ):
+        """Find and label connected regions.
 
-        This adds an ID array to the point and cell data to
-        distinguish separate connected bodies. This applies a
-        ``vtkConnectivityFilter`` filter which extracts cells that
-        share common points and/or meet other connectivity criterion.
+        This filter extracts cell regions based on a specified connectivity
+        criterion. The extraction criterion can be controlled with
+        ``extraction_mode`` to extract the largest region or the closest
+        region to a seed point, for example.
 
-        Cells that share vertices and meet other connectivity
-        criterion such as scalar range are known as a region.
+        In general, cells are considered to be connected if they
+        share a point. However, if a ``scalar_range`` is provided, cells
+        must also have at least one point with scalar values in the
+        specified range to be considered connected.
+
+        See :ref:`connectivity_example` and :ref:`volumetric_example` for
+        more examples using this filter.
+
+        .. versionadded:: 0.43.0
+           * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
+             and ``'closest'``.
+           * Extracted regions are now sorted in descending order by
+             cell count.
+           * Region connectivity can be controlled using ``scalar_range``.
+
+        .. deprecated:: 0.43.0
+           Parameter ``largest`` is deprecated. Use ``'largest'`` or
+           ``extraction_mode='largest'`` instead.
 
         Parameters
         ----------
-        largest : bool, default: False
-            Extract the largest connected part of the mesh.
+        extraction_mode : str, default: "all"
+            * ``'all'``: Extract all connected regions.
+            * ``'largest'`` : Extract the largest connected region (by cell
+              count).
+            * ``'specified'``: Extract specific region IDs. Use ``region_ids``
+              to specify the region IDs to extract.
+            * ``'cell_seed'``: Extract all regions sharing the specified cell
+              ids. Use ``cell_ids`` to specify the cell ids.
+            * ``'point_seed'`` : Extract all regions sharing the specified
+              point ids. Use ``point_ids`` to specify the point ids.
+            * ``'closest'`` : Extract the region closest to the specified
+              point. Use ``closest_point`` to specify the point.
+
+        variable_input : float | sequence[float], optional
+            The convenience parameter used for specifying any required input values
+            for some values of ``extraction_mode``. Setting
+            ``extraction_input`` is equivalent to setting:
+            * ``'region_ids'`` if mode is ``'specified'``.
+            * ``'cell_ids'`` if mode is ``'cell_seed'``.
+            * ``'point_ids'`` if mode is ``'point_seed'``.
+            * ``'closest_point'`` if mode is ``'closest'``. It has no effect if the mode is ``'all'`` or ``'largest'``.
+
+        scalar_range : float | sequence[float], optional
+            Single value or ``(min, max)``. If set, the connectivity is
+            restricted to cells with at least one point with scalar values in
+            the specified range.
+
+        scalars : str, optional
+            Name of scalars to use if ``scalar_range`` is specified. Defaults
+            to currently active scalars.
+
+            .. note::
+               This filter requires point scalars to determine region
+               connectivity. If cell scalars are provided, they are first
+               converted to point scalars with :func:`cell_data_to_point_data`
+               before applying the filter. The converted point scalars are
+               removed from the output after applying the filter.
+
+        label_regions : bool, default: True
+            If ``True``, scalar point and cell arrays ``RegionId`` are stored.
+            Each region is assigned a unique ID. IDs are zero-indexed and are
+            assigned by region cell count in descending order (i.e. the largest
+            region has ID ``0``).
+
+        region_ids : sequence[int], optional
+            Region ids to extract. Only used if ``extraction_mode`` is
+            ``specified``.
+
+        point_ids : sequence[int], optional
+            Point ids to use as seeds. Only used if ``extraction_mode`` is
+            ``point_seed``.
+
+        cell_ids : sequence[int], optional
+            Cell ids to use as seeds. Only used if ``extraction_mode`` is
+            ``cell_seed``.
+
+        closest_point : sequence[int], optional
+            Point coordinates in ``(x, y, z)``. Only used if
+            ``extraction_mode`` is ``closest``.
+
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy
+            is returned. A copy is always returned if the input type is
+            not ``pyvista.PolyData`` or ``pyvista.UnstructuredGrid``.
 
         progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
+            Display a progress bar.
+
+        **kwargs : dict, optional
+            Used for handling deprecated parameters.
 
         Returns
         -------
         pyvista.DataSet
-            Dataset with labeled connected bodies.  Return type
-            matches input.
+            Dataset with labeled connected bodies. Return type is
+            ``pyvista.PolyData`` if input type is ``pyvista.PolyData`` and
+            ``pyvista.UnstructuredGrid`` otherwise.
+
+        See Also
+        --------
+            :func:`pyvista.DataSetFilter.connectivity`
 
         Examples
         --------
-        Join two meshes together and plot their connectivity.
+        Label all connected regions.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere() + pyvista.Sphere(center=(2, 0, 0))
-        >>> conn = mesh.connectivity(largest=False)
-        >>> conn.plot(cmap=['red', 'blue'])
+        Load data.
 
-        See :ref:`volumetric_example` for more examples using this filter.
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> mesh = examples.download_foot_bones()
+
+        Extract all disconnected regions.
+
+        >>> conn = mesh.connectivity()
+
+        Configure plotting parameters.
+
+        >>> categories = True
+        >>> cmap = 'glasbey'
+
+        Format scalar bar text for integer values.
+
+        >>> scalar_bar_args = dict(
+        ...     fmt='%.f',  # Do not show decimals
+        ... )
+
+        Set the plot's camera position.
+
+        >>> cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+
+        Plot the regions by ID.
+
+        Note that region IDs are sorted in descending order by
+        cell count.
+
+        >>> conn.plot(
+        ...     categories=categories,
+        ...     cmap=cmap,
+        ...     scalar_bar_args=scalar_bar_args,
+        ...     cpos=cpos,
+        ... )
+
+        Extract specific regions by size.
+        Calculate region sizes.
+
+        Get counts using the previous `connectivity('all')` results.
+
+        >>> regions, region_sizes = np.unique(
+        ...     conn['RegionId'], return_counts=True
+        ... )
+
+        Extract regions with fewer than 150 cells.
+
+        >>> region_ids = regions[np.flatnonzero(region_sizes < 150)]
+        >>> conn = mesh.connectivity('specified', region_ids)
+
+        Plot result with plotting parameters defined earlier.
+
+        >>> conn.plot(
+        ...     categories=categories,
+        ...     cmap=cmap,
+        ...     scalar_bar_args=scalar_bar_args,
+        ...     cpos=cpos,
+        ... )
+
+        Extract the largest region.
+
+        >>> conn = mesh.connectivity('largest', label_regions=False)
+
+        Plot the largest region and show the input mesh for reference.
+
+        >>> p = pv.Plotter()
+        >>> _ = p.add_mesh(conn)
+        >>> _ = p.add_mesh(mesh, style='wireframe')
+        >>> p.show(cpos=cpos)
+
+        Extract regions using seed points.
+
+        Create hills and use curvature to define their peaks and valleys.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricRandomHills()
+        >>> mesh["Curvature"] = mesh.curvature()
+
+        Visualize the peaks and valleys.
+
+        Peaks have large positive curvature (i.e. are convex)
+        Valleys have large negative curvature (i.e. are concave)
+        Flat regions have curvature close to zero.
+
+        >>> mesh.plot(
+        ...     clim=[-0.5, 0.5],
+        ...     cmap='bwr',
+        ...     below_color='blue',
+        ...     above_color='red',
+        ... )
+
+        Extract the steepest peak using a seed point.
+
+        >>> data_min, data_max = mesh.get_data_range()
+        >>> peak_range = [0.2, data_max]  # Peak if curvature > 0.2
+        >>> peak_point_id = np.argmax(mesh['Curvature'])  # Steepest point
+        >>> peak_mesh = mesh.connectivity(
+        ...     'point_seed', peak_point_id, scalar_range=peak_range
+        ... )
+
+        Extract the valley region closest to the steepest peak.
+
+        >>> valley_range = [data_min, -0.2]  # Valley if curvature < 0.2
+        >>> peak_point = mesh.points[peak_point_id]
+        >>> valley_mesh = mesh.connectivity(
+        ...     'closest', peak_point, scalar_range=valley_range
+        ... )
+
+        Plot extracted regions.
+
+        >>> p = pv.Plotter()
+        >>> _ = p.add_mesh(mesh, style='wireframe', color='lightgray')
+        >>> _ = p.add_mesh(peak_mesh, color='red', label='Steepest Peak')
+        >>> _ = p.add_mesh(
+        ...     valley_mesh, color='blue', label='Closest Valley'
+        ... )
+        >>> _ = p.add_legend()
+        >>> p.show()
 
         """
-        alg = _vtk.vtkConnectivityFilter()
-        alg.SetInputData(self)
-        if largest:
-            alg.SetExtractionModeToLargestRegion()
+        # Deprecated on v0.43.0
+        keep_largest = kwargs.pop('largest', False)
+        if keep_largest:  # pragma: no cover
+            warnings.warn(
+                "Use of `largest=True` is deprecated. Use 'largest' or "
+                "`extraction_mode='largest'` instead.",
+                PyVistaDeprecationWarning,
+            )
+            extraction_mode = 'largest'
+
+        def _unravel_and_validate_ids(ids):
+            ids = np.asarray(ids).ravel()
+            is_all_integers = np.issubdtype(ids.dtype, np.integer)
+            is_all_positive = not np.any(ids < 0)
+            if not (is_all_positive and is_all_integers):
+                raise ValueError('IDs must be positive integer values.')
+            return np.unique(ids)
+
+        def _extract_points(_input, points):
+            # This method is similar to `mesh.extract_points` but the
+            # output arrays are removed and the output type is PolyData
+            # if the input type is PolyData
+            _output = _input.extract_points(points, progress_bar=progress_bar)
+            if isinstance(_input, pyvista.PolyData):
+                # Output is UnstructuredGrid, so apply vtkRemovePolyData
+                # to input to make the output as PolyData type instead
+                all_ids = set(range(_input.n_cells))
+                ids_to_keep = set(_output['vtkOriginalCellIds'])
+                ids_to_remove = list(all_ids - ids_to_keep)
+                if len(ids_to_remove) == 0:
+                    _output = _input
+                else:
+                    if pyvista.vtk_version_info < (9, 1, 0):
+                        raise VTKVersionError(
+                            '`connectivity` with PolyData requires vtk>=9.1.0'
+                        )  # pragma: no cover
+                    remove = _vtk.vtkRemovePolyData()
+                    remove.SetInputData(_input)
+                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))
+                    _update_alg(remove, progress_bar, "Removing Cells.")
+                    _output = _get_output(remove)
+                    _output.clean(
+                        point_merging=False, inplace=True, progress_bar=progress_bar
+                    )  # remove unused points
+            _output.point_data.remove('vtkOriginalPointIds')
+            _output.cell_data.remove('vtkOriginalCellIds')
+            return _output
+
+        # Store active scalars info to restore later if needed
+        active_field, active_name = self.active_scalars_info  # type: ignore
+
+        # Set scalars
+        if scalar_range is None:
+            input_mesh = self.copy(deep=False)  # type: ignore
         else:
+            if scalar_range[0] > scalar_range[1]:
+                raise ValueError(
+                    f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}"
+                )
+
+            # Input will be modified, so copy first
+            input_mesh = self.copy()  # type: ignore
+            if scalars is None:
+                set_default_active_scalars(input_mesh)
+            else:
+                input_mesh.set_active_scalars(scalars)
+            # Make sure we have point data (required by the filter)
+            field, name = input_mesh.active_scalars_info
+            if field == FieldAssociation.CELL:
+                # Convert to point data with a unique name
+                # The point array will be removed later
+                point_data = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)[name]
+                input_mesh.point_data['__point_data'] = point_data
+                input_mesh.set_active_scalars('__point_data')
+
+            if extraction_mode in ['all', 'specified', 'closest']:
+                # Scalar connectivity has no effect if SetExtractionModeToAllRegions
+                # (which applies to 'all' and 'specified') and 'closest'
+                # can sometimes fail for some datasets/scalar values.
+                # So, we filter scalar values beforehand
+                if scalar_range is not None:
+                    # Use extract_points to ensure that cells with at least one
+                    # point within the range are kept (this is consistent
+                    # with how the filter operates for other modes)
+                    lower = input_mesh.active_scalars >= scalar_range[0]
+                    upper = input_mesh.active_scalars <= scalar_range[1]
+                    input_mesh = _extract_points(input_mesh, np.logical_and(upper, lower))
+
+        alg = _vtk.vtkConnectivityFilter()
+        alg.SetInputDataObject(input_mesh)
+
+        # Due to inconsistent/buggy output, always keep this on and
+        # remove scalars later as needed
+        alg.ColorRegionsOn()  # This will create 'RegionId' scalars
+
+        # Sort region ids
+        alg.SetRegionIdAssignmentMode(alg.CELL_COUNT_DESCENDING)
+
+        if scalar_range is not None:
+            alg.ScalarConnectivityOn()
+            alg.SetScalarRange(*scalar_range)
+
+        if extraction_mode == 'all':
             alg.SetExtractionModeToAllRegions()
-        alg.SetColorRegions(True)
-        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
+
+        elif extraction_mode == 'largest':
+            alg.SetExtractionModeToLargestRegion()
+
+        elif extraction_mode == 'specified':
+            if region_ids is None:
+                if variable_input is None:
+                    raise ValueError(
+                        "`region_ids` must be specified when `extraction_mode='specified'`."
+                    )
+                else:
+                    region_ids = variable_input
+            # this mode returns scalar data with shape that may not match
+            # the number of cells/points, so we extract all and filter later
+            # alg.SetExtractionModeToSpecifiedRegions()
+            region_ids = _unravel_and_validate_ids(region_ids)
+            # [alg.AddSpecifiedRegion(i) for i in region_ids]
+            alg.SetExtractionModeToAllRegions()
+
+        elif extraction_mode == 'cell_seed':
+            if cell_ids is None:
+                if variable_input is None:
+                    raise ValueError(
+                        "`cell_ids` must be specified when `extraction_mode='cell_seed'`."
+                    )
+                else:
+                    cell_ids = variable_input
+            alg.SetExtractionModeToCellSeededRegions()
+            alg.InitializeSeedList()
+            [alg.AddSeed(i) for i in _unravel_and_validate_ids(cell_ids)]
+
+        elif extraction_mode == 'point_seed':
+            if point_ids is None:
+                if variable_input is None:
+                    raise ValueError(
+                        "`point_ids` must be specified when `extraction_mode='point_seed'`."
+                    )
+                else:
+                    point_ids = variable_input
+            alg.SetExtractionModeToPointSeededRegions()
+            alg.InitializeSeedList()
+            [alg.AddSeed(i) for i in _unravel_and_validate_ids(point_ids)]
+
+        elif extraction_mode == 'closest':
+            if closest_point is None:
+                if variable_input is None:
+                    raise ValueError(
+                        "`closest_point` must be specified when `extraction_mode='closest'`."
+                    )
+                else:
+                    closest_point = variable_input
+            alg.SetExtractionModeToClosestPointRegion()
+            alg.SetClosestPoint(*closest_point)
+
+        else:
+            raise ValueError(
+                f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
+            )
+
+        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
         output = _get_output(alg)
 
-        # remove regionID from the output when extraction mode is set to the
-        # largest to avoid the VTK warning:
-        # the Cell array RegionId ... has X tuples but there are only Y cells
-        if largest:
-            output.cell_data.pop('RegionId', None)
+        # Process output
+        output_needs_fixing = False  # initialize flag if output needs to be fixed
+        if extraction_mode == 'all':
+            pass  # Output is good
+        elif extraction_mode == 'specified':
+            # All regions were initially extracted, so extract only the
+            # specified regions
+            point_scalars = output.point_data['RegionId']
+            point_id_mask = np.zeros_like(point_scalars)
+            for i in region_ids:
+                point_id_mask[point_scalars == i] = True
+            output = _extract_points(output, np.nonzero(point_id_mask)[0])
+
+            if label_regions:
+                # Tresholded regions may not be contiguous and zero-based
+                # which will need to be fixed
+                output_needs_fixing = True
+
+        elif extraction_mode == 'largest' and isinstance(output, pyvista.PolyData):
+            # PolyData with 'largest' mode generates bad output with unreferenced points
+            output_needs_fixing = True
+
+        else:
+            # All other extraction modes / cases may generate incorrect scalar arrays
+            # e.g. 'largest' may output scalars with shape that does not match output mesh
+            # e.g. 'seed' method scalars may have one RegionId, yet may contain many
+            # disconnected regions. Therefore, check for correct scalars size
+            if label_regions:
+                invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
+                invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
+                if invalid_cell_scalars or invalid_point_scalars:
+                    output_needs_fixing = True
+
+        if output_needs_fixing:
+            # Fix bad output recursively using 'all' mode which has known good output
+            output.point_data.remove('RegionId')
+            output.cell_data.remove('RegionId')
+            output = output.connectivity('all', label_regions=True, inplace=inplace)
+
+        # Remove temp point array
+        try:
+            output.point_data.remove('__point_data')
+        except KeyError:
+            pass
+
+        if not label_regions:
+            output.point_data.remove('RegionId')
+            output.cell_data.remove('RegionId')
+
+            # restore previously active scalars
+            output.set_active_scalars(active_name, preference=active_field)
+
+        if inplace:
+            try:
+                self.copy_from(output, deep=False)  # type: ignore
+                return self
+            except:
+                pass
         return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
@@ -2424,18 +2879,18 @@ class DataSetFilters:
         >>> import pyvista
         >>> mesh = pyvista.Sphere() + pyvista.Cube()
         >>> largest = mesh.extract_largest()
-        >>> largest.point_data.clear()
-        >>> largest.cell_data.clear()
         >>> largest.plot()
 
-        See :ref:`volumetric_example` for more examples using this filter.
+        See :ref:`connectivity_example` and :ref:`volumetric_example` for
+        more examples using this filter.
+
+        .. seealso::
+            :func:`pyvista.DataSetFilter.connectivity`
 
         """
-        mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=progress_bar)
-        if inplace:
-            self.copy_from(mesh, deep=False)
-            return self
-        return mesh
+        return DataSetFilters.connectivity(
+            self, 'largest', label_regions=False, inplace=inplace, progress_bar=progress_bar
+        )
 
     def split_bodies(self, label=False, progress_bar=False):
         """Find, label, and split connected bodies/volumes.
@@ -3024,7 +3479,12 @@ class DataSetFilters:
     ):
         """Sample data values at specified point locations.
 
-        This uses :class:`vtk.vtkProbeFilter`.
+        .. deprecated:: 0.41.0
+           `probe` will be removed in a future version. Use
+           :func:`pyvista.DataSetFilters.sample` instead.
+           If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
+
+        This uses :class:`vtkProbeFilter`.
 
         Parameters
         ----------
@@ -3068,11 +3528,21 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
-        >>> result = grid.probe(mesh)
-        >>> 'Spatial Point Data' in result.point_data
+        >>> result = grid.probe(mesh)  # doctest:+SKIP
+        >>> 'Spatial Point Data' in result.point_data  # doctest:+SKIP
         True
 
         """
+        # deprecated in v0.41.0
+        # remove in v0.44.0
+        warnings.warn(
+            """probe filter is deprecated and will be removed in a future version.
+            Use sample filter instead.
+            If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
+            """,
+            PyVistaDeprecationWarning,
+        )
+
         if not pyvista.is_pyvista_dataset(points):
             points = wrap(points)
         alg = _vtk.vtkProbeFilter()
@@ -3100,8 +3570,22 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        locator=None,
+        pass_field_data=True,
+        mark_blank=True,
     ):
         """Resample array data from a passed mesh onto this mesh.
+
+        For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
+        the points of `mesh1`.  This function interpolates within an
+        enclosing cell.  This contrasts with
+        :function`pyvista.DataSetFilters.interpolate` that uses a distance
+        weighting for nearby points.  If there is cell topology, `sample` is
+        usually preferred.
+
+        The point data 'vtkValidPointMask' stores whether the point could be sampled
+        with a value of 1 meaning successful sampling. And a value of 0 means
+        unsuccessful.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
 
@@ -3130,21 +3614,52 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        locator : vtkAbstractCellLocator or str, optional
+            Prototype cell locator to perform the ``FindCell()``
+            operation.  Default uses the DataSet ``FindCell`` method.
+            Valid strings with mapping to vtk cell locators are
+
+                * 'cell' - vtkCellLocator
+                * 'cell_tree' - vtkCellTreeLocator
+                * 'obb_tree' - vtkOBBTree
+                * 'static_cell' - vtkStaticCellLocator
+
+        pass_field_data : bool, default: True
+            Preserve source mesh's original field data arrays.
+
+        mark_blank : bool, default: True
+            Whether to mark blank points and cells in "vtkGhostType".
+
         Returns
         -------
         pyvista.DataSet
             Dataset containing resampled data.
 
+        See Also
+        --------
+        pyvista.DataSetFilters.interpolate
+
         Examples
         --------
         Resample data from another dataset onto a sphere.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> data_to_probe = examples.load_uniform()
         >>> result = mesh.sample(data_to_probe)
         >>> result.plot(scalars="Spatial Point Data")
+
+        If sampling from a set of points represented by a ``(n, 3)``
+        shaped ``numpy.ndarray``, they need to be converted to a
+        PyVista DataSet, e.g. :class:`pyvista.PolyData`, first.
+
+        >>> import numpy as np
+        >>> points = np.array([[1.5, 5.0, 6.2], [6.7, 4.2, 8.0]])
+        >>> mesh = pv.PolyData(points)
+        >>> result = mesh.sample(data_to_probe)
+        >>> result["Spatial Point Data"]
+        pyvista_ndarray([ 46.5 , 225.12])
 
         See :ref:`resampling_example` for more examples using this filter.
 
@@ -3157,10 +3672,30 @@ class DataSetFilters:
         alg.SetSourceData(target)
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
+        alg.SetPassFieldArrays(pass_field_data)
+
+        alg.SetMarkBlankPointsAndCells(mark_blank)
         alg.SetCategoricalData(categorical)
+
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
+        if locator:
+            if isinstance(locator, str):
+                locator_map = {
+                    "cell": _vtk.vtkCellLocator(),
+                    "cell_tree": _vtk.vtkCellTreeLocator(),
+                    "obb_tree": _vtk.vtkOBBTree(),
+                    "static_cell": _vtk.vtkStaticCellLocator(),
+                }
+                try:
+                    locator = locator_map[locator]
+                except KeyError as err:
+                    raise ValueError(
+                        f"locator must be a string from {locator_map.keys()}, got {locator}"
+                    ) from err
+            alg.SetCellLocatorPrototype(locator)
+
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -3178,8 +3713,8 @@ class DataSetFilters:
     ):
         """Interpolate values onto this mesh from a given dataset.
 
-        The input dataset is typically a point cloud. Only point data from
-        the source mesh will be interpolated onto points of this mesh. Whether
+        The ``target`` dataset is typically a point cloud. Only point data from
+        the ``target`` mesh will be interpolated onto points of this mesh. Whether
         preexisting point and cell data of this mesh are preserved in the
         output can be customized with the ``pass_point_data`` and
         ``pass_cell_data`` parameters.
@@ -3187,6 +3722,10 @@ class DataSetFilters:
         This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
+
+        If the cell topology is more useful for interpolating, e.g. from a
+        discretized FEM or CFD simulation, use
+        :func:`pyvista.DataSetFilters.sample` instead.
 
         Parameters
         ----------
@@ -3237,6 +3776,10 @@ class DataSetFilters:
         pyvista.DataSet
             Interpolated dataset.  Return type matches input.
 
+        See Also
+        --------
+        pyvista.DataSetFilters.sample
+
         Examples
         --------
         Interpolate the values of 5 points onto a sample plane.
@@ -3267,7 +3810,7 @@ class DataSetFilters:
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
@@ -4522,7 +5065,9 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> extracted = sphere.extract_points(sphere.points[:, 2] > 0)
+        >>> extracted = sphere.extract_points(
+        ...     sphere.points[:, 2] > 0, include_cells=False
+        ... )
         >>> extracted.clear_data()  # clear for plotting
         >>> extracted.plot()
 
@@ -4567,7 +5112,7 @@ class DataSetFilters:
             correspond to.
 
         pass_cellid : bool, default: True
-            Adds a cell array ``"vtkOriginalPointIds"`` that
+            Adds a cell array ``"vtkOriginalCellIds"`` that
             idenfities which original cells these surface cells
             correspond to.
 
@@ -4604,6 +5149,26 @@ class DataSetFilters:
         >>> surf = grid.extract_surface()
         >>> type(surf)
         <class 'pyvista.core.pointset.PolyData'>
+        >>> surf["vtkOriginalPointIds"]
+        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4, 54,  3,  6, 45,
+                         72,  5, 63,  9, 35, 44, 11, 16, 89, 17, 10, 26, 62, 13,
+                         12, 53, 80, 15, 14, 71, 19, 37, 55, 20, 38, 56, 21, 39,
+                         57, 22, 40, 58, 23, 41, 59, 24, 42, 60, 25, 43, 61, 28,
+                         82, 29, 83, 30, 84, 31, 85, 32, 86, 33, 87, 34, 88, 46,
+                         73, 47, 74, 48, 75, 49, 76, 50, 77, 51, 78, 52, 79, 64,
+                         65, 66, 67, 68, 69, 70])
+        >>> surf["vtkOriginalCellIds"]
+        pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
+                         36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
+                         13, 13, 17, 17, 21, 21, 25, 25, 29, 29, 33, 33,  4,  4,
+                          8,  8, 12, 12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32,
+                          7,  7, 11, 11, 15, 15, 19, 19, 23, 23, 27, 27, 31, 31,
+                         35, 35,  6,  6, 10, 10, 14, 14, 18, 18, 22, 22, 26, 26,
+                         30, 30, 34, 34])
+
+        Note that in the "vtkOriginalCellIds" array, the same original cells
+        appears multiple times since this array represents the original cell of
+        each surface cell extracted.
 
         See the :ref:`extract_surface_example` for more examples using this filter.
 
@@ -4823,7 +5388,7 @@ class DataSetFilters:
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if inplace:
-            if type(self) == type(merged):
+            if type(self) is type(merged):
                 self.deep_copy(merged)
                 return self
             else:
@@ -5265,7 +5830,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Transformed dataset.  Return type matches input unless
-            input dataset is a :class:`pyvista.UniformGrid`, in which
+            input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         Examples
@@ -5542,11 +6107,11 @@ class DataSetFilters:
 
         Examples
         --------
-        Partition a simple UniformGrid into a :class:`pyvista.MultiBlock`
+        Partition a simple ImageData into a :class:`pyvista.MultiBlock`
         containing each partition.
 
         >>> import pyvista as pv
-        >>> grid = pv.UniformGrid(dimensions=(5, 5, 5))
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
         >>> out = grid.partition(4, as_composite=True)
         >>> out.plot(multi_colors=True, show_edges=True)
 
@@ -5669,9 +6234,9 @@ class DataSetFilters:
         is shallow copied to the output.
 
         The type of output dataset is always the same as the input type. Since
-        structured types of data (i.e., :class:`pyvista.UniformGrid`,
-        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`,
-        :class:`pyvista.UniformGrid`) are all composed of a cell of the same
+        structured types of data (i.e., :class:`pyvista.ImageData`,
+        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`)
+        are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,
         :class:`pyvista.PolyData`) input may produce a subset of the input data

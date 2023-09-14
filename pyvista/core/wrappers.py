@@ -16,14 +16,14 @@ A user-defined Foo class is defined that extends the functionality of
 ...     pass  # Extend PolyData here
 ...
 >>> pv._wrappers['vtkPolyData'] = Foo
->>> uniform_grid = pv.UniformGrid()
->>> surface = uniform_grid.extract_surface()
+>>> image = pv.ImageData()
+>>> surface = image.extract_surface()
 >>> assert isinstance(surface, Foo)
 >>> pv._wrappers = default_wrappers  # reset back to default
 
 """
 from .composite import MultiBlock
-from .grid import RectilinearGrid, UniformGrid
+from .grid import ImageData, RectilinearGrid
 from .objects import Table
 from .pointset import ExplicitStructuredGrid, PointSet, PolyData, StructuredGrid, UnstructuredGrid
 
@@ -33,8 +33,8 @@ _wrappers = {
     'vtkRectilinearGrid': RectilinearGrid,
     'vtkStructuredGrid': StructuredGrid,
     'vtkPolyData': PolyData,
-    'vtkImageData': UniformGrid,
-    'vtkStructuredPoints': UniformGrid,
+    'vtkImageData': ImageData,
+    'vtkStructuredPoints': ImageData,
     'vtkMultiBlockDataSet': MultiBlock,
     'vtkTable': Table,
     'vtkPointSet': PointSet,

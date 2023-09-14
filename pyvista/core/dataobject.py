@@ -22,7 +22,17 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 @abstract_class
 class DataObject:
-    """Methods common to all wrapped data objects."""
+    """Methods common to all wrapped data objects.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to all wrapped data objects.
+
+    **kwargs :
+        Any extra keyword args are passed as option to all wrapped data objects.
+
+    """
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
@@ -63,6 +73,7 @@ class DataObject:
         self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
+        """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
@@ -209,7 +220,7 @@ class DataObject:
             fmt = ""
             # HTML version
             fmt += "\n"
-            fmt += "<table>\n"
+            fmt += "<table style='width: 100%;'>\n"
             fmt += f"<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n"
             row = "<tr><td>{}</td><td>{}</td></tr>\n"
             # now make a call on the object to get its attributes as a list of len 2 tuples
@@ -368,9 +379,9 @@ class DataObject:
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        Add field data to a UniformGrid dataset.
+        Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.UniformGrid(dimensions=(2, 2, 1))
+        >>> mesh = pyvista.ImageData(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(
         ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
         ... )
@@ -393,12 +404,17 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:
+    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
+
+        Returns
+        -------
+        DataSetAttributes
+            FieldData as DataSetAttributes.
 
         Examples
         --------
@@ -439,7 +455,7 @@ class DataObject:
         self.field_data.clear()
 
     @property
-    def memory_address(self) -> str:
+    def memory_address(self) -> str:  # numpydoc ignore=RT01
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -458,7 +474,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:
+    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
         """Return the actual size of the dataset object.
 
         Returns
@@ -488,8 +504,8 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
-        >>> target = pv.UniformGrid()
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
 
@@ -507,9 +523,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dimensions=(10, 10, 5))
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 

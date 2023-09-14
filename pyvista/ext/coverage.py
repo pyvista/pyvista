@@ -1,14 +1,13 @@
 """
-    sphinx.ext.coverage
-    ~~~~~~~~~~~~~~~~~~~
+Modified sphinx.ext.coverage module.
 
-    Check Python modules and C API for coverage.  Mostly written by Josip
-    Dzolonga for the Google Highly Open Participation contest.
+Check Python modules and C API for coverage.  Mostly written by Josip
+Dzolonga for the Google Highly Open Participation contest.
 
-    Modified slightly for ``pyvista``.
+Modified slightly for ``pyvista``.
 
-    :copyright: See `Sphinx copyright <https://github.com/sphinx-doc/sphinx>`_.
-    :license: See `Sphinx license <https://github.com/sphinx-doc/sphinx>`_.
+:copyright: See `Sphinx copyright <https://github.com/sphinx-doc/sphinx>`_.
+:license: See `Sphinx license <https://github.com/sphinx-doc/sphinx>`_.
 
 """
 

@@ -16,7 +16,7 @@ from .algorithms import (
     triangulate_algorithm,
 )
 from .cubemap import cubemap, cubemap_from_filenames
-from .gl_checks import check_depth_peeling
+from .gl_checks import check_depth_peeling, uses_egl
 from .regression import (
     compare_images,
     image_from_window,

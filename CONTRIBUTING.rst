@@ -40,16 +40,20 @@ For general questions about the project, its applications, or about
 software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_
-or send one of the developers an email. The project support team can be
-reached at info@pyvista.org
 
-For more technical questions, you are welcome to create an issue on the
-`issues page <https://github.com/pyvista/pyvista/issues>`_ which we
-will address promptly. Through posting on the issues page, your question
-can be addressed by community members with the needed expertise and the
-information gained will remain available on the issues page for other
-users.
+You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+but Slack should be reserved for ad hoc conversations and community engagement
+rather than technical discussions.
+
+For critical, high-level project support and engagement, please email
+info@pyvista.org - but please do not use this email for technical support.
+
+For all technical conversations, you are welcome to create an issue on the
+`Discussions page <https://github.com/pyvista/pyvista/discussions>`_
+which we will address promptly. Through posting on the Discussions page,
+your question can be addressed by community members with the needed
+expertise and the information gained will remain available for other
+users to find.
 
 Reporting Bugs
 --------------
@@ -295,6 +299,40 @@ Note the following:
   the input parameters.
 * The examples section references the "full example" in the gallery if it
   exists.
+
+These standards will be enforced using ``pre-commit`` using
+``numpydoc-validate``, with errors being reported as:
+
+.. code-block:: text
+
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | file            | item                     | check   | description                                     |
+   +=================+==========================+=========+=================================================+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | features.py:250 | features.merge           | PR09    | Parameter "datasets" description should finish  |
+   |                 |                          |         | with "."                                        |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+
+If for whatever reason you feel that your function should have an exception to
+any of the rules, add an exception to the function either in the
+``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
+comment to exclude a certain check. For example, we do not enforce
+documentation strings for setters and skip the GL08 check.
+
+.. code:: python
+
+    @strips.setter
+    def strips(self, strips):  # numpydoc ignore=GL08
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
+
+See the available validation checks in `numpydoc Validation
+<https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
 
 
 Deprecating Features or other Backwards-Breaking Changes
@@ -543,7 +581,6 @@ the ``verify_image_cache`` fixture can be utilized:
 .. code:: python
 
 
-       @skip_no_plotting
        def test_add_background_image_not_global(verify_image_cache):
            verify_image_cache.skip = True  # Turn off caching
            plotter = pyvista.Plotter()
@@ -753,10 +790,16 @@ created the following will occur:
 1.  Create a new branch from the ``main`` branch with name
     ``release/MAJOR.MINOR`` (for example ``release/0.25``).
 
-2.  Locally run all tests as outlined in the `Testing
+2.  Update the development version numbers in ``pyvista/_version.py``
+    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
+    and create a new PR for this release that merges it to main.
+    Development to main should be limited at this point while effort
+    is focused on the release.
+
+3.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-3.  Locally test and build the documentation with link checking to make
+4.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
@@ -767,14 +810,8 @@ created the following will occur:
        make doctest-modules
        make html -b linkcheck
 
-4.  After building the documentation, open the local build and examine
+5.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
-
-5.  Update the development version numbers in ``pyvista/_version.py``
-    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
-    and create a new PR for this release that merges it to main.
-    Development to main should be limited at this point while effort
-    is focused on the release.
 
 6.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
@@ -790,9 +827,14 @@ created the following will occur:
     .. code:: bash
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
+
+8.  Please check again that the tag has been created correctly and push the tag.
+
+    .. code:: bash
+
        git push origin --tags
 
-8.  Create a list of all changes for the release. It is often helpful to
+9.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
     feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
@@ -800,17 +842,17 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-9.  Place your release notes from step 8 in the description for `the new
+10. Place your release notes from step 8 in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
-10. Go grab a beer/coffee/water and wait for
+11. Go grab a beer/coffee/water and wait for
     `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-11. Announce the new release in the PyVista Slack workspace and
+12. Announce the new release in the PyVista Slack workspace and
     celebrate.
 
 Patch Release Steps

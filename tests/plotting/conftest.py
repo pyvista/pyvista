@@ -6,11 +6,26 @@ import inspect
 
 import pytest
 
-import pyvista
+import pyvista as pv
+from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests
-pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
-pyvista.OFF_SCREEN = True
+pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
+pv.OFF_SCREEN = True
+SKIP_PLOTTING = not system_supports_plotting()
+
+
+# Configure skip_plotting marker
+def pytest_configure(config):
+    config.addinivalue_line(
+        'markers', 'skip_plotting: skip the test if system does not support plotting'
+    )
+
+
+def pytest_runtest_setup(item):
+    skip = any(mark.name == 'skip_plotting' for mark in item.iter_markers())
+    if skip and SKIP_PLOTTING:
+        pytest.skip('Test requires system to support plotting')
 
 
 def _is_vtk(obj):
@@ -20,22 +35,31 @@ def _is_vtk(obj):
         return False
 
 
+@pytest.fixture()
+def skip_check_gc(check_gc):
+    """Skip check_gc fixture."""
+    check_gc.skip = True
+
+
 @pytest.fixture(autouse=True)
-def check_gc(request):
+def check_gc():
     """Ensure that all VTK objects are garbage-collected by Python."""
     gc.collect()
     before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
-    yield
 
-    # Do not check for collection if the test session failed. Tests that fail
-    # also fail to cleanup their resources and this makes reading the unit test
-    # output more difficult.
-    #
-    # This applies to the entire session, so it's going to be the most useful
-    # when debugging tests with `pytest -x`
-    pyvista.close_all()
-    if request.session.testsfailed:
+    class GcHandler:
+        def __init__(self) -> None:
+            # if set to True, will entirely skip checking in this fixture
+            self.skip = False
+
+    gc_handler = GcHandler()
+
+    yield gc_handler
+
+    if gc_handler.skip:
         return
+
+    pv.close_all()
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
@@ -69,6 +93,36 @@ def check_gc(request):
 
 @pytest.fixture()
 def colorful_tetrahedron():
-    mesh = pyvista.Tetrahedron()
+    mesh = pv.Tetrahedron()
     mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
     return mesh
+
+
+def make_two_char_img(text):
+    """Turn text into an image.
+
+    This is really only here to make a two character black and white image.
+
+    """
+    # create a basic texture by plotting a sphere and converting the image
+    # buffer to a texture
+    pl = pv.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
+    pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
+    pl.background_color = 'k'
+    pl.camera.zoom = 'tight'
+    return pv.Texture(pl.screenshot()).to_image()
+
+
+@pytest.fixture()
+def cubemap(texture):
+    """Sample texture as a cubemap."""
+    return pv.Texture(
+        [
+            make_two_char_img('X+'),
+            make_two_char_img('X-'),
+            make_two_char_img('Y+'),
+            make_two_char_img('Y-'),
+            make_two_char_img('Z+'),
+            make_two_char_img('Z-'),
+        ]
+    )

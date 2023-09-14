@@ -81,6 +81,11 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
+        if self.n_points == other_mesh.n_points:
+            if np.allclose(self.points, other_mesh.points):
+                raise ValueError(
+                    "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface."
+                )
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
@@ -187,7 +192,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -260,7 +265,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -337,7 +342,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(
         ...     sphere_b, color='b', style='wireframe', line_width=3
         ... )
-        >>> _ = pl.add_mesh(result, color='tan')
+        >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -509,7 +514,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_a = pyvista.Sphere()
         >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
         >>> merged = sphere_a.merge(sphere_b)
-        >>> merged.plot(style='wireframe', color='tan')
+        >>> merged.plot(style='wireframe', color='lightblue')
 
         """
         # check if dataset or datasets are not polydata
@@ -550,9 +555,19 @@ class PolyDataFilters(DataSetFilters):
                 polydata_merged = pyvista.PolyData(
                     merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
                 )
+                # Calling update() will modify the active scalars in this specific
+                # case. Store values to restore after updating.
+                active_point_scalars_name = merged.point_data.active_scalars_name
+                active_cell_scalars_name = merged.cell_data.active_scalars_name
+
                 polydata_merged.point_data.update(merged.point_data)
                 polydata_merged.cell_data.update(merged.cell_data)
                 polydata_merged.field_data.update(merged.field_data)
+
+                # restore active scalars
+                polydata_merged.point_data.active_scalars_name = active_point_scalars_name
+                polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+
                 merged = polydata_merged
 
         if inplace:
@@ -956,7 +971,7 @@ class PolyDataFilters(DataSetFilters):
         References
         ----------
         See `Optimal Surface Smoothing as Filter Design
-        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>` for details
+        <https://dl.acm.org/doi/pdf/10.1145/218380.218473>`_ for details
         regarding the implementation of Taubin smoothing.
 
         Examples
@@ -1182,7 +1197,7 @@ class PolyDataFilters(DataSetFilters):
         'Line Cells: 1'
         >>> f'Tube Cells: {tube.n_cells}'
         'Tube Cells: 22'
-        >>> tube.plot(color='tan')
+        >>> tube.plot(color='lightblue')
 
         See :ref:`create_spline_example` for more examples using this filter.
 
@@ -2053,9 +2068,6 @@ class PolyDataFilters(DataSetFilters):
 
         output["vtkOriginalPointIds"] = original_ids
 
-        # Do not copy textures from input
-        output.clear_textures()
-
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:
             output.points[...] = output.points[::-1, :]
@@ -2389,7 +2401,7 @@ class PolyDataFilters(DataSetFilters):
 
         color : ColorLike, optional
             Color of the arrows.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.edge_color`.
+            :attr:`pyvista.plotting.themes.Theme.edge_color`.
 
         **kwargs : dict, optional
             All additional keyword arguments will be passed to
@@ -2925,7 +2937,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
-        >>> mesh.plot(color='tan')
+        >>> mesh.plot(color='lightblue')
 
         Extrude and cap an 8 sided polygon.
 
@@ -3078,7 +3090,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> spline = pyvista.Spline(points, 30)
         >>> extruded = spline.extrude_rotate(resolution=20, capping=False)
-        >>> extruded.plot(color='tan')
+        >>> extruded.plot(color='lightblue')
 
         """
         if capping is None:
@@ -3411,7 +3423,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        pyvista_ndarray([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+        pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are
@@ -3428,7 +3440,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> _ = pl.add_mesh(
         ...     mesh_b,
-        ...     color='tan',
+        ...     color='lightblue',
         ...     line_width=5,
         ...     opacity=0.7,
         ...     show_edges=True,

@@ -178,7 +178,7 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can also plot atomic orbitals using a 3D density plot. For this, we will
 # use :func:`numpy.random.choice` to sample all the points of our
-# :class:`pyvista.UniformGrid` based on the probability of the electron being
+# :class:`pyvista.ImageData` based on the probability of the electron being
 # at that coordinate.
 
 # Generate the orbital and sample based on the square of the probability of an
@@ -189,7 +189,7 @@ prob /= prob.sum()
 indices = np.random.choice(hydro_orbital.n_points, 10000, p=prob)
 
 # add a small amount of noise to these coordinates to remove the "grid like"
-# structure present in the underlying UniformGrid
+# structure present in the underlying ImageData
 points = hydro_orbital.points[indices]
 points += np.random.random(points.shape) - 0.5
 

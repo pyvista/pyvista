@@ -18,6 +18,9 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
+    mesh : pyvista.DataSet
+        Mesh to voxelize.
+
     density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
@@ -102,6 +105,27 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     The output grid will have the specified dimensions and is commonly used
     for interpolating the input dataset.
 
+    Parameters
+    ----------
+    dataset : DataSet
+        Input dataset used as a reference for the grid creation.
+    dimensions : tuple of int, default: (101, 101, 101)
+        The dimensions of the grid to be created. Each value in the tuple
+        represents the number of grid points along the corresponding axis.
+
+    Raises
+    ------
+    NotImplementedError
+        If the dimensions parameter is set to None. Currently, the function
+        does not support automatically determining the "optimal" grid size
+        based on the sparsity of the points in the input dataset.
+
+    Returns
+    -------
+    ImageData
+        A uniform grid with the specified dimensions that surrounds the input
+        dataset.
+
     """
     bounds = np.array(dataset.bounds)
     if dimensions is None:
@@ -111,7 +135,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # somewhere
         raise NotImplementedError('Please specify dimensions.')
     dimensions = np.array(dimensions, dtype=int)
-    image = pyvista.UniformGrid()
+    image = pyvista.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
@@ -147,7 +171,7 @@ def grid_from_sph_coords(theta, phi, r):
     return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
 
 
-def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
+def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT02
     """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -155,17 +179,17 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     Parameters
     ----------
     theta : array_like[float]
-        Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
+        Azimuthal angle in degrees ``[0, 360]`` of shape ``(M,)``.
     phi : array_like[float]
-        Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
+        Polar (zenith) angle in degrees ``[0, 180]`` of shape ``(N,)``.
     r : array_like[float]
-        Distance (radius) from the point of origin of shape (P,)
+        Distance (radius) from the point of origin of shape ``(P,)``.
     u : array_like[float]
-        X-component of the vector of shape (P, N, M)
+        X-component of the vector of shape ``(P, N, M)``.
     v : array_like[float]
-        Y-component of the vector of shape (P, N, M)
+        Y-component of the vector of shape ``(P, N, M)``.
     w : array_like[float]
-        Z-component of the vector of shape (P, N, M)
+        Z-component of the vector of shape ``(P, N, M)``.
 
     Returns
     -------
@@ -210,7 +234,7 @@ def cartesian_to_spherical(x, y, z):
     --------
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> grid = pv.UniformGrid(dimensions=(3, 3, 3))
+    >>> grid = pv.ImageData(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
     >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
 
@@ -237,16 +261,17 @@ def merge(
        does not attempt to create a manifold mesh and will include
        internal surfaces when two meshes overlap.
 
+    Parameters
+    ----------
     datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`
+        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
 
     main_has_priority : bool, default: True
-        When this parameter is ``True`` and ``merge_points=True``,
-        the arrays of the merging grids will be overwritten
-        by the original main mesh.
+        When this parameter is ``True`` and ``merge_points=True``, the arrays
+        of the merging grids will be overwritten by the original main mesh.
 
     progress_bar : bool, default: False
         Display a progress bar to indicate progress.
@@ -427,7 +452,7 @@ def sample_function(
 
     Returns
     -------
-    pyvista.UniformGrid
+    pyvista.ImageData
         Uniform grid with sampled data.
 
     Examples

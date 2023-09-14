@@ -56,7 +56,7 @@ def plot(
         screenshots without a window popping up.  Defaults to the
         global setting ``pyvista.OFF_SCREEN``.
 
-    full_screen : bool, default: :attr:`pyvista.themes.DefaultTheme.full_screen`
+    full_screen : bool, default: :attr:`pyvista.plotting.themes.Theme.full_screen`
         Opens window in full screen.  When enabled, ignores
         ``window_size``.
 
@@ -68,26 +68,26 @@ def plot(
         When ``True``, takes screenshot and returns ``numpy`` array of
         image.
 
-    interactive : bool, default: :attr:`pyvista.themes.DefaultTheme.interactive`
+    interactive : bool, default: :attr:`pyvista.plotting.themes.Theme.interactive`
         Allows user to pan and move figure.
 
     cpos : list, optional
         List of camera position, focal point, and view up.
 
-    window_size : sequence, default: :attr:`pyvista.themes.DefaultTheme.window_size`
+    window_size : sequence, default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
 
     show_bounds : bool, default: False
         Shows mesh bounds when ``True``.
 
-    show_axes : bool, default: :attr:`pyvista.themes._AxesConfig.show`
+    show_axes : bool, default: :attr:`pyvista.plotting.themes._AxesConfig.show`
         Shows a vtk axes widget.
 
-    notebook : bool, default: :attr:`pyvista.themes.DefaultTheme.notebook`
+    notebook : bool, default: :attr:`pyvista.plotting.themes.Theme.notebook`
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : ColorLike, default: :attr:`pyvista.themes.DefaultTheme.background`
+    background : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.background`
         Color of the background.
 
     text : str, optional
@@ -106,14 +106,12 @@ def plot(
     parallel_projection : bool, default: False
         Enable parallel projection.
 
-    jupyter_backend : str, default: :attr:`pyvista.themes.DefaultTheme.jupyter_backend`
+    jupyter_backend : str, default: :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
         Jupyter notebook plotting backend to use.  One of the
         following:
 
         * ``'none'`` : Do not display in the notebook.
         * ``'static'`` : Display a static figure.
-        * ``'ipygany'`` : Show a ``ipygany`` widget
-        * ``'panel'`` : Show a ``panel`` widget.
         * ``'trame'`` : Display using ``trame``.
 
         This can also be set globally with
@@ -130,17 +128,19 @@ def plot(
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
-    theme : pyvista.themes.DefaultTheme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    hidden_line_removal : bool, default: :attr:`pyvista.themes.DefaultTheme.hidden_line_removal`
+    hidden_line_removal : bool, default: :attr:`pyvista.plotting.themes.Theme.hidden_line_removal`
         Wireframe geometry will be drawn using hidden line removal if
         the rendering engine supports it.  See
         :func:`Plotter.enable_hidden_line_removal
         <Plotter.enable_hidden_line_removal>`.
 
-    anti_aliasing : bool, default: :attr:`pyvista.themes.DefaultTheme.anti_aliasing`
-        Enable or disable anti-aliasing.
+    anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+        Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
+        disables anti_aliasing. If a string, should be either ``"fxaa"`` or
+        ``"ssaa"``.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
@@ -199,10 +199,10 @@ def plot(
     >>> mesh.plot(show_edges=True)
 
     Plot a volume mesh. Color by distance from the center of the
-    UniformGrid. Note ``volume=True`` is passed.
+    ImageData. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.UniformGrid(
+    >>> grid = pv.ImageData(
     ...     dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5)
     ... )
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
@@ -235,8 +235,14 @@ def plot(
         show_axes = pl.theme.axes.show
     if show_axes:
         pl.add_axes()
+
     if anti_aliasing:
-        pl.enable_anti_aliasing()
+        if anti_aliasing is True:
+            pl.enable_anti_aliasing('msaa', multi_samples=pyvista.global_theme.multi_samples)
+        else:
+            pl.enable_anti_aliasing(anti_aliasing)
+    elif anti_aliasing is False:
+        pl.disable_anti_aliasing()
 
     pl.set_background(background)
 
