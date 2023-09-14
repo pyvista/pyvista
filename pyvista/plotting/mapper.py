@@ -856,16 +856,11 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         return self.SetScaleFactor(value)
 
     @property
-    def scale_array(self) -> str:
+    def scale_array(self) -> str:  # numpydoc ignore=RT01
         """Set or return the name of the array used to scale the splats.
 
         Scalars used to scale the gaussian points. Accepts a string
         name of an array that is present on the mesh.
-
-        Parameters
-        ----------
-        name : str
-            Name of the array used to scale the points.
 
         Notes
         -----
@@ -898,7 +893,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         return self.GetScaleArray()
 
     @scale_array.setter
-    def scale_array(self, name: str):
+    def scale_array(self, name: str):  # numpydoc ignore=GL08
         if not self.dataset:  # pragma: no cover
             raise RuntimeError('Missing dataset.')
         if name not in self.dataset.point_data:
