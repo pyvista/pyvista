@@ -19,7 +19,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         super().__init__()
 
     @property
-    def mapper(self) -> _BaseMapper:
+    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
         """Return or set the mapper of the volume.
 
         Examples
@@ -27,7 +27,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         Add a volume to a :class:`pyvista.Plotter` and get its mapper.
 
         >>> import pyvista as pv
-        >>> vol = pv.UniformGrid(dimensions=(10, 10, 10))
+        >>> vol = pv.ImageData(dimensions=(10, 10, 10))
         >>> vol['scalars'] = 255 - vol.z * 25
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(vol)
@@ -37,11 +37,11 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetMapper()
 
     @mapper.setter
-    def mapper(self, obj):
+    def mapper(self, obj):  # numpydoc ignore=GL08
         return self.SetMapper(obj)
 
     @property
-    def prop(self):
+    def prop(self):  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -49,7 +49,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         Create an volume and get its properties.
 
         >>> import pyvista as pv
-        >>> vol = pv.UniformGrid(dimensions=(10, 10, 10))
+        >>> vol = pv.ImageData(dimensions=(10, 10, 10))
         >>> vol['scalars'] = 255 - vol.z * 25
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(vol)
@@ -60,5 +60,5 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):
+    def prop(self, obj: Property):  # numpydoc ignore=GL08
         self.SetProperty(obj)

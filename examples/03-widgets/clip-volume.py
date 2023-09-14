@@ -3,7 +3,7 @@
 
 Clip Volume Widget
 ------------------
-If you have a structured dataset like a :class:`pyvista.UniformGrid` or
+If you have a structured dataset like a :class:`pyvista.ImageData` or
 :class:`pyvista.RectilinearGrid`, you can clip it using the
 :func:`pyvista.Plotter.add_volume_clip_plane` widget to better see the internal
 structure of the dataset.
@@ -15,7 +15,7 @@ structure of the dataset.
 ###############################################################################
 # Create the Dataset
 # ~~~~~~~~~~~~~~~~~~
-# Create a dense :class:`pyvista.UniformGrid` with dimensions ``(200, 200,
+# Create a dense :class:`pyvista.ImageData` with dimensions ``(200, 200,
 # 200)`` and set the active scalars to distance from the :attr:`center
 # <pyvista.DataSet.center>` of the grid.
 
@@ -23,7 +23,7 @@ import numpy as np
 
 import pyvista as pv
 
-grid = pv.UniformGrid(dimensions=(200, 200, 200))
+grid = pv.ImageData(dimensions=(200, 200, 200))
 grid['scalars'] = np.linalg.norm(grid.center - grid.points, axis=1)
 grid
 

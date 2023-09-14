@@ -18,7 +18,7 @@ combinations of all possible cell types:
    # jupyterlab boiler plate setup
    import pyvista
    pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.anti_aliasing = 'fxaa'
@@ -458,7 +458,7 @@ item in the list to a string.
 
     # Create plotting class and add the unstructured grid
     plotter = pv.Plotter()
-    plotter.add_mesh(grid, show_edges=True, color='tan')
+    plotter.add_mesh(grid, show_edges=True, color='lightblue')
 
     # Add labels to points on the yz plane (where x == 0)
     points = grid.points

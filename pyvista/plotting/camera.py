@@ -96,12 +96,12 @@ class Camera(_vtk.vtkCamera):
         self.parent = None
 
     @property
-    def is_set(self) -> bool:
+    def is_set(self) -> bool:  # numpydoc ignore=RT01
         """Get or set whether this camera has been configured."""
         return self._is_set
 
     @is_set.setter
-    def is_set(self, value: bool):
+    def is_set(self, value: bool):  # numpydoc ignore=GL08
         self._is_set = bool(value)
 
     @classmethod
@@ -115,6 +115,11 @@ class Camera(_vtk.vtkCamera):
         ----------
         filename : str or pathlib.Path
             Path to Paraview camera file (.pvcc).
+
+        Returns
+        -------
+        pyvista.Camera
+            Camera from the camera file.
 
         Examples
         --------
@@ -229,7 +234,7 @@ class Camera(_vtk.vtkCamera):
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Return or set the position of the camera in world coordinates.
 
         Examples
@@ -246,8 +251,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value):
-        """Set the position of the camera."""
+    def position(self, value):  # numpydoc ignore=GL08
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
@@ -275,7 +279,7 @@ class Camera(_vtk.vtkCamera):
         self._renderer.reset_camera_clipping_range()
 
     @property
-    def focal_point(self):
+    def focal_point(self):  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates.
 
         Examples
@@ -291,13 +295,12 @@ class Camera(_vtk.vtkCamera):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, point):
-        """Set the location of the camera's focus in world coordinates."""
+    def focal_point(self, point):  # numpydoc ignore=GL08
         self.SetFocalPoint(point)
         self.is_set = True
 
     @property
-    def model_transform_matrix(self):
+    def model_transform_matrix(self):  # numpydoc ignore=RT01
         """Return or set the camera's model transformation matrix.
 
         Examples
@@ -331,14 +334,13 @@ class Camera(_vtk.vtkCamera):
         return matrix
 
     @model_transform_matrix.setter
-    def model_transform_matrix(self, matrix):
-        """Set the camera's model transformation matrix."""
+    def model_transform_matrix(self, matrix):  # numpydoc ignore=GL08
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
 
     @property
-    def distance(self):
+    def distance(self):  # numpydoc ignore=RT01
         """Return or set the distance of the focal point from the camera.
 
         Notes
@@ -359,13 +361,12 @@ class Camera(_vtk.vtkCamera):
         return self.GetDistance()
 
     @distance.setter
-    def distance(self, distance):
-        """Set the distance from the camera position to the focal point."""
+    def distance(self, distance):  # numpydoc ignore=GL08
         self.SetDistance(distance)
         self.is_set = True
 
     @property
-    def thickness(self):
+    def thickness(self):  # numpydoc ignore=RT01
         """Return or set the distance between clipping planes.
 
         Examples
@@ -382,12 +383,11 @@ class Camera(_vtk.vtkCamera):
         return self.GetThickness()
 
     @thickness.setter
-    def thickness(self, length):
-        """Set the distance between clipping planes."""
+    def thickness(self, length):  # numpydoc ignore=GL08
         self.SetThickness(length)
 
     @property
-    def parallel_scale(self):
+    def parallel_scale(self):  # numpydoc ignore=RT01
         """Return or set the scaling used for a parallel projection.
 
         Examples
@@ -404,8 +404,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetParallelScale()
 
     @parallel_scale.setter
-    def parallel_scale(self, scale):
-        """Set the scaling used for parallel projection."""
+    def parallel_scale(self, scale):  # numpydoc ignore=GL08
         self.SetParallelScale(scale)
 
     def zoom(self, value):
@@ -460,7 +459,7 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def up(self):
+    def up(self):  # numpydoc ignore=RT01
         """Return or set the "up" of the camera.
 
         Examples
@@ -477,8 +476,7 @@ class Camera(_vtk.vtkCamera):
         return self.GetViewUp()
 
     @up.setter
-    def up(self, vector):
-        """Set the "up" of the camera."""
+    def up(self, vector):  # numpydoc ignore=GL08
         self.SetViewUp(vector)
         self.is_set = True
 
@@ -518,7 +516,7 @@ class Camera(_vtk.vtkCamera):
         self.SetParallelProjection(False)
 
     @property
-    def parallel_projection(self):
+    def parallel_projection(self):  # numpydoc ignore=RT01
         """Return the state of the parallel projection.
 
         Examples
@@ -533,25 +531,14 @@ class Camera(_vtk.vtkCamera):
         return self._parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):
-        """Return the state of the parallel projection.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import demos
-        >>> pl = pyvista.Plotter()
-        >>> pl.disable_parallel_projection()
-        >>> pl.parallel_projection
-        False
-        """
+    def parallel_projection(self, state):  # numpydoc ignore=GL08
         if state:
             self.enable_parallel_projection()
         else:
             self.disable_parallel_projection()
 
     @property
-    def clipping_range(self):
+    def clipping_range(self):  # numpydoc ignore=RT01
         """Return or set the location of the clipping planes.
 
         Clipping planes are the near and far clipping planes along
@@ -571,14 +558,13 @@ class Camera(_vtk.vtkCamera):
         return self.GetClippingRange()
 
     @clipping_range.setter
-    def clipping_range(self, points):
-        """Set the clipping planes."""
+    def clipping_range(self, points):  # numpydoc ignore=GL08
         if points[0] > points[1]:
             raise ValueError('Near point must be lower than the far point.')
         self.SetClippingRange(points[0], points[1])
 
     @property
-    def view_angle(self):
+    def view_angle(self):  # numpydoc ignore=RT01
         """Return or set the camera view angle.
 
         Examples
@@ -595,12 +581,11 @@ class Camera(_vtk.vtkCamera):
         return self.GetViewAngle()
 
     @view_angle.setter
-    def view_angle(self, value):
-        """Set the camera view angle."""
+    def view_angle(self, value):  # numpydoc ignore=GL08
         self.SetViewAngle(value)
 
     @property
-    def direction(self):
+    def direction(self):  # numpydoc ignore=RT01
         """Vector from the camera position to the focal point.
 
         Examples
@@ -651,8 +636,8 @@ class Camera(_vtk.vtkCamera):
         return frustum
 
     @property
-    def roll(self):
-        """Rotate the camera about the direction of projection.
+    def roll(self):  # numpydoc ignore=RT01
+        """Return or set the roll of the camera about the direction of projection.
 
         This will spin the camera about its axis.
 
@@ -669,14 +654,13 @@ class Camera(_vtk.vtkCamera):
         return self.GetRoll()
 
     @roll.setter
-    def roll(self, angle):
-        """Set the rotate of the camera about the direction of projection."""
+    def roll(self, angle):  # numpydoc ignore=GL08
         self.SetRoll(angle)
         self.is_set = True
 
     @property
-    def elevation(self):
-        """Vertical rotation of the scene.
+    def elevation(self):  # numpydoc ignore=RT01
+        """Return or set the vertical rotation of the scene.
 
         Rotate the camera about the cross product of the negative of
         the direction of projection and the view up vector, using the
@@ -696,8 +680,7 @@ class Camera(_vtk.vtkCamera):
         return self._elevation
 
     @elevation.setter
-    def elevation(self, angle):
-        """Set the vertical rotation of the scene."""
+    def elevation(self, angle):  # numpydoc ignore=GL08
         if self._elevation:
             self.Elevation(-self._elevation)
         self._elevation = angle
@@ -705,8 +688,8 @@ class Camera(_vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def azimuth(self):
-        """Azimuth of the camera.
+    def azimuth(self):  # numpydoc ignore=RT01
+        """Return or set the azimuth of the camera.
 
         Rotate the camera about the view up vector centered at the
         focal point. Note that the view up vector is whatever was set
@@ -727,8 +710,7 @@ class Camera(_vtk.vtkCamera):
         return self._azimuth
 
     @azimuth.setter
-    def azimuth(self, angle):
-        """Set the azimuth rotation of the camera."""
+    def azimuth(self, angle):  # numpydoc ignore=GL08
         if self._azimuth:
             self.Azimuth(-self._azimuth)
         self._azimuth = angle

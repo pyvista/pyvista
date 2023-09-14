@@ -45,7 +45,7 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
    # must have this here as our global backend may not be static
    import pyvista
    pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.anti_aliasing = 'fxaa'
@@ -134,7 +134,7 @@ Attributes are data values that live on either the points or cells of
 a mesh. In PyVista, we work with both point data and cell data and
 allow easy access to data dictionaries to hold arrays for attributes
 that live either on all points or on all cells of a mesh. These
-attributes can be accessed in a dictionary-like attribute attached to
+attributes can be accessed in a Dictionary-like attribute attached to
 any PyVista mesh accessible as one of the following:
 
 * :attr:`point_data <pyvista.DataSet.point_data>`

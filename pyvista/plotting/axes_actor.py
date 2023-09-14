@@ -16,7 +16,7 @@ class AxesActor(_vtk.vtkAxesActor):
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
     options, refer to `vtkAxesActor Details
-    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`.
+    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
 
     Examples
     --------
@@ -94,7 +94,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self.z_axis_shaft_properties.lighting = pv.global_theme.lighting
 
     @property
-    def visibility(self) -> bool:
+    def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set AxesActor visibility.
 
         Examples
@@ -111,11 +111,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):
+    def visibility(self, value: bool):  # numpydoc ignore=GL08
         return self.SetVisibility(value)
 
     @property
-    def total_length(self) -> tuple:
+    def total_length(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the length of all axes.
 
         Examples
@@ -135,14 +135,14 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetTotalLength()
 
     @total_length.setter
-    def total_length(self, length):
+    def total_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetTotalLength(length[0], length[1], length[2])
         else:
             self.SetTotalLength(length, length, length)
 
     @property
-    def shaft_length(self) -> tuple:
+    def shaft_length(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
         Examples
@@ -162,14 +162,14 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length):
+    def shaft_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
             self.SetNormalizedShaftLength(length, length, length)
 
     @property
-    def tip_length(self) -> tuple:
+    def tip_length(self) -> tuple:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
 
         Examples
@@ -189,14 +189,14 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length):
+    def tip_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
             self.SetNormalizedTipLength(length, length, length)
 
     @property
-    def label_position(self) -> tuple:
+    def label_position(self) -> tuple:  # numpydoc ignore=RT01
         """Position of the label along the axes.
 
         Examples
@@ -216,14 +216,14 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length):
+    def label_position(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
             self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
             self.SetNormalizedLabelPosition(length, length, length)
 
     @property
-    def cone_resolution(self) -> int:
+    def cone_resolution(self) -> int:  # numpydoc ignore=RT01
         """Return or set the resolution of the cone tip.
 
         Examples
@@ -240,11 +240,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetConeResolution()
 
     @cone_resolution.setter
-    def cone_resolution(self, res: int):
+    def cone_resolution(self, res: int):  # numpydoc ignore=GL08
         self.SetConeResolution(res)
 
     @property
-    def sphere_resolution(self) -> int:
+    def sphere_resolution(self) -> int:  # numpydoc ignore=RT01
         """Return or set the resolution of the spherical tip.
 
         Examples
@@ -261,11 +261,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetSphereResolution()
 
     @sphere_resolution.setter
-    def sphere_resolution(self, res: int):
+    def sphere_resolution(self, res: int):  # numpydoc ignore=GL08
         self.SetSphereResolution(res)
 
     @property
-    def cylinder_resolution(self) -> int:
+    def cylinder_resolution(self) -> int:  # numpydoc ignore=RT01
         """Return or set the resolution of the shaft cylinder.
 
         Examples
@@ -282,11 +282,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetCylinderResolution()
 
     @cylinder_resolution.setter
-    def cylinder_resolution(self, res: int):
+    def cylinder_resolution(self, res: int):  # numpydoc ignore=GL08
         self.SetCylinderResolution(res)
 
     @property
-    def cone_radius(self) -> float:
+    def cone_radius(self) -> float:  # numpydoc ignore=RT01
         """Return or set the radius of the cone tip.
 
         Examples
@@ -303,11 +303,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetConeRadius()
 
     @cone_radius.setter
-    def cone_radius(self, rad: float):
+    def cone_radius(self, rad: float):  # numpydoc ignore=GL08
         self.SetConeRadius(rad)
 
     @property
-    def sphere_radius(self) -> float:
+    def sphere_radius(self) -> float:  # numpydoc ignore=RT01
         """Return or set the radius of the spherical tip.
 
         Examples
@@ -324,11 +324,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetSphereRadius()
 
     @sphere_radius.setter
-    def sphere_radius(self, rad: float):
+    def sphere_radius(self, rad: float):  # numpydoc ignore=GL08
         self.SetSphereRadius(rad)
 
     @property
-    def cylinder_radius(self) -> float:
+    def cylinder_radius(self) -> float:  # numpydoc ignore=RT01
         """Return or set the radius of the shaft cylinder.
 
         Examples
@@ -345,11 +345,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetCylinderRadius()
 
     @cylinder_radius.setter
-    def cylinder_radius(self, rad: float):
+    def cylinder_radius(self, rad: float):  # numpydoc ignore=GL08
         self.SetCylinderRadius(rad)
 
     @property
-    def shaft_type(self) -> ShaftType:
+    def shaft_type(self) -> ShaftType:  # numpydoc ignore=RT01
         """Return or set the shaft type.
 
         Can be either a cylinder(0) or a line(1).
@@ -366,7 +366,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: Union[ShaftType, int]):
+    def shaft_type(self, shaft_type: Union[ShaftType, int]):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -374,7 +374,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetShaftTypeToLine()
 
     @property
-    def tip_type(self) -> TipType:
+    def tip_type(self) -> TipType:  # numpydoc ignore=RT01
         """Return or set the shaft type.
 
         Can be either a cone(0) or a sphere(1).
@@ -391,7 +391,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[TipType, int]):
+    def tip_type(self, tip_type: Union[TipType, int]):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
@@ -399,7 +399,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTipTypeToSphere()
 
     @property
-    def x_axis_label(self) -> str:
+    def x_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the X axis.
 
         Examples
@@ -414,11 +414,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetXAxisLabelText()
 
     @x_axis_label.setter
-    def x_axis_label(self, label: str):
+    def x_axis_label(self, label: str):  # numpydoc ignore=GL08
         self.SetXAxisLabelText(label)
 
     @property
-    def y_axis_label(self) -> str:
+    def y_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the Y axis.
 
         Examples
@@ -433,11 +433,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetYAxisLabelText()
 
     @y_axis_label.setter
-    def y_axis_label(self, label: str):
+    def y_axis_label(self, label: str):  # numpydoc ignore=GL08
         self.SetYAxisLabelText(label)
 
     @property
-    def z_axis_label(self) -> str:
+    def z_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the Z axis.
 
         Examples
@@ -452,47 +452,47 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.GetZAxisLabelText()
 
     @z_axis_label.setter
-    def z_axis_label(self, label: str):
+    def z_axis_label(self, label: str):  # numpydoc ignore=GL08
         self.SetZAxisLabelText(label)
 
     @property
-    def x_axis_shaft_properties(self):
+    def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the X axis shaft."""
         return ActorProperties(self.GetXAxisShaftProperty())
 
     @property
-    def y_axis_shaft_properties(self):
+    def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Y axis shaft."""
         return ActorProperties(self.GetYAxisShaftProperty())
 
     @property
-    def z_axis_shaft_properties(self):
+    def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Z axis shaft."""
         return ActorProperties(self.GetZAxisShaftProperty())
 
     @property
-    def x_axis_tip_properties(self):
+    def x_axis_tip_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the X axis tip."""
         return ActorProperties(self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
-    def x_axis_tip_properties(self, properties: ActorProperties):
+    def x_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.x_axis_tip_properties = properties
 
     @property
-    def y_axis_tip_properties(self):
+    def y_axis_tip_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Y axis tip."""
         return ActorProperties(self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
-    def y_axis_tip_properties(self, properties: ActorProperties):
+    def y_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.y_axis_tip_properties = properties
 
     @property
-    def z_axis_tip_properties(self):
+    def z_axis_tip_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Z axis tip."""
         return ActorProperties(self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter
-    def z_axis_tip_properties(self, properties: ActorProperties):
+    def z_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.z_axis_tip_properties = properties

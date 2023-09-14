@@ -1,4 +1,4 @@
-"""pyvista wrapping of vtkCellArray."""
+"""PyVista wrapping of vtkCellArray."""
 
 from collections import deque
 from itertools import count, islice
@@ -10,7 +10,19 @@ from pyvista.core import _vtk_core as _vtk
 
 
 def ncells_from_cells(cells):
-    """Get the number of cells from a VTK cell connectivity array."""
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Parameters
+    ----------
+    cells : numpy.ndarray
+        A VTK cell connectivity array.
+
+    Returns
+    -------
+    int
+        The number of cells extracted from the given cell connectivity array.
+
+    """
     consumer = deque(maxlen=0)
     it = cells.flat
     for n_cells in count():  # noqa: B007
@@ -22,7 +34,34 @@ def ncells_from_cells(cells):
 
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
-    """Safely convert a numpy array to a vtkIdTypeArray."""
+    """Safely convert a numpy array to a vtkIdTypeArray.
+
+    Parameters
+    ----------
+    ind : sequence[int]
+        Input sequence to be converted to a vtkIdTypeArray. Can be either a mask
+        or an integer array-like.
+    deep : bool, default: False
+        If ``True``, deep copy the input data. If ``False``, do not deep copy
+        the input data.
+    return_ind : bool, default: False
+        If ``True``, also return the input array after it has been cast to the
+        proper dtype.
+
+    Returns
+    -------
+    vtkIdTypeArray
+        Converted array as a vtkIdTypeArray.
+    numpy.ndarray
+        The input array after it has been cast to the proper dtype. Only
+        returned if `return_ind` is set to ``True``.
+
+    Raises
+    ------
+    TypeError
+        If the input array is not a mask or an integer array-like.
+
+    """
     ind = np.asarray(ind)
 
     # np.asarray will eat anything, so we have to weed out bogus inputs
@@ -60,18 +99,19 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     ----------
     mixed_cell_dict : dict
         A dictionary that maps VTK-Enum-types (e.g. VTK_TRIANGLE) to
-        np.ndarrays of type int.  The ``np.ndarrays`` describe the cell connectivity
+        np.ndarrays of type int.  The ``np.ndarrays`` describe the cell
+        connectivity.
     nr_points : int, optional
-        Number of points of the grid. Used only to allow additional runtime checks for
-        invalid indices, by default None
+        Number of points of the grid. Used only to allow additional runtime
+        checks for invalid indices.
 
     Returns
     -------
     cell_types : numpy.ndarray (uint8)
-        Types of each cell
+        Types of each cell.
 
     cell_arr : numpy.ndarray (int)
-        VTK-cell array
+        VTK-cell array.
 
     Raises
     ------
@@ -154,7 +194,7 @@ def get_mixed_cells(vtkobj):
     Parameters
     ----------
     vtkobj : pyvista.UnstructuredGrid
-        The unstructured grid for which the cells dictionary should be computed
+        The unstructured grid for which the cells dictionary should be computed.
 
     Returns
     -------

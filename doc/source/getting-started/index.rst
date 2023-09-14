@@ -133,7 +133,7 @@ through a range of examples and tutorials.
 
          from pyvista import examples
          mesh = examples.download_bunny()
-         mesh.plot(cpos=bunny_cpos, anti_aliasing='ssao')
+         mesh.plot(cpos=bunny_cpos)
 
 
    .. grid-item-card:: Authors & Citation
@@ -163,8 +163,7 @@ Support
 For general questions about the project, its applications, or about software
 usage, please create a discussion in `pyvista/discussions`_
 where the community can collectively address your questions. You are also
-welcome to join us on Slack_ or send one of the developers an email.
-The project support team can be reached at `info@pyvista.org`_.
+welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
 .. _Slack: http://slack.pyvista.org

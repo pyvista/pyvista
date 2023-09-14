@@ -145,20 +145,20 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
 
     @property
-    def interpolation_type(self) -> str:
+    def interpolation_type(self) -> str:  # numpydoc ignore=RT01
         """Return or set the interpolation type.
 
         Value must be either ``'linear'`` or ``'nearest'``.
 
         Examples
         --------
-        Create a sample :class:`pyvista.UniformGrid` dataset.
+        Create a sample :class:`pyvista.ImageData` dataset.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> n = 21
         >>> c = -(n - 1) / 2
-        >>> vol = pv.UniformGrid(dimensions=(n, n, n), origin=(c, c, c))
+        >>> vol = pv.ImageData(dimensions=(n, n, n), origin=(c, c, c))
         >>> scalars = np.linalg.norm(vol.points, axis=1)
         >>> scalars *= 255 / scalars.max()
         >>> vol['scalars'] = scalars
@@ -191,7 +191,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetInterpolationTypeAsString().split()[0].lower()
 
     @interpolation_type.setter
-    def interpolation_type(self, value: str):
+    def interpolation_type(self, value: str):  # numpydoc ignore=GL08
         if value == 'linear':
             self.SetInterpolationTypeToLinear()
         elif value == 'nearest':
@@ -200,7 +200,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
             raise ValueError('`interpolation_type` must be either "linear" or "nearest"')
 
     @property
-    def opacity_unit_distance(self) -> float:
+    def opacity_unit_distance(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity unit distance.
 
         This is the unit distance on which the scalar opacity transfer function
@@ -213,11 +213,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetScalarOpacityUnitDistance()
 
     @opacity_unit_distance.setter
-    def opacity_unit_distance(self, value: float):
+    def opacity_unit_distance(self, value: float):  # numpydoc ignore=GL08
         self.SetScalarOpacityUnitDistance(value)
 
     @property
-    def shade(self) -> bool:
+    def shade(self) -> bool:  # numpydoc ignore=RT01
         """Return or set shading of a volume.
 
         If shading is turned off, then the mapper for the volume will not
@@ -233,11 +233,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetShade())
 
     @shade.setter
-    def shade(self, value: bool):
+    def shade(self, value: bool):  # numpydoc ignore=GL08
         self.SetShade(value)
 
     @property
-    def independent_components(self) -> bool:
+    def independent_components(self) -> bool:  # numpydoc ignore=RT01
         """Return or set independent components.
 
         If ``False``, then you must have either 2 or 4 component data.
@@ -259,11 +259,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetIndependentComponents())
 
     @independent_components.setter
-    def independent_components(self, value: bool):
+    def independent_components(self, value: bool):  # numpydoc ignore=GL08
         self.SetIndependentComponents(value)
 
     @property
-    def ambient(self) -> float:
+    def ambient(self) -> float:  # numpydoc ignore=RT01
         """Return or set ambient lighting coefficient.
 
         This is the amount of light in the range of 0 to 1 (default 0.0) that
@@ -277,11 +277,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):
+    def ambient(self, value: float):  # numpydoc ignore=GL08
         self.SetAmbient(value)
 
     @property
-    def diffuse(self) -> float:
+    def diffuse(self) -> float:  # numpydoc ignore=RT01
         """Return or set the diffuse lighting coefficient.
 
         This is the scattering of light by reflection or transmission. Diffuse
@@ -295,11 +295,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):
+    def diffuse(self, value: float):  # numpydoc ignore=GL08
         self.SetDiffuse(value)
 
     @property
-    def specular(self) -> float:
+    def specular(self) -> float:  # numpydoc ignore=RT01
         """Return or set specular.
 
         Default 0.0
@@ -314,11 +314,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):
+    def specular(self, value: float):  # numpydoc ignore=GL08
         self.SetSpecular(value)
 
     @property
-    def specular_power(self) -> float:
+    def specular_power(self) -> float:  # numpydoc ignore=RT01
         """Return or set specular power.
 
         The specular power. Between 0.0 and 128.0. Default 10.0
@@ -327,7 +327,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):
+    def specular_power(self, value: float):  # numpydoc ignore=GL08
         self.SetSpecularPower(value)
 
     def copy(self) -> 'VolumeProperty':

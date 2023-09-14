@@ -1,7 +1,6 @@
 """Provides an easy way of generating several geometric objects.
 
-CONTAINS
---------
+**CONTAINS**
 vtkArrowSource
 vtkCylinderSource
 vtkSphereSource
@@ -46,9 +45,25 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     By default, the input mesh is considered centered at the origin
     and facing in the x direction.
 
+    Parameters
+    ----------
+    surf : pyvista.core.pointset.PolyData
+        Mesh to be translated and oriented.
+    center : tuple, optional, default: (0.0, 0.0, 0.0)
+        Center point to which the mesh should be translated.
+    direction : tuple, optional, default: (1.0, 0.0, 0.0)
+        Direction vector along which the mesh should be oriented.
+
     """
     normx = np.array(direction) / np.linalg.norm(direction)
-    normz = np.cross(normx, [0, 1.0, 0.0000001])
+    # assume temporary normy to calculate normz
+    norm_y_temp = [0.0, 1.0, 0.0]
+    normz = np.cross(normx, norm_y_temp)
+    if np.array_equal(normz, (0.0, 0.0, 0.0)):
+        # the assumed normy axis is parallel to normx, so shift its
+        # axis and recalculate normz
+        norm_y_temp = [-1.0, 0.0, 0.0]
+        normz = np.cross(normx, norm_y_temp)
     normz /= np.linalg.norm(normz)
     normy = np.cross(normz, normx)
 
@@ -310,7 +325,7 @@ def Sphere(
     start_phi=0.0,
     end_phi=180.0,
 ):
-    """Create a vtk Sphere.
+    """Create a sphere.
 
     Parameters
     ----------
@@ -321,7 +336,8 @@ def Sphere(
         Center in ``[x, y, z]``.
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction the top of the sphere points to in ``[x, y, z]``.
+        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees latitude.
 
     theta_resolution : int, default: 30
         Set the number of points in the longitude direction (ranging
@@ -332,16 +348,16 @@ def Sphere(
         ``start_phi`` to ``end_phi``).
 
     start_theta : float, default: 0.0
-        Starting longitude angle.
+        Starting longitude angle in degrees ``[0, 360]``.
 
     end_theta : float, default: 360.0
-        Ending longitude angle.
+        Ending longitude angle in degrees ``[0, 360]``.
 
     start_phi : float, default: 0.0
-        Starting latitude angle.
+        Starting latitude angle in degrees ``[0, 180]``.
 
     end_phi : float, default: 180.0
-        Ending latitude angle.
+        Ending latitude angle in degrees ``[0, 180]``.
 
     Returns
     -------
@@ -365,6 +381,11 @@ def Sphere(
     >>> sphere = pyvista.Sphere(end_theta=90)
     >>> out = sphere.plot(show_edges=True)
 
+    Create a hemisphere by setting ``end_phi``.
+
+    >>> sphere = pyvista.Sphere(end_phi=90)
+    >>> out = sphere.plot(show_edges=True)
+
     """
     sphere = _vtk.vtkSphereSource()
     sphere.SetRadius(radius)
@@ -376,7 +397,7 @@ def Sphere(
     sphere.SetEndPhi(end_phi)
     sphere.Update()
     surf = wrap(sphere.GetOutput())
-    surf.rotate_y(-90, inplace=True)
+    surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
 
@@ -434,7 +455,7 @@ def Plane(
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
-    surf.rotate_y(-90, inplace=True)
+    surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
 
@@ -507,7 +528,11 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> mesh = pyvista.MultipleLines(
     ...     points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]]
     ... )
-    >>> mesh.plot(color='k', line_width=10)
+    >>> plotter = pyvista.Plotter()
+    >>> actor = plotter.add_mesh(mesh, color='k', line_width=10)
+    >>> plotter.camera.azimuth = 45
+    >>> plotter.camera.zoom(0.8)
+    >>> plotter.show()
     """
     points, _ = _coerce_pointslike_arg(points)
     src = _vtk.vtkLineSource()

@@ -93,11 +93,16 @@ plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 # lighting simply by providing a different color for backface.
 
 globe = examples.load_globe()
+texture = examples.load_globe_texture()
 clipped = globe.clip(normal='z', value=4.37e9)
 
 pl = pv.Plotter()
 pl.add_mesh(
-    clipped, backface_params={'color': [0.2, 0.2, 0.2]}, lighting=False, smooth_shading=True
+    clipped,
+    backface_params={'color': [0.2, 0.2, 0.2]},
+    lighting=False,
+    smooth_shading=True,
+    texture=texture,
 )
 pl.show()
 

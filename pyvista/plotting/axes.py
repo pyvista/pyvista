@@ -30,7 +30,9 @@ class Axes(_vtk.vtkAxes):
 
     """
 
-    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False):
+    def __init__(
+        self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()
         self.SetSymmetric(symmetric)
@@ -45,8 +47,8 @@ class Axes(_vtk.vtkAxes):
         self.actor.prop.line_width = line_width
 
     @property
-    def origin(self):
-        """Origin of the axes in world coordinates.
+    def origin(self):  # numpydoc ignore=RT01
+        """Return or set th origin of the axes in world coordinates.
 
         Examples
         --------
@@ -65,8 +67,7 @@ class Axes(_vtk.vtkAxes):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value):
-        """Set the origin of the camera."""
+    def origin(self, value):  # numpydoc ignore=GL08
         self.SetOrigin(value)
 
     def show_actor(self):

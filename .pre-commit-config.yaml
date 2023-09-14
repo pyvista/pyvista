@@ -2,11 +2,11 @@
 # See https://pre-commit.ci/
 ci:
     autofix_prs: false
-    autoupdate_schedule: weekly
+    autoupdate_schedule: monthly
 
 repos:
 - repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 23.9.1
   hooks:
   - id: black
 
@@ -23,7 +23,7 @@ repos:
   - id: isort
 
 - repo: https://github.com/PyCQA/flake8
-  rev: 6.0.0
+  rev: 6.1.0
   hooks:
   - id: flake8
     additional_dependencies: [
@@ -33,7 +33,7 @@ repos:
     ]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.4
+  rev: v2.2.5
   hooks:
   - id: codespell
     args: [
@@ -62,8 +62,14 @@ repos:
         "--no-capitalize-first-letter",
       ]
 
+- repo: https://github.com/numpy/numpydoc
+  rev: v1.6.0rc2
+  hooks:
+  - id: numpydoc-validation
+    files: ^pyvista/
+
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.3.0
+  rev: v1.5.1
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
@@ -73,7 +79,7 @@ repos:
   ]
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.4.0
+  rev: v3.10.1
   hooks:
   - id: pyupgrade
     args: [--py38-plus, --keep-runtime-typing]
@@ -91,6 +97,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.23.1
+  rev: 0.26.3
   hooks:
     - id: check-github-workflows
