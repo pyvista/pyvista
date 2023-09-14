@@ -5,7 +5,6 @@ import pathlib
 import numpy as np
 import pytest
 
-import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError, PyVistaFutureWarning
@@ -709,7 +708,7 @@ def test_clean(sphere):
     assert cleaned.n_points == mesh.n_points
 
     # test with points but no cells
-    mesh = pyvista.PolyData()
+    mesh = pv.PolyData()
     mesh.points = (0, 0, 0)
     cleaned = mesh.clean()
     assert cleaned.n_points == 0

@@ -96,7 +96,7 @@ mesh = examples.download_foot_bones()
 conn = mesh.connectivity('all')
 
 ###############################################################################
-# Plot the labelled regions.
+# Plot the labeled regions.
 
 # Format scalar bar text for integer values.
 scalar_bar_args = dict(
@@ -146,7 +146,7 @@ mesh.plot(
 # Get seed point
 peak_point_id = np.argmax(mesh['Curvature'])
 
-# Define scalar range of region to extract
+# Define a scalar range of the region to extract
 data_min, data_max = mesh.get_data_range()
 peak_range = [0.2, data_max]  # Peak if curvature > 0.2
 
