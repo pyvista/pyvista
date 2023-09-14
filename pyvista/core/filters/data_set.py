@@ -2551,6 +2551,7 @@ class DataSetFilters:
         region IDs. Note that the region IDs of the output differ from
         the specified IDs since the input has three regions but the output
         only has two.
+
         >>> large_id = 0  # largest always has ID '0'
         >>> small_id = 2  # smallest has ID 'N-1' with N=3 regions
         >>> conn = mesh.connectivity('specified', (small_id, large_id))
