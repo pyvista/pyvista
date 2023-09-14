@@ -6440,14 +6440,14 @@ class DataSetFilters:
         --------
         Pack segmented image labels.
 
-        >>> # Load non-contiguous image labels
+        Load non-contiguous image labels
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.download_frog_tissue()
 
         Show range of labels
         >>> image_labels.get_data_range()
-        (0, 255)
+        (0, 29)
 
         Find 'gaps' in the labels
         >>> label_numbers = np.unique(image_labels.active_scalars)
