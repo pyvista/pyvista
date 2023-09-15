@@ -873,6 +873,12 @@ def test_create_image_data_from_specs():
     assert grid != grid_from_grid
 
 
+@pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
+def test_points_empty_image_data_dims(dims):
+    points = pv.ImageData(dimensions=dims).points
+    assert np.array_equal(points, np.empty((0, 3)))
+
+
 def test_create_uniform_grid_from_specs():
     # empty
     with pytest.warns(PyVistaDeprecationWarning):
