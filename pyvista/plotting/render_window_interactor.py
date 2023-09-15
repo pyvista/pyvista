@@ -155,6 +155,22 @@ class RenderWindowInteractor:
         callback : callable
             A callable that takes one argument. It will be passed
             `step`, which is the number of times the timer event has occurred.
+
+        Examples
+        --------
+        Add a timer to a Plotter to move a sphere across a scene.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(sphere)
+        >>> def callback(step):
+        ...     actor.position = [step / 100.0, step / 100.0, 0]
+        ...
+        >>> pl.add_timer_event(
+        ...     max_steps=200, duration=500, callback=callback
+        ... )
+
         """
         self._timer = Timer(max_steps, callback)
         self.add_observer("TimerEvent", self._timer.execute)
