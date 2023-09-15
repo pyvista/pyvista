@@ -1,6 +1,6 @@
 """Provides an easy way of generating several geometric sources.
 
-as well as some pure-python helpers.
+Also includes some pure-python helpers.
 
 """
 from typing import Sequence
@@ -31,7 +31,7 @@ class ConeSource(_vtk.vtkConeSource):
     radius : float, optional
         Base radius of the cone.
 
-    capping : bool, optional
+    capping : bool, default: True
         Enable or disable the capping the base of the cone with a
         polygon.
 
@@ -68,7 +68,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.height = height
         self.capping = capping
         if angle is not None and radius is not None:
-            raise ValueError("Both radius and angle specified. They are mutually exclusive.")
+            raise ValueError("Both radius and angle cannot be specified. They are mutually exclusive.")
         elif angle is not None and radius is None:
             self.angle = angle
         elif angle is None and radius is not None:
