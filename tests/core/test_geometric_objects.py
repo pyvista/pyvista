@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import examples
+from pyvista.core.utilities.geometric_objects import translate
 
 
 def test_cylinder():
@@ -515,3 +517,27 @@ def test_icosphere():
 
     icosahedron = pv.Icosahedron()
     assert icosahedron.n_faces * 4**nsub == icosphere.n_faces
+
+
+@pytest.mark.parametrize("is_negative", (True, False))
+@pytest.mark.parametrize("is_close", (True, False))
+def test_translate_direction_collinear(is_negative, is_close):
+    mesh_in = examples.download_bunny()
+    direction = np.array([0.0, 1.0, 0.0])
+    if is_close:
+        direction += 1e-8 * (direction == 0)
+    if is_negative:
+        direction *= -1
+    mesh_out = mesh_in.copy()
+    translate(mesh_out, direction=direction)
+    points_in = mesh_in.points
+    points_out = mesh_out.points
+
+    if is_negative:
+        assert np.allclose(points_in[:, 0], -points_out[:, 1])
+        assert np.allclose(points_in[:, 1], points_out[:, 0])
+        assert np.allclose(points_in[:, 2], points_out[:, 2])
+    else:
+        assert np.allclose(points_in[:, 0], points_out[:, 1])
+        assert np.allclose(points_in[:, 1], -points_out[:, 0])
+        assert np.allclose(points_in[:, 2], points_out[:, 2])
