@@ -519,10 +519,15 @@ def test_icosphere():
     assert icosahedron.n_faces * 4**nsub == icosphere.n_faces
 
 
+@pytest.fixture()
+def bunny():
+    return examples.download_bunny()
+
+
 @pytest.mark.parametrize("is_negative", (True, False))
 @pytest.mark.parametrize("delta", ([0, 0, 0], [1e-8, 0, 0], [0, 0, 1e-8]))
-def test_translate_direction_collinear(is_negative, delta):
-    mesh_in = examples.download_bunny()
+def test_translate_direction_collinear(is_negative, delta, bunny):
+    mesh_in = bunny
     direction = np.array([0.0, 1.0, 0.0]) + delta
     if is_negative:
         direction *= -1
