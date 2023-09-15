@@ -520,12 +520,10 @@ def test_icosphere():
 
 
 @pytest.mark.parametrize("is_negative", (True, False))
-@pytest.mark.parametrize("is_close", (True, False))
-def test_translate_direction_collinear(is_negative, is_close):
+@pytest.mark.parametrize("delta", ([0, 0, 0], [1e-8, 0, 0], [0, 0, 1e-8]))
+def test_translate_direction_collinear(is_negative, delta):
     mesh_in = examples.download_bunny()
-    direction = np.array([0.0, 1.0, 0.0])
-    if is_close:
-        direction += 1e-8 * (direction == 0)
+    direction = np.array([0.0, 1.0, 0.0]) + delta
     if is_negative:
         direction *= -1
     mesh_out = mesh_in.copy()
