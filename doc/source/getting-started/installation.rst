@@ -214,7 +214,7 @@ time your Docker container is launched:
 
 All you have to do next is include PyVista in your Python requirements and you
 can get to visualizing your data. If you need more help than this on setting up
-PyVista for these types of services, hop on Slack and chat with the developers
+PyVista for these types of services, hop on Discussions page and chat with the developers
 or take a look at `this repository`_ that is currently using PyVista on
 MyBinder.
 

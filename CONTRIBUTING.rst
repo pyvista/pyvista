@@ -852,7 +852,7 @@ created the following will occur:
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-12. Announce the new release in the PyVista Slack workspace and
+12. Announce the new release in the Discussions page and
     celebrate.
 
 Patch Release Steps
