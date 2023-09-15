@@ -1902,6 +1902,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
+    @wraps(RenderWindowInteractor.add_timer_event)
+    def add_timer_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.add_timer_event."""
+        if hasattr(self, 'iren'):
+            self.iren.add_timer_event(*args, **kwargs)
+
     @wraps(RenderWindowInteractor.clear_events_for_key)
     def clear_events_for_key(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
