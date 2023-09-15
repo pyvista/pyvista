@@ -1149,6 +1149,16 @@ def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
     dataset = connected_datasets_single_disconnected_cell[0]['point']
+
+    with pytest.raises(TypeError, match='Scalar range must be'):
+        dataset.connectivity(scalar_range=dataset)
+
+    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+        dataset.connectivity(scalar_range=[1, 2, 3])
+
+    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+        dataset.connectivity(scalar_range=np.array([[1, 2], [3, 4]]))
+
     with pytest.raises(ValueError, match='Lower value'):
         dataset.connectivity(scalar_range=[1, 0])
 
@@ -1285,6 +1295,16 @@ def test_connectivity_specified(foot_bones):
     region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
     assert np.array_equal(region_ids, [0, 1, 2, 3])
     assert np.array_equal(counts, [586, 392, 228, 212])
+
+
+@pytest.mark.parametrize('dataset_index', list(range(5)))
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_connectivity_specified_returns_empty(connected_datasets, dataset_index):
+    dataset = connected_datasets[dataset_index]
+    unused_region_id = 1
+    conn = dataset.connectivity('specified', unused_region_id)
+    assert conn.n_cells == 0
+    assert conn.n_points == 0
 
 
 @pytest.mark.needs_vtk_version(9, 1, 0)

@@ -77,10 +77,11 @@ print(f"Original volume: {dataset.volume}")
 ###############################################################################
 # Or better yet, you could simply extract the largest volume from your
 # dataset directly by passing ``'largest'`` to the ``connectivity`` and
-# specify the same scalar range used earlier for thresholding.
+# specifying the scalar range of interest.
 
 # Grab the largest connected volume within a scalar range
-largest = threshed.connectivity('largest', scalar_range=[0.15, 0.50])
+scalar_range = [0, 77]  # Range corresponding to bottom 15% of values
+largest = threshed.connectivity('largest', scalar_range=scalar_range)
 
 # Get volume as numeric value
 large_volume = largest.volume

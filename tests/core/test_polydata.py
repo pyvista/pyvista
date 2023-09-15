@@ -707,6 +707,12 @@ def test_clean(sphere):
     cleaned = mesh.clean(point_merging=False)
     assert cleaned.n_points == mesh.n_points
 
+    # test with points but no cells
+    mesh = pv.PolyData()
+    mesh.points = (0, 0, 0)
+    cleaned = mesh.clean()
+    assert cleaned.n_points == 0
+
 
 def test_area(sphere_dense, cube_dense):
     radius = 0.5
