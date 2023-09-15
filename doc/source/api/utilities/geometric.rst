@@ -14,6 +14,7 @@ PyVista's geometric objects may be more appropriate. If you need more control
 over the geometry or are building a complex VTK pipeline, then using geometric
 sources would be more suitable.
 
+
 Geometric Objects
 ~~~~~~~~~~~~~~~~~
 * High-Level Abstraction: Geometric objects like Box, Circle, Arrow, etc., in
