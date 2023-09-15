@@ -57,7 +57,7 @@ def test_file_from_files(tmpdir):
     else:
         assert fname == fnames[1]
 
-    with pytest.raises(RuntimeError, match='Ambigious'):
+    with pytest.raises(RuntimeError, match='Ambiguous'):
         fname = examples.downloads.file_from_files('tmp2.txt', fnames)
 
 
