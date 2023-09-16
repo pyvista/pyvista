@@ -31,7 +31,7 @@ from .mapper import (
 )
 from .picking import PickingHelper
 from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
-from .render_window_interactor import RenderWindowInteractor
+from .render_window_interactor import RenderWindowInteractor, Timer
 from .renderer import CameraPosition, Renderer, scale_point
 from .text import CornerAnnotation, Text, TextProperty
 from .texture import Texture, image_to_texture, numpy_to_texture

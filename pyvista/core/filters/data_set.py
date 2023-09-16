@@ -2037,7 +2037,7 @@ class DataSetFilters:
             alg.SetCenter(center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Maping texture to sphere')
+        _update_alg(alg, progress_bar, 'Mapping texture to sphere')
         output = _get_output(alg)
         if not inplace:
             return output
@@ -2406,6 +2406,7 @@ class DataSetFilters:
         more examples using this filter.
 
         .. versionadded:: 0.43.0
+
            * New extraction modes: ``'specified'``, ``'cell_seed'``, ``'point_seed'``,
              and ``'closest'``.
            * Extracted regions are now sorted in descending order by
@@ -2432,16 +2433,19 @@ class DataSetFilters:
               point. Use ``closest_point`` to specify the point.
 
         variable_input : float | sequence[float], optional
-            The convenience parameter used for specifying any required input values
-            for some values of ``extraction_mode``. Setting
-            ``extraction_input`` is equivalent to setting:
+            The convenience parameter used for specifying any required input
+            values for some values of ``extraction_mode``. Setting
+            ``variable_input`` is equivalent to setting:
+
             * ``'region_ids'`` if mode is ``'specified'``.
             * ``'cell_ids'`` if mode is ``'cell_seed'``.
             * ``'point_ids'`` if mode is ``'point_seed'``.
-            * ``'closest_point'`` if mode is ``'closest'``. It has no effect if the mode is ``'all'`` or ``'largest'``.
+            * ``'closest_point'`` if mode is ``'closest'``.
 
-        scalar_range : float | sequence[float], optional
-            Single value or ``(min, max)``. If set, the connectivity is
+            It has no effect if the mode is ``'all'`` or ``'largest'``.
+
+        scalar_range : sequence[float], optional
+            Scalar range in the form ``[min, max]``. If set, the connectivity is
             restricted to cells with at least one point with scalar values in
             the specified range.
 
@@ -2457,7 +2461,7 @@ class DataSetFilters:
                removed from the output after applying the filter.
 
         label_regions : bool, default: True
-            If ``True``, scalar point and cell arrays ``RegionId`` are stored.
+            If ``True``, ``'RegionId'`` point and cell scalar arrays are stored.
             Each region is assigned a unique ID. IDs are zero-indexed and are
             assigned by region cell count in descending order (i.e. the largest
             region has ID ``0``).
@@ -2498,132 +2502,60 @@ class DataSetFilters:
 
         See Also
         --------
-            :func:`pyvista.DataSetFilter.connectivity`
+            :meth:`extract_largest`, :meth:`split_bodies`
 
         Examples
         --------
-        Label all connected regions.
+        Create a single mesh with three disconnected regions where each
+        region has a different cell count.
 
-        Load data.
-
-        >>> import numpy as np
-        >>> from pyvista import examples
-        >>> import pyvista as pv
-        >>> mesh = examples.download_foot_bones()
-
-        Extract all disconnected regions.
-
-        >>> conn = mesh.connectivity()
-
-        Configure plotting parameters.
-
-        >>> categories = True
-        >>> cmap = 'glasbey'
-
-        Format scalar bar text for integer values.
-
-        >>> scalar_bar_args = dict(
-        ...     fmt='%.f',  # Do not show decimals
+        >>> import pyvista
+        >>> large = pyvista.Sphere(
+        ...     center=(-4, 0, 0), phi_resolution=40, theta_resolution=40
         ... )
-
-        Set the plot's camera position.
-
-        >>> cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
-
-        Plot the regions by ID.
-
-        Note that region IDs are sorted in descending order by
-        cell count.
-
-        >>> conn.plot(
-        ...     categories=categories,
-        ...     cmap=cmap,
-        ...     scalar_bar_args=scalar_bar_args,
-        ...     cpos=cpos,
+        >>> medium = pyvista.Sphere(
+        ...     center=(-2, 0, 0), phi_resolution=15, theta_resolution=15
         ... )
-
-        Extract specific regions by size.
-        Calculate region sizes.
-
-        Get counts using the previous `connectivity('all')` results.
-
-        >>> regions, region_sizes = np.unique(
-        ...     conn['RegionId'], return_counts=True
+        >>> small = pyvista.Sphere(
+        ...     center=(0, 0, 0), phi_resolution=7, theta_resolution=7
         ... )
+        >>> mesh = large + medium + small
 
-        Extract regions with fewer than 150 cells.
+        Plot their connectivity.
 
-        >>> region_ids = regions[np.flatnonzero(region_sizes < 150)]
-        >>> conn = mesh.connectivity('specified', region_ids)
+        >>> conn = mesh.connectivity('all')
+        >>> conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
 
-        Plot result with plotting parameters defined earlier.
+        Restrict connectivity to a scalar range.
 
-        >>> conn.plot(
-        ...     categories=categories,
-        ...     cmap=cmap,
-        ...     scalar_bar_args=scalar_bar_args,
-        ...     cpos=cpos,
-        ... )
+        >>> mesh['y_coordinates'] = mesh.points[:, 1]
+        >>> conn = mesh.connectivity('all', scalar_range=[-1, 0])
+        >>> conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+
+        Extract the region closest to the origin.
+
+        >>> conn = mesh.connectivity('closest', (0, 0, 0))
+        >>> conn.plot(color='blue', show_edges=True)
+
+        Extract a region using a cell ID ``100`` as a seed.
+
+        >>> conn = mesh.connectivity('cell_seed', 100)
+        >>> conn.plot(color='green', show_edges=True)
 
         Extract the largest region.
 
-        >>> conn = mesh.connectivity('largest', label_regions=False)
+        >>> conn = mesh.connectivity('largest')
+        >>> conn.plot(color='red', show_edges=True)
 
-        Plot the largest region and show the input mesh for reference.
+        Extract the largest and smallest regions by specifying their
+        region IDs. Note that the region IDs of the output differ from
+        the specified IDs since the input has three regions but the output
+        only has two.
 
-        >>> p = pv.Plotter()
-        >>> _ = p.add_mesh(conn)
-        >>> _ = p.add_mesh(mesh, style='wireframe')
-        >>> p.show(cpos=cpos)
-
-        Extract regions using seed points.
-
-        Create hills and use curvature to define their peaks and valleys.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.ParametricRandomHills()
-        >>> mesh["Curvature"] = mesh.curvature()
-
-        Visualize the peaks and valleys.
-
-        Peaks have large positive curvature (i.e. are convex)
-        Valleys have large negative curvature (i.e. are concave)
-        Flat regions have curvature close to zero.
-
-        >>> mesh.plot(
-        ...     clim=[-0.5, 0.5],
-        ...     cmap='bwr',
-        ...     below_color='blue',
-        ...     above_color='red',
-        ... )
-
-        Extract the steepest peak using a seed point.
-
-        >>> data_min, data_max = mesh.get_data_range()
-        >>> peak_range = [0.2, data_max]  # Peak if curvature > 0.2
-        >>> peak_point_id = np.argmax(mesh['Curvature'])  # Steepest point
-        >>> peak_mesh = mesh.connectivity(
-        ...     'point_seed', peak_point_id, scalar_range=peak_range
-        ... )
-
-        Extract the valley region closest to the steepest peak.
-
-        >>> valley_range = [data_min, -0.2]  # Valley if curvature < 0.2
-        >>> peak_point = mesh.points[peak_point_id]
-        >>> valley_mesh = mesh.connectivity(
-        ...     'closest', peak_point, scalar_range=valley_range
-        ... )
-
-        Plot extracted regions.
-
-        >>> p = pv.Plotter()
-        >>> _ = p.add_mesh(mesh, style='wireframe', color='lightgray')
-        >>> _ = p.add_mesh(peak_mesh, color='red', label='Steepest Peak')
-        >>> _ = p.add_mesh(
-        ...     valley_mesh, color='blue', label='Closest Valley'
-        ... )
-        >>> _ = p.add_legend()
-        >>> p.show()
+        >>> large_id = 0  # largest always has ID '0'
+        >>> small_id = 2  # smallest has ID 'N-1' with N=3 regions
+        >>> conn = mesh.connectivity('specified', (small_id, large_id))
+        >>> conn.plot(cmap=['red', 'blue'], show_edges=True)
 
         """
         # Deprecated on v0.43.0
@@ -2649,11 +2581,16 @@ class DataSetFilters:
             # output arrays are removed and the output type is PolyData
             # if the input type is PolyData
             _output = _input.extract_points(points, progress_bar=progress_bar)
+            has_cells = _output.n_cells != 0
+
             if isinstance(_input, pyvista.PolyData):
                 # Output is UnstructuredGrid, so apply vtkRemovePolyData
                 # to input to make the output as PolyData type instead
                 all_ids = set(range(_input.n_cells))
-                ids_to_keep = set(_output['vtkOriginalCellIds'])
+
+                ids_to_keep = set()
+                if has_cells:
+                    ids_to_keep |= set(_output['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
                 if len(ids_to_remove) == 0:
                     _output = _input
@@ -2670,8 +2607,9 @@ class DataSetFilters:
                     _output.clean(
                         point_merging=False, inplace=True, progress_bar=progress_bar
                     )  # remove unused points
-            _output.point_data.remove('vtkOriginalPointIds')
-            _output.cell_data.remove('vtkOriginalCellIds')
+            if has_cells:
+                _output.point_data.remove('vtkOriginalPointIds')
+                _output.cell_data.remove('vtkOriginalCellIds')
             return _output
 
         # Store active scalars info to restore later if needed
@@ -2681,6 +2619,14 @@ class DataSetFilters:
         if scalar_range is None:
             input_mesh = self.copy(deep=False)  # type: ignore
         else:
+            if isinstance(scalar_range, np.ndarray):
+                num_elements = scalar_range.size
+            elif isinstance(scalar_range, collections.abc.Sequence):
+                num_elements = len(scalar_range)
+            else:
+                raise TypeError('Scalar range must be a numpy array or a sequence.')
+            if num_elements != 2:
+                raise ValueError('Scalar range must have two elements defining the min and max.')
             if scalar_range[0] > scalar_range[1]:
                 raise ValueError(
                     f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}"
@@ -2825,7 +2771,7 @@ class DataSetFilters:
                 if invalid_cell_scalars or invalid_point_scalars:
                     output_needs_fixing = True
 
-        if output_needs_fixing:
+        if output_needs_fixing and output.n_cells > 0:
             # Fix bad output recursively using 'all' mode which has known good output
             output.point_data.remove('RegionId')
             output.cell_data.remove('RegionId')
@@ -2837,7 +2783,7 @@ class DataSetFilters:
         except KeyError:
             pass
 
-        if not label_regions:
+        if not label_regions and output.n_cells > 0:
             output.point_data.remove('RegionId')
             output.cell_data.remove('RegionId')
 

@@ -18,6 +18,11 @@ def actor():
 
 
 @pytest.fixture()
+def actor_from_multi_block():
+    return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
+
+
+@pytest.fixture()
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
@@ -66,6 +71,14 @@ def test_actor_copy_shallow(actor):
     assert actor_copy is not actor
     assert actor_copy.prop is actor.prop
     assert actor_copy.mapper is actor.mapper
+
+
+def test_actor_mblock_copy_shallow(actor_from_multi_block):
+    actor_copy = actor_from_multi_block.copy(deep=False)
+    assert actor_copy is not actor_from_multi_block
+    assert actor_copy.prop is actor_from_multi_block.prop
+    assert actor_copy.mapper is actor_from_multi_block.mapper
+    assert actor_copy.mapper.dataset is actor_from_multi_block.mapper.dataset
 
 
 @skip_mac
