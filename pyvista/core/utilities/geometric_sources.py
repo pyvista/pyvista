@@ -384,7 +384,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
         """
-        return self._self.direction
+        return self._direction
 
     @direction.setter
     def direction(self, direction: Sequence[float]):
@@ -396,7 +396,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
         """
-        self._self.direction = direction
+        self._direction = direction
 
     @property
     def radius(self) -> bool:
