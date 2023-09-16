@@ -117,7 +117,7 @@ class ConeSource(_vtk.vtkConeSource):
 
     @direction.setter
     def direction(self, direction: Sequence[float]):
-        """Set the center in ``[x, y, z]``. Axis of the cone passes through this point.
+        """Set the direction in ``[x, y, z]``. Axis of the cone passes through this point.
 
         Parameters
         ----------
@@ -140,12 +140,12 @@ class ConeSource(_vtk.vtkConeSource):
 
     @height.setter
     def height(self, height: float):
-        """Set the height of the cylinder.
+        """Set the height of the cone.
 
         Parameters
         ----------
         height : float
-            Height of the cylinder.
+            Height of the cone.
         """
         self.SetHeight(height)
 
