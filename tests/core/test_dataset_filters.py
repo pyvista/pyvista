@@ -59,11 +59,6 @@ def composite(datasets):
     return pv.MultiBlock(datasets)
 
 
-@pytest.fixture()
-def grid():
-    return pv.UnstructuredGrid(examples.hexbeamfile)
-
-
 @pytest.fixture(scope='module')
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
