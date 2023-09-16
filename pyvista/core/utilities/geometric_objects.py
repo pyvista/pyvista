@@ -7,7 +7,7 @@ vtkSphereSource
 vtkPlaneSource
 vtkLineSource
 vtkCubeSource
-vtkConeSource
+ConeSource
 vtkDiskSource
 vtkRegularPolygonSource
 vtkPyramid
@@ -26,6 +26,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .arrays import _coerce_pointslike_arg
+from .geometric_sources import ConeSource
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -778,22 +779,16 @@ def Cone(
     >>> mesh = pyvista.Cone()
     >>> mesh.plot(show_edges=True, line_width=5)
     """
-    src = _vtk.vtkConeSource()
-    src.SetCapping(capping)
-    src.SetDirection(direction)
-    src.SetCenter(center)
-    src.SetHeight(height)
-    if angle and radius:
-        raise ValueError("Both radius and angle specified. They are mutually exclusive.")
-    elif angle and not radius:
-        src.SetAngle(angle)
-    elif not angle and radius:
-        src.SetRadius(radius)
-    elif not angle and not radius:
-        src.SetRadius(0.5)
-    src.SetResolution(resolution)
-    src.Update()
-    return wrap(src.GetOutput())
+    algo = ConeSource(
+        capping=capping,
+        direction=direction,
+        center=center,
+        height=height,
+        angle=angle,
+        radius=radius,
+        resolution=resolution,
+    )
+    return algo.output
 
 
 def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True):
