@@ -1937,6 +1937,24 @@ def test_user_annotations_scalar_bar_volume(uniform, verify_image_cache):
     p.show()
 
 
+def test_user_matrix_volume(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 1
+
+    p = pv.Plotter()
+    volume = p.add_volume(uniform, user_matrix=shear)
+    np.testing.assert_almost_equal(volume.user_matrix, shear)
+
+
+def test_user_matrix_mesh(sphere):
+    shear = np.eye(4)
+    shear[0, 1] = 1
+
+    p = pv.Plotter()
+    actor = p.add_mesh(sphere, user_matrix=shear)
+    np.testing.assert_almost_equal(actor.user_matrix, shear)
+
+
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {"vertical": True}
     sargs_copy = sargs.copy()

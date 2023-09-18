@@ -135,7 +135,7 @@ def test_actor_orientation(actor):
 
 
 def test_actor_unit_matrix(actor):
-    assert actor.user_matrix is None
+    assert np.allclose(actor.user_matrix, np.eye(4))
 
     arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
 
