@@ -990,6 +990,16 @@ def test_coil_magnetic_field():
     assert dataset.n_points == 531441
 
 
+def test_download_surface_vectors():
+    filename = examples.download_surface_vectors(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('vtk')
+
+    dataset = examples.download_surface_vectors(load=True)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert len(dataset.point_data.keys()) == 7
+
+
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells
