@@ -493,7 +493,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         Returns
         -------
         pyvista.PolyData
-            Cone surface.
+            Cylinder surface.
         """
         self.Update()
         output = wrap(self.GetOutput())
