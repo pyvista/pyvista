@@ -14,6 +14,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
@@ -699,7 +700,7 @@ def test_download_dolfin():
 
 def test_download_meshio_xdmf():
     dataset = examples.download_meshio_xdmf()
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert isinstance(dataset, pv.MultiBlock)
 
 
 def test_download_damavand_volcano():
@@ -800,13 +801,15 @@ def test_download_action_figure():
 
 
 def test_download_mars_jpg():
-    filename = examples.download_mars_jpg()
-    assert os.path.isfile(filename)
+    with pytest.warns(PyVistaDeprecationWarning):
+        filename = examples.download_mars_jpg()
+        assert os.path.isfile(filename)
 
 
 def test_download_stars_jpg():
-    filename = examples.download_stars_jpg()
-    assert os.path.isfile(filename)
+    with pytest.warns(PyVistaDeprecationWarning):
+        filename = examples.download_stars_jpg()
+        assert os.path.isfile(filename)
 
 
 def test_download_notch_stress():
