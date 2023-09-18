@@ -50,7 +50,7 @@ class Actor(Prop3D, _vtk.vtkActor):
       X Bounds                    -4.993E-01, 4.993E-01
       Y Bounds                    -4.965E-01, 4.965E-01
       Z Bounds                    -5.000E-01, 5.000E-01
-      User matrix:                Unset
+      User matrix:                Set
       Has mapper:                 True
     ...
 
