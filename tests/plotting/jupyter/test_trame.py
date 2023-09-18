@@ -3,7 +3,6 @@ import os
 from IPython.display import IFrame
 import numpy as np
 import pytest
-from vtk import vtkConeSource
 
 import pyvista as pv
 from pyvista import examples
@@ -176,7 +175,7 @@ def test_trame_custom_menu_items(client_type):
     assert server.running
 
     pl = pv.Plotter(notebook=True)
-    algo = vtkConeSource()
+    algo = pv.ConeSource()
     mesh_actor = pl.add_mesh(algo)
 
     viewer = get_viewer(pl, server=server)
@@ -222,20 +221,20 @@ def test_trame_custom_menu_items(client_type):
 
     @state.change("resolution")
     def update_resolution(resolution, **kwargs):
-        algo.SetResolution(resolution)
+        algo.resolution = resolution
         ctrl.view_update()
 
     @state.change("visibility")
     def set_visibility(visibility, **kwargs):
         toggle = {"Hide": 0, "Show": 1}
-        mesh_actor.SetVisibility(toggle[visibility])
+        mesh_actor.visibility = toggle[visibility]
         ctrl.view_update()
 
     assert server.state["resolution"] == 3
     server.state.update({"resolution": 5, "visibility": "Hide"})
     server.state.flush()
-    assert algo.GetResolution() == 5
-    assert not mesh_actor.GetVisibility()
+    assert algo.resolution == 5
+    assert not mesh_actor.visibility
 
 
 def test_trame_jupyter_modes():

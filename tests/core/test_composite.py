@@ -12,16 +12,6 @@ from pyvista import ImageData, MultiBlock, PolyData, RectilinearGrid, Structured
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 
-@pytest.fixture()
-def vtk_multi():
-    return vtk.vtkMultiBlockDataSet()
-
-
-@pytest.fixture()
-def pyvista_multi():
-    return pv.MultiBlock
-
-
 def multi_from_datasets(*datasets):
     """Return pyvista multiblock composed of any number of datasets."""
     return MultiBlock(datasets)

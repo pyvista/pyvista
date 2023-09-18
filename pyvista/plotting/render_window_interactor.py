@@ -22,6 +22,37 @@ log.addHandler(logging.StreamHandler())
 _CLASSES = {}
 
 
+class Timer:
+    """Timer class.
+
+    Parameters
+    ----------
+    max_steps : int
+        Maximum number of steps to allow for the timer before destroying it.
+
+    callback : callable
+        A callable that takes one argument. It will be passed `step`,
+        which is the number of times the timer event has occurred.
+    """
+
+    def __init__(self, max_steps, callback):
+        """Initialize."""
+        self.step = 0
+        self.max_steps = max_steps
+        self.id = None
+        self.callback = callback
+
+    def execute(self, obj, event):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Execute Timer."""
+        while self.step < self.max_steps:
+            self.callback(self.step)
+            iren = obj
+            iren.GetRenderWindow().Render()
+            self.step += 1
+        if self.id:
+            iren.DestroyTimer(self.id)
+
+
 class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
 
@@ -62,6 +93,7 @@ class RenderWindowInteractor:
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ("LeftButtonPressEvent", "RightButtonPressEvent")
         }
+        self._timer_event = None
         self._click_time = 0
         self._MAX_CLICK_DELAY = 0.8  # seconds
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
@@ -107,6 +139,42 @@ class RenderWindowInteractor:
             if param.default is param.empty:
                 raise TypeError('`callback` must not have any arguments without default values.')
         self._key_press_event_callbacks[key].append(callback)
+
+    def add_timer_event(self, max_steps, duration, callback):
+        """Add a function to callback as timer event.
+
+        Parameters
+        ----------
+        max_steps : int
+            Maximum number of steps for integrating a timer.
+
+        duration : int
+            Time (in milliseconds) before the timer emits a TimerEvent and
+            ``callback`` is called.
+
+        callback : callable
+            A callable that takes one argument. It will be passed
+            `step`, which is the number of times the timer event has occurred.
+
+        Examples
+        --------
+        Add a timer to a Plotter to move a sphere across a scene.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(sphere)
+        >>> def callback(step):
+        ...     actor.position = [step / 100.0, step / 100.0, 0]
+        ...
+        >>> pl.add_timer_event(
+        ...     max_steps=200, duration=500, callback=callback
+        ... )
+
+        """
+        self._timer = Timer(max_steps, callback)
+        self.add_observer("TimerEvent", self._timer.execute)
+        self._timer.id = self.create_timer(duration)
 
     @staticmethod
     def _get_event_str(event):
@@ -902,7 +970,7 @@ class RenderWindowInteractor:
 
     @contextmanager
     def poked_subplot(self):
-        """Activate the sublot that was last interacted."""
+        """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
         loc = self.get_event_subplot_loc()
         self._plotter.subplot(*loc)
@@ -1124,6 +1192,7 @@ class RenderWindowInteractor:
         self.terminate_app()
         self.interactor = None
         self._click_event_callbacks = None
+        self._timer_event = None
 
 
 def _style_factory(klass):

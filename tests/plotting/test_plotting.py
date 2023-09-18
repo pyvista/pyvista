@@ -3366,7 +3366,7 @@ def test_add_point_scalar_labels_list():
 
 
 def test_plot_algorithm_cone():
-    algo = vtk.vtkConeSource()
+    algo = pv.ConeSource()
     algo.SetResolution(10)
 
     pl = pv.Plotter()
@@ -3414,7 +3414,7 @@ def test_algorithm_add_points():
 
 @skip_9_1_0
 def test_algorithm_add_point_labels():
-    algo = vtk.vtkConeSource()
+    algo = pv.ConeSource()
     elev = vtk.vtkElevationFilter()
     elev.SetInputConnection(algo.GetOutputPort())
     elev.SetLowPoint(0, 0, -1)

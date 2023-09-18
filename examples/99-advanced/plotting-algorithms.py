@@ -31,13 +31,13 @@ from pyvista import examples
 # create a cone object depending on the instances's parameters. In this
 # example, we will connect a callback to set the cone source algorithm's
 # resolution via ``vtkConeSource.SetResolution()``.
-algo = vtk.vtkConeSource()
+algo = pv.ConeSource()
 
 
 def update_resolution(value):
     """Callback to set the resolution of the cone generator."""
     res = round(value)
-    algo.SetResolution(res)
+    algo.resolution = res
 
 
 ###############################################################################
