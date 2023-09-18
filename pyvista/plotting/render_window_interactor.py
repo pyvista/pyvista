@@ -970,7 +970,7 @@ class RenderWindowInteractor:
 
     @contextmanager
     def poked_subplot(self):
-        """Activate the sublot that was last interacted."""
+        """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
         loc = self.get_event_subplot_loc()
         self._plotter.subplot(*loc)
