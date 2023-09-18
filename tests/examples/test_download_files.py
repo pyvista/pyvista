@@ -960,7 +960,7 @@ def test_download_stars_cloud_hyg():
     assert dataset.n_points == 107857
 
 
-def test_cad_model_case():
+def test_download_cad_model_case():
     filename = examples.download_cad_model_case(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
