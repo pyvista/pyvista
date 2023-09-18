@@ -449,18 +449,18 @@ class CylinderSource(_vtk.vtkCylinderSource):
         Returns
         -------
         int
-            Number of points on the circular face of the cylinder.
+            Number of points on the circular face of the cone.
         """
         return self.GetResolution()
 
     @resolution.setter
     def resolution(self, resolution: int):
-        """Set number of points on the circular face of the cylinder.
+        """Set number of points on the circular face of the cone.
 
         Parameters
         ----------
         resolution : int
-            Number of points on the circular face of the cylinder.
+            Number of points on the circular face of the cone.
         """
         self.SetResolution(resolution)
 
