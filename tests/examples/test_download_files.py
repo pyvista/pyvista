@@ -205,6 +205,7 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
+@skip_9_1_0
 def test_download_can_crushed_hdf():
     path = examples.download_can_crushed_hdf(load=False)
     assert os.path.isfile(path)
@@ -860,6 +861,7 @@ def test_download_dual_sphere_animation():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+@skip_9_1_0
 def test_download_cgns_structured():
     filename = examples.download_cgns_structured(load=False)
     assert os.path.isfile(filename)
@@ -876,6 +878,7 @@ def test_download_tecplot_ascii():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+@skip_9_1_0
 def test_download_cgns_multi():
     filename = examples.download_cgns_multi(load=False)
     assert os.path.isfile(filename)
