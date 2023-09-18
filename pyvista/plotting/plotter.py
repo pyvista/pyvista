@@ -3478,6 +3478,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
+        actor.user_matrix = user_matrix
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
