@@ -20,6 +20,7 @@ if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
 def test_download_single_sphere_animation():
@@ -933,6 +934,7 @@ def test_download_gltf_avocado():
     pl.import_gltf(filename)
 
 
+@skip_9_1_0
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
     assert os.path.isfile(filename)
@@ -943,6 +945,7 @@ def test_download_cloud_dark_matter():
     assert dataset.n_points == 32314
 
 
+@skip_9_1_0
 def test_download_cloud_dark_matter_dense():
     filename = examples.download_cloud_dark_matter_dense(load=False)
     assert os.path.isfile(filename)
