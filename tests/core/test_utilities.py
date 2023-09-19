@@ -958,9 +958,9 @@ def test_compute_orthonormal_axes_direction():
 
     axes = orthonormal_axes(
         points,
-        axis_0_direction=[-1, 0, 0],
-        axis_1_direction=[0, -1, 0],
-        axis_2_direction=[0, 0, -1],  # test has no effect
+        axis_0_direction='-x',
+        axis_1_direction='-y',
+        axis_2_direction='-z',  # test has no effect
     )
     assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
 
@@ -980,7 +980,7 @@ def test_compute_orthonormal_axes_as_transform(airplane):
     airplane.transform(transform)
 
     points = airplane.points
-    axes_after = orthonormal_axes(points, axis_0_direction=[1, 0, 0], axis_1_direction=[0, 1, 0])
+    axes_after = orthonormal_axes(points, axis_0_direction='x', axis_1_direction='y')
     centroid_after = np.mean(points, axis=0)
     assert np.allclose(axes_after, np.eye(3))
     assert np.allclose(centroid_after, [0, 0, 0])
@@ -1030,3 +1030,5 @@ def test_compute_orthonormal_axes_raises():
         orthonormal_axes(np.empty((0, 3)), "abc")
     with pytest.raises(TypeError):
         orthonormal_axes(np.empty((0, 3)), np.empty((0, 3)))
+    with pytest.raises(ValueError):
+        orthonormal_axes(np.empty((0, 3)), axis_0_direction='abc')

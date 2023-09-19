@@ -7,6 +7,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.misc import check_valid_vector
 
 
@@ -223,21 +224,31 @@ def orthonormal_axes(
         -``'principal'``: axes are the eigenvectors of the covariance matrix
         -``'svd'``: axes are the right singular vectors
 
-    axis_0_direction : sequence[float], optional
+    axis_0_direction : sequence[float] | str, optional
         Approximate direction vector of the first axis. If set, the
         direction of the first orthonormal axis will be flipped such
-        that it best aligns with this vector.
+        that it best aligns with this vector. Can be a sequence of three
+        elements specifying the ``(x, y, z)`` direction or a string to
+        specify a conventional direction such as ``'x'`` for ``(1, 0, 0)``
+         or ``'-x'`` for ``(-1, 0, 0)``, etc.
 
-    axis_1_direction : sequence[float], optional
+    axis_1_direction : sequence[float] | str, optional
         Approximate direction vector of the second axis. If set, the
         direction of the second orthonormal axis will be flipped such
-        that it best aligns with this vector.
+        that it best aligns with this vector. Can be a sequence of three
+        elements specifying the ``(x, y, z)`` direction or a string to
+        specify a conventional direction
 
-    axis_2_direction : sequence[float], optional
+    axis_2_direction : sequence[float] | str, optional
         Approximate direction vector of the third axis. If set, the
         direction of the third orthonormal axis will be flipped such
-        that it best aligns with this vector. This parameter has no
-        effect if ``axis_0_direction`` and ``axis_1_direction`` are set.
+        that it best aligns with this vector. Can be a sequence of three
+        elements specifying the ``(x, y, z)`` direction or a string to
+        specify a conventional direction.
+
+        .. note::
+            This parameter has no effect if ``axis_0_direction`` and
+            ``axis_1_direction`` are set.
 
     as_transform : bool, False
         If ``True``, the axes are used to compute a 4x4 transformation
@@ -258,12 +269,22 @@ def orthonormal_axes(
     elif method not in ['principal', 'svd']:
         raise ValueError(f"Method must be 'principal' or 'svd', got {method} instead.")
 
-    if axis_0_direction is not None:
-        check_valid_vector(axis_0_direction)
-    if axis_1_direction is not None:
-        check_valid_vector(axis_1_direction)
-    if axis_2_direction is not None:
-        check_valid_vector(axis_2_direction)
+    def _validate_vector(vector):
+        if vector is not None:
+            if isinstance(vector, str):
+                vector = vector.lower()
+                valid_strings = list(NORMALS.keys())
+                if vector not in valid_strings:
+                    raise ValueError(
+                        f"Vector string must be one of {valid_strings}, got {vector} instead."
+                    )
+                vector = NORMALS[vector.lower()]
+            check_valid_vector(vector)
+        return vector
+
+    axis_0_direction = _validate_vector(axis_0_direction)
+    axis_1_direction = _validate_vector(axis_1_direction)
+    axis_2_direction = _validate_vector(axis_2_direction)
 
     # Initialize output
     if as_transform:
