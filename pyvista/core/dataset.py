@@ -42,7 +42,7 @@ from .utilities.arrays import (
 )
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class, check_valid_vector
-from .utilities.points import vtk_points
+from .utilities.points import orthonormal_axes, vtk_points
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1795,6 +1795,46 @@ class DataSet(DataSetFilters, DataObject):
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
         return sizes.cell_data['Area'].sum()
+
+    @property
+    def principal_axes(self) -> np.ndarray:
+        """Return the mesh's principal axes.
+
+        The mesh's principal axes are orthonormal unit vectors that best
+        fit its points. The axes define a rotation matrix that can be used
+        to align the mesh to the XYZ axes or vice-versa.
+
+        The principal axes are computed as the eigenvectors of the
+        covariance matrix of the mesh's points. The eigenvectors are
+        ordered according to the magnitude of their respective
+        eigenvalues, sorted from largest to smallest.
+
+        Notes
+        -----
+            If the principal axes cannot be computed, the identity matrix is
+            returned.
+
+        See Also
+        --------
+            :func:`~pyvista.principal_axes_transform`, :func:`~pyvista.orthonormal_axes`
+
+        Returns
+        -------
+        numpy.ndarray
+            The principal axes of the mesh as a 3x3 array. Axes are stored
+            as row vectors.
+
+        Examples
+        --------
+        Get the principal axes of a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> axes = mesh.principal_axes
+
+        """
+        return orthonormal_axes(self.points, method='principal')
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'

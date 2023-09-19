@@ -204,7 +204,7 @@ def principal_axes_transform(
 
     See Also
     --------
-        :func:`~pyvista.orthonormal_axes`
+        :func:`~pyvista.orthonormal_axes`, :attr:'~pyvista.DataSet.principal_axes`
 
     Parameters
     ----------
@@ -281,7 +281,9 @@ def orthonormal_axes(
 
     See Also
     --------
-        :func:`~pyvista.principal_axes_transform`, :func:`~pyvista.fit_plane_to_points`
+        :attr:`~pyvista.DataSet.principal_axes`,
+        :func:`~pyvista.principal_axes_transform`,
+        :func:`~pyvista.fit_plane_to_points`
 
     Parameters
     ----------

@@ -1494,6 +1494,46 @@ def test_volume_area():
     assert np.isclose(grid.area, 96.0)
 
 
+@pytest.fixture
+def datasets_asymmetric():
+    # similar to 'datasets' fixture but with examples that have points
+    # asymmetric
+    # points along its axes
+    return []
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.ImageData(dimensions=(3, 4, 5), spacing=(1, 2, 3)),  # ImageData
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.download_unstructured_grid(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+    ],
+)
+def test_principal_axes(dataset):
+    axes = dataset.principal_axes
+    assert np.any(axes)
+    assert not np.array_equal(axes, np.eye(3))
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.ImageData(),
+        pv.UnstructuredGrid(),
+        pv.StructuredGrid(),
+        pv.RectilinearGrid(),
+        pv.PolyData(),
+    ],
+)
+def test_principal_axes_empty(dataset):
+    axes = dataset.principal_axes
+    assert np.any(axes)
+    assert np.array_equal(axes, np.eye(3))
+
+
 # ------------------
 # Connectivity tests
 # ------------------
