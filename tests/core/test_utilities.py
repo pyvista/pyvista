@@ -13,7 +13,13 @@ import vtk
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
+from pyvista.core.utilities import (
+    cells,
+    fileio,
+    fit_plane_to_points,
+    orthonormal_axes,
+    transformations,
+)
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     copy_vtk_array,
@@ -893,7 +899,7 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-def test_fit_plane_to_points():
+def test_fit_plane_to_points_svd():
     points = ex.load_airplane().points
     plane, center, normal = fit_plane_to_points(points, return_meta=True)
 
@@ -910,3 +916,73 @@ def test_fit_plane_to_points():
             157.70724487304688,
         ],
     )
+
+
+def test_fit_plane_to_points_principal():
+    points = ex.load_airplane().points
+
+    plane, center, normal = fit_plane_to_points(points, method='principal', return_meta=True)
+    assert np.allclose(normal, [-2.5997750931635788e-08, 0.12178051369177637, -0.9925570545238024])
+    assert np.allclose(center, [896.9954860040623, 686.6470197014223, 78.13188440342194])
+    assert np.allclose(
+        plane.bounds,
+        [
+            139.06036376953125,
+            1654.9306640625,
+            38.07762145996094,
+            1335.2164306640625,
+            -1.4434863328933716,
+            157.70726013183594,
+        ],
+    )
+
+
+@pytest.fixture
+def cow():
+    return ex.download_cow()
+
+
+@pytest.mark.parametrize('method', ['principal', 'svd'])
+def test_compute_orthogonal_axes(method, cow):
+    axes = orthonormal_axes(cow.points, method=method)
+    if method == 'principal':
+        assert np.allclose(
+            axes,
+            [
+                [-9.30605585e-01, -3.66023558e-01, 2.21814485e-05],
+                [-3.66023559e-01, 9.30605580e-01, -9.87969142e-05],
+                [1.55198184e-05, -1.00059893e-04, -9.99999995e-01],
+            ],
+        )
+    else:
+        assert np.allclose(
+            axes,
+            [
+                [-9.3060559e-01, -3.6602357e-01, 2.2181448e-05],
+                [3.6602357e-01, -9.3060559e-01, 9.8796911e-05],
+                [-1.5519818e-05, 1.0005989e-04, 1.0000000e00],
+            ],
+        )
+
+    # test two points returns non-default axes
+    points = [[0, 0, 0], [1, 1, 1]]
+    axes = orthonormal_axes(points, method=method)
+    assert not np.array_equal(axes, np.eye(3))
+    assert np.size(axes) == 9
+
+    # test empty data returns default axes
+    points = np.empty((0, 3))
+    axes = orthonormal_axes(points, method=method)
+    assert np.array_equal(axes, np.eye(3))
+
+    # test single point returns default axes
+    points = [[0, 0, 0]]
+    axes = orthonormal_axes(points, method=method)
+    assert np.array_equal(axes, np.eye(3))
+
+
+def test_compute_orthogonal_axes_raises():
+    with pytest.raises(ValueError):
+        orthonormal_axes(np.empty((0, 3)), "abc")
+    with pytest.raises(TypeError):
+        orthonormal_axes(np.empty((0, 3)), np.empty((0, 3)))

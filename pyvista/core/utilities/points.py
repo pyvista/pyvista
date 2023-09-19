@@ -1,10 +1,12 @@
 """Points related utilities."""
+from typing import Literal
 import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -179,11 +181,80 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False):
-    """Fit a plane to a set of points using the SVD algorithm.
+def orthonormal_axes(points, method: Literal['principal', 'svd'] = 'principal'):
+    """Compute a set of orthonormal axes vectors from points.
 
-    The plane is automatically sized and oriented to fit the extents of
-    the points.
+    Parameters
+    ----------
+    points : array_like[float]
+        Points array.
+
+    method : str, default: 'principal'
+        Method for calculating axes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Orthonormal axes as 3x3 array.
+    """
+    if not isinstance(method, str):
+        raise TypeError("Method must be a string.")
+    elif method not in ['principal', 'svd']:
+        raise ValueError(f"Method must be 'principal' or 'svd', got {method} instead.")
+
+    # Initialize output
+    default_vectors = np.eye(3)
+
+    # Validate points
+    data, _ = _coerce_pointslike_arg(points, copy=True)
+    if not np.issubdtype(data.dtype, np.floating):
+        data = data.astype(np.float32)
+
+    # Center data
+    if len(data) == 0:
+        return default_vectors
+    else:
+        data -= data.mean(axis=0)
+
+    if method == 'principal':
+        try:
+            covariance = np.cov(data, rowvar=False)
+            _, vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
+            vectors = vectors.T[::-1]  # row vectors, descending order
+
+        except np.linalg.LinAlgError:
+            return default_vectors
+
+    elif method == 'svd':
+        try:
+            _, _, vectors = np.linalg.svd(data)
+        except np.linalg.LinAlgError:
+            return default_vectors
+    else:
+        raise NotImplementedError(f"{method} not implemented.")
+
+    # Ensure vectors have unit-length and form a right-hand coordinate system
+    i_vector = vectors[0] / np.linalg.norm(vectors[0])
+    j_vector = vectors[1] / np.linalg.norm(vectors[1])
+    k_vector = np.cross(i_vector, j_vector)
+    vectors = np.row_stack((i_vector, j_vector, k_vector))
+
+    return vectors
+
+
+def fit_plane_to_points(
+    points,
+    method: Literal['principal', 'svd'] = 'principal',
+    return_meta=False,
+    i_resolution=10,
+    j_resolution=10,
+):
+    """Fit a plane to a set of points.
+
+    The plane's normal and orientation can be determined using the point's
+    principal axes or by Singular Value Decomposition (SVD).
+
+    The plane is automatically sized to fit the extents of the points.
 
     Parameters
     ----------
@@ -193,6 +264,14 @@ def fit_plane_to_points(points, return_meta=False):
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the
         generated plane.
+
+    i_resolution : int, default: 10
+        Number of points on the plane in the direction of the plane's
+        long edge.
+
+    j_resolution : int, default: 10
+        Number of points on the plane in the direction of the plane's
+        short edge.
 
     Returns
     -------
@@ -258,22 +337,49 @@ def fit_plane_to_points(points, return_meta=False):
     ... ]
     >>> pl.show()
 
+        Compare fitting methods.
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>>
+    >>> # Create mesh
+    >>> mesh = examples.download_cow()
+    >>>
+    >>> # Fit plane using two different methods
+    >>> plane_pc = pyvista.fit_plane_to_points(
+    ...     mesh.points, method='pc', i_resolution=1, j_resolution=1
+    ... )
+    >>> plane_svd = pyvista.fit_plane_to_points(
+    ...     mesh.points, method='svd', i_resolution=1, j_resolution=1
+    ... )
+    >>>
+    >>> # Plot the fitted planes
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     plane_pc, show_edges=True, color='lightblue', opacity=0.25
+    ... )
+    >>> _ = pl.add_mesh(
+    ...     plane_svd, show_edges=True, color='red', opacity=0.25
+    ... )
+    >>> _ = pl.add_mesh(mesh, style='wireframe')
+    >>> pl.camera_position = [
+    ...     (-117, 76, 235),
+    ...     (1.69, -1.38, 0),
+    ...     (0.189, 0.957, -0.22),
+    ... ]
+    >>> pl.show()
     """
-    # Apply SVD to get orthogonal basis vectors to define the plane
-    data = np.array(points)
-    data_center = data.mean(axis=0)
-    _, _, Vh = np.linalg.svd(data - data_center)
-    i_vector = Vh[0]
-    j_vector = Vh[1]
-    normal = np.cross(i_vector, j_vector)
+    vectors = orthonormal_axes(points, method=method)
+    normal = vectors[2]
 
     # Create rotation matrix from basis vectors
     rotate_transform = np.eye(4)
-    rotate_transform[:3, :3] = np.vstack((i_vector, j_vector, normal))
+    rotate_transform[:3, :3] = vectors
     rotate_transform_inv = rotate_transform.T
 
     # Project and transform points to align and center data to the XY plane
     poly = pyvista.PolyData(points)
+    data_center = points.mean(axis=0)
     projected = poly.project_points_to_plane(origin=data_center, normal=normal)
     projected.points -= data_center
     projected.transform(rotate_transform)
@@ -289,7 +395,14 @@ def fit_plane_to_points(points, return_meta=False):
     center = rotate_transform_inv[:3, :3] @ projected.center + data_center
 
     # Initialize plane then move to final position
-    plane = pyvista.Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=i_size, j_size=j_size)
+    plane = pyvista.Plane(
+        center=(0, 0, 0),
+        direction=(0, 0, 1),
+        i_size=i_size,
+        j_size=j_size,
+        i_resolution=i_resolution,
+        j_resolution=j_resolution,
+    )
     plane.transform(rotate_transform_inv)
     plane.points += center
 

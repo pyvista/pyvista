@@ -127,6 +127,7 @@ from .parametric_objects import (
     surface_from_para,
 )
 from .points import (
+    orthonormal_axes,
     fit_plane_to_points,
     line_segments_from_points,
     lines_from_points,
