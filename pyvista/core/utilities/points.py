@@ -204,7 +204,7 @@ def principal_axes_transform(
 
     See Also
     --------
-        :func:`~pyvista.orthonormal_axes`, :attr:'~pyvista.DataSet.principal_axes`
+        :func:`~pyvista.orthonormal_axes`, :attr:`~pyvista.DataSet.principal_axes`
 
     Parameters
     ----------
@@ -225,7 +225,7 @@ def principal_axes_transform(
         direction of the second orthonormal axis will be flipped such
         that it best aligns with this vector. Can be a sequence of three
         elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction
+        specify a conventional direction.
 
     axis_2_direction : sequence[float] | str, optional
         Approximate direction vector of the third axis. If set, the
@@ -245,7 +245,14 @@ def principal_axes_transform(
         at the origin.
 
     """
-    return orthonormal_axes(points, method='principal', as_transform=True)
+    return orthonormal_axes(
+        points,
+        axis_0_direction=axis_0_direction,
+        axis_1_direction=axis_1_direction,
+        axis_2_direction=axis_2_direction,
+        method='principal',
+        as_transform=True,
+    )
 
 
 def orthonormal_axes(
@@ -293,8 +300,8 @@ def orthonormal_axes(
 
     method : str, default: 'principal'
         Method for computing the axes:
-        -``'principal'``: axes are the eigenvectors of the covariance matrix
-        -``'svd'``: axes are the right singular vectors
+        -``'principal'``: axes computed as the eigenvectors of the covariance matrix.
+        -``'svd'``: axes computed as the right singular vectors.
 
     axis_0_direction : sequence[float] | str, optional
         Approximate direction vector of the first axis. If set, the
@@ -309,7 +316,7 @@ def orthonormal_axes(
         direction of the second orthonormal axis will be flipped such
         that it best aligns with this vector. Can be a sequence of three
         elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction
+        specify a conventional direction.
 
     axis_2_direction : sequence[float] | str, optional
         Approximate direction vector of the third axis. If set, the
@@ -462,8 +469,8 @@ def fit_plane_to_points(
 
     method : str, default: 'principal'
         Method for computing the plane:
-        -``'principal'``: plane is computed from the points' covariance matrix
-        -``'svd'``: plane is computed with SVD
+        -``'principal'``: computed from the eigenvectors of the points' covariance matrix.
+        -``'svd'``: computed with SVD.
 
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the

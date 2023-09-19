@@ -1036,4 +1036,8 @@ def test_orthonormal_axes_raises():
 
 
 def test_principal_axes_transform(airplane):
-    assert np.any(principal_axes_transform(airplane.points))
+    assert np.any(
+        principal_axes_transform(
+            airplane.points, axis_0_direction='x', axis_1_direction='y', axis_2_direction='z'
+        )
+    )
