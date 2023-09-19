@@ -132,6 +132,7 @@ from .points import (
     lines_from_points,
     make_tri_mesh,
     orthonormal_axes,
+    principal_axes_transform,
     vector_poly_data,
     vtk_points,
 )

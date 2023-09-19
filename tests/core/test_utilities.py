@@ -18,6 +18,7 @@ from pyvista.core.utilities import (
     fileio,
     fit_plane_to_points,
     orthonormal_axes,
+    principal_axes_transform,
     transformations,
 )
 from pyvista.core.utilities.arrays import (
@@ -1032,3 +1033,6 @@ def test_compute_orthonormal_axes_raises():
         orthonormal_axes(np.empty((0, 3)), np.empty((0, 3)))
     with pytest.raises(ValueError):
         orthonormal_axes(np.empty((0, 3)), axis_0_direction='abc')
+
+def test_principal_axes_transform(airplane):
+    assert np.any(principal_axes_transform(airplane.points))

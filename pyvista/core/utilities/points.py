@@ -183,6 +183,71 @@ def lines_from_points(points, close=False):
     return poly
 
 
+def principal_axes_transform(
+    points,
+    axis_0_direction=None,
+    axis_1_direction=None,
+    axis_2_direction=None,
+):
+    """Compute the principal axes transform.
+
+    Get the transformation matrix which translates the center a set of
+    points to the origin and rotates the points to align their principal
+    axes to the XYZ axes.
+
+    This method is a convenience function for :func:`pyvista.orthonormal_axes`
+    with ``method='principal'`` and ``as_transform=True``
+
+    Notes
+    -----
+        If the transform cannot be computed, the identity matrix is returned.
+
+    See Also
+    --------
+        :func:`~pyvista.orthonormal_axes`
+
+    Parameters
+    ----------
+    points : array_like[float]
+        Points array. Accepts a single point or several points as a
+        Nx3 array.
+
+    axis_0_direction : sequence[float] | str, optional
+        Approximate direction vector of the first axis. If set, the
+        direction of the first orthonormal axis will be flipped such
+        that it best aligns with this vector. Can be a sequence of three
+        elements specifying the ``(x, y, z)`` direction or a string to
+        specify a conventional direction such as ``'x'`` for ``(1, 0, 0)``
+         or ``'-x'`` for ``(-1, 0, 0)``, etc.
+
+    axis_1_direction : sequence[float] | str, optional
+        Approximate direction vector of the second axis. If set, the
+        direction of the second orthonormal axis will be flipped such
+        that it best aligns with this vector. Can be a sequence of three
+        elements specifying the ``(x, y, z)`` direction or a string to
+        specify a conventional direction
+
+    axis_2_direction : sequence[float] | str, optional
+        Approximate direction vector of the third axis. If set, the
+        direction of the third orthonormal axis will be flipped such
+        that it best aligns with this vector. Can be a sequence of three
+        elements specifying the ``(x, y, z)`` direction or a string to
+        specify a conventional direction.
+
+        .. note::
+            This parameter has no effect if ``axis_0_direction`` and
+            ``axis_1_direction`` are set.
+
+    Returns
+    -------
+    numpy.ndarray
+        4x4 transformation matrix which aligns the points to the XYZ axes
+        at the origin.
+
+    """
+    return orthonormal_axes(points, method='principal', as_transform=True)
+
+
 def orthonormal_axes(
     points,
     method: Literal['principal', 'svd'] = 'principal',
@@ -193,9 +258,10 @@ def orthonormal_axes(
 ):
     """Compute a set of orthonormal axes vectors from points.
 
-    The orthonormal vectors are orthogonal, unit-length vectors which
-    best fit the points. The axes define a rotation matrix that can be
-    used to align the points to the XYZ axes or vice-versa.
+    The orthonormal axes vectors are orthogonal, unit-length row vectors
+    which best fit the points. The vectors can be used to define a local
+    coordinate frame and treated as a rotation matrix to align the
+    points to the XYZ axes or vice-versa.
 
     The vectors can be computed as the point's Principal Components or
     using Singular Value Decomposition (SVD) (both methods are similar).
@@ -212,6 +278,10 @@ def orthonormal_axes(
     Notes
     -----
         If the axes cannot be computed, the identity matrix is returned.
+
+    See Also
+    --------
+        :func:`~pyvista.principal_axes_transform`, :func:`~pyvista.fit_plane_to_points`
 
     Parameters
     ----------
@@ -378,6 +448,10 @@ def fit_plane_to_points(
     .. versionchanged:: 0.43.0
         The default fitting method has been changed to ``'principal'``.
         Use ``method='svd'`` to restore the previous behavior.
+
+    See Also
+    --------
+        :func:`~pyvista.orthonormal_axes`
 
     Parameters
     ----------
