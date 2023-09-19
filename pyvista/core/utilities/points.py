@@ -188,6 +188,7 @@ def orthonormal_axes(
     axis_0_direction=None,
     axis_1_direction=None,
     axis_2_direction=None,
+    as_transform=False,
 ):
     """Compute a set of orthonormal axes vectors from points.
 
@@ -197,26 +198,30 @@ def orthonormal_axes(
 
     The vectors can be computed as the point's Principal Components or
     using Singular Value Decomposition (SVD) (both methods are similar).
+    The points are centered at their mean prior to the computation.
     The vectors are sorted by eigenvalue, with the first and third axes
     corresponding to the largest and smallest eigenvalues, respectively.
 
-    The computed axes directions are arbitrary. As such, approximate
-    direction vectors may optionally be specified to control the axis
-    directions. This can be used, for example, to define a local coordinate
-    frame where one or two axis directions have a clear physical meaning.
+    The computed axes are not unique and their directions are arbitrary.
+    As such, approximate direction vectors may optionally be specified
+    to control the axis directions. This can be used, for example, to
+    define a local coordinate frame where one or two axis directions
+    have a clear physical meaning.
 
     Notes
-    _____
+    -----
         If the axes cannot be computed, the identity matrix is returned.
 
     Parameters
     ----------
     points : array_like[float]
-        Points array. Accepts a single point or several points as an
-        ``Nx3`` array.
+        Points array. Accepts a single point or several points as a
+        Nx3 array.
 
     method : str, default: 'principal'
-        Method for calculating axes.
+        Method for computing the axes:
+        -``'principal'``: axes are the eigenvectors of the covariance matrix
+        -``'svd'``: axes are the right singular vectors
 
     axis_0_direction : sequence[float], optional
         Approximate direction vector of the first axis. If set, the
@@ -234,11 +239,18 @@ def orthonormal_axes(
         that it best aligns with this vector. This parameter has no
         effect if ``axis_0_direction`` and ``axis_1_direction`` are set.
 
+    as_transform : bool, False
+        If ``True``, the axes are used to compute a 4x4 transformation
+        matrix. The transform translates the points to be centered at the
+        origin, then rotates the points to align the orthonormal axes to
+        the XYZ axes.
+
     Returns
     -------
     numpy.ndarray
-        The orthonormal axes of the points as a 3x3 array. Axes are stored
-        as row vectors.
+        The orthonormal axes or transform of the points. If ``as_transform``,
+        is ``False``, the output is as a 3x3 array with axes stored as
+        row vectors. Otherwise, a 4x4 transformation matrix is returned.
 
     """
     if not isinstance(method, str):
@@ -254,18 +266,21 @@ def orthonormal_axes(
         check_valid_vector(axis_2_direction)
 
     # Initialize output
-    default_axes_vectors = np.eye(3)
+    if as_transform:
+        default_output = np.eye(4)
+    else:
+        default_output = np.eye(3)
 
     # Validate points
     data, _ = _coerce_pointslike_arg(points, copy=True)
     if not np.issubdtype(data.dtype, np.floating):
         data = data.astype(np.float32)
+    if len(data) == 0:
+        return default_output
 
     # Center data
-    if len(data) == 0:
-        return default_axes_vectors
-    else:
-        data -= data.mean(axis=0)
+    centroid = data.mean(axis=0)
+    data -= centroid
 
     if method == 'principal':
         try:
@@ -274,13 +289,13 @@ def orthonormal_axes(
             axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
 
         except np.linalg.LinAlgError:
-            return default_axes_vectors
+            return default_output
 
     elif method == 'svd':
         try:
             _, _, axes_vectors = np.linalg.svd(data)
         except np.linalg.LinAlgError:
-            return default_axes_vectors
+            return default_output
     else:
         raise NotImplementedError(f"{method} not implemented.")
 
@@ -311,6 +326,16 @@ def orthonormal_axes(
                 k_vector *= sign
 
     axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
+
+    if as_transform:
+        # Create a 4x4 transformation matrix to align orthonormal axes
+        # to the XYZ axes
+        rotate_to_xyz = np.eye(4)
+        rotate_to_xyz[:3, :3] = axes_vectors
+        translate_to_origin = np.eye(4)
+        translate_to_origin[:3, 3] = -centroid
+        transform = rotate_to_xyz @ translate_to_origin
+        return transform
 
     return axes_vectors
 

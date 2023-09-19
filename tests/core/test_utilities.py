@@ -965,6 +965,27 @@ def test_compute_orthonormal_axes_direction():
     assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
 
 
+def test_compute_orthonormal_axes_as_transform(airplane):
+    airplane.points_to_double()
+
+    points = airplane.points
+    axes_before = orthonormal_axes(points)
+    centroid_before = np.mean(points, axis=0)
+    assert not np.allclose(axes_before, np.eye(3))
+    assert not np.allclose(centroid_before, [0, 0, 0])
+
+    transform = orthonormal_axes(points, as_transform=True)
+    assert np.array_equal(transform.shape, (4, 4))
+
+    airplane.transform(transform)
+
+    points = airplane.points
+    axes_after = orthonormal_axes(points, axis_0_direction=[1, 0, 0], axis_1_direction=[0, 1, 0])
+    centroid_after = np.mean(points, axis=0)
+    assert np.allclose(axes_after, np.eye(3))
+    assert np.allclose(centroid_after, [0, 0, 0])
+
+
 @pytest.mark.parametrize('method', ['principal', 'svd'])
 def test_compute_orthonormal_axes(method, cow):
     axes = orthonormal_axes(cow.points, method=method)
