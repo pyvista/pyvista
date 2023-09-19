@@ -36,6 +36,16 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 
 
+@pytest.fixture
+def cow():
+    return ex.download_cow()
+
+
+@pytest.fixture
+def airplane():
+    return ex.load_airplane()
+
+
 def test_version():
     assert "major" in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
@@ -296,9 +306,8 @@ def get_array_vtk(hexbeam):
     get_array(grid_vtk, 'foo')
 
 
-def test_is_inside_bounds():
-    data = ex.load_uniform()
-    bnds = data.bounds
+def test_is_inside_bounds(uniform):
+    bnds = uniform.bounds
     assert is_inside_bounds((0.5, 0.5, 0.5), bnds)
     assert not is_inside_bounds((12, 5, 5), bnds)
     assert not is_inside_bounds((5, 12, 5), bnds)
@@ -502,9 +511,8 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
-def test_apply_transformation_to_points():
-    mesh = ex.load_airplane()
-    points = mesh.points
+def test_apply_transformation_to_points(airplane):
+    points = airplane.points
     points_orig = points.copy()
 
     # identity 3 x 3
@@ -522,7 +530,7 @@ def test_apply_transformation_to_points():
     tf[3, 3] = 1
     r = transformations.apply_transformation_to_points(tf, points, inplace=True)
     assert r is None
-    assert mesh.points == pytest.approx(2 * points_orig)
+    assert airplane.points == pytest.approx(2 * points_orig)
 
 
 def _generate_vtk_err():
@@ -899,14 +907,12 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-def test_fit_plane_to_points_svd():
-    points = ex.load_airplane().points
-    plane, center, normal = fit_plane_to_points(points, return_meta=True)
-
+def test_fit_plane_to_points_svd(airplane):
+    airplane, center, normal = fit_plane_to_points(airplane.points, return_meta=True)
     assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
     assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
     assert np.allclose(
-        plane.bounds,
+        airplane.bounds,
         [
             139.06036376953125,
             1654.9306640625,
@@ -918,14 +924,14 @@ def test_fit_plane_to_points_svd():
     )
 
 
-def test_fit_plane_to_points_principal():
-    points = ex.load_airplane().points
-
-    plane, center, normal = fit_plane_to_points(points, method='principal', return_meta=True)
+def test_fit_plane_to_points_principal(airplane):
+    airplane, center, normal = fit_plane_to_points(
+        airplane.points, method='principal', return_meta=True
+    )
     assert np.allclose(normal, [-2.5997750931635788e-08, 0.12178051369177637, -0.9925570545238024])
     assert np.allclose(center, [896.9954860040623, 686.6470197014223, 78.13188440342194])
     assert np.allclose(
-        plane.bounds,
+        airplane.bounds,
         [
             139.06036376953125,
             1654.9306640625,
@@ -935,11 +941,6 @@ def test_fit_plane_to_points_principal():
             157.70726013183594,
         ],
     )
-
-
-@pytest.fixture
-def cow():
-    return ex.download_cow()
 
 
 def test_compute_orthonormal_axes_direction():
@@ -964,7 +965,7 @@ def test_compute_orthonormal_axes_direction():
         points,
         axis_0_direction=[-1, 0, 0],
         axis_1_direction=[0, -1, 0],
-        axis_2_direction=[0, 0, -1],
+        axis_2_direction=[0, 0, -1],  # test has no effect
     )
     assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
 
