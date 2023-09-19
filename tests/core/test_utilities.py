@@ -903,40 +903,34 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-def test_fit_plane_to_points_svd(airplane):
-    airplane, center, normal = fit_plane_to_points(airplane.points, return_meta=True)
-    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
-    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
-    assert np.allclose(
-        airplane.bounds,
-        [
-            139.06036376953125,
-            1654.9306640625,
-            38.0776252746582,
-            1335.2164306640625,
-            -1.4434913396835327,
-            157.70724487304688,
-        ],
+@pytest.mark.parametrize('method', ['principal', 'svd'])
+def test_fit_plane_to_points(cow, method):
+    cow.points_to_double()
+    plane, center, normal = fit_plane_to_points(
+        cow.points, method=method, return_meta=True, i_resolution=1, j_resolution=1
     )
+    if method == 'principal':
+        expected_normal = [1.551883832279653e-05, -0.00010006013364892495, -0.9999999948735677]
+        expected_center = [0.7383465538115013, -0.27255687569177367, 4.2508956649349256e-05]
+        expected_points = [
+            [7.1521964, -1.656375, 0.0002805095],
+            [-3.0142126, -5.6550026, 0.0005228419],
+            [4.490906, 5.109889, -0.00043782394],
+            [-5.6755033, 1.1112612, -0.00019549158],
+        ]
+    else:
+        expected_normal = [-1.5518838324305238e-05, 0.00010006013365270224, 0.9999999948735678]
+        expected_center = [0.7383465538115028, -0.2725568756917751, 4.250895664991391e-05]
+        expected_points = [
+            [4.490906, 5.109889, -0.00043782394],
+            [-5.6755033, 1.1112612, -0.00019549158],
+            [7.1521964, -1.656375, 0.0002805095],
+            [-3.0142126, -5.6550026, 0.0005228419],
+        ]
 
-
-def test_fit_plane_to_points_principal(airplane):
-    airplane, center, normal = fit_plane_to_points(
-        airplane.points, method='principal', return_meta=True
-    )
-    assert np.allclose(normal, [-2.5997750931635788e-08, 0.12178051369177637, -0.9925570545238024])
-    assert np.allclose(center, [896.9954860040623, 686.6470197014223, 78.13188440342194])
-    assert np.allclose(
-        airplane.bounds,
-        [
-            139.06036376953125,
-            1654.9306640625,
-            38.07762145996094,
-            1335.2164306640625,
-            -1.4434863328933716,
-            157.70726013183594,
-        ],
-    )
+    assert np.allclose(normal, expected_normal)
+    assert np.allclose(center, expected_center)
+    assert np.allclose(plane.points, expected_points)
 
 
 def test_orthonormal_axes_direction():
