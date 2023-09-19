@@ -350,14 +350,23 @@ def fit_plane_to_points(
     """Fit a plane to a set of points.
 
     The plane's normal and orientation can be determined using the point's
-    principal axes or by Singular Value Decomposition (SVD).
+    Principal Components or by Singular Value Decomposition (SVD).
 
     The plane is automatically sized to fit the extents of the points.
+
+    .. versionchanged:: 0.43.0
+        The default fitting method has been changed to ``'principal'``.
+        Use ``method='svd'`` to restore the previous behavior.
 
     Parameters
     ----------
     points : array_like[float]
         Size ``[N x 3]`` sequence of points to fit a plane through.
+
+    method : str, default: 'principal'
+        Method for computing the plane:
+        -``'principal'``: plane is computed from the points' covariance matrix
+        -``'svd'``: plane is computed with SVD
 
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the
