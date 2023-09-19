@@ -939,7 +939,7 @@ def test_fit_plane_to_points_principal(airplane):
     )
 
 
-def test_compute_orthonormal_axes_direction():
+def test_orthonormal_axes_direction():
     # define planar data
     points = [[1, 1, 0], [1, -1, 0], [-1, 1, 0], [-1, -1, 0]]
     axes = orthonormal_axes(points)
@@ -966,7 +966,7 @@ def test_compute_orthonormal_axes_direction():
     assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
 
 
-def test_compute_orthonormal_axes_as_transform(airplane):
+def test_orthonormal_axes_as_transform(airplane):
     airplane.points_to_double()
 
     points = airplane.points
@@ -988,7 +988,7 @@ def test_compute_orthonormal_axes_as_transform(airplane):
 
 
 @pytest.mark.parametrize('method', ['principal', 'svd'])
-def test_compute_orthonormal_axes(method, cow):
+def test_orthonormal_axes(method, cow):
     axes = orthonormal_axes(cow.points, method=method)
     if method == 'principal':
         assert np.allclose(
@@ -1026,13 +1026,14 @@ def test_compute_orthonormal_axes(method, cow):
     assert np.array_equal(axes, np.eye(3))
 
 
-def test_compute_orthonormal_axes_raises():
+def test_orthonormal_axes_raises():
     with pytest.raises(ValueError):
         orthonormal_axes(np.empty((0, 3)), "abc")
     with pytest.raises(TypeError):
         orthonormal_axes(np.empty((0, 3)), np.empty((0, 3)))
     with pytest.raises(ValueError):
         orthonormal_axes(np.empty((0, 3)), axis_0_direction='abc')
+
 
 def test_principal_axes_transform(airplane):
     assert np.any(principal_axes_transform(airplane.points))
