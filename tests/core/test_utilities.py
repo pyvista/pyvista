@@ -942,6 +942,33 @@ def cow():
     return ex.download_cow()
 
 
+def test_compute_orthogonal_axes_direction():
+    # define planar data
+    points = [[1, 1, 0], [1, -1, 0], [-1, 1, 0], [-1, -1, 0]]
+    axes = orthonormal_axes(points)
+    assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    axes = orthonormal_axes(points, axis_0_direction=[-1, 0, 0])
+    assert np.array_equal(axes, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+
+    axes = orthonormal_axes(points, axis_1_direction=[0, -1, 0])
+    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+
+    axes = orthonormal_axes(points, axis_2_direction=[0, 0, -1])
+    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+
+    axes = orthonormal_axes(points, axis_0_direction=[-1, 0, 0], axis_1_direction=[0, -1, 0])
+    assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+
+    axes = orthonormal_axes(
+        points,
+        axis_0_direction=[-1, 0, 0],
+        axis_1_direction=[0, -1, 0],
+        axis_2_direction=[0, 0, -1],
+    )
+    assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+
+
 @pytest.mark.parametrize('method', ['principal', 'svd'])
 def test_compute_orthogonal_axes(method, cow):
     axes = orthonormal_axes(cow.points, method=method)

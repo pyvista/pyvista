@@ -7,6 +7,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.misc import check_valid_vector
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -181,29 +182,79 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def orthonormal_axes(points, method: Literal['principal', 'svd'] = 'principal'):
+def orthonormal_axes(
+    points,
+    method: Literal['principal', 'svd'] = 'principal',
+    axis_0_direction=None,
+    axis_1_direction=None,
+    axis_2_direction=None,
+):
     """Compute a set of orthonormal axes vectors from points.
+
+    The orthonormal vectors are orthogonal, unit-length vectors which
+    best fit the points. The axes define a rotation matrix that can be
+    used to align the points to the XYZ axes or vice-versa.
+
+    The vectors can be computed as the point's Principal Components or
+    using Singular Value Decomposition (SVD) (both methods are similar).
+    The vectors are sorted by eigenvalue, with the first and third axes
+    corresponding to the largest and smallest eigenvalues, respectively.
+
+    The computed axes directions are arbitrary. As such, approximate
+    direction vectors may optionally be specified to control the axis
+    directions. This can be used, for example, to define a local coordinate
+    frame where one or two axis directions have a clear physical meaning.
+
+    Notes
+    _____
+        If the axes cannot be computed, the identity matrix is returned.
 
     Parameters
     ----------
     points : array_like[float]
-        Points array.
+        Points array. Accepts a single point or several points as an
+        ``Nx3`` array.
 
     method : str, default: 'principal'
         Method for calculating axes.
 
+    axis_0_direction : sequence[float], optional
+        Approximate direction vector of the first axis. If set, the
+        direction of the first orthonormal axis will be flipped such
+        that it best aligns with this vector.
+
+    axis_1_direction : sequence[float], optional
+        Approximate direction vector of the second axis. If set, the
+        direction of the second orthonormal axis will be flipped such
+        that it best aligns with this vector.
+
+    axis_2_direction : sequence[float], optional
+        Approximate direction vector of the third axis. If set, the
+        direction of the third orthonormal axis will be flipped such
+        that it best aligns with this vector. This parameter has no
+        effect if ``axis_0_direction`` and ``axis_1_direction`` are set.
+
     Returns
     -------
     numpy.ndarray
-        Orthonormal axes as 3x3 array.
+        The orthonormal axes of the points as a 3x3 array. Axes are stored
+        as row vectors.
+
     """
     if not isinstance(method, str):
         raise TypeError("Method must be a string.")
     elif method not in ['principal', 'svd']:
         raise ValueError(f"Method must be 'principal' or 'svd', got {method} instead.")
 
+    if axis_0_direction is not None:
+        check_valid_vector(axis_0_direction)
+    if axis_1_direction is not None:
+        check_valid_vector(axis_1_direction)
+    if axis_2_direction is not None:
+        check_valid_vector(axis_2_direction)
+
     # Initialize output
-    default_vectors = np.eye(3)
+    default_axes_vectors = np.eye(3)
 
     # Validate points
     data, _ = _coerce_pointslike_arg(points, copy=True)
@@ -212,34 +263,56 @@ def orthonormal_axes(points, method: Literal['principal', 'svd'] = 'principal'):
 
     # Center data
     if len(data) == 0:
-        return default_vectors
+        return default_axes_vectors
     else:
         data -= data.mean(axis=0)
 
     if method == 'principal':
         try:
             covariance = np.cov(data, rowvar=False)
-            _, vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
-            vectors = vectors.T[::-1]  # row vectors, descending order
+            _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
+            axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
 
         except np.linalg.LinAlgError:
-            return default_vectors
+            return default_axes_vectors
 
     elif method == 'svd':
         try:
-            _, _, vectors = np.linalg.svd(data)
+            _, _, axes_vectors = np.linalg.svd(data)
         except np.linalg.LinAlgError:
-            return default_vectors
+            return default_axes_vectors
     else:
         raise NotImplementedError(f"{method} not implemented.")
 
-    # Ensure vectors have unit-length and form a right-hand coordinate system
-    i_vector = vectors[0] / np.linalg.norm(vectors[0])
-    j_vector = vectors[1] / np.linalg.norm(vectors[1])
-    k_vector = np.cross(i_vector, j_vector)
-    vectors = np.row_stack((i_vector, j_vector, k_vector))
+    # Normalize to unit-length, flip directions, and ensure vectors form
+    # a right-hand coordinate system
+    i_vector = axes_vectors[0] / np.linalg.norm(axes_vectors[0])
+    if axis_0_direction:
+        i_vector *= np.sign(np.dot(i_vector, axis_0_direction))
 
-    return vectors
+    j_vector = axes_vectors[1] / np.linalg.norm(axes_vectors[1])
+    if axis_1_direction:
+        j_vector *= np.sign(np.dot(j_vector, axis_1_direction))
+
+    k_vector = np.cross(i_vector, j_vector)
+    if axis_2_direction:
+        sign = np.sign(np.dot(k_vector, axis_2_direction))
+        if axis_0_direction and axis_1_direction:
+            pass  # k direction is already pre-determined
+        else:
+            # Need to modify two vectors to keep system as right-handed
+            if axis_1_direction:
+                # Do not modify j vector
+                i_vector *= sign
+                k_vector *= sign
+            else:
+                # Do not modify i vector
+                j_vector *= sign
+                k_vector *= sign
+
+    axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
+
+    return axes_vectors
 
 
 def fit_plane_to_points(

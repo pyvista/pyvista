@@ -127,11 +127,11 @@ from .parametric_objects import (
     surface_from_para,
 )
 from .points import (
-    orthonormal_axes,
     fit_plane_to_points,
     line_segments_from_points,
     lines_from_points,
     make_tri_mesh,
+    orthonormal_axes,
     vector_poly_data,
     vtk_points,
 )
