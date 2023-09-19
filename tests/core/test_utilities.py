@@ -41,11 +41,6 @@ def cow():
     return ex.download_cow()
 
 
-@pytest.fixture
-def airplane():
-    return ex.load_airplane()
-
-
 def test_version():
     assert "major" in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
