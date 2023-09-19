@@ -942,7 +942,7 @@ def cow():
     return ex.download_cow()
 
 
-def test_compute_orthogonal_axes_direction():
+def test_compute_orthonormal_axes_direction():
     # define planar data
     points = [[1, 1, 0], [1, -1, 0], [-1, 1, 0], [-1, -1, 0]]
     axes = orthonormal_axes(points)
@@ -970,7 +970,7 @@ def test_compute_orthogonal_axes_direction():
 
 
 @pytest.mark.parametrize('method', ['principal', 'svd'])
-def test_compute_orthogonal_axes(method, cow):
+def test_compute_orthonormal_axes(method, cow):
     axes = orthonormal_axes(cow.points, method=method)
     if method == 'principal':
         assert np.allclose(
@@ -1008,7 +1008,7 @@ def test_compute_orthogonal_axes(method, cow):
     assert np.array_equal(axes, np.eye(3))
 
 
-def test_compute_orthogonal_axes_raises():
+def test_compute_orthonormal_axes_raises():
     with pytest.raises(ValueError):
         orthonormal_axes(np.empty((0, 3)), "abc")
     with pytest.raises(TypeError):
