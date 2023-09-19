@@ -1937,6 +1937,36 @@ def test_user_annotations_scalar_bar_volume(uniform, verify_image_cache):
     p.show()
 
 
+def test_user_matrix_volume(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 1
+
+    p = pv.Plotter()
+    volume = p.add_volume(uniform, user_matrix=shear)
+    np.testing.assert_almost_equal(volume.user_matrix, shear)
+
+    with pytest.raises(ValueError):
+        p.add_volume(uniform, user_matrix=np.eye(5))
+
+    with pytest.raises(TypeError):
+        p.add_volume(uniform, user_matrix='invalid')
+
+
+def test_user_matrix_mesh(sphere):
+    shear = np.eye(4)
+    shear[0, 1] = 1
+
+    p = pv.Plotter()
+    actor = p.add_mesh(sphere, user_matrix=shear)
+    np.testing.assert_almost_equal(actor.user_matrix, shear)
+
+    with pytest.raises(ValueError):
+        p.add_mesh(sphere, user_matrix=np.eye(5))
+
+    with pytest.raises(TypeError):
+        p.add_mesh(sphere, user_matrix='invalid')
+
+
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {"vertical": True}
     sargs_copy = sargs.copy()
@@ -3366,7 +3396,7 @@ def test_add_point_scalar_labels_list():
 
 
 def test_plot_algorithm_cone():
-    algo = vtk.vtkConeSource()
+    algo = pv.ConeSource()
     algo.SetResolution(10)
 
     pl = pv.Plotter()
@@ -3414,7 +3444,7 @@ def test_algorithm_add_points():
 
 @skip_9_1_0
 def test_algorithm_add_point_labels():
-    algo = vtk.vtkConeSource()
+    algo = pv.ConeSource()
     elev = vtk.vtkElevationFilter()
     elev.SetInputConnection(algo.GetOutputPort())
     elev.SetLowPoint(0, 0, -1)

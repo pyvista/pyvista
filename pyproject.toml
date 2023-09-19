@@ -224,7 +224,7 @@ exclude = [  # don't report on objects that match any of these regex
     '^viewer_directive\..*$',
     '^plot_directive\..*$',
     '^coverage\..*$',
-    '\.pv_html_page_context$',    
+    '\.pv_html_page_context$',
     # Internal
     '^observers\..*$',
     # methods we probably should make private

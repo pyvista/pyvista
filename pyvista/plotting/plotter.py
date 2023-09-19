@@ -1902,6 +1902,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.add_key_event(*args, **kwargs)
 
+    @wraps(RenderWindowInteractor.add_timer_event)
+    def add_timer_event(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.add_timer_event."""
+        if hasattr(self, 'iren'):
+            self.iren.add_timer_event(*args, **kwargs)
+
     @wraps(RenderWindowInteractor.clear_events_for_key)
     def clear_events_for_key(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
@@ -2829,6 +2835,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         metallic=None,
         roughness=None,
         render=True,
+        user_matrix=np.eye(4),
         component=None,
         emissive=None,
         copy_mesh=False,
@@ -3115,6 +3122,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+            Matrix passed to the Actor class before rendering. This affects the
+            actor/rendering only, not the input volume itself. The user matrix is the
+            last transformation applied to the actor before rendering. Defaults to the
+            identity matrix.
 
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
@@ -3465,6 +3478,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
+        actor.user_matrix = user_matrix
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -3665,6 +3679,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
         render=True,
+        user_matrix=np.eye(4),
         log_scale=False,
         **kwargs,
     ):
@@ -3882,6 +3897,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when True.
+
+        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+            Matrix passed to the Volume class before rendering. This affects the
+            actor/rendering only, not the input volume itself. The user matrix is the
+            last transformation applied to the actor before rendering. Defaults to the
+            identity matrix.
 
         log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
@@ -4220,6 +4241,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.volume = Volume()
         self.volume.mapper = self.mapper
+        self.volume.user_matrix = user_matrix
 
         self.volume.prop = VolumeProperty(
             lookup_table=self.mapper.lookup_table,
