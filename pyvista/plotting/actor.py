@@ -1,11 +1,8 @@
 """Wrap vtkActor module."""
 
-from typing import Optional, Union
-
-import numpy as np
+from typing import Optional
 
 import pyvista as pv
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -53,7 +50,7 @@ class Actor(Prop3D, _vtk.vtkActor):
       X Bounds                    -4.993E-01, 4.993E-01
       Y Bounds                    -4.965E-01, 4.965E-01
       Z Bounds                    -5.000E-01, 5.000E-01
-      User matrix:                Unset
+      User matrix:                Set
       Has mapper:                 True
     ...
 
@@ -341,53 +338,6 @@ class Actor(Prop3D, _vtk.vtkActor):
             attr.append('')
             attr.append(repr(self.mapper))
         return '\n'.join(attr)
-
-    @property
-    def user_matrix(self) -> Optional[np.ndarray]:  # numpydoc ignore=RT01
-        """Return or set the orientation matrix.
-
-        Examples
-        --------
-        Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
-        is effectively translates the actor by one unit in the Z direction,
-        rotates the actor about the Z axis by approximately 45 degrees, and
-        shrinks the actor by a factor of 0.5.
-
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> arr = np.array(
-        ...     [
-        ...         [0.707, -0.707, 0, 0],
-        ...         [0.707, 0.707, 0, 0],
-        ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2],
-        ...     ]
-        ... )
-        >>> actor.user_matrix = arr
-        >>> pl.show_axes()
-        >>> pl.show()
-
-        """
-        mat = self.GetUserMatrix()
-        if mat is not None:
-            mat = array_from_vtkmatrix(mat)
-        return mat
-
-    @user_matrix.setter
-    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):  # numpydoc ignore=GL08
-        if isinstance(value, np.ndarray):
-            value = vtkmatrix_from_array(value)
-        self.SetUserMatrix(value)
 
     @property
     def backface_prop(self) -> Optional['pv.Property']:  # numpydoc ignore=RT01
