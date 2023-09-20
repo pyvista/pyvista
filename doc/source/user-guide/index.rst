@@ -18,8 +18,10 @@ This basic example demonstrates three key features of PyVista:
 .. _numpy: https://numpy.org/
 .. _matplotlib: https://matplotlib.org/
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :include-source: false
+   :nofigs:
+   :context:
 
    import pyvista
    pyvista.set_jupyter_backend('static')
@@ -35,7 +37,8 @@ Here, we download the `Stanford dragon mesh
 to height, and plot it using a web-viewer. This same example will run
 identically locally.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     >>> from pyvista import examples
     >>> mesh = examples.download_dragon()

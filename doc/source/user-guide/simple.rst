@@ -141,8 +141,10 @@ arguments.
 To get started, try out the :func:`pyvista.plot` convenience method
 that is bound to each PyVista data object.
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :include-source: false
+   :nofigs:
+   :context:
 
    # must have this here as our global backend may not be static
    import pyvista
@@ -155,7 +157,8 @@ that is bound to each PyVista data object.
    pyvista.global_theme.show_scalar_bar = False
 
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista as pv
     from pyvista import examples
@@ -170,7 +173,8 @@ instantiate a plotter such as :class:`pyvista.Plotter` or
 will create a rendering window that will pause the execution of the
 code after calling :func:`show() <pyvista.Plotter.show>`.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh = examples.load_airplane()
 
