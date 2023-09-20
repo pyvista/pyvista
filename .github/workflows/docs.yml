@@ -133,7 +133,7 @@ jobs:
 
       - name: Deploy Dev Docs
         if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
-        uses: pyansys/actions/doc-deploy-dev@v4
+        uses: ansys/actions/doc-deploy-dev@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           decompress-artifact: false
@@ -143,7 +143,7 @@ jobs:
 
       - name: Deploy Stable Docs
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-        uses: pyansys/actions/doc-deploy-stable@v4
+        uses: ansys/actions/doc-deploy-stable@v4
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           decompress-artifact: false
