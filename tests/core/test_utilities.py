@@ -903,17 +903,27 @@ def test_fit_plane_to_points(airplane):
         airplane.points, return_meta=True, i_resolution=1, j_resolution=1
     )
 
-    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
-    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
+    expected_normal = np.array([-2.5999512e-08, 0.121780515, -0.99255705])
+    expected_center = [896.9954860028446, 686.6470205328502, 78.13187948615939]
+    expected_points = [
+        [1654.9296, 1335.2166, 157.70726],
+        [1654.9307, 38.07869, -1.4433962],
+        [139.06036, 1335.2153, 157.70715],
+        [139.06146, 38.07747, -1.4435107],
+    ]
+    assert np.allclose(normal, expected_normal)
+    assert np.allclose(center, expected_center)
     assert np.allclose(
         plane.points,
-        [
-            [1654.9296, 1335.2166, 157.70726],
-            [1654.9307, 38.07869, -1.4433962],
-            [139.06036, 1335.2153, 157.70715],
-            [139.06146, 38.07747, -1.4435107],
-        ],
+        expected_points,
     )
+
+    plane, center, normal = fit_plane_to_points(
+        airplane.points, return_meta=True, i_resolution=1, j_resolution=1, normal_direction='z'
+    )
+    assert np.allclose(normal, -expected_normal)
+    assert np.allclose(center, expected_center)
+    assert np.allclose(plane.points, np.roll(expected_points, shift=2, axis=0))
 
 
 def test_principal_axes_vectors_direction():

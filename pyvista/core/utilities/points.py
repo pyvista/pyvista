@@ -191,10 +191,12 @@ def principal_axes_transform(
 ):
     """Compute the principal axes transform.
 
-    Use :func:`~pyvista.principal_axes_vectors` to get the transformation
-    matrix which will:
+    This function uses :func:`~pyvista.principal_axes_vectors` to get
+    the transformation matrix which will:
         1. Translate ``points`` such that their centroid is at the origin, then
         2. Rotate ``points`` to align their principal axes to the XYZ axes.
+
+    .. versionadded:: 0.43.0
 
     Notes
     -----
@@ -269,6 +271,8 @@ def principal_axes_vectors(
     to control the axis directions. This can be used, for example, to
     define a local coordinate frame where one or two axis directions
     have a clear physical meaning.
+
+    .. versionadded:: 0.43.0
 
     Notes
     -----
@@ -427,11 +431,16 @@ def fit_plane_to_points(
     return_meta=False,
     i_resolution=10,
     j_resolution=10,
+    normal_direction=None,
 ):
     """Fit a plane to a set of points.
 
     The plane is fitted to the points using :func:~pyvista.principal_axes_vectors,
     and is automatically sized to fit the extents of the points.
+
+    Optionally, the sign of the normal can be controlled by specifying
+    an approximate normal direction. This can be useful, for example,
+    in cases where the normal direction has a clear physical meaning.
 
     See Also
     --------
@@ -458,6 +467,15 @@ def fit_plane_to_points(
 
         .. versionadded:: 0.43.0
 
+    normal_direction : sequence[float] | str, optional
+        Approximate direction vector of the plane's normal. If set, the
+        direction of the plane's normal will be flipped suc that it best
+        aligns with this vector. Can be a sequence of three elements
+        specifying the ``(x, y, z)`` direction or a string specifying
+        a conventional direction (e.g. ``'x'`` for ``(1, 0, 0)`` or
+        ``'-x'`` for ``(-1, 0, 0)``, etc.).
+
+        .. versionadded:: 0.43.0
 
     Returns
     -------
@@ -527,7 +545,7 @@ def fit_plane_to_points(
 
 
     """
-    vectors = principal_axes_vectors(points)
+    vectors = principal_axes_vectors(points, axis_2_direction=normal_direction)
     normal = vectors[2]
 
     # Create rotation matrix from basis vectors

@@ -1809,6 +1809,8 @@ class DataSet(DataSetFilters, DataObject):
         The axes can be used as a rotation matrix to align the mesh to
         the XYZ axes or vice-versa.
 
+        .. versionadded:: 0.43.0
+
         Notes
         -----
             If the principal axes cannot be computed, the identity matrix is
