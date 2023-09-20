@@ -263,12 +263,16 @@ TEMPLATE = """
 .. only:: html
 
    {% for img in images %}
+   {% if img.extension == 'vtksz' %}
+   .. offlineviewer:: {{ img.filename }}
+   {% else %}
    .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
       {{ option }}
       {% endfor %}
 
       {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {% endif %}
    {% endfor %}
 
 """
@@ -294,6 +298,7 @@ class ImageFile:
         """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
+        self.extension = Path(basename).suffix[1:]
 
     @property
     def filename(self):  # numpydoc ignore=RT01
@@ -374,12 +379,18 @@ def render_figures(
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
-                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                    try:
-                        plotter.screenshot(image_file.filename)
-                    except RuntimeError:  # pragma no cover
-                        # ignore closed, unrendered plotters
-                        continue
+                    # if an interactive plot is available pick it up, otherwise fallback to a screenshot
+                    if plotter.last_vtksz is not None:
+                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
+                        with open(image_file.filename, "wb") as f:
+                            f.write(plotter.last_vtksz)
+                    else:
+                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                        try:
+                            plotter.screenshot(image_file.filename)
+                        except RuntimeError:  # pragma no cover
+                            # ignore closed, unrendered plotters
+                            continue
                 images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
