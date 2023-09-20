@@ -30,7 +30,7 @@ def html_rst(
     figure_list, sources_dir, fig_titles='', srcsetpaths=None
 ):  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
-    from sphinx_gallery.scrapers import _get_srcset_st
+    from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
 
     if srcsetpaths is None:
         # this should never happen, but figure_rst is public, so
@@ -43,12 +43,13 @@ def html_rst(
     ]
 
     images_rst = ""
-    if len(figure_paths) == 1:
-        hinames = srcsetpaths[0]
-        srcset = _get_srcset_st(sources_dir, hinames)
-        images_rst = "\n.. offlineviewer:: {}\n\n".format(srcset.lstrip("/"))
-    elif len(figure_paths) > 1:
-        raise RuntimeError("Only one figure per output is supported for now.")
+    for i, hinnames in enumerate(srcsetpaths):
+        srcset = _get_srcset_st(sources_dir, hinnames)
+        if srcset[-5:] == "vtksz":
+            path = os.path.join(sources_dir, figure_paths[i])
+            images_rst += f"\n.. offlineviewer:: {path}\n\n"
+        else:
+            images_rst += "\n" + figure_rst([figure_list[i]], sources_dir) + "\n\n"
 
     return images_rst
 
@@ -124,15 +125,18 @@ class DynamicScraper:
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for _, plotter in figures.items():
             fname = next(image_path_iterator)
-            # if hasattr(plotter, '_gif_filename'):
-            #     raise RuntimeError('GIFs are not supported with DynamicScraper.')
-            # else:
-            plotter.screenshot(fname)  # produce PNG for thumbnail
-            fname = fname[:-3] + "vtksz"
-            if plotter.last_vtksz is None:
-                raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
-            with open(fname, "wb") as f:
-                f.write(plotter.last_vtksz)
-            image_names.append(fname)
+            if hasattr(plotter, '_gif_filename'):
+                fname = fname[:-3] + "gif"
+                shutil.move(plotter._gif_filename, fname)
+                image_names.append(fname)
+            else:
+                plotter.screenshot(fname)  # produce PNG for thumbnail
+                if plotter.last_vtksz is not None:
+                    fname = fname[:-3] + "vtksz"
+                    with open(fname, "wb") as f:
+                        f.write(plotter.last_vtksz)
+                        image_names.append(fname)
+                else:
+                    image_names.append(fname)
         pyvista.close_all()  # close and clear all plotters
         return html_rst(image_names, gallery_conf["src_dir"])
