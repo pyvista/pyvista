@@ -42,7 +42,7 @@ from .utilities.arrays import (
 )
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class, check_valid_vector
-from .utilities.points import orthonormal_axes, vtk_points
+from .utilities.points import principal_axes_vectors, vtk_points
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1800,14 +1800,14 @@ class DataSet(DataSetFilters, DataObject):
     def principal_axes(self) -> np.ndarray:
         """Return the mesh's principal axes.
 
-        The mesh's principal axes are orthonormal unit vectors that best
-        fit its points. The axes define a rotation matrix that can be used
-        to align the mesh to the XYZ axes or vice-versa.
+        The mesh's principal axes are orthonormal row vectors that best
+        fit its points. The axes are computed using Singular Value
+        Decomposition (SVD). The first axis direction explains the most
+        variance in the points, and the third axis direction explains
+        the least variance in the points.
 
-        The principal axes are computed as the eigenvectors of the
-        covariance matrix of the mesh's points. The eigenvectors are
-        ordered according to the magnitude of their respective
-        eigenvalues, sorted from largest to smallest.
+        The axes can be used as a rotation matrix to align the mesh to
+        the XYZ axes or vice-versa.
 
         Notes
         -----
@@ -1816,13 +1816,12 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-            :func:`~pyvista.principal_axes_transform`, :func:`~pyvista.orthonormal_axes`
+            :func:`~pyvista.principal_axes_transform`, :func:`~pyvista.principal_axes_vectors`
 
         Returns
         -------
         numpy.ndarray
-            The principal axes of the mesh as a 3x3 array. Axes are stored
-            as row vectors.
+            A 3x3 array with the principal axes as row vectors.
 
         Examples
         --------
@@ -1834,7 +1833,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> axes = mesh.principal_axes
 
         """
-        return orthonormal_axes(self.points, method='principal')
+        return principal_axes_vectors(self.points)
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'

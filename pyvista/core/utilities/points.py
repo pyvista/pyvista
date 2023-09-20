@@ -191,12 +191,10 @@ def principal_axes_transform(
 ):
     """Compute the principal axes transform.
 
-    Get the transformation matrix which translates the center a set of
-    points to the origin and rotates the points to align their principal
-    axes to the XYZ axes.
-
-    This method is a convenience function for :func:`pyvista.orthonormal_axes`
-    with ``method='principal'`` and ``as_transform=True``
+    Use :func:`~pyvista.principal_axes_vectors` to get the transformation
+    matrix which will:
+        1. Translate ``points`` such that their centroid is at the origin, then
+        2. Rotate ``points`` to align their principal axes to the XYZ axes.
 
     Notes
     -----
@@ -204,7 +202,7 @@ def principal_axes_transform(
 
     See Also
     --------
-        :func:`~pyvista.orthonormal_axes`, :attr:`~pyvista.DataSet.principal_axes`
+        :func:`~pyvista.principal_axes_vectors`, :attr:`~pyvista.DataSet.principal_axes`
 
     Parameters
     ----------
@@ -215,66 +213,56 @@ def principal_axes_transform(
     axis_0_direction : sequence[float] | str, optional
         Approximate direction vector of the first axis. If set, the
         direction of the first orthonormal axis will be flipped such
-        that it best aligns with this vector. Can be a sequence of three
-        elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction such as ``'x'`` for ``(1, 0, 0)``
-         or ``'-x'`` for ``(-1, 0, 0)``, etc.
+        that it best aligns with this vector. Has no effect if this
+        vector is perpendicular to the applied axis. Can be a sequence
+        of three elements specifying the ``(x, y, z)`` direction or a
+        string specifying a conventional direction (e.g. ``'x'`` for
+        ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.).
 
     axis_1_direction : sequence[float] | str, optional
         Approximate direction vector of the second axis. If set, the
         direction of the second orthonormal axis will be flipped such
-        that it best aligns with this vector. Can be a sequence of three
-        elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction.
+        that it best aligns with this vector. Has no effect if this
+        vector is perpendicular to the second axis.
 
     axis_2_direction : sequence[float] | str, optional
         Approximate direction vector of the third axis. If set, the
         direction of the third orthonormal axis will be flipped such
-        that it best aligns with this vector. Can be a sequence of three
-        elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction.
-
-        .. note::
-            This parameter has no effect if ``axis_0_direction`` and
-            ``axis_1_direction`` are set.
+        that it best aligns with this vector. Has no effect if this
+        vector is perpendicular to the second axis, or if
+        ``axis_0_direction`` and ``axis_1_direction`` are set.
 
     Returns
     -------
     numpy.ndarray
-        4x4 transformation matrix which aligns the points to the XYZ axes
+        The 4x4 transformation matrix which aligns the points to the XYZ axes
         at the origin.
 
     """
-    return orthonormal_axes(
+    return principal_axes_vectors(
         points,
         axis_0_direction=axis_0_direction,
         axis_1_direction=axis_1_direction,
         axis_2_direction=axis_2_direction,
-        method='principal',
         as_transform=True,
     )
 
 
-def orthonormal_axes(
+def principal_axes_vectors(
     points,
-    method: Literal['principal', 'svd'] = 'principal',
     axis_0_direction=None,
     axis_1_direction=None,
     axis_2_direction=None,
     as_transform=False,
 ):
-    """Compute a set of orthonormal axes vectors from points.
+    """Compute the principal axes vectors from a set of points.
 
-    The orthonormal axes vectors are orthogonal, unit-length row vectors
-    which best fit the points. The vectors can be used to define a local
-    coordinate frame and treated as a rotation matrix to align the
-    points to the XYZ axes or vice-versa.
-
-    The vectors can be computed as the point's Principal Components or
-    using Singular Value Decomposition (SVD) (both methods are similar).
-    The points are centered at their mean prior to the computation.
-    The vectors are sorted by eigenvalue, with the first and third axes
-    corresponding to the largest and smallest eigenvalues, respectively.
+    The mesh's principal axes are orthonormal row vectors that best
+    fit its points. The axes are computed using Singular Value
+    Decomposition (SVD) and the points are centered at their mean prior
+    to the computation. The first axis direction explains the most
+    variance in the points, and the third axis direction explains
+    the least variance in the points.
 
     The computed axes are not unique and their directions are arbitrary.
     As such, approximate direction vectors may optionally be specified
@@ -298,36 +286,27 @@ def orthonormal_axes(
         Points array. Accepts a single point or several points as a
         Nx3 array.
 
-    method : str, default: 'principal'
-        Method for computing the axes:
-        -``'principal'``: axes computed as the eigenvectors of the covariance matrix.
-        -``'svd'``: axes computed as the right singular vectors.
-
     axis_0_direction : sequence[float] | str, optional
         Approximate direction vector of the first axis. If set, the
         direction of the first orthonormal axis will be flipped such
-        that it best aligns with this vector. Can be a sequence of three
-        elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction such as ``'x'`` for ``(1, 0, 0)``
-         or ``'-x'`` for ``(-1, 0, 0)``, etc.
+        that it best aligns with this vector. Has no effect if this
+        vector is perpendicular to the applied axis. Can be a sequence
+        of three elements specifying the ``(x, y, z)`` direction or a
+        string specifying a conventional direction (e.g. ``'x'`` for
+        ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.).
 
     axis_1_direction : sequence[float] | str, optional
         Approximate direction vector of the second axis. If set, the
         direction of the second orthonormal axis will be flipped such
-        that it best aligns with this vector. Can be a sequence of three
-        elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction.
+        that it best aligns with this vector. Has no effect if this
+        vector is perpendicular to the second axis.
 
     axis_2_direction : sequence[float] | str, optional
         Approximate direction vector of the third axis. If set, the
         direction of the third orthonormal axis will be flipped such
-        that it best aligns with this vector. Can be a sequence of three
-        elements specifying the ``(x, y, z)`` direction or a string to
-        specify a conventional direction.
-
-        .. note::
-            This parameter has no effect if ``axis_0_direction`` and
-            ``axis_1_direction`` are set.
+        that it best aligns with this vector. Has no effect if this
+        vector is perpendicular to the second axis, or if
+        ``axis_0_direction`` and ``axis_1_direction`` are set.
 
     as_transform : bool, False
         If ``True``, the axes are used to compute a 4x4 transformation
@@ -338,15 +317,10 @@ def orthonormal_axes(
     Returns
     -------
     numpy.ndarray
-        The orthonormal axes or transform of the points. If ``as_transform``,
-        is ``False``, the output is as a 3x3 array with axes stored as
-        row vectors. Otherwise, a 4x4 transformation matrix is returned.
+        A 3x3 array with the principal axes as row vectors or a 4x4
+        transformation matrix if ``as_transform=True``.
 
     """
-    if not isinstance(method, str):
-        raise TypeError("Method must be a string.")
-    elif method not in ['principal', 'svd']:
-        raise ValueError(f"Method must be 'principal' or 'svd', got {method} instead.")
 
     def _validate_vector(vector):
         if vector is not None:
@@ -365,6 +339,13 @@ def orthonormal_axes(
     axis_1_direction = _validate_vector(axis_1_direction)
     axis_2_direction = _validate_vector(axis_2_direction)
 
+    # Compare all direction vectors
+    directions = [vec for vec in [axis_0_direction, axis_1_direction, axis_2_direction] if vec]
+    for i, vec1 in enumerate(directions):
+        for j, vec2 in enumerate(directions[i + 1 : :]):
+            if np.allclose(vec1, vec2):
+                raise ValueError("Direction vectors must be distinct.")
+
     # Initialize output
     if as_transform:
         default_output = np.eye(4)
@@ -382,32 +363,33 @@ def orthonormal_axes(
     centroid = data.mean(axis=0)
     data -= centroid
 
-    if method == 'principal':
-        try:
-            covariance = np.cov(data, rowvar=False)
-            _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
-            axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
+    try:
+        # Use SVD as it's numerically more stable than using PCA (below)
+        _, _, axes_vectors = np.linalg.svd(data)
 
-        except np.linalg.LinAlgError:
-            return default_output
+        ## Equivalently (up to a difference in axis sign and numerical error),
+        ## the axes may also be computed using PCA (i.e. using covariance and
+        ## eigenvalue decomposition).
+        # covariance = np.cov(data, rowvar=False)
+        # _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
+        # axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
 
-    elif method == 'svd':
-        try:
-            _, _, axes_vectors = np.linalg.svd(data)
-        except np.linalg.LinAlgError:
-            return default_output
-    else:
-        raise NotImplementedError(f"{method} not implemented.")
+    except np.linalg.LinAlgError:
+        return default_output
 
     # Normalize to unit-length, flip directions, and ensure vectors form
     # a right-hand coordinate system
     i_vector = axes_vectors[0] / np.linalg.norm(axes_vectors[0])
     if axis_0_direction:
-        i_vector *= np.sign(np.dot(i_vector, axis_0_direction))
+        sign = np.sign(np.dot(i_vector, axis_0_direction))
+        if sign != 0:  # Only change sign if not perpendicular
+            i_vector *= sign
 
     j_vector = axes_vectors[1] / np.linalg.norm(axes_vectors[1])
     if axis_1_direction:
-        j_vector *= np.sign(np.dot(j_vector, axis_1_direction))
+        sign = np.sign(np.dot(j_vector, axis_1_direction))
+        if sign != 0:
+            j_vector *= sign
 
     k_vector = np.cross(i_vector, j_vector)
     if axis_2_direction:
@@ -442,47 +424,40 @@ def orthonormal_axes(
 
 def fit_plane_to_points(
     points,
-    method: Literal['principal', 'svd'] = 'principal',
     return_meta=False,
     i_resolution=10,
     j_resolution=10,
 ):
     """Fit a plane to a set of points.
 
-    The plane's normal and orientation can be determined using the point's
-    Principal Components or by Singular Value Decomposition (SVD).
-
-    The plane is automatically sized to fit the extents of the points.
-
-    .. versionchanged:: 0.43.0
-        The default fitting method has been changed to ``'principal'``.
-        Use ``method='svd'`` to restore the previous behavior.
+    The plane is fitted to the points using :func:~pyvista.principal_axes_vectors,
+    and is automatically sized to fit the extents of the points.
 
     See Also
     --------
-        :func:`~pyvista.orthonormal_axes`
+        :func:`~pyvista.principal_axes_vectors`
 
     Parameters
     ----------
     points : array_like[float]
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
-    method : str, default: 'principal'
-        Method for computing the plane:
-        -``'principal'``: computed from the eigenvectors of the points' covariance matrix.
-        -``'svd'``: computed with SVD.
-
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the
         generated plane.
 
     i_resolution : int, default: 10
-        Number of points on the plane in the direction of the plane's
-        long edge.
+        Number of points on the plane mesh in the direction of its long
+        edge.
+
+        .. versionadded:: 0.43.0
 
     j_resolution : int, default: 10
-        Number of points on the plane in the direction of the plane's
-        short edge.
+        Number of points on the plane mesh in the direction of its short
+        edge.
+
+        .. versionadded:: 0.43.0
+
 
     Returns
     -------
@@ -533,7 +508,9 @@ def fit_plane_to_points(
     >>> mesh = examples.download_shark()
     >>>
     >>> # Fit plane
-    >>> plane = pyvista.fit_plane_to_points(mesh.points)
+    >>> plane = pyvista.fit_plane_to_points(
+    ...     mesh.points, i_resolution=1, j_resolution=1
+    ... )
     >>>
     >>> # Plot the fitted plane
     >>> pl = pyvista.Plotter()
@@ -548,39 +525,9 @@ def fit_plane_to_points(
     ... ]
     >>> pl.show()
 
-        Compare fitting methods.
 
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>>
-    >>> # Create mesh
-    >>> mesh = examples.download_cow()
-    >>>
-    >>> # Fit plane using two different methods
-    >>> plane_pc = pyvista.fit_plane_to_points(
-    ...     mesh.points, method='pc', i_resolution=1, j_resolution=1
-    ... )
-    >>> plane_svd = pyvista.fit_plane_to_points(
-    ...     mesh.points, method='svd', i_resolution=1, j_resolution=1
-    ... )
-    >>>
-    >>> # Plot the fitted planes
-    >>> pl = pyvista.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane_pc, show_edges=True, color='lightblue', opacity=0.25
-    ... )
-    >>> _ = pl.add_mesh(
-    ...     plane_svd, show_edges=True, color='red', opacity=0.25
-    ... )
-    >>> _ = pl.add_mesh(mesh, style='wireframe')
-    >>> pl.camera_position = [
-    ...     (-117, 76, 235),
-    ...     (1.69, -1.38, 0),
-    ...     (0.189, 0.957, -0.22),
-    ... ]
-    >>> pl.show()
     """
-    vectors = orthonormal_axes(points, method=method)
+    vectors = principal_axes_vectors(points)
     normal = vectors[2]
 
     # Create rotation matrix from basis vectors

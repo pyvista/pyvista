@@ -17,8 +17,8 @@ from pyvista.core.utilities import (
     cells,
     fileio,
     fit_plane_to_points,
-    orthonormal_axes,
     principal_axes_transform,
+    principal_axes_vectors,
     transformations,
 )
 from pyvista.core.utilities.arrays import (
@@ -35,11 +35,6 @@ from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
-
-
-@pytest.fixture
-def cow():
-    return ex.download_cow()
 
 
 def test_version():
@@ -903,130 +898,107 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-@pytest.mark.parametrize('method', ['principal', 'svd'])
-def test_fit_plane_to_points(cow, method):
-    cow.points_to_double()
+def test_fit_plane_to_points(airplane):
     plane, center, normal = fit_plane_to_points(
-        cow.points, method=method, return_meta=True, i_resolution=1, j_resolution=1
+        airplane.points, return_meta=True, i_resolution=1, j_resolution=1
     )
-    if method == 'principal':
-        expected_normal = [1.551883832279653e-05, -0.00010006013364892495, -0.9999999948735677]
-        expected_center = [0.7383465538115013, -0.27255687569177367, 4.2508956649349256e-05]
-        expected_points = [
-            [7.1521964, -1.656375, 0.0002805095],
-            [-3.0142126, -5.6550026, 0.0005228419],
-            [4.490906, 5.109889, -0.00043782394],
-            [-5.6755033, 1.1112612, -0.00019549158],
-        ]
-    else:
-        expected_normal = [-1.5518838324305238e-05, 0.00010006013365270224, 0.9999999948735678]
-        expected_center = [0.7383465538115028, -0.2725568756917751, 4.250895664991391e-05]
-        expected_points = [
-            [4.490906, 5.109889, -0.00043782394],
-            [-5.6755033, 1.1112612, -0.00019549158],
-            [7.1521964, -1.656375, 0.0002805095],
-            [-3.0142126, -5.6550026, 0.0005228419],
-        ]
 
-    assert np.allclose(normal, expected_normal)
-    assert np.allclose(center, expected_center)
-    assert np.allclose(plane.points, expected_points)
+    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
+    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
+    assert np.allclose(
+        plane.points,
+        [
+            [1654.9296, 1335.2166, 157.70726],
+            [1654.9307, 38.07869, -1.4433962],
+            [139.06036, 1335.2153, 157.70715],
+            [139.06146, 38.07747, -1.4435107],
+        ],
+    )
 
 
-def test_orthonormal_axes_direction():
-    # define planar data
-    points = [[1, 1, 0], [1, -1, 0], [-1, 1, 0], [-1, -1, 0]]
-    axes = orthonormal_axes(points)
+def test_principal_axes_vectors_direction():
+    # define planar data with largest variation in x
+    points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]
+    vectors = principal_axes_vectors(points)
+    assert np.array_equal(vectors, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+
+    axes = principal_axes_vectors(points, axis_0_direction=[1, 0, 0])
     assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-    axes = orthonormal_axes(points, axis_0_direction=[-1, 0, 0])
-    assert np.array_equal(axes, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
-
-    axes = orthonormal_axes(points, axis_1_direction=[0, -1, 0])
-    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-
-    axes = orthonormal_axes(points, axis_2_direction=[0, 0, -1])
-    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-
-    axes = orthonormal_axes(points, axis_0_direction=[-1, 0, 0], axis_1_direction=[0, -1, 0])
+    axes = principal_axes_vectors(points, axis_1_direction=[0, -1, 0])
     assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
 
-    axes = orthonormal_axes(
+    axes = principal_axes_vectors(points, axis_2_direction=[0, 0, -1])
+    assert np.array_equal(axes, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+
+    axes = principal_axes_vectors(points, axis_0_direction=[-1, 0, 0], axis_1_direction=[0, -1, 0])
+    assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+
+    axes = principal_axes_vectors(
         points,
-        axis_0_direction='-x',
+        axis_0_direction='x',
         axis_1_direction='-y',
         axis_2_direction='-z',  # test has no effect
     )
-    assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
 
 
-def test_orthonormal_axes_as_transform(airplane):
+def test_principal_axes_vectors_as_transform(airplane):
     airplane.points_to_double()
 
     points = airplane.points
-    axes_before = orthonormal_axes(points)
+    axes_before = principal_axes_vectors(points)
     centroid_before = np.mean(points, axis=0)
     assert not np.allclose(axes_before, np.eye(3))
     assert not np.allclose(centroid_before, [0, 0, 0])
 
-    transform = orthonormal_axes(points, as_transform=True)
+    transform = principal_axes_vectors(points, as_transform=True)
     assert np.array_equal(transform.shape, (4, 4))
 
     airplane.transform(transform)
 
     points = airplane.points
-    axes_after = orthonormal_axes(points, axis_0_direction='x', axis_1_direction='y')
+    axes_after = principal_axes_vectors(points, axis_0_direction='x', axis_1_direction='y')
     centroid_after = np.mean(points, axis=0)
     assert np.allclose(axes_after, np.eye(3))
     assert np.allclose(centroid_after, [0, 0, 0])
 
 
-@pytest.mark.parametrize('method', ['principal', 'svd'])
-def test_orthonormal_axes(method, cow):
-    axes = orthonormal_axes(cow.points, method=method)
-    if method == 'principal':
-        assert np.allclose(
-            axes,
-            [
-                [-9.30605585e-01, -3.66023558e-01, 2.21814485e-05],
-                [-3.66023559e-01, 9.30605580e-01, -9.87969142e-05],
-                [1.55198184e-05, -1.00059893e-04, -9.99999995e-01],
-            ],
-        )
-    else:
-        assert np.allclose(
-            axes,
-            [
-                [-9.3060559e-01, -3.6602357e-01, 2.2181448e-05],
-                [3.6602357e-01, -9.3060559e-01, 9.8796911e-05],
-                [-1.5519818e-05, 1.0005989e-04, 1.0000000e00],
-            ],
-        )
+def test_principal_axes_vectors(airplane):
+    axes = principal_axes_vectors(airplane.points)
+    assert np.allclose(
+        axes,
+        [
+            [8.131365e-07, -0.9925571, -0.12178052],
+            [-1.0, -8.102506e-07, -7.321818e-08],
+            [-2.5999512e-08, 0.12178052, -0.9925571],
+        ],
+    )
 
     # test two points returns non-default axes
     points = [[0, 0, 0], [1, 1, 1]]
-    axes = orthonormal_axes(points, method=method)
+    axes = principal_axes_vectors(points)
     assert not np.array_equal(axes, np.eye(3))
     assert np.size(axes) == 9
 
     # test empty data returns default axes
     points = np.empty((0, 3))
-    axes = orthonormal_axes(points, method=method)
+    axes = principal_axes_vectors(points)
     assert np.array_equal(axes, np.eye(3))
 
     # test single point returns default axes
     points = [[0, 0, 0]]
-    axes = orthonormal_axes(points, method=method)
+    axes = principal_axes_vectors(points)
     assert np.array_equal(axes, np.eye(3))
 
 
-def test_orthonormal_axes_raises():
+def test_principal_axes_vectors_raises():
     with pytest.raises(ValueError):
-        orthonormal_axes(np.empty((0, 3)), "abc")
-    with pytest.raises(TypeError):
-        orthonormal_axes(np.empty((0, 3)), np.empty((0, 3)))
+        principal_axes_vectors(np.empty((0, 3)), axis_0_direction='abc')
     with pytest.raises(ValueError):
-        orthonormal_axes(np.empty((0, 3)), axis_0_direction='abc')
+        principal_axes_vectors(np.empty((0, 3)), axis_0_direction='x', axis_1_direction='x')
+    with pytest.raises(ValueError):
+        principal_axes_vectors(np.empty((0, 3)), axis_1_direction='x', axis_2_direction='x')
 
 
 def test_principal_axes_transform(airplane):
