@@ -10,3 +10,5 @@ jobs:
     if: github.actor == 'dependabot[bot]'
     steps:
       - uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
