@@ -59,6 +59,9 @@ The ``pyvista-plot`` directive supports the following options:
         If specified, the code block will be run, but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
+    force_static : bool
+        If specified, static images will be used instead of an interactive scene.
+
     caption : str
         If specified, the option's argument will be used as a caption for the
         figure. This overwrites the caption given in the content, when the plot
@@ -162,6 +165,7 @@ class PlotDirective(Directive):
         'nofigs': directives.flag,
         'encoding': directives.encoding,
         'caption': directives.unchanged,
+        'force_static': directives.flag,
     }
 
     def run(self):
@@ -340,6 +344,7 @@ def render_figures(
     context,
     function_name,
     config,
+    force_static,
 ):
     """Run a pyplot script and save the images in *output_dir*.
 
@@ -380,7 +385,7 @@ def render_figures(
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
                     # if an interactive plot is available pick it up, otherwise fallback to a screenshot
-                    if plotter.last_vtksz is not None:
+                    if not force_static and (plotter.last_vtksz is not None):
                         image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
                         with open(image_file.filename, "wb") as f:
                             f.write(plotter.last_vtksz)
@@ -408,6 +413,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
+    force_static = 'force_static' in options
 
     default_fmt = 'png'
 
@@ -506,7 +512,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     # make figures
     try:
         results = render_figures(
-            code, source_file_name, build_dir, output_base, keep_context, function_name, config
+            code,
+            source_file_name,
+            build_dir,
+            output_base,
+            keep_context,
+            function_name,
+            config,
+            force_static,
         )
         errors = []
     except PlotError as err:  # pragma: no cover
