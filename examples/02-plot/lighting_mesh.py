@@ -58,4 +58,4 @@ mesh.plot(diffuse=0.5, specular=0.5, ambient=0.5, cpos=cpos, show_scalar_bar=Fal
 
 ###############################################################################
 # For detailed control over lighting conditions in general see the
-# :ref:`ref_light_examples` examples.
+# :ref:`light_examples` examples.
