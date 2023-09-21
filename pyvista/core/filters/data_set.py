@@ -1946,7 +1946,7 @@ class DataSetFilters:
 
         Examples
         --------
-        See :ref:`ref_topo_map_example`
+        See :ref:`topo_map_example`
 
         """
         if use_bounds:
@@ -2026,7 +2026,7 @@ class DataSetFilters:
 
         Examples
         --------
-        See :ref:`ref_texture_example`.
+        See :ref:`texture_example`.
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -2870,7 +2870,7 @@ class DataSetFilters:
         >>> len(bodies)
         2
 
-        See :ref:`split_vol_ref` for more examples using this filter.
+        See :ref:`split_vol` for more examples using this filter.
 
         """
         # Get the connectivity and label different bodies
@@ -5952,7 +5952,7 @@ class DataSetFilters:
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)
 
-        See the :ref:`ref_reflect_example` for more examples using this filter.
+        See the :ref:`reflect_example` for more examples using this filter.
 
         """
         t = transformations.reflection(normal, point=point)

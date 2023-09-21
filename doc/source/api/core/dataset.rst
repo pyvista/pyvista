@@ -1,4 +1,4 @@
-.. _ref_dataset:
+.. _dataset:
 
 Data Sets
 =========
