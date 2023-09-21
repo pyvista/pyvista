@@ -616,7 +616,7 @@ def fit_plane_to_points(
     """Fit a plane to a set of points.
 
     The plane is fitted to the points using :func:~pyvista.principal_axes_vectors,
-    and is automatically sized to fit the extents of the points.
+    and is automatically sized to fit the extent of the points.
 
     Optionally, the sign of the normal can be controlled by specifying
     an approximate normal direction. This can be useful, for example,
