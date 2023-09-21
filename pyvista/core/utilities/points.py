@@ -213,6 +213,76 @@ def principal_axes_transform(points, **kwargs):
         The 4x4 transformation matrix which aligns the points to the XYZ axes
         at the origin.
 
+    Examples
+    --------
+    Compute the principal axes transform for a mesh.
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.download_face()
+    >>> mesh.points *= 5  # scale mesh for visualization
+    >>> matrix = principal_axes_transform(mesh.points)
+    >>> matrix
+    array([[-5.79430342e-01, -3.02252942e-04, -8.15021694e-01,
+            -8.62259164e-02],
+           [ 6.74928480e-04,  9.99999404e-01, -8.50685057e-04,
+             6.39482565e-01],
+           [ 8.15021455e-01, -1.04299409e-03, -5.79429805e-01,
+            -4.70775854e-01],
+           [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+             1.00000000e+00]])
+
+    Apply the transformation and compare the result to the input. Notice
+    that the transformed mesh is centered at the origin and aligned with
+    the XYZ axes.
+    >>> mesh_transformed = mesh.transform(matrix, inplace=False)
+    >>> def plot_meshes():
+    ...     p = pv.Plotter()
+    ...     _ = p.add_mesh(
+    ...         mesh, label='Input', color='lightblue', show_edges=True
+    ...     )
+    ...     _ = p.add_mesh(
+    ...         mesh_transformed,
+    ...         label='Transformed',
+    ...         color='goldenrod',
+    ...         show_edges=True,
+    ...     )
+    ...     _ = p.add_axes_at_origin()
+    ...     _ = p.add_legend()
+    ...     _ = p.camera.zoom(2)
+    ...     p.show()
+    ...
+    >>> plot_meshes()
+
+    It is possible to adjust the transform so that the sign of one
+    or more principal axes have a meaningful interpretation. For example,
+    the face of the original mesh is generally "looking" towards the
+    ``+X`` direction, and we can see from the transformed mesh that this
+    direction correlates with the third principal axis (i.e. the z-axis
+    axis of the transformed mesh). Therefore, if we want the face of the
+    transformed mesh to be "looking" down instead of up, we can specify
+    an approximate direction vector for the third principal axis as the
+    ``-X`` direction with ``axis_2_direction='-x'``.
+    >>> matrix = principal_axes_transform(
+    ...     mesh.points, axis_2_direction='-x'
+    ... )
+    >>> mesh_transformed = mesh.transform(matrix, inplace=False)
+    >>> plot_meshes()
+
+    The face is now looking down in the ``-Z`` direction as desired.
+    However, the top of the face has now flipped in the new transform
+    relative to the previous one, and is pointing in the ``-Y``
+    direction. Similar to above, we can adjust the transform so that the
+    direction of the second principal axis (which corresponds to the
+    y-axis) is such that the top of the face points in the ``+Y``
+    direction. Since the top of the face in the original mesh
+    points appromiately in the ``+Y`` direction, we set
+    ``axis_1_direction='y'.
+    >>> matrix = principal_axes_transform(
+    ...     mesh.points, axis_1_direction='y', axis_2_direction='-x'
+    ... )
+    >>> mesh_transformed = mesh.transform(matrix, inplace=False)
+    >>> plot_meshes()
+
     """
     return principal_axes_vectors(
         points,
@@ -227,7 +297,7 @@ def principal_axes_vectors(
     axis_1_direction=None,
     axis_2_direction=None,
     swap_equal_axes=None,
-    orient_xyz=False,
+    project_xyz=False,
     as_transform=False,
 ):
     """Compute principal axes vectors from a set of points.
@@ -257,6 +327,10 @@ def principal_axes_vectors(
     Notes
     -----
     If the axes cannot be computed, the identity matrix is returned.
+
+    The ``project_xyz`` and ``axis_#_direction`` parameters only control
+    the signs of the individual principal axes and do not apply a
+    transformation to reorient the axes as a set.
 
     See Also
     --------
@@ -298,8 +372,8 @@ def principal_axes_vectors(
     swap_equal_axes : bool, optional
         If ``True``, principal axes which explain variance equally
         (e.g. when points have reflection symmetry) may be swapped based
-        on their relative alignment (i.e. dot product) with each of the
-        XYZ axes. Swapping is performed as follows: first, principal
+        on their relative alignment (projection) onto each of the X, Y,
+        and Z axes. Swapping is performed as follows: first, principal
         axes are labelled according to the axis (``X``, ``Y``, or ``Z``)
         which they are most closely aligned with; then, the principal
         axes are sorted by their label. For example, if principal axis 1
@@ -312,19 +386,17 @@ def principal_axes_vectors(
             frame. Use the ``axis_#_direction`` parameters to control
             the axes signs if needed.
 
-    orient_xyz : bool, False
+    project_xyz : bool, False
         If ``True``, the following default values are set:
-
         * ``axis_0_direction='x'``
         * ``axis_1_direction='y'``
         * ``axis_2_direction='z'``
         * ``reorder_equal_axes=True``
-
         Default values are only applied if the respective parameter has
         not been set. As such, these values can be overridden.
-        This parameter can be used, for example, to ensure that the
-        principal axes of X-Y planar data have the same orientation as
-        the XYZ axes, i.e. the principal axes is the identity matrix.
+        This parameter can be used, for example, to project the
+        principal axes of X-Y planar data onto the positive XYZ axes to
+        ensure the principal axes all have a positive direction.
 
     as_transform : bool, False
         If ``True``, the axes are used to compute a 4x4 transformation
@@ -337,6 +409,63 @@ def principal_axes_vectors(
     numpy.ndarray
         A 3x3 array with the principal axes as row vectors or a 4x4
         transformation matrix if ``as_transform`` is ``True``.
+
+    Examples
+    --------
+    Create a mesh with points that have the largest variation in ``X``,
+    followed by ``Y``, then ``Z``.
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricEllipsoid(xradius=10, yradius=5, zradius=1)
+    >>> p = pv.Plotter()
+    >>> _ = p.add_mesh(mesh)
+    >>> _ = p.show_grid()
+    >>> p.show()
+
+    Compute its principal axes
+    >>> principal_axes = pv.principal_axes_vectors(mesh.points)
+
+    Note that the principal axes have ones along the diagonal and zeros
+    in the off diagonals. This indicates that the first principal axis is
+    aligned with the x-axis, the second with the y-axis, and third with
+    the z-axis, as expected, since the mesh is already axis-aligned.
+    >>> principal_axes
+    array([[-1.0000000e+00,  5.7725498e-11, -9.1508944e-19],
+           [ 5.7725498e-11,  1.0000000e+00, -4.8674285e-18],
+           [ 9.1508944e-19, -4.8674285e-18, -1.0000000e+00]])
+
+    However, since the signs of the principal axes are arbitrary, the
+    first and third axes in this case have a negative direction. To
+    project the positive XYZ axes directions onto the principal axes,
+    use ``project_xyz=True``.
+    >>> principal_axes = pv.principal_axes_vectors(
+    ...     mesh.points, project_xyz=True
+    ... )
+    >>> principal_axes
+    array([[ 1.0000000e+00, -5.7725498e-11,  9.1508944e-19],
+           [ 5.7725498e-11,  1.0000000e+00, -4.8674285e-18],
+           [-9.1508944e-19,  4.8674285e-18,  1.0000000e+00]])
+
+    The signs of the principal axes can also be controlled by specifying
+    approximate axis directions.
+    >>> principal_axes = pv.principal_axes_vectors(
+    ...     mesh.points, axis_0_direction='-x', axis_1_direction='-y'
+    ... )
+    >>> principal_axes
+    array([[-1.0000000e+00,  5.7725498e-11, -9.1508944e-19],
+           [-5.7725498e-11, -1.0000000e+00,  4.8674285e-18],
+           [-9.1508944e-19,  4.8674285e-18,  1.0000000e+00]])
+
+    Note, however, that since the ``project_xyz`` and ``axis_#_direction``
+    parameters only control the signs of the axes, they cannot be used
+    to reorient them. For example, the following code does not orient
+    the first principal axes to point in a specified direction.
+    >>> principal_axes = pv.principal_axes_vectors(
+    ...     mesh.points, axis_0_direction=[4, 5, 6]
+    ... )
+    >>> principal_axes
+    array([[ 1.0000000e+00, -5.7725498e-11,  9.1508944e-19],
+           [ 5.7725498e-11,  1.0000000e+00, -4.8674285e-18],
+           [-9.1508944e-19,  4.8674285e-18,  1.0000000e+00]])
 
     """
 
@@ -364,7 +493,7 @@ def principal_axes_vectors(
             if np.allclose(vec1, vec2):
                 raise ValueError("Direction vectors must be distinct.")
 
-    if orient_xyz:
+    if project_xyz:
         # Set values only if not yet set
         axis_0_direction = [1, 0, 0] if not axis_0_direction else None
         axis_1_direction = [0, 1, 0] if not axis_1_direction else None
@@ -459,6 +588,7 @@ def _swap_axes(vectors, values):
     and is only exposed as a module-level function for testing purposes.
 
     """
+
     def _swap(axis_a, axis_b):
         axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
@@ -494,7 +624,8 @@ def fit_plane_to_points(
 
     See Also
     --------
-        :func:`~pyvista.principal_axes_vectors`
+    :func:`~pyvista.principal_axes_vectors`
+        Compute the best fit axes to a set of points.
 
     Parameters
     ----------
@@ -519,7 +650,7 @@ def fit_plane_to_points(
 
     normal_direction : sequence[float] | str, optional
         Approximate direction vector of the plane's normal. If set, the
-        direction of the plane's normal will be flipped suc that it best
+        direction of the plane's normal will be flipped such that it best
         aligns with this vector. Can be a sequence of three elements
         specifying the ``(x, y, z)`` direction or a string specifying
         a conventional direction (e.g. ``'x'`` for ``(1, 0, 0)`` or
@@ -542,10 +673,11 @@ def fit_plane_to_points(
     --------
     Fit a plane to a random point cloud.
 
-    >>> import pyvista
+    import numpy.random    >>> import pyvista
     >>> import numpy as np
     >>>
     >>> # Create point cloud
+    >>> np.random.seed(42)
     >>> cloud = np.random.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
@@ -567,6 +699,18 @@ def fit_plane_to_points(
     ... )
     >>> pl.show()
 
+    The plane's normal in this example points in the negative z direction
+    >>> normal
+    array([-0.03064989, -0.01475286, -0.9994213 ])
+
+    To control the sign of the normal, specify the approximate normal
+    direction when fitting the plane
+    >>> plane, center, normal = pyvista.fit_plane_to_points(
+    ...     cloud, return_meta=True, normal_direction='z'
+    ... )
+    >>> normal
+    array([0.03064989, 0.01475286, 0.9994213 ])
+
     Fit a plane to a mesh.
 
     >>> import pyvista
@@ -575,10 +719,18 @@ def fit_plane_to_points(
     >>> # Create mesh
     >>> mesh = examples.download_shark()
     >>>
-    >>> # Fit plane
+    >>> # Fit plane. Set the plane resolution to one only extract
+    >>> # the plane's corner points
     >>> plane = pyvista.fit_plane_to_points(
     ...     mesh.points, i_resolution=1, j_resolution=1
     ... )
+    >>> plane.points
+    pyvista_ndarray([[-7.5869438e+01,  2.9497326e+01, -4.8396739e-08],
+                     [ 7.4705307e+01,  3.3273979e+01, -2.2577751e-07],
+                     [-7.4325546e+01, -3.2057564e+01,  4.7211194e-07],
+                     [ 7.6249199e+01, -2.8280910e+01,  2.9473117e-07]]
+    )
+
     >>>
     >>> # Plot the fitted plane
     >>> pl = pyvista.Plotter()
@@ -592,7 +744,6 @@ def fit_plane_to_points(
     ...     (0.189, 0.957, -0.22),
     ... ]
     >>> pl.show()
-
 
     """
     vectors = principal_axes_vectors(points, axis_2_direction=normal_direction)

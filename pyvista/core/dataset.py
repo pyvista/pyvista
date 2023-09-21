@@ -1800,11 +1800,10 @@ class DataSet(DataSetFilters, DataObject):
     def principal_axes(self) -> np.ndarray:
         """Return the mesh's principal axes.
 
-        The mesh's principal axes are orthonormal row vectors that best
-        fit its points. The axes are computed using Singular Value
-        Decomposition (SVD). The first axis direction explains the most
-        variance in the points, and the third axis direction explains
-        the least variance in the points.
+        The mesh's principal axes are orthonormal vectors that best fit
+        its points. The axes explain the total variance of the points.
+        The first axis explains the largest percentage of variance,
+        whereas the third axis explains the smallest percentage of variance.
 
         The axes can be used as a rotation matrix to align the mesh to
         the XYZ axes or vice-versa.
@@ -1813,12 +1812,15 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-            If the principal axes cannot be computed, the identity matrix is
-            returned.
+        If the principal axes cannot be computed, the identity matrix is
+        returned.
 
         See Also
         --------
-            :func:`~pyvista.principal_axes_transform`, :func:`~pyvista.principal_axes_vectors`
+        :func:`~pyvista.principal_axes_vectors`
+            Compute the principal axes vectors from points.
+        :func:`~pyvista.principal_axes_transform`,
+            Compute the principal axes transform from points.
 
         Returns
         -------
@@ -1832,7 +1834,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> axes = mesh.principal_axes
+        >>> mesh.principal_axes
+        array([[ 8.1313652e-07, -9.9255711e-01, -1.2178052e-01]
+               [-1.0000000e+00, -8.1025058e-07, -7.3218182e-08]
+               [-2.5999512e-08,  1.2178052e-01, -9.9255711e-01]])
 
         """
         return principal_axes_vectors(self.points)

@@ -966,11 +966,11 @@ def test_principal_axes_vectors_swap_and_orient():
     vectors = principal_axes_vectors(points, swap_equal_axes=True)
     assert np.array_equal(vectors, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])  # XYZ
 
-    vectors = principal_axes_vectors(points, orient_xyz=True)
+    vectors = principal_axes_vectors(points, project_xyz=True)
     assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ all positive
     vectors = principal_axes_vectors(
         points,
-        orient_xyz=True,
+        project_xyz=True,
         axis_0_direction='-x',  # override default values
         axis_1_direction='-y',
         axis_2_direction='-z',
@@ -980,7 +980,7 @@ def test_principal_axes_vectors_swap_and_orient():
 
 
 def test_principal_axes_vectors_direction():
-    # define planar data with largest variation in x
+    # define planar data with largest variation in x, then y
     points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]
     vectors = principal_axes_vectors(points)
     assert np.array_equal(vectors, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
