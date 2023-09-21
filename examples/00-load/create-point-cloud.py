@@ -48,7 +48,7 @@ np.allclose(points, point_cloud.points)
 ###############################################################################
 # And now that we have a PyVista mesh, we can plot it. Note that we add an
 # option to use eye dome lighting - this is a shading technique to improve
-# depth perception with point clouds (learn more in :ref:`ref_edl`).
+# depth perception with point clouds (learn more in :ref:`edl`).
 point_cloud.plot(eye_dome_lighting=True)
 
 ###############################################################################

@@ -1,5 +1,5 @@
 """
-.. _ref_light_beam_shape_example:
+.. _light_beam_shape_example:
 
 Beam Shape
 ~~~~~~~~~~
@@ -76,7 +76,7 @@ plotter.show()
 # Now the inner surface of both hemispheres is lit. A positional light with a
 # cone angle of 90 degrees (or more) acts as a point source located at the
 # light's nominal position. It could still display attenuation, see the
-# :ref:`ref_attenuation_example` example.
+# :ref:`attenuation_example` example.
 #
 # Switching to a spotlight (i.e. a positional light with a cone angle less
 # than 90 degrees) will enable beam shaping using the :py:attr:`pyvista.Light.exponent`

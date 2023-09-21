@@ -48,7 +48,7 @@ Clone PyVista and cd into this directory to create your own customized docker im
   docker push $IMAGE
 
 If you wish to have off-screen GPU support when rending on jupyterlab,
-see the notes about building with EGL at :ref:`ref_building_vtk`,
+see the notes about building with EGL at :ref:`building_vtk`,
 or use the custom, pre-built wheels at
 `Release 0.27.0 <https://github.com/pyvista/pyvista/releases/tag/0.27.0>`_.
 Install that customized vtk wheel onto your docker image by modifying
