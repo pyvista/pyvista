@@ -76,7 +76,7 @@ the `Anaconda Distribution <https://www.anaconda.com/>`_.
 .. grid::
 
    .. grid-item-card:: In-depth instructions?
-      :link: install_ref
+      :link: install
       :link-type: ref
       :class-title: pyvista-card-title
 
@@ -137,7 +137,7 @@ through a range of examples and tutorials.
 
 
    .. grid-item-card:: Authors & Citation
-      :link: authors_ref
+      :link: authors
       :link-type: ref
       :class-title: pyvista-card-title
 

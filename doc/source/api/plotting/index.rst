@@ -3,7 +3,7 @@
 Plotting
 ========
 
-* Intuitive plotting routines with `matplotlib`_ like syntax (see :ref:`plotting_ref`).
+* Intuitive plotting routines with `matplotlib`_ like syntax (see :ref:`plotting`).
 * Plotting tools built for interactivity (see :ref:`widgets`).
 
 .. toctree::

@@ -1,5 +1,5 @@
 """
-.. _ref_parametric_example:
+.. _parametric_example:
 
 Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
