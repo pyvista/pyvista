@@ -1,5 +1,4 @@
 """Points related utilities."""
-from typing import Literal
 import warnings
 
 import numpy as np
@@ -183,28 +182,21 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def principal_axes_transform(
-    points,
-    axis_0_direction=None,
-    axis_1_direction=None,
-    axis_2_direction=None,
-):
+def principal_axes_transform(points, **kwargs):
     """Compute the principal axes transform.
 
-    This function uses :func:`~pyvista.principal_axes_vectors` to get
-    the transformation matrix which will:
+    This function computes the transformation matrix which will:
         1. Translate ``points`` such that their centroid is at the origin, then
         2. Rotate ``points`` to align their principal axes to the XYZ axes.
+
+    See :func:`~pyvista.principal_axes_vectors` for more information and
+    for additional keyword arguments.
 
     .. versionadded:: 0.43.0
 
     Notes
     -----
-        If the transform cannot be computed, the identity matrix is returned.
-
-    See Also
-    --------
-        :func:`~pyvista.principal_axes_vectors`, :attr:`~pyvista.DataSet.principal_axes`
+    If the transform cannot be computed, the identity matrix is returned.
 
     Parameters
     ----------
@@ -212,27 +204,8 @@ def principal_axes_transform(
         Points array. Accepts a single point or several points as a
         Nx3 array.
 
-    axis_0_direction : sequence[float] | str, optional
-        Approximate direction vector of the first axis. If set, the
-        direction of the first orthonormal axis will be flipped such
-        that it best aligns with this vector. Has no effect if this
-        vector is perpendicular to the applied axis. Can be a sequence
-        of three elements specifying the ``(x, y, z)`` direction or a
-        string specifying a conventional direction (e.g. ``'x'`` for
-        ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.).
-
-    axis_1_direction : sequence[float] | str, optional
-        Approximate direction vector of the second axis. If set, the
-        direction of the second orthonormal axis will be flipped such
-        that it best aligns with this vector. Has no effect if this
-        vector is perpendicular to the second axis.
-
-    axis_2_direction : sequence[float] | str, optional
-        Approximate direction vector of the third axis. If set, the
-        direction of the third orthonormal axis will be flipped such
-        that it best aligns with this vector. Has no effect if this
-        vector is perpendicular to the second axis, or if
-        ``axis_0_direction`` and ``axis_1_direction`` are set.
+    **kwargs : dict, optional
+        Keyword arguments passed to :func:`~pyvista.principal_axes_vectors`.
 
     Returns
     -------
@@ -243,10 +216,8 @@ def principal_axes_transform(
     """
     return principal_axes_vectors(
         points,
-        axis_0_direction=axis_0_direction,
-        axis_1_direction=axis_1_direction,
-        axis_2_direction=axis_2_direction,
         as_transform=True,
+        **kwargs,
     )
 
 
@@ -255,34 +226,46 @@ def principal_axes_vectors(
     axis_0_direction=None,
     axis_1_direction=None,
     axis_2_direction=None,
+    swap_equal_axes=None,
+    orient_xyz=False,
     as_transform=False,
 ):
-    """Compute the principal axes vectors from a set of points.
+    """Compute principal axes vectors from a set of points.
 
-    The mesh's principal axes are orthonormal row vectors that best
-    fit its points. The axes are computed using Singular Value
-    Decomposition (SVD) and the points are centered at their mean prior
-    to the computation. The first axis direction explains the most
-    variance in the points, and the third axis direction explains
-    the least variance in the points.
+    Principal axes are orthonormal vectors that best fit a set of
+    points. The axes are also known as the principal components of the
+    points in Principal Component Analysis (PCA). For numerical
+    stability, the axes are computed as the right singular vectors from
+    the Singular Value Decomposition (SVD) of the mean-centered points.
 
-    The computed axes are not unique and their directions are arbitrary.
-    As such, approximate direction vectors may optionally be specified
-    to control the axis directions. This can be used, for example, to
-    define a local coordinate frame where one or two axis directions
-    have a clear physical meaning.
+    The axes explain the total variance of the points. The first axis
+    explains the largest percentage of variance, followed by the second
+    axis, followed again by the third axis which explains the smallest
+    percentage of variance.
+
+    The computed axes are not unique, and the sign of each axis direction
+    can be arbitrarily changed (as long the axes define a right-handed
+    coordinate frame). Similarly, axes which explain variance equally can
+    be arbitrarily reordered. As such, approximate direction vectors may
+    optionally be specified to control the axis directions, and equally-
+    weighted axes may optionally be reordered. This can be useful for
+    cases where axis directions for a local coordinate frame have a
+    clear physical meaning.
 
     .. versionadded:: 0.43.0
 
     Notes
     -----
-        If the axes cannot be computed, the identity matrix is returned.
+    If the axes cannot be computed, the identity matrix is returned.
 
     See Also
     --------
-        :attr:`~pyvista.DataSet.principal_axes`,
-        :func:`~pyvista.principal_axes_transform`,
-        :func:`~pyvista.fit_plane_to_points`
+    :attr:`~pyvista.DataSet.principal_axes`
+        Compute the principal axes of a mesh.
+    :func:`~pyvista.principal_axes_transform`
+        Compute the principal axes transform.
+    :func:`~pyvista.fit_plane_to_points`
+        Use the principal axes to fit a plane.
 
     Parameters
     ----------
@@ -292,25 +275,56 @@ def principal_axes_vectors(
 
     axis_0_direction : sequence[float] | str, optional
         Approximate direction vector of the first axis. If set, the
-        direction of the first orthonormal axis will be flipped such
-        that it best aligns with this vector. Has no effect if this
-        vector is perpendicular to the applied axis. Can be a sequence
+        sign of the first principal axis will be flipped such that it
+        best aligns with this vector. Has no effect if this vector is
+        perpendicular to the first principal axis. Can be a sequence
         of three elements specifying the ``(x, y, z)`` direction or a
         string specifying a conventional direction (e.g. ``'x'`` for
         ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.).
 
     axis_1_direction : sequence[float] | str, optional
         Approximate direction vector of the second axis. If set, the
-        direction of the second orthonormal axis will be flipped such
-        that it best aligns with this vector. Has no effect if this
-        vector is perpendicular to the second axis.
+        sign of the second principal axis will be flipped such that it
+        best aligns with this vector. Has no effect if this vector is
+        perpendicular to the second principal axis.
 
     axis_2_direction : sequence[float] | str, optional
         Approximate direction vector of the third axis. If set, the
-        direction of the third orthonormal axis will be flipped such
-        that it best aligns with this vector. Has no effect if this
-        vector is perpendicular to the second axis, or if
+        sign of the third principal axis will be flipped such that it
+        best aligns with this vector. Has no effect if this vector is
+        perpendicular to the third principal axis. Has no effect if
         ``axis_0_direction`` and ``axis_1_direction`` are set.
+
+    swap_equal_axes : bool, optional
+        If ``True``, principal axes which explain variance equally
+        (e.g. when points have reflection symmetry) may be swapped based
+        on their relative alignment (i.e. dot product) with each of the
+        XYZ axes. Swapping is performed as follows: first, principal
+        axes are labelled according to the axis (``X``, ``Y``, or ``Z``)
+        which they are most closely aligned with; then, the principal
+        axes are sorted by their label. For example, if principal axis 1
+        maps to ``Z`` and principal axis 2 maps to ``X``, the axes are
+        swapped so that the order is ``X-Z`` instead of ``Z-X``.
+
+        .. note::
+            Swapping may cause the sign of a principal axis to be
+            flipped to ensure the axes form a right-handed coordinate
+            frame. Use the ``axis_#_direction`` parameters to control
+            the axes signs if needed.
+
+    orient_xyz : bool, False
+        If ``True``, the following default values are set:
+
+        * ``axis_0_direction='x'``
+        * ``axis_1_direction='y'``
+        * ``axis_2_direction='z'``
+        * ``reorder_equal_axes=True``
+
+        Default values are only applied if the respective parameter has
+        not been set. As such, these values can be overridden.
+        This parameter can be used, for example, to ensure that the
+        principal axes of X-Y planar data have the same orientation as
+        the XYZ axes, i.e. the principal axes is the identity matrix.
 
     as_transform : bool, False
         If ``True``, the axes are used to compute a 4x4 transformation
@@ -322,7 +336,7 @@ def principal_axes_vectors(
     -------
     numpy.ndarray
         A 3x3 array with the principal axes as row vectors or a 4x4
-        transformation matrix if ``as_transform=True``.
+        transformation matrix if ``as_transform`` is ``True``.
 
     """
 
@@ -343,12 +357,19 @@ def principal_axes_vectors(
     axis_1_direction = _validate_vector(axis_1_direction)
     axis_2_direction = _validate_vector(axis_2_direction)
 
-    # Compare all direction vectors
+    # Compare all direction vectors with each other
     directions = [vec for vec in [axis_0_direction, axis_1_direction, axis_2_direction] if vec]
     for i, vec1 in enumerate(directions):
         for j, vec2 in enumerate(directions[i + 1 : :]):
             if np.allclose(vec1, vec2):
                 raise ValueError("Direction vectors must be distinct.")
+
+    if orient_xyz:
+        # Set values only if not yet set
+        axis_0_direction = [1, 0, 0] if not axis_0_direction else None
+        axis_1_direction = [0, 1, 0] if not axis_1_direction else None
+        axis_2_direction = [0, 0, 1] if not axis_2_direction else None
+        swap_equal_axes = True if swap_equal_axes is None else None
 
     # Initialize output
     if as_transform:
@@ -369,11 +390,11 @@ def principal_axes_vectors(
 
     try:
         # Use SVD as it's numerically more stable than using PCA (below)
-        _, _, axes_vectors = np.linalg.svd(data)
+        _, axes_values, axes_vectors = np.linalg.svd(data)
 
-        ## Equivalently (up to a difference in axis sign and numerical error),
-        ## the axes may also be computed using PCA (i.e. using covariance and
-        ## eigenvalue decomposition).
+        ## Equivalently (up to a difference in axis sign, non-uniqueness of
+        ## vectors, and numerical error), the axes may also be computed using
+        ## PCA, i.e. using covariance and eigenvalue decomposition.
         # covariance = np.cov(data, rowvar=False)
         # _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
         # axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
@@ -381,8 +402,13 @@ def principal_axes_vectors(
     except np.linalg.LinAlgError:
         return default_output
 
+    if swap_equal_axes:
+        # Note: Swapping may create a left-handed coordinate frame. This
+        # is fixed later with a cross-product
+        axes_vectors = _swap_axes(axes_vectors, axes_values)
+
     # Normalize to unit-length, flip directions, and ensure vectors form
-    # a right-hand coordinate system
+    # a right-handed coordinate system
     i_vector = axes_vectors[0] / np.linalg.norm(axes_vectors[0])
     if axis_0_direction:
         sign = np.sign(np.dot(i_vector, axis_0_direction))
@@ -424,6 +450,35 @@ def principal_axes_vectors(
         return transform
 
     return axes_vectors
+
+
+def _swap_axes(vectors, values):
+    """Swap axes vectors based on their respective values.
+
+    This function is intended to be used by :func:`principal_axes_vectors`
+    and is only exposed as a module-level function for testing purposes.
+
+    """
+    axis_order = None  # initialize
+
+    def _swap(axis_a, axis_b):
+        # Ensure axis_order is only computed once
+        nonlocal axis_order
+        if axis_order is None:
+            axis_order = np.argmax(np.abs(vectors), axis=1)
+        if axis_order[axis_a] > axis_order[axis_b]:
+            vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
+
+    if np.isclose(values[0], values[1]) and np.isclose(values[1], values[2]):
+        # Sort all axes by largest 'x' component
+        vectors = vectors[np.argsort(np.abs(vectors)[:, 0])[::-1]]
+        _swap(1, 2)
+    else:
+        if np.isclose(values[0], values[1]):
+            _swap(0, 1)
+        elif np.isclose(values[1], values[2]):
+            _swap(1, 2)
+    return vectors
 
 
 def fit_plane_to_points(

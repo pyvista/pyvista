@@ -1,4 +1,5 @@
 """Test pyvista core utilities."""
+from itertools import permutations
 import os
 import pathlib
 import pickle
@@ -34,7 +35,7 @@ from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
-from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.utilities.points import _swap_axes, vector_poly_data
 
 
 def test_version():
@@ -926,6 +927,58 @@ def test_fit_plane_to_points(airplane):
     assert np.allclose(plane.points, np.roll(expected_points, shift=2, axis=0))
 
 
+def swap_axes_test_cases():
+    d = dict(swap_all=[1, 1, 1], swap_none=[3, 2, 1], swap_0_1=[2, 2, 1], swap_1_2=[2, 1, 1])
+    return list(zip(d.keys(), d.values()))
+
+
+@pytest.mark.parametrize('x', ([1, 0, 0], [-1, 0, 0]))
+@pytest.mark.parametrize('y', ([0, 1, 0], [0, -1, 0]))
+@pytest.mark.parametrize('z', ([0, 0, 1], [0, 0, -1]))
+@pytest.mark.parametrize('order', permutations([0, 1, 2]))
+@pytest.mark.parametrize('values_test_case', swap_axes_test_cases())
+def test_swap_axes(x, y, z, order, values_test_case):
+    case, values = values_test_case
+    axes = np.array((x, y, z))[list(order)]
+    swapped = _swap_axes(axes, values)
+    if case == "swap_all":
+        assert np.array_equal(np.abs(swapped), np.eye(3))
+    elif case == "swap_none":
+        assert np.array_equal(axes, swapped)
+    elif case == "swap_0_1":
+        assert np.flatnonzero(swapped[0])[0] < np.flatnonzero(swapped[1])[0]
+    elif case == "swap_1_2":
+        assert np.flatnonzero(swapped[1])[0] < np.flatnonzero(swapped[2])[0]
+
+
+def test_principal_axes_vectors_swap_and_orient():
+    # create planar data with equal variance in x and z
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
+    vectors = principal_axes_vectors(points, swap_equal_axes=False)
+    assert np.array_equal(vectors, [[0, 0, -1], [-1, 0, 0], [0, 1, 0]])  # ZXY
+    vectors = principal_axes_vectors(points, swap_equal_axes=True)
+    assert np.array_equal(vectors, [[-1, 0, 0], [0, 0, -1], [0, -1, 0]])  # XZY
+
+    # create planar data with equal variance in x and y
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
+    vectors = principal_axes_vectors(points, swap_equal_axes=False)
+    assert np.array_equal(vectors, [[0, -1, 0], [-1, 0, 0], [0, 0, -1]])  # YXZ
+    vectors = principal_axes_vectors(points, swap_equal_axes=True)
+    assert np.array_equal(vectors, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])  # XYZ
+
+    vectors = principal_axes_vectors(points, orient_xyz=True)
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ all positive
+    vectors = principal_axes_vectors(
+        points,
+        orient_xyz=True,
+        axis_0_direction='-x',  # override default values
+        axis_1_direction='-y',
+        axis_2_direction='-z',
+        swap_equal_axes=False,
+    )
+    assert np.array_equal(vectors, [[0, -1, 0], [-1, 0, 0], [0, 0, -1]])
+
+
 def test_principal_axes_vectors_direction():
     # define planar data with largest variation in x
     points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]
@@ -989,7 +1042,7 @@ def test_principal_axes_vectors(airplane):
     points = [[0, 0, 0], [1, 1, 1]]
     axes = principal_axes_vectors(points)
     assert not np.array_equal(axes, np.eye(3))
-    assert np.size(axes) == 9
+    assert np.array_equal(axes.shape, (3, 3))
 
     # test empty data returns default axes
     points = np.empty((0, 3))
