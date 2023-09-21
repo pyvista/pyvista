@@ -459,13 +459,8 @@ def _swap_axes(vectors, values):
     and is only exposed as a module-level function for testing purposes.
 
     """
-    axis_order = None  # initialize
-
     def _swap(axis_a, axis_b):
-        # Ensure axis_order is only computed once
-        nonlocal axis_order
-        if axis_order is None:
-            axis_order = np.argmax(np.abs(vectors), axis=1)
+        axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
             vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
 
