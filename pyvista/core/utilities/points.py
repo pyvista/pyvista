@@ -673,7 +673,8 @@ def fit_plane_to_points(
     --------
     Fit a plane to a random point cloud.
 
-    import numpy.random    >>> import pyvista
+    >>> import numpy.random
+    >>> import pyvista
     >>> import numpy as np
     >>>
     >>> # Create point cloud
