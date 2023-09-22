@@ -53,7 +53,7 @@ threshed.plot(show_grid=True, cpos=[-2, 5, 3])
 ###############################################################################
 # We could then assign a classification array for the two bodies, compute the
 # cell sizes, then extract the volumes of each body. Note that there is a
-# simpler implementation of this below in :ref:`split_vol_ref`.
+# simpler implementation of this below in :ref:`split_vol`.
 
 # Create a classifying array to ID each body
 rng = dataset.get_data_range()
@@ -93,7 +93,7 @@ largest.plot(show_grid=True, cpos=[-2, 5, 3])
 ###############################################################################
 # -----
 #
-# .. _split_vol_ref:
+# .. _split_vol:
 #
 # Splitting Volumes
 # +++++++++++++++++

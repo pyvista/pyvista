@@ -1,5 +1,5 @@
 """
-.. _ref_texture_example:
+.. _texture_example:
 
 Applying Textures
 ~~~~~~~~~~~~~~~~~
