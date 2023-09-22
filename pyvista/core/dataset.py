@@ -1835,9 +1835,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.principal_axes
-        array([[ 8.1313652e-07, -9.9255711e-01, -1.2178052e-01]
-               [-1.0000000e+00, -8.1025058e-07, -7.3218182e-08]
-               [-2.5999512e-08,  1.2178052e-01, -9.9255711e-01]])
+        array([[ 8.1313652e-07, -9.9255711e-01, -1.2178052e-01],
+               [-1.0000000e+00, -8.1025058e-07, -7.3218182e-08],
+               [-2.5999512e-08,  1.2178052e-01, -9.9255711e-01]], dtype=float32)
 
         """
         return principal_axes_vectors(self.points)
