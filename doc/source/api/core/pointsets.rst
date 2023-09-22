@@ -112,7 +112,7 @@ cell types. All faces are assumed to be polygons, hence the name
 "Poly" data.
 
 Click on the attributes above to see examples of how to add geometric
-features to an empty. See :ref:`ref_create_poly` for an example on
+features to an empty. See :ref:`create_poly` for an example on
 creating a :class:`pyvista.PolyData` object from NumPy arrays.
 
 
@@ -281,7 +281,7 @@ Creating from NumPy Arrays
 A structured grid can be created directly from numpy arrays. This is useful
 when creating a grid from scratch or copying it from another format.
 
-Also see :ref:`ref_create_structured` for an example on creating a structured
+Also see :ref:`create_structured` for an example on creating a structured
 grid from NumPy arrays.
 
 

@@ -1,4 +1,4 @@
-.. _authors_ref:
+.. _authors:
 
 Authors
 -------
