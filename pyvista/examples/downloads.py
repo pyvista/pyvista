@@ -284,7 +284,7 @@ def download_masonry_texture(load=True):  # pragma: no cover
     >>> surf = pyvista.Cylinder()
     >>> surf.plot(texture=texture)
 
-    See :ref:`ref_texture_example` for an example using this
+    See :ref:`texture_example` for an example using this
     dataset.
 
     """
@@ -336,7 +336,7 @@ def download_puppy_texture(load=True):  # pragma: no cover
     >>> dataset = examples.download_puppy_texture()
     >>> dataset.plot(cpos="xy")
 
-    See :ref:`ref_texture_example` for an example using this
+    See :ref:`texture_example` for an example using this
     dataset.
 
     """
@@ -414,7 +414,7 @@ def download_st_helens(load=True):  # pragma: no cover
     This dataset is used in the following examples:
 
     * :ref:`colormap_example`
-    * :ref:`ref_lighting_properties_example`
+    * :ref:`lighting_properties_example`
     * :ref:`plot_opacity_example`
     * :ref:`orbiting_example`
     * :ref:`plot_over_line_example`
@@ -907,7 +907,7 @@ def download_lidar(load=True):  # pragma: no cover
     This dataset is used in the following examples:
 
     * :ref:`create_point_cloud`
-    * :ref:`ref_edl`
+    * :ref:`edl`
 
     """
     return _download_and_read('kafadar-lidar-interp.vtp', load=load)
@@ -962,7 +962,7 @@ def download_nefertiti(load=True):  # pragma: no cover
     * :ref:`surface_normal_example`
     * :ref:`extract_edges_example`
     * :ref:`show_edges_example`
-    * :ref:`ref_edl`
+    * :ref:`edl`
     * :ref:`pbr_example`
     * :ref:`box_widget_example`
 
@@ -2841,7 +2841,7 @@ def download_crater_topo(load=True):  # pragma: no cover
     This dataset is used in the following examples:
 
     * :ref:`terrain_following_mesh_example`
-    * :ref:`ref_topo_map_example`
+    * :ref:`topo_map_example`
 
     """
     return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk', load=load)
@@ -2872,7 +2872,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
     >>> texture = examples.download_crater_imagery()
     >>> texture.plot(cpos=cpos)
 
-    See :ref:`ref_topo_map_example` for an example using this dataset.
+    See :ref:`topo_map_example` for an example using this dataset.
 
     """
     return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
@@ -3104,7 +3104,7 @@ def download_rgba_texture(load=True):  # pragma: no cover
     >>> dataset = examples.download_rgba_texture()
     >>> dataset.plot(cpos="xy")
 
-    See :ref:`ref_texture_example` for an example using this dataset.
+    See :ref:`texture_example` for an example using this dataset.
 
     """
     return _download_and_read("alphachannel.png", texture=True, load=load)
