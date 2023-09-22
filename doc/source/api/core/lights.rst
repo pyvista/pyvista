@@ -30,7 +30,7 @@ without lighting and add our light to it manually.
     plotter.add_light(light)
     plotter.show()
 
-For detailed examples please see :ref:`ref_light_examples`.
+For detailed examples please see :ref:`light_examples`.
 
 
 Light API
