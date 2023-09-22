@@ -385,17 +385,17 @@ def render_figures(
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
                     # if an interactive plot is available pick it up, otherwise fallback to a screenshot
-                    if not force_static and (plotter.last_vtksz is not None):
-                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
-                        with open(image_file.filename, "wb") as f:
-                            f.write(plotter.last_vtksz)
-                    else:
+                    if force_static or (plotter.last_vtksz is None):
                         image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
                         try:
                             plotter.screenshot(image_file.filename)
                         except RuntimeError:  # pragma no cover
                             # ignore closed, unrendered plotters
                             continue
+                    else:
+                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
+                        with open(image_file.filename, "wb") as f:
+                            f.write(plotter.last_vtksz)
                 images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
