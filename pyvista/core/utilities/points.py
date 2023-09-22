@@ -220,7 +220,7 @@ def principal_axes_transform(points, **kwargs):
     >>> from pyvista import examples
     >>> mesh = examples.download_face()
     >>> mesh.points *= 5  # scale mesh for visualization
-    >>> matrix = principal_axes_transform(mesh.points)
+    >>> matrix = pv.principal_axes_transform(mesh.points)
     >>> matrix
     array([[-5.79430342e-01, -3.02252942e-04, -8.15021694e-01,
             -8.62259164e-02],
@@ -262,7 +262,7 @@ def principal_axes_transform(points, **kwargs):
     transformed mesh to be "looking" down instead of up, we can specify
     an approximate direction vector for the third principal axis as the
     ``-X`` direction with ``axis_2_direction='-x'``.
-    >>> matrix = principal_axes_transform(
+    >>> matrix = pv.principal_axes_transform(
     ...     mesh.points, axis_2_direction='-x'
     ... )
     >>> mesh_transformed = mesh.transform(matrix, inplace=False)
@@ -277,7 +277,7 @@ def principal_axes_transform(points, **kwargs):
     direction. Since the top of the face in the original mesh
     points appromiately in the ``+Y`` direction, we set
     ``axis_1_direction='y'.
-    >>> matrix = principal_axes_transform(
+    >>> matrix = pv.principal_axes_transform(
     ...     mesh.points, axis_1_direction='y', axis_2_direction='-x'
     ... )
     >>> mesh_transformed = mesh.transform(matrix, inplace=False)
