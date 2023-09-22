@@ -1138,6 +1138,22 @@ class RenderWindowInteractor:
     def add_pick_obeserver(self, observer):
         """Add an observer to call back when pick events end.
 
+        .. deprecated:: 0.42.2
+        This function is deprecated. Use :func:`pyvista.plotting.RenderWindowInteractor.add_pick_observer` instead.
+
+        Parameters
+        ----------
+        observer : callable
+            The observer function to call when a pick event ends.
+        """
+        warnings.warn(
+            "add_pick_obeserver is deprecated, use add_pick_observer", PyVistaDeprecationWarning
+        )
+        self.add_pick_observer(observer)
+
+    def add_pick_observer(self, observer):
+        """Add an observer to call back when pick events end.
+
         Parameters
         ----------
         observer : callable
