@@ -1147,7 +1147,7 @@ class RenderWindowInteractor:
             The observer function to call when a pick event ends.
         """
         warnings.warn(
-            "add_pick_obeserver is deprecated, use add_pick_observer", PyVistaDeprecationWarning
+            "`add_pick_obeserver` is deprecated, use `add_pick_observer`", PyVistaDeprecationWarning
         )
         self.add_pick_observer(observer)
 
