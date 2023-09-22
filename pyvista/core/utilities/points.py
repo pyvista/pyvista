@@ -441,9 +441,9 @@ def principal_axes_vectors(
     ...     mesh.points, project_xyz=True
     ... )
     >>> principal_axes
-    array([[ 1.0000000e+00, -5.7725498e-11,  9.1508944e-19],
-           [ 5.7725498e-11,  1.0000000e+00, -4.8674285e-18],
-           [-9.1508944e-19,  4.8674285e-18,  1.0000000e+00]])
+    array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
+           [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
+           [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
 
     The signs of the principal axes can also be controlled by specifying
     approximate axis directions.
@@ -451,9 +451,9 @@ def principal_axes_vectors(
     ...     mesh.points, axis_0_direction='-x', axis_1_direction='-y'
     ... )
     >>> principal_axes
-    array([[-1.0000000e+00,  5.7725498e-11, -9.1508944e-19],
-           [-5.7725498e-11, -1.0000000e+00,  4.8674285e-18],
-           [-9.1508944e-19,  4.8674285e-18,  1.0000000e+00]])
+    array([[-1.0000000e+00,  5.7725526e-11, -9.1508944e-19],
+           [-5.7725526e-11, -1.0000000e+00,  3.8939370e-18],
+           [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
 
     Note, however, that since the ``project_xyz`` and ``axis_#_direction``
     parameters only control the signs of the axes, they cannot be used
@@ -463,9 +463,9 @@ def principal_axes_vectors(
     ...     mesh.points, axis_0_direction=[4, 5, 6]
     ... )
     >>> principal_axes
-    array([[ 1.0000000e+00, -5.7725498e-11,  9.1508944e-19],
-           [ 5.7725498e-11,  1.0000000e+00, -4.8674285e-18],
-           [-9.1508944e-19,  4.8674285e-18,  1.0000000e+00]])
+    array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
+           [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
+           [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
 
     """
 
