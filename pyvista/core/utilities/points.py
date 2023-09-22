@@ -429,9 +429,9 @@ def principal_axes_vectors(
     aligned with the x-axis, the second with the y-axis, and third with
     the z-axis, as expected, since the mesh is already axis-aligned.
     >>> principal_axes
-    array([[-1.0000000e+00,  5.7725498e-11, -9.1508944e-19],
-           [ 5.7725498e-11,  1.0000000e+00, -4.8674285e-18],
-           [ 9.1508944e-19, -4.8674285e-18, -1.0000000e+00]])
+    array([[-1.0000000e+00,  5.7725526e-11, -9.1508944e-19],
+           [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
+           [ 9.1508944e-19, -3.8939370e-18, -1.0000000e+00]], dtype=float32)
 
     However, since the signs of the principal axes are arbitrary, the
     first and third axes in this case have a negative direction. To
