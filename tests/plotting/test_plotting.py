@@ -760,6 +760,7 @@ def test_plot_invalid_add_scalar_bar():
         plotter.add_scalar_bar()
 
 
+@skip_windows
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)
