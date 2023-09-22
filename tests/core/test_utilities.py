@@ -489,9 +489,20 @@ def test_observer():
 
 
 def test_check_valid_vector():
-    with pytest.raises(ValueError, match="length three"):
-        check_valid_vector([0, 1])
     check_valid_vector([0, 1, 2])
+    check_valid_vector(np.array([0, 1, 2]))
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector(np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]]))
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector(np.array([0, 1, 2, 3]))
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector("abc")
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector("a")
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector([0, 1])
+    with pytest.raises(TypeError, match="three numbers"):
+        check_valid_vector(0)
 
 
 def test_cells_dict_utils():
@@ -951,7 +962,42 @@ def test_swap_axes(x, y, z, order, values_test_case):
         assert np.flatnonzero(swapped[1])[0] < np.flatnonzero(swapped[2])[0]
 
 
-def test_principal_axes_vectors_swap_and_orient():
+np.random.seed(0)
+
+
+def assert_valid_right_handed_frame(axes):
+    assert not np.allclose(axes[0], [0, 0, 0])
+    assert not np.allclose(axes[1], [0, 0, 0])
+    assert not np.allclose(axes[2], [0, 0, 0])
+    assert np.allclose(axes[2], np.cross(axes[0], axes[1]))
+    return True
+
+
+@pytest.mark.parametrize('x', ([1, 0, 0], [-1, 0, 0]))
+@pytest.mark.parametrize('y', ([0, 1, 0], [0, -1, 0]))
+@pytest.mark.parametrize('z', ([0, 0, 1], [0, 0, -1]))
+@pytest.mark.parametrize('order', permutations([0, 1, 2]))
+def test_principal_axes_vectors_returns_right_handed_frame(x, y, z, order):
+    directions = np.array((x, y, z))[list(order)]
+
+    # test generally with random data
+    points = np.random.random_sample((10, 3))
+    axes = principal_axes_vectors(points)
+    assert assert_valid_right_handed_frame(axes)
+
+    # test where direction vector may be perpendicular to axes
+    points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]  # axis-aligned data
+    axes = principal_axes_vectors(
+        points, axis_0_direction=directions[0], axis_1_direction=directions[1]
+    )
+    assert assert_valid_right_handed_frame(axes)
+    axes = principal_axes_vectors(
+        points, axis_1_direction=directions[1], axis_2_direction=directions[2]
+    )
+    assert assert_valid_right_handed_frame(axes)
+
+
+def test_principal_axes_vectors_swap_and_project():
     # create planar data with equal variance in x and z
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
     vectors = principal_axes_vectors(points, swap_equal_axes=False)

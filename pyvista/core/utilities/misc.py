@@ -1,12 +1,15 @@
 """Miscellaneous core utilities."""
-from collections.abc import Iterable
+from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
+from numbers import Number
 import sys
 import threading
 import traceback
 import warnings
+
+import numpy as np
 
 
 def assert_empty_kwargs(**kwargs):
@@ -44,31 +47,40 @@ def assert_empty_kwargs(**kwargs):
     raise TypeError(message)
 
 
-def check_valid_vector(point, name=''):
+def check_valid_vector(vector, name=''):
     """
-    Check if a vector contains three components.
+    Check if a vector contains three numerical elements.
 
     Parameters
     ----------
-    point : Iterable[float|int]
-        Input vector to check. Must be an iterable with exactly three components.
+    vector : Sequence[float | int] | np.ndarray
+        Input vector to check. Must be a sequence with exactly three numeric elements.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
 
     Raises
     ------
     TypeError
-        If the input is not an iterable.
+        If the vector is not a Sequence or np.ndarray
     ValueError
-        If the input does not have exactly three components.
+        If the vector is not numeric or does not have exactly three elements.
 
     """
-    if not isinstance(point, Iterable):
-        raise TypeError(f'{name} must be a length three iterable of floats.')
-    if len(point) != 3:
-        if name == '':
-            name = 'Vector'
-        raise ValueError(f'{name} must be a length three iterable of floats.')
+    if name == '':
+        name = 'Vector'
+    error_msg = f'{name} must be a sequence with three numbers.'
+
+    if isinstance(vector, np.ndarray):
+        if np.size(vector) != 3:
+            raise ValueError(error_msg)
+    elif isinstance(vector, Sequence):
+        if len(vector) != 3:
+            raise ValueError(error_msg)
+        for element in vector:
+            if not isinstance(element, Number):
+                raise ValueError(error_msg)
+    else:
+        raise TypeError(error_msg)
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01

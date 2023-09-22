@@ -258,7 +258,7 @@ def principal_axes_transform(points, **kwargs):
     the face of the original mesh is generally "looking" towards the
     ``+X`` direction, and we can see from the transformed mesh that this
     direction correlates with the third principal axis (i.e. the z-axis
-    axis of the transformed mesh). Therefore, if we want the face of the
+    of the transformed mesh). Therefore, if we want the face of the
     transformed mesh to be "looking" down instead of up, we can specify
     an approximate direction vector for the third principal axis as the
     ``-X`` direction with ``axis_2_direction='-x'``.
@@ -275,7 +275,7 @@ def principal_axes_transform(points, **kwargs):
     direction of the second principal axis (which corresponds to the
     y-axis) is such that the top of the face points in the ``+Y``
     direction. Since the top of the face in the original mesh
-    points appromiately in the ``+Y`` direction, we set
+    points approximately in the ``+Y`` direction, we set
     ``axis_1_direction='y'.
     >>> matrix = pv.principal_axes_transform(
     ...     mesh.points, axis_1_direction='y', axis_2_direction='-x'
@@ -469,29 +469,30 @@ def principal_axes_vectors(
 
     """
 
-    def _validate_vector(vector):
+    def _validate_vector(vector, name):
         if vector is not None:
             if isinstance(vector, str):
                 vector = vector.lower()
                 valid_strings = list(NORMALS.keys())
                 if vector not in valid_strings:
                     raise ValueError(
-                        f"Vector string must be one of {valid_strings}, got {vector} instead."
+                        f"Vector string for {name} must be one of {valid_strings}, got {vector} instead."
                     )
-                vector = NORMALS[vector.lower()]
-            check_valid_vector(vector)
+                vector = NORMALS[vector]
+            check_valid_vector(vector, name=name)
         return vector
 
-    axis_0_direction = _validate_vector(axis_0_direction)
-    axis_1_direction = _validate_vector(axis_1_direction)
-    axis_2_direction = _validate_vector(axis_2_direction)
+    axis_0_direction = _validate_vector(axis_0_direction, name='axis_0_direction')
+    axis_1_direction = _validate_vector(axis_1_direction, name='axis_1_direction')
+    axis_2_direction = _validate_vector(axis_2_direction, name='axis_2_direction')
 
     # Compare all direction vectors with each other
-    directions = [vec for vec in [axis_0_direction, axis_1_direction, axis_2_direction] if vec]
+    directions = [axis_0_direction, axis_1_direction, axis_2_direction]
     for i, vec1 in enumerate(directions):
         for j, vec2 in enumerate(directions[i + 1 : :]):
-            if np.allclose(vec1, vec2):
-                raise ValueError("Direction vectors must be distinct.")
+            if vec1 is not None and vec2 is not None:
+                if np.allclose(vec1, vec2):
+                    raise ValueError("Direction vectors must be distinct.")
 
     if project_xyz:
         # Set values only if not yet set
@@ -539,25 +540,26 @@ def principal_axes_vectors(
     # Normalize to unit-length, flip directions, and ensure vectors form
     # a right-handed coordinate system
     i_vector = axes_vectors[0] / np.linalg.norm(axes_vectors[0])
-    if axis_0_direction:
+    if axis_0_direction is not None:
         sign = np.sign(np.dot(i_vector, axis_0_direction))
         if sign != 0:  # Only change sign if not perpendicular
             i_vector *= sign
 
     j_vector = axes_vectors[1] / np.linalg.norm(axes_vectors[1])
-    if axis_1_direction:
+    if axis_1_direction is not None:
         sign = np.sign(np.dot(j_vector, axis_1_direction))
         if sign != 0:
             j_vector *= sign
 
     k_vector = np.cross(i_vector, j_vector)
-    if axis_2_direction:
+    if axis_2_direction is not None:
         sign = np.sign(np.dot(k_vector, axis_2_direction))
-        if axis_0_direction and axis_1_direction:
-            pass  # k direction is already pre-determined
+        cannot_be_changed = axis_0_direction is not None and axis_1_direction is not None
+        if sign == 0 or cannot_be_changed:
+            pass
         else:
             # Need to modify two vectors to keep system as right-handed
-            if axis_1_direction:
+            if axis_1_direction is not None:
                 # Do not modify j vector
                 i_vector *= sign
                 k_vector *= sign
@@ -569,7 +571,7 @@ def principal_axes_vectors(
     axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
 
     if as_transform:
-        # Create a 4x4 transformation matrix to align orthonormal axes
+        # Create a 4x4 transformation matrix to align principal axes
         # to the XYZ axes
         rotate_to_xyz = np.eye(4)
         rotate_to_xyz[:3, :3] = axes_vectors
@@ -650,7 +652,7 @@ def fit_plane_to_points(
 
     normal_direction : sequence[float] | str, optional
         Approximate direction vector of the plane's normal. If set, the
-        direction of the plane's normal will be flipped such that it best
+        sign of the plane's normal will be flipped such that it best
         aligns with this vector. Can be a sequence of three elements
         specifying the ``(x, y, z)`` direction or a string specifying
         a conventional direction (e.g. ``'x'`` for ``(1, 0, 0)`` or
