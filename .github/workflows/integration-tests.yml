@@ -23,7 +23,7 @@ jobs:
   # For now this is just MNE-Python, but others could be added
   mne:
     name: MNE-Python
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       DISPLAY: ':99.0'
       MNE_LOGGING_LEVEL: 'info'
@@ -59,7 +59,7 @@ jobs:
 
   pyvistaqt:
     name: PyVistaQt
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -77,7 +77,7 @@ jobs:
 
   geovista:
     name: GeoVista
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -l {0}
