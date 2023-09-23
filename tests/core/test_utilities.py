@@ -963,7 +963,7 @@ def test_fit_plane_to_points(airplane, normal_direction, is_double, i_resolution
     )
 
     # test output variables match the plane's actual geometry
-    actual_plane_normal = np.mean(plane.cell_normals,axis=0)
+    actual_plane_normal = np.mean(plane.cell_normals, axis=0)
     actual_plane_center = np.mean(plane.points, axis=0)
     assert np.allclose(normal, actual_plane_normal)
     assert np.allclose(center, actual_plane_center)
@@ -1163,9 +1163,11 @@ def test_principal_axes_vectors_raises():
 
 
 def test_principal_axes_transform(airplane):
-    transform = principal_axes_transform(airplane.points, axis_0_direction='x', axis_1_direction='y', axis_2_direction='z')
+    transform = principal_axes_transform(
+        airplane.points, axis_0_direction='x', axis_1_direction='y', axis_2_direction='z'
+    )
     assert np.any(transform)
-    assert np.array_equal(transform.shape, (4,4))
+    assert np.array_equal(transform.shape, (4, 4))
 
     transform = principal_axes_transform(airplane.points, return_inverse=True)
     assert np.array_equal(transform[0].shape, (4, 4))
