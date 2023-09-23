@@ -421,10 +421,10 @@ def principal_axes_vectors(
         3x3 array with the principal axes as row vectors.
 
     numpy.ndarray
-        4x4 transformation matrix if ``return_transform=True``.
+        4x4 transformation matrix if ``return_transforms=True``.
 
     numpy.ndarray
-        4x4 inverse transformation matrix if ``return_transform=True``.
+        4x4 inverse transformation matrix if ``return_transforms=True``.
 
     Examples
     --------
@@ -518,17 +518,17 @@ def principal_axes_vectors(
         swap_equal_axes = True if swap_equal_axes is None else None
 
     # Initialize output
-    if return_transforms:
-        default_output = np.eye(4)
-    else:
-        default_output = np.eye(3)
+    default_axes = np.eye(3)
+    default_transform = np.eye(4)
 
     # Validate points
     data, _ = _coerce_pointslike_arg(points, copy=True)
     if not np.issubdtype(data.dtype, np.floating):
         data = data.astype(np.float32)
     if len(data) == 0:
-        return default_output
+        if return_transforms:
+            return default_axes, default_transform, default_transform
+        return default_axes
 
     # Center data
     centroid = data.mean(axis=0)
@@ -546,7 +546,9 @@ def principal_axes_vectors(
         # axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
 
     except np.linalg.LinAlgError:
-        return default_output
+        if return_transforms:
+            return default_axes, default_transform, default_transform
+        return default_axes
 
     if swap_equal_axes:
         # Note: Swapping may create a left-handed coordinate frame. This

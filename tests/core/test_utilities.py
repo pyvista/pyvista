@@ -1124,6 +1124,12 @@ def test_principal_axes_vectors_return_transforms(airplane):
     assert np.allclose(inverted_points, initial_points)
     assert np.allclose(inverted_center, initial_center)
 
+    # test returns default values
+    axes, transform, inverse = principal_axes_vectors([0, 0, 0], return_transforms=True)
+    assert np.array_equal(axes, np.eye(3))
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
 
 def test_principal_axes_vectors(airplane):
     axes = principal_axes_vectors(airplane.points)
