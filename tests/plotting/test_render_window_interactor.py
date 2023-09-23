@@ -6,6 +6,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 def empty_callback():
@@ -242,3 +243,12 @@ def test_poked_subplot_context(verify_image_cache):
         pl.add_mesh(pv.Arrow(), color=True)
 
     pl.show()
+
+
+@pytest.mark.skip_plotting
+def test_add_pick_observer():
+    with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
+        pl = pv.Plotter()
+        pl.iren.add_pick_obeserver(empty_callback)
+    pl = pv.Plotter()
+    pl.iren.add_pick_observer(empty_callback)

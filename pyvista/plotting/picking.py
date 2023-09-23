@@ -514,7 +514,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             self.iren.picker = picker
         if hasattr(self.iren.picker, 'SetTolerance'):
             self.iren.picker.SetTolerance(tolerance)
-        self.iren.add_pick_obeserver(_end_pick_event)
+        self.iren.add_pick_observer(_end_pick_event)
         self._init_click_picking_callback(left_clicking=left_clicking)
         self._picker_in_use = True
 
@@ -631,7 +631,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self.enable_rubber_band_style()  # TODO: better handle?
         self.iren.picker = 'rendered'
-        self.iren.add_pick_obeserver(_end_pick_helper)
+        self.iren.add_pick_observer(_end_pick_helper)
         self._picker_in_use = True
 
         # Now add text about cell-selection
