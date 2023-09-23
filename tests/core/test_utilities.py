@@ -910,32 +910,73 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-def test_fit_plane_to_points(airplane):
+@pytest.mark.parametrize('normal_direction', ('z', '-z'))
+@pytest.mark.parametrize('is_double', (True, False))
+@pytest.mark.parametrize('i_resolution', (1, 10, 20))
+@pytest.mark.parametrize('j_resolution', (1, 10, 20))
+def test_fit_plane_to_points(airplane, normal_direction, is_double, i_resolution, j_resolution):
+    # set up
+    if is_double:
+        airplane.points_to_double()
+
+    expected_normal = np.array([-2.5776557795075497e-08, 0.1217805140255676, -0.9925570544828484])
+    if normal_direction == 'z':
+        expected_normal *= -1
+    expected_center = [896.9955164251104, 686.6469899574811, 78.13206745346744]
+    if is_double:
+        expected_bounds = [
+            139.06047647458706,
+            1654.9305563756338,
+            38.07752570263108,
+            1335.216454212331,
+            -1.4433109538384485,
+            157.70744586077336,
+        ]
+    else:
+        expected_bounds = [
+            139.0604705810547,
+            1654.9305419921875,
+            38.07742691040039,
+            1335.216552734375,
+            -1.4435099363327026,
+            157.707275390625,
+        ]
+
+    # do tests
+    plane = fit_plane_to_points(airplane.points)
+    assert np.any(plane.points)
+
     plane, center, normal = fit_plane_to_points(
-        airplane.points, return_meta=True, i_resolution=1, j_resolution=1
+        airplane.points,
+        return_meta=True,
+        i_resolution=i_resolution,
+        j_resolution=j_resolution,
+        normal_direction=normal_direction,
     )
 
-    expected_normal = np.array([-2.5999512e-08, 0.121780515, -0.99255705])
-    expected_center = [896.9954860028446, 686.6470205328502, 78.13187948615939]
-    expected_points = [
-        [1654.9296, 1335.2166, 157.70726],
-        [1654.9307, 38.07869, -1.4433962],
-        [139.06036, 1335.2153, 157.70715],
-        [139.06146, 38.07747, -1.4435107],
-    ]
+    # test correct output
     assert np.allclose(normal, expected_normal)
     assert np.allclose(center, expected_center)
     assert np.allclose(
-        plane.points,
-        expected_points,
+        plane.bounds,
+        expected_bounds,
     )
 
-    plane, center, normal = fit_plane_to_points(
-        airplane.points, return_meta=True, i_resolution=1, j_resolution=1, normal_direction='z'
-    )
-    assert np.allclose(normal, -expected_normal)
-    assert np.allclose(center, expected_center)
-    assert np.allclose(plane.points, np.roll(expected_points, shift=2, axis=0))
+    # test output variables match the plane's actual geometry
+    actual_plane_normal = np.mean(plane.cell_normals,axis=0)
+    actual_plane_center = np.mean(plane.points, axis=0)
+    assert np.allclose(normal, actual_plane_normal)
+    assert np.allclose(center, actual_plane_center)
+
+    # test correct type
+    if is_double:
+        assert plane.points.dtype.type is np.double
+        assert normal.dtype.type is np.double
+        assert center.dtype.type is np.double
+    else:
+        assert plane.points.dtype.type is not np.double
+        assert normal.dtype.type is not np.double
+        assert center.dtype.type is not np.double
 
 
 def swap_axes_test_cases():
@@ -1052,25 +1093,36 @@ def test_principal_axes_vectors_direction():
     assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
 
 
-def test_principal_axes_vectors_as_transform(airplane):
+def test_principal_axes_vectors_return_transforms(airplane):
     airplane.points_to_double()
+    initial_points = airplane.points
 
-    points = airplane.points
-    axes_before = principal_axes_vectors(points)
-    centroid_before = np.mean(points, axis=0)
-    assert not np.allclose(axes_before, np.eye(3))
-    assert not np.allclose(centroid_before, [0, 0, 0])
-
-    transform = principal_axes_vectors(points, as_transform=True)
+    # verify not centered and not axis-aligned
+    initial_axes, transform, inverse = principal_axes_vectors(
+        initial_points, return_transforms=True
+    )
+    initial_center = np.mean(initial_points, axis=0)
+    assert not np.allclose(initial_axes, np.eye(3))
+    assert not np.allclose(initial_center, [0, 0, 0])
     assert np.array_equal(transform.shape, (4, 4))
+    assert np.array_equal(inverse.shape, (4, 4))
 
+    # test transformed points are centered and axis-aligned
     airplane.transform(transform)
+    aligned_points = airplane.points
+    aligned_axes = principal_axes_vectors(
+        aligned_points, axis_0_direction='x', axis_1_direction='y'
+    )
+    aligned_center = np.mean(aligned_points, axis=0)
+    assert np.allclose(aligned_axes, np.eye(3))
+    assert np.allclose(aligned_center, [0, 0, 0])
 
-    points = airplane.points
-    axes_after = principal_axes_vectors(points, axis_0_direction='x', axis_1_direction='y')
-    centroid_after = np.mean(points, axis=0)
-    assert np.allclose(axes_after, np.eye(3))
-    assert np.allclose(centroid_after, [0, 0, 0])
+    # test inverted points are same as initial
+    airplane.transform(inverse)
+    inverted_points = airplane.points
+    inverted_center = np.mean(inverted_points, axis=0)
+    assert np.allclose(inverted_points, initial_points)
+    assert np.allclose(inverted_center, initial_center)
 
 
 def test_principal_axes_vectors(airplane):
@@ -1111,8 +1163,10 @@ def test_principal_axes_vectors_raises():
 
 
 def test_principal_axes_transform(airplane):
-    assert np.any(
-        principal_axes_transform(
-            airplane.points, axis_0_direction='x', axis_1_direction='y', axis_2_direction='z'
-        )
-    )
+    transform = principal_axes_transform(airplane.points, axis_0_direction='x', axis_1_direction='y', axis_2_direction='z')
+    assert np.any(transform)
+    assert np.array_equal(transform.shape, (4,4))
+
+    transform = principal_axes_transform(airplane.points, return_inverse=True)
+    assert np.array_equal(transform[0].shape, (4, 4))
+    assert np.array_equal(transform[1].shape, (4, 4))

@@ -8,6 +8,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.misc import check_valid_vector
+from pyvista.core.utilities.transformations import apply_transformation_to_points
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -182,7 +183,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def principal_axes_transform(points, **kwargs):
+def principal_axes_transform(points, return_inverse=False, **kwargs):
     """Compute the principal axes transform.
 
     This function computes the transformation matrix which will:
@@ -204,14 +205,20 @@ def principal_axes_transform(points, **kwargs):
         Points array. Accepts a single point or several points as a
         Nx3 array.
 
+    return_inverse : bool, False
+        If ``True``, the inverse of the transform is also returned.
+
     **kwargs : dict, optional
         Keyword arguments passed to :func:`~pyvista.principal_axes_vectors`.
 
     Returns
     -------
     numpy.ndarray
-        The 4x4 transformation matrix which aligns the points to the XYZ axes
+        4x4 transformation matrix which aligns the points to the XYZ axes
         at the origin.
+
+    numpy.ndarray
+        4x4 inverse transformation matrix if ``return_inverse`` is ``True``.
 
     Examples
     --------
@@ -284,11 +291,14 @@ def principal_axes_transform(points, **kwargs):
     >>> plot_meshes()
 
     """
-    return principal_axes_vectors(
+    axes, transform, inverse = principal_axes_vectors(
         points,
-        as_transform=True,
+        return_transforms=True,
         **kwargs,
     )
+    if return_inverse:
+        return transform, inverse
+    return transform
 
 
 def principal_axes_vectors(
@@ -298,7 +308,7 @@ def principal_axes_vectors(
     axis_2_direction=None,
     swap_equal_axes=None,
     project_xyz=False,
-    as_transform=False,
+    return_transforms=False,
 ):
     """Compute principal axes vectors from a set of points.
 
@@ -311,7 +321,8 @@ def principal_axes_vectors(
     The axes explain the total variance of the points. The first axis
     explains the largest percentage of variance, followed by the second
     axis, followed again by the third axis which explains the smallest
-    percentage of variance.
+    percentage of variance. The axes can be used to build a
+    transformation matrix to align a mesh to the XYZ axes.
 
     The computed axes are not unique, and the sign of each axis direction
     can be arbitrarily changed (as long the axes define a right-handed
@@ -398,17 +409,22 @@ def principal_axes_vectors(
         principal axes of X-Y planar data onto the positive XYZ axes to
         ensure the principal axes all have a positive direction.
 
-    as_transform : bool, False
-        If ``True``, the axes are used to compute a 4x4 transformation
-        matrix. The transform translates the points to be centered at the
-        origin, then rotates the points to align the orthonormal axes to
-        the XYZ axes.
+    return_transforms : bool, False
+        If ``True``, two 4x4 transformation matrices are also returned.
+        The first transform translates the points to be centered at the origin,
+        then rotates the points to align the principal axes to the XYZ
+        axes. The second transform is the inverse of the first.
 
     Returns
     -------
     numpy.ndarray
-        A 3x3 array with the principal axes as row vectors or a 4x4
-        transformation matrix if ``as_transform`` is ``True``.
+        3x3 array with the principal axes as row vectors.
+
+    numpy.ndarray
+        4x4 transformation matrix if ``return_transform=True``.
+
+    numpy.ndarray
+        4x4 inverse transformation matrix if ``return_transform=True``.
 
     Examples
     --------
@@ -502,7 +518,7 @@ def principal_axes_vectors(
         swap_equal_axes = True if swap_equal_axes is None else None
 
     # Initialize output
-    if as_transform:
+    if return_transforms:
         default_output = np.eye(4)
     else:
         default_output = np.eye(3)
@@ -570,7 +586,7 @@ def principal_axes_vectors(
 
     axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
 
-    if as_transform:
+    if return_transforms:
         # Create a 4x4 transformation matrix to align principal axes
         # to the XYZ axes
         rotate_to_xyz = np.eye(4)
@@ -578,8 +594,11 @@ def principal_axes_vectors(
         translate_to_origin = np.eye(4)
         translate_to_origin[:3, 3] = -centroid
         transform = rotate_to_xyz @ translate_to_origin
-        return transform
 
+        # Invert transform
+        translate_to_origin[:3, 3] *= -1
+        inverse = translate_to_origin @ rotate_to_xyz.T
+        return axes_vectors, transform, inverse
     return axes_vectors
 
 
@@ -624,6 +643,15 @@ def fit_plane_to_points(
     an approximate normal direction. This can be useful, for example,
     in cases where the normal direction has a clear physical meaning.
 
+    .. versionchanged:: 0.42.0
+    The center of the plane (returned if ``return_meta=True``) is now
+    computed as the center of the generated plane mesh. In previous
+    versions, the center of the input points was returned.
+
+    .. versionchanged:: 0.43.0
+    If ``points`` is type ``numpy.double``, the points of the generated
+    plane will also be type ``numpy.double``
+
     See Also
     --------
     :func:`~pyvista.principal_axes_vectors`
@@ -637,6 +665,10 @@ def fit_plane_to_points(
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the
         generated plane.
+
+        .. note::
+        The center of the generated plane mesh may not coincide with
+        the center of the points.
 
     i_resolution : int, default: 10
         Number of points on the plane mesh in the direction of its long
@@ -749,44 +781,60 @@ def fit_plane_to_points(
     >>> pl.show()
 
     """
-    vectors = principal_axes_vectors(points, axis_2_direction=normal_direction)
-    normal = vectors[2]
+    # Get best-fit axes and transforms
+    axes_vectors, transform, inverse = principal_axes_vectors(
+        points, axis_2_direction=normal_direction, return_transforms=True
+    )
+    dtype = axes_vectors.dtype
 
-    # Create rotation matrix from basis vectors
-    rotate_transform = np.eye(4)
-    rotate_transform[:3, :3] = vectors
-    rotate_transform_inv = rotate_transform.T
+    # Wrap points as polydata and align to XYZ axes
+    poly_axis_aligned = pyvista.PolyData()
+    poly_axis_aligned.points = points
+    poly_axis_aligned.transform(transform)
 
-    # Project and transform points to align and center data to the XY plane
-    poly = pyvista.PolyData(points)
-    data_center = points.mean(axis=0)
-    projected = poly.project_points_to_plane(origin=data_center, normal=normal)
-    projected.points -= data_center
-    projected.transform(rotate_transform)
+    # Compute plane size and center from XY bounds
+    points_aligned = poly_axis_aligned.points
+    xmin, xmax = np.min(points_aligned[:, 0]), np.max(points_aligned[:, 0])
+    ymin, ymax = np.min(points_aligned[:, 1]), np.max(points_aligned[:, 1])
+    i_size = xmax - xmin
+    j_size = ymax - ymin
+    center_aligned = np.array([(xmax + xmin) / 2, (ymax + ymin) / 2, 0])
 
-    # Compute size of the plane
-    i_size = projected.bounds[1] - projected.bounds[0]
-    j_size = projected.bounds[3] - projected.bounds[2]
+    # Compute plane normal direction sign using axes as a rotation matrix
+    normal_aligned = axes_vectors @ axes_vectors[2]
+    sign = np.sign(normal_aligned[2])
 
-    # The center of the input data does not necessarily coincide with
-    # the center of the plane. The true center of the plane is the
-    # middle of the bounding box of the projected + transformed data
-    # relative to the input data's center
-    center = rotate_transform_inv[:3, :3] @ projected.center + data_center
-
-    # Initialize plane then move to final position
+    # Initialize plane aligned with XYZ axes
+    # Set center and direction manually afterward to preserve precision
+    # and set the correct orientation
     plane = pyvista.Plane(
-        center=(0, 0, 0),
-        direction=(0, 0, 1),
+        center=(0.0, 0.0, 0.0),
+        direction=(0.0, 0.0, 1 * sign),
         i_size=i_size,
         j_size=j_size,
         i_resolution=i_resolution,
         j_resolution=j_resolution,
     )
-    plane.transform(rotate_transform_inv)
-    plane.points += center
+    if dtype.type is np.double:
+        plane.points_to_double()
+
+    # Shift plane to its axis-aligned center
+    plane.points += center_aligned
+
+    # Transform plane to the points' original coordinate frame
+    plane.transform(inverse)
 
     if return_meta:
+        # Recompute center from the actual plane being returned.
+        # This is done to remove any error from the transformations and
+        # ensure the plane's geometry matches the meta variable
+        center = np.mean(plane.points, axis=0)
+
+        # Unlike with center, for the normal we return the vector computed
+        # directly from the principal axes since any normals derived
+        # from the actual plane will have errors from the edge points,
+        # are limited to float32, and have a variable number of cell normals
+        normal = axes_vectors[2]
         return plane, center, normal
     return plane
 
