@@ -8,7 +8,6 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.misc import check_valid_vector
-from pyvista.core.utilities.transformations import apply_transformation_to_points
 
 
 def vtk_points(points, deep=True, force_float=False):
