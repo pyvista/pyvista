@@ -842,7 +842,7 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-10. Place your release notes from step 8 in the description for `the new
+10. Place your release notes from previous step in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
@@ -852,7 +852,7 @@ created the following will occur:
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-12. Announce the new release in the PyVista Slack workspace and
+12. Announce the new release in the Discussions page and
     celebrate.
 
 Patch Release Steps
