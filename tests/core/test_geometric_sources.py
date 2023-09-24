@@ -35,9 +35,13 @@ def test_cylinder_source():
 
 
 def test_multiple_lines_source():
-    points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points = np.array([[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
     algo = pv.MultipleLinesSource()
-    assert np.array_equal(algo.points == points)
-    points = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]]
+    assert np.array_equal(algo.points, points)
+    points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]])
     algo = pv.MultipleLinesSource(points=points)
-    assert np.array_equal(algo.points == points)
+    assert np.array_equal(algo.points, points)
+    with pytest.raises(ValueError, match='Array of points must have three values per point'):
+        algo.points = points[:, :1]
+    with pytest.raises(ValueError, match='>=2 points need to define multiple lines.'):
+        algo.points = points[0, :]
