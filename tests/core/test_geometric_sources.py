@@ -35,8 +35,8 @@ def test_cylinder_source():
 
 
 def test_multiple_lines_source():
-    points = np.array([[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
     algo = pv.MultipleLinesSource()
+    points = np.array([[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
     assert np.array_equal(algo.points, points)
     points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]])
     algo = pv.MultipleLinesSource(points=points)
