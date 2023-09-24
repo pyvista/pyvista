@@ -32,3 +32,12 @@ def test_cylinder_source():
     algo.direction = direction
     assert np.array_equal(algo.center, center)
     assert np.array_equal(algo.direction, direction)
+
+
+def test_line_source():
+    algo = pv.LineSource()
+    assert algo.resolution == 1
+    assert np.array_equal(algo.points == [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    points = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]]
+    algo = pv.LineSource(points=points)
+    assert np.array_equal(algo.points == points)
