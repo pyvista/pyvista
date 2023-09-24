@@ -34,10 +34,10 @@ def test_cylinder_source():
     assert np.array_equal(algo.direction, direction)
 
 
-def test_line_source():
-    algo = pv.LineSource()
-    assert algo.resolution == 1
-    assert np.array_equal(algo.points == [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
+def test_multiple_lines_source():
+    points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    algo = pv.MultipleLinesSource()
+    assert np.array_equal(algo.points == points)
     points = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]]
-    algo = pv.LineSource(points=points)
+    algo = pv.MultipleLinesSource(points=points)
     assert np.array_equal(algo.points == points)
