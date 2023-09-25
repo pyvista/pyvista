@@ -73,6 +73,7 @@ from .geometric_objects import (
     Quadrilateral,
     Rectangle,
     Sphere,
+    SphereUnstructured,
     Superquadric,
     Tetrahedron,
     Text3D,

@@ -363,6 +363,219 @@ def Sphere(
     return surf
 
 
+def SphereUnstructured(
+    radius=np.linspace(0.0, 1.0, 5),
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
+    theta=np.linspace(0, np.pi, 30),
+    phi=np.linspace(0, 2 * np.pi, 30),
+):
+    """Create a sphere.
+
+    Parameters
+    ----------
+    radius : float, default: 0.5
+        Sphere radius.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees latitude.
+
+    theta : int, default: 30
+        Set the number of points in the longitude direction (ranging
+        from ``start_theta`` to ``end_theta``).
+
+    phi : int, default: 30
+        Set the number of points in the latitude direction (ranging from
+        ``start_phi`` to ``end_phi``).
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Sphere mesh.
+
+    See Also
+    --------
+    pyvista.Sphere
+
+    Examples
+    --------
+    Create a sphere using default parameters.
+
+    >>> import pyvista
+    >>> sphere = pyvista.SphereUnstructured()
+    >>> sphere.plot(show_edges=True)
+
+    """
+    if radius[0] < 0:
+        raise ValueError("minimum radius cannot be negative")
+    if theta[0] < 0:
+        raise ValueError("minimum theta cannot be negative")
+    if phi[0] < 0:
+        raise ValueError("minimum phi cannot be negative")
+    if theta[-1] > np.pi:
+        raise ValueError("maximum theta cannot be >= pi")
+    if phi[-1] > 2 * np.pi:
+        raise ValueError("maximum phi cannot be >= 2 * pi")
+
+    nr = len(radius)
+    # if radius[0] == 0:
+    #    nr = nr - 1
+    ntheta = len(theta)
+    nphi = len(phi)
+
+    def spherical_to_cartesian(r, theta, phi):
+        """Convert spherical coordinate sequences to a ``(n,3)`` cartesian coordinate array.
+
+        Parameters
+        ----------
+        r : sequence(float)
+            Ordered sequence of floats of radii.
+        theta : sequence(float)
+            Ordered sequence of floats for theta direction.
+        phi : sequence
+            Ordered sequence of floats for phi direction.
+
+        Returns
+        -------
+        np.ndarray
+            ``(n, 3)`` cartesian coordinate array.
+
+        """
+        r, theta, phi = np.meshgrid(r, theta, phi, indexing='ij')
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
+        return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
+
+    # points on axis
+    points = [[0.0, 0.0, 0.0]]
+    points.extend(spherical_to_cartesian(radius[1:], theta[0], phi[0]))
+    points.extend(spherical_to_cartesian(radius[1:], theta[-1], phi[0]))
+
+    # rest of points with phi changing quickest
+    for ir in radius[1:]:
+        for itheta in theta[1:-1]:
+            points.extend(spherical_to_cartesian(ir, itheta, phi[:-1]))
+
+    cells = []
+    celltypes = []
+
+    # 2*nr-1 points on axis
+    # At each r, theta, nphi-1 points
+    # At each r, ntheta-2 rings of points: theta[0] and theta[-1] are on the axis
+
+    # first make the tetras that form with origin and axis point
+    #   origin is 0
+    #   first axis point is 1
+    #   other points at 2*nr-1 + (0:nphi-1)
+
+    for iphi in range(nphi - 1):
+        start = 2 * nr - 1
+        upper_range = (1 + iphi) % (nphi - 1)
+        cells.append(4)
+        cells.extend([0, 1, start + iphi, start + upper_range])
+
+        celltypes.append(pyvista.CellType.TETRA)
+
+    # next tetras that form with origin and bottom axis point
+    # 2 theta points are already on axis and we want the last remaining theta level, so (ntheta-3)
+    # other points at 2*nr-1 + (ntheta-3)*(nphi-1) + (0:nphi-1)
+
+    for iphi in range(nphi - 1):
+        start = 2 * nr - 1 + (ntheta - 3) * (nphi - 1)
+        upper_range = (1 + iphi) % (nphi - 1)
+        cells.append(4)
+        cells.extend([0, nr, start + iphi, start + upper_range])
+
+        celltypes.append(pyvista.CellType.TETRA)
+
+    # Pyramids that form to origin but without an axis point
+    # start with the same points as above, but connect to next theta points
+
+    for itheta in range(ntheta - 3):
+        for iphi in range(nphi - 1):
+            start = 2 * nr - 1 + itheta * (nphi - 1)
+            upper_range = (1 + iphi) % (nphi - 1)
+            next = 2 * nr - 1 + (itheta + 1) * (nphi - 1)
+            cells.append(5)
+            cells.extend([start + iphi, start + upper_range, next + upper_range, next + iphi, 0])
+
+            celltypes.append(pyvista.CellType.PYRAMID)
+
+    # Wedges form between two r levels at first and last theta position
+    #   At each r level, the triangle is formed with axis point,  two phi positions
+    # First go upwards
+    for ir in range(nr - 2):
+        axis0 = ir + 1
+        axis1 = ir + 2
+        for iphi in range(nphi - 1):
+            start = 2 * nr - 1 + ir * (nphi - 1) * (ntheta - 2)
+            upper_range = (1 + iphi) % (nphi - 1)
+
+            next = 2 * nr - 1 + (ir + 1) * (nphi - 1) * (ntheta - 2)
+            cells.append(6)
+            cells.extend(
+                [axis0, start + iphi, start + upper_range, axis1, next + iphi, next + upper_range]
+            )
+
+            celltypes.append(pyvista.CellType.WEDGE)
+
+    # now go downwards
+    for ir in range(nr - 2):
+        axis0 = nr + ir
+        axis1 = nr + ir + 1
+        for iphi in range(nphi - 1):
+            start = 2 * nr - 1 + ir * (nphi - 1) * (ntheta - 2) + (ntheta - 3) * (nphi - 1)
+            upper_range = (1 + iphi) % (nphi - 1)
+
+            next = 2 * nr - 1 + (ir + 1) * (nphi - 1) * (ntheta - 2) + (ntheta - 3) * (nphi - 1)
+            cells.append(6)
+            cells.extend(
+                [axis0, start + iphi, start + upper_range, axis1, next + iphi, next + upper_range]
+            )
+
+            celltypes.append(pyvista.CellType.WEDGE)
+
+    # Form Hexahedra
+    # Hexahedra form between two r levels and two theta levels and two phi levels
+    #   Order by r levels
+    for ir in range(nr - 2):
+        for itheta in range(ntheta - 3):
+            for iphi in range(nphi - 1):
+                start0 = 2 * nr - 1 + ir * (nphi - 1) * (ntheta - 2) + itheta * (nphi - 1)
+                upper_range = (1 + iphi) % (nphi - 1)
+
+                next0 = 2 * nr - 1 + ir * (nphi - 1) * (ntheta - 2) + (itheta + 1) * (nphi - 1)
+                start1 = 2 * nr - 1 + (ir + 1) * (nphi - 1) * (ntheta - 2) + itheta * (nphi - 1)
+                next1 = (
+                    2 * nr - 1 + (ir + 1) * (nphi - 1) * (ntheta - 2) + (itheta + 1) * (nphi - 1)
+                )
+
+                cells.append(8)
+                cells.extend(
+                    [
+                        start0 + iphi,
+                        start0 + upper_range,
+                        next0 + upper_range,
+                        next0 + iphi,
+                        start1 + iphi,
+                        start1 + upper_range,
+                        next1 + upper_range,
+                        next1 + iphi,
+                    ]
+                )
+
+                celltypes.append(pyvista.CellType.HEXAHEDRON)
+
+    mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
+    # TODO: translate and orient
+    return mesh
+
+
 def Plane(
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
