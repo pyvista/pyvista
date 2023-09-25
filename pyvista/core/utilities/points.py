@@ -505,9 +505,8 @@ def principal_axes_vectors(
     directions = [axis_0_direction, axis_1_direction, axis_2_direction]
     for i, vec1 in enumerate(directions):
         for j, vec2 in enumerate(directions[i + 1 : :]):
-            if vec1 is not None and vec2 is not None:
-                if np.allclose(vec1, vec2):
-                    raise ValueError("Direction vectors must be distinct.")
+            if vec1 is not None and vec2 is not None and np.allclose(vec1, vec2):
+                raise ValueError("Direction vectors must be distinct.")
 
     if project_xyz:
         # Set values only if not yet set
