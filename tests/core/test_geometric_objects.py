@@ -77,6 +77,17 @@ def test_sphere_theta():
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
+def test_sphere_unstructured():
+    sphere = pv.SphereUnstructured()
+    assert isinstance(sphere, pv.UnstructuredGrid)
+    assert np.any(sphere.points)
+
+    # make sure cell creation gives positive volume.
+    for i, cell in enumerate(sphere.cell):
+        print(i, cell.type.name)
+        assert cell.cast_to_unstructured_grid().volume > 0
+
+
 def test_plane():
     surf = pv.Plane()
     assert np.any(surf.points)

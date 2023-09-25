@@ -489,7 +489,7 @@ def SphereUnstructured(
         start = 2 * nr - 1 + (ntheta - 3) * (nphi - 1)
         upper_range = (1 + iphi) % (nphi - 1)
         cells.append(4)
-        cells.extend([0, nr, start + iphi, start + upper_range])
+        cells.extend([0, nr, start + upper_range, start + iphi])
 
         celltypes.append(pyvista.CellType.TETRA)
 
@@ -519,7 +519,7 @@ def SphereUnstructured(
             next = 2 * nr - 1 + (ir + 1) * (nphi - 1) * (ntheta - 2)
             cells.append(6)
             cells.extend(
-                [axis0, start + iphi, start + upper_range, axis1, next + iphi, next + upper_range]
+                [axis0, start + upper_range, start + iphi, axis1, next + upper_range, next + iphi]
             )
 
             celltypes.append(pyvista.CellType.WEDGE)
@@ -559,13 +559,13 @@ def SphereUnstructured(
                 cells.extend(
                     [
                         start0 + iphi,
-                        start0 + upper_range,
-                        next0 + upper_range,
                         next0 + iphi,
+                        next0 + upper_range,
+                        start0 + upper_range,
                         start1 + iphi,
-                        start1 + upper_range,
-                        next1 + upper_range,
                         next1 + iphi,
+                        next1 + upper_range,
+                        start1 + upper_range,
                     ]
                 )
 
