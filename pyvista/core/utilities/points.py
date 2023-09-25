@@ -219,7 +219,6 @@ def principal_axes_transform(points, return_inverse=False, **kwargs):
     numpy.ndarray
         4x4 inverse transformation matrix if ``return_inverse`` is ``True``.
     """
-
     # Examples
     # --------
     # Compute the principal axes transform for a mesh.
@@ -425,7 +424,6 @@ def principal_axes_vectors(
     numpy.ndarray
         4x4 inverse transformation matrix if ``return_transforms=True``.
     """
-
     # Examples
     # --------
     # Create a mesh with points that have the largest variation in ``X``,
