@@ -760,7 +760,8 @@ def _coerce_transformlike_arg(transform_like: TransformLike):
     Parameters
     ----------
     transform_like : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
-        Input from which to generate a 4x4 array.
+        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
+        from a vtkTransform.
 
     Returns
     -------

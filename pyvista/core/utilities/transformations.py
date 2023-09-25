@@ -1,6 +1,8 @@
 """Module implementing point transformations and their matrices."""
 import numpy as np
 
+from pyvista.core._typing_core import TransformLike
+
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
@@ -236,13 +238,14 @@ def reflection(normal, point=None):
     return augmented
 
 
-def apply_transformation_to_points(transformation, points, inplace=False):
-    """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
+def apply_transformation_to_points(transformation: TransformLike, points, inplace=False):
+    """Apply a transformation matrix to a set of points.
 
     Parameters
     ----------
     transformation : np.ndarray
-        Transformation matrix of shape (3, 3) or (4, 4).
+        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
+        from a vtkTransform.
 
     points : np.ndarray
         Array of points to be transformed of shape (N, 3).

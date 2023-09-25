@@ -1,10 +1,14 @@
 """Prop3D module."""
-from typing import Tuple, Union
+from typing import Tuple
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, Vector
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core._typing_core import BoundsLike, TransformLike, Vector
+from pyvista.core.utilities.arrays import (
+    _coerce_transformlike_arg,
+    array_from_vtkmatrix,
+    vtkmatrix_from_array,
+)
 
 from . import _vtk
 
@@ -301,15 +305,7 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):  # numpydoc ignore=GL08
-        if isinstance(value, np.ndarray):
-            if value.shape != (4, 4):
-                raise ValueError('User matrix array must be 4x4.')
-            value = vtkmatrix_from_array(value)
-
-        if isinstance(value, _vtk.vtkMatrix4x4):
-            self.SetUserMatrix(value)
-        else:
-            raise TypeError(
-                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
-            )
+    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
+        array = _coerce_transformlike_arg(value)
+        matrix = vtkmatrix_from_array(array)
+        self.SetUserMatrix(matrix)
