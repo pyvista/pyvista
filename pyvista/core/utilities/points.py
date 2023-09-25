@@ -218,78 +218,78 @@ def principal_axes_transform(points, return_inverse=False, **kwargs):
 
     numpy.ndarray
         4x4 inverse transformation matrix if ``return_inverse`` is ``True``.
-
-    Examples
-    --------
-    Compute the principal axes transform for a mesh.
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> mesh = examples.download_face()
-    >>> mesh.points *= 5  # scale mesh for visualization
-    >>> matrix = pv.principal_axes_transform(mesh.points)
-    >>> matrix
-    array([[-5.79430342e-01, -3.02252942e-04, -8.15021694e-01,
-            -8.62259164e-02],
-           [ 6.74928480e-04,  9.99999404e-01, -8.50685057e-04,
-             6.39482565e-01],
-           [ 8.15021455e-01, -1.04299409e-03, -5.79429805e-01,
-            -4.70775854e-01],
-           [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
-             1.00000000e+00]])
-
-    Apply the transformation and compare the result to the input. Notice
-    that the transformed mesh is centered at the origin and aligned with
-    the XYZ axes.
-    >>> mesh_transformed = mesh.transform(matrix, inplace=False)
-    >>> def plot_meshes():
-    ...     p = pv.Plotter()
-    ...     _ = p.add_mesh(
-    ...         mesh, label='Input', color='lightblue', show_edges=True
-    ...     )
-    ...     _ = p.add_mesh(
-    ...         mesh_transformed,
-    ...         label='Transformed',
-    ...         color='goldenrod',
-    ...         show_edges=True,
-    ...     )
-    ...     _ = p.add_axes_at_origin()
-    ...     _ = p.add_legend()
-    ...     _ = p.camera.zoom(2)
-    ...     p.show()
-    ...
-    >>> plot_meshes()
-
-    It is possible to adjust the transform so that the sign of one
-    or more principal axes have a meaningful interpretation. For example,
-    the face of the original mesh is generally "looking" towards the
-    ``+X`` direction, and we can see from the transformed mesh that this
-    direction correlates with the third principal axis (i.e. the z-axis
-    of the transformed mesh). Therefore, if we want the face of the
-    transformed mesh to be "looking" down instead of up, we can specify
-    an approximate direction vector for the third principal axis as the
-    ``-X`` direction with ``axis_2_direction='-x'``.
-    >>> matrix = pv.principal_axes_transform(
-    ...     mesh.points, axis_2_direction='-x'
-    ... )
-    >>> mesh_transformed = mesh.transform(matrix, inplace=False)
-    >>> plot_meshes()
-
-    The face is now looking down in the ``-Z`` direction as desired.
-    However, the top of the face has now flipped in the new transform
-    relative to the previous one, and is pointing in the ``-Y``
-    direction. Similar to above, we can adjust the transform so that the
-    direction of the second principal axis (which corresponds to the
-    y-axis) is such that the top of the face points in the ``+Y``
-    direction. Since the top of the face in the original mesh
-    points approximately in the ``+Y`` direction, we set
-    ``axis_1_direction='y'.
-    >>> matrix = pv.principal_axes_transform(
-    ...     mesh.points, axis_1_direction='y', axis_2_direction='-x'
-    ... )
-    >>> mesh_transformed = mesh.transform(matrix, inplace=False)
-    >>> plot_meshes()
-
     """
+
+    # Examples
+    # --------
+    # Compute the principal axes transform for a mesh.
+    # >>> import pyvista as pv
+    # >>> from pyvista import examples
+    # >>> mesh = examples.download_face()
+    # >>> mesh.points *= 5  # scale mesh for visualization
+    # >>> matrix = pv.principal_axes_transform(mesh.points)
+    # >>> matrix
+    # array([[-5.79430342e-01, -3.02252942e-04, -8.15021694e-01,
+    #         -8.62259164e-02],
+    #        [ 6.74928480e-04,  9.99999404e-01, -8.50685057e-04,
+    #          6.39482565e-01],
+    #        [ 8.15021455e-01, -1.04299409e-03, -5.79429805e-01,
+    #         -4.70775854e-01],
+    #        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+    #          1.00000000e+00]])
+    #
+    # Apply the transformation and compare the result to the input. Notice
+    # that the transformed mesh is centered at the origin and aligned with
+    # the XYZ axes.
+    # >>> mesh_transformed = mesh.transform(matrix, inplace=False)
+    # >>> def plot_meshes():
+    # ...     p = pv.Plotter()
+    # ...     _ = p.add_mesh(
+    # ...         mesh, label='Input', color='lightblue', show_edges=True
+    # ...     )
+    # ...     _ = p.add_mesh(
+    # ...         mesh_transformed,
+    # ...         label='Transformed',
+    # ...         color='goldenrod',
+    # ...         show_edges=True,
+    # ...     )
+    # ...     _ = p.add_axes_at_origin()
+    # ...     _ = p.add_legend()
+    # ...     _ = p.camera.zoom(2)
+    # ...     p.show()
+    # ...
+    # >>> plot_meshes()
+    #
+    # It is possible to adjust the transform so that the sign of one
+    # or more principal axes have a meaningful interpretation. For example,
+    # the face of the original mesh is generally "looking" towards the
+    # ``+X`` direction, and we can see from the transformed mesh that this
+    # direction correlates with the third principal axis (i.e. the z-axis
+    # of the transformed mesh). Therefore, if we want the face of the
+    # transformed mesh to be "looking" down instead of up, we can specify
+    # an approximate direction vector for the third principal axis as the
+    # ``-X`` direction with ``axis_2_direction='-x'``.
+    # >>> matrix = pv.principal_axes_transform(
+    # ...     mesh.points, axis_2_direction='-x'
+    # ... )
+    # >>> mesh_transformed = mesh.transform(matrix, inplace=False)
+    # >>> plot_meshes()
+    #
+    # The face is now looking down in the ``-Z`` direction as desired.
+    # However, the top of the face has now flipped in the new transform
+    # relative to the previous one, and is pointing in the ``-Y``
+    # direction. Similar to above, we can adjust the transform so that the
+    # direction of the second principal axis (which corresponds to the
+    # y-axis) is such that the top of the face points in the ``+Y``
+    # direction. Since the top of the face in the original mesh
+    # points approximately in the ``+Y`` direction, we set
+    # ``axis_1_direction='y'.
+    # >>> matrix = pv.principal_axes_transform(
+    # ...     mesh.points, axis_1_direction='y', axis_2_direction='-x'
+    # ... )
+    # >>> mesh_transformed = mesh.transform(matrix, inplace=False)
+    # >>> plot_meshes()
+
     axes, transform, inverse = principal_axes_vectors(
         points,
         return_transforms=True,
@@ -424,65 +424,64 @@ def principal_axes_vectors(
 
     numpy.ndarray
         4x4 inverse transformation matrix if ``return_transforms=True``.
-
-    Examples
-    --------
-    Create a mesh with points that have the largest variation in ``X``,
-    followed by ``Y``, then ``Z``.
-    >>> import pyvista as pv
-    >>> mesh = pv.ParametricEllipsoid(xradius=10, yradius=5, zradius=1)
-    >>> p = pv.Plotter()
-    >>> _ = p.add_mesh(mesh)
-    >>> _ = p.show_grid()
-    >>> p.show()
-
-    Compute its principal axes
-    >>> principal_axes = pv.principal_axes_vectors(mesh.points)
-
-    Note that the principal axes have ones along the diagonal and zeros
-    in the off diagonals. This indicates that the first principal axis is
-    aligned with the x-axis, the second with the y-axis, and third with
-    the z-axis, as expected, since the mesh is already axis-aligned.
-    >>> principal_axes
-    array([[-1.0000000e+00,  5.7725526e-11, -9.1508944e-19],
-           [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
-           [ 9.1508944e-19, -3.8939370e-18, -1.0000000e+00]], dtype=float32)
-
-    However, since the signs of the principal axes are arbitrary, the
-    first and third axes in this case have a negative direction. To
-    project the positive XYZ axes directions onto the principal axes,
-    use ``project_xyz=True``.
-    >>> principal_axes = pv.principal_axes_vectors(
-    ...     mesh.points, project_xyz=True
-    ... )
-    >>> principal_axes
-    array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
-           [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
-           [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
-
-    The signs of the principal axes can also be controlled by specifying
-    approximate axis directions.
-    >>> principal_axes = pv.principal_axes_vectors(
-    ...     mesh.points, axis_0_direction='-x', axis_1_direction='-y'
-    ... )
-    >>> principal_axes
-    array([[-1.0000000e+00,  5.7725526e-11, -9.1508944e-19],
-           [-5.7725526e-11, -1.0000000e+00,  3.8939370e-18],
-           [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
-
-    Note, however, that since the ``project_xyz`` and ``axis_#_direction``
-    parameters only control the signs of the axes, they cannot be used
-    to reorient them. For example, the following code does not orient
-    the first principal axes to point in a specified direction.
-    >>> principal_axes = pv.principal_axes_vectors(
-    ...     mesh.points, axis_0_direction=[4, 5, 6]
-    ... )
-    >>> principal_axes
-    array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
-           [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
-           [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
-
     """
+
+    # Examples
+    # --------
+    # Create a mesh with points that have the largest variation in ``X``,
+    # followed by ``Y``, then ``Z``.
+    # >>> import pyvista as pv
+    # >>> mesh = pv.ParametricEllipsoid(xradius=10, yradius=5, zradius=1)
+    # >>> p = pv.Plotter()
+    # >>> _ = p.add_mesh(mesh)
+    # >>> _ = p.show_grid()
+    # >>> p.show()
+    #
+    # Compute its principal axes
+    # >>> principal_axes = pv.principal_axes_vectors(mesh.points)
+    #
+    # Note that the principal axes have ones along the diagonal and zeros
+    # in the off diagonals. This indicates that the first principal axis is
+    # aligned with the x-axis, the second with the y-axis, and third with
+    # the z-axis, as expected, since the mesh is already axis-aligned.
+    # >>> principal_axes
+    # array([[-1.0000000e+00,  5.7725526e-11, -9.1508944e-19],
+    #        [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
+    #        [ 9.1508944e-19, -3.8939370e-18, -1.0000000e+00]], dtype=float32)
+    #
+    # However, since the signs of the principal axes are arbitrary, the
+    # first and third axes in this case have a negative direction. To
+    # project the positive XYZ axes directions onto the principal axes,
+    # use ``project_xyz=True``.
+    # >>> principal_axes = pv.principal_axes_vectors(
+    # ...     mesh.points, project_xyz=True
+    # ... )
+    # >>> principal_axes
+    # array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
+    #        [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
+    #        [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
+    #
+    # The signs of the principal axes can also be controlled by specifying
+    # approximate axis directions.
+    # >>> principal_axes = pv.principal_axes_vectors(
+    # ...     mesh.points, axis_0_direction='-x', axis_1_direction='-y'
+    # ... )
+    # >>> principal_axes
+    # array([[-1.0000000e+00,  5.7725526e-11, -9.1508944e-19],
+    #        [-5.7725526e-11, -1.0000000e+00,  3.8939370e-18],
+    #        [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
+    #
+    # Note, however, that since the ``project_xyz`` and ``axis_#_direction``
+    # parameters only control the signs of the axes, they cannot be used
+    # to reorient them. For example, the following code does not orient
+    # the first principal axes to point in a specified direction.
+    # >>> principal_axes = pv.principal_axes_vectors(
+    # ...     mesh.points, axis_0_direction=[4, 5, 6]
+    # ... )
+    # >>> principal_axes
+    # array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
+    #        [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
+    #        [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
 
     def _validate_vector(vector, name):
         if vector is not None:
