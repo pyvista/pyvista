@@ -1,12 +1,13 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
-from typing import Literal, Optional, Sequence, Union
+from typing import Literal, Optional, Sequence
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import TransformLike
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,
@@ -18,6 +19,7 @@ from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
+    _coerce_transformlike_arg,
     get_array,
     get_array_association,
     set_default_active_scalars,
@@ -5729,7 +5731,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
+        trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -5757,9 +5759,9 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
-            Accepts a vtk transformation object or a 4x4
-            transformation matrix.
+        trans : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
+            Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix,
+            or from a vtkTransform.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all arrays with three components are
@@ -5806,26 +5808,10 @@ class DataSetFilters:
         if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            m = trans
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = trans
-            m = trans.GetMatrix()
-        elif isinstance(trans, np.ndarray):
-            if trans.shape != (4, 4):
-                raise ValueError('Transformation array must be 4x4')
-            m = vtkmatrix_from_array(trans)
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        else:
-            raise TypeError(
-                'Input transform must be either:\n'
-                '\tvtk.vtkMatrix4x4\n'
-                '\tvtk.vtkTransform\n'
-                '\t4x4 np.ndarray\n'
-            )
+        arr = _coerce_transformlike_arg(trans)
+        m = vtkmatrix_from_array(arr)
+        t = _vtk.vtkTransform()
+        t.SetMatrix(m)
 
         if m.GetElement(3, 3) == 0:
             raise ValueError("Transform element (3,3), the inverse scale term, is zero")
