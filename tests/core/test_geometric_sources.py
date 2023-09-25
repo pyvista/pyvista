@@ -18,3 +18,17 @@ def test_cone_source():
     assert algo.angle == 0.0
     algo = pv.ConeSource(radius=0.0)
     assert algo.radius == 0.0
+
+
+def test_cylinder_source():
+    algo = pv.CylinderSource()
+    assert algo.radius == 0.5
+    assert algo.height == 1.0
+    assert algo.capping
+    assert algo.resolution == 100
+    center = np.random.rand(3)
+    direction = np.random.rand(3)
+    algo.center = center
+    algo.direction = direction
+    assert np.array_equal(algo.center, center)
+    assert np.array_equal(algo.direction, direction)
