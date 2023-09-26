@@ -92,18 +92,14 @@ jobs:
           python-version: '3.10'
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
-        run: |
-          pip install -ve . # pyvista
-          pip list
+        run: pip install -ve . # pyvista
       - name: Install GeoVista
-        run: |
-          pip install -ve .[test] # geovista
-          pip list
+        run: pip install -ve .[test] # geovista
         working-directory: geovista
       - name: Download cartopy assets
         run: |
           wget --quiet ${CARTOPY_FEATURE}
           mkdir -p ${CARTOPY_SHARE_DIR}
           python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
-      - run: pytest -W error
+      - run: pytest -W error -W "ignore:numpy.ndarray size changed:RuntimeWarning"
         working-directory: geovista
