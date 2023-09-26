@@ -96,6 +96,7 @@ repos:
     exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
   - id: check-docstring-first
   - id: end-of-file-fixer
+    exclude_types: [vtk]
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
