@@ -428,7 +428,7 @@ def test_plotter_add_floor_raise_error():
 
 
 def test_plotter_reset_key_events():
-    pl = pv.Plotter
+    pl = pv.Plotter()
     pl.zoom(1.05)
     pl.zoom(0.95)
 
