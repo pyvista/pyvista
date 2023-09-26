@@ -2068,8 +2068,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Zoom of the camera. If a float, must be greater than 0. Otherwise,
             if a string, must be ``"tight"``. If tight, the plot will be zoomed
             such that the actors fill the entire viewport.
-            self.camera.zoom(value)
-            self.render()
 
         """
         self.camera.zoom(value)
