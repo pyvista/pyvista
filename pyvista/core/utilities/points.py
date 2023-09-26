@@ -642,13 +642,13 @@ def fit_plane_to_points(
     in cases where the normal direction has a clear physical meaning.
 
     .. versionchanged:: 0.42.0
-    The center of the plane (returned if ``return_meta=True``) is now
-    computed as the center of the generated plane mesh. In previous
-    versions, the center of the input points was returned.
+        The center of the plane (returned if ``return_meta=True``) is now
+        computed as the center of the generated plane mesh. In previous
+        versions, the center of the input points was returned.
 
     .. versionchanged:: 0.43.0
-    If ``points`` is type ``numpy.double``, the points of the generated
-    plane will also be type ``numpy.double``
+        If ``points`` is type ``numpy.double``, the points of the generated
+        plane will also be type ``numpy.double``
 
     See Also
     --------
@@ -665,8 +665,8 @@ def fit_plane_to_points(
         generated plane.
 
         .. note::
-        The center of the generated plane mesh may not coincide with
-        the center of the points.
+            The center of the generated plane mesh may not coincide with
+            the center of the points.
 
     i_resolution : int, default: 10
         Number of points on the plane mesh in the direction of its long
