@@ -425,3 +425,7 @@ def test_plotter_add_floor_raise_error():
     pl = pv.Plotter()
     with pytest.raises(NotImplementedError, match='not implemented'):
         pl.add_floor(face='invalid')
+
+def test_plotter_reset_key_events():
+    pl = pv.Plotter()
+    pl.reset_key_events()
