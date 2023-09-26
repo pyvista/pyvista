@@ -2060,11 +2060,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         def zoom_in():  # numpydoc ignore=GL08
-            self.camera.Zoom(1.05)
+            self.camera.zoom(1.05)
             self.render()
 
         def zoom_out():  # numpydoc ignore=GL08
-            self.camera.Zoom(0.95)
+            self.camera.zoom(0.95)
             self.render()
 
         self.add_key_event('b', b_left_down_callback)
