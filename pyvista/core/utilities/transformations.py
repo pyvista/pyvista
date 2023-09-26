@@ -1,4 +1,6 @@
 """Module implementing point transformations and their matrices."""
+from collections.abc import Sequence
+
 import numpy as np
 
 from pyvista.core._typing_core import TransformLike
@@ -256,7 +258,7 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
     Returns
     -------
     numpy.ndarray
-        Transformed points.
+        Transformed points if ``inplace`` is ``False``.
 
     Examples
     --------
@@ -305,3 +307,91 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
     else:
         # otherwise return the new points
         return points_2
+
+
+def axes_rotation(axes, point_a=(0, 0, 0), point_b=(0, 0, 0), return_inverse=False):
+    """Return a 4x4 matrix to apply a rotation by axes vectors.
+
+    This function computes a transformation matrix which applies the
+    following transforms in sequence:
+        * translation from ``point_a`` to the origin
+        * rotation specified by ``axes``
+        * translation from the origin back to ``point_b``.
+
+    The transformation is useful for changing axes basis vectors.
+
+    Parameters
+    ----------
+    axes : Sequence[Sequence[int, float]] | np.ndarray
+        3x3 axes row vectors (e.g. axes defining a coordinate frame).
+        Axes must be orthogonal but need not be orthonormal since the
+        vectors are normalized by default. Axes vectors must form a
+        right-handed coordinate frame.
+
+    point_a : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+        Starting point of the transformation.
+
+    point_b : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+        End point of the transformation.
+
+    return_inverse : bool, False
+        If ``True``, the inverse transform is also returned.
+
+    Returns
+    -------
+    numpy.ndarray
+        4x4 transformation matrix.
+
+    numpy.ndarray
+        4x4 inverse transformation matrix.
+
+    """
+    from pyvista.core.utilities import check_valid_vector  # avoid circular import
+
+    check_valid_vector(point_a)
+    point_a = np.asarray(point_a)
+    check_valid_vector(point_b)
+    point_b = np.asarray(point_b)
+    if not (isinstance(axes, Sequence) or isinstance(axes, np.ndarray)):
+        raise TypeError("Axes vectors must a sequence or numpy array.")
+    axes = np.asarray(axes)
+    is_3x3 = axes.ndim == 2 and axes.shape[0] == 3 and axes.shape[1] == 3
+    is_floats = np.issubdtype(axes.dtype, np.floating)
+    is_ints = np.issubdtype(axes.dtype, np.integer)
+    is_numeric = is_floats or is_ints
+    if not (is_3x3 and is_numeric):
+        raise ValueError("Axes vectors must be a 3x3 numeric array.")
+
+    # Axes must be linearly independent
+    rank = np.linalg.matrix_rank(axes)
+    if not rank == 3:
+        raise ValueError(f"Axes must be linearly independent with rank 3. Got rank {rank} instead.")
+
+    # Normalize
+    axes = axes @ np.diag(1 / np.linalg.norm(axes, axis=1))
+
+    # Axes must form a right-handed coordinate frame
+    if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
+        raise ValueError("Axes must form a right-handed coordinate frame.")
+
+    # Define transformations
+    translate_to_a = np.eye(4)
+    translate_to_a[:3, 3] = -point_a
+    translate_to_a_inv = np.eye(4)
+    translate_to_a_inv[:3, 3] = point_a
+
+    rotate = np.eye(4)
+    rotate[:3, :3] = axes
+    rotate_inv = rotate.T
+
+    translate_to_b = np.eye(4)
+    translate_to_b[:3, 3] = point_b
+    translate_to_b_inv = np.eye(4)
+    translate_to_b_inv[:3, 3] = -point_b
+
+    transform = translate_to_b @ rotate @ translate_to_a
+    inverse = translate_to_a_inv @ rotate_inv @ translate_to_b_inv
+
+    if return_inverse:
+        return transform, inverse
+    return transform

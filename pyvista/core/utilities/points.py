@@ -8,7 +8,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.misc import check_valid_vector
-from pyvista.core.utilities.transformations import apply_transformation_to_points
+from pyvista.core.utilities.transformations import apply_transformation_to_points, axes_rotation
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -183,7 +183,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def principal_axes_transform(points, return_inverse=False, **kwargs):
+def principal_axes_transform(points, transform_location="origin", return_inverse=False, **kwargs):
     """Compute the principal axes transform.
 
     This function computes the transformation matrix which will:
@@ -204,6 +204,13 @@ def principal_axes_transform(points, return_inverse=False, **kwargs):
     points : array_like[float]
         Points array. Accepts a single point or several points as a
         Nx3 array.
+
+    transform_location : sequence[float] | str, default: "origin"
+        Desired location of the points center after the transformation
+        is applied. May be a sequence of three values or one of:
+        * ``"origin"`` : Alias for ``(0, 0, 0)``
+        * ``"centroid"`` : Alias for ``np.mean(points, axis=0)``
+        Has no effect if ``return_transforms`` is ``False``.
 
     return_inverse : bool, False
         If ``True``, the inverse of the transform is also returned.
@@ -292,6 +299,7 @@ def principal_axes_transform(points, return_inverse=False, **kwargs):
 
     axes, transform, inverse = principal_axes_vectors(
         points,
+        transform_location=transform_location,
         return_transforms=True,
         **kwargs,
     )
@@ -308,6 +316,7 @@ def principal_axes_vectors(
     swap_equal_axes=None,
     project_xyz=False,
     return_transforms=False,
+    transform_location="origin",
 ):
     """Compute principal axes vectors from a set of points.
 
@@ -413,6 +422,13 @@ def principal_axes_vectors(
         The first transform translates the points to be centered at the origin,
         then rotates the points to align the principal axes to the XYZ
         axes. The second transform is the inverse of the first.
+
+    transform_location : sequence[float] | str, default: "origin"
+        Desired location of the points center after the transformation
+        is applied. May be a sequence of three values or one of:
+        * ``"origin"`` : Alias for ``(0, 0, 0)``
+        * ``"centroid"`` : Alias for ``np.mean(points, axis=0)``
+        Has no effect if ``return_transforms`` is ``False``.
 
     Returns
     -------
@@ -527,8 +543,20 @@ def principal_axes_vectors(
         return default_axes
 
     # Center data
-    centroid = data.mean(axis=0)
+    centroid = np.mean(data, axis=0)
     data -= centroid
+
+    if return_transforms:
+        if isinstance(transform_location, str):
+            if transform_location == "origin":
+                transform_location = (0, 0, 0)
+            elif transform_location == "centroid":
+                transform_location = centroid
+            else:
+                raise ValueError(
+                    f"Expected one of {['origin', 'centroid']}, got {transform_location} instead."
+                )
+        check_valid_vector(transform_location, name="transform_location")
 
     try:
         # Use SVD as it's numerically more stable than using PCA (below)
@@ -585,17 +613,9 @@ def principal_axes_vectors(
     axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
 
     if return_transforms:
-        # Create a 4x4 transformation matrix to align principal axes
-        # to the XYZ axes
-        rotate_to_xyz = np.eye(4)
-        rotate_to_xyz[:3, :3] = axes_vectors
-        translate_to_origin = np.eye(4)
-        translate_to_origin[:3, 3] = -centroid
-        transform = rotate_to_xyz @ translate_to_origin
-
-        # Invert transform
-        translate_to_origin[:3, 3] *= -1
-        inverse = translate_to_origin @ rotate_to_xyz.T
+        transform, inverse = axes_rotation(
+            axes_vectors, point_a=centroid, point_b=transform_location, return_inverse=True
+        )
         return axes_vectors, transform, inverse
     return axes_vectors
 
