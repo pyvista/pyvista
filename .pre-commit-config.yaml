@@ -97,6 +97,7 @@ repos:
   - id: check-docstring-first
   - id: end-of-file-fixer
     exclude_types: [vtk]
+  - id: mixed-line-ending
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
