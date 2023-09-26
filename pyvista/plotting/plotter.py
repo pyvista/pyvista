@@ -2047,19 +2047,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.render()
         return
 
-    def reset_key_events(self):
-        """Reset all of the key press events to their defaults."""
-        if not hasattr(self, 'iren'):
-            return
-
-        self.iren.clear_key_event_callbacks()
-
-        self.add_key_event('q', self._prep_for_close)  # Add no matter what
-        b_left_down_callback = lambda: self.iren.add_observer(
-            'LeftButtonPressEvent', self.left_button_down
-        )
-
-        def zoom(self, value):
+    def zoom(self, value):
         """Set the zoom of the camera and render.
 
         Parameters
@@ -2072,6 +2060,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.camera.zoom(value)
         self.render()
+
+    def reset_key_events(self):
+        """Reset all of the key press events to their defaults."""
+        if not hasattr(self, 'iren'):
+            return
+
+        self.iren.clear_key_event_callbacks()
+
+        self.add_key_event('q', self._prep_for_close)  # Add no matter what
+        b_left_down_callback = lambda: self.iren.add_observer(
+            'LeftButtonPressEvent', self.left_button_down
+        )
 
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
