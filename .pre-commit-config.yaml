@@ -96,7 +96,7 @@ repos:
     exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
   - id: check-docstring-first
   - id: end-of-file-fixer
-    exclude_types: [vtk]
+    exclude_types: ["vtk"]
   - id: mixed-line-ending
 
 # this validates our github workflow files
