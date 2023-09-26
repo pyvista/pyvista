@@ -5,7 +5,7 @@
 #  when using a custom variant like `vtk_osmesa`
 #  which we do in some of our CI jobs.
 matplotlib<3.7.3
-numpy>=1.21,<1.26.0
+numpy>=1.21.1,<1.26.0
 pillow<10.1.0
 pooch<1.8.0
 scooby>=0.5.1,<0.8.0
