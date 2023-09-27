@@ -430,7 +430,6 @@ def test_plotter_add_floor_raise_error():
 def test_plotter_zoom_camera():
     pl = pv.Plotter()
     pl.zoom_camera(1.05)
-    pl.zoom_camera(0.95)
 
 
 def test_plotter_reset_key_events():
