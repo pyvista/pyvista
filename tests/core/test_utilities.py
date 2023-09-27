@@ -1239,6 +1239,15 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg("abc")
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_axes_rotation_equals_transform(airplane):
+    axes = np.eye(3)
+    points = airplane.points
+    rotate1 = axes_rotation(points, axes)
+    rotate2 = pv.PointSet(points).transform(axes).points
+    assert np.array_equal(rotate1, rotate2)
+
+
 def test_axes_rotation(airplane):
     axes = np.eye(3)
     points, _, _ = axes_rotation(
@@ -1251,8 +1260,9 @@ def test_axes_rotation(airplane):
     )
     assert np.array_equal(points, airplane.points)
 
+    points = airplane.points
     rotate1 = axes_rotation(points, axes)
-    rotate2 = pv.PointSet(points).transform(axes).points
+    rotate2 = pv.PolyData(points).transform(axes).points
     assert np.array_equal(rotate1, rotate2)
 
     assert axes_rotation(points, axes, inplace=True) is None
