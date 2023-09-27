@@ -320,6 +320,16 @@ def axes_rotation(axes, point_a=(0, 0, 0), point_b=(0, 0, 0), return_inverse=Fal
 
     The transformation is useful for changing axes basis vectors.
 
+    Example use cases:
+        1. Set both point ``a`` and ``b`` as zero vectors to cause a
+        rotation about the origin.
+        2. Set both point ``a`` and ``b`` to the same value (e.g. the
+        origin of a local coordinate frame (defined in world coordinates)
+        to cause a localized rotation about the specified point.
+        3. Set point ``a`` as the origin of a local coordinate frame
+        (defined in world coordinates) and point ``b`` as the zero vector
+        to align the frame with the XYZ axes at the origin.
+
     Parameters
     ----------
     axes : Sequence[Sequence[int, float]] | np.ndarray

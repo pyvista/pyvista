@@ -186,9 +186,17 @@ def lines_from_points(points, close=False):
 def principal_axes_transform(points, transformed_center="origin", return_inverse=False, **kwargs):
     """Compute the principal axes transform.
 
-    This function computes the transformation matrix which will:
-        1. Translate ``points`` such that their centroid is at the origin, then
-        2. Rotate ``points`` to align their principal axes to the XYZ axes.
+    The principal axes transform uses the :func:`~pyvista.principal_axes_vectors`
+    to compute a 4x4 transformation matrix which aligns the principal axes
+    of the points to the XYZ axes. The transformed center can be controlled
+    to create origin-centered points (with ``transformed_center="origin"``)
+    or to align the principal axes with the XYZ axes but keep the points
+    centered at their initial center (with ``transformed_center="centroid"``).
+
+    The transform applies the following transformations in sequence:
+        * translation from the centroid of ``points`` to the origin
+        * rotation defined by the principal axes`
+        * translation from the origin to ``transformed_center``
 
     See :func:`~pyvista.principal_axes_vectors` for more information and
     for additional keyword arguments.
@@ -198,6 +206,11 @@ def principal_axes_transform(points, transformed_center="origin", return_inverse
     Notes
     -----
     If the transform cannot be computed, the identity matrix is returned.
+
+    See Also
+    --------
+    :func:`~axes_rotation`
+        Apply a rotation by axes vectors.
 
     Parameters
     ----------
@@ -359,6 +372,8 @@ def principal_axes_vectors(
         Compute the principal axes transform.
     :func:`~pyvista.fit_plane_to_points`
         Use the principal axes to fit a plane.
+    :func:`~axes_rotation`
+        Apply a rotation by axes vectors.
 
     Parameters
     ----------
@@ -419,9 +434,11 @@ def principal_axes_vectors(
 
     return_transforms : bool, False
         If ``True``, two 4x4 transformation matrices are also returned.
-        The first transform translates the points to be centered at the origin,
-        then rotates the points to align the principal axes to the XYZ
-        axes. The second transform is the inverse of the first.
+        The first matrix applies the following transformations in sequence:
+        * translation from the centroid of ``points`` to the origin
+        * rotation defined by the principal axes`
+        * translation from the origin to ``transformed_center``
+        The second transform is the inverse of the first.
 
     transformed_center : sequence[float] | str, default: "origin"
         Desired location of the points center after the transformation
