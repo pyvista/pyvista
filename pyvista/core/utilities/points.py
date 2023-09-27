@@ -183,7 +183,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def principal_axes_transform(points, transform_location="origin", return_inverse=False, **kwargs):
+def principal_axes_transform(points, transformed_center="origin", return_inverse=False, **kwargs):
     """Compute the principal axes transform.
 
     This function computes the transformation matrix which will:
@@ -205,7 +205,7 @@ def principal_axes_transform(points, transform_location="origin", return_inverse
         Points array. Accepts a single point or several points as a
         Nx3 array.
 
-    transform_location : sequence[float] | str, default: "origin"
+    transformed_center : sequence[float] | str, default: "origin"
         Desired location of the points center after the transformation
         is applied. May be a sequence of three values or one of:
         * ``"origin"`` : Alias for ``(0, 0, 0)``
@@ -299,7 +299,7 @@ def principal_axes_transform(points, transform_location="origin", return_inverse
 
     axes, transform, inverse = principal_axes_vectors(
         points,
-        transform_location=transform_location,
+        transformed_center=transformed_center,
         return_transforms=True,
         **kwargs,
     )
@@ -316,7 +316,7 @@ def principal_axes_vectors(
     swap_equal_axes=None,
     project_xyz=False,
     return_transforms=False,
-    transform_location="origin",
+    transformed_center="origin",
 ):
     """Compute principal axes vectors from a set of points.
 
@@ -423,11 +423,11 @@ def principal_axes_vectors(
         then rotates the points to align the principal axes to the XYZ
         axes. The second transform is the inverse of the first.
 
-    transform_location : sequence[float] | str, default: "origin"
+    transformed_center : sequence[float] | str, default: "origin"
         Desired location of the points center after the transformation
         is applied. May be a sequence of three values or one of:
-        * ``"origin"`` : Alias for ``(0, 0, 0)``
-        * ``"centroid"`` : Alias for ``np.mean(points, axis=0)``
+        * ``"origin"``: Alias for ``(0, 0, 0)``
+        * ``"centroid"``: Alias for ``np.mean(points, axis=0)``
         Has no effect if ``return_transforms`` is ``False``.
 
     Returns
@@ -547,16 +547,16 @@ def principal_axes_vectors(
     data -= centroid
 
     if return_transforms:
-        if isinstance(transform_location, str):
-            if transform_location == "origin":
-                transform_location = (0, 0, 0)
-            elif transform_location == "centroid":
-                transform_location = centroid
+        if isinstance(transformed_center, str):
+            if transformed_center == "origin":
+                transformed_center = (0, 0, 0)
+            elif transformed_center == "centroid":
+                transformed_center = centroid
             else:
                 raise ValueError(
-                    f"Expected one of {['origin', 'centroid']}, got {transform_location} instead."
+                    f"Expected one of {['origin', 'centroid']}, got {transformed_center} instead."
                 )
-        check_valid_vector(transform_location, name="transform_location")
+        check_valid_vector(transformed_center, name="transform_location")
 
     try:
         # Use SVD as it's numerically more stable than using PCA (below)
@@ -614,7 +614,7 @@ def principal_axes_vectors(
 
     if return_transforms:
         transform, inverse = axes_rotation(
-            axes_vectors, point_a=centroid, point_b=transform_location, return_inverse=True
+            axes_vectors, point_a=centroid, point_b=transformed_center, return_inverse=True
         )
         return axes_vectors, transform, inverse
     return axes_vectors
