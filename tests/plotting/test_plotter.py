@@ -427,10 +427,10 @@ def test_plotter_add_floor_raise_error():
         pl.add_floor(face='invalid')
 
 
-def test_plotter_zoom():
+def test_plotter_zoom_camera():
     pl = pv.Plotter()
-    pl.zoom(1.05)
-    pl.zoom(0.95)
+    pl.zoom_camera(1.05)
+    pl.zoom_camera(0.95)
 
 
 def test_plotter_reset_key_events():
