@@ -512,13 +512,19 @@ def SphereUnstructured(
     else:
         include_origin = False
 
+    if theta[0] == 0.0 and theta[-1] == 2 * np.pi:
+        duplicate_theta = True
+        theta = theta[:-1]
+    else:
+        duplicate_theta = False
+
     points.extend(_spherical_to_cartesian(radius, phi[0], theta[0]))
     points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
 
     # rest of points with theta changing quickest
     for ir in radius:
         for iphi in phi[1:-1]:
-            points.extend(_spherical_to_cartesian(ir, iphi, theta[:-1]))
+            points.extend(_spherical_to_cartesian(ir, iphi, theta))
 
     cells = []
     celltypes = []
@@ -532,8 +538,11 @@ def SphereUnstructured(
 
         Values of ir and phi here are relative to the first nonaxis values.
         """
-        ntheta_ = ntheta - 1
-        itheta = itheta % ntheta_
+        if duplicate_theta:
+            ntheta_ = ntheta - 1
+            itheta = itheta % ntheta_
+        else:
+            ntheta_ = ntheta
 
         return npoints_on_axis + ir * (nphi - 2) * ntheta_ + iphi * ntheta_ + itheta
 
