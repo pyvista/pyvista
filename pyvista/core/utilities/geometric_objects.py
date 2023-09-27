@@ -473,8 +473,6 @@ def SphereUnstructured(
     phi = np.deg2rad(phi)
 
     nr = len(radius)
-    # if radius[0] == 0:
-    #    nr = nr - 1
     ntheta = len(theta)
     nphi = len(phi)
 
@@ -502,74 +500,91 @@ def SphereUnstructured(
         z = r * np.cos(phi)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
+    points = []
     # points on axis
-    points = [[0.0, 0.0, 0.0]]
-    points.extend(spherical_to_cartesian(radius[1:], phi[0], theta[0]))
-    points.extend(spherical_to_cartesian(radius[1:], phi[-1], theta[0]))
+
+    if radius[0] == 0.0:
+        points.append([0.0, 0.0, 0.0])
+        include_origin = True
+        nr = nr - 1
+        radius = radius[1:]
+    else:
+        include_origin = False
+
+    points.extend(spherical_to_cartesian(radius, phi[0], theta[0]))
+    points.extend(spherical_to_cartesian(radius, phi[-1], theta[0]))
 
     # rest of points with theta changing quickest
-    for ir in radius[1:]:
+    for ir in radius:
         for iphi in phi[1:-1]:
             points.extend(spherical_to_cartesian(ir, iphi, theta[:-1]))
 
     cells = []
     celltypes = []
 
-    # 2*nr-1 points on axis
+    # 2*nr + 1 points on axis
+    npoints_on_axis = 2 * nr + 1 if include_origin else 2 * nr
+    npoints_on_axis_one_dir = nr + 1 if include_origin else nr
+
     # At each r and phi: ntheta-1 points
     # At each r, nphi-2 rings of points. phi[0] and phi[-1] are on the axis
 
-    # first make the tetras that form with origin and axis point
-    #   origin is 0
-    #   first axis point is 1
-    #   other points at 2*nr-1 + (0:ntheta-1)
-
-    for itheta in range(ntheta - 1):
-        start = 2 * nr - 1
-        upper_range = (1 + itheta) % (ntheta - 1)
-        cells.append(4)
-        cells.extend([0, 1, start + itheta, start + upper_range])
-
-        celltypes.append(pyvista.CellType.TETRA)
-
-    # next tetras that form with origin and bottom axis point
-    # 2 phi points are already on axis and we want the last remaining phi level, so (nphi-3)
-    # other points at 2*nr-1 + (nphi-3)*(ntheta-1) + (0:ntheta-1)
-
-    for itheta in range(ntheta - 1):
-        start = 2 * nr - 1 + (nphi - 3) * (ntheta - 1)
-        upper_range = (1 + itheta) % (ntheta - 1)
-        cells.append(4)
-        cells.extend([0, nr, start + upper_range, start + itheta])
-
-        celltypes.append(pyvista.CellType.TETRA)
-
-    # Pyramids that form to origin but without an axis point
-    # start with the same points as above, but connect to next phi points
-
-    for iphi in range(nphi - 3):
+    if include_origin:
+        # first make the tetras that form with origin and axis point
+        #   origin is 0
+        #   first axis point is 1
+        #   other points at n_points_on_axis + (0:ntheta-1)
         for itheta in range(ntheta - 1):
-            start = 2 * nr - 1 + iphi * (ntheta - 1)
+            start = npoints_on_axis
             upper_range = (1 + itheta) % (ntheta - 1)
-            next = 2 * nr - 1 + (iphi + 1) * (ntheta - 1)
-            cells.append(5)
-            cells.extend(
-                [start + itheta, start + upper_range, next + upper_range, next + itheta, 0]
-            )
+            cells.append(4)
+            cells.extend([0, 1, start + itheta, start + upper_range])
 
-            celltypes.append(pyvista.CellType.PYRAMID)
+            celltypes.append(pyvista.CellType.TETRA)
+
+        # next tetras that form with origin and bottom axis point
+        # 2 phi points are already on axis and we want the last remaining phi level, so (nphi-3)
+        # other points at npoints_on_axis + (nphi-3)*(ntheta-1) + (0:ntheta-1)
+
+        for itheta in range(ntheta - 1):
+            start = npoints_on_axis + (nphi - 3) * (ntheta - 1)
+            upper_range = (1 + itheta) % (ntheta - 1)
+            cells.append(4)
+            cells.extend([0, npoints_on_axis_one_dir, start + upper_range, start + itheta])
+
+            celltypes.append(pyvista.CellType.TETRA)
+
+        # Pyramids that form to origin but without an axis point
+        # start with the same points as above, but connect to next phi points
+
+        for iphi in range(nphi - 3):
+            for itheta in range(ntheta - 1):
+                start = npoints_on_axis + iphi * (ntheta - 1)
+                upper_range = (1 + itheta) % (ntheta - 1)
+                next = npoints_on_axis + (iphi + 1) * (ntheta - 1)
+                cells.append(5)
+                cells.extend(
+                    [start + itheta, start + upper_range, next + upper_range, next + itheta, 0]
+                )
+
+                celltypes.append(pyvista.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
-    for ir in range(nr - 2):
-        axis0 = ir + 1
-        axis1 = ir + 2
+    for ir in range(nr - 1):
+        if include_origin:
+            axis0 = ir + 1
+            axis1 = ir + 2
+        else:
+            axis0 = ir
+            axis1 = ir + 1
+
         for itheta in range(ntheta - 1):
-            start = 2 * nr - 1 + ir * (ntheta - 1) * (nphi - 2)
+            start = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2)
             upper_range = (1 + itheta) % (ntheta - 1)
 
-            next = 2 * nr - 1 + (ir + 1) * (ntheta - 1) * (nphi - 2)
+            next = npoints_on_axis + (ir + 1) * (ntheta - 1) * (nphi - 2)
             cells.append(6)
             cells.extend(
                 [
@@ -585,14 +600,16 @@ def SphereUnstructured(
             celltypes.append(pyvista.CellType.WEDGE)
 
     # now go downwards
-    for ir in range(nr - 2):
-        axis0 = nr + ir
-        axis1 = nr + ir + 1
+    for ir in range(nr - 1):
+        axis0 = npoints_on_axis_one_dir + ir
+        axis1 = npoints_on_axis_one_dir + ir + 1
         for itheta in range(ntheta - 1):
-            start = 2 * nr - 1 + ir * (ntheta - 1) * (nphi - 2) + (nphi - 3) * (ntheta - 1)
+            start = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2) + (nphi - 3) * (ntheta - 1)
             upper_range = (1 + itheta) % (ntheta - 1)
 
-            next = 2 * nr - 1 + (ir + 1) * (ntheta - 1) * (nphi - 2) + (nphi - 3) * (ntheta - 1)
+            next = (
+                npoints_on_axis + (ir + 1) * (ntheta - 1) * (nphi - 2) + (nphi - 3) * (ntheta - 1)
+            )
             cells.append(6)
             cells.extend(
                 [
@@ -610,16 +627,20 @@ def SphereUnstructured(
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir in range(nr - 2):
+    for ir in range(nr - 1):
         for iphi in range(nphi - 3):
             for itheta in range(ntheta - 1):
-                start0 = 2 * nr - 1 + ir * (ntheta - 1) * (nphi - 2) + iphi * (ntheta - 1)
+                start0 = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2) + iphi * (ntheta - 1)
                 upper_range = (1 + itheta) % (ntheta - 1)
 
-                next0 = 2 * nr - 1 + ir * (ntheta - 1) * (nphi - 2) + (iphi + 1) * (ntheta - 1)
-                start1 = 2 * nr - 1 + (ir + 1) * (ntheta - 1) * (nphi - 2) + iphi * (ntheta - 1)
+                next0 = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2) + (iphi + 1) * (ntheta - 1)
+                start1 = (
+                    npoints_on_axis + (ir + 1) * (ntheta - 1) * (nphi - 2) + iphi * (ntheta - 1)
+                )
                 next1 = (
-                    2 * nr - 1 + (ir + 1) * (ntheta - 1) * (nphi - 2) + (iphi + 1) * (ntheta - 1)
+                    npoints_on_axis
+                    + (ir + 1) * (ntheta - 1) * (nphi - 2)
+                    + (iphi + 1) * (ntheta - 1)
                 )
 
                 cells.append(8)

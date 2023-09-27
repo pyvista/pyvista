@@ -85,10 +85,19 @@ def test_sphere_unstructured():
     # make sure cell creation gives positive volume.
     for i, cell in enumerate(sphere.cell):
         assert cell.cast_to_unstructured_grid().volume > 0
-    sphere = pv.SphereUnstructured(
-        radius=np.linspace(0, 0.5, 5), theta=np.linspace(0, 360, 100), phi=np.linspace(0, 180, 100)
-    )
+    sphere = pv.SphereUnstructured(radius_resolution=5, theta_resolution=100, phi_resolution=100)
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
+
+
+def test_sphere_unstructured_hollow():
+    sphere = pv.SphereUnstructured(
+        outer_radius=1.0,
+        inner_radius=0.5,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * (1.0**3 - 0.5**3), rel=1e-3)
 
 
 def test_plane():
