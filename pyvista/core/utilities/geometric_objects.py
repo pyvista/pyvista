@@ -364,18 +364,66 @@ def Sphere(
 
 
 def SphereUnstructured(
-    radius=np.linspace(0.0, 1.0, 5),
+    outer_radius=0.5,
+    inner_radius=0.0,
+    radius_resolution=5,
+    start_theta=0.0,
+    end_theta=180.0,
+    theta_resolution=30,
+    start_phi=0.0,
+    end_phi=360.0,
+    phi_resolution=30,
+    radius=None,
+    theta=None,
+    phi=None,
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
-    theta=np.linspace(0, np.pi, 30),
-    phi=np.linspace(0, 2 * np.pi, 30),
 ):
     """Create a sphere.
 
     Parameters
     ----------
-    radius : float, default: 0.5
-        Sphere radius.
+    outer_radius : float, default: 0.5
+        Outer radius of sphere.
+
+    inner_radius : float, default: 0.0
+        Inner radius of sphere.
+
+    radius_resolution : int, default: 5
+        Number of points in radial direction.
+
+    start_theta : float, default: 0.0
+        Starting latituge angle in degrees.
+
+    end_theta : float, default: 180.0
+        Ending latitude angle in degrees.
+
+    theta_resolution : int, default: 30
+        Number of points in theta direction, inclusive of polar axis if applicable.
+
+    start_phi : float, default: 0.0
+        Starting longituge angle in degrees.
+
+    end_phi : float, default: 360.0
+        Ending longitude angle in degrees.
+
+    phi_resolution : int, default: 30
+        Number of points in phi direction.
+
+    radius : sequence(float), optional
+        A monotonically increasing sequence of values specifying radial
+        points. If specified, it overrides any choices for ``outer_radius``,
+        ``inner_radius``, and ``radius_resolution``.
+
+    theta : sequence(float), optional
+        A monotonically increasing sequence of values specifying theta
+        points in degrees. If specified, it overrides any choices for
+        ``start_theta``, ``end_theta``, and ``theta_resolution``.
+
+    phi : sequence(float), optional
+        A monotonically increasing sequence of values specifying phi
+        points in degrees. If specified, it overrides any choices for
+        ``start_phi``, ``end_phi``, and ``phi_resolution``.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
@@ -383,14 +431,6 @@ def SphereUnstructured(
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees latitude.
-
-    theta : int, default: 30
-        Set the number of points in the longitude direction (ranging
-        from ``start_theta`` to ``end_theta``).
-
-    phi : int, default: 30
-        Set the number of points in the latitude direction (ranging from
-        ``start_phi`` to ``end_phi``).
 
     Returns
     -------
@@ -410,6 +450,16 @@ def SphereUnstructured(
     >>> sphere.plot(show_edges=True)
 
     """
+    if radius is None:
+        radius = np.linspace(inner_radius, outer_radius, radius_resolution)
+    if theta is None:
+        theta = np.linspace(start_theta, end_theta, theta_resolution)
+    if phi is None:
+        phi = np.linspace(start_phi, end_phi, phi_resolution)
+
+    theta = np.deg2rad(theta)
+    phi = np.deg2rad(phi)
+
     if radius[0] < 0:
         raise ValueError("minimum radius cannot be negative")
     if theta[0] < 0:
