@@ -82,7 +82,14 @@ from .geometric_objects import (
     translate,
 )
 from .geometric_sources import ConeSource, CylinderSource
-from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
+from .helpers import (
+    axes_rotation,
+    axis_rotation,
+    generate_plane,
+    is_inside_bounds,
+    is_pyvista_dataset,
+    wrap,
+)
 from .misc import (
     AnnotatedIntEnum,
     abstract_class,

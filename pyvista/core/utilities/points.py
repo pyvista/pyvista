@@ -8,7 +8,10 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.misc import check_valid_vector
-from pyvista.core.utilities.transformations import apply_transformation_to_points, axes_rotation
+from pyvista.core.utilities.transformations import (
+    apply_transformation_to_points,
+    axes_rotation_matrix,
+)
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -209,7 +212,7 @@ def principal_axes_transform(points, transformed_center="origin", return_inverse
 
     See Also
     --------
-    :func:`~axes_rotation`
+    :func:`~pyvista.axes_rotation`
         Apply a rotation by axes vectors.
 
     Parameters
@@ -372,7 +375,7 @@ def principal_axes_vectors(
         Compute the principal axes transform.
     :func:`~pyvista.fit_plane_to_points`
         Use the principal axes to fit a plane.
-    :func:`~axes_rotation`
+    :func:`~pyvista.axes_rotation`
         Apply a rotation by axes vectors.
 
     Parameters
@@ -630,8 +633,11 @@ def principal_axes_vectors(
     axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
 
     if return_transforms:
-        transform, inverse = axes_rotation(
-            axes_vectors, point_a=centroid, point_b=transformed_center, return_inverse=True
+        transform, inverse = axes_rotation_matrix(
+            axes_vectors,
+            point_initial=centroid,
+            point_final=transformed_center,
+            return_inverse=True,
         )
         return axes_vectors, transform, inverse
     return axes_vectors

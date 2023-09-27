@@ -223,7 +223,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     Returns
     -------
     numpy.ndarray
-        Rotated points.
+        Rotated points if ``inplace`` is ``False``.
 
     Examples
     --------
@@ -287,3 +287,92 @@ def is_inside_bounds(point, bounds):
     if lower <= p <= upper:
         return is_inside_bounds(point, bounds)
     return False
+
+
+def axes_rotation(
+    points,
+    axes,
+    point_initial=(0, 0, 0),
+    point_final=(0, 0, 0),
+    inplace=False,
+    return_transforms=False,
+):
+    """Rotate points with a set of axes.
+
+    This function causes a rotation defined by a set of axes. The manner
+    in which the rotation is applied can be controlled by specifying an
+    initial and final transformation point.
+
+    Specifically, the following transformations are applied in sequence:
+        * translation from ``point_initial`` to the origin
+        * rotation specified by ``axes``
+        * translation from the origin to ``point_final``.
+
+    The rotation can be used to change the basis vectors of the points,
+    for example.
+
+    Example use cases:
+        1. Set initial and final point as zero vectors to cause a
+        rotation about the origin.
+        2. Set initial and final point to the same value (e.g. the
+        origin of a local coordinate frame (defined in world coordinates)
+        to cause a localized rotation about the specified point.
+        3. Set initial point as the origin of a local coordinate frame
+        (defined in world coordinates) and final point as the zero vector
+        to align the frame with the XYZ axes at the origin.
+
+    Notes
+    -----
+    If ``point_initial`` and ``point_final`` are both zero vectors, then
+    ``pv.axes_rotation(points, axes)`` is equivalent to
+    ``pv.PointSet(points).transform(axes).points``
+
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Array of points with shape ``(N, 3)``.
+
+    axes : Sequence[Sequence[int, float]] | np.ndarray
+        3x3 axes row vectors. Axes must be orthogonal but need not be
+        orthonormal since the vectors are normalized by default. Axes
+        vectors must form a right-handed coordinate frame.
+
+    point_initial : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+        Starting point of the transformation.
+
+    point_final : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+        End point of the transformation.
+
+    inplace : bool, default: False
+        Updates points in-place while returning nothing.
+
+    return_transforms : bool, False
+        If ``True``, two 4x4 transformation matrices are also returned.
+        The first is the transform that was applied to the points. The
+        second is its inverse.
+
+    Returns
+    -------
+    numpy.ndarray
+        Transformed points if ``inplace`` is ``False``.
+
+    numpy.ndarray
+        4x4 transformation matrix if ``return_transforms`` is ``True``.
+
+    numpy.ndarray
+        4x4 inverse transformation matrix if ``return_transforms`` is ``True``.
+
+    """
+    transform, inverse = transformations.axes_rotation_matrix(
+        axes, point_initial=point_initial, point_final=point_final, return_inverse=True
+    )
+    if inplace:
+        points[:] = transformations.apply_transformation_to_points(transform, points)
+        if return_transforms:
+            return transform, inverse
+    else:
+        points = transformations.apply_transformation_to_points(transform, points)
+        if return_transforms:
+            return points, transform, inverse
+        else:
+            return points

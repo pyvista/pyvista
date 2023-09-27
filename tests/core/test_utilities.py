@@ -33,13 +33,13 @@ from pyvista.core.utilities.arrays import (
 )
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
-from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.helpers import axes_rotation, is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import _swap_axes, vector_poly_data
 from pyvista.core.utilities.transformations import (
     apply_transformation_to_points,
-    axes_rotation,
+    axes_rotation_matrix,
     axis_angle_rotation,
     reflection,
 )
@@ -1133,19 +1133,19 @@ def test_principal_axes_vectors_return_transforms(airplane):
 
     # test transform_location
     _, transform, _ = principal_axes_vectors(
-        initial_points, return_transforms=True, transform_location="origin"
+        initial_points, return_transforms=True, transformed_center="origin"
     )
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), (0, 0, 0))
 
     _, transform, _ = principal_axes_vectors(
-        initial_points, return_transforms=True, transform_location="centroid"
+        initial_points, return_transforms=True, transformed_center="centroid"
     )
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), np.mean(initial_points, axis=0))
 
     _, transform, _ = principal_axes_vectors(
-        initial_points, return_transforms=True, transform_location=(1, 2, 3)
+        initial_points, return_transforms=True, transformed_center=(1, 2, 3)
     )
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), (1, 2, 3))
@@ -1236,14 +1236,41 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg("abc")
 
 
-def test_axes_rotation():
+def test_axes_rotation(airplane):
+    axes = np.eye(3)
+    points, _, _ = axes_rotation(
+        airplane.points,
+        axes=np.eye(3),
+        point_initial=(0, 0, 0),
+        point_final=(0, 0, 0),
+        inplace=False,
+        return_transforms=True,
+    )
+    assert np.array_equal(points, airplane.points)
+
+    rotate1 = axes_rotation(points, axes)
+    rotate2 = pv.PointSet(points).transform(axes).points
+    assert np.array_equal(rotate1, rotate2)
+
+    assert axes_rotation(points, axes, inplace=True) is None
+    transform, inverse = axes_rotation(points, axes, inplace=True, return_transforms=True)
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
+    points, transform, inverse = axes_rotation(points, axes, inplace=False, return_transforms=True)
+    assert np.array_equal(points, airplane.points)
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
+
+def test_axes_rotation_matrix():
     # test passing axes without points creates a 4x4 rotation matrix
     axes = np.eye(3)
-    transform = axes_rotation(axes)
+    transform = axes_rotation_matrix(axes)
     assert np.array_equal(transform, np.eye(4))
 
     axes = [[0, 0, 1], [1, 0, 0], [0, 1, 0]]  # ZXY
-    transform, inverse = axes_rotation(axes, return_inverse=True)
+    transform, inverse = axes_rotation_matrix(axes, return_inverse=True)
     assert np.array_equal(
         transform,
         [[0.0, 0.0, 1.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
@@ -1256,7 +1283,7 @@ def test_axes_rotation():
     p1 = (1, 2, 3)
     p2 = np.array((4, 5, 6))
 
-    transform, inverse = axes_rotation(axes, point_a=p1, return_inverse=True)
+    transform, inverse = axes_rotation_matrix(axes, point_initial=p1, return_inverse=True)
     assert np.array_equal(
         transform,
         [[0, 0, 1, -3], [1, 0, 0, -1], [0, 1, 0, -2], [0, 0, 0, 1]],
@@ -1266,7 +1293,7 @@ def test_axes_rotation():
         [[0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 1.0, 2.0], [1.0, 0.0, 0.0, 3.0], [0.0, 0.0, 0.0, 1.0]],
     )
 
-    transform, inverse = axes_rotation(axes, point_b=p1, return_inverse=True)
+    transform, inverse = axes_rotation_matrix(axes, point_final=p1, return_inverse=True)
     assert np.array_equal(
         transform,
         [[0, 0, 1, 1], [1, 0, 0, 2], [0, 1, 0, 3], [0, 0, 0, 1]],
@@ -1276,7 +1303,9 @@ def test_axes_rotation():
         [[0.0, 1.0, 0.0, -2.0], [0.0, 0.0, 1.0, -3.0], [1.0, 0.0, 0.0, -1.0], [0.0, 0.0, 0.0, 1.0]],
     )
 
-    transform, inverse = axes_rotation(axes, point_a=p1, point_b=p2, return_inverse=True)
+    transform, inverse = axes_rotation_matrix(
+        axes, point_initial=p1, point_final=p2, return_inverse=True
+    )
     assert np.array_equal(
         transform,
         [[0, 0, 1, 1], [1, 0, 0, 4], [0, 1, 0, 4], [0, 0, 0, 1]],
@@ -1287,14 +1316,14 @@ def test_axes_rotation():
     )
 
     with pytest.raises(ValueError, match="3x3 numeric"):
-        axes_rotation(np.array([['a', 'b', 'c'], ['a', 'b', 'c'], ['a', 'b', 'c']]))
+        axes_rotation_matrix(np.array([['a', 'b', 'c'], ['a', 'b', 'c'], ['a', 'b', 'c']]))
     with pytest.raises(ValueError, match="3x3 numeric"):
-        axes_rotation([['a', 'b', 'c'], ['a', 'b', 'c'], ['a', 'b', 'c']])
+        axes_rotation_matrix([['a', 'b', 'c'], ['a', 'b', 'c'], ['a', 'b', 'c']])
     with pytest.raises(TypeError, match="sequence or numpy array"):
-        axes_rotation(0)
+        axes_rotation_matrix(0)
     with pytest.raises(TypeError, match="sequence or numpy"):
-        axes_rotation(axes_rotation)
+        axes_rotation_matrix(axes_rotation_matrix)
     with pytest.raises(ValueError, match="linearly independent"):
-        axes_rotation([[1, 0, 0], [1, 0, 0], [1, 0, 0]])
+        axes_rotation_matrix([[1, 0, 0], [1, 0, 0], [1, 0, 0]])
     with pytest.raises(ValueError, match="right-handed "):
-        axes_rotation([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        axes_rotation_matrix([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])

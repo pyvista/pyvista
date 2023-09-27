@@ -245,7 +245,7 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
 
     Parameters
     ----------
-    transformation : np.ndarray
+    transformation : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
         Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
         from a vtkTransform.
 
@@ -278,24 +278,19 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))
 
     """
-    transformation_shape = transformation.shape
-    if transformation_shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+    from .arrays import _coerce_pointslike_arg, _coerce_transformlike_arg
 
-    if points.shape[1] != 3:
-        raise ValueError('`points` must be of shape (N, 3).')
+    transformation = _coerce_transformlike_arg(transformation)
+    points, _ = _coerce_pointslike_arg(points)
 
-    if transformation_shape[0] == 4:
-        # Divide by scale factor when homogeneous
-        transformation /= transformation[3, 3]
+    # Divide by scale factor
+    transformation /= transformation[3, 3]
 
-        # Add the homogeneous coordinate
-        # `points_2` is a copy of the data, not a view
-        points_2 = np.empty((len(points), 4))
-        points_2[:, :-1] = points
-        points_2[:, -1] = 1
-    else:
-        points_2 = points
+    # Add the homogeneous coordinate
+    # `points_2` is a copy of the data, not a view
+    points_2 = np.empty((len(points), 4))
+    points_2[:, :-1] = points
+    points_2[:, -1] = 1
 
     # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
     # that the matrices to be multiplied lie in the last two dimensions.
@@ -309,39 +304,41 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
         return points_2
 
 
-def axes_rotation(axes, point_a=(0, 0, 0), point_b=(0, 0, 0), return_inverse=False):
+def axes_rotation_matrix(
+    axes, point_initial=(0, 0, 0), point_final=(0, 0, 0), return_inverse=False
+):
     """Return a 4x4 matrix to apply a rotation by axes vectors.
 
     This function computes a transformation matrix which applies the
     following transforms in sequence:
-        * translation from ``point_a`` to the origin
+        * translation from ``point_initial`` to the origin
         * rotation specified by ``axes``
-        * translation from the origin back to ``point_b``.
+        * translation from the origin to ``point_final``.
 
-    The transformation is useful for changing axes basis vectors.
+    The transformation is useful for changing axes basis vectors, for
+    example.
 
     Example use cases:
-        1. Set both point ``a`` and ``b`` as zero vectors to cause a
+        1. Set initial and final point as zero vectors to cause a
         rotation about the origin.
-        2. Set both point ``a`` and ``b`` to the same value (e.g. the
+        2. Set initial and final point to the same value (e.g. the
         origin of a local coordinate frame (defined in world coordinates)
         to cause a localized rotation about the specified point.
-        3. Set point ``a`` as the origin of a local coordinate frame
-        (defined in world coordinates) and point ``b`` as the zero vector
+        3. Set initial point as the origin of a local coordinate frame
+        (defined in world coordinates) and final point as the zero vector
         to align the frame with the XYZ axes at the origin.
 
     Parameters
     ----------
     axes : Sequence[Sequence[int, float]] | np.ndarray
-        3x3 axes row vectors (e.g. axes defining a coordinate frame).
-        Axes must be orthogonal but need not be orthonormal since the
-        vectors are normalized by default. Axes vectors must form a
-        right-handed coordinate frame.
+        3x3 axes row vectors. Axes must be orthogonal but need not be
+        orthonormal since the vectors are normalized by default. Axes
+        vectors must form a right-handed coordinate frame.
 
-    point_a : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+    point_initial : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
         Starting point of the transformation.
 
-    point_b : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+    point_final : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
         End point of the transformation.
 
     return_inverse : bool, False
@@ -358,10 +355,10 @@ def axes_rotation(axes, point_a=(0, 0, 0), point_b=(0, 0, 0), return_inverse=Fal
     """
     from pyvista.core.utilities import check_valid_vector  # avoid circular import
 
-    check_valid_vector(point_a)
-    point_a = np.asarray(point_a)
-    check_valid_vector(point_b)
-    point_b = np.asarray(point_b)
+    check_valid_vector(point_initial)
+    point_initial = np.asarray(point_initial)
+    check_valid_vector(point_final)
+    point_final = np.asarray(point_final)
     if not (isinstance(axes, Sequence) or isinstance(axes, np.ndarray)):
         raise TypeError("Axes vectors must a sequence or numpy array.")
     axes = np.asarray(axes)
@@ -386,22 +383,25 @@ def axes_rotation(axes, point_a=(0, 0, 0), point_b=(0, 0, 0), return_inverse=Fal
 
     # Define transformations
     translate_to_a = np.eye(4)
-    translate_to_a[:3, 3] = -point_a
-    translate_to_a_inv = np.eye(4)
-    translate_to_a_inv[:3, 3] = point_a
+    translate_to_a[:3, 3] = -point_initial
 
     rotate = np.eye(4)
     rotate[:3, :3] = axes
-    rotate_inv = rotate.T
 
     translate_to_b = np.eye(4)
-    translate_to_b[:3, 3] = point_b
-    translate_to_b_inv = np.eye(4)
-    translate_to_b_inv[:3, 3] = -point_b
+    translate_to_b[:3, 3] = point_final
 
     transform = translate_to_b @ rotate @ translate_to_a
-    inverse = translate_to_a_inv @ rotate_inv @ translate_to_b_inv
 
     if return_inverse:
+        translate_to_a_inv = np.eye(4)
+        translate_to_a_inv[:3, 3] = point_initial
+
+        rotate_inv = rotate.T
+
+        translate_to_b_inv = np.eye(4)
+        translate_to_b_inv[:3, 3] = -point_final
+
+        inverse = translate_to_a_inv @ rotate_inv @ translate_to_b_inv
         return transform, inverse
     return transform
