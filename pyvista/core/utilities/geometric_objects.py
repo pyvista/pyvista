@@ -469,6 +469,7 @@ def SphereUnstructured(
     if phi[-1] > 180:
         raise ValueError("maximum phi cannot be > 180")
 
+    # Hereafter all degrees are in radians
     theta = np.deg2rad(theta)
     phi = np.deg2rad(phi)
 
@@ -476,7 +477,7 @@ def SphereUnstructured(
     ntheta = len(theta)
     nphi = len(phi)
 
-    def spherical_to_cartesian(r, phi, theta):
+    def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` cartesian coordinate array.
 
         Parameters
@@ -501,8 +502,8 @@ def SphereUnstructured(
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
-    # points on axis
 
+    # points on axis
     if radius[0] == 0.0:
         points.append([0.0, 0.0, 0.0])
         include_origin = True
@@ -511,13 +512,13 @@ def SphereUnstructured(
     else:
         include_origin = False
 
-    points.extend(spherical_to_cartesian(radius, phi[0], theta[0]))
-    points.extend(spherical_to_cartesian(radius, phi[-1], theta[0]))
+    points.extend(_spherical_to_cartesian(radius, phi[0], theta[0]))
+    points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
 
     # rest of points with theta changing quickest
     for ir in radius:
         for iphi in phi[1:-1]:
-            points.extend(spherical_to_cartesian(ir, iphi, theta[:-1]))
+            points.extend(_spherical_to_cartesian(ir, iphi, theta[:-1]))
 
     cells = []
     celltypes = []
@@ -525,6 +526,16 @@ def SphereUnstructured(
     # 2*nr + 1 points on axis
     npoints_on_axis = 2 * nr + 1 if include_origin else 2 * nr
     npoints_on_axis_one_dir = nr + 1 if include_origin else nr
+
+    def _index(ir, iphi, itheta):
+        """Index for points not on axis.
+
+        Values of ir and phi here are relative to the first nonaxis values.
+        """
+        ntheta_ = ntheta - 1
+        itheta = itheta % ntheta_
+
+        return npoints_on_axis + ir * (nphi - 2) * ntheta_ + iphi * ntheta_ + itheta
 
     # At each r and phi: ntheta-1 points
     # At each r, nphi-2 rings of points. phi[0] and phi[-1] are on the axis
@@ -535,10 +546,8 @@ def SphereUnstructured(
         #   first axis point is 1
         #   other points at n_points_on_axis + (0:ntheta-1)
         for itheta in range(ntheta - 1):
-            start = npoints_on_axis
-            upper_range = (1 + itheta) % (ntheta - 1)
             cells.append(4)
-            cells.extend([0, 1, start + itheta, start + upper_range])
+            cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
 
             celltypes.append(pyvista.CellType.TETRA)
 
@@ -547,10 +556,15 @@ def SphereUnstructured(
         # other points at npoints_on_axis + (nphi-3)*(ntheta-1) + (0:ntheta-1)
 
         for itheta in range(ntheta - 1):
-            start = npoints_on_axis + (nphi - 3) * (ntheta - 1)
-            upper_range = (1 + itheta) % (ntheta - 1)
             cells.append(4)
-            cells.extend([0, npoints_on_axis_one_dir, start + upper_range, start + itheta])
+            cells.extend(
+                [
+                    0,
+                    npoints_on_axis_one_dir,
+                    _index(0, nphi - 3, itheta + 1),
+                    _index(0, nphi - 3, itheta),
+                ]
+            )
 
             celltypes.append(pyvista.CellType.TETRA)
 
@@ -559,12 +573,15 @@ def SphereUnstructured(
 
         for iphi in range(nphi - 3):
             for itheta in range(ntheta - 1):
-                start = npoints_on_axis + iphi * (ntheta - 1)
-                upper_range = (1 + itheta) % (ntheta - 1)
-                next = npoints_on_axis + (iphi + 1) * (ntheta - 1)
                 cells.append(5)
                 cells.extend(
-                    [start + itheta, start + upper_range, next + upper_range, next + itheta, 0]
+                    [
+                        _index(0, iphi, itheta),
+                        _index(0, iphi, itheta + 1),
+                        _index(0, iphi + 1, itheta + 1),
+                        _index(0, iphi + 1, itheta),
+                        0,
+                    ]
                 )
 
                 celltypes.append(pyvista.CellType.PYRAMID)
@@ -581,22 +598,17 @@ def SphereUnstructured(
             axis1 = ir + 1
 
         for itheta in range(ntheta - 1):
-            start = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2)
-            upper_range = (1 + itheta) % (ntheta - 1)
-
-            next = npoints_on_axis + (ir + 1) * (ntheta - 1) * (nphi - 2)
             cells.append(6)
             cells.extend(
                 [
                     axis0,
-                    start + upper_range,
-                    start + itheta,
+                    _index(ir, 0, itheta + 1),
+                    _index(ir, 0, itheta),
                     axis1,
-                    next + upper_range,
-                    next + itheta,
+                    _index(ir + 1, 0, itheta + 1),
+                    _index(ir + 1, 0, itheta),
                 ]
             )
-
             celltypes.append(pyvista.CellType.WEDGE)
 
     # now go downwards
@@ -604,21 +616,15 @@ def SphereUnstructured(
         axis0 = npoints_on_axis_one_dir + ir
         axis1 = npoints_on_axis_one_dir + ir + 1
         for itheta in range(ntheta - 1):
-            start = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2) + (nphi - 3) * (ntheta - 1)
-            upper_range = (1 + itheta) % (ntheta - 1)
-
-            next = (
-                npoints_on_axis + (ir + 1) * (ntheta - 1) * (nphi - 2) + (nphi - 3) * (ntheta - 1)
-            )
             cells.append(6)
             cells.extend(
                 [
                     axis0,
-                    start + itheta,
-                    start + upper_range,
+                    _index(ir, nphi - 3, itheta),
+                    _index(ir, nphi - 3, itheta + 1),
                     axis1,
-                    next + itheta,
-                    next + upper_range,
+                    _index(ir + 1, nphi - 3, itheta),
+                    _index(ir + 1, nphi - 3, itheta + 1),
                 ]
             )
 
@@ -630,35 +636,21 @@ def SphereUnstructured(
     for ir in range(nr - 1):
         for iphi in range(nphi - 3):
             for itheta in range(ntheta - 1):
-                start0 = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2) + iphi * (ntheta - 1)
-                upper_range = (1 + itheta) % (ntheta - 1)
-
-                next0 = npoints_on_axis + ir * (ntheta - 1) * (nphi - 2) + (iphi + 1) * (ntheta - 1)
-                start1 = (
-                    npoints_on_axis + (ir + 1) * (ntheta - 1) * (nphi - 2) + iphi * (ntheta - 1)
-                )
-                next1 = (
-                    npoints_on_axis
-                    + (ir + 1) * (ntheta - 1) * (nphi - 2)
-                    + (iphi + 1) * (ntheta - 1)
-                )
-
                 cells.append(8)
                 cells.extend(
                     [
-                        start0 + itheta,
-                        next0 + itheta,
-                        next0 + upper_range,
-                        start0 + upper_range,
-                        start1 + itheta,
-                        next1 + itheta,
-                        next1 + upper_range,
-                        start1 + upper_range,
+                        _index(ir, iphi, itheta),
+                        _index(ir, iphi + 1, itheta),
+                        _index(ir, iphi + 1, itheta + 1),
+                        _index(ir, iphi, itheta + 1),
+                        _index(ir + 1, iphi, itheta),
+                        _index(ir + 1, iphi + 1, itheta),
+                        _index(ir + 1, iphi + 1, itheta + 1),
+                        _index(ir + 1, iphi, itheta + 1),
                     ]
                 )
 
                 celltypes.append(pyvista.CellType.HEXAHEDRON)
-
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
     # TODO: translate and orient
     return mesh
