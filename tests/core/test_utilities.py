@@ -1150,6 +1150,9 @@ def test_principal_axes_vectors_return_transforms(airplane):
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), (1, 2, 3))
 
+    with pytest.raises(ValueError):
+        principal_axes_vectors(initial_points,transformed_center="abc", return_transforms=True)
+
     # test returns default values
     axes, transform, inverse = principal_axes_vectors([0, 0, 0], return_transforms=True)
     assert np.array_equal(axes, np.eye(3))
