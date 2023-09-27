@@ -129,6 +129,22 @@ def test_sphere_unstructured_theta_start_end():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 12, rel=1e-3)
 
 
+def test_sphere_unstructured_phi_start_end():
+    sphere = pv.SphereUnstructured(
+        start_phi=0, end_phi=90, radius_resolution=5, theta_resolution=100, phi_resolution=100
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
+
+    sphere = pv.SphereUnstructured(
+        start_phi=90,
+        end_phi=180,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
+
+
 def test_plane():
     surf = pv.Plane()
     assert np.any(surf.points)
