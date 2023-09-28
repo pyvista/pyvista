@@ -94,7 +94,7 @@ jobs:
       - name: Install PyVista
         run: pip install -ve . # pyvista
       - name: Install GeoVista
-        run: pip install -ve .[test] # geovista
+        run: pip install -ve .[test,exam] # geovista
         working-directory: geovista
       - name: Download cartopy assets
         run: |
