@@ -970,7 +970,7 @@ class RenderWindowInteractor:
 
     @contextmanager
     def poked_subplot(self):
-        """Activate the sublot that was last interacted."""
+        """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
         loc = self.get_event_subplot_loc()
         self._plotter.subplot(*loc)
@@ -1136,6 +1136,22 @@ class RenderWindowInteractor:
         self.interactor.SetPicker(picker)
 
     def add_pick_obeserver(self, observer):
+        """Add an observer to call back when pick events end.
+
+        .. deprecated:: 0.42.2
+            This function is deprecated. Use :func:`pyvista.plotting.RenderWindowInteractor.add_pick_observer` instead.
+
+        Parameters
+        ----------
+        observer : callable
+            The observer function to call when a pick event ends.
+        """
+        warnings.warn(
+            "`add_pick_obeserver` is deprecated, use `add_pick_observer`", PyVistaDeprecationWarning
+        )
+        self.add_pick_observer(observer)
+
+    def add_pick_observer(self, observer):
         """Add an observer to call back when pick events end.
 
         Parameters

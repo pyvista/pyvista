@@ -19,7 +19,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
-    :ref:`ref_texture_example`.
+    :ref:`texture_example`.
 
     They can also be used for environment textures to affect the lighting of
     the scene, or even as a environment cubemap as in the case of

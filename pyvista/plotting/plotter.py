@@ -2047,6 +2047,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.render()
         return
 
+    def zoom_camera(self, value):
+        """Zoom of the camera and render.
+
+        Parameters
+        ----------
+        value : float or str
+            Zoom of the camera. If a float, must be greater than 0. Otherwise,
+            if a string, must be ``"tight"``. If tight, the plot will be zoomed
+            such that the actors fill the entire viewport.
+
+        """
+        self.camera.zoom(value)
+        self.render()
+        return
+
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
         if not hasattr(self, 'iren'):
@@ -2061,8 +2076,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
         self.add_key_event('C', lambda: self.enable_cell_picking())
-        self.add_key_event('Up', lambda: self.camera.Zoom(1.05))
-        self.add_key_event('Down', lambda: self.camera.Zoom(0.95))
+        self.add_key_event('Up', lambda: self.zoom_camera(1.05))
+        self.add_key_event('Down', lambda: self.zoom_camera(0.95))
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
@@ -2835,6 +2850,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         metallic=None,
         roughness=None,
         render=True,
+        user_matrix=np.eye(4),
         component=None,
         emissive=None,
         copy_mesh=False,
@@ -3121,6 +3137,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+            Matrix passed to the Actor class before rendering. This affects the
+            actor/rendering only, not the input volume itself. The user matrix is the
+            last transformation applied to the actor before rendering. Defaults to the
+            identity matrix.
 
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
@@ -3471,6 +3493,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
+        actor.user_matrix = user_matrix
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -3671,6 +3694,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
         render=True,
+        user_matrix=np.eye(4),
         log_scale=False,
         **kwargs,
     ):
@@ -3888,6 +3912,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when True.
+
+        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+            Matrix passed to the Volume class before rendering. This affects the
+            actor/rendering only, not the input volume itself. The user matrix is the
+            last transformation applied to the actor before rendering. Defaults to the
+            identity matrix.
 
         log_scale : bool, default: False
             Use log scale when mapping data to colors. Scalars less
@@ -4226,6 +4256,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.volume = Volume()
         self.volume.mapper = self.mapper
+        self.volume.user_matrix = user_matrix
 
         self.volume.prop = VolumeProperty(
             lookup_table=self.mapper.lookup_table,

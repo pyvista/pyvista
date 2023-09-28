@@ -575,7 +575,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> mesh = pyvista.PolyData(examples.antfile)
 
-    See :ref:`ref_create_poly` for more examples.
+    See :ref:`create_poly` for more examples.
 
     """
 

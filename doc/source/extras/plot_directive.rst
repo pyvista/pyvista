@@ -1,4 +1,4 @@
-.. _ref_plot_directive_docs:
+.. _plot_directive_docs:
 
 Sphinx PyVista Plot Directive
 =============================
