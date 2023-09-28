@@ -2047,6 +2047,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.render()
         return
 
+    def zoom_camera(self, value):
+        """Zoom of the camera and render.
+
+        Parameters
+        ----------
+        value : float or str
+            Zoom of the camera. If a float, must be greater than 0. Otherwise,
+            if a string, must be ``"tight"``. If tight, the plot will be zoomed
+            such that the actors fill the entire viewport.
+
+        """
+        self.camera.zoom(value)
+        self.render()
+        return
+
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
         if not hasattr(self, 'iren'):
@@ -2061,8 +2076,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
         self.add_key_event('C', lambda: self.enable_cell_picking())
-        self.add_key_event('Up', lambda: self.camera.Zoom(1.05))
-        self.add_key_event('Down', lambda: self.camera.Zoom(0.95))
+        self.add_key_event('Up', lambda: self.zoom_camera(1.05))
+        self.add_key_event('Down', lambda: self.zoom_camera(0.95))
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 

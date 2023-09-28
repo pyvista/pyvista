@@ -14,11 +14,13 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
 def test_download_single_sphere_animation():
@@ -203,6 +205,7 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
+@skip_9_1_0
 def test_download_can_crushed_hdf():
     path = examples.download_can_crushed_hdf(load=False)
     assert os.path.isfile(path)
@@ -699,7 +702,7 @@ def test_download_dolfin():
 
 def test_download_meshio_xdmf():
     dataset = examples.download_meshio_xdmf()
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert isinstance(dataset, pv.MultiBlock)
 
 
 def test_download_damavand_volcano():
@@ -800,13 +803,15 @@ def test_download_action_figure():
 
 
 def test_download_mars_jpg():
-    filename = examples.download_mars_jpg()
-    assert os.path.isfile(filename)
+    with pytest.warns(PyVistaDeprecationWarning):
+        filename = examples.download_mars_jpg()
+        assert os.path.isfile(filename)
 
 
 def test_download_stars_jpg():
-    filename = examples.download_stars_jpg()
-    assert os.path.isfile(filename)
+    with pytest.warns(PyVistaDeprecationWarning):
+        filename = examples.download_stars_jpg()
+        assert os.path.isfile(filename)
 
 
 def test_download_notch_stress():
@@ -856,6 +861,7 @@ def test_download_dual_sphere_animation():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+@skip_9_1_0
 def test_download_cgns_structured():
     filename = examples.download_cgns_structured(load=False)
     assert os.path.isfile(filename)
@@ -872,6 +878,7 @@ def test_download_tecplot_ascii():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+@skip_9_1_0
 def test_download_cgns_multi():
     filename = examples.download_cgns_multi(load=False)
     assert os.path.isfile(filename)
@@ -909,6 +916,10 @@ def test_download_gltf_damaged_helmet():
     pl.import_gltf(filename)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info > (9, 1),
+    reason="Skip until glTF extension KHR_texture_transform is supported.",
+)
 def test_download_gltf_sheen_chair():
     filename = examples.gltf.download_sheen_chair()
     assert os.path.isfile(filename)
@@ -930,6 +941,7 @@ def test_download_gltf_avocado():
     pl.import_gltf(filename)
 
 
+@skip_9_1_0
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
     assert os.path.isfile(filename)
@@ -940,6 +952,7 @@ def test_download_cloud_dark_matter():
     assert dataset.n_points == 32314
 
 
+@skip_9_1_0
 def test_download_cloud_dark_matter_dense():
     filename = examples.download_cloud_dark_matter_dense(load=False)
     assert os.path.isfile(filename)
