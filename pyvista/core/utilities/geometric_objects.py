@@ -593,20 +593,19 @@ def SphereUnstructured(
                 celltypes.append(pyvista.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
-        for iphi in range(nphi - 1):
-            for itheta in range(ntheta - 1):
-                cells.append(5)
-                cells.extend(
-                    [
-                        _index(0, iphi, itheta),
-                        _index(0, iphi, itheta + 1),
-                        _index(0, iphi + 1, itheta + 1),
-                        _index(0, iphi + 1, itheta),
-                        0,
-                    ]
-                )
+        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
+            cells.append(5)
+            cells.extend(
+                [
+                    _index(0, iphi, itheta),
+                    _index(0, iphi, itheta + 1),
+                    _index(0, iphi + 1, itheta + 1),
+                    _index(0, iphi + 1, itheta),
+                    0,
+                ]
+            )
 
-                celltypes.append(pyvista.CellType.PYRAMID)
+            celltypes.append(pyvista.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
@@ -657,22 +656,20 @@ def SphereUnstructured(
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir in range(nr - 1):
-        for iphi in range(nphi - 1):
-            for itheta in range(ntheta - 1):
-                cells.append(8)
-                cells.extend(
-                    [
-                        _index(ir, iphi, itheta),
-                        _index(ir, iphi + 1, itheta),
-                        _index(ir, iphi + 1, itheta + 1),
-                        _index(ir, iphi, itheta + 1),
-                        _index(ir + 1, iphi, itheta),
-                        _index(ir + 1, iphi + 1, itheta),
-                        _index(ir + 1, iphi + 1, itheta + 1),
-                        _index(ir + 1, iphi, itheta + 1),
-                    ]
-                )
+    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1))
+        cells.append(8)
+        cells.extend(
+            [
+                _index(ir, iphi, itheta),
+                _index(ir, iphi + 1, itheta),
+                _index(ir, iphi + 1, itheta + 1),
+                _index(ir, iphi, itheta + 1),
+                _index(ir + 1, iphi, itheta),
+                _index(ir + 1, iphi + 1, itheta),
+                _index(ir + 1, iphi + 1, itheta + 1),
+                _index(ir + 1, iphi, itheta + 1),
+            ]
+        )
 
                 celltypes.append(pyvista.CellType.HEXAHEDRON)
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
