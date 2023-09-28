@@ -6,6 +6,7 @@ This base class does not define a `ui` method, but its derived classes do.
 See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived classes.
 """
 import io
+import itertools
 
 from trame.app import get_server
 from trame.widgets import html
@@ -149,10 +150,9 @@ class BaseViewer:
 
         """
         value = kwargs[self.EDGES]
-        for renderer in self.plotter.renderers:
-            for _, actor in renderer.actors.items():
-                if isinstance(actor, pyvista.Actor):
-                    actor.prop.show_edges = value
+        for renderer, _, actor in itertools.product(self.plotter.renderers, renderer.actors.items()):
+            if isinstance(actor, pyvista.Actor):
+                actor.prop.show_edges = value
         self.update()
 
     def on_grid_visiblity_change(self, **kwargs):
