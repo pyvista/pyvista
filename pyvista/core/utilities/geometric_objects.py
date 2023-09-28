@@ -17,6 +17,7 @@ vtkSuperquadricSource
 as well as some pure-python helpers.
 
 """
+import itertools
 import warnings
 
 import numpy as np
@@ -29,8 +30,6 @@ from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ConeSource, CylinderSource, translate
 from .helpers import wrap
 from .misc import check_valid_vector
-
-import itertools
 
 NORMALS = {
     'x': [1, 0, 0],
