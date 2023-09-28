@@ -30,6 +30,8 @@ from .geometric_sources import ConeSource, CylinderSource, translate
 from .helpers import wrap
 from .misc import check_valid_vector
 
+import itertools
+
 NORMALS = {
     'x': [1, 0, 0],
     'y': [0, 1, 0],
@@ -656,7 +658,7 @@ def SphereUnstructured(
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1))
+    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
         cells.append(8)
         cells.extend(
             [
