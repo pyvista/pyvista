@@ -673,7 +673,7 @@ def SphereUnstructured(
             ]
         )
 
-                celltypes.append(pyvista.CellType.HEXAHEDRON)
+        celltypes.append(pyvista.CellType.HEXAHEDRON)
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
     # TODO: translate and orient
     return mesh
