@@ -3,6 +3,7 @@ from itertools import permutations
 import os
 import pathlib
 import pickle
+import platform
 import random
 import shutil
 import unittest.mock as mock
@@ -1219,6 +1220,9 @@ def test_principal_axes_vectors_precision(input_type, precision):
     assert np.any(principal_axes_vectors(data, precision=precision.__name__))
 
 
+# See source for reason:
+# https://stackoverflow.com/questions/54961554/why-can-a-352gb-numpy-ndarray-be-used-on-an-8gb-memory-macos-computer
+@pytest.mark.skipif(platform.system() == 'Darwin', reason='Memory is stored virtually.')
 def test_principal_axes_vectors_memory_error():
     N_huge_RAM = 370000  # requires approx 1 TiB of RAM to compute without sampling
     points = np.random.rand(N_huge_RAM, 3)
