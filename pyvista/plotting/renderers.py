@@ -1,6 +1,6 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
-import itertools
+from itertools import product
 from weakref import proxy
 
 import numpy as np
@@ -180,7 +180,7 @@ class Renderers:
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i, j in itertools.product(
+                    for i, j in product(
                         range(norm_group[0], norm_group[2] + 1),
                         range(norm_group[1], norm_group[3] + 1),
                     ):
@@ -192,7 +192,7 @@ class Renderers:
                         (self.groups, np.array([norm_group], dtype=int)), axis=0
                     )
             # Create subplot renderers
-            for row, col in itertools.product(range(shape[0]), range(shape[1])):
+            for row, col in product(range(shape[0]), range(shape[1])):
                 group = self.loc_to_group((row, col))
                 nb_rows = None
                 nb_cols = None
