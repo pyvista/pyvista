@@ -162,6 +162,20 @@ def test_sphere_unstructured_phi_start_end():
     assert sphere.volume == pytest.approx(exp_sphere_volume - 2 * (vcone + vcap), rel=1e-3)
 
 
+def test_sphere_unstructured_resolution_edge_cases():
+    sphere = pv.SphereUnstructured(radius_resolution=2)
+    assert sphere.volume > 0
+
+    sphere = pv.SphereUnstructured(radius_resolution=2, inner_radius=0.1)
+    assert sphere.volume > 0
+
+    sphere = pv.SphereUnstructured(theta_resolution=2, start_theta=45, end_theta=90)
+    assert sphere.volume > 0
+
+    sphere = pv.SphereUnstructured(phi_resolution=2, start_phi=45, end_phi=90)
+    assert sphere.volume > 0
+
+
 def test_plane():
     surf = pv.Plane()
     assert np.any(surf.points)
