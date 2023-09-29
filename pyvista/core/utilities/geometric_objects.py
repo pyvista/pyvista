@@ -17,8 +17,8 @@ vtkSuperquadricSource
 as well as some pure-python helpers.
 
 """
-import warnings
 from itertools import product
+import warnings
 
 import numpy as np
 
