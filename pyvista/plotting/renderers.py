@@ -1,5 +1,6 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
+import itertools
 from weakref import proxy
 
 import numpy as np
@@ -179,42 +180,43 @@ class Renderers:
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i in range(norm_group[0], norm_group[2] + 1):
-                        for j in range(norm_group[1], norm_group[3] + 1):
-                            if self.loc_to_group((i, j)) is not None:
-                                raise ValueError(
-                                    f'Groups cannot overlap. Overlap found at position {(i, j)}.'
-                                )
+                    for i, j in itertools.product(
+                        range(norm_group[0], norm_group[2] + 1),
+                        range(norm_group[1], norm_group[3] + 1),
+                    ):
+                        if self.loc_to_group((i, j)) is not None:
+                            raise ValueError(
+                                f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                            )
                     self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)), axis=0
                     )
             # Create subplot renderers
-            for row in range(shape[0]):
-                for col in range(shape[1]):
-                    group = self.loc_to_group((row, col))
-                    nb_rows = None
-                    nb_cols = None
-                    if group is not None:
-                        if row == self.groups[group, 0] and col == self.groups[group, 1]:
-                            # Only add renderer for first location of the group
-                            nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
-                            nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
-                    else:
-                        nb_rows = 1
-                        nb_cols = 1
-                    if nb_rows is not None:
-                        renderer = Renderer(self._plotter, border, border_color, border_width)
-                        x0 = col_off[col]
-                        y0 = row_off[row + nb_rows]
-                        x1 = col_off[col + nb_cols]
-                        y1 = row_off[row]
-                        renderer.SetViewport(x0, y0, x1, y1)
-                        self._render_idxs[row, col] = len(self)
-                        self._renderers.append(renderer)
-                    else:
-                        self._render_idxs[row, col] = self._render_idxs[
-                            self.groups[group, 0], self.groups[group, 1]
-                        ]
+            for row, col in itertools.product(range(shape[0]), range(shape[1])):
+                group = self.loc_to_group((row, col))
+                nb_rows = None
+                nb_cols = None
+                if group is not None:
+                    if row == self.groups[group, 0] and col == self.groups[group, 1]:
+                        # Only add renderer for first location of the group
+                        nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
+                        nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
+                else:
+                    nb_rows = 1
+                    nb_cols = 1
+                if nb_rows is not None:
+                    renderer = Renderer(self._plotter, border, border_color, border_width)
+                    x0 = col_off[col]
+                    y0 = row_off[row + nb_rows]
+                    x1 = col_off[col + nb_cols]
+                    y1 = row_off[row]
+                    renderer.SetViewport(x0, y0, x1, y1)
+                    self._render_idxs[row, col] = len(self)
+                    self._renderers.append(renderer)
+                else:
+                    self._render_idxs[row, col] = self._render_idxs[
+                        self.groups[group, 0], self.groups[group, 1]
+                    ]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self))]
