@@ -5,7 +5,7 @@ dependencies:
   - python>=3.8
   - jupyterlab
   - numpy
-  - vtk
+  - vtk==9.3.20230807rc0
   - scooby>=0.5.1
   - meshio
   - matplotlib

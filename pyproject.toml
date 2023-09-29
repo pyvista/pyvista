@@ -31,7 +31,7 @@ dependencies = [
     'pillow',
     'pooch',
     'scooby>=0.5.1',
-    'vtk',  # keep without version constraints
+    'vtk==9.3.20230807rc0',  # keep without version constraints
 ]
 dynamic = ['version']
 

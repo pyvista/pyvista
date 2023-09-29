@@ -412,3 +412,13 @@ try:
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
 except ImportError:  # pragma: no cover
     pass
+
+try:  # Introduced prior to VTK 9.3
+    from vtkViewport.GradientModes import (
+        VTK_GRADIENT_HORIZONTAL,
+        VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER,
+        VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE,
+        VTK_GRADIENT_VERTICAL,
+    )
+except ImportError:  # pragma: no cover
+    pass
