@@ -77,20 +77,20 @@ def test_sphere_theta():
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
-def test_sphere_unstructured():
-    sphere = pv.SphereUnstructured()
+def test_solid_sphere():
+    sphere = pv.SolidSphere()
     assert isinstance(sphere, pv.UnstructuredGrid)
     assert np.any(sphere.points)
 
     # make sure cell creation gives positive volume.
     for i, cell in enumerate(sphere.cell):
         assert cell.cast_to_unstructured_grid().volume > 0
-    sphere = pv.SphereUnstructured(radius_resolution=5, theta_resolution=100, phi_resolution=100)
+    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
 
 
-def test_sphere_unstructured_hollow():
-    sphere = pv.SphereUnstructured(
+def test_solid_sphere_hollow():
+    sphere = pv.SolidSphere(
         outer_radius=1.0,
         inner_radius=0.5,
         radius_resolution=5,
@@ -100,21 +100,21 @@ def test_sphere_unstructured_hollow():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * (1.0**3 - 0.5**3), rel=1e-3)
 
 
-def test_sphere_unstructured_sequences():
-    sphere = pv.SphereUnstructured(radius_resolution=5, theta_resolution=11, phi_resolution=13)
-    sphere_seq = pv.SphereUnstructured(
+def test_solid_sphere_sequences():
+    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
+    sphere_seq = pv.SolidSphere(
         radius=np.linspace(0, 0.5, 5), theta=np.linspace(0, 360, 11), phi=np.linspace(0, 180, 13)
     )
     assert sphere == sphere_seq
 
 
-def test_sphere_unstructured_theta_start_end():
-    sphere = pv.SphereUnstructured(
+def test_solid_sphere_theta_start_end():
+    sphere = pv.SolidSphere(
         start_theta=0, end_theta=180, radius_resolution=5, theta_resolution=100, phi_resolution=100
     )
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
 
-    sphere = pv.SphereUnstructured(
+    sphere = pv.SolidSphere(
         start_theta=180,
         end_theta=360,
         radius_resolution=5,
@@ -123,21 +123,21 @@ def test_sphere_unstructured_theta_start_end():
     )
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
 
-    sphere = pv.SphereUnstructured(
+    sphere = pv.SolidSphere(
         start_theta=90, end_theta=120, radius_resolution=5, theta_resolution=100, phi_resolution=100
     )
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 12, rel=1e-3)
 
 
-def test_sphere_unstructured_phi_start_end():
+def test_solid_sphere_phi_start_end():
     exp_sphere_volume = 4.0 / 3.0 * np.pi * 0.5**3
 
-    sphere = pv.SphereUnstructured(
+    sphere = pv.SolidSphere(
         start_phi=0, end_phi=90, radius_resolution=5, theta_resolution=100, phi_resolution=100
     )
     assert sphere.volume == pytest.approx(exp_sphere_volume / 2, rel=1e-3)
 
-    sphere = pv.SphereUnstructured(
+    sphere = pv.SolidSphere(
         start_phi=90,
         end_phi=180,
         radius_resolution=5,
@@ -146,7 +146,7 @@ def test_sphere_unstructured_phi_start_end():
     )
     assert sphere.volume == pytest.approx(exp_sphere_volume / 2, rel=1e-3)
 
-    sphere = pv.SphereUnstructured(
+    sphere = pv.SolidSphere(
         start_phi=45,
         end_phi=135,
         radius_resolution=5,
@@ -162,36 +162,36 @@ def test_sphere_unstructured_phi_start_end():
     assert sphere.volume == pytest.approx(exp_sphere_volume - 2 * (vcone + vcap), rel=1e-3)
 
 
-def test_sphere_unstructured_resolution_edge_cases():
-    sphere = pv.SphereUnstructured(radius_resolution=2)
+def test_solid_sphere_resolution_edge_cases():
+    sphere = pv.SolidSphere(radius_resolution=2)
     assert sphere.volume > 0
 
-    sphere = pv.SphereUnstructured(radius_resolution=2, inner_radius=0.1)
+    sphere = pv.SolidSphere(radius_resolution=2, inner_radius=0.1)
     assert sphere.volume > 0
 
-    sphere = pv.SphereUnstructured(theta_resolution=2, start_theta=45, end_theta=90)
+    sphere = pv.SolidSphere(theta_resolution=2, start_theta=45, end_theta=90)
     assert sphere.volume > 0
 
-    sphere = pv.SphereUnstructured(phi_resolution=2, start_phi=45, end_phi=90)
+    sphere = pv.SolidSphere(phi_resolution=2, start_phi=45, end_phi=90)
     assert sphere.volume > 0
 
 
-def test_sphere_unstructured_resolution_errors():
+def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match="minimum radius cannot be negative"):
-        pv.SphereUnstructured(inner_radius=-1)
+        pv.SolidSphere(inner_radius=-1)
     with pytest.raises(ValueError, match="minimum theta cannot be negative"):
-        pv.SphereUnstructured(start_theta=-1)
+        pv.SolidSphere(start_theta=-1)
     with pytest.raises(ValueError, match="maximum theta cannot be > 360"):
-        pv.SphereUnstructured(end_theta=370)
+        pv.SolidSphere(end_theta=370)
     with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
-        pv.SphereUnstructured(end_phi=190)
+        pv.SolidSphere(end_phi=190)
 
     with pytest.raises(ValueError, match="radius_resolution must be 2 or more"):
-        pv.SphereUnstructured(radius_resolution=1)
+        pv.SolidSphere(radius_resolution=1)
     with pytest.raises(ValueError, match="theta_resolution must be 2 or more"):
-        pv.SphereUnstructured(theta_resolution=1)
+        pv.SolidSphere(theta_resolution=1)
     with pytest.raises(ValueError, match="phi_resolution must be 2 or more"):
-        pv.SphereUnstructured(phi_resolution=1)
+        pv.SolidSphere(phi_resolution=1)
 
 
 def test_plane():

@@ -364,7 +364,7 @@ def Sphere(
     return surf
 
 
-def SphereUnstructured(
+def SolidSphere(
     outer_radius=0.5,
     inner_radius=0.0,
     radius_resolution=5,
@@ -380,7 +380,7 @@ def SphereUnstructured(
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
 ):
-    """Create a sphere.
+    """Create a solid sphere.
 
     Parameters
     ----------
@@ -437,7 +437,7 @@ def SphereUnstructured(
     Returns
     -------
     pyvista.UnstructuredGrid
-        Sphere mesh.
+        Solid sphere mesh.
 
     See Also
     --------
@@ -445,10 +445,10 @@ def SphereUnstructured(
 
     Examples
     --------
-    Create a sphere using default parameters.
+    Create a solid sphere using default parameters.
 
     >>> import pyvista
-    >>> sphere = pyvista.SphereUnstructured()
+    >>> sphere = pyvista.SolidSphere()
     >>> sphere.plot(show_edges=True)
 
     """
