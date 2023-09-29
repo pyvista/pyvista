@@ -1219,7 +1219,7 @@ def test_principal_axes_vectors_precision(in_type, precision):
     assert np.any(principal_axes_vectors(data, precision=precision.__name__))
 
 
-def test_principal_axes_vectors_sample_count(max_array_length):
+def test_principal_axes_vectors_sample_count():
     N = 100
     points = np.random.rand(N, 3)
     axes = principal_axes_vectors(points, sample_count=N + 1)
