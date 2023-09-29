@@ -488,16 +488,16 @@ def SolidSphere(
     if phi is None:
         phi = np.linspace(start_phi, end_phi, phi_resolution)
 
-    if radius[0] < 0:
+    if radius[0] < 0.0:
         raise ValueError("minimum radius cannot be negative")
-    if theta[0] < 0:
+    if theta[0] < 0.0:
         raise ValueError("minimum theta cannot be negative")
-    if phi[0] < 0:
+    if phi[0] < 0.0:
         raise ValueError("minimum phi cannot be negative")
-    if theta[-1] > 360:
-        raise ValueError("maximum theta cannot be > 360")
-    if phi[-1] > 180:
-        raise ValueError("maximum phi cannot be > 180")
+    if theta[-1] > 360.0:
+        raise ValueError("maximum theta cannot be > 360.0")
+    if phi[-1] > 180.0:
+        raise ValueError("maximum phi cannot be > 180.0")
 
     # Hereafter all degrees are in radians
     theta = np.deg2rad(theta)
