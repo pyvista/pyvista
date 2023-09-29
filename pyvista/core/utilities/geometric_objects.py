@@ -1628,7 +1628,6 @@ def Rectangle(points=None):
     point_0 = points[0]
     point_1 = points[1]
     point_2 = points[2]
-    
 
     vec_01 = point_1 - point_0
     vec_02 = point_2 - point_0
