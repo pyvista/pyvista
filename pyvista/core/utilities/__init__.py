@@ -81,7 +81,7 @@ from .geometric_objects import (
     Wavelet,
     translate,
 )
-from .geometric_sources import ConeSource, CylinderSource
+from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource
 from .helpers import (
     axes_rotation,
     axis_rotation,
