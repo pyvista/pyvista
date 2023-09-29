@@ -1,5 +1,6 @@
 """Points related utilities."""
 import random
+from typing import Union
 import warnings
 
 import numpy as np
@@ -335,7 +336,7 @@ def principal_axes_vectors(
     return_transforms=False,
     transformed_center="origin",
     sample_count=10000,
-    precision: np.double | np.single = np.double,
+    precision: Union[np.double, np.single] = np.double,
 ):
     """Compute the principal axes vectors of a set of points.
 
