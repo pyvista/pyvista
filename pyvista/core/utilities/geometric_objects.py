@@ -504,9 +504,9 @@ def SphereUnstructured(
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x = r * np.sin(phi) * np.cos(theta)
+        z = r * np.sin(phi) * np.cos(theta)
         y = r * np.sin(phi) * np.sin(theta)
-        z = r * np.cos(phi)
+        x = r * np.cos(phi)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
@@ -680,7 +680,7 @@ def SphereUnstructured(
 
         celltypes.append(pyvista.CellType.HEXAHEDRON)
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
-    # TODO: translate and orient
+    translate(mesh, center, direction)
     return mesh
 
 
