@@ -540,7 +540,6 @@ def SolidSphere(
 
     points = []
 
-    # points on axis
     npoints_on_axis = 0
 
     if radius[0] == 0.0:
