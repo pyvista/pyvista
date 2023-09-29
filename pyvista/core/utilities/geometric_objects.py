@@ -412,17 +412,17 @@ def SolidSphere(
         Number of points in phi direction,
         inclusive of polar axis if applicable.
 
-    radius : sequence(float), optional
+    radius : sequence[float], optional
         A monotonically increasing sequence of values specifying radial
         points. If specified, it overrides any choices for ``outer_radius``,
         ``inner_radius``, and ``radius_resolution``.
 
-    theta : sequence(float), optional
+    theta : sequence[float], optional
         A monotonically increasing sequence of values specifying theta
         points in degrees. If specified, it overrides any choices for
         ``start_theta``, ``end_theta``, and ``theta_resolution``.
 
-    phi : sequence(float), optional
+    phi : sequence[float], optional
         A monotonically increasing sequence of values specifying phi
         points in degrees. If specified, it overrides any choices for
         ``start_phi``, ``end_phi``, and ``phi_resolution``.
@@ -519,11 +519,11 @@ def SolidSphere(
 
         Parameters
         ----------
-        r : sequence(float)
+        r : sequence[float]
             Ordered sequence of floats of radii.
-        phi : sequence(float)
+        phi : sequence[float]
             Ordered sequence of floats for phi direction.
-        theta : sequence(float)
+        theta : sequence[float]
             Ordered sequence of floats for theta direction.
 
         Returns
