@@ -36,7 +36,7 @@ def translate(
 
     """
 
-    def _form_matrix(direction):
+    def _form_matrix(direction, inverse=False):
         """Rotates from (1.0, 0.0, 0.0) to direction."""
         normx = np.array(direction) / np.linalg.norm(direction)
         normy_temp = [0.0, 1.0, 0.0]
@@ -52,11 +52,14 @@ def translate(
         normz /= np.linalg.norm(normz)
         normy = np.cross(normz, normx)
 
-        return np.vstack((normx, normy, normz))
+        out = np.vstack((normx, normy, normz))
+        if inverse:
+            return out
+        return out.transpose()
 
     # Start with inverse of matrix from starting_direction to (1.0, 0.0, 0.0)
     if not np.allclose(starting_direction, (1.0, 0.0, 0.0)):
-        rot_matrix = _form_matrix(starting_direction).transpose()
+        rot_matrix = _form_matrix(starting_direction, inverse=True)
     else:
         rot_matrix = np.identity(3)
 
