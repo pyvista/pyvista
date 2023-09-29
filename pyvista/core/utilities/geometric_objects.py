@@ -516,8 +516,6 @@ def SphereUnstructured(
     else:
         include_origin = False
 
-    npoints_on_axis_one_dir = npoints_on_axis + nr
-
     if theta[0] == 0.0 and theta[-1] == 2 * np.pi:
         duplicate_theta = True
         theta = theta[:-1]
@@ -532,6 +530,7 @@ def SphereUnstructured(
         npoints_on_axis += nr
     else:
         positive_axis = False
+    npoints_on_pos_axis = npoints_on_axis
 
     if phi[-1] == np.pi:
         points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
@@ -585,7 +584,7 @@ def SphereUnstructured(
                 cells.extend(
                     [
                         0,
-                        npoints_on_axis_one_dir,
+                        npoints_on_pos_axis,
                         _index(0, nphi - 1, itheta + 1),
                         _index(0, nphi - 1, itheta),
                     ]
@@ -637,8 +636,8 @@ def SphereUnstructured(
     # now go downwards
     if negative_axis:
         for ir in range(nr - 1):
-            axis0 = npoints_on_axis_one_dir + ir
-            axis1 = npoints_on_axis_one_dir + ir + 1
+            axis0 = npoints_on_pos_axis + ir
+            axis1 = npoints_on_pos_axis + ir + 1
             for itheta in range(ntheta - 1):
                 cells.append(6)
                 cells.extend(
