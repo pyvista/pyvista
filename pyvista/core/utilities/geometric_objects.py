@@ -527,9 +527,9 @@ def SolidSphere(
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        z = r * np.sin(phi) * np.cos(theta)
+        x = r * np.sin(phi) * np.cos(theta)
         y = r * np.sin(phi) * np.sin(theta)
-        x = r * np.cos(phi)
+        z = r * np.cos(phi)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
@@ -703,7 +703,7 @@ def SolidSphere(
 
         celltypes.append(pyvista.CellType.HEXAHEDRON)
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
-    translate(mesh, center, direction)
+    translate(mesh, center, direction, starting_direction=(0.0, 0.0, 1.0))
     return mesh
 
 

@@ -15,40 +15,56 @@ from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 
-def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
+def translate(
+    surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0), starting_direction=(1.0, 0.0, 0.0)
+):
     """Translate and orient a mesh to a new center and direction.
 
-    By default, the input mesh is considered centered at the origin
-    and facing in the x direction.
+    The input mesh is considered centered at the origin
+    and facing in the starting_direction.
 
     Parameters
     ----------
     surf : pyvista.core.pointset.PolyData
         Mesh to be translated and oriented.
-    center : tuple, optional, default: (0.0, 0.0, 0.0)
+    center : tuple, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
-    direction : tuple, optional, default: (1.0, 0.0, 0.0)
+    direction : tuple, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
+    starting_direction : tuple, default: (1.0, 0.0, 0.0)
+        Direction vector along which mesh is originally oriented.
 
     """
-    normx = np.array(direction) / np.linalg.norm(direction)
-    normy_temp = [0.0, 1.0, 0.0]
 
-    # Adjust normy if collinear with normx since cross-product will
-    # be zero otherwise
-    if np.allclose(normx, [0, 1, 0]):
-        normy_temp = [-1.0, 0.0, 0.0]
-    elif np.allclose(normx, [0, -1, 0]):
-        normy_temp = [1.0, 0.0, 0.0]
+    def _form_matrix(direction):
+        """Rotates from (1.0, 0.0, 0.0) to direction."""
+        normx = np.array(direction) / np.linalg.norm(direction)
+        normy_temp = [0.0, 1.0, 0.0]
 
-    normz = np.cross(normx, normy_temp)
-    normz /= np.linalg.norm(normz)
-    normy = np.cross(normz, normx)
+        # Adjust normy if collinear with normx since cross-product will
+        # be zero otherwise
+        if np.allclose(normx, [0, 1, 0]):
+            normy_temp = [-1.0, 0.0, 0.0]
+        elif np.allclose(normx, [0, -1, 0]):
+            normy_temp = [1.0, 0.0, 0.0]
+
+        normz = np.cross(normx, normy_temp)
+        normz /= np.linalg.norm(normz)
+        normy = np.cross(normz, normx)
+
+        return np.vstack((normx, normy, normz))
+
+    # Start with inverse of matrix from starting_direction to (1.0, 0.0, 0.0)
+    if not np.allclose(starting_direction, (1.0, 0.0, 0.0)):
+        rot_matrix = _form_matrix(starting_direction).transpose()
+    else:
+        rot_matrix = np.identity(3)
+
+    # Multiply with matrix to direction to get final rotation matrix
+    rot_matrix = np.matmul(rot_matrix, _form_matrix(direction))
 
     trans = np.zeros((4, 4))
-    trans[:3, 0] = normx
-    trans[:3, 1] = normy
-    trans[:3, 2] = normz
+    trans[:3, :3] = rot_matrix
     trans[3, 3] = 1
 
     surf.transform(trans)
