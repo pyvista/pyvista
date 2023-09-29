@@ -7,9 +7,11 @@ from typing import Sequence
 
 import numpy as np
 
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 
+from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 
@@ -500,3 +502,58 @@ class CylinderSource(_vtk.vtkCylinderSource):
         output.rotate_z(-90, inplace=True)
         translate(output, self.center, self.direction)
         return output
+
+
+@no_new_attr
+class MultipleLinesSource(_vtk.vtkLineSource):
+    """Multiple lines source algorithm class.
+
+    Parameters
+    ----------
+    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+        List of points defining a broken line.
+    """
+
+    _new_attr_exceptions = ['points']
+
+    def __init__(self, points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+        """Initialize the multiple lines source class."""
+        super().__init__()
+        self.points = points
+
+    @property
+    def points(self) -> np.ndarray:
+        """Get the list of points defining a broken line.
+
+        Returns
+        -------
+        np.ndarray
+            List of points defining a broken line.
+        """
+        return _vtk.vtk_to_numpy(self.GetPoints().GetData())
+
+    @points.setter
+    def points(self, points: Sequence[Sequence[float]]):
+        """Set the list of points defining a broken line.
+
+        Parameters
+        ----------
+        points : array_like[float]
+            List of points defining a broken line.
+        """
+        points, _ = _coerce_pointslike_arg(points)
+        if not (len(points) >= 2):
+            raise ValueError('>=2 points need to define multiple lines.')
+        self.SetPoints(pyvista.vtk_points(points))
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
