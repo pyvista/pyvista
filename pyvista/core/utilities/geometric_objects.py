@@ -463,7 +463,7 @@ def SolidSphere(
     >>> partial_solid_sphere.plot(show_edges=True)
 
     To see the cell structure inside the solid sphere,
-    only 1/4 of the sphere is generate. The are cells exploded
+    only 1/4 of the sphere is generated. The cells exploded
     and colored by radial position.
 
     >>> partial_solid_sphere = pv.SolidSphere(
@@ -523,7 +523,7 @@ def SolidSphere(
             Ordered sequence of floats of radii.
         phi : sequence(float)
             Ordered sequence of floats for phi direction.
-        theta : sequence
+        theta : sequence(float)
             Ordered sequence of floats for theta direction.
 
         Returns
@@ -599,7 +599,7 @@ def SolidSphere(
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
     if include_origin:
-        # first make the tetras that form with origin and axis point
+        # First make the tetras that form with origin and axis point
         #   origin is 0
         #   first axis point is 1
         #   other points at first phi position off axis
@@ -610,7 +610,7 @@ def SolidSphere(
 
                 celltypes.append(pyvista.CellType.TETRA)
 
-        # next tetras that form with origin and bottom axis point
+        # Next tetras that form with origin and bottom axis point
         #   origin is 0
         #   axis point is first in negative dir
         #   other points at last phi position off axis
