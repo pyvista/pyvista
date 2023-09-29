@@ -17,8 +17,8 @@ vtkSuperquadricSource
 as well as some pure-python helpers.
 
 """
-import itertools
 import warnings
+from itertools import product
 
 import numpy as np
 
@@ -629,7 +629,7 @@ def SolidSphere(
                 celltypes.append(pyvista.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
-        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
+        for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
             cells.append(5)
             cells.extend(
                 [
@@ -692,7 +692,7 @@ def SolidSphere(
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
+    for ir, iphi, itheta in product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
         cells.append(8)
         cells.extend(
             [
@@ -1628,6 +1628,7 @@ def Rectangle(points=None):
     point_0 = points[0]
     point_1 = points[1]
     point_2 = points[2]
+    
 
     vec_01 = point_1 - point_0
     vec_02 = point_2 - point_0
