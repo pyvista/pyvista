@@ -176,6 +176,24 @@ def test_sphere_unstructured_resolution_edge_cases():
     assert sphere.volume > 0
 
 
+def test_sphere_unstructured_resolution_errors():
+    with pytest.raises(ValueError, match="minimum radius cannot be negative"):
+        pv.SphereUnstructured(inner_radius=-1)
+    with pytest.raises(ValueError, match="minimum theta cannot be negative"):
+        pv.SphereUnstructured(start_theta=-1)
+    with pytest.raises(ValueError, match="maximum theta cannot be > 360"):
+        pv.SphereUnstructured(end_theta=370)
+    with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
+        pv.SphereUnstructured(end_phi=190)
+
+    with pytest.raises(ValueError, match="radius_resolution must be 2 or more"):
+        pv.SphereUnstructured(radius_resolution=1)
+    with pytest.raises(ValueError, match="theta_resolution must be 2 or more"):
+        pv.SphereUnstructured(theta_resolution=1)
+    with pytest.raises(ValueError, match="phi_resolution must be 2 or more"):
+        pv.SphereUnstructured(phi_resolution=1)
+
+
 def test_plane():
     surf = pv.Plane()
     assert np.any(surf.points)

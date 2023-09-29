@@ -479,11 +479,11 @@ def SphereUnstructured(
     nphi = len(phi)
 
     if nr < 2:
-        raise ValueError("radius resolution must be 2 or more")
+        raise ValueError("radius_resolution must be 2 or more")
     if ntheta < 2:
-        raise ValueError("theta resolution must be 2 or more")
+        raise ValueError("theta_resolution must be 2 or more")
     if nphi < 2:
-        raise ValueError("phi resolution must be 2 or more")
+        raise ValueError("phi_resolution must be 2 or more")
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` cartesian coordinate array.
