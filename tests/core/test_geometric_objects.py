@@ -179,6 +179,8 @@ def test_solid_sphere_resolution_errors():
         pv.SolidSphere(inner_radius=-1)
     with pytest.raises(ValueError, match="minimum theta cannot be negative"):
         pv.SolidSphere(start_theta=-1)
+    with pytest.raises(ValueError, match="minimum phi cannot be negative"):
+        pv.SolidSphere(start_phi=-1)
     with pytest.raises(ValueError, match="maximum theta cannot be > 360"):
         pv.SolidSphere(end_theta=370)
     with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
