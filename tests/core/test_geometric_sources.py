@@ -74,3 +74,35 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 0], points_out[:, 1])
         assert np.allclose(points_in[:, 1], -points_out[:, 0])
         assert np.allclose(points_in[:, 2], points_out[:, 2])
+
+
+def test_translate_rotations():
+    point = pv.PolyData([[1.0, 0.0, 0.0]])
+    translate(
+        point,
+        direction=(
+            1.0,
+            0.0,
+            0.0,
+        ),
+    )
+    assert np.allclose(point.points, [[1.0, 0.0, 0.0]])
+
+    point = pv.PolyData([[1.0, 0.0, 0.0]])
+    translate(
+        point,
+        direction=(
+            0.0,
+            1.0,
+            0.0,
+        ),
+    )
+    assert np.allclose(point.points, [[0.0, 1.0, 0.0]])
+
+    point = pv.PolyData([[0.0, 0.0, 1.0]])
+    translate(point, direction=[0.0, 1.0, 0.0], starting_direction=[0.0, 0.0, 1.0])
+    assert np.allclose(point.points, [[0.0, 1.0, 0.0]])
+
+    point = pv.PolyData([[0.0, 0.0, 1.0]])
+    translate(point, direction=[0.0, 0.0, 1.0], starting_direction=[0.0, 0.0, 1.0])
+    assert np.allclose(point.points, [[0.0, 0.0, 1.0]])

@@ -57,14 +57,20 @@ def translate(
             return out
         return out.transpose()
 
-    # Start with inverse of matrix from starting_direction to (1.0, 0.0, 0.0)
-    if not np.allclose(starting_direction, (1.0, 0.0, 0.0)):
-        rot_matrix = _form_matrix(starting_direction, inverse=True)
-    else:
+    if np.allclose(direction, starting_direction):
         rot_matrix = np.identity(3)
+    else:
+        # Start with inverse of matrix from starting_direction to (1.0, 0.0, 0.0)
+        if not np.allclose(starting_direction, (1.0, 0.0, 0.0)):
+            rot_matrix = _form_matrix(starting_direction, inverse=True)
+        else:
+            rot_matrix = np.identity(3)
 
-    # Multiply with matrix to direction to get final rotation matrix
-    rot_matrix = np.matmul(rot_matrix, _form_matrix(direction))
+        # Multiply with matrix to direction to get final rotation matrix
+        rot_matrix = np.matmul(
+            _form_matrix(direction),
+            rot_matrix,
+        )
 
     trans = np.zeros((4, 4))
     trans[:3, :3] = rot_matrix
