@@ -57,11 +57,11 @@ def translate(
             return out
         return out.transpose()
 
-    if np.allclose(direction, starting_direction):
+    if np.array_equal(direction, starting_direction):
         rot_matrix = np.identity(3)
     else:
         # Start with inverse of matrix from starting_direction to (1.0, 0.0, 0.0)
-        if not np.allclose(starting_direction, (1.0, 0.0, 0.0)):
+        if not np.array_equal(starting_direction, (1.0, 0.0, 0.0)):
             rot_matrix = _form_matrix(starting_direction, inverse=True)
         else:
             rot_matrix = np.identity(3)
