@@ -577,9 +577,8 @@ def SolidSphere(
         negative_axis = False
 
     # rest of points with theta changing quickest
-    for ir in radius:
-        for iphi in phi:
-            points.extend(_spherical_to_cartesian(ir, iphi, theta))
+    for ir, iphi in product(radius, phi):
+        points.extend(_spherical_to_cartesian(ir, iphi, theta))
 
     cells = []
     celltypes = []
