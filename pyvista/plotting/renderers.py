@@ -522,7 +522,9 @@ class Renderers:
         """
         return self._shadow_renderer
 
-    def set_background(self, color, top=None, all_renderers=True):
+    def set_background(
+        self, color, top=None, right=None, side=None, corner=None, all_renderers=True
+    ):
         """Set the background color.
 
         Parameters
@@ -540,6 +542,21 @@ class Renderers:
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
+
+        right : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the left and the color given in ``right``
+            will be the color at the right of the renderer.
+
+        side : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in ``side``
+            will be the color at the side of the renderer.
+
+        corner : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in ``corner``
+            will be the color at the corner of the renderer.
 
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
@@ -568,10 +585,12 @@ class Renderers:
         """
         if all_renderers:
             for renderer in self:
-                renderer.set_background(color, top=top)
+                renderer.set_background(color, top=top, right=right, side=side, corner=corner)
             self._shadow_renderer.set_background(color)
         else:
-            self.active_renderer.set_background(color, top=top)
+            self.active_renderer.set_background(
+                color, top=top, right=right, side=side, corner=corner
+            )
 
     def set_color_cycler(self, color_cycler, all_renderers=True):
         """Set or reset the color cycler.
