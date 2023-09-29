@@ -3,6 +3,7 @@ from itertools import permutations
 import os
 import pathlib
 import pickle
+import random
 import shutil
 import unittest.mock as mock
 import warnings
@@ -20,6 +21,7 @@ from pyvista.core.utilities import (
     fit_plane_to_points,
     principal_axes_transform,
     principal_axes_vectors,
+    random_sample_points,
 )
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
@@ -43,6 +45,8 @@ from pyvista.core.utilities.transformations import (
     axis_angle_rotation,
     reflection,
 )
+
+random.seed(0)
 
 
 def test_version():
@@ -1010,9 +1014,6 @@ def test_swap_axes(x, y, z, order, values_test_case):
         assert np.flatnonzero(swapped[1])[0] < np.flatnonzero(swapped[2])[0]
 
 
-np.random.seed(0)
-
-
 def assert_valid_right_handed_frame(axes):
     assert not np.allclose(axes[0], [0, 0, 0])
     assert not np.allclose(axes[1], [0, 0, 0])
@@ -1195,12 +1196,60 @@ def test_principal_axes_vectors(airplane):
 
 
 def test_principal_axes_vectors_raises():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be one of"):
         principal_axes_vectors(np.empty((0, 3)), axis_0_direction='abc')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be distinct"):
         principal_axes_vectors(np.empty((0, 3)), axis_0_direction='x', axis_1_direction='x')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be distinct"):
         principal_axes_vectors(np.empty((0, 3)), axis_1_direction='x', axis_2_direction='x')
+    with pytest.raises(TypeError, match="must be np.single or np.double"):
+        principal_axes_vectors(np.eye(3), precision=str)
+
+
+@pytest.mark.parametrize('in_type', [np.single, np.double])
+@pytest.mark.parametrize('precision', [np.single, np.double])
+def test_principal_axes_vectors_precision(in_type, precision):
+    data = np.eye(3).astype(in_type)
+    axes, transform, inverse = principal_axes_vectors(np.eye(3), precision=precision)
+    assert axes.dtype.type is precision
+    assert transform.dtype.type is precision
+    assert inverse.dtype.type is precision
+
+    # test dtype strings are also valid input
+    assert np.any(principal_axes_vectors(data, precision=precision.__name__))
+
+
+def test_principal_axes_vectors_sample_count(max_array_length):
+    N = 100
+    points = np.random.rand(N, 3)
+    axes = principal_axes_vectors(points, sample_count=N + 1)
+    assert np.any(axes)
+    axes = principal_axes_vectors(points, sample_count=N)
+    assert np.any(axes)
+    axes = principal_axes_vectors(points, sample_count=N - 1)
+    assert np.any(axes)
+
+    N_huge_RAM = 370000  # requires approx 1 TiB of RAM to compute without sampling
+    points = np.random.rand(N_huge_RAM, 3)
+    axes = principal_axes_vectors(points)
+    assert np.any(axes)
+    axes = principal_axes_vectors(points, sample_count=11000)
+    assert np.any(axes)
+    with pytest.raises(MemoryError):
+        principal_axes_vectors(points, sample_count=None)
+
+    # test that None disables sampling
+    N_below_default = 100
+    points = np.random.rand(N_below_default, 3)
+    axes1 = principal_axes_vectors(points)
+    axes2 = principal_axes_vectors(points, sample_count=None)
+    assert np.array_equal(axes1, axes2)
+
+    N_above_default = 11000
+    points = np.random.rand(N_above_default, 3)
+    axes1 = principal_axes_vectors(points)
+    axes2 = principal_axes_vectors(points, sample_count=None)
+    assert not np.array_equal(axes1, axes2)
 
 
 def test_principal_axes_transform(airplane):
@@ -1210,9 +1259,9 @@ def test_principal_axes_transform(airplane):
     assert np.any(transform)
     assert np.array_equal(transform.shape, (4, 4))
 
-    transform = principal_axes_transform(airplane.points, return_inverse=True)
-    assert np.array_equal(transform[0].shape, (4, 4))
-    assert np.array_equal(transform[1].shape, (4, 4))
+    transform, inverse = principal_axes_transform(airplane.points, return_inverse=True)
+    assert np.array_equal(transform.shape, (4, 4))
+    assert np.array_equal(inverse.shape, (4, 4))
 
 
 @pytest.mark.parametrize(
@@ -1340,3 +1389,22 @@ def test_axes_rotation_matrix():
         axes_rotation_matrix([[1, 0, 0], [1, 0, 0], [1, 0, 0]])
     with pytest.raises(ValueError, match="right-handed "):
         axes_rotation_matrix([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+
+def test_random_sample(airplane):
+    points = airplane.points
+    sample1 = random_sample_points(points, count=3, seed=2)
+    assert len(sample1) == 3
+    assert np.allclose(
+        sample1,
+        [[887.395, 48.7601, 80.7452], [915.95, 1075.49, 155.196], [946.622, 1075.49, 132.912]],
+    )
+
+    sample2 = random_sample_points(points, count=3, seed=42)
+    assert not np.array_equal(sample1, sample2)
+
+    N = len(points)
+    sample = random_sample_points(points, count=N + 1, pass_through=True)
+    assert np.array_equal(sample, points)
+    with pytest.raises(ValueError):
+        random_sample_points(points, count=N + 1, pass_through=False)

@@ -141,6 +141,7 @@ from .points import (
     make_tri_mesh,
     principal_axes_transform,
     principal_axes_vectors,
+    random_sample_points,
     vector_poly_data,
     vtk_points,
 )

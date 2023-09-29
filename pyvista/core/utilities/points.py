@@ -1,4 +1,5 @@
 """Points related utilities."""
+import random
 import warnings
 
 import numpy as np
@@ -333,8 +334,10 @@ def principal_axes_vectors(
     project_xyz=False,
     return_transforms=False,
     transformed_center="origin",
+    sample_count=10000,
+    precision: np.double | np.single = np.double,
 ):
-    """Compute principal axes vectors from a set of points.
+    """Compute the principal axes vectors of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of
     points. The axes are also known as the principal components of the
@@ -357,15 +360,31 @@ def principal_axes_vectors(
     cases where axis directions for a local coordinate frame have a
     clear physical meaning.
 
+    .. warning::
+
+        This function has a large memory storage requirement of``O(N^2)``
+        which can be an issue for large point arrays. To reduce this
+        requirement, the points are randomly sampled by default. Sampling
+        can be disabled, however, if desired. For reference, the
+        approximate memory requirement for double precision (default) is:
+
+        .. list-table::
+            :widths: 25 25
+            :header-rows: 1
+
+            * - Number of points
+              - Minimum memory required
+            * - 10,000
+              - < 1 GiB
+            * - 40,000
+              - 12 GiB
+            * - 100,000
+              - 75 GiB
+
+        If using single precision, the requirement is halved.
+
+
     .. versionadded:: 0.43.0
-
-    Notes
-    -----
-    If the axes cannot be computed, the identity matrix is returned.
-
-    The ``project_xyz`` and ``axis_#_direction`` parameters only control
-    the signs of the individual principal axes and do not apply a
-    transformation to reorient the axes as a set.
 
     See Also
     --------
@@ -435,6 +454,12 @@ def principal_axes_vectors(
         principal axes of X-Y planar data onto the positive XYZ axes to
         ensure the principal axes all have a positive direction.
 
+        .. note::
+
+            The ``project_xyz`` and ``axis_#_direction`` parameters only control
+            the signs of the individual principal axes and do not apply a
+            transformation to reorient the axes as a set.
+
     return_transforms : bool, False
         If ``True``, two 4x4 transformation matrices are also returned.
         The first matrix applies the following transformations in sequence:
@@ -449,6 +474,23 @@ def principal_axes_vectors(
         * ``"origin"``: Alias for ``(0, 0, 0)``
         * ``"centroid"``: Alias for ``np.mean(points, axis=0)``
         Has no effect if ``return_transforms`` is ``False``.
+
+    sample_count : int, default: 10000
+        If set, the input points may be randomly sampled to reduce the
+        time and memory required for the computation. Has no effect if
+        the number of input points is less than this value. Can be set
+        to ``None`` to disable sampling.
+
+    precision : str, default: np.double
+        Control the precision of the SVD computation. Use ``np.double``
+        for better precision and ``np.single`` to reduce the time and
+        memory requirements for the computation. The returned values
+        will also have this type.
+
+    Raises
+    ------
+    MemoryError
+        If there is insufficient memory to compute the principal axes.
 
     Returns
     -------
@@ -517,6 +559,14 @@ def principal_axes_vectors(
     # array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
     #        [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
     #        [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
+    from numpy.core._exceptions import _ArrayMemoryError
+
+    def _default_values():
+        default_axes = np.eye(3)
+        default_transform = np.eye(4)
+        if return_transforms:
+            return default_axes, default_transform, default_transform
+        return default_axes
 
     def _validate_vector(vector, name):
         if vector is not None:
@@ -549,23 +599,23 @@ def principal_axes_vectors(
         axis_2_direction = [0, 0, 1] if not axis_2_direction else None
         swap_equal_axes = True if swap_equal_axes is None else None
 
-    # Initialize output
-    default_axes = np.eye(3)
-    default_transform = np.eye(4)
-
     # Validate points
     data, _ = _coerce_pointslike_arg(points, copy=True)
     if not np.issubdtype(data.dtype, np.floating):
         data = data.astype(np.float32)
     if len(data) == 0:
-        if return_transforms:
-            return default_axes, default_transform, default_transform
-        return default_axes
+        return _default_values()
+
+    # Validate precision
+    precision = np.array(np.empty(0), dtype=precision).dtype.type
+    if precision not in [np.single, np.double]:
+        raise TypeError(f"Precision must be np.single or np.double, got {precision} instead.")
 
     # Center data
     centroid = np.mean(data, axis=0)
     data -= centroid
 
+    # Validate transformed center
     if return_transforms:
         if isinstance(transformed_center, str):
             if transformed_center == "origin":
@@ -578,21 +628,36 @@ def principal_axes_vectors(
                 )
         check_valid_vector(transformed_center, name="transform_location")
 
+    # Sample data
+    if sample_count is not None:
+        data = random_sample_points(data, count=sample_count, pass_through=True)
+
+    # Compute principal axes
     try:
-        # Use SVD as it's numerically more stable than using PCA (below)
-        _, axes_values, axes_vectors = np.linalg.svd(data)
+        if precision is np.double:
+            # Use SVD as it's numerically more stable than using PCA (below)
+            _, axes_values, axes_vectors = np.linalg.svd(data)  # row vectors, descending order
 
-        ## Equivalently (up to a difference in axis sign, non-uniqueness of
-        ## vectors, and numerical error), the axes may also be computed using
-        ## PCA, i.e. using covariance and eigenvalue decomposition.
-        # covariance = np.cov(data, rowvar=False)
-        # _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
-        # axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
+            ## Equivalently (up to a difference in axis sign, non-uniqueness of
+            ## vectors, and numerical error), the axes may also be computed using
+            ## PCA, i.e. using covariance and eigenvalue decomposition.
+            # covariance = np.cov(data, rowvar=False)
+            # _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
+            # axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
 
-    except np.linalg.LinAlgError:
-        if return_transforms:
-            return default_axes, default_transform, default_transform
-        return default_axes
+        elif precision is np.single:
+            _, axes_values, axes_vectors = _svd_single(data)
+        else:
+            # This line should not be reachable
+            raise NotImplementedError(f"Type {precision} precision is not valid.")
+
+    except _ArrayMemoryError as e:
+        msg = (
+            f"Failed to allocate memory to compute the principal axes for "
+            f"N={len(data)} points. Consider reducing the number of points"
+            f"with `sample_count` or using some other method."
+        )
+        raise MemoryError(msg) from e
 
     if swap_equal_axes:
         # Note: Swapping may create a left-handed coordinate frame. This
@@ -666,6 +731,50 @@ def _swap_axes(vectors, values):
         elif np.isclose(values[1], values[2]):
             _swap(1, 2)
     return vectors
+
+
+def _svd_single(a):
+    """Compute single-precision SVD.
+
+    The function is a customized recreating of `numpy.linalg.svd` with
+    modifications for single floats. Stock SVD always computes with
+    double floats, which is not always practical.
+
+    In contrast to numpy's general SVD, this version:
+        - assumes that we have an array of real numbers
+        - assumes that M > N
+        - always computes uv (compute_uv==True)
+        - always returns full matrices (full_matrices==True)
+
+    Warning: No checks are done to validate the assumptions above.
+
+    """
+    # Import locally instead of at module level to avoid cluttering
+    # the namespace with internal NumPy functions
+    from numpy.linalg.linalg import (
+        _assert_stacked_2d,
+        _makearray,
+        _raise_linalgerror_svd_nonconvergence,
+        _umath_linalg,
+        get_linalg_error_extobj,
+    )
+
+    a, wrap = _makearray(a)
+    _assert_stacked_2d(a)
+    result_t = np.single
+
+    extobj = get_linalg_error_extobj(_raise_linalgerror_svd_nonconvergence)
+
+    gufunc = _umath_linalg.svd_n_f  # compute full uv with M < N
+
+    # default signature is 'd->ddd' for double floats
+    # swap 'd' with 'f' for single floats
+    signature = 'f->fff'
+    u, s, vh = gufunc(a, signature=signature, extobj=extobj)
+    u = u.astype(result_t, copy=False)
+    s = s.astype(result_t, copy=False)
+    vh = vh.astype(result_t, copy=False)
+    return wrap(u), s, wrap(vh)
 
 
 def fit_plane_to_points(
@@ -1035,3 +1144,37 @@ def vector_poly_data(orig, vec):
     pdata.GetPointData().SetActiveScalars(name)
 
     return pyvista.PolyData(pdata)
+
+
+def random_sample_points(points, count, seed=None, pass_through=False):
+    """Randomly sample a set of points.
+
+    Parameters
+    ----------
+    points : array_like[float]
+        Nx3 points array to sample.
+
+    count : int
+        Number of points to return.
+
+    seed : int
+        Value to initialize random number generator.
+
+    pass_through : bool, default: False
+        If ``True``, the points are returned as-is without sampling
+        when ``count`` is greater than the number of ``points``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of sampled points.
+
+    """
+    if seed is not None:
+        random.seed(seed)  # make sampling deterministic
+    points, _ = _coerce_pointslike_arg(points)
+    N = len(points)
+    if count > N and pass_through:
+        return points
+    sample_idx = random.sample(range(N), count)
+    return points[sample_idx]
