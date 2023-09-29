@@ -1206,10 +1206,10 @@ def test_principal_axes_vectors_raises():
         principal_axes_vectors(np.eye(3), precision=str)
 
 
-@pytest.mark.parametrize('in_type', [np.single, np.double])
+@pytest.mark.parametrize('input_type', [np.single, np.double])
 @pytest.mark.parametrize('precision', [np.single, np.double])
-def test_principal_axes_vectors_precision(in_type, precision):
-    data = np.eye(3).astype(in_type)
+def test_principal_axes_vectors_precision(input_type, precision):
+    data = np.eye(3).astype(input_type)
     axes, transform, inverse = principal_axes_vectors(np.eye(3), precision=precision)
     assert axes.dtype.type is precision
     assert transform.dtype.type is precision
@@ -1217,6 +1217,17 @@ def test_principal_axes_vectors_precision(in_type, precision):
 
     # test dtype strings are also valid input
     assert np.any(principal_axes_vectors(data, precision=precision.__name__))
+
+
+def test_principal_axes_vectors_memory_error():
+    N_huge_RAM = 370000  # requires approx 1 TiB of RAM to compute without sampling
+    points = np.random.rand(N_huge_RAM, 3)
+    axes = principal_axes_vectors(points)
+    assert np.any(axes)
+    axes = principal_axes_vectors(points, sample_count=11000)
+    assert np.any(axes)
+    with pytest.raises(MemoryError):
+        principal_axes_vectors(points, sample_count=None)
 
 
 def test_principal_axes_vectors_sample_count():
@@ -1228,15 +1239,6 @@ def test_principal_axes_vectors_sample_count():
     assert np.any(axes)
     axes = principal_axes_vectors(points, sample_count=N - 1)
     assert np.any(axes)
-
-    N_huge_RAM = 370000  # requires approx 1 TiB of RAM to compute without sampling
-    points = np.random.rand(N_huge_RAM, 3)
-    axes = principal_axes_vectors(points)
-    assert np.any(axes)
-    axes = principal_axes_vectors(points, sample_count=11000)
-    assert np.any(axes)
-    with pytest.raises(MemoryError):
-        principal_axes_vectors(points, sample_count=None)
 
     # test that None disables sampling
     N_below_default = 100
