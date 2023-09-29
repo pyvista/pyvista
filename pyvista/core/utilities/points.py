@@ -1,6 +1,5 @@
 """Points related utilities."""
 import random
-from typing import Union
 import warnings
 
 import numpy as np
@@ -336,7 +335,7 @@ def principal_axes_vectors(
     return_transforms=False,
     transformed_center="origin",
     sample_count=10000,
-    precision: Union[np.double, np.single] = np.double,
+    precision=np.double,
 ):
     """Compute the principal axes vectors of a set of points.
 
@@ -383,7 +382,6 @@ def principal_axes_vectors(
               - 75 GiB
 
         If using single precision, the requirement is halved.
-
 
     .. versionadded:: 0.43.0
 
@@ -631,7 +629,7 @@ def principal_axes_vectors(
 
     # Sample data
     if sample_count is not None:
-        data = random_sample_points(data, count=sample_count, pass_through=True)
+        data = random_sample_points(data, count=sample_count, pass_through=True, seed=42)
 
     # Compute principal axes
     try:
