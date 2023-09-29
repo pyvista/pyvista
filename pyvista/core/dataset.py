@@ -2,22 +2,10 @@
 from __future__ import annotations
 
 from collections import namedtuple
-import collections.abc
+from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from copy import deepcopy
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, List, Literal, Optional, Tuple, Union, cast
 import warnings
 
 import numpy as np
@@ -1043,7 +1031,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_vector(
         self,
-        vector: Iterable[float],
+        vector: Sequence[float],
         angle: float,
         point=(0.0, 0.0, 0.0),
         transform_all_input_vectors=False,
@@ -1100,6 +1088,79 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(vector)
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
+
+    def rotate_axes(
+        self,
+        axes: np.ndarray | VectorArray,
+        point=(0.0, 0.0, 0.0),
+        transform_all_input_vectors=False,
+        inplace=False,
+    ):
+        """Rotate mesh by a set of axes about a point.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        .. versionadded:: 0.43.0
+
+        See Also
+        --------
+        :attr:`~pyvista.principal_axes`
+            Get the mesh's principal axes vectors.
+        :func:`~pyvista.axes_rotation`
+            Rotate points by a set of axes.
+
+        Parameters
+        ----------
+        axes : np.ndarray | VectorArray
+            Axes to rotate.
+
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Create a mesh away from the origin with an off-axis orientation.
+
+        >>> import pyvista as pv
+        >>> start = (-0.3, 0.8, 0.8)
+        >>> mesh = pv.Arrow(start=start, direction=(1, -2, 2), scale=2)
+
+        Rotate the mesh by its principal axes about its starting point.
+
+        >>> axes = mesh.principal_axes
+        >>> rot = mesh.rotate_axes(axes, point=start, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot, label="Rotated", color='lightblue')
+        >>> _ = pl.add_mesh(mesh, label="Original", color='goldenrod')
+        >>> _ = pl.add_axes_at_origin()
+        >>> _ = pl.add_legend()
+        >>> pl.show()
+
+        """
+        check_valid_vector(point, "point")
+        t = transformations.axes_rotation_matrix(axes, point_initial=point, point_final=point)
         return self.transform(
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
@@ -1821,6 +1882,8 @@ class DataSet(DataSetFilters, DataObject):
             Compute the principal axes vectors from points.
         :func:`~pyvista.principal_axes_transform`,
             Compute the principal axes transform from points.
+        :func:`~pyvista.DataSet.rotate_axes`
+            Rotate mesh by a set of axes.
 
         Returns
         -------
@@ -1949,7 +2012,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
+        if isinstance(index, Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
@@ -1966,7 +2029,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.array_names
 
     def __setitem__(
-        self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence, float]
+        self, name: str, scalars: Union[np.ndarray, Sequence, float]
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2340,7 +2403,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista_ndarray([-0.05218758,  0.49653167,  0.02706946], dtype=float32)
 
         """
-        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+        if not isinstance(point, (np.ndarray, Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")

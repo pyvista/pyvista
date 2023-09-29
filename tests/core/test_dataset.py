@@ -1201,6 +1201,13 @@ def test_rotate_vector(uniform):
         out = uniform.rotate_vector(30, 33)
 
 
+def test_rotate_axes(airplane):
+    axes = airplane.principal_axes
+    out = airplane.rotate_axes(
+        axes, point=(0, 0, 0), inplace=True, transform_all_input_vectors=True
+    )
+    assert np.any(out.points)
+
 
 def test_transform_integers():
     # regression test for gh-1943
