@@ -445,11 +445,34 @@ def SolidSphere(
 
     Examples
     --------
-    Create a solid sphere using default parameters.
+    Create a solid sphere.
 
-    >>> import pyvista
-    >>> sphere = pyvista.SolidSphere()
-    >>> sphere.plot(show_edges=True)
+    >>> import pyvista as pv
+    >>> solid_sphere = pv.SolidSphere()
+    >>> solid_sphere.plot(show_edges=True)
+
+    A solid sphere is 3D in comparison to the 2d `pyvista.Sphere`
+
+    >>> isinstance(solid_sphere, pv.UnstructuredGrid)
+    True
+    >>> clipped_sphere = solid_sphere.clip()
+    >>> clipped_sphere.plot(show_edges=True)
+
+    A partial solid sphere can also be generated.
+    A lower resolution is used to see the cell structure.
+
+    >>> partial_solid_sphere = pv.SolidSphere(
+    ...     inner_radius=0.25,
+    ...     outer_radius=0.5,
+    ...     start_theta=0,
+    ...     end_theta=45,
+    ...     start_phi=0,
+    ...     end_phi=90,
+    ...     radius_resolution=3,
+    ...     theta_resolution=8,
+    ...     phi_resolution=8,
+    ... )
+    >>> partial_solid_sphere.explode(1).plot()
 
     """
     if radius is None:
