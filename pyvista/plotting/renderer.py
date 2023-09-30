@@ -3082,7 +3082,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             raise VTKVersionError(
                 "`corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
-        if sum([top is not None, right is not None, side is not None, corner is not None]) > 1:
+        if sum([top is not None, right is not None, side is not None, corner is not None]) > 1:  # pragma: no cover
             raise ValueError("You can only set one argument in top, right, side, corner.")
         if top is not None:
             self.SetGradientBackground(True)
