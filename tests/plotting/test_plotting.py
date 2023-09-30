@@ -971,10 +971,6 @@ def test_set_background():
     assert plotter.renderers[1].GetBackground() == pv.Color('orange')
     plotter.show()
 
-    with pytest.raises(ValueError):
-        plotter = pv.Plotter()
-        plotter.set_background('gold', top='orange', right='orange')
-
 
 def test_add_points():
     plotter = pv.Plotter()
@@ -3769,3 +3765,7 @@ def test_radial_gradient_background():
     plotter = pv.Plotter()
     plotter.set_background('gold', corner='orange')
     plotter.show()
+
+    with pytest.raises(ValueError):
+        plotter = pv.Plotter()
+        plotter.set_background('gold', top='orange', right='orange')
