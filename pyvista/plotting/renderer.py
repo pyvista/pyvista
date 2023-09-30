@@ -3069,20 +3069,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
         if right is not None and pyvista.vtk_version_info < (9, 3):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError(
                 "`right` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
         if side is not None and pyvista.vtk_version_info < (9, 3):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError(
                 "`side` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
         if corner is not None and pyvista.vtk_version_info < (9, 3):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError(
                 "`corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
-        if sum([top is not None, right is not None, side is not None, corner is not None]) > 1:  # pragma: no cover
+        if (
+            sum([top is not None, right is not None, side is not None, corner is not None]) > 1
+        ):  # pragma: no cover
             raise ValueError("You can only set one argument in top, right, side, corner.")
         if top is not None:
             self.SetGradientBackground(True)
