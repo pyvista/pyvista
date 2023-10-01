@@ -884,7 +884,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple
+        tuple[numpy.int32, numpy.int32]
             Shape of the plotter.
 
         Examples
@@ -1554,7 +1554,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple[float, float, float, float, float, float]
+        tuple[numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64]
             Bounds of the active renderer.
 
         Examples
@@ -1579,7 +1579,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[float, float, float]
+        list[numpy.float64, numpy.float64, numpy.float64]
             Center of the active renderer.
 
         Examples
@@ -1797,7 +1797,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             Image array of current render window.
 
         Examples
@@ -5098,7 +5098,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             Image of depth values from camera orthogonal to image
             plane.
 
@@ -5815,7 +5815,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             Array containing pixel RGB and alpha.  Sized:
 
             * [Window height x Window width x 3] if
@@ -6286,7 +6286,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list(tuple(int))
+        list[tuple[numpy.int64, numpy.int64]]
             A list with the subplot coordinates of the actor.
 
         Examples
