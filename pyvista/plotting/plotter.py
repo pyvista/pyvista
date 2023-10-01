@@ -1575,7 +1575,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def center(self):  # numpydoc ignore=RT01
-        """Return the center of the active renderer."""
+        """Return the center of the active renderer.
+
+        Returns
+        -------
+        list[float, float, float]
+            Center of the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.center
+        [0.0, 0.0, 0.0]
+
+        """
         return self.renderer.center
 
     @property
@@ -1778,7 +1793,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def image(self):  # numpydoc ignore=RT01
-        """Return an image array of current render window."""
+        """Return an image array of current render window.
+
+        Returns
+        -------
+        numpy.ndarray
+            Image array of current render window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(off_screen=True)
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.show()
+        >>> pl.image
+
+        """
         if self.render_window is None and self.last_image is not None:
             return self.last_image
 
