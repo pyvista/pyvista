@@ -28,7 +28,7 @@ jobs:
         python-version: ['3.9', '3.11']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -65,7 +65,7 @@ jobs:
       PYVISTA_OFF_SCREEN: True
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -144,7 +144,7 @@ jobs:
           - python-version: '3.11'  # Added with VTK 9.2.5
             vtk-version: 'latest'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
@@ -235,7 +235,7 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
