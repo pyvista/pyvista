@@ -5,7 +5,7 @@ enum-tools==0.10.0
 imageio==2.31.4
 imageio-ffmpeg==0.4.8
 jupyter_sphinx==0.4.0
-jupyterlab==4.0.5
+jupyterlab==4.0.6
 lxml==4.9.3
 meshio==5.3.4
 mypy==1.5.1
