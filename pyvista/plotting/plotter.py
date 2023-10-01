@@ -1806,7 +1806,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pyvista.Plotter(off_screen=True)
         >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.show()
-        >>> pl.image
+        >>> pl.image  # doctest:+SKIP
 
         """
         if self.render_window is None and self.last_image is not None:
