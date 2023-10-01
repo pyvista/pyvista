@@ -3755,17 +3755,17 @@ def test_show_bounds_n_labels():
 @skip_lesser_9_3_X
 def test_radial_gradient_background():
     plotter = pv.Plotter()
-    plotter.set_background('gold', right='orange')
+    plotter.set_background('white', right='black')
     plotter.show()
 
     plotter = pv.Plotter()
-    plotter.set_background('gold', side='orange')
+    plotter.set_background('white', side='black')
     plotter.show()
 
     plotter = pv.Plotter()
-    plotter.set_background('gold', corner='orange')
+    plotter.set_background('white', corner='black')
     plotter.show()
 
     with pytest.raises(ValueError):
         plotter = pv.Plotter()
-        plotter.set_background('gold', top='orange', right='orange')
+        plotter.set_background('white', top='black', right='black')
