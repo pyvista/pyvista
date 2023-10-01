@@ -10,12 +10,12 @@ lxml==4.9.3
 meshio==5.3.4
 mypy==1.5.1
 mypy-extensions==1.0.0
-numpydoc==1.5.0
+numpydoc==1.6.0
 osmnx==1.6.0
 pydata-sphinx-theme==0.14.1
 pypandoc==1.11
 pytest-sphinx==0.5.0
-scipy==1.11.2
+scipy==1.11.3
 Sphinx==7.1.2
 sphinx-autobuild==2021.3.14
 sphinx-copybutton==0.5.2
