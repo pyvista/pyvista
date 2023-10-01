@@ -420,5 +420,6 @@ try:  # Introduced prior to VTK 9.3
         VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE,
         VTK_GRADIENT_VERTICAL,
     )
+    from vtkmodules.vtkRenderingCore import vtkViewport
 except ImportError:  # pragma: no cover
     pass

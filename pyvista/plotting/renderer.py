@@ -3094,15 +3094,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetBackground2(Color(top).float_rgb)
         elif right is not None:  # pragma: no cover
             self.SetGradientBackground(True)
-            self.SetGradientMode(_vtk.VTK_GRADIENT_HORIZONTAL)
+            self.SetGradientMode(_vtk.vtkViewport.GradientModes.VTK_GRADIENT_HORIZONTAL)
             self.SetBackground2(Color(right).float_rgb)
         elif side is not None:  # pragma: no cover
             self.SetGradientBackground(True)
-            self.SetGradientMode(_vtk.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE)
+            self.SetGradientMode(
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE
+            )
             self.SetBackground2(Color(side).float_rgb)
         elif corner is not None:  # pragma: no cover
             self.SetGradientBackground(True)
-            self.SetGradientMode(_vtk.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER)
+            self.SetGradientMode(
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER
+            )
             self.SetBackground2(Color(corner).float_rgb)
         else:
             self.SetGradientBackground(False)
