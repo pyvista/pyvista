@@ -246,6 +246,7 @@ def cartesian_to_spherical(x, y, z):
 
     return r, theta, phi
 
+
 def spherical_to_cartesian(r, theta, phi):
     """Convert Spherical coordinates to 3D Cartesian coordinates.
 
@@ -261,17 +262,18 @@ def spherical_to_cartesian(r, theta, phi):
     phi : numpy.ndarray
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
-    
+
     Returns
     -------
     x, y, z : numpy.ndarray
         Cartesian coordinates.
     """
     s = np.sin(theta)
-    x = r*s*np.cos(phi)
-    y = r*s*np.sin(phi)
-    z = r*np.cos(theta)
+    x = r * s * np.cos(phi)
+    y = r * s * np.sin(phi)
+    z = r * np.cos(theta)
     return x, y, z
+
 
 def merge(
     datasets,
