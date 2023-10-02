@@ -3071,7 +3071,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "`right` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
         if (
             sum([top is not None, right is not None, side is not None, corner is not None]) > 1
