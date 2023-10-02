@@ -3073,8 +3073,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             raise VTKVersionError(
                 "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
-        if (
-            sum([top is not None, right is not None, side is not None, corner is not None]) > 1
+        if not (
+            (top is not None and right is side is corner is None) and
+            (right is not None and top is side is corner is None) and
+            (side is not None and top is right is corner is None) and
+            (corner is not None and top is right is side is None)
         ):  # pragma: no cover
             raise ValueError("You can only set one argument in top, right, side, corner.")
         if top is not None:
