@@ -3334,11 +3334,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(mesh, pyvista.PolyData):
             mesh_points = mesh.points.copy()
             angle = np.radians(90.0)
-            rotation_matrix = np.array([
-                [np.cos(angle), -np.sin(angle), 0],
-                [np.sin(angle), np.cos(angle), 0],
-                [0, 0, 1]
-            ])
+            rotation_matrix = np.array(
+                [[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]]
+            )
             rotated_points = np.dot(mesh_points, rotation_matrix)
             mesh.points = rotated_points
         elif isinstance(mesh, pyvista.PointSet):
