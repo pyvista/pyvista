@@ -828,7 +828,7 @@ def SolidSphereGeneric(
 
         celltypes.append(pyvista.CellType.HEXAHEDRON)
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
-    translate(mesh, center, direction, starting_direction=(0.0, 0.0, 1.0))
+    translate(mesh, center, direction, start_direction=(0.0, 0.0, 1.0))
     return mesh
 
 
