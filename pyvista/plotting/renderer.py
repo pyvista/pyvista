@@ -25,6 +25,8 @@ from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 from .utilities.gl_checks import check_depth_peeling, uses_egl
 
+from pyvista import vtk_version_info
+
 ACTOR_LOC_MAP = [
     'upper right',
     'upper left',
@@ -3067,10 +3069,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is None and side is None and corner is None) and pyvista.vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
+        if not (right is None and side is None and corner is None) and vtk_version_info < (9, 3):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
