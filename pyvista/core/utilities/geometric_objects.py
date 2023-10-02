@@ -382,6 +382,9 @@ def SolidSphere(
 ):
     """Create a solid sphere.
 
+    A solid sphere fills space in 3D in comparison to
+    :func:`pyvista.Sphere`, which is a 2D surface.
+
     Parameters
     ----------
     outer_radius : float, default: 0.5
