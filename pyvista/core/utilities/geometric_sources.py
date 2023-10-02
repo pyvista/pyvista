@@ -21,7 +21,7 @@ def translate(
     """Translate and orient a mesh to a new center and direction.
 
     The input mesh is considered centered at the origin
-    and facing in the starting_direction.
+    and facing in the start_direction.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def translate(
         Center point to which the mesh should be translated.
     direction : tuple, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
-    starting_direction : tuple, default: (1.0, 0.0, 0.0)
+    start_direction : tuple, default: (1.0, 0.0, 0.0)
         Direction vector along which mesh is originally oriented.
 
     """
@@ -57,12 +57,12 @@ def translate(
             return out
         return out.transpose()
 
-    if np.array_equal(direction, starting_direction):
+    if np.array_equal(direction, start_direction):
         rot_matrix = np.identity(3)
     else:
-        # Start with inverse of matrix from starting_direction to (1.0, 0.0, 0.0)
-        if not np.array_equal(starting_direction, (1.0, 0.0, 0.0)):
-            rot_matrix = _form_matrix(starting_direction, inverse=True)
+        # Start with inverse of matrix from start_direction to (1.0, 0.0, 0.0)
+        if not np.array_equal(start_direction, (1.0, 0.0, 0.0)):
+            rot_matrix = _form_matrix(start_direction, inverse=True)
         else:
             rot_matrix = np.identity(3)
 
