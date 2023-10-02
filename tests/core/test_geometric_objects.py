@@ -47,6 +47,7 @@ def test_sphere_direction_points(expected):
     assert np.array_equal(expected, actual)
 
 
+# test_sphere_phi and test_sphere_theta are similar to ones for SolidSphere
 def test_sphere_phi():
     atol = 1e-16
     north_hemisphere = pv.Sphere(start_phi=0, end_phi=90)
@@ -192,6 +193,35 @@ def test_solid_sphere_resolution_errors():
         pv.SolidSphere(theta_resolution=1)
     with pytest.raises(ValueError, match="phi_resolution must be 2 or more"):
         pv.SolidSphere(phi_resolution=1)
+
+
+# test_solid_sphere_phi and test_solid_sphere_theta are similar to ones for Sphere
+def test_solid_sphere_phi():
+    atol = 1e-16
+    north_hemisphere = pv.SolidSphere(start_phi=0, end_phi=90)
+    assert np.all(north_hemisphere.points[:, 2] >= -atol)  # north is above XY plane
+    south_hemisphere = pv.SolidSphere(start_phi=90, end_phi=180)
+    assert np.all(south_hemisphere.points[:, 2] <= atol)  # south is below XY plane
+
+
+def test_solid_sphere_theta():
+    atol = 1e-16
+
+    quadrant1 = pv.SolidSphere(start_theta=0, end_theta=90)
+    assert np.all(quadrant1.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant1.points[:, 1] >= -atol)  # +Y
+
+    quadrant2 = pv.SolidSphere(start_theta=90, end_theta=180)
+    assert np.all(quadrant2.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant2.points[:, 1] >= -atol)  # +Y
+
+    quadrant3 = pv.SolidSphere(start_theta=180, end_theta=270)
+    assert np.all(quadrant3.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant3.points[:, 1] <= atol)  # -Y
+
+    quadrant4 = pv.SolidSphere(start_theta=270, end_theta=360)
+    assert np.all(quadrant4.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
 def test_plane():
