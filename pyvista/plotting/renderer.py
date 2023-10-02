@@ -3074,7 +3074,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
         if not (
-            (top is not None and right is side is corner is None)
+            (top is right is side is corner is None)
+            or (top is not None and right is side is corner is None)
             or (right is not None and top is side is corner is None)
             or (side is not None and top is right is corner is None)
             or (corner is not None and top is right is side is None)
