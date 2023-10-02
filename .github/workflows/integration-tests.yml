@@ -28,7 +28,7 @@ jobs:
       DISPLAY: ':99.0'
       MNE_LOGGING_LEVEL: 'info'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -61,7 +61,7 @@ jobs:
     name: PyVistaQt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -90,7 +90,7 @@ jobs:
         with:
           packages: libgl1-mesa-glx xvfb
           version: 3.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
