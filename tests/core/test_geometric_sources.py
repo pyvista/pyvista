@@ -100,9 +100,9 @@ def test_translate_rotations():
     assert np.allclose(point.points, [[0.0, 1.0, 0.0]])
 
     point = pv.PolyData([[0.0, 0.0, 1.0]])
-    translate(point, direction=[0.0, 1.0, 0.0], starting_direction=[0.0, 0.0, 1.0])
+    translate(point, direction=[0.0, 1.0, 0.0], start_direction=[0.0, 0.0, 1.0])
     assert np.allclose(point.points, [[0.0, 1.0, 0.0]])
 
     point = pv.PolyData([[0.0, 0.0, 1.0]])
-    translate(point, direction=[0.0, 0.0, 1.0], starting_direction=[0.0, 0.0, 1.0])
+    translate(point, direction=[0.0, 0.0, 1.0], start_direction=[0.0, 0.0, 1.0])
     assert np.allclose(point.points, [[0.0, 0.0, 1.0]])
