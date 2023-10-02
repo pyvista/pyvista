@@ -461,6 +461,7 @@ def SolidSphere(
     Create a solid sphere.
 
     >>> import pyvista as pv
+    >>> import numpy as np
     >>> solid_sphere = pv.SolidSphere()
     >>> solid_sphere.plot(show_edges=True)
 
