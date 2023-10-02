@@ -498,10 +498,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Cylinder surface.
         """
         self.Update()
-        output = wrap(self.GetOutput())
-        output.rotate_z(-90, inplace=True)
-        translate(output, self.center, self.direction)
-        return output
+        return wrap(self.GetOutput())
 
 
 @no_new_attr
