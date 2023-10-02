@@ -289,6 +289,16 @@ def Sphere(
 ):
     """Create a sphere.
 
+    A sphere describes a 2D surface in comparison to
+    :func:`pyvista.SolidSphere`, which fills a 3D volume.
+
+    PyVista uses a convention where theta represents the azimuthal
+    angle (similar to degrees longitude on the globe) and phi
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    phi is 0 degrees at the North Pole and 180 degrees at the South
+    Pole.
+
     Parameters
     ----------
     radius : float, default: 0.5
@@ -299,27 +309,27 @@ def Sphere(
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees latitude.
+        the sphere's north pole at zero degrees phi.
 
     theta_resolution : int, default: 30
-        Set the number of points in the longitude direction (ranging
+        Set the number of points in the azimuthal direction (ranging
         from ``start_theta`` to ``end_theta``).
 
     phi_resolution : int, default: 30
-        Set the number of points in the latitude direction (ranging from
+        Set the number of points in the polar direction (ranging from
         ``start_phi`` to ``end_phi``).
 
     start_theta : float, default: 0.0
-        Starting longitude angle in degrees ``[0, 360]``.
+        Starting azimuthal angle in degrees ``[0, 360]``.
 
     end_theta : float, default: 360.0
-        Ending longitude angle in degrees ``[0, 360]``.
+        Ending azimuthal angle in degrees ``[0, 360]``.
 
     start_phi : float, default: 0.0
-        Starting latitude angle in degrees ``[0, 180]``.
+        Starting polar angle in degrees ``[0, 180]``.
 
     end_phi : float, default: 180.0
-        Ending latitude angle in degrees ``[0, 180]``.
+        Ending polar angle in degrees ``[0, 180]``.
 
     Returns
     -------
@@ -329,6 +339,7 @@ def Sphere(
     See Also
     --------
     pyvista.Icosphere
+    pyvista.SolidSphere
 
     Examples
     --------
@@ -385,6 +396,13 @@ def SolidSphere(
     A solid sphere fills space in 3D in comparison to
     :func:`pyvista.Sphere`, which is a 2D surface.
 
+    PyVista uses a convention where theta represents the azimuthal
+    angle (similar to degrees longitude on the globe) and phi
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    phi is 0 degrees at the North Pole and 180 degrees at the South
+    Pole.
+
     Parameters
     ----------
     outer_radius : float, default: 0.5
@@ -397,19 +415,19 @@ def SolidSphere(
         Number of points in radial direction.
 
     start_theta : float, default: 0.0
-        Starting longitude angle in degrees.
+        Starting azimuthal angle in degrees.
 
     end_theta : float, default: 360.0
-        Ending longitude angle in degrees.
+        Ending azimuthal angle in degrees.
 
     theta_resolution : int, default: 30
         Number of points in theta direction.
 
     start_phi : float, default: 0.0
-        Starting latitude angle in degrees.
+        Starting polar angle in degrees.
 
     end_phi : float, default: 180.0
-        Ending latitude angle in degrees.
+        Ending polar angle in degrees.
 
     phi_resolution : int, default: 30
         Number of points in phi direction,
@@ -435,7 +453,7 @@ def SolidSphere(
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees latitude.
+        the sphere's north pole at zero degrees phi.
 
     Returns
     -------
@@ -455,7 +473,7 @@ def SolidSphere(
     >>> solid_sphere = pv.SolidSphere()
     >>> solid_sphere.plot(show_edges=True)
 
-    A solid sphere is 3D in comparison to the 2d `pyvista.Sphere`.
+    A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
     Generate a solid hemi-sphere to see the internal structure.
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
