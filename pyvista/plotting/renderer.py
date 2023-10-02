@@ -3067,7 +3067,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is None and side and None and corner is None) and pyvista.vtk_version_info < (9, 3):  # pragma: no cover
+        if not (right is None and side and None and corner is None) and pyvista.vtk_version_info < (
+            9,
+            3,
+        ):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
