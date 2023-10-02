@@ -78,6 +78,9 @@ skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason="Flaky on 9
 skip_lesser_9_0_X = pytest.mark.skipif(
     pv.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
 )
+skip_lesser_9_3_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X"
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -3749,3 +3752,22 @@ def test_show_bounds_n_labels():
     )
     plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
     plotter.show()
+
+
+@skip_lesser_9_3_X
+def test_radial_gradient_background():
+    plotter = pv.Plotter()
+    plotter.set_background('white', right='black')
+    plotter.show()
+
+    plotter = pv.Plotter()
+    plotter.set_background('white', side='black')
+    plotter.show()
+
+    plotter = pv.Plotter()
+    plotter.set_background('white', corner='black')
+    plotter.show()
+
+    with pytest.raises(ValueError):
+        plotter = pv.Plotter()
+        plotter.set_background('white', top='black', right='black')
