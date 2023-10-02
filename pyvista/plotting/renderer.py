@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS
+from pyvista import MAX_N_COLOR_BARS, vtk_version_info
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -24,8 +24,6 @@ from .helpers import view_vectors
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 from .utilities.gl_checks import check_depth_peeling, uses_egl
-
-from pyvista import vtk_version_info
 
 ACTOR_LOC_MAP = [
     'upper right',
