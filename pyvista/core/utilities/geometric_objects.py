@@ -596,6 +596,29 @@ def SolidSphereGeneric(
     ... )
 
     """
+    radius = np.asanyarray(radius)
+    theta = np.asanyarray(theta)
+    phi = np.asanyarray(phi)
+
+    nr = len(radius)
+    ntheta = len(theta)
+    nphi = len(phi)
+
+    if nr < 2:
+        raise ValueError("radius resolution must be 2 or more")
+    if ntheta < 2:
+        raise ValueError("theta resolution must be 2 or more")
+    if nphi < 2:
+        raise ValueError("phi resolution must be 2 or more")
+
+    is_sorted = lambda a: np.all(a[:-1] < a[1:])
+    if not is_sorted(radius):
+        raise ValueError("radius is not monotonically increasing")
+    if not is_sorted(theta):
+        raise ValueError("theta is not monotonically increasing")
+    if not is_sorted(phi):
+        raise ValueError("phi is not monotonically increasing")
+
     if radius[0] < 0.0:
         raise ValueError("minimum radius cannot be negative")
     if theta[0] < 0.0:
@@ -610,17 +633,6 @@ def SolidSphereGeneric(
     # Hereafter all degrees are in radians
     theta = np.deg2rad(theta)
     phi = np.deg2rad(phi)
-
-    nr = len(radius)
-    ntheta = len(theta)
-    nphi = len(phi)
-
-    if nr < 2:
-        raise ValueError("radius_resolution must be 2 or more")
-    if ntheta < 2:
-        raise ValueError("theta_resolution must be 2 or more")
-    if nphi < 2:
-        raise ValueError("phi_resolution must be 2 or more")
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` cartesian coordinate array.

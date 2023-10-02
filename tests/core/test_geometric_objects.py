@@ -187,11 +187,18 @@ def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
         pv.SolidSphere(end_phi=190)
 
-    with pytest.raises(ValueError, match="radius_resolution must be 2 or more"):
+    with pytest.raises(ValueError, match="radius is not monotonically increasing"):
+        pv.SolidSphereGeneric(radius=(0, 10, 1))
+    with pytest.raises(ValueError, match="theta is not monotonically increasing"):
+        pv.SolidSphereGeneric(theta=(0, 180, 90))
+    with pytest.raises(ValueError, match="phi is not monotonically increasing"):
+        pv.SolidSphereGeneric(phi=(0, 180, 90))
+
+    with pytest.raises(ValueError, match="radius resolution must be 2 or more"):
         pv.SolidSphere(radius_resolution=1)
-    with pytest.raises(ValueError, match="theta_resolution must be 2 or more"):
+    with pytest.raises(ValueError, match="theta resolution must be 2 or more"):
         pv.SolidSphere(theta_resolution=1)
-    with pytest.raises(ValueError, match="phi_resolution must be 2 or more"):
+    with pytest.raises(ValueError, match="phi resolution must be 2 or more"):
         pv.SolidSphere(phi_resolution=1)
 
 
