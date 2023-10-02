@@ -56,6 +56,7 @@ Geometric Objects
    Pyramid
    Rectangle
    SolidSphere
+   SolidSphereGeneric
    Sphere
    Spline
    Superquadric

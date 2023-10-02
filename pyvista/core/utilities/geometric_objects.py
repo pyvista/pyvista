@@ -338,8 +338,8 @@ def Sphere(
 
     See Also
     --------
-    pyvista.Icosphere
-    pyvista.SolidSphere
+    pyvista.Icosphere: Sphere created from projection of icosohedron.
+    pyvista.SolidSphere: Sphere that fills 3D space.
 
     Examples
     --------
@@ -385,9 +385,6 @@ def SolidSphere(
     start_phi=0.0,
     end_phi=180.0,
     phi_resolution=30,
-    radius=None,
-    theta=None,
-    phi=None,
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
 ):
@@ -395,6 +392,10 @@ def SolidSphere(
 
     A solid sphere fills space in 3D in comparison to
     :func:`pyvista.Sphere`, which is a 2D surface.
+
+    This function uses a linear sampling of each spherical
+    coordinate, whereas :func:`pyvista.SolidSphereGeneric`
+    allows for nonuniform sampling.
 
     PyVista uses a convention where theta represents the azimuthal
     angle (similar to degrees longitude on the globe) and phi
@@ -406,10 +407,10 @@ def SolidSphere(
     Parameters
     ----------
     outer_radius : float, default: 0.5
-        Outer radius of sphere.
+        Outer radius of sphere.  Must be non-nonegative.
 
     inner_radius : float, default: 0.0
-        Inner radius of sphere.
+        Inner radius of sphere.  Must be non-negative.
 
     radius_resolution : int, default: 5
         Number of points in radial direction.
@@ -419,34 +420,24 @@ def SolidSphere(
 
     end_theta : float, default: 360.0
         Ending azimuthal angle in degrees.
+        ``end_theta`` must be greater than ``start_theta``.
 
     theta_resolution : int, default: 30
         Number of points in theta direction.
 
     start_phi : float, default: 0.0
         Starting polar angle in degrees.
+        phi must lie between 0 and 180.
 
     end_phi : float, default: 180.0
         Ending polar angle in degrees.
+        phi must lie between 0 and 180.
+        ``end_phi`` must be greater than ``start_phi``.
 
     phi_resolution : int, default: 30
         Number of points in phi direction,
-        inclusive of polar axis if applicable.
-
-    radius : sequence[float], optional
-        A monotonically increasing sequence of values specifying radial
-        points. If specified, it overrides any choices for ``outer_radius``,
-        ``inner_radius``, and ``radius_resolution``.
-
-    theta : sequence[float], optional
-        A monotonically increasing sequence of values specifying theta
-        points in degrees. If specified, it overrides any choices for
-        ``start_theta``, ``end_theta``, and ``theta_resolution``.
-
-    phi : sequence[float], optional
-        A monotonically increasing sequence of values specifying phi
-        points in degrees. If specified, it overrides any choices for
-        ``start_phi``, ``end_phi``, and ``phi_resolution``.
+        inclusive of polar axis, i.e. phi=0 and phi=180,
+        if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
@@ -462,14 +453,14 @@ def SolidSphere(
 
     See Also
     --------
-    pyvista.Sphere
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+    pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
 
     Examples
     --------
     Create a solid sphere.
 
     >>> import pyvista as pv
-    >>> import numpy as np
     >>> solid_sphere = pv.SolidSphere()
     >>> solid_sphere.plot(show_edges=True)
 
@@ -502,13 +493,109 @@ def SolidSphere(
     >>> partial_solid_sphere.explode(1).plot()
 
     """
-    if radius is None:
-        radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    if theta is None:
-        theta = np.linspace(start_theta, end_theta, theta_resolution)
-    if phi is None:
-        phi = np.linspace(start_phi, end_phi, phi_resolution)
+    radius = np.linspace(inner_radius, outer_radius, radius_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    phi = np.linspace(start_phi, end_phi, phi_resolution)
+    return SolidSphereGeneric(radius, theta, phi, center, direction)
 
+
+def SolidSphereGeneric(
+    radius=np.linspace(0, 0.5, 5),
+    theta=np.linspace(0, 360, 30),
+    phi=np.linspace(0, 180, 30),
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
+):
+    """Create a solid sphere with flexible sampling.
+
+    A solid sphere fills space in 3D in comparison to
+    :func:`pyvista.Sphere`, which is a 2D surface.
+
+    This function allows user defined sampling of each spherical
+    coordinate, whereas :func:`pyvista.SolidSphere`
+    only allows linear sampling.
+
+    PyVista uses a convention where theta represents the azimuthal
+    angle (similar to degrees longitude on the globe) and phi
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    phi is 0 degrees at the North Pole and 180 degrees at the South
+    Pole.
+
+    Parameters
+    ----------
+    radius : sequence[float], optional
+        A monotonically increasing sequence of values specifying radial
+        points. Must have at least two points.
+
+    theta : sequence[float], optional
+        A monotonically increasing sequence of values specifying theta
+        points in degrees. Must have at least two points.
+
+    phi : sequence[float], optional
+        A monotonically increasing sequence of values specifying phi
+        points in degrees. Must have at least two points.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees phi.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Solid sphere mesh.
+
+    See Also
+    --------
+    pyvista.SolidSphere: Sphere creation using linear sampling.
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+
+    Examples
+    --------
+    Create a solid sphere using default parameters.  The
+    default creates a sphere that is linearly sampled with
+    respect to spherical coordinates, the same as
+    :func:`pyvista.SolidSphere`.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> solid_sphere = pv.SolidSphereGeneric()
+    >>> solid_sphere.plot(show_edges=True)
+
+    Linearly sampling spherical coordinates does not lead to
+    cells of all the same size at each radial position.  In
+    particular, cells near the poles have smaller sizes.
+    Plot the cell volumes of a solid sphere with only one layer of
+    cells.
+
+    >>> solid_sphere = pv.SolidSphereGeneric(
+    ...     radius=np.linspace(0, 0.5, 2),
+    ...     theta=np.linspace(180, 360, 30),
+    ...     phi=np.linspace(0, 180, 30),
+    ... )
+    >>> solid_sphere = solid_sphere.compute_cell_sizes()
+    >>> solid_sphere.plot(
+    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
+    ... )
+
+    Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
+    `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
+
+    >>> phi = np.rad2deg(np.arccos(np.linspace(1, -1, 30)))
+    >>> solid_sphere = pv.SolidSphereGeneric(
+    ...     radius=np.linspace(0, 0.5, 2),
+    ...     theta=np.linspace(180, 360, 30),
+    ...     phi=phi,
+    ... )
+    >>> solid_sphere = solid_sphere.compute_cell_sizes()
+    >>> solid_sphere.plot(
+    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
+    ... )
+
+    """
     if radius[0] < 0.0:
         raise ValueError("minimum radius cannot be negative")
     if theta[0] < 0.0:

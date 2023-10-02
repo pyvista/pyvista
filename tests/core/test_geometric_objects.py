@@ -98,9 +98,9 @@ def test_solid_sphere_hollow():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * (1.0**3 - 0.5**3), rel=1e-3)
 
 
-def test_solid_sphere_sequences():
+def test_solid_sphere_generic():
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
-    sphere_seq = pv.SolidSphere(
+    sphere_seq = pv.SolidSphereGeneric(
         radius=np.linspace(0, 0.5, 5), theta=np.linspace(0, 360, 11), phi=np.linspace(0, 180, 13)
     )
     assert sphere == sphere_seq
