@@ -884,7 +884,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple
+        tuple[numpy.int32, numpy.int32]
             Shape of the plotter.
 
         Examples
@@ -1554,7 +1554,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple[float, float, float, float, float, float]
+        tuple[numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64]
             Bounds of the active renderer.
 
         Examples
@@ -1575,7 +1575,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def center(self):  # numpydoc ignore=RT01
-        """Return the center of the active renderer."""
+        """Return the center of the active renderer.
+
+        Returns
+        -------
+        list[numpy.float64, numpy.float64, numpy.float64]
+            Center of the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.center
+        [0.0, 0.0, 0.0]
+
+        """
         return self.renderer.center
 
     @property
@@ -1778,7 +1793,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def image(self):  # numpydoc ignore=RT01
-        """Return an image array of current render window."""
+        """Return an image array of current render window.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            Image array of current render window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(off_screen=True)
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.show()
+        >>> pl.image  # doctest:+SKIP
+
+        """
         if self.render_window is None and self.last_image is not None:
             return self.last_image
 
@@ -5068,7 +5098,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             Image of depth values from camera orthogonal to image
             plane.
 
@@ -5785,7 +5815,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             Array containing pixel RGB and alpha.  Sized:
 
             * [Window height x Window width x 3] if
@@ -6256,7 +6286,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list(tuple(int))
+        list[tuple[numpy.int64, numpy.int64]]
             A list with the subplot coordinates of the actor.
 
         Examples

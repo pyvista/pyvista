@@ -3,13 +3,13 @@
 -r requirements.txt
 cmocean<3.1
 colorcet<3.1.0
-hypothesis<6.87.1
+hypothesis<6.87.2
 imageio<2.32.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
 ipywidgets<9.0.0
 meshio<5.4.0
-nest_asyncio<1.5.8
+nest_asyncio<1.5.9
 numpydoc==1.6.0
 param<1.14.0
 pytest<7.5.0

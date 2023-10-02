@@ -5,7 +5,7 @@ enum-tools==0.10.0
 imageio==2.31.4
 imageio-ffmpeg==0.4.8
 jupyter_sphinx==0.4.0
-jupyterlab==4.0.5
+jupyterlab==4.0.6
 lxml==4.9.3
 meshio==5.3.4
 mypy==1.5.1
@@ -26,7 +26,7 @@ sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.3.7
 sphinxcontrib-websupport==1.2.6
 sympy==1.12
-trame==3.2.4
+trame==3.2.7
 trame-vtk==2.5.8
 trame-vuetify==2.3.1
 trimesh==3.23.5
