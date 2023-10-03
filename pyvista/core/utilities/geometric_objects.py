@@ -396,7 +396,8 @@ def SolidSphere(
 
     This function uses a linear sampling of each spherical
     coordinate, whereas :func:`pyvista.SolidSphereGeneric`
-    allows for nonuniform sampling.
+    allows for nonuniform sampling. Angles are by default
+    specified in degrees.
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
@@ -418,28 +419,28 @@ def SolidSphere(
         Number of points in radial direction.
 
     start_theta : float, default: 0.0
-        Starting azimuthal angle in degrees.
+        Starting azimuthal angle.
 
     end_theta : float, default: 360.0
-        Ending azimuthal angle in degrees.
+        Ending azimuthal angle.
         ``end_theta`` must be greater than ``start_theta``.
 
     theta_resolution : int, default: 30
         Number of points in theta direction.
 
     start_phi : float, default: 0.0
-        Starting polar angle in degrees.
-        ``phi`` must lie between 0 and 180.
+        Starting polar angle.
+        ``phi`` must lie between 0 and 180 in degrees.
 
     end_phi : float, default: 180.0
-        Ending polar angle in degrees.
-        ``phi`` must lie between 0 and 180.
+        Ending polar angle.
+        ``phi`` must lie between 0 and 180 in degrees.
         ``end_phi`` must be greater than ``start_phi``.
 
     phi_resolution : int, default: 30
         Number of points in phi direction,
-        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``,
-        if applicable.
+        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
+        in degrees, if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
@@ -525,7 +526,8 @@ def SolidSphereGeneric(
 
     This function allows user defined sampling of each spherical
     coordinate, whereas :func:`pyvista.SolidSphere`
-    only allows linear sampling.
+    only allows linear sampling.   Angles are by default
+    specified in degrees.
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
@@ -538,15 +540,16 @@ def SolidSphereGeneric(
     ----------
     radius : sequence[float], optional
         A monotonically increasing sequence of values specifying radial
-        points. Must have at least two points.
+        points. Must have at least two points and be non-negative.
 
     theta : sequence[float], optional
         A monotonically increasing sequence of values specifying ``theta``
-        points in degrees. Must have at least two points.
+        points. Must have at least two points.
 
     phi : sequence[float], optional
         A monotonically increasing sequence of values specifying ``phi``
-        points in degrees. Must have at least two points.
+        points. Must have at least two points.  Must be between
+        0 and 180 degrees.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
