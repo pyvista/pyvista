@@ -404,7 +404,8 @@ def SolidSphere(
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
-    Pole.
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
 
     Parameters
     ----------
@@ -534,7 +535,8 @@ def SolidSphereGeneric(
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
-    Pole.
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
 
     Parameters
     ----------
