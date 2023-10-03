@@ -94,7 +94,10 @@ def Cylinder(
         capping=capping,
         resolution=resolution,
     )
-    return algo.output
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def CylinderStructured(
