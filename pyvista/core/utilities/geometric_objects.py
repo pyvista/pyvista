@@ -305,10 +305,10 @@ def Sphere(
         Sphere radius.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
-        Center in ``[x, y, z]``.
+        Center coordinate vector in ``[x, y, z]``.
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
@@ -442,9 +442,8 @@ def SolidSphere(
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
-
     direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
 
     Returns
@@ -539,10 +538,10 @@ def SolidSphereGeneric(
         points in degrees. Must have at least two points.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
-        Center in ``[x, y, z]``.
+        Center coordinate vector in ``[x, y, z]``.
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction vector in ``[x, y, z]`` pointing from ``center`` to
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
 
     Returns
@@ -613,13 +612,14 @@ def SolidSphereGeneric(
     if nphi < 2:
         raise ValueError("phi resolution must be 2 or more")
 
-    def is_sorted(a):
+    def _is_sorted(a):
         return np.all(a[:-1] < a[1:])
-    if not is_sorted(radius):
+
+    if not _is_sorted(radius):
         raise ValueError("radius is not monotonically increasing")
-    if not is_sorted(theta):
+    if not _is_sorted(theta):
         raise ValueError("theta is not monotonically increasing")
-    if not is_sorted(phi):
+    if not _is_sorted(phi):
         raise ValueError("phi is not monotonically increasing")
 
     if radius[0] < 0.0:
