@@ -498,7 +498,7 @@ class RenderWindowInteractor:
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
-        ctrl + left button for spinning the view around the vewing
+        ctrl + left button for spinning the view around the viewing
         axis of the camera.  Alternatively, ctrl + shift + left button
         or mouse wheel zooms, and shift + left button pans.
 
