@@ -51,7 +51,7 @@ def Cylinder(
     """Create the surface of a cylinder.
 
     .. warning::
-       :class:`Cylinder` function rotates the :class:`CylinderSource` 's :class:`PolyData` in its own way.
+       :class:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
