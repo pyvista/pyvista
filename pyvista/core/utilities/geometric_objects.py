@@ -52,7 +52,7 @@ def Cylinder(
 
     .. warning::
        :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
-       It rotates the :attr:`CylinderSource.output` 90 degrees in z-axis, translates and
+       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
     See also :func:`pyvista.CylinderStructured`.
