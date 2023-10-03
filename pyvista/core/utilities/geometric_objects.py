@@ -397,11 +397,11 @@ def SolidSphere(
     coordinate, whereas :func:`pyvista.SolidSphereGeneric`
     allows for nonuniform sampling.
 
-    PyVista uses a convention where theta represents the azimuthal
-    angle (similar to degrees longitude on the globe) and phi
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
-    phi is 0 degrees at the North Pole and 180 degrees at the South
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole.
 
     Parameters
@@ -431,12 +431,12 @@ def SolidSphere(
 
     end_phi : float, default: 180.0
         Ending polar angle in degrees.
-        phi must lie between 0 and 180.
+        ``phi`` must lie between 0 and 180.
         ``end_phi`` must be greater than ``start_phi``.
 
     phi_resolution : int, default: 30
         Number of points in phi direction,
-        inclusive of polar axis, i.e. phi=0 and phi=180,
+        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``,
         if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -444,7 +444,7 @@ def SolidSphere(
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees phi.
+        the sphere's north pole at zero degrees ``phi``.
 
     Returns
     -------
@@ -516,11 +516,11 @@ def SolidSphereGeneric(
     coordinate, whereas :func:`pyvista.SolidSphere`
     only allows linear sampling.
 
-    PyVista uses a convention where theta represents the azimuthal
-    angle (similar to degrees longitude on the globe) and phi
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
-    phi is 0 degrees at the North Pole and 180 degrees at the South
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole.
 
     Parameters
@@ -530,11 +530,11 @@ def SolidSphereGeneric(
         points. Must have at least two points.
 
     theta : sequence[float], optional
-        A monotonically increasing sequence of values specifying theta
+        A monotonically increasing sequence of values specifying ``theta``
         points in degrees. Must have at least two points.
 
     phi : sequence[float], optional
-        A monotonically increasing sequence of values specifying phi
+        A monotonically increasing sequence of values specifying ``phi``
         points in degrees. Must have at least two points.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -542,7 +542,7 @@ def SolidSphereGeneric(
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees phi.
+        the sphere's north pole at zero degrees ``phi``.
 
     Returns
     -------
