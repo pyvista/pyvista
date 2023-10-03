@@ -91,7 +91,9 @@ def Cylinder(
     >>> import pyvista
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2),
+    ...     pyvista.Cylinder(
+    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ...     ),
     ...     show_edges=True,
     ...     line_width=5,
     ... )
