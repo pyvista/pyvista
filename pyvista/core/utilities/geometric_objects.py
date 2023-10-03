@@ -50,8 +50,11 @@ def Cylinder(
 ):
     """Create the surface of a cylinder.
 
-    Cylinder function rotates the CylinderSource's PolyData in its own way.
-    Therefore the plot of CylinderSource object and Cylinder function are different.
+    .. warning::
+       Cylinder function rotates the CylinderSource's PolyData in its own way.
+       It rotates the CylinderSource().output 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+       Therefore the plot of CylinderSource object and Cylinder function are different.
 
     See also :func:`pyvista.CylinderStructured`.
 
