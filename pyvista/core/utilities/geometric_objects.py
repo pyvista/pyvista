@@ -511,7 +511,7 @@ def SolidSphere(
 
 
 def SolidSphereGeneric(
-    radius=np.linspace(0, 0.5, 5),
+    radius=None,
     theta=None,
     phi=None,
     center=(0.0, 0.0, 0.0),
