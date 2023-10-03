@@ -90,7 +90,6 @@ def Cylinder(
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
 
-    >>> import pyvista
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(
     ...     pyvista.Cylinder(
