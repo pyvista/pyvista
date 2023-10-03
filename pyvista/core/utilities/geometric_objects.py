@@ -292,11 +292,11 @@ def Sphere(
     A sphere describes a 2D surface in comparison to
     :func:`pyvista.SolidSphere`, which fills a 3D volume.
 
-    PyVista uses a convention where theta represents the azimuthal
-    angle (similar to degrees longitude on the globe) and phi
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
-    phi is 0 degrees at the North Pole and 180 degrees at the South
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole.
 
     Parameters
@@ -309,7 +309,7 @@ def Sphere(
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees phi.
+        the sphere's north pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
         Set the number of points in the azimuthal direction (ranging
