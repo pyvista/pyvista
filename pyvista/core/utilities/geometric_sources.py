@@ -304,10 +304,9 @@ class CylinderSource(_vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
-       Cylinder function rotates the CylinderSource's PolyData in its own way.
-       It rotates the CylinderSource().output 90 degrees in z-axis, translates and
+       :class:`Cylinder` function rotates the :class:`CylinderSource` 's :class:`PolyData` in its own way.
+       It rotates the :attr:`CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
-       Therefore the plot of CylinderSource object and Cylinder function are different.
 
     Parameters
     ----------
