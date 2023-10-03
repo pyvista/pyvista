@@ -410,7 +410,8 @@ def SolidSphere(
         Outer radius of sphere.  Must be non-nonegative.
 
     inner_radius : float, default: 0.0
-        Inner radius of sphere.  Must be non-negative.
+        Inner radius of sphere.  Must be non-negative
+        and smaller than ``outer_radius``.
 
     radius_resolution : int, default: 5
         Number of points in radial direction.
