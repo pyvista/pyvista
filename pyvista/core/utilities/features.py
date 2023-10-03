@@ -247,7 +247,7 @@ def cartesian_to_spherical(x, y, z):
     return r, theta, phi
 
 
-def spherical_to_cartesian(r, theta, phi):
+def spherical_to_cartesian(r, phi, theta):
     """Convert Spherical coordinates to 3D Cartesian coordinates.
 
     Parameters
@@ -268,10 +268,10 @@ def spherical_to_cartesian(r, theta, phi):
     x, y, z : numpy.ndarray
         Cartesian coordinates.
     """
-    s = np.sin(theta)
-    x = r * s * np.cos(phi)
-    y = r * s * np.sin(phi)
-    z = r * np.cos(theta)
+    s = np.sin(phi)
+    x = r * s * np.cos(theta)
+    y = r * s * np.sin(theta)
+    z = r * np.cos(phi)
     return x, y, z
 
 
