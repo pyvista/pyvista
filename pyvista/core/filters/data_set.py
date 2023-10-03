@@ -5054,12 +5054,12 @@ class DataSetFilters:
         ----------
         pass_pointid : bool, default: True
             Adds a point array ``"vtkOriginalPointIds"`` that
-            idenfities which original points these surface points
+            identifies which original points these surface points
             correspond to.
 
         pass_cellid : bool, default: True
             Adds a cell array ``"vtkOriginalCellIds"`` that
-            idenfities which original cells these surface cells
+            identifies which original cells these surface cells
             correspond to.
 
         nonlinear_subdivision : int, default: 1
