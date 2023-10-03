@@ -179,15 +179,17 @@ def test_solid_sphere_resolution_edge_cases():
 def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match="minimum radius cannot be negative"):
         pv.SolidSphere(inner_radius=-1)
-    with pytest.raises(ValueError, match="minimum theta cannot be negative"):
+    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
         pv.SolidSphere(start_theta=-1)
     with pytest.raises(ValueError, match="minimum phi cannot be negative"):
         pv.SolidSphere(start_phi=-1)
-    with pytest.raises(ValueError, match="maximum theta cannot be > 360"):
+    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
         pv.SolidSphere(end_theta=370)
     with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
         pv.SolidSphere(end_phi=190)
-    with pytest.raises(ValueError, match=re.escape("maximum theta cannot be > 2 * np.pi")):
+    with pytest.raises(
+        ValueError, match=re.escape("max theta and min theta must be within 2 * np.pi")
+    ):
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
     with pytest.raises(ValueError, match="maximum phi cannot be > np.pi"):
         pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
@@ -260,6 +262,15 @@ def test_solid_sphere_radians():
     deg = pv.SolidSphereGeneric(theta=theta, phi=phi)
     rad = pv.SolidSphereGeneric(theta=np.deg2rad(theta), phi=np.deg2rad(phi), radians=True)
     assert np.allclose(deg.points, rad.points)
+
+
+def test_solid_sphere_theta_range():
+    reference = pv.SolidSphere(start_theta=15, end_theta=105)
+    pos = pv.SolidSphere(start_theta=15 + 720, end_theta=105 + 720)
+    assert np.allclose(reference.points, pos.points)
+
+    both_sides = pv.SolidSphere(start_theta=-45, end_theta=45)
+    assert np.isclose(reference.volume, both_sides.volume)
 
 
 def test_plane():

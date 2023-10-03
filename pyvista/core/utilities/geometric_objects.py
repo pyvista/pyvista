@@ -407,6 +407,10 @@ def SolidSphere(
     Pole. ``phi=0`` is on the positive z-axis by default.
     ``theta=0`` is on the positive x-axis by default.
 
+    While values for theta can be any value with a maximum span of
+    360 degrees, large magnitudes may result in problems with endpoint
+    overlap detection.
+
     Parameters
     ----------
     outer_radius : float, default: 0.5
@@ -546,7 +550,9 @@ def SolidSphereGeneric(
 
     theta : sequence[float], optional
         A monotonically increasing sequence of values specifying ``theta``
-        points. Must have at least two points.
+        points. Must have at least two points.  Can have any value as long
+        as range is within 360 degrees. Large magnitudes may result in
+        problems with endpoint overlap detection.
 
     phi : sequence[float], optional
         A monotonically increasing sequence of values specifying ``phi``
@@ -667,14 +673,15 @@ def SolidSphereGeneric(
 
     if not _greater_than_equal_or_close(radius[0], 0.0):
         raise ValueError("minimum radius cannot be negative")
-    if not _greater_than_equal_or_close(theta[0], 0.0):
-        raise ValueError("minimum theta cannot be negative")
+
+    # range of theta cannot be greater than 360 degrees
+    if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi):
+        if radians:
+            raise ValueError("max theta and min theta must be within 2 * np.pi")
+        raise ValueError("max theta and min theta must be within 360 degrees")
+
     if not _greater_than_equal_or_close(phi[0], 0.0):
         raise ValueError("minimum phi cannot be negative")
-    if not _less_than_equal_or_close(theta[-1], 2 * np.pi):
-        if radians:
-            raise ValueError("maximum theta cannot be > 2 * np.pi")
-        raise ValueError("maximum theta cannot be > 360.0")
     if not _less_than_equal_or_close(phi[-1], np.pi):
         if radians:
             raise ValueError("maximum phi cannot be > np.pi")
@@ -708,7 +715,7 @@ def SolidSphereGeneric(
 
     npoints_on_axis = 0
 
-    if radius[0] == 0.0:
+    if np.isclose(radius[0], 0.0):
         points.append([0.0, 0.0, 0.0])
         include_origin = True
         nr = nr - 1
@@ -717,13 +724,13 @@ def SolidSphereGeneric(
     else:
         include_origin = False
 
-    if theta[0] == 0.0 and theta[-1] == 2 * np.pi:
+    if np.isclose(np.mod(theta[-1] - theta[0], 2 * np.pi), 0.0):
         duplicate_theta = True
         theta = theta[:-1]
     else:
         duplicate_theta = False
 
-    if phi[0] == 0.0:
+    if np.isclose(phi[0], 0.0):
         points.extend(_spherical_to_cartesian(radius, phi[0], theta[0]))
         positive_axis = True
         phi = phi[1:]
@@ -733,7 +740,7 @@ def SolidSphereGeneric(
         positive_axis = False
     npoints_on_pos_axis = npoints_on_axis
 
-    if phi[-1] == np.pi:
+    if np.isclose(phi[-1], np.pi):
         points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
         negative_axis = True
         phi = phi[:-1]
