@@ -50,6 +50,9 @@ def Cylinder(
 ):
     """Create the surface of a cylinder.
 
+    Cylinder function rotates the CylinderSource's PolyData in its own way.
+    Therefore the plot of CylinderSource object and Cylinder function are different.
+
     See also :func:`pyvista.CylinderStructured`.
 
     Parameters
@@ -80,11 +83,22 @@ def Cylinder(
     Examples
     --------
     >>> import pyvista
-    >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(
     ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
+
+    >>> import pyvista
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2),
+    ...     show_edges=True,
+    ...     line_width=5,
+    ... )
+    >>> pl.camera_position = "xy"
+    >>> pl.show()
+
+    The above examples are similar in terms of their behavior.
     """
     algo = CylinderSource(
         center=center,

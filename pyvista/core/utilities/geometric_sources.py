@@ -330,6 +330,22 @@ class CylinderSource(_vtk.vtkCylinderSource):
     >>> import pyvista
     >>> source = pyvista.CylinderSource()
     >>> source.output.plot(show_edges=True, line_width=5)
+
+    Display a 3D plot of a default CylinderSource.
+
+    >>> import pyvista
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(pyvista.CylinderSource(), show_edges=True, line_width=5)
+    >>> pl.show()
+
+    Visualize the output of CylinderSource in a 3D plot.
+
+    >>> import pyvista
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(pv.CylinderSource().output, show_edges=True, line_width=5)
+    >>> pl.show()
+
+    The above examples are similar in terms of their behavior.
     """
 
     _new_attr_exceptions = ['_center', '_direction']
