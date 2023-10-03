@@ -543,7 +543,7 @@ class PickingInterface:  # numpydoc ignore=PR01
     ):
         """Enable rectangle based picking at cells.
 
-        Press ``"r"`` to enable retangle based selection. Press
+        Press ``"r"`` to enable rectangle based selection. Press
         ``"r"`` again to turn it off.
 
         Picking with the rectangle selection tool provides two values that
@@ -1347,7 +1347,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     ):
         """Enable picking of cells with a rectangle selection tool.
 
-        Press ``"r"`` to enable retangle based selection.  Press
+        Press ``"r"`` to enable rectangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
         ``self.picked_cells``.
 
