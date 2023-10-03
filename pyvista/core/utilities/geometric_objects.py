@@ -388,6 +388,7 @@ def SolidSphere(
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
     radians=False,
+    tolerance=1.0e-8,
 ):
     """Create a solid sphere.
 
@@ -457,6 +458,10 @@ def SolidSphere(
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``.
 
+    tolerance : bool, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``theta``, ``phi`,
+        and ``radius``.
+
     Returns
     -------
     pyvista.UnstructuredGrid
@@ -513,7 +518,9 @@ def SolidSphere(
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
     theta = np.linspace(start_theta, end_theta, theta_resolution)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
-    return SolidSphereGeneric(radius, theta, phi, center, direction, radians=radians)
+    return SolidSphereGeneric(
+        radius, theta, phi, center, direction, radians=radians, tolerance=tolerance
+    )
 
 
 def SolidSphereGeneric(
@@ -523,6 +530,7 @@ def SolidSphereGeneric(
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
     radians=False,
+    tolerance=1.0e-8,
 ):
     """Create a solid sphere with flexible sampling.
 
@@ -568,6 +576,11 @@ def SolidSphereGeneric(
 
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``.
+
+    tolerance : bool, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``theta``, ``phi`,
+        and ``radius``.
+
 
     Returns
     -------
@@ -666,10 +679,10 @@ def SolidSphereGeneric(
         raise ValueError("phi is not monotonically increasing")
 
     def _greater_than_equal_or_close(value1, value2):
-        return value1 >= value2 or np.isclose(value1, value2)
+        return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=tolerance)
 
     def _less_than_equal_or_close(value1, value2):
-        return value1 <= value2 or np.isclose(value1, value2)
+        return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=tolerance)
 
     if not _greater_than_equal_or_close(radius[0], 0.0):
         raise ValueError("minimum radius cannot be negative")
@@ -715,7 +728,7 @@ def SolidSphereGeneric(
 
     npoints_on_axis = 0
 
-    if np.isclose(radius[0], 0.0):
+    if np.isclose(radius[0], 0.0, rtol=0.0, atol=tolerance):
         points.append([0.0, 0.0, 0.0])
         include_origin = True
         nr = nr - 1
@@ -724,13 +737,15 @@ def SolidSphereGeneric(
     else:
         include_origin = False
 
-    if np.isclose(np.mod(theta[-1] - theta[0], 2 * np.pi), 0.0):
+    if np.isclose(
+        np.mod(theta[0], 2 * np.pi), np.mod(theta[-1], 2 * np.pi), rtol=0.0, atol=tolerance
+    ):
         duplicate_theta = True
         theta = theta[:-1]
     else:
         duplicate_theta = False
 
-    if np.isclose(phi[0], 0.0):
+    if np.isclose(phi[0], 0.0, rtol=0.0, atol=tolerance):
         points.extend(_spherical_to_cartesian(radius, phi[0], theta[0]))
         positive_axis = True
         phi = phi[1:]
@@ -740,7 +755,7 @@ def SolidSphereGeneric(
         positive_axis = False
     npoints_on_pos_axis = npoints_on_axis
 
-    if np.isclose(phi[-1], np.pi):
+    if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tolerance):
         points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
         negative_axis = True
         phi = phi[:-1]
