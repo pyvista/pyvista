@@ -63,7 +63,7 @@ repos:
       ]
 
 - repo: https://github.com/numpy/numpydoc
-  rev: v1.6.0rc2
+  rev: v1.6.0
   hooks:
   - id: numpydoc-validation
     files: ^pyvista/
@@ -79,7 +79,7 @@ repos:
   ]
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.10.1
+  rev: v3.14.0
   hooks:
   - id: pyupgrade
     args: [--py38-plus, --keep-runtime-typing]
@@ -101,6 +101,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.26.3
+  rev: 0.27.0
   hooks:
     - id: check-github-workflows
