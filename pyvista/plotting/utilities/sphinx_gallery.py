@@ -1,6 +1,5 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
-import os
 import shutil
 
 import pyvista
@@ -37,17 +36,11 @@ def html_rst(
         # this has to be a kwarg...
         srcsetpaths = [{0: fl} for fl in figure_list]
 
-    figure_paths = [
-        os.path.relpath(figure_path, sources_dir).replace(os.sep, "/").lstrip("/")
-        for figure_path in figure_list
-    ]
-
     images_rst = ""
     for i, hinnames in enumerate(srcsetpaths):
         srcset = _get_srcset_st(sources_dir, hinnames)
         if srcset[-5:] == "vtksz":
-            path = os.path.join(sources_dir, figure_paths[i])
-            images_rst += f"\n.. offlineviewer:: {path}\n\n"
+            images_rst += f"\n.. offlineviewer:: {figure_list[i]}\n\n"
         else:
             images_rst += "\n" + figure_rst([figure_list[i]], sources_dir) + "\n\n"
 

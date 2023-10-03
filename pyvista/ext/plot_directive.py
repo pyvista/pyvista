@@ -268,7 +268,7 @@ TEMPLATE = """
 
    {% for img in images %}
    {% if img.extension == 'vtksz' %}
-   .. offlineviewer:: {{ img.filename }}
+   .. offlineviewer:: {{ build_dir }}/{{ img.basename }}
    {% else %}
    .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
