@@ -441,7 +441,7 @@ def SolidSphere(
         if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
-        Center in ``[x, y, z]``.
+        Center coordinate vector in ``[x, y, z]``.
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]`` pointing from ``center`` to
@@ -477,7 +477,7 @@ def SolidSphere(
     >>> partial_solid_sphere.plot(show_edges=True)
 
     To see the cell structure inside the solid sphere,
-    only 1/4 of the sphere is generated. The cells exploded
+    only 1/4 of the sphere is generated. The cells are exploded
     and colored by radial position.
 
     >>> partial_solid_sphere = pv.SolidSphere(
@@ -613,7 +613,8 @@ def SolidSphereGeneric(
     if nphi < 2:
         raise ValueError("phi resolution must be 2 or more")
 
-    is_sorted = lambda a: np.all(a[:-1] < a[1:])
+    def is_sorted(a):
+        return np.all(a[:-1] < a[1:])
     if not is_sorted(radius):
         raise ValueError("radius is not monotonically increasing")
     if not is_sorted(theta):
@@ -637,7 +638,7 @@ def SolidSphereGeneric(
     phi = np.deg2rad(phi)
 
     def _spherical_to_cartesian(r, phi, theta):
-        """Convert spherical coordinate sequences to a ``(n,3)`` cartesian coordinate array.
+        """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
 
         Parameters
         ----------
