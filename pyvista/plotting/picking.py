@@ -1129,7 +1129,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         def finalize(picked):  # numpydoc ignore=GL08
             if picked is None:
-                # Inidcates invalid pick
+                # Indicates invalid pick
                 with self_().iren.poked_subplot():
                     self_()._clear_picking_representations()
                 return
@@ -1245,7 +1245,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         def finalize(picked):  # numpydoc ignore=GL08
             if picked is None:
-                # Inidcates invalid pick
+                # Indicates invalid pick
                 with self_().iren.poked_subplot():
                     self_()._clear_picking_representations()
                 return
