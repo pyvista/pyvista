@@ -380,13 +380,14 @@ def SolidSphere(
     inner_radius=0.0,
     radius_resolution=5,
     start_theta=0.0,
-    end_theta=360.0,
+    end_theta=None,
     theta_resolution=30,
     start_phi=0.0,
-    end_phi=180.0,
+    end_phi=None,
     phi_resolution=30,
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
+    radians=False,
 ):
     """Create a solid sphere.
 
@@ -442,9 +443,13 @@ def SolidSphere(
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
+
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
+
+    radians : bool, default: False
+        Whether to use radians for ``theta`` and ``phi``.
 
     Returns
     -------
@@ -494,18 +499,24 @@ def SolidSphere(
     >>> partial_solid_sphere.explode(1).plot()
 
     """
+    if end_theta is None:
+        end_theta = 2 * np.pi if radians else 360.0
+    if end_phi is None:
+        end_phi = np.pi if radians else 180.0
+
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
     theta = np.linspace(start_theta, end_theta, theta_resolution)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
-    return SolidSphereGeneric(radius, theta, phi, center, direction)
+    return SolidSphereGeneric(radius, theta, phi, center, direction, radians=radians)
 
 
 def SolidSphereGeneric(
     radius=np.linspace(0, 0.5, 5),
-    theta=np.linspace(0, 360, 30),
-    phi=np.linspace(0, 180, 30),
+    theta=None,
+    phi=None,
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
+    radians=False,
 ):
     """Create a solid sphere with flexible sampling.
 
@@ -543,6 +554,9 @@ def SolidSphereGeneric(
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
+
+    radians : bool, default: False
+        Whether to use radians for ``theta`` and ``phi``.
 
     Returns
     -------
@@ -597,6 +611,20 @@ def SolidSphereGeneric(
     ... )
 
     """
+    if radius is None:
+        radius = np.linspace(0, 0.5, 5)
+
+    # Hereafter all degrees are in radians
+    if not radians and theta is not None:
+        theta = np.deg2rad(theta)
+    if not radians and phi is not None:
+        phi = np.deg2rad(phi)
+
+    if phi is None:
+        phi = np.linspace(0, np.pi, 30)
+    if theta is None:
+        theta = np.linspace(0, 2 * np.pi, 30)
+
     radius = np.asanyarray(radius)
     theta = np.asanyarray(theta)
     phi = np.asanyarray(phi)
@@ -622,20 +650,26 @@ def SolidSphereGeneric(
     if not _is_sorted(phi):
         raise ValueError("phi is not monotonically increasing")
 
-    if radius[0] < 0.0:
-        raise ValueError("minimum radius cannot be negative")
-    if theta[0] < 0.0:
-        raise ValueError("minimum theta cannot be negative")
-    if phi[0] < 0.0:
-        raise ValueError("minimum phi cannot be negative")
-    if theta[-1] > 360.0:
-        raise ValueError("maximum theta cannot be > 360.0")
-    if phi[-1] > 180.0:
-        raise ValueError("maximum phi cannot be > 180.0")
+    def _greater_than_equal_or_close(value1, value2):
+        return value1 >= value2 or np.isclose(value1, value2)
 
-    # Hereafter all degrees are in radians
-    theta = np.deg2rad(theta)
-    phi = np.deg2rad(phi)
+    def _less_than_equal_or_close(value1, value2):
+        return value1 <= value2 or np.isclose(value1, value2)
+
+    if not _greater_than_equal_or_close(radius[0], 0.0):
+        raise ValueError("minimum radius cannot be negative")
+    if not _greater_than_equal_or_close(theta[0], 0.0):
+        raise ValueError("minimum theta cannot be negative")
+    if not _greater_than_equal_or_close(phi[0], 0.0):
+        raise ValueError("minimum phi cannot be negative")
+    if not _less_than_equal_or_close(theta[-1], 2 * np.pi):
+        if radians:
+            raise ValueError("maximum theta cannot be > 2 * np.pi")
+        raise ValueError("maximum theta cannot be > 360.0")
+    if not _less_than_equal_or_close(phi[-1], np.pi):
+        if radians:
+            raise ValueError("maximum phi cannot be > np.pi")
+        raise ValueError("maximum phi cannot be > 180.0")
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.

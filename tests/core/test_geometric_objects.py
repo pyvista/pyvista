@@ -1,4 +1,5 @@
 from itertools import permutations
+import re
 
 import numpy as np
 import pytest
@@ -186,6 +187,10 @@ def test_solid_sphere_resolution_errors():
         pv.SolidSphere(end_theta=370)
     with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
         pv.SolidSphere(end_phi=190)
+    with pytest.raises(ValueError, match=re.escape("maximum theta cannot be > 2 * np.pi")):
+        pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
+    with pytest.raises(ValueError, match="maximum phi cannot be > np.pi"):
+        pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
 
     with pytest.raises(ValueError, match="radius is not monotonically increasing"):
         pv.SolidSphereGeneric(radius=(0, 10, 1))
@@ -229,6 +234,32 @@ def test_solid_sphere_theta():
     quadrant4 = pv.SolidSphere(start_theta=270, end_theta=360)
     assert np.all(quadrant4.points[:, 0] >= -atol)  # +X
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
+
+
+def test_solid_sphere_radians():
+    deg = pv.SolidSphere()
+    rad = pv.SolidSphere(radians=True)
+    assert np.allclose(deg.points, rad.points)
+
+    deg = pv.SolidSphere(start_theta=15, end_theta=180, start_phi=30, end_phi=90)
+    rad = pv.SolidSphere(
+        start_theta=np.deg2rad(15),
+        end_theta=np.deg2rad(180),
+        start_phi=np.deg2rad(30),
+        end_phi=np.deg2rad(90),
+        radians=True,
+    )
+    assert np.allclose(deg.points, rad.points)
+
+    deg = pv.SolidSphereGeneric()
+    rad = pv.SolidSphereGeneric(radians=True)
+    assert np.allclose(deg.points, rad.points)
+
+    theta = np.linspace(15, 180, 30)
+    phi = np.linspace(30, 90, 30)
+    deg = pv.SolidSphereGeneric(theta=theta, phi=phi)
+    rad = pv.SolidSphereGeneric(theta=np.deg2rad(theta), phi=np.deg2rad(phi), radians=True)
+    assert np.allclose(deg.points, rad.points)
 
 
 def test_plane():
