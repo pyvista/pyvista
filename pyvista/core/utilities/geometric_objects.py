@@ -427,7 +427,7 @@ def SolidSphere(
 
     start_phi : float, default: 0.0
         Starting polar angle in degrees.
-        phi must lie between 0 and 180.
+        ``phi`` must lie between 0 and 180.
 
     end_phi : float, default: 180.0
         Ending polar angle in degrees.
