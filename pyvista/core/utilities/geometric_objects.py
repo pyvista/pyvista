@@ -668,10 +668,7 @@ def SolidSphereGeneric(
     if theta is None:
         theta = np.linspace(0, 2 * np.pi, 30)
     else:
-        if radians:
-            theta = np.asanyarray(theta)
-        else:
-            theta = np.deg2rad(theta)
+        theta = np.asanyarray(theta) if radians else np.deg2rad(theta)
 
     if phi is None:
         phi = np.linspace(0, np.pi, 30)
