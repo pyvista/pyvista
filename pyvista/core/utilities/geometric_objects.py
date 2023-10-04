@@ -620,6 +620,8 @@ def SolidSphereGeneric(
     Cells near the poles have smaller sizes.
 
     >>> import pyvista as pv
+    >>> import pyvista as pv
+    >>> import numpy as np
     >>> solid_sphere = pv.SolidSphereGeneric(
     ...     radius=np.linspace(0, 0.5, 2),
     ...     theta=np.linspace(180, 360, 30),
