@@ -280,7 +280,7 @@ def test_solid_sphere_tolerance():
     solid_sphere = pv.SolidSphere(inner_radius=1e-10)
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 0.0])
 
-    solid_sphere = pv.SolidSphere(inner_radius=1e-10, tolerance=1e-11)
+    solid_sphere = pv.SolidSphere(inner_radius=1e-10, tol_radius=1e-11)
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
 
     # when phi point not on axis, it is skipped in point ordering
@@ -293,12 +293,12 @@ def test_solid_sphere_tolerance():
     solid_sphere = pv.SolidSphere(end_phi=np.pi - 1e-3, radius_resolution=2, radians=True)
     assert solid_sphere.points[2, 2] > 0.0
 
-    solid_sphere = pv.SolidSphere(start_phi=1e-3, radius_resolution=2, radians=True, tolerance=1e-2)
+    solid_sphere = pv.SolidSphere(start_phi=1e-3, radius_resolution=2, radians=True, tol_angle=1e-2)
     # Positive axis point is there, but it is now slightly offset.
     assert np.allclose(solid_sphere.points[1, :], [0.0, 0.0, 0.5], atol=1e-3)
     # Negative axis point is there
     solid_sphere = pv.SolidSphere(
-        end_phi=np.pi - 1e-3, radius_resolution=2, radians=True, tolerance=1e-2
+        end_phi=np.pi - 1e-3, radius_resolution=2, radians=True, tol_angle=1e-2
     )
     assert np.allclose(solid_sphere.points[2, :], [0.0, 0.0, -0.5], atol=1e-3)
 
@@ -307,7 +307,7 @@ def test_solid_sphere_tolerance():
     solid_sphere = pv.SolidSphere(start_theta=1e-3, end_theta=2 * np.pi, radians=True)
     assert solid_sphere.n_points > reference.n_points
     solid_sphere = pv.SolidSphere(
-        start_theta=1e-3, end_theta=2 * np.pi, radians=True, tolerance=1e-1
+        start_theta=1e-3, end_theta=2 * np.pi, radians=True, tol_angle=1e-1
     )
     assert solid_sphere.n_points == reference.n_points
 

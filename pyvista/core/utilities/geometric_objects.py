@@ -408,7 +408,8 @@ def SolidSphere(
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
     radians=False,
-    tolerance=1.0e-8,
+    tol_radius=1.0e-8,
+    tol_angle=1.0e-8,
 ):
     """Create a solid sphere.
 
@@ -478,10 +479,12 @@ def SolidSphere(
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``.
 
-    tolerance : bool, default: 1.0e-8
-        Absolute tolerance for endpoint detection for ``theta``, ``phi`,
-        and ``radius``. ``tolerance`` is always compared in radians for
-        angular quantities.
+    tol_radius : bool, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``radius``.
+
+    tol_angle : bool, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``phi`` and ``theta``.
+        Unit always in radians.
 
     Returns
     -------
@@ -540,7 +543,14 @@ def SolidSphere(
     theta = np.linspace(start_theta, end_theta, theta_resolution)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
-        radius, theta, phi, center, direction, radians=radians, tolerance=tolerance
+        radius,
+        theta,
+        phi,
+        center,
+        direction,
+        radians=radians,
+        tol_radius=tol_radius,
+        tol_angle=tol_angle,
     )
 
 
@@ -551,7 +561,8 @@ def SolidSphereGeneric(
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
     radians=False,
-    tolerance=1.0e-8,
+    tol_radius=1.0e-8,
+    tol_angle=1.0e-8,
 ):
     """Create a solid sphere with flexible sampling.
 
@@ -598,10 +609,12 @@ def SolidSphereGeneric(
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``.
 
-    tolerance : bool, default: 1.0e-8
-        Absolute tolerance for endpoint detection for ``theta``, ``phi`,
-        and ``radius``. ``tolerance`` is always compared in radians for
-        angular quantities.
+    tol_radius : bool, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``radius``.
+
+    tol_angle : bool, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``phi`` and ``theta``.
+        Unit always in radians.
 
     Returns
     -------
@@ -689,24 +702,24 @@ def SolidSphereGeneric(
     if not _is_sorted(phi):
         raise ValueError("phi is not monotonically increasing")
 
-    def _greater_than_equal_or_close(value1, value2):
-        return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=tolerance)
+    def _greater_than_equal_or_close(value1, value2, atol):
+        return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
 
-    def _less_than_equal_or_close(value1, value2):
-        return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=tolerance)
+    def _less_than_equal_or_close(value1, value2, atol):
+        return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
 
-    if not _greater_than_equal_or_close(radius[0], 0.0):
+    if not _greater_than_equal_or_close(radius[0], 0.0, tol_radius):
         raise ValueError("minimum radius cannot be negative")
 
     # range of theta cannot be greater than 360 degrees
-    if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi):
+    if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle):
         if radians:
             raise ValueError("max theta and min theta must be within 2 * np.pi")
         raise ValueError("max theta and min theta must be within 360 degrees")
 
-    if not _greater_than_equal_or_close(phi[0], 0.0):
+    if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
         raise ValueError("minimum phi cannot be negative")
-    if not _less_than_equal_or_close(phi[-1], np.pi):
+    if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle):
         if radians:
             raise ValueError("maximum phi cannot be > np.pi")
         raise ValueError("maximum phi cannot be > 180.0")
@@ -739,7 +752,7 @@ def SolidSphereGeneric(
 
     npoints_on_axis = 0
 
-    if np.isclose(radius[0], 0.0, rtol=0.0, atol=tolerance):
+    if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
         points.append([0.0, 0.0, 0.0])
         include_origin = True
         nr = nr - 1
@@ -749,14 +762,14 @@ def SolidSphereGeneric(
         include_origin = False
 
     if np.isclose(
-        np.mod(theta[0], 2 * np.pi), np.mod(theta[-1], 2 * np.pi), rtol=0.0, atol=tolerance
+        np.mod(theta[0], 2 * np.pi), np.mod(theta[-1], 2 * np.pi), rtol=0.0, atol=tol_angle
     ):
         duplicate_theta = True
         theta = theta[:-1]
     else:
         duplicate_theta = False
 
-    if np.isclose(phi[0], 0.0, rtol=0.0, atol=tolerance):
+    if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle):
         points.extend(_spherical_to_cartesian(radius, phi[0], theta[0]))
         positive_axis = True
         phi = phi[1:]
@@ -766,7 +779,7 @@ def SolidSphereGeneric(
         positive_axis = False
     npoints_on_pos_axis = npoints_on_axis
 
-    if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tolerance):
+    if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle):
         points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
         negative_axis = True
         phi = phi[:-1]
