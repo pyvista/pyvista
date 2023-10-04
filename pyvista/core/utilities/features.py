@@ -236,7 +236,7 @@ def cartesian_to_spherical(x, y, z):
     >>> import pyvista as pv
     >>> grid = pv.ImageData(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
-    >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
+    >>> r, phi, theta = pv.cartesian_to_spherical(x, y, z)
 
     """
     xy2 = x**2 + y**2
