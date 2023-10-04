@@ -244,7 +244,7 @@ def cartesian_to_spherical(x, y, z):
     phi = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
     theta = np.arctan2(y, x)  # the azimuth angle in radian angles
 
-    return r, theta, phi
+    return r, phi, theta
 
 
 def merge(
