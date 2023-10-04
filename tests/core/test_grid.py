@@ -1485,7 +1485,7 @@ def test_copy_no_copy_wrap_object(datasets):
 
 def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
     for dataset in datasets_vtk9:
-        # different dataset tyoes have different copy behavior for points
+        # different dataset types have different copy behavior for points
         # use point data which is common
         dataset["data"] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset)
@@ -1493,7 +1493,7 @@ def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
         assert np.array_equal(new_dataset["data"], dataset["data"])
 
     for dataset in datasets_vtk9:
-        # different dataset tyoes have different copy behavior for points
+        # different dataset types have different copy behavior for points
         # use point data which is common
         dataset["data"] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset, deep=True)
