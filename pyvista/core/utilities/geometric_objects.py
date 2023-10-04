@@ -358,7 +358,7 @@ def Sphere(
 
     See Also
     --------
-    pyvista.Icosphere: Sphere created from projection of icosohedron.
+    pyvista.Icosphere: Sphere created from projection of icosahedron.
     pyvista.SolidSphere: Sphere that fills 3D space.
 
     Examples
