@@ -616,21 +616,9 @@ def SolidSphereGeneric(
 
     Examples
     --------
-    Create a solid sphere using default parameters.  The
-    default creates a sphere that is linearly sampled with
-    respect to spherical coordinates, the same as
-    :func:`pyvista.SolidSphere`.
-
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> solid_sphere = pv.SolidSphereGeneric()
-    >>> solid_sphere.plot(show_edges=True)
-
     Linearly sampling spherical coordinates does not lead to
-    cells of all the same size at each radial position.  In
-    particular, cells near the poles have smaller sizes.
-    Plot the cell volumes of a solid sphere with only one layer of
-    cells.
+    cells of all the same size at each radial position.
+    Cells near the poles have smaller sizes.
 
     >>> solid_sphere = pv.SolidSphereGeneric(
     ...     radius=np.linspace(0, 0.5, 2),
