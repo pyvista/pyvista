@@ -460,7 +460,8 @@ def SolidSphere(
 
     tolerance : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``theta``, ``phi`,
-        and ``radius``.
+        and ``radius``. ``tolerance`` is always compared in radians for
+        angular quantities.
 
     Returns
     -------
@@ -579,7 +580,8 @@ def SolidSphereGeneric(
 
     tolerance : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``theta``, ``phi`,
-        and ``radius``.
+        and ``radius``. ``tolerance`` is always compared in radians for
+        angular quantities.
 
 
     Returns
