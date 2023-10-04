@@ -603,7 +603,6 @@ def SolidSphereGeneric(
         and ``radius``. ``tolerance`` is always compared in radians for
         angular quantities.
 
-
     Returns
     -------
     pyvista.UnstructuredGrid
