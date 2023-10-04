@@ -26,7 +26,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .arrays import _coerce_pointslike_arg
-from .geometric_sources import ConeSource, CylinderSource, translate
+from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource, translate
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -495,14 +495,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
-    points, _ = _coerce_pointslike_arg(points)
-    src = _vtk.vtkLineSource()
-    if not (len(points) >= 2):
-        raise ValueError('>=2 points need to define multiple lines.')
-    src.SetPoints(pyvista.vtk_points(points))
-    src.Update()
-    multiple_lines = wrap(src.GetOutput())
-    return multiple_lines
+    return MultipleLinesSource(points=points).output
 
 
 def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):
