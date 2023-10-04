@@ -116,6 +116,15 @@ class DynamicScraper:
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
+        # read global option  if it exists
+        force_static = block_vars['example_globals'].get(
+            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT", False
+        )
+        # override with block specific value if it exists
+        if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split('\n'):
+            force_static = True
+        elif "PYVISTA_GALLERY_FORCE_STATIC = False" in block[1].split('\n'):
+            force_static = False
         for _, plotter in figures.items():
             fname = next(image_path_iterator)
             if hasattr(plotter, '_gif_filename'):
@@ -124,12 +133,12 @@ class DynamicScraper:
                 image_names.append(fname)
             else:
                 plotter.screenshot(fname)  # produce PNG for thumbnail
-                if plotter.last_vtksz is not None:
+                if force_static or plotter.last_vtksz is None:
+                    image_names.append(fname)
+                else:
                     fname = fname[:-3] + "vtksz"
                     with open(fname, "wb") as f:
                         f.write(plotter.last_vtksz)
                         image_names.append(fname)
-                else:
-                    image_names.append(fname)
         pyvista.close_all()  # close and clear all plotters
         return html_rst(image_names, gallery_conf["src_dir"])
