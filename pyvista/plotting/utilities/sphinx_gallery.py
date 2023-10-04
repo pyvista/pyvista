@@ -66,7 +66,6 @@ class Scraper:
 
     """
 
-    # Give it a stable __repr__
     def __repr__(self):
         """Return a stable representation of the class."""
         return f"<{self.__class__.__name__}"
