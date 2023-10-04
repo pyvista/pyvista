@@ -66,6 +66,10 @@ class Scraper:
 
     """
 
+    # Give it a stable __repr__
+    def __repr__(self):
+        return f"<{self.__class__.__name__}"
+
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
 
