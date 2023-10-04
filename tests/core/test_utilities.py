@@ -755,7 +755,7 @@ def test_cartesian_to_spherical():
 
 def test_spherical_to_cartesian():
     points = np.random.random((1000, 3))
-    r, phi, theta = points.T
+    r, theta, phi = points.T
     x, y, z = pv.spherical_to_cartesian(r, phi, theta)
     assert np.allclose(pv.cartesian_to_spherical(x, y, z), points)
 
