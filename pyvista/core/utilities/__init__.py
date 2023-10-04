@@ -32,6 +32,7 @@ from .features import (
     sample_function,
     transform_vectors_sph_to_cart,
     voxelize,
+    spherical_to_cartesian,
 )
 from .fileio import (
     from_meshio,
