@@ -222,11 +222,11 @@ def cartesian_to_spherical(x, y, z):
     r : numpy.ndarray
         Radial distance.
 
-    theta : numpy.ndarray
+    phi : numpy.ndarray
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    phi : numpy.ndarray
+    theta : numpy.ndarray
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 
@@ -241,10 +241,10 @@ def cartesian_to_spherical(x, y, z):
     """
     xy2 = x**2 + y**2
     r = np.sqrt(xy2 + z**2)
-    theta = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
-    phi = np.arctan2(y, x)  # the azimuth angle in radian angles
+    phi = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
+    theta = np.arctan2(y, x)  # the azimuth angle in radian angles
 
-    return r, theta, phi
+    return r, phi, theta
 
 
 def spherical_to_cartesian(r, phi, theta):
