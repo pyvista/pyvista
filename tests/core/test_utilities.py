@@ -747,15 +747,17 @@ def test_copy_vtk_array():
 
 
 def test_cartesian_to_spherical():
-    def polar2cart(r, theta, phi):
-        return np.vstack(
-            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
-        ).T
-
     points = np.random.random((1000, 3))
     x, y, z = points.T
     r, theta, phi = pv.cartesian_to_spherical(x, y, z)
-    assert np.allclose(polar2cart(r, theta, phi), points)
+    assert np.allclose(pv.spherical_to_cartesian(r, theta, phi), points)
+
+
+def test_spherical_to_cartesian():
+    points = np.random.random((1000, 3))
+    r, theta, phi = points.T
+    x, y, z = pv.spherical_to_cartesian(r, theta, phi)
+    assert np.allclose(pv.cartesian_to_spherical(x, y, z), points)
 
 
 def test_set_pickle_format():
