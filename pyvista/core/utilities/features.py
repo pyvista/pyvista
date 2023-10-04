@@ -265,7 +265,7 @@ def spherical_to_cartesian(r, phi, theta):
 
     Returns
     -------
-    x, y, z : numpy.ndarray
+    numpy.ndarray, numpy.ndarray, numpy.ndarray
         Cartesian coordinates.
     """
     s = np.sin(phi)
