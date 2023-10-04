@@ -749,13 +749,13 @@ def test_copy_vtk_array():
 def test_cartesian_to_spherical():
     points = np.random.random((1000, 3))
     x, y, z = points.T
-    r, theta, phi = pv.cartesian_to_spherical(x, y, z)
+    r, phi, theta = pv.cartesian_to_spherical(x, y, z)
     assert np.allclose(pv.spherical_to_cartesian(r, phi, theta), points.T)
 
 
 def test_spherical_to_cartesian():
     points = np.random.random((1000, 3))
-    r, theta, phi = points.T
+    r, phi, theta = points.T
     x, y, z = pv.spherical_to_cartesian(r, phi, theta)
     assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
 
