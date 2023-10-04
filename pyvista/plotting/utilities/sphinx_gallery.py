@@ -66,7 +66,7 @@ class Scraper:
 
     """
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         """Return a stable representation of the class."""
         return f"<{self.__class__.__name__}"
 
