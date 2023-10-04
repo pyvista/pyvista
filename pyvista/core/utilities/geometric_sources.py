@@ -328,6 +328,12 @@ class ConeSource(_vtk.vtkConeSource):
 class CylinderSource(_vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
+    .. warning::
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
+       :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
     Parameters
     ----------
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -355,6 +361,25 @@ class CylinderSource(_vtk.vtkCylinderSource):
     >>> import pyvista
     >>> source = pyvista.CylinderSource()
     >>> source.output.plot(show_edges=True, line_width=5)
+
+    Display a 3D plot of a default :class:`CylinderSource`.
+
+    >>> import pyvista
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.CylinderSource(), show_edges=True, line_width=5
+    ... )
+    >>> pl.show()
+
+    Visualize the output of :class:`CylinderSource` in a 3D plot.
+
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.CylinderSource().output, show_edges=True, line_width=5
+    ... )
+    >>> pl.show()
+
+    The above examples are similar in terms of their behavior.
     """
 
     _new_attr_exceptions = ['_center', '_direction']
@@ -523,10 +548,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Cylinder surface.
         """
         self.Update()
-        output = wrap(self.GetOutput())
-        output.rotate_z(-90, inplace=True)
-        translate(output, self.center, self.direction)
-        return output
+        return wrap(self.GetOutput())
 
 
 @no_new_attr

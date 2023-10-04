@@ -51,6 +51,11 @@ def Cylinder(
 ):
     """Create the surface of a cylinder.
 
+    .. warning::
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
     See also :func:`pyvista.CylinderStructured`.
 
     Parameters
@@ -81,11 +86,23 @@ def Cylinder(
     Examples
     --------
     >>> import pyvista
-    >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(
     ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
+
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.Cylinder(
+    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ...     ),
+    ...     show_edges=True,
+    ...     line_width=5,
+    ... )
+    >>> pl.camera_position = "xy"
+    >>> pl.show()
+
+    The above examples are similar in terms of their behavior.
     """
     algo = CylinderSource(
         center=center,
@@ -95,7 +112,10 @@ def Cylinder(
         capping=capping,
         resolution=resolution,
     )
-    return algo.output
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def CylinderStructured(
