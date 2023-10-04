@@ -737,7 +737,7 @@ def SolidSphereGeneric(
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+        x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
