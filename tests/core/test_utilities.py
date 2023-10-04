@@ -758,6 +758,13 @@ def test_cartesian_to_spherical():
     assert np.allclose(polar2cart(r, phi, theta), points)
 
 
+def test_spherical_to_cartesian():
+    points = np.random.random((1000, 3))
+    r, phi, theta = points.T
+    x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+    assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
+
+
 def test_set_pickle_format():
     pv.set_pickle_format('legacy')
     assert pv.PICKLE_FORMAT == 'legacy'
