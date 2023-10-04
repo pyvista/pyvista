@@ -66,6 +66,10 @@ class Scraper:
 
     """
 
+    def __repr__(self):  # pragma: no cover
+        """Return a stable representation of the class."""
+        return f"<{self.__class__.__name__}"
+
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
 
