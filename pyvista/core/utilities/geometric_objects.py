@@ -876,7 +876,7 @@ def SolidSphereGeneric(
                     _index(ir + 1, nphi - 1, itheta + 1),
                 ]
             )
-                celltypes.append(pyvista.CellType.WEDGE)
+            celltypes.append(pyvista.CellType.WEDGE)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
