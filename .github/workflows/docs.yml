@@ -1,6 +1,8 @@
 name: Build Documentation
 on:
   pull_request:  # Uses cache
+  pull_request_target:
+    types: [labeled]
   workflow_dispatch:  # Able to not use cache by user demand
     inputs:
       cache:
@@ -98,6 +100,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Preview HTML documentation
+        if: contains(github.event.pull_request.labels.*.name, 'deploy-preview')
         uses: nwtgck/actions-netlify@v2.0
         with:
           publish-dir: doc/_build/html/
