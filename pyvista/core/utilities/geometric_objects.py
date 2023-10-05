@@ -317,7 +317,8 @@ def Sphere(
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
-    Pole.
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
 
     Parameters
     ----------
@@ -358,8 +359,8 @@ def Sphere(
 
     See Also
     --------
-    pyvista.Icosphere: Sphere created from projection of icosahedron.
-    pyvista.SolidSphere: Sphere that fills 3D space.
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
 
     Examples
     --------
@@ -465,7 +466,7 @@ def SolidSphere(
         ``end_phi`` must be greater than ``start_phi``.
 
     phi_resolution : int, default: 30
-        Number of points in phi direction,
+        Number of points in ``phi`` direction,
         inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
@@ -477,7 +478,7 @@ def SolidSphere(
         the sphere's north pole at zero degrees ``phi``.
 
     radians : bool, default: False
-        Whether to use radians for ``theta`` and ``phi``.
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
 
     tol_radius : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
@@ -506,7 +507,7 @@ def SolidSphere(
     >>> solid_sphere.plot(show_edges=True)
 
     A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
-    Generate a solid hemi-sphere to see the internal structure.
+    Generate a solid hemisphere to see the internal structure.
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
     True
@@ -607,7 +608,7 @@ def SolidSphereGeneric(
         the sphere's north pole at zero degrees ``phi``.
 
     radians : bool, default: False
-        Whether to use radians for ``theta`` and ``phi``.
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
 
     tol_radius : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
@@ -707,16 +708,14 @@ def SolidSphereGeneric(
 
     # range of theta cannot be greater than 360 degrees
     if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle):
-        if radians:
-            raise ValueError("max theta and min theta must be within 2 * np.pi")
-        raise ValueError("max theta and min theta must be within 360 degrees")
+        max_angle = "2 * np.pi" if radians else "360 degrees"
+        raise ValueError(f"max theta and min theta must be within {max_angle}")
 
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
         raise ValueError("minimum phi cannot be negative")
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle):
-        if radians:
-            raise ValueError("maximum phi cannot be > np.pi")
-        raise ValueError("maximum phi cannot be > 180.0")
+        max_angle = "np.pi" if radians else "180 degrees"
+        raise ValueError(f"maximum phi cannot be > {max_angle}")
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
@@ -737,9 +736,7 @@ def SolidSphereGeneric(
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x = r * np.sin(phi) * np.cos(theta)
-        y = r * np.sin(phi) * np.sin(theta)
-        z = r * np.cos(phi)
+        x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
@@ -811,7 +808,6 @@ def SolidSphereGeneric(
             for itheta in range(ntheta - 1):
                 cells.append(4)
                 cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-
                 celltypes.append(pyvista.CellType.TETRA)
 
         # Next tetras that form with origin and bottom axis point
@@ -829,7 +825,6 @@ def SolidSphereGeneric(
                         _index(0, nphi - 1, itheta),
                     ]
                 )
-
                 celltypes.append(pyvista.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
@@ -844,54 +839,45 @@ def SolidSphereGeneric(
                     0,
                 ]
             )
-
             celltypes.append(pyvista.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
     if positive_axis:
-        for ir in range(nr - 1):
-            if include_origin:
-                axis0 = ir + 1
-                axis1 = ir + 2
-            else:
-                axis0 = ir
-                axis1 = ir + 1
-
-            for itheta in range(ntheta - 1):
-                cells.append(6)
-                cells.extend(
-                    [
-                        axis0,
-                        _index(ir, 0, itheta + 1),
-                        _index(ir, 0, itheta),
-                        axis1,
-                        _index(ir + 1, 0, itheta + 1),
-                        _index(ir + 1, 0, itheta),
-                    ]
-                )
-                celltypes.append(pyvista.CellType.WEDGE)
+        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+            axis0 = ir + 1 if include_origin else ir
+            axis1 = ir + 2 if include_origin else ir + 1
+            cells.append(6)
+            cells.extend(
+                [
+                    axis0,
+                    _index(ir, 0, itheta + 1),
+                    _index(ir, 0, itheta),
+                    axis1,
+                    _index(ir + 1, 0, itheta + 1),
+                    _index(ir + 1, 0, itheta),
+                ]
+            )
+            celltypes.append(pyvista.CellType.WEDGE)
 
     # now go downwards
     if negative_axis:
-        for ir in range(nr - 1):
+        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
-            for itheta in range(ntheta - 1):
-                cells.append(6)
-                cells.extend(
-                    [
-                        axis0,
-                        _index(ir, nphi - 1, itheta),
-                        _index(ir, nphi - 1, itheta + 1),
-                        axis1,
-                        _index(ir + 1, nphi - 1, itheta),
-                        _index(ir + 1, nphi - 1, itheta + 1),
-                    ]
-                )
-
-                celltypes.append(pyvista.CellType.WEDGE)
+            cells.append(6)
+            cells.extend(
+                [
+                    axis0,
+                    _index(ir, nphi - 1, itheta),
+                    _index(ir, nphi - 1, itheta + 1),
+                    axis1,
+                    _index(ir + 1, nphi - 1, itheta),
+                    _index(ir + 1, nphi - 1, itheta + 1),
+                ]
+            )
+            celltypes.append(pyvista.CellType.WEDGE)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
@@ -910,8 +896,8 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi, itheta + 1),
             ]
         )
-
         celltypes.append(pyvista.CellType.HEXAHEDRON)
+
     mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
     translate(mesh, center, direction, start_direction=(0.0, 0.0, 1.0))
     return mesh
