@@ -824,7 +824,6 @@ def SolidSphereGeneric(
                         _index(0, nphi - 1, itheta),
                     ]
                 )
-
                 celltypes.append(pyvista.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
