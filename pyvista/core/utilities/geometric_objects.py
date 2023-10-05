@@ -707,9 +707,8 @@ def SolidSphereGeneric(
 
     # range of theta cannot be greater than 360 degrees
     if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle):
-        if radians:
-            raise ValueError("max theta and min theta must be within 2 * np.pi")
-        raise ValueError("max theta and min theta must be within 360 degrees")
+        max_angle = "2 * np.pi" if radians else "360 degrees"
+        raise ValueError(f"max theta and min theta must be within {max_angle}")
 
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
         raise ValueError("minimum phi cannot be negative")
