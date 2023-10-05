@@ -104,6 +104,22 @@ jobs:
           name: docs-build
           path: doc/_build/html/
 
+      - name: Preview HTML documentation
+        if: always()
+        uses: nwtgck/actions-netlify@v2.0
+        with:
+          publish-dir: doc/_build/html/
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+
       - uses: actions/upload-artifact@v3
         with:
           name: examples
@@ -150,31 +166,6 @@ jobs:
           repository: 'pyvista/pyvista-docs'
           doc-artifact-name: docs-build
           cname: ${{ env.DOCUMENTATION_CNAME }}
-
-  preview:
-    name: Preview Documentation
-    runs-on: ubuntu-latest
-    needs: doc
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
-        with:
-          name: docs-build
-          path: .
-
-      - uses: nwtgck/actions-netlify@v2.0
-        with:
-          publish-dir: doc/_build/html/
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: true
-          enable-commit-comment: true
-          overwrites-pull-request-comment: true
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 1
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
