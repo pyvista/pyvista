@@ -7,9 +7,11 @@ from typing import Sequence
 
 import numpy as np
 
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 
+from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 
@@ -301,6 +303,12 @@ class ConeSource(_vtk.vtkConeSource):
 class CylinderSource(_vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
+    .. warning::
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
+       :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
     Parameters
     ----------
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -328,6 +336,25 @@ class CylinderSource(_vtk.vtkCylinderSource):
     >>> import pyvista
     >>> source = pyvista.CylinderSource()
     >>> source.output.plot(show_edges=True, line_width=5)
+
+    Display a 3D plot of a default :class:`CylinderSource`.
+
+    >>> import pyvista
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.CylinderSource(), show_edges=True, line_width=5
+    ... )
+    >>> pl.show()
+
+    Visualize the output of :class:`CylinderSource` in a 3D plot.
+
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.CylinderSource().output, show_edges=True, line_width=5
+    ... )
+    >>> pl.show()
+
+    The above examples are similar in terms of their behavior.
     """
 
     _new_attr_exceptions = ['_center', '_direction']
@@ -496,7 +523,59 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Cylinder surface.
         """
         self.Update()
-        output = wrap(self.GetOutput())
-        output.rotate_z(-90, inplace=True)
-        translate(output, self.center, self.direction)
-        return output
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class MultipleLinesSource(_vtk.vtkLineSource):
+    """Multiple lines source algorithm class.
+
+    Parameters
+    ----------
+    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+        List of points defining a broken line.
+    """
+
+    _new_attr_exceptions = ['points']
+
+    def __init__(self, points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+        """Initialize the multiple lines source class."""
+        super().__init__()
+        self.points = points
+
+    @property
+    def points(self) -> np.ndarray:
+        """Get the list of points defining a broken line.
+
+        Returns
+        -------
+        np.ndarray
+            List of points defining a broken line.
+        """
+        return _vtk.vtk_to_numpy(self.GetPoints().GetData())
+
+    @points.setter
+    def points(self, points: Sequence[Sequence[float]]):
+        """Set the list of points defining a broken line.
+
+        Parameters
+        ----------
+        points : array_like[float]
+            List of points defining a broken line.
+        """
+        points, _ = _coerce_pointslike_arg(points)
+        if not (len(points) >= 2):
+            raise ValueError('>=2 points need to define multiple lines.')
+        self.SetPoints(pyvista.vtk_points(points))
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())

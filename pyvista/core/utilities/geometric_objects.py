@@ -26,7 +26,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .arrays import _coerce_pointslike_arg
-from .geometric_sources import ConeSource, CylinderSource, translate
+from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource, translate
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -49,6 +49,11 @@ def Cylinder(
     capping=True,
 ):
     """Create the surface of a cylinder.
+
+    .. warning::
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
 
     See also :func:`pyvista.CylinderStructured`.
 
@@ -80,11 +85,23 @@ def Cylinder(
     Examples
     --------
     >>> import pyvista
-    >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(
     ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
+
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     pyvista.Cylinder(
+    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ...     ),
+    ...     show_edges=True,
+    ...     line_width=5,
+    ... )
+    >>> pl.camera_position = "xy"
+    >>> pl.show()
+
+    The above examples are similar in terms of their behavior.
     """
     algo = CylinderSource(
         center=center,
@@ -94,7 +111,10 @@ def Cylinder(
         capping=capping,
         resolution=resolution,
     )
-    return algo.output
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def CylinderStructured(
@@ -495,14 +515,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
-    points, _ = _coerce_pointslike_arg(points)
-    src = _vtk.vtkLineSource()
-    if not (len(points) >= 2):
-        raise ValueError('>=2 points need to define multiple lines.')
-    src.SetPoints(pyvista.vtk_points(points))
-    src.Update()
-    multiple_lines = wrap(src.GetOutput())
-    return multiple_lines
+    return MultipleLinesSource(points=points).output
 
 
 def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):

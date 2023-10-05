@@ -30,6 +30,7 @@ from .features import (
     merge,
     perlin_noise,
     sample_function,
+    spherical_to_cartesian,
     transform_vectors_sph_to_cart,
     voxelize,
 )
@@ -81,7 +82,7 @@ from .geometric_objects import (
     Wavelet,
     translate,
 )
-from .geometric_sources import ConeSource, CylinderSource
+from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,

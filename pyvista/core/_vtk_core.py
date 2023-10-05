@@ -416,3 +416,8 @@ try:
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
 except ImportError:  # pragma: no cover
     pass
+
+try:  # Introduced prior to VTK 9.3
+    from vtkmodules.vtkRenderingCore import vtkViewport
+except ImportError:  # pragma: no cover
+    pass

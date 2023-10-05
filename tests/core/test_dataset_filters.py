@@ -1064,7 +1064,7 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
 def test_connectivity_inplace_and_output_type(
     datasets, dataset_index, extraction_mode, label_regions, scalar_range
 ):
-    # paramaterize with label_regions and scalar_range as these parameters
+    # parameterize with label_regions and scalar_range as these parameters
     # have branches which may modify input/input type
     dataset = datasets[dataset_index]
 
