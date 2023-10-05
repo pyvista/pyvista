@@ -807,7 +807,6 @@ def SolidSphereGeneric(
             for itheta in range(ntheta - 1):
                 cells.append(4)
                 cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-
                 celltypes.append(pyvista.CellType.TETRA)
 
         # Next tetras that form with origin and bottom axis point
