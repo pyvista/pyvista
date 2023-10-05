@@ -12,7 +12,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 # -- General configuration ------------------------------------------------
 
-extensions = ['pyvista.ext.plot_directive']
 templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
@@ -27,6 +26,7 @@ pygments_style = 'sphinx'
 extensions = [
     "numpydoc",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.viewer_directive",
     "sphinx.ext.autosummary",
 ]
 

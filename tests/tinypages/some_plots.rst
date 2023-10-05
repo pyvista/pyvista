@@ -83,6 +83,14 @@ Plot 8 gets a caption specified by the :caption: option:
    import pyvista
    pyvista.Disc().plot()
 
+Plot _ forces a static image instead of an interactive scene:
+
+.. pyvista-plot::
+   :force_static:
+
+   import pyvista
+   pyvista.Disc().plot()
+
 
 Plot __ uses an external file with the plot commands and a caption
 using the :caption: option:
