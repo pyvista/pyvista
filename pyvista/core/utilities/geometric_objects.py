@@ -359,8 +359,8 @@ def Sphere(
 
     See Also
     --------
-    pyvista.Icosphere: Sphere created from projection of icosahedron.
-    pyvista.SolidSphere: Sphere that fills 3D space.
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
 
     Examples
     --------
@@ -466,7 +466,7 @@ def SolidSphere(
         ``end_phi`` must be greater than ``start_phi``.
 
     phi_resolution : int, default: 30
-        Number of points in phi direction,
+        Number of points in ``phi`` direction,
         inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
@@ -478,7 +478,7 @@ def SolidSphere(
         the sphere's north pole at zero degrees ``phi``.
 
     radians : bool, default: False
-        Whether to use radians for ``theta`` and ``phi``.
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
 
     tol_radius : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
@@ -507,7 +507,7 @@ def SolidSphere(
     >>> solid_sphere.plot(show_edges=True)
 
     A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
-    Generate a solid hemi-sphere to see the internal structure.
+    Generate a solid hemisphere to see the internal structure.
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
     True
@@ -608,7 +608,7 @@ def SolidSphereGeneric(
         the sphere's north pole at zero degrees ``phi``.
 
     radians : bool, default: False
-        Whether to use radians for ``theta`` and ``phi``.
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
 
     tol_radius : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
