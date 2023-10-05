@@ -206,7 +206,8 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', (None, '../intersphinx/python-objects.inv')),
+    # Pin Python 3.11
+    'python': ('https://docs.python.org/3.11', (None, '../intersphinx/python-objects.inv')),
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, '../intersphinx/scipy-objects.inv'),
