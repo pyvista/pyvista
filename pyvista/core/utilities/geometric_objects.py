@@ -883,7 +883,6 @@ def SolidSphereGeneric(
                         _index(ir + 1, nphi - 1, itheta + 1),
                     ]
                 )
-
                 celltypes.append(pyvista.CellType.WEDGE)
 
     # Form Hexahedra
