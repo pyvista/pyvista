@@ -713,9 +713,8 @@ def SolidSphereGeneric(
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
         raise ValueError("minimum phi cannot be negative")
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle):
-        if radians:
-            raise ValueError("maximum phi cannot be > np.pi")
-        raise ValueError("maximum phi cannot be > 180.0")
+        max_angle = "np.pi" if radians else "180 degrees"
+        raise ValueError(f"maximum phi cannot be > {max_angle}")
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
