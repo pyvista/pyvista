@@ -153,19 +153,23 @@ jobs:
 
   preview:
     name: Preview Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: doc
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
         with:
           name: docs-build
           path: .
+
+      - name: UnTar build
+        run: tar -xzvf docs-build.tar.gz
+
       - uses: nwtgck/actions-netlify@v2.0
         with:
-          publish-dir: './docs-build'
+          publish-dir: doc/_build/html/
           production-branch: main
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: true
           enable-commit-comment: true
