@@ -839,7 +839,6 @@ def SolidSphereGeneric(
                     0,
                 ]
             )
-
             celltypes.append(pyvista.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
