@@ -844,45 +844,38 @@ def SolidSphereGeneric(
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
     if positive_axis:
-        for ir in range(nr - 1):
-            if include_origin:
-                axis0 = ir + 1
-                axis1 = ir + 2
-            else:
-                axis0 = ir
-                axis1 = ir + 1
-
-            for itheta in range(ntheta - 1):
-                cells.append(6)
-                cells.extend(
-                    [
-                        axis0,
-                        _index(ir, 0, itheta + 1),
-                        _index(ir, 0, itheta),
-                        axis1,
-                        _index(ir + 1, 0, itheta + 1),
-                        _index(ir + 1, 0, itheta),
-                    ]
-                )
-                celltypes.append(pyvista.CellType.WEDGE)
+        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+            axis0 = ir + 1 if include_origin else ir
+            axis1 = ir + 2 if include_origin else ir + 1
+            cells.append(6)
+            cells.extend(
+                [
+                    axis0,
+                    _index(ir, 0, itheta + 1),
+                    _index(ir, 0, itheta),
+                    axis1,
+                    _index(ir + 1, 0, itheta + 1),
+                    _index(ir + 1, 0, itheta),
+                ]
+            )
+            celltypes.append(pyvista.CellType.WEDGE)
 
     # now go downwards
     if negative_axis:
-        for ir in range(nr - 1):
+        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
-            for itheta in range(ntheta - 1):
-                cells.append(6)
-                cells.extend(
-                    [
-                        axis0,
-                        _index(ir, nphi - 1, itheta),
-                        _index(ir, nphi - 1, itheta + 1),
-                        axis1,
-                        _index(ir + 1, nphi - 1, itheta),
-                        _index(ir + 1, nphi - 1, itheta + 1),
-                    ]
-                )
+            cells.append(6)
+            cells.extend(
+                [
+                    axis0,
+                    _index(ir, nphi - 1, itheta),
+                    _index(ir, nphi - 1, itheta + 1),
+                    axis1,
+                    _index(ir + 1, nphi - 1, itheta),
+                    _index(ir + 1, nphi - 1, itheta + 1),
+                ]
+            )
                 celltypes.append(pyvista.CellType.WEDGE)
 
     # Form Hexahedra
