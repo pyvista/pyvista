@@ -162,9 +162,6 @@ jobs:
           name: docs-build
           path: .
 
-      - name: UnTar build
-        run: tar -xzvf docs-build.tar.gz
-
       - uses: nwtgck/actions-netlify@v2.0
         with:
           publish-dir: doc/_build/html/
