@@ -752,16 +752,14 @@ def SolidSphereGeneric(
     else:
         include_origin = False
 
-    if np.isclose(
-        np.mod(theta[0], 2 * np.pi), np.mod(theta[-1], 2 * np.pi), rtol=0.0, atol=tol_angle
-    ):
+    if np.isclose(theta[-1] - theta[0], 2 * np.pi, rtol=0.0, atol=tol_angle):
         duplicate_theta = True
         theta = theta[:-1]
     else:
         duplicate_theta = False
 
     if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle):
-        points.extend(_spherical_to_cartesian(radius, phi[0], theta[0]))
+        points.extend(_spherical_to_cartesian(radius, 0.0, theta[0]))
         positive_axis = True
         phi = phi[1:]
         nphi = nphi - 1
@@ -771,7 +769,7 @@ def SolidSphereGeneric(
     npoints_on_pos_axis = npoints_on_axis
 
     if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle):
-        points.extend(_spherical_to_cartesian(radius, phi[-1], theta[0]))
+        points.extend(_spherical_to_cartesian(radius, np.pi, theta[0]))
         negative_axis = True
         phi = phi[:-1]
         nphi = nphi - 1
