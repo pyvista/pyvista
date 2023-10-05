@@ -97,13 +97,6 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Upload HTML documentation
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: docs-build
-          path: doc/_build/html/
-
       - name: Preview HTML documentation
         if: always()
         uses: nwtgck/actions-netlify@v2.0
@@ -119,6 +112,13 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         timeout-minutes: 1
+
+      - name: Upload HTML documentation
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-build
+          path: doc/_build/html/
 
       - uses: actions/upload-artifact@v3
         with:
