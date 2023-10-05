@@ -98,7 +98,6 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Preview HTML documentation
-        if: always()
         uses: nwtgck/actions-netlify@v2.0
         with:
           publish-dir: doc/_build/html/
