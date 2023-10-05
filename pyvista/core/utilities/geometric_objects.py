@@ -454,7 +454,7 @@ def SolidSphere(
         ``end_theta`` must be greater than ``start_theta``.
 
     theta_resolution : int, default: 30
-        Number of points in theta direction.
+        Number of points in ``theta`` direction.
 
     start_phi : float, default: 0.0
         Starting polar angle.
