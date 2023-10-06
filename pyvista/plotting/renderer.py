@@ -1028,7 +1028,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_axes(
         self,
         interactive=None,
-        line_width=2,
         color=None,
         x_color=None,
         y_color=None,
@@ -1049,9 +1048,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ----------
         interactive : bool, optional
             Enable this orientation widget to be moved by the user.
-
-        line_width : int, default: 2
-            The width of the marker lines.
 
         color : ColorLike, optional
             Color of the labels.
@@ -1108,12 +1104,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        Show axes without labels and with thick lines.
+        Show axes without labels and with thick axes shafts.
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
-        >>> _ = pl.add_axes(line_width=5, labels_off=True)
+        >>> _ = pl.add_axes(shaft_radius=0.05, labels_off=True)
         >>> pl.show()
 
         Use the axes orientation widget instead of the default arrows.
@@ -1129,8 +1125,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
         >>> _ = pl.add_axes(
-        ...     line_width=5,
-        ...     cone_radius=0.6,
+        ...     shaft_radius=0.05,
+        ...     tip_radius=0.6,
         ...     shaft_length=0.7,
         ...     tip_length=0.3,
         ...     ambient=0.5,
@@ -1160,7 +1156,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
                 label_color=color,
-                line_width=line_width,
                 x_color=x_color,
                 y_color=y_color,
                 z_color=z_color,
@@ -1173,7 +1168,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             self.axes_actor = create_axes_marker(
                 label_color=color,
-                shaft_width=line_width,
                 x_color=x_color,
                 y_color=y_color,
                 z_color=z_color,

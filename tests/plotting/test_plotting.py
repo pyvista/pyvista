@@ -891,11 +891,11 @@ def test_add_axes_parameters():
     plotter = pv.Plotter()
     plotter.add_axes()
     plotter.add_axes(
-        line_width=5,
-        cone_radius=0.6,
+        shaft_width=5,
+        tip_radius=0.6,
         shaft_length=0.7,
         tip_length=0.3,
-        ambient=0.5,
+        properties=dict(ambient=0.5),
         label_size=(0.4, 0.16),
         viewport=(0, 0, 0.4, 0.4),
     )
