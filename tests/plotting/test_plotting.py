@@ -3681,7 +3681,13 @@ def test_add_remove_scalar_bar(sphere):
 
 @skip_lesser_9_0_X
 def test_axes_actor_properties():
-    axes_actor = pv.AxesActor(shaft_type='cylinder', shaft_radius=0.05, tip_radius=1,tip_resolution=100, tip_type='sphere')
+    axes_actor = pv.AxesActor(
+        shaft_type='cylinder',
+        shaft_radius=0.05,
+        tip_radius=1,
+        tip_resolution=100,
+        tip_type='sphere',
+    )
 
     axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
     assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
