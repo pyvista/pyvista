@@ -140,3 +140,12 @@ class ActorProperties:
     @representation.setter
     def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
         self.properties.SetRepresentation(RepresentationType.from_any(value).value)
+
+    @property
+    def ambient(self):  # numpydoc ignore=RT01
+        """Return or set the ambient lighting coefficient."""
+        return self.properties.GetAmbient()
+
+    @ambient.setter
+    def ambient(self, ambient: float):  # numpydoc ignore=GL08
+        self.properties.SetAmbient(ambient)

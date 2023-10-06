@@ -460,6 +460,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (
+                hasattr(actor, 'bounds')
+                and actor.bounds is not None
+                and id(actor) != id(self.bounding_box_actor)
+            ):
+                _update_bounds(actor.bounds)
+            elif (
                 hasattr(actor, 'GetBounds')
                 and actor.GetBounds() is not None
                 and id(actor) != id(self.bounding_box_actor)
@@ -479,7 +485,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Returns
         -------
         float
-            Length of the diagional of the bounding box.
+            Length of the diagonal of the bounding box.
         """
         return pyvista.Box(self.bounds).length
 
@@ -833,8 +839,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'SetScale'):
+        if hasattr(actor, 'scale'):
+            # Use PyVista implementation if available
+            actor.scale = np.array(actor.scale) * np.array(self.scale)
+        elif hasattr(actor, 'SetScale'):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
+
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
@@ -928,7 +938,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         self._marker_actor = create_axes_marker(
-            line_width=line_width,
+            shaft_width=line_width,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
@@ -1163,13 +1173,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             self.axes_actor = create_axes_marker(
                 label_color=color,
-                line_width=line_width,
+                shaft_width=line_width,
                 x_color=x_color,
                 y_color=y_color,
                 z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
+                x_label=xlabel,
+                y_label=ylabel,
+                z_label=zlabel,
                 labels_off=labels_off,
                 **kwargs,
             )
@@ -2448,7 +2458,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
+            if hasattr(actor, 'scale'):
+                actor.scale = self.scale
+            elif hasattr(actor, 'SetScale'):
                 actor.SetScale(self.scale)
 
         self.parent.render()

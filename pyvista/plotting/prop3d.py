@@ -1,5 +1,5 @@
 """Prop3D module."""
-from typing import Tuple, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
@@ -41,8 +41,11 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Vector):  # numpydoc ignore=GL08
-        return self.SetScale(value)
+    def scale(self, value: float | Sequence[float]):  # numpydoc ignore=GL08
+        if isinstance(value, Sequence):
+            self.SetScale(*value)
+        else:
+            self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -169,6 +172,9 @@ class Prop3D(_vtk.vtkProp3D):
         Orientation is defined as the rotation from the global axes in degrees
         about the actor's x, y, and z axes.
 
+        The rotations are applied in the following order: RotateZ, then
+        RotateX, and finally RotateY.
+
         Examples
         --------
         Reorient just the actor and plot it. Note how the actor is rotated
@@ -212,6 +218,19 @@ class Prop3D(_vtk.vtkProp3D):
     @orientation.setter
     def orientation(self, value: tuple):  # numpydoc ignore=GL08
         self.SetOrientation(value)
+
+    @property
+    def origin(self) -> tuple:  # numpydoc ignore=RT01
+        """Return or set the entity origin.
+
+        This is the point about which all rotations take place.
+
+        """
+        return self.GetOrigin()
+
+    @origin.setter
+    def origin(self, value: tuple):  # numpydoc ignore=GL08
+        self.SetOrigin(value)
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
