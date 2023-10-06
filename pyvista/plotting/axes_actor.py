@@ -1,6 +1,6 @@
 """Axes actor module."""
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, Union
 import warnings
 
 import numpy as np
@@ -382,7 +382,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length: float | Sequence[float]):  # numpydoc ignore=GL08
+    def shaft_length(self, length: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
@@ -409,7 +409,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length: float | Sequence[float]):  # numpydoc ignore=GL08
+    def tip_length(self, length: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
@@ -436,9 +436,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(
-        self, length: float or Sequence[float]
-    ):  # numpydoc ignore=GL08
+    def label_position(self, length: float or Sequence[float]):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
@@ -678,7 +676,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: ShaftType | int | str):  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: Union[ShaftType, int, str]):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType.from_any(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -703,7 +701,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: TipType | int | str):  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: Union[TipType, int, str]):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType.from_any(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
