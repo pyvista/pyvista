@@ -1,5 +1,5 @@
 """Axes actor module."""
-from typing import Literal, Union, Sequence, Tuple
+from typing import Literal, Sequence, Tuple, Union
 import warnings
 
 import numpy as np
