@@ -41,7 +41,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: float | Sequence[float]):  # numpydoc ignore=GL08
+    def scale(self, value: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
         if isinstance(value, Sequence):
             self.SetScale(*value)
         else:
