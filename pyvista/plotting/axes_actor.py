@@ -11,7 +11,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor
+from ._vtk import vtkAxesActor, vtkTransform
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -967,7 +967,13 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     def _update_user_matrix(self):
         matrix = vtkmatrix_from_array(self._compute_matrix())
-        self.SetUserMatrix(matrix)
+        # Due to trame-vtk bug (see: trame-vtk/issues/50), do not set
+        # the UserMatrix directly with:
+        # self.SetUserMatrix(matrix)
+        # Instead, set the matrix implicitly through UserTransform
+        transform = vtkTransform()
+        transform.SetMatrix(matrix)
+        self.SetUserTransform(transform)
 
     def _compute_matrix(self):
         return self._user_matrix @ self._implicit_transform_matrix
