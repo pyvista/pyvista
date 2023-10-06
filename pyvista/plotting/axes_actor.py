@@ -1,5 +1,5 @@
 """Axes actor module."""
-from typing import Literal, Union, Sequence
+from typing import Literal, Union, Sequence, Tuple
 import warnings
 
 import numpy as np
@@ -388,7 +388,7 @@ class AxesActor(Prop3D, vtkAxesActor):
             self.SetNormalizedShaftLength(length, length, length)
 
     @property
-    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the normalized length of the tip.
 
         Examples
@@ -913,7 +913,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.SetAxisLabels(not is_on)
 
     @property
-    def label_size(self) -> tuple[float, float]:
+    def label_size(self) -> Tuple[float, float]:
         # Assume label size for x is same as y and z
         label_actor = self.GetXAxisCaptionActor2D()
         size = (label_actor.GetWidth(), label_actor.GetHeight())
