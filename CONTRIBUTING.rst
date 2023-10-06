@@ -490,6 +490,9 @@ Run all code examples in the docstrings with:
 
    python -m pytest -v --doctest-modules pyvista
 
+Documentation Preview
+~~~~~~~~~~~~~~~~~~~~~
+
 Style Checking
 ~~~~~~~~~~~~~~
 PyVista follows PEP8 standard as outlined in the `Coding Style section
