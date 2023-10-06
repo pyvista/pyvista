@@ -76,6 +76,29 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 2], points_out[:, 2])
 
 
+@pytest.mark.parametrize("is_negative", (True, False))
+@pytest.mark.parametrize("delta", ([0, 0, 0], [1e-8, 0, 0], [0, 0, 1e-8]))
+def test_translate_start_direction_collinear(is_negative, delta, bunny):
+    mesh_in = bunny
+    direction = np.array([1.0, 0.0, 0.0])
+    start_direction = np.array([0.0, 1.0, 0.0]) + delta
+    if is_negative:
+        start_direction *= -1
+    mesh_out = mesh_in.copy()
+    translate(mesh_out, direction=direction, start_direction=start_direction)
+    points_in = mesh_in.points
+    points_out = mesh_out.points
+
+    if is_negative:
+        assert np.allclose(points_in[:, 0], points_out[:, 1])
+        assert np.allclose(points_in[:, 1], -points_out[:, 0])
+        assert np.allclose(points_in[:, 2], points_out[:, 2])
+    else:
+        assert np.allclose(points_in[:, 0], -points_out[:, 1])
+        assert np.allclose(points_in[:, 1], points_out[:, 0])
+        assert np.allclose(points_in[:, 2], points_out[:, 2])
+
+
 def test_translate_rotations():
     point = pv.PolyData([[1.0, 0.0, 0.0]])
     translate(
