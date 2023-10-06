@@ -102,7 +102,7 @@ floats can describe the shape, so it takes the least amount of memory
 to store.
 
 This is because in |PolyData| or
-|UnstructuredGrid|, points and cells must be explicitly
+|UnstructuredGrid|, points, and cells must be explicitly
 defined. In other data types, such as |ImageData|,
 the cells (and even points) are defined as an emergent property based
 on the dimensionality of the grid.
