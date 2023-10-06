@@ -437,7 +437,7 @@ def SolidSphere(
     Parameters
     ----------
     outer_radius : float, default: 0.5
-        Outer radius of sphere.  Must be non-nonegative.
+        Outer radius of sphere.  Must be non-negative.
 
     inner_radius : float, default: 0.0
         Inner radius of sphere.  Must be non-negative
