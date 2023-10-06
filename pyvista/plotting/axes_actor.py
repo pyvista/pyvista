@@ -86,7 +86,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
 
-        label_size : sequence[float], default: (0.25, 0.1)
+        label_size : Sequence[float], default: (0.25, 0.1)
             The width and height of the axes label actors. Values should
             be in range ``[0, 1]``.
 
@@ -382,7 +382,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length: float | Sequence[float, float, float]):  # numpydoc ignore=GL08
+    def shaft_length(self, length: float | Sequence[float]):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedShaftLength(length[0], length[1], length[2])
         else:
@@ -409,7 +409,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length: float | Sequence[float, float, float]):  # numpydoc ignore=GL08
+    def tip_length(self, length: float | Sequence[float]):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedTipLength(length[0], length[1], length[2])
         else:
@@ -437,7 +437,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @label_position.setter
     def label_position(
-        self, length: float or Sequence[float, float, float]
+        self, length: float or Sequence[float]
     ):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedLabelPosition(length[0], length[1], length[2])
@@ -916,7 +916,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.SetAxisLabels(not is_on)
 
     @property
-    def label_size(self) -> tuple[int, int]:
+    def label_size(self) -> tuple[float, float]:
         # Assume label size for x is same as y and z
         label_actor = self.GetXAxisCaptionActor2D()
         size = (label_actor.GetWidth(), label_actor.GetHeight())
@@ -926,7 +926,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return size
 
     @label_size.setter
-    def label_size(self, size: Sequence[int, int]):
+    def label_size(self, size: Sequence[float]):
         for label_actor in [
             self.GetXAxisCaptionActor2D(),
             self.GetYAxisCaptionActor2D(),
