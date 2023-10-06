@@ -3681,11 +3681,12 @@ def test_add_remove_scalar_bar(sphere):
 
 @skip_lesser_9_0_X
 def test_axes_actor_properties():
-    axes = pv.Axes()
-    axes_actor = axes.axes_actor
+    axes_actor = pv.AxesActor(shaft_type='cylinder', shaft_radius=0.05, tip_radius=1,tip_resolution=100, tip_type='sphere')
 
     axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
     assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
+    axes_actor.x_axis_shaft_properties.ambient = 0.9
+    assert axes_actor.x_axis_shaft_properties.ambient == 0.9
     axes_actor.y_axis_shaft_properties.metallic = 0.2
     assert axes_actor.y_axis_shaft_properties.metallic == 0.2
     axes_actor.z_axis_shaft_properties.roughness = 0.3
@@ -3710,9 +3711,9 @@ def test_axes_actor_properties():
     axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
     assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
 
-    axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
     pl = pv.Plotter()
     pl.add_actor(axes_actor)
+    pl.camera.zoom(1.5)
     pl.show()
 
 
