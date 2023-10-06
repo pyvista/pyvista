@@ -353,6 +353,17 @@ def get_matrix_cases():
 
 @pytest.mark.parametrize('case', range(len(get_matrix_cases())))
 def test_axes_actor_GetUserMatrix_emulates_GetMatrix(axes_actor, vtk_axes_actor, case):
+    # NOTE: Normally, GetUserMatrix() and GetMatrix() are very different matrices:
+    # - GetUserMatrix() is an independent user-provided transformation matrix
+    # - GetMatrix() concatenates
+    #     implicit_transform -> user_transform -> coordinate system transform
+    # However, as a workaround for pyvista#5019, UserMatrix is used
+    # to represent the user_transform *and* implicit_transform
+    # Further, the renderer's coordinate system transform is identity
+    # by default. Therefore, we can check that the workaround is working
+    # by asserting that:
+    #   all(vtkAxesActor.GetMatrix()) == all(axes_actor.GetUserMatrix())
+
     cases = get_matrix_cases()
     angle = 42
     origin = (1, 5, 10)
@@ -457,3 +468,10 @@ def test_create_axes_marker_deprecated_constructor():
     assert np.any(axes)
     axes = create_axes_marker()
     assert np.any(axes)
+
+
+def test_axes_actor_raises():
+    with pytest.raises(TypeError, match="must be a dictionary"):
+        pv.AxesActor(properties="not_a_dict")
+    with pytest.raises(TypeError, match="unexpected keyword"):
+        pv.AxesActor(not_valid_kwarg="some_value")
