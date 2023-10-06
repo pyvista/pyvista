@@ -732,7 +732,7 @@ def SolidSphereGeneric(
         Returns
         -------
         np.ndarray
-            ``(n, 3)`` cartesian coordinate array.
+            ``(n, 3)`` Cartesian coordinate array.
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
