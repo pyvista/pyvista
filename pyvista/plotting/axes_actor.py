@@ -42,14 +42,14 @@ class AxesActor(Prop3D, vtkAxesActor):
         x_color=None,
         y_color=None,
         z_color=None,
-        shaft_type: Literal["cylinder", "line"] = "cylinder",
+        shaft_type="cylinder",
         shaft_length=0.8,
         shaft_radius=0.01,
         shaft_width=2,
         shaft_resolution=16,
         tip_radius=0.4,
         tip_length=0.2,
-        tip_type: Literal["cone", "sphere"] = "cone",
+        tip_type="cone",
         tip_resolution=16,
         total_length=1,
         scale=1,
@@ -448,7 +448,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length: float or Sequence[float]):  # numpydoc ignore=GL08
+    def label_position(self, length: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
         if isinstance(length, Sequence):
             self.SetNormalizedLabelPosition(length[0], length[1], length[2])
         else:
@@ -685,7 +685,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         <ShaftType.LINE: 1>
 
         """
-        return AxesActor.ShaftType(self.GetShaftType())
+        return AxesActor.ShaftType.from_any(self.GetShaftType())
 
     @shaft_type.setter
     def shaft_type(self, shaft_type: Union[ShaftType, int, str]):  # numpydoc ignore=GL08
@@ -710,7 +710,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         <TipType.SPHERE: 1>
 
         """
-        return AxesActor.TipType(self.GetTipType())
+        return AxesActor.TipType.from_any(self.GetTipType())
 
     @tip_type.setter
     def tip_type(self, tip_type: Union[TipType, int, str]):  # numpydoc ignore=GL08
