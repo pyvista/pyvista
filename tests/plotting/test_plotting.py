@@ -3679,6 +3679,24 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+def test_axes_actor_orientation():
+    axes_actor1 = pv.AxesActor()
+    axes_actor2 = pv.AxesActor(
+        position=(-0.7, 0.8, 0.3),
+        orientation=(13, 25, 68),
+        origin=(-0.3, -0.2, -0.1),
+        scale=(2, 3, 4),
+        x_label='i',
+        y_label='j',
+        z_label='k',
+    )
+    plot = pv.Plotter()
+    plot.add_actor(axes_actor1)
+    plot.add_actor(axes_actor2)
+    plot.show_grid()
+    plot.show()
+
+
 @skip_lesser_9_0_X
 def test_axes_actor_properties():
     axes_actor = pv.AxesActor(
