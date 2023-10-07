@@ -1,4 +1,4 @@
-"""Version info for pv.
+"""Version info for pyvista.
 
 On the ``main`` branch, use 'dev0' to denote a development version.
 For example:
