@@ -92,7 +92,7 @@ def Cylinder(
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pyvista.Cylinder(
+    ...     pv.Cylinder(
     ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ...     ),
     ...     show_edges=True,
