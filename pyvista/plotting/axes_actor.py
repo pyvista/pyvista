@@ -198,7 +198,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         """
         super().__init__()
-        self.__enable_orientation = False
+        self.__enable_orientation = True
 
         # Supported aliases (inherited from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
@@ -986,11 +986,11 @@ class AxesActor(Prop3D, vtkAxesActor):
             matrix = self._user_matrix
         # Due to trame-vtk bug (see: trame-vtk/issues/50), do not set
         # the UserMatrix directly with:
-        # self.SetUserMatrix(matrix)
-        # Instead, set the matrix implicitly through UserTransform
-        transform = vtkTransform()
-        transform.SetMatrix(vtkmatrix_from_array(matrix))
-        self.SetUserTransform(transform)
+        self.SetUserMatrix(vtkmatrix_from_array(matrix))
+        # # Instead, set the matrix implicitly through UserTransform
+        # transform = vtkTransform()
+        # transform.SetMatrix(vtkmatrix_from_array(matrix))
+        # self.SetUserTransform(transform)
 
     def _concatenate_implicit_matrix_and_user_matrix(self):
         return self._user_matrix @ self._implicit_matrix
