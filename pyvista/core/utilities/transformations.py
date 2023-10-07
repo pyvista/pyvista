@@ -260,7 +260,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     Scale a set of points in-place.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> points = examples.load_airplane().points
     >>> points_orig = points.copy()

@@ -1,7 +1,7 @@
 """Image regression module."""
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -17,7 +17,7 @@ def remove_alpha(img):
 
     Returns
     -------
-    pyvista.ImageData
+    pv.ImageData
         The output image data with the alpha channel removed.
 
     """
@@ -25,7 +25,7 @@ def remove_alpha(img):
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
     ec.Update()
-    return pyvista.wrap(ec.GetOutput())
+    return pv.wrap(ec.GetOutput())
 
 
 def wrap_image_array(arr):
@@ -46,7 +46,7 @@ def wrap_image_array(arr):
 
     Returns
     -------
-    pyvista.ImageData
+    pv.ImageData
         A PyVista ImageData object with the wrapped array data.
 
     """
@@ -59,7 +59,7 @@ def wrap_image_array(arr):
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
-    wrap_img = pyvista.wrap(img)
+    wrap_img = pv.wrap(img)
     wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
@@ -174,18 +174,18 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     --------
     Compare two active plotters.
 
-    >>> import pyvista
-    >>> pl1 = pyvista.Plotter()
-    >>> _ = pl1.add_mesh(pyvista.Sphere(), smooth_shading=True)
-    >>> pl2 = pyvista.Plotter()
-    >>> _ = pl2.add_mesh(pyvista.Sphere(), smooth_shading=False)
-    >>> error = pyvista.compare_images(pl1, pl2)
+    >>> import pyvista as pv
+    >>> pl1 = pv.Plotter()
+    >>> _ = pl1.add_mesh(pv.Sphere(), smooth_shading=True)
+    >>> pl2 = pv.Plotter()
+    >>> _ = pl2.add_mesh(pv.Sphere(), smooth_shading=False)
+    >>> error = pv.compare_images(pl1, pl2)
 
     Compare images from file.
 
-    >>> import pyvista
-    >>> img1 = pyvista.read('img1.png')  # doctest:+SKIP
-    >>> img2 = pyvista.read('img2.png')  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> img1 = pv.read('img1.png')  # doctest:+SKIP
+    >>> img2 = pv.read('img2.png')  # doctest:+SKIP
     >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
 
     """

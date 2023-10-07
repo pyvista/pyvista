@@ -28,7 +28,7 @@ class UnstructuredGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
+        pv.UnstructuredGrid
             UnstructuredGrid containing the subdivided tetrahedrons.
 
         Examples

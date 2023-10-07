@@ -9,7 +9,7 @@ from typing import Sequence, Tuple, Union
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -59,8 +59,8 @@ class _PointSet(DataSet):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere(center=(1, 1, 1))
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(center=(1, 1, 1))
         >>> mesh.center_of_mass()
         array([1., 1., 1.])
 
@@ -78,7 +78,7 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        to_copy : pyvista.DataSet
+        to_copy : pv.DataSet
             Data object to perform the shallow copy from.
 
         """
@@ -101,7 +101,7 @@ class _PointSet(DataSet):
 
         Returns
         -------
-        pyvista.DataSet
+        pv.DataSet
             Same type as the input, but with the specified cells
             removed.
 
@@ -110,8 +110,8 @@ class _PointSet(DataSet):
         Remove 20 cells from an unstructured grid.
 
         >>> from pyvista import examples
-        >>> import pyvista
-        >>> hex_mesh = pyvista.read(examples.hexbeamfile)
+        >>> import pyvista as pv
+        >>> hex_mesh = pv.read(examples.hexbeamfile)
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
@@ -137,7 +137,7 @@ class _PointSet(DataSet):
 
         Returns
         -------
-        pyvista.PointSet
+        pv.PointSet
             Pointset with points in double precision.
 
         Notes
@@ -149,8 +149,8 @@ class _PointSet(DataSet):
         Create a mesh that has points of the type ``float32`` and
         convert the points to ``float64``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.points.dtype
         dtype('float32')
         >>> _ = mesh.points_to_double()
@@ -183,15 +183,15 @@ class _PointSet(DataSet):
 
         Returns
         -------
-        pyvista.PointSet
+        pv.PointSet
             Translated pointset.
 
         Examples
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.center
         [0.0, 0.0, 0.0]
         >>> trans = mesh.translate((2, 1, 2), inplace=True)
@@ -249,10 +249,10 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     Create a simple point cloud of 10 points from a numpy array.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> rng = np.random.default_rng()
     >>> points = rng.random((10, 3))
-    >>> pset = pyvista.PointSet(points)
+    >>> pset = pv.PointSet(points)
 
     Plot the pointset. Note: this casts to a :class:`pyvista.PolyData`
     internally when plotting.
@@ -271,7 +271,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         the class being abstract.
 
         """
-        if pyvista.vtk_version_info < (9, 1, 0):
+        if pv.vtk_version_info < (9, 1, 0):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
         return super().__new__(cls, *args, **kwargs)
 
@@ -310,7 +310,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             PointSet cast to a ``pyvista.PolyData``.
 
         """
@@ -531,49 +531,49 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     See Also
     --------
-    pyvista.PolyData.from_regular_faces
+    pv.PolyData.from_regular_faces
 
     Examples
     --------
     >>> import vtk
     >>> import numpy as np
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
 
     Create an empty mesh.
 
-    >>> mesh = pyvista.PolyData()
+    >>> mesh = pv.PolyData()
 
     Initialize from a ``vtk.vtkPolyData`` object.
 
     >>> vtkobj = vtk.vtkPolyData()
-    >>> mesh = pyvista.PolyData(vtkobj)
+    >>> mesh = pv.PolyData(vtkobj)
 
     Initialize from just vertices.
 
     >>> vertices = np.array(
     ...     [[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]]
     ... )
-    >>> mesh = pyvista.PolyData(vertices)
+    >>> mesh = pv.PolyData(vertices)
 
     Initialize from vertices and faces.
 
     >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]])
-    >>> mesh = pyvista.PolyData(vertices, faces)
+    >>> mesh = pv.PolyData(vertices, faces)
 
     Initialize from vertices and lines.
 
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
-    >>> mesh = pyvista.PolyData(vertices, lines=lines)
+    >>> mesh = pv.PolyData(vertices, lines=lines)
 
     Initialize from vertices and triangle strips.
 
     >>> strips = np.hstack([[4, 0, 1, 3, 2]])
-    >>> mesh = pyvista.PolyData(vertices, strips=strips)
+    >>> mesh = pv.PolyData(vertices, strips=strips)
 
     Initialize from a filename.
 
-    >>> mesh = pyvista.PolyData(examples.antfile)
+    >>> mesh = pv.PolyData(examples.antfile)
 
     See :ref:`create_poly` for more examples.
 
@@ -684,9 +684,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @staticmethod
     def _make_vertex_cells(npoints):
-        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
+        cells = np.empty((npoints, 2), dtype=pv.ID_TYPE)
         cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
+        cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
         return cells
 
     @property
@@ -702,17 +702,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         Create a point cloud polydata and return the vertex cells.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> points = np.random.random((5, 3))
-        >>> pdata = pyvista.PolyData(points)
+        >>> pdata = pv.PolyData(points)
         >>> pdata.verts
         array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
 
         Set vertex cells.  Note how the mesh plots both the surface
         mesh and the additional vertices in a single plot.
 
-        >>> mesh = pyvista.Plane(i_resolution=3, j_resolution=3)
+        >>> mesh = pv.Plane(i_resolution=3, j_resolution=3)
         >>> mesh.verts = np.vstack(
         ...     (
         ...         np.ones(mesh.n_points, dtype=np.int64),
@@ -743,10 +743,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         Return the lines from a spline.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> points = np.random.random((3, 3))
-        >>> spline = pyvista.Spline(points, 10)
+        >>> spline = pv.Spline(points, 10)
         >>> spline.lines
         array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
 
@@ -784,7 +784,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         See Also
         --------
-        pyvista.PolyData.regular_faces
+        pv.PolyData.regular_faces
 
         Notes
         -----
@@ -843,7 +843,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         See Also
         --------
-        pyvista.PolyData.faces
+        pv.PolyData.faces
 
         Notes
         -----
@@ -892,7 +892,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The newly constructed mesh.
 
         Examples
@@ -950,15 +950,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Show a mesh from :func:`pyvista.Plane` is not composed of all
         triangles.
 
-        >>> import pyvista
-        >>> plane = pyvista.Plane()
+        >>> import pyvista as pv
+        >>> plane = pv.Plane()
         >>> plane.is_all_triangles
         False
 
         Show that the mesh from :func:`pyvista.Sphere` contains only
         triangles.
 
-        >>> sphere = pyvista.Sphere()
+        >>> sphere = pv.Sphere()
         >>> sphere.is_all_triangles
         True
 
@@ -994,8 +994,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Line()
+        >>> import pyvista as pv
+        >>> mesh = pv.Line()
         >>> mesh.n_lines
         1
 
@@ -1016,15 +1016,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         number of vertices. By default, when constructing a PolyData with points but no cells,
         vertices are automatically created, one per point.
 
-        >>> import pyvista
-        >>> mesh = pyvista.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
         >>> mesh.n_points, mesh.n_verts
         (2, 2)
 
         If any other cells are specified, these vertices are not created.
 
-        >>> import pyvista
-        >>> mesh = pyvista.PolyData(
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData(
         ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1]
         ... )
         >>> mesh.n_points, mesh.n_verts
@@ -1042,13 +1042,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Create a simple mesh with one triangle strip and return the
         number of triangles.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> vertices = np.array(
         ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
         ... )
         >>> strip = np.array([3, 0, 1, 2])
-        >>> mesh = pyvista.PolyData(vertices, strips=strip)
+        >>> mesh = pv.PolyData(vertices, strips=strip)
         >>> mesh.n_strips
         1
 
@@ -1063,8 +1063,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Examples
         --------
-        >>> import pyvista
-        >>> plane = pyvista.Plane(i_resolution=2, j_resolution=2)
+        >>> import pyvista as pv
+        >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
         >>> plane.n_faces
         4
 
@@ -1119,20 +1119,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         Save a mesh as a STL.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere.save('my_mesh.stl')  # doctest:+SKIP
 
         Save a mesh as a PLY.
 
-        >>> sphere = pyvista.Sphere()
+        >>> sphere = pv.Sphere()
         >>> sphere.save('my_mesh.ply')  # doctest:+SKIP
 
         Save a mesh as a PLY with a texture array.  Here we also
         create a simple RGB array representing the texture.
 
         >>> import numpy as np
-        >>> sphere = pyvista.Sphere()
+        >>> sphere = pv.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
         >>> # Just the green channel is set as a repeatedly
         >>> # decreasing value
@@ -1150,7 +1150,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Save a mesh as a VTK file.
 
-        >>> sphere = pyvista.Sphere()
+        >>> sphere = pv.Sphere()
         >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         """
@@ -1193,8 +1193,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Examples
         --------
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere.volume
         0.5183
 
@@ -1204,7 +1204,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def point_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the point normals.
 
         If the point data already contains an array named ``'Normals'``, this
@@ -1214,13 +1214,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pv.pyvista_ndarray
             Array of point normals.
 
         Examples
         --------
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere.point_normals  # doctest:+SKIP
         pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
                          [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
@@ -1239,7 +1239,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def cell_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         If the cell data already contains an array named ``'Normals'``, this
@@ -1249,13 +1249,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pv.pyvista_ndarray
             Array of cell normals.
 
         Examples
         --------
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere.cell_normals  # doctest:+SKIP
         pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
                          [-0.05177207,  0.01682176, -0.9985172 ],
@@ -1273,20 +1273,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def face_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pv.pyvista_ndarray
             Array of face normals.
 
         Examples
         --------
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere.face_normals  # doctest:+SKIP
         pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
                          [-0.05177207,  0.01682176, -0.9985172 ],
@@ -1324,14 +1324,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         Return the number of open edges on a sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere.n_open_edges
         0
 
         Return the number of open edges on a plane.
 
-        >>> plane = pyvista.Plane(i_resolution=1, j_resolution=1)
+        >>> plane = pv.Plane(i_resolution=1, j_resolution=1)
         >>> plane.n_open_edges
         4
 
@@ -1352,7 +1352,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         Show a sphere is manifold.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> pyvista.Sphere().is_manifold
         True
 
@@ -1424,35 +1424,35 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> import vtk
 
     Create an empty grid
 
-    >>> grid = pyvista.UnstructuredGrid()
+    >>> grid = pv.UnstructuredGrid()
 
     Copy a vtk.vtkUnstructuredGrid
 
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
-    >>> grid = pyvista.UnstructuredGrid(vtkgrid)
+    >>> grid = pv.UnstructuredGrid(vtkgrid)
 
     From a filename.
 
-    >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    >>> grid = pv.UnstructuredGrid(examples.hexbeamfile)
     >>> grid.plot(show_edges=True)
 
     From arrays. Here we create a single tetrahedron.
 
     >>> cells = [4, 0, 1, 2, 3]
-    >>> celltypes = [pyvista.CellType.TETRA]
+    >>> celltypes = [pv.CellType.TETRA]
     >>> points = [
     ...     [1.0, 1.0, 1.0],
     ...     [1.0, -1.0, -1.0],
     ...     [-1.0, 1.0, -1.0],
     ...     [-1.0, -1.0, 1.0],
     ... ]
-    >>> grid = pyvista.UnstructuredGrid(cells, celltypes, points)
+    >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
 
     See the :ref:`create_unstructured_example` example for more details
@@ -1563,7 +1563,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         --------
         >>> import numpy as np
         >>> from pyvista import CellType
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
         >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
         >>> cells = np.hstack((cell0_ids, cell1_ids))
@@ -1601,7 +1601,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         >>> points = np.vstack((cell1, cell2))
 
-        >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+        >>> grid = pv.UnstructuredGrid(cells, cell_type, points)
 
         """
         # convert to arrays upfront
@@ -1658,9 +1658,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pyvista.DataSet.get_cell
-        pyvista.UnstructuredGrid.cell_connectivity
-        pyvista.UnstructuredGrid.offset
+        pv.DataSet.get_cell
+        pv.UnstructuredGrid.cell_connectivity
+        pv.UnstructuredGrid.offset
 
         Notes
         -----
@@ -1675,7 +1675,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         beam.  Note how the cells have "padding" indicating the number
         of points per cell.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
         >>> grid.cells[:18]
@@ -1713,7 +1713,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pyvista.DataSet.get_cell
+        pv.DataSet.get_cell
 
         Examples
         --------
@@ -1726,9 +1726,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         approach may be more helpful than the ``cells`` property when
         extracting cells.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.cells_dict  # doctest:+SKIP
         {12: array([[ 0,  2,  8,  7, 27, 36, 90, 81],
                 [ 2,  1,  4,  8, 36, 18, 54, 90],
@@ -1754,15 +1754,15 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pyvista.DataSet.get_cell
+        pv.DataSet.get_cell
 
         Examples
         --------
         Return the cell connectivity for the first two cells.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.cell_connectivity[:16]
         array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90])
 
@@ -1788,7 +1788,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Returns
         -------
-        pyvista.UnstructuredGrid
+        pv.UnstructuredGrid
             UnstructuredGrid containing only linear cells when
             ``deep=False``.
 
@@ -1888,9 +1888,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         This mesh contains only linear hexahedral cells, type
         ``CellType.HEXAHEDRON``, which evaluates to 12.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.celltypes  # doctest:+SKIP
         array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
@@ -1924,9 +1924,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         all hexahedral cells, note how each cell starts at 8 greater
         than the prior cell.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.offset
         array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
                104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
@@ -1945,7 +1945,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Returns
         -------
-        pyvista.ExplicitStructuredGrid
+        pv.ExplicitStructuredGrid
             An explicit structured grid.
 
         Raises
@@ -1956,7 +1956,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pyvista.ExplicitStructuredGrid.cast_to_unstructured_grid
+        pv.ExplicitStructuredGrid.cast_to_unstructured_grid
 
         Examples
         --------
@@ -2035,18 +2035,18 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import vtk
     >>> import numpy as np
 
     Create an empty structured grid.
 
-    >>> grid = pyvista.StructuredGrid()
+    >>> grid = pv.StructuredGrid()
 
     Initialize from a ``vtk.vtkStructuredGrid`` object
 
     >>> vtkgrid = vtk.vtkStructuredGrid()
-    >>> grid = pyvista.StructuredGrid(vtkgrid)
+    >>> grid = pv.StructuredGrid(vtkgrid)
 
     Create from NumPy arrays.
 
@@ -2054,7 +2054,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> yrng = np.arange(-10, 10, 5, dtype=np.float32)
     >>> zrng = np.arange(-10, 10, 1, dtype=np.float32)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
-    >>> grid = pyvista.StructuredGrid(x, y, z)
+    >>> grid = pv.StructuredGrid(x, y, z)
     >>> grid
     StructuredGrid (...)
       N Cells:      513
@@ -2162,13 +2162,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
         >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
-        >>> grid = pyvista.StructuredGrid(x, y, z)
+        >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.dimensions
         (20, 10, 4)
 
@@ -2192,13 +2192,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
         >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
-        >>> grid = pyvista.StructuredGrid(x, y, z)
+        >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.x.shape
         (20, 10, 4)
 
@@ -2269,7 +2269,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Returns
         -------
-        pyvista.StructuredGrid
+        pv.StructuredGrid
             Structured grid with hidden cells.
 
         Examples
@@ -2320,7 +2320,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Returns
         -------
-        pyvista.PointSet
+        pv.PointSet
             Point set with hidden points.
 
         Examples
@@ -2497,8 +2497,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        pyvista.DataSetFilters.extract_cells : Extract a subset of a dataset.
-        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
+        pv.DataSetFilters.extract_cells : Extract a subset of a dataset.
+        pv.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
 
         Notes
         -----
@@ -2740,7 +2740,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        pyvista.ExplicitStructuredGrid.cell_coords : Return the cell structured coordinates.
+        pv.ExplicitStructuredGrid.cell_coords : Return the cell structured coordinates.
 
         Examples
         --------
@@ -2787,7 +2787,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        pyvista.ExplicitStructuredGrid.cell_id : Return the cell ID.
+        pv.ExplicitStructuredGrid.cell_id : Return the cell ID.
 
         Examples
         --------

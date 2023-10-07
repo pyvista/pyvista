@@ -5,15 +5,15 @@ import warnings
 
 # Places to look for the utility
 _MODULES = [
-    'pyvista.core.utilities',
-    'pyvista.core.errors',
-    'pyvista.core',
-    'pyvista.plotting.utilities',
-    'pyvista.plotting.errors',
-    'pyvista.plotting.texture',
-    'pyvista.plotting',
-    'pyvista.report',
-    'pyvista.plotting.themes',
+    'pv.core.utilities',
+    'pv.core.errors',
+    'pv.core',
+    'pv.plotting.utilities',
+    'pv.plotting.errors',
+    'pv.plotting.texture',
+    'pv.plotting',
+    'pv.report',
+    'pv.plotting.themes',
 ]
 
 
@@ -45,7 +45,7 @@ def __getattr__(name):
     PyVistaDeprecationWarning
         If the attribute has been found via importing from the modules in
         ``_MODULES``, as this implies that the feature has been moved from
-        pyvista.utilities.
+        pv.utilities.
 
     """
     from pyvista.core.errors import PyVistaDeprecationWarning

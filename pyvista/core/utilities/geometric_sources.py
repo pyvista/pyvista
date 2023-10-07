@@ -7,7 +7,7 @@ from typing import Sequence
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -23,7 +23,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    surf : pyvista.core.pointset.PolyData
+    surf : pv.core.pointset.PolyData
         Mesh to be translated and oriented.
     center : tuple, optional, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
@@ -91,8 +91,8 @@ class ConeSource(_vtk.vtkConeSource):
     --------
     Create a default ConeSource.
 
-    >>> import pyvista
-    >>> source = pyvista.ConeSource()
+    >>> import pyvista as pv
+    >>> source = pv.ConeSource()
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
@@ -292,7 +292,7 @@ class ConeSource(_vtk.vtkConeSource):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Cone surface.
         """
         self.Update()
@@ -333,14 +333,14 @@ class CylinderSource(_vtk.vtkCylinderSource):
     --------
     Create a default CylinderSource.
 
-    >>> import pyvista
-    >>> source = pyvista.CylinderSource()
+    >>> import pyvista as pv
+    >>> source = pv.CylinderSource()
     >>> source.output.plot(show_edges=True, line_width=5)
 
     Display a 3D plot of a default :class:`CylinderSource`.
 
-    >>> import pyvista
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     pyvista.CylinderSource(), show_edges=True, line_width=5
     ... )
@@ -348,7 +348,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
     Visualize the output of :class:`CylinderSource` in a 3D plot.
 
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     pyvista.CylinderSource().output, show_edges=True, line_width=5
     ... )
@@ -519,7 +519,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Cylinder surface.
         """
         self.Update()
@@ -566,7 +566,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
             raise ValueError('>=2 points need to define multiple lines.')
-        self.SetPoints(pyvista.vtk_points(points))
+        self.SetPoints(pv.vtk_points(points))
 
     @property
     def output(self):
@@ -574,7 +574,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Line mesh.
         """
         self.Update()

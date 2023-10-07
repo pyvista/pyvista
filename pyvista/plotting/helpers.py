@@ -4,7 +4,7 @@ from typing import Tuple
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 
@@ -30,14 +30,14 @@ def plot_arrows(cent, direction, **kwargs):
 
     See Also
     --------
-    pyvista.plot
+    pv.plot
 
     Examples
     --------
     Plot a single random arrow.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> cent = np.random.random(3)
     >>> direction = np.random.random(3)
     >>> pyvista.plot_arrows(cent, direction)
@@ -45,13 +45,13 @@ def plot_arrows(cent, direction, **kwargs):
     Plot 100 random arrows.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> cent = np.random.random((100, 3))
     >>> direction = np.random.random((100, 3))
     >>> pyvista.plot_arrows(cent, direction)
 
     """
-    return pyvista.plot([cent, direction], **kwargs)
+    return pv.plot([cent, direction], **kwargs)
 
 
 def plot_compare_four(
@@ -74,13 +74,13 @@ def plot_compare_four(
 
     Parameters
     ----------
-    data_a : pyvista.DataSet
+    data_a : pv.DataSet
         The data object to display in the top-left corner.
-    data_b : pyvista.DataSet
+    data_b : pv.DataSet
         The data object to display in the top-right corner.
-    data_c : pyvista.DataSet
+    data_c : pv.DataSet
         The data object to display in the bottom-left corner.
-    data_d : pyvista.DataSet
+    data_d : pv.DataSet
         The data object to display in the bottom-right corner.
     display_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``add_mesh`` method.
@@ -93,7 +93,7 @@ def plot_compare_four(
         a screenshot array.
     camera_position : list, default: None
         The camera position to use in the plot.
-    outline : pyvista.DataSet, default: None
+    outline : pv.DataSet, default: None
         An outline to plot around the data objects.
     outline_color : str, default: 'k'
         The color of the outline.
@@ -106,7 +106,7 @@ def plot_compare_four(
 
     Returns
     -------
-    pyvista.Plotter
+    pv.Plotter
         The plotter object.
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
@@ -121,7 +121,7 @@ def plot_compare_four(
 
     plotter_kwargs['notebook'] = notebook
 
-    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
+    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):
