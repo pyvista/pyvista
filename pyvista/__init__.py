@@ -83,14 +83,14 @@ def __getattr__(name):
         'utilities',
     }
     if name in allow:
-        return importlib.import_module(f'pv.{name}')
+        return importlib.import_module(f'pyvista.{name}')
 
     # avoid recursive import
-    if 'pv.plotting' not in sys.modules:
+    if 'pyvista.plotting' not in sys.modules:
         import pyvista.plotting
 
     try:
-        feature = inspect.getattr_static(sys.modules['pv.plotting'], name)
+        feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError as e:
         raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 
