@@ -5,8 +5,8 @@ import warnings
 
 # Places to look for the utility
 _MODULES = [
-    'pv.core.errors',
-    'pv.plotting.errors',
+    'pyvista.core.errors',
+    'pyvista.plotting.errors',
 ]
 
 
