@@ -7,11 +7,11 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 def __getattr__(name):
-    module = importlib.import_module('pv.plotting.plotter')
+    module = importlib.import_module('pyvista.plotting.plotter')
     try:
         value = inspect.getattr_static(module, name)
     except AttributeError:
-        module = importlib.import_module('pv.plotting')
+        module = importlib.import_module('pyvista.plotting')
         try:
             value = inspect.getattr_static(module, name)
         except AttributeError:
