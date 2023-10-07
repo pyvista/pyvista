@@ -131,6 +131,7 @@ class AxesActor(Prop3D, vtkAxesActor):
             Scaling factor for the axes.
 
         position : Sequence[float], default: (0, 0, 0)
+            Position of the axes.
 
         origin : Sequence[float], default: (0, 0, 0)
 
@@ -305,11 +306,8 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.scale = scale
 
     def __setattr__(self, name, value):
-        # Use default behavior to set attribute
-        object.__setattr__(self, name, value)
-
-        # Make sure to update the user matrix after setting any of the
-        # following properties
+        # Check to see if any of the following properties are being modified
+        is_modified = False
         if name in [
             'orientation',
             'user_matrix',
@@ -317,7 +315,14 @@ class AxesActor(Prop3D, vtkAxesActor):
             'origin',
             'scale',
             '_enable_orientation',
-        ]:
+        ] and not np.array_equal(getattr(self, name), value):
+            is_modified = True
+
+        # Use default behavior to set attribute
+        object.__setattr__(self, name, value)
+
+        if is_modified:
+            # UserMatrix needs to be updated
             self._update_UserMatrix()
 
     @property
