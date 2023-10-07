@@ -198,7 +198,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         """
         super().__init__()
-        self.__enable_orientation = True
+        self.__enable_orientation = False
 
         # Supported aliases (inherited from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
