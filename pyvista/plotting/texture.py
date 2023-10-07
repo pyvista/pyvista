@@ -132,7 +132,7 @@ class Texture(_vtk.vtkTexture, DataObject):
                 if not isinstance(image, pv.ImageData):
                     raise TypeError(
                         'If a sequence, the each item in the first argument must be a '
-                        'pv.ImageData'
+                        'pyvista.ImageData'
                     )
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
