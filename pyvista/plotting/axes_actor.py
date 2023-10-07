@@ -11,7 +11,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor, vtkTransform
+from ._vtk import vtkAxesActor, vtkProp3D, vtkTransform
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -197,6 +197,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         """
         super().__init__()
+        self.__enable_orientation = True
 
         # Supported aliases (inherited from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
@@ -309,8 +310,15 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         # Make sure to update the user matrix after setting any of the
         # following properties
-        if name in ['orientation', 'user_matrix', 'position', 'origin', 'scale']:
-            self._update_user_matrix()
+        if name in [
+            'orientation',
+            'user_matrix',
+            'position',
+            'origin',
+            'scale',
+            '_enable_orientation',
+        ]:
+            self._update_UserMatrix()
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -934,15 +942,15 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     def rotate_x(self, angle: float):
         super().rotate_x(angle)
-        self._update_user_matrix()
+        self._update_UserMatrix()
 
     def rotate_y(self, angle: float):
         super().rotate_y(angle)
-        self._update_user_matrix()
+        self._update_UserMatrix()
 
     def rotate_z(self, angle: float):
         super().rotate_z(angle)
-        self._update_user_matrix()
+        self._update_UserMatrix()
 
     @property
     def user_matrix(self) -> np.ndarray:
@@ -957,7 +965,8 @@ class AxesActor(Prop3D, vtkAxesActor):
         self._user_matrix = arr
 
     @property
-    def _implicit_transform_matrix(self) -> np.ndarray:  # numpydoc ignore=GL08
+    def _implicit_matrix(self) -> np.ndarray:  # numpydoc ignore=GL08
+        # Compute the transformation matrix implicitly defined by 3D parameters
         temp_actor = vtkAxesActor()
         temp_actor.SetOrigin(*self.origin)
         temp_actor.SetScale(*self.scale)
@@ -965,21 +974,23 @@ class AxesActor(Prop3D, vtkAxesActor):
         temp_actor.SetOrientation(*self.orientation)
         return array_from_vtkmatrix(temp_actor.GetMatrix())
 
-    def _update_user_matrix(self):
-        matrix = vtkmatrix_from_array(self._compute_matrix())
+    def _update_UserMatrix(self):
+        if self._enable_orientation:
+            matrix = self._concatenate_implicit_matrix_and_user_matrix()
+        else:
+            matrix = self._user_matrix
         # Due to trame-vtk bug (see: trame-vtk/issues/50), do not set
         # the UserMatrix directly with:
         # self.SetUserMatrix(matrix)
         # Instead, set the matrix implicitly through UserTransform
         transform = vtkTransform()
-        transform.SetMatrix(matrix)
+        transform.SetMatrix(vtkmatrix_from_array(matrix))
         self.SetUserTransform(transform)
 
-    def _compute_matrix(self):
-        return self._user_matrix @ self._implicit_transform_matrix
+    def _concatenate_implicit_matrix_and_user_matrix(self):
+        return self._user_matrix @ self._implicit_matrix
 
-    @property
-    def bounds(self) -> BoundsLike:
+    def _compute_transformed_bounds(self) -> BoundsLike:
         # The default method from vtkProp3D does not compute the actual
         # bounds of the rendered actor (see pyvista issue #5019).
         # Therefore, we redefine the bounds using the actor's matrix
@@ -990,7 +1001,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         points = np.array([[x, 0, 0], [-x, 0, 0], [0, y, 0], [0, -y, 0], [0, 0, z], [0, 0, -z]])
 
         # Transform points
-        matrix = self._compute_matrix()
+        matrix = self._concatenate_implicit_matrix_and_user_matrix()
         apply_transformation_to_points(matrix, points, inplace=True)
 
         # Compute bounds
@@ -998,3 +1009,17 @@ class AxesActor(Prop3D, vtkAxesActor):
         ymin, ymax = np.min(points[:, 1]), np.max(points[:, 1])
         zmin, zmax = np.min(points[:, 2]), np.max(points[:, 2])
         return xmin, xmax, ymin, ymax, zmin, zmax
+
+    def GetBounds(self) -> BoundsLike:
+        if self._enable_orientation:
+            return self._compute_transformed_bounds()
+        else:
+            return super(vtkProp3D, self).GetBounds()
+
+    @property
+    def _enable_orientation(self) -> bool:
+        return self.__enable_orientation
+
+    @_enable_orientation.setter
+    def _enable_orientation(self, value: bool):
+        self.__enable_orientation = value

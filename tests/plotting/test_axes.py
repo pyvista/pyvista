@@ -352,17 +352,19 @@ def get_matrix_cases():
 
 
 @pytest.mark.parametrize('case', range(len(get_matrix_cases())))
-def test_axes_actor_GetUserMatrix_emulates_GetMatrix(axes_actor, vtk_axes_actor, case):
-    # NOTE: Normally, GetUserMatrix() and GetMatrix() are very different matrices:
+def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
+    # NOTE: This test works by asserting that:
+    #   all(vtkAxesActor.GetMatrix()) == all(axes_actor.GetUserMatrix())
+    #
+    # Normally, GetUserMatrix() and GetMatrix() are very different matrices:
     # - GetUserMatrix() is an independent user-provided transformation matrix
     # - GetMatrix() concatenates
     #     implicit_transform -> user_transform -> coordinate system transform
     # However, as a workaround for pyvista#5019, UserMatrix is used
-    # to represent the user_transform *and* implicit_transform
-    # Further, the renderer's coordinate system transform is identity
-    # by default. Therefore, we can check that the workaround is working
-    # by asserting that:
-    #   all(vtkAxesActor.GetMatrix()) == all(axes_actor.GetUserMatrix())
+    # to represent the user_transform *and* implicit_transform.
+    # Since the renderer's coordinate system transform is identity
+    # by default, this means that in for this test the assertion should
+    # hold true.
 
     cases = get_matrix_cases()
     angle = 42
@@ -375,6 +377,7 @@ def test_axes_actor_GetUserMatrix_emulates_GetMatrix(axes_actor, vtk_axes_actor,
     )
 
     # test each property separately and also all together
+    axes_actor._enable_orientation = True
     if case in [cases.ALL, cases.ORIENTATION]:
         vtk_axes_actor.SetOrientation(*orientation)
         axes_actor.orientation = orientation
@@ -403,6 +406,21 @@ def test_axes_actor_GetUserMatrix_emulates_GetMatrix(axes_actor, vtk_axes_actor,
     expected = array_from_vtkmatrix(vtk_axes_actor.GetMatrix())
     actual = array_from_vtkmatrix(axes_actor.GetUserMatrix())
     assert np.allclose(expected, actual)
+
+    default_bounds = (-1, 1, -1, 1, -1, 1)
+    assert np.allclose(vtk_axes_actor.GetBounds(), default_bounds)
+
+    # test AxesActor has non-default bounds except in ORIGIN case
+    actual_bounds = axes_actor.GetBounds()
+    if case == cases.ORIGIN:
+        assert np.allclose(actual_bounds, default_bounds)
+    else:
+        assert not np.allclose(actual_bounds, default_bounds)
+
+    # test that bounds are always default (i.e. incorrect) after disabling orientation
+    axes_actor._enable_orientation = False
+    actual_bounds = axes_actor.GetBounds()
+    assert np.allclose(actual_bounds, default_bounds)
 
 
 def test_create_axes_marker_deprecated_constructor():
