@@ -67,10 +67,7 @@ def translate(
             rot_matrix = np.identity(3)
 
         # Multiply with matrix to direction to get final rotation matrix
-        rot_matrix = np.matmul(
-            _form_matrix(direction),
-            rot_matrix,
-        )
+        rot_matrix = _form_matrix(direction) @ rot_matrix
 
     trans = np.zeros((4, 4))
     trans[:3, :3] = rot_matrix
