@@ -1429,7 +1429,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> outline = sphere.outline()
-        >>> pyvista.plot([sphere, outline], line_width=5)
+        >>> pv.plot([sphere, outline], line_width=5)
 
         See :ref:`common_filter_example` for more examples using this filter.
 
@@ -1465,7 +1465,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> corners = sphere.outline_corners(factor=0.1)
-        >>> pyvista.plot([sphere, corners], line_width=5)
+        >>> pv.plot([sphere, corners], line_width=5)
 
         """
         alg = _vtk.vtkOutlineCornerFilter()

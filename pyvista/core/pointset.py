@@ -1353,12 +1353,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Show a sphere is manifold.
 
         >>> import pyvista as pv
-        >>> pyvista.Sphere().is_manifold
+        >>> pv.Sphere().is_manifold
         True
 
         Show a plane is not manifold.
 
-        >>> pyvista.Plane().is_manifold
+        >>> pv.Plane().is_manifold
         False
 
         """
