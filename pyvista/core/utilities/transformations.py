@@ -267,7 +267,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     >>> scale_factor = 2
     >>> tf = scale_factor * np.eye(4)
     >>> tf[3, 3] = 1
-    >>> pyvista.core.utilities.transformations.apply_transformation_to_points(
+    >>> pv.core.utilities.transformations.apply_transformation_to_points(
     ...     tf, points, inplace=True
     ... )
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))

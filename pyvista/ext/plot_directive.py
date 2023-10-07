@@ -220,9 +220,9 @@ def _split_code_at_show(text):
     Includes logic to deal with edge cases like:
 
     >>> import pyvista as pv
-    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+    >>> pv.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red', cpos='xy')
+    >>> pv.Sphere().plot(color='red', cpos='xy')
 
     """
     parts = []

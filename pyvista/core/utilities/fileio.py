@@ -628,7 +628,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
     >>> import pyvista as pv
     >>> sphere = pv.Sphere()
-    >>> pyvista.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
+    >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
     try:

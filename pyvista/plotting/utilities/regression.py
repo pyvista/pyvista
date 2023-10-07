@@ -186,7 +186,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> import pyvista as pv
     >>> img1 = pv.read('img1.png')  # doctest:+SKIP
     >>> img2 = pv.read('img2.png')  # doctest:+SKIP
-    >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
+    >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
     from pyvista import ImageData, Plotter, read, wrap

@@ -35,7 +35,7 @@ def start_xvfb(wait=3, window_size=None):
     Examples
     --------
     >>> import pyvista as pv
-    >>> pyvista.start_xvfb()  # doctest:+SKIP
+    >>> pv.start_xvfb()  # doctest:+SKIP
 
     """
     from pyvista import global_theme
