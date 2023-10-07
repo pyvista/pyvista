@@ -436,7 +436,7 @@ class DataSetFilters:
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
-        <class 'pv.core.pyvista_ndarray.pyvista_ndarray'>
+        <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
 
         Plot these distances as a heatmap. Note how distances above the
         plane are positive, and distances below the plane are negative.
@@ -5092,7 +5092,7 @@ class DataSetFilters:
         >>> grid = examples.load_hexbeam()
         >>> surf = grid.extract_surface()
         >>> type(surf)
-        <class 'pv.core.pointset.PolyData'>
+        <class 'pyvista.core.pointset.PolyData'>
         >>> surf["vtkOriginalPointIds"]
         pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4, 54,  3,  6, 45,
                          72,  5, 63,  9, 35, 44, 11, 16, 89, 17, 10, 26, 62, 13,

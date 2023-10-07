@@ -2142,10 +2142,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> type(mesh)
-        <class 'pv.core.pointset.PolyData'>
+        <class 'pyvista.core.pointset.PolyData'>
         >>> grid = mesh.cast_to_unstructured_grid()
         >>> type(grid)
-        <class 'pv.core.pointset.UnstructuredGrid'>
+        <class 'pyvista.core.pointset.UnstructuredGrid'>
 
         """
         alg = _vtk.vtkAppendFilter()
@@ -2179,7 +2179,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pv.Wavelet()
         >>> pointset = mesh.cast_to_pointset()
         >>> type(pointset)
-        <class 'pv.core.pointset.PointSet'>
+        <class 'pyvista.core.pointset.PointSet'>
 
         """
         pset = pv.PointSet()
@@ -2216,7 +2216,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = examples.load_uniform()
         >>> points = mesh.cast_to_poly_points(pass_cell_data=True)
         >>> type(points)
-        <class 'pv.core.pointset.PolyData'>
+        <class 'pyvista.core.pointset.PolyData'>
         >>> points.n_arrays
         2
         >>> points.point_data
