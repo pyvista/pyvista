@@ -1963,7 +1963,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
     _DOC_SUBS = {
         "plot_name": "2D line plot",
-        "chart_init": "pyvista.Chart2D()",
+        "chart_init": "pv.Chart2D()",
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
@@ -2112,7 +2112,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     }
     _DOC_SUBS = {
         "plot_name": "2D scatter plot",
-        "chart_init": "pyvista.Chart2D()",
+        "chart_init": "pv.Chart2D()",
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
@@ -2304,7 +2304,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
     _DOC_SUBS = {
         "plot_name": "area plot",
-        "chart_init": "pyvista.Chart2D()",
+        "chart_init": "pv.Chart2D()",
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
     }
 
@@ -2480,9 +2480,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     ORIENTATIONS = {"H": _vtk.vtkPlotBar.HORIZONTAL, "V": _vtk.vtkPlotBar.VERTICAL}
     _DOC_SUBS = {
         "plot_name": "bar plot",
-        "chart_init": "pyvista.Chart2D()",
+        "chart_init": "pv.Chart2D()",
         "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
-        "multichart_init": "pyvista.Chart2D()",
+        "multichart_init": "pv.Chart2D()",
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
@@ -2667,9 +2667,9 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     _DOC_SUBS = {
         "plot_name": "stack plot",
-        "chart_init": "pyvista.Chart2D()",
+        "chart_init": "pv.Chart2D()",
         "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
-        "multichart_init": "pyvista.Chart2D()",
+        "multichart_init": "pv.Chart2D()",
         "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
@@ -3548,9 +3548,9 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     _DOC_SUBS = {
         "plot_name": "box plot",
-        "chart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
+        "chart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
         "plot_init": "chart.plot",
-        "multichart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 4, 5], [0, 1, 2, 2, 3, 4, 5], [0, 1, 2, 3, 3, 4, 5], [0, 1, 2, 3, 4, 4, 5]])",
+        "multichart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 4, 5], [0, 1, 2, 2, 3, 4, 5], [0, 1, 2, 3, 3, 4, 5], [0, 1, 2, 3, 4, 4, 5]])",
         "multiplot_init": "chart.plot",
     }
 
@@ -3853,9 +3853,9 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     _DOC_SUBS = {
         "plot_name": "pie plot",
-        "chart_init": "pyvista.ChartPie([4, 3, 2, 1])",
+        "chart_init": "pv.ChartPie([4, 3, 2, 1])",
         "plot_init": "chart.plot",
-        "multichart_init": "pyvista.ChartPie([4, 3, 2, 1])",
+        "multichart_init": "pv.ChartPie([4, 3, 2, 1])",
         "multiplot_init": "chart.plot",
     }
 
