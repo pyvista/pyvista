@@ -1,5 +1,5 @@
 """Axes actor module."""
-from typing import Literal, Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union
 import warnings
 
 import numpy as np
@@ -11,7 +11,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor, vtkProp3D, vtkTransform
+from ._vtk import vtkAxesActor, vtkProp3D
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -142,7 +142,7 @@ class AxesActor(Prop3D, vtkAxesActor):
             3x3 transformation matrix, or 4x4 transformation matrix.
 
         properties: dict, optional
-            Apply``:class:~pyvista.actor_properties`` to all axes shafts and tips.
+            Apply``:class:~pyvista.ActorProperties`` to all axes shafts and tips.
 
         **kwargs : dict, optional
             Used for handling deprecated parameters.
@@ -158,14 +158,14 @@ class AxesActor(Prop3D, vtkAxesActor):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(marker)
+        >>> _ = pl.add_actor(axes_actor)
         >>> pl.show()
 
         Create an axes actor with custom colors and axis labels.
 
-        >>> marker = pv.create_axes_marker(
+        >>> axes_actor = pv.AxesActor(
         ...     shaft_type='line',
-        ...     line_width=4,
+        ...     shaft_width=4,
         ...     x_color="#378df0",
         ...     y_color="#ab2e5d",
         ...     z_color="#f7fb9a",
@@ -175,14 +175,12 @@ class AxesActor(Prop3D, vtkAxesActor):
         ...     label_size=(0.1, 0.1),
         ... )
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(marker)
+        >>> _ = pl.add_actor(axes_actor)
         >>> pl.show()
 
 
         The actor can also be used as a custom orientation widget with
         :func:`~pyvista.Renderer.add_orientation_widget`
-
-        >>> import pyvista as pv
 
         >>> axes_actor = pv.AxesActor(
         ...     x_label="U", y_label="V", z_label="W"
@@ -523,11 +521,11 @@ class AxesActor(Prop3D, vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.shaft_resoltiuon
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.shaft_resoltiuon
         16
-        >>> axes.axes_actor.shaft_resoltiuon = 24
-        >>> axes.axes_actor.shaft_resoltiuon
+        >>> axes_actor.shaft_resoltiuon = 24
+        >>> axes_actor.shaft_resoltiuon
         24
 
         """
@@ -643,8 +641,8 @@ class AxesActor(Prop3D, vtkAxesActor):
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.shaft_radius
         0.01
-        >>> axes.axes_actor.shaft_radius = 0.03
-        >>> axes.axes_actor.shaft_radius
+        >>> axes_actor.shaft_radius = 0.03
+        >>> axes_actor.shaft_radius
         0.03
 
         """
@@ -984,13 +982,7 @@ class AxesActor(Prop3D, vtkAxesActor):
             matrix = self._concatenate_implicit_matrix_and_user_matrix()
         else:
             matrix = self._user_matrix
-        # Due to trame-vtk bug (see: trame-vtk/issues/50), do not set
-        # the UserMatrix directly with:
         self.SetUserMatrix(vtkmatrix_from_array(matrix))
-        # # Instead, set the matrix implicitly through UserTransform
-        # transform = vtkTransform()
-        # transform.SetMatrix(vtkmatrix_from_array(matrix))
-        # self.SetUserTransform(transform)
 
     def _concatenate_implicit_matrix_and_user_matrix(self):
         return self._user_matrix @ self._implicit_matrix

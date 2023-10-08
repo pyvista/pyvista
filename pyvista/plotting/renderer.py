@@ -1129,8 +1129,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     tip_radius=0.6,
         ...     shaft_length=0.7,
         ...     tip_length=0.3,
-        ...     ambient=0.5,
         ...     label_size=(0.4, 0.16),
+        ...     properties=dict(ambient=0.5),
         ... )
         >>> pl.show()
 
