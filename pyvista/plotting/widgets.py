@@ -156,7 +156,7 @@ class WidgetHelper:
         Examples
         --------
         Shows interactive box which is used to resize and relocate a sphere.
-        
+
         >>> import pyvista as pv
         >>> import numpy as np
         >>> plotter = pv.Plotter()
@@ -469,8 +469,8 @@ class WidgetHelper:
 
         Examples
         --------
-	    Shows an interactive plane moving along x-axis in random-hill example, which is used to mark the max altitude
-		at a particular distance x.
+        Shows an interactive plane moving along x-axis in random-hill example, which is used to mark the max altitude
+        at a particular distance x.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1192,9 +1192,9 @@ class WidgetHelper:
         vtk.vtkLineWidget
             Created line widget.
 
-	Examples
-	--------
-	Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+        Examples
+        --------
+        Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
