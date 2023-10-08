@@ -661,7 +661,7 @@ class WidgetHelper:
         >>> from pyvista import examples
         >>> vol = examples.load_airplane()
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
+        >>> _ = pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
         >>> pl.show(cpos=[-2.1, 0.6, 1.5])
         >>> pl.plane_clipped_meshes  # doctest:+SKIP
 
@@ -946,8 +946,8 @@ class WidgetHelper:
         >>> from pyvista import examples
         >>> pl = pv.Plotter()
         >>> mesh = examples.load_channels()
-        >>> pl.add_mesh(mesh.outline())
-        >>> pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
         >>> pl.show()
 
         For a full example see :ref:`plane_widget_example`.
@@ -1054,8 +1054,8 @@ class WidgetHelper:
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> mesh = pv.Wavelet()
-        >>> pl.add_mesh(mesh.outline())
-        >>> pl.add_mesh_slice_orthogonal(mesh)
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice_orthogonal(mesh)
         >>> pl.show()
 
         """
@@ -1755,8 +1755,8 @@ class WidgetHelper:
         >>> from pyvista import examples
         >>> pl = pv.Plotter()
         >>> mesh = examples.load_random_hills()
-        >>> pl.add_mesh(mesh, opacity=0.4)
-        >>> pl.add_mesh_isovalue(mesh)
+        >>> _ = pl.add_mesh(mesh, opacity=0.4)
+        >>> _ = pl.add_mesh_isovalue(mesh)
         >>> pl.show()
 
         """
