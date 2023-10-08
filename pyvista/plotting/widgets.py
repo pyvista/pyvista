@@ -153,18 +153,6 @@ class WidgetHelper:
         vtk.vtkBoxWidget
             Box widget.
 
-        Examples
-        --------
-        Shows an interactive clip box.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.ParametricConicSpiral()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
-        >>> pl.show()
-
-        For a full example see :ref:`box_widget_example`.
-
         """
         interaction_event = _parse_interaction_event(interaction_event)
 
@@ -278,6 +266,18 @@ class WidgetHelper:
         -------
         vtk.vtkActor
             VTK actor of the mesh.
+
+        Examples
+        --------
+        Shows an interactive clip box.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`.
 
         """
         from pyvista.core.filters import _get_output  # avoids circular import
