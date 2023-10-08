@@ -10,7 +10,6 @@ from vtkmodules.vtkCommonComputationalGeometry import (
     vtkParametricBour,
     vtkParametricEnneper,
     vtkParametricMobius,
-    vtkParametricRandomHills,
     vtkParametricTorus,
 )
 from vtkmodules.vtkCommonCore import (
@@ -55,6 +54,8 @@ from vtkmodules.vtkRenderingCore import (
     vtkTextMapper,
     vtkTextProperty,
 )
+
+import pyvista as pv
 
 
 def main(argv):
@@ -643,38 +644,6 @@ def get_mobius():
     return transform_filter.GetOutput()
 
 
-def get_random_hills():
-    u_resolution = 51
-    v_resolution = 51
-    surface = vtkParametricRandomHills()
-    surface.SetRandomSeed(1)
-    surface.SetNumberOfHills(30)
-    # If you want a plane
-    # surface.SetHillAmplitude(0)
-
-    source = vtkParametricFunctionSource()
-    source.SetUResolution(u_resolution)
-    source.SetVResolution(v_resolution)
-    source.GenerateTextureCoordinatesOn()
-    source.SetParametricFunction(surface)
-    source.Update()
-
-    # Build the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(source.GetOutputPort())
-    tangents.Update()
-
-    transform = vtkTransform()
-    transform.Translate(0.0, 5.0, 15.0)
-    transform.RotateX(-90.0)
-    transform_filter = vtkTransformPolyDataFilter()
-    transform_filter.SetInputConnection(tangents.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return transform_filter.GetOutput()
-
-
 def get_sphere():
     theta_resolution = 32
     phi_resolution = 32
@@ -742,7 +711,9 @@ def get_source(source):
     elif surface == 'mobius':
         return get_mobius()
     elif surface == 'randomhills':
-        return get_random_hills()
+        return pv.ParametricRandomHills(
+            randomseed=1, numberofhills=30, u_res=51, v_res=51, generate_texture_coordinates=True
+        )
     elif surface == 'sphere':
         return get_sphere()
     elif surface == 'torus':
