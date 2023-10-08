@@ -1192,9 +1192,9 @@ class WidgetHelper:
         vtk.vtkLineWidget
             Created line widget.
 
-		Examples
-		________
-		Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+	Examples
+	--------
+	Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
