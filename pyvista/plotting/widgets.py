@@ -153,6 +153,36 @@ class WidgetHelper:
         vtk.vtkBoxWidget
             Box widget.
 
+        Examples
+        --------
+        Shows interactive box which is used to resize and relocate a sphere.
+        
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> plotter = pv.Plotter()
+        >>> def simulate(widget):
+        ...     bounds = widget.bounds
+        ...     new_center = np.array(
+        ...         [
+        ...             (bounds[0] + bounds[1]) / 2,
+        ...             (bounds[2] + bounds[3]) / 2,
+        ...             (bounds[4] + bounds[5]) / 2,
+        ...         ]
+        ...     )
+        ...     new_radius = (
+        ...         min(
+        ...             (bounds[1] - bounds[0]) / 2,
+        ...             (bounds[3] - bounds[2]) / 2,
+        ...             (bounds[5] - bounds[4]) / 2,
+        ...         )
+        ...         - 0.3
+        ...     )
+        ...     sphere = pv.Sphere(new_radius, new_center)
+        ...     _ = plotter.add_mesh(sphere, name="Sphere")
+        ...
+        >>> _ = plotter.add_box_widget(callback=simulate)
+        >>> plotter.show()
+
         """
         interaction_event = _parse_interaction_event(interaction_event)
 
@@ -1134,6 +1164,26 @@ class WidgetHelper:
         -------
         vtk.vtkLineWidget
             Created line widget.
+
+		Examples
+		________
+		Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> model = examples.load_channels()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(model, opacity=0.4)
+        >>> def move_center(pointa, pointb):
+        ...     center = (np.array(pointa) + np.array(pointb)) / 2
+        ...     normal = np.array(pointa) - np.array(pointb)
+        ...     single_slc = model.slice(normal=normal, origin=center)
+        ...
+        ...     _ = pl.add_mesh(single_slc, name="slc")
+        ...
+        >>> _ = pl.add_line_widget(callback=move_center, use_vertices=True)
+        >>> pl.show()
 
         """
         if bounds is None:
