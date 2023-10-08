@@ -665,6 +665,8 @@ class WidgetHelper:
         >>> pl.show(cpos=[-2.1, 0.6 , 1.5])
         >>> pl.plane_clipped_meshes  # doctest:+SKIP
 
+        For a full example see :ref:`plane_widget_example`.
+
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -947,6 +949,8 @@ class WidgetHelper:
         >>> pl.add_mesh(mesh.outline())
         >>> pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
         >>> pl.show()
+
+        For a full example see :ref:`plane_widget_example`.
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
