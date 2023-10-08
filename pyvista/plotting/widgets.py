@@ -662,7 +662,7 @@ class WidgetHelper:
         >>> vol = examples.load_airplane()
         >>> pl = pv.Plotter()
         >>> pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
-        >>> pl.show(cpos=[-2.1, 0.6 , 1.5])
+        >>> pl.show(cpos=[-2.1, 0.6, 1.5])
         >>> pl.plane_clipped_meshes  # doctest:+SKIP
 
         For a full example see :ref:`plane_widget_example`.
