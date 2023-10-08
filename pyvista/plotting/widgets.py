@@ -653,6 +653,18 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used to clip the mesh and store it.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> vol = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
+        >>> pl.show(cpos=[-2.1, 0.6 , 1.5])
+        >>> pl.plane_clipped_meshes  # doctest:+SKIP
+
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -924,6 +936,18 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used specifically for slicing.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_channels()
+        >>> pl.add_mesh(mesh.outline())
+        >>> pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
+        >>> pl.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -1018,6 +1042,17 @@ class WidgetHelper:
         -------
         list
             List of vtk.vtkActor(s).
+
+        Examples
+        --------
+        Shows an interactive plane sliced along each cartesian axis of the mesh.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Wavelet()
+        >>> pl.add_mesh(mesh.outline())
+        >>> pl.add_mesh_slice_orthogonal(mesh)
+        >>> pl.show()
 
         """
         actors = []
@@ -1707,6 +1742,18 @@ class WidgetHelper:
         -------
         vtk.vtkActor
             VTK actor of the mesh.
+
+        Examples
+        --------
+        Shows an interactive slider controlling the altitude of the contours.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_random_hills()
+        >>> pl.add_mesh(mesh, opacity=0.4)
+        >>> pl.add_mesh_isovalue(mesh)
+        >>> pl.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
