@@ -8,7 +8,7 @@ import numpy as np
 import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
-from .errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning
 from .geometric_objects import translate
 from .helpers import wrap
 from .misc import check_valid_vector
