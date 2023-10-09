@@ -8,7 +8,7 @@ import numpy as np
 import pyvista as pv
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
@@ -1095,7 +1095,7 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         # transform = vtkTransform()
         # transform.SetMatrix(vtkmatrix_from_array(matrix))
         # self.SetUserTransform(transform)
-        self.SetUserMatrix(matrix)
+        self.SetUserMatrix(vtkmatrix_from_array(matrix))
 
     def _concatenate_implicit_matrix_and_user_matrix(self):
         return self._user_matrix @ self._implicit_matrix
