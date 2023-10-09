@@ -1,11 +1,10 @@
 name: "Pull Request Labeler"
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request_target:
+    types: [opened, reopened]
 
 jobs:
   triage:
-    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     steps:
     - name: Label based on changed files
