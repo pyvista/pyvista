@@ -110,7 +110,8 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
 
         shaft_length : float | Sequence[float], default: 0.8
-            Normalized length of the axes shafts in range ``[0, 1]``.
+            Normalized length of the shaft for each axis. Values should be
+            in range ``[0, 1]``.
 
         shaft_radius : float, default: 0.1
             Cylinder radius of the axes shafts. Only has an effect if ``shaft_type``
@@ -120,7 +121,8 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             Line width of the axes shafts in screen units. Only has
             an effect if ``shaft_type`` is ``'line'``.
 
-        shaft_resolution
+        shaft_resolution : int, default: 16
+            Resolution of the axes shafts.
 
         tip_type : str | AxesActor.TipType, default: 'cone'
             Tip type of the axes, either ``'cone'`` or ``'sphere'``.
@@ -131,9 +133,11 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         tip_length : float | Sequence[float], default: 0.2
             Normalized length of the axes tips in range ``[0, 1]``.
 
-        tip_resolution
+        tip_resolution : int , default: 16
+            Resolution of the axes tips.
 
         total_length float | Sequence[float], default: 1
+            Total length of each axis (shaft plus tip).
 
         scale : float | Sequence[float], default: (1, 1, 1)
             Scaling factor for the axes.
@@ -142,8 +146,15 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             Position of the axes.
 
         origin : Sequence[float], default: (0, 0, 0)
+            Origin of the axes. This is the point about which all
+            rotations take place.
 
         orientation : Sequence[float], default: (0, 0, 0)
+            Orientation angles of the axes which define rotations about
+            the world's x-y-z axes. The angles are specified in degrees
+            and in x-y-z order. However, the actual rotations are
+            applied in the following order: rotate_z first,
+            then rotate_x, and finally rotate_y.
 
         user_matrix : TransformLike
             Transformation to apply to the axes. Can be a vtkTransformation,
@@ -381,7 +392,7 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
 
     @property
     def shaft_length(self) -> tuple:  # numpydoc ignore=RT01
-        """Normalizd length of the shaft for each axis.
+        """Normalized length of the shaft for each axis.
 
         Values should be in range ``[0, 1]``.
 
@@ -536,7 +547,7 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
 
     @property
     def shaft_resolution(self) -> int:  # numpydoc ignore=RT01
-        """Return or set the resolution of the shaft.
+        """Resolution of the axes shafts.
 
         Examples
         --------

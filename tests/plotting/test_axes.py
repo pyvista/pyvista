@@ -377,7 +377,7 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
     )
 
     # test each property separately and also all together
-    axes_actor._enable_orientation = True
+    axes_actor._enable_orientation_workaround = True
     if case in [cases.ALL, cases.ORIENTATION]:
         vtk_axes_actor.SetOrientation(*orientation)
         axes_actor.orientation = orientation
@@ -418,7 +418,7 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
         assert not np.allclose(actual_bounds, default_bounds)
 
     # test that bounds are always default (i.e. incorrect) after disabling orientation
-    axes_actor._enable_orientation = False
+    axes_actor._enable_orientation_workaround = False
     actual_bounds = axes_actor.GetBounds()
     assert np.allclose(actual_bounds, default_bounds)
 

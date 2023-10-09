@@ -167,13 +167,13 @@ class Prop3D(_vtk.vtkProp3D):
 
     @property
     def orientation(self) -> tuple:  # numpydoc ignore=RT01
-        """Return or set the entity orientation.
+        """Return or set the entity orientation angles.
 
-        Orientation is defined as the rotation from the global axes in degrees
-        about the actor's x, y, and z axes.
-
-        The rotations are applied in the following order: RotateZ, then
-        RotateX, and finally RotateY.
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: rotate_z first, then rotate_x, and finally
+        rotate_y.
 
         Examples
         --------
