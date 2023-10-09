@@ -1775,7 +1775,7 @@ def Rectangle(points=None):
 
     .. deprecated:: 0.39.0
        To deal with more than 3 points use :func:`pyvista.Quadrilateral()
-       <pv.examples.cells.Quadrilateral>` instead.
+       <pyvista.examples.cells.Quadrilateral>` instead.
 
     The 3 points must define an orthogonal set of vectors.
 
