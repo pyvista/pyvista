@@ -52,11 +52,11 @@ def Cylinder(
     """Create the surface of a cylinder.
 
     .. warning::
-       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
-       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
+       :func:`pv.Cylinder` function rotates the :class:`pv.CylinderSource` 's :class:`pv.PolyData` in its own way.
+       It rotates the :attr:`pv.CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
-    See also :func:`pyvista.CylinderStructured`.
+    See also :func:`pv.CylinderStructured`.
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ def CylinderStructured(
     theta_resolution=32,
     z_resolution=10,
 ):
-    """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
+    """Create a cylinder mesh as a :class:`pv.StructuredGrid`.
 
     The end caps are left open. This can create a surface mesh if a single
     value for the ``radius`` is given or a 3D mesh if multiple radii are given
@@ -310,9 +310,9 @@ def Sphere(
     """Create a sphere.
 
     A sphere describes a 2D surface in comparison to
-    :func:`pyvista.SolidSphere`, which fills a 3D volume.
+    :func:`pv.SolidSphere`, which fills a 3D volume.
 
-    PyVista uses a convention where ``theta`` represents the azimuthal
+    pv uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
@@ -359,8 +359,8 @@ def Sphere(
 
     See Also
     --------
-    pyvista.Icosphere : Sphere created from projection of icosahedron.
-    pyvista.SolidSphere : Sphere that fills 3D space.
+    pv.Icosphere : Sphere created from projection of icosahedron.
+    pv.SolidSphere : Sphere that fills 3D space.
 
     Examples
     --------
@@ -415,14 +415,14 @@ def SolidSphere(
     """Create a solid sphere.
 
     A solid sphere fills space in 3D in comparison to
-    :func:`pyvista.Sphere`, which is a 2D surface.
+    :func:`pv.Sphere`, which is a 2D surface.
 
     This function uses a linear sampling of each spherical
-    coordinate, whereas :func:`pyvista.SolidSphereGeneric`
+    coordinate, whereas :func:`pv.SolidSphereGeneric`
     allows for nonuniform sampling. Angles are by default
     specified in degrees.
 
-    PyVista uses a convention where ``theta`` represents the azimuthal
+    pv uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
@@ -489,13 +489,13 @@ def SolidSphere(
 
     Returns
     -------
-    pyvista.UnstructuredGrid
+    pv.UnstructuredGrid
         Solid sphere mesh.
 
     See Also
     --------
-    pyvista.Sphere: Sphere that describes outer 2D surface.
-    pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
+    pv.Sphere: Sphere that describes outer 2D surface.
+    pv.SolidSphereGeneric: Uses more flexible parameter definition.
 
     Examples
     --------
@@ -506,7 +506,7 @@ def SolidSphere(
     >>> solid_sphere = pv.SolidSphere()
     >>> solid_sphere.plot(show_edges=True)
 
-    A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
+    A solid sphere is 3D in comparison to the 2d :func:`pv.Sphere`.
     Generate a solid hemisphere to see the internal structure.
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
@@ -568,14 +568,14 @@ def SolidSphereGeneric(
     """Create a solid sphere with flexible sampling.
 
     A solid sphere fills space in 3D in comparison to
-    :func:`pyvista.Sphere`, which is a 2D surface.
+    :func:`pv.Sphere`, which is a 2D surface.
 
     This function allows user defined sampling of each spherical
-    coordinate, whereas :func:`pyvista.SolidSphere`
+    coordinate, whereas :func:`pv.SolidSphere`
     only allows linear sampling.   Angles are by default
     specified in degrees.
 
-    PyVista uses a convention where ``theta`` represents the azimuthal
+    pv uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
@@ -619,13 +619,13 @@ def SolidSphereGeneric(
 
     Returns
     -------
-    pyvista.UnstructuredGrid
+    pv.UnstructuredGrid
         Solid sphere mesh.
 
     See Also
     --------
-    pyvista.SolidSphere: Sphere creation using linear sampling.
-    pyvista.Sphere: Sphere that describes outer 2D surface.
+    pv.SolidSphere: Sphere creation using linear sampling.
+    pv.Sphere: Sphere that describes outer 2D surface.
 
     Examples
     --------
@@ -736,7 +736,7 @@ def SolidSphereGeneric(
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
+        x, y, z = pv.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
@@ -806,7 +806,7 @@ def SolidSphereGeneric(
             for itheta in range(ntheta - 1):
                 cells.append(4)
                 cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-                celltypes.append(pyvista.CellType.TETRA)
+                celltypes.append(pv.CellType.TETRA)
 
         # Next tetras that form with origin and bottom axis point
         #   origin is 0
@@ -823,7 +823,7 @@ def SolidSphereGeneric(
                         _index(0, nphi - 1, itheta),
                     ]
                 )
-                celltypes.append(pyvista.CellType.TETRA)
+                celltypes.append(pv.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
         for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
@@ -837,7 +837,7 @@ def SolidSphereGeneric(
                     0,
                 ]
             )
-            celltypes.append(pyvista.CellType.PYRAMID)
+            celltypes.append(pv.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
@@ -857,7 +857,7 @@ def SolidSphereGeneric(
                     _index(ir + 1, 0, itheta),
                 ]
             )
-            celltypes.append(pyvista.CellType.WEDGE)
+            celltypes.append(pv.CellType.WEDGE)
 
     # now go downwards
     if negative_axis:
@@ -875,7 +875,7 @@ def SolidSphereGeneric(
                     _index(ir + 1, nphi - 1, itheta + 1),
                 ]
             )
-            celltypes.append(pyvista.CellType.WEDGE)
+            celltypes.append(pv.CellType.WEDGE)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
@@ -894,9 +894,9 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi, itheta + 1),
             ]
         )
-        celltypes.append(pyvista.CellType.HEXAHEDRON)
+        celltypes.append(pv.CellType.HEXAHEDRON)
 
-    mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
+    mesh = pv.UnstructuredGrid(cells, celltypes, points)
     translate(mesh, center, direction, start_direction=(0.0, 0.0, 1.0))
     return mesh
 
@@ -1100,9 +1100,9 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     .. versionchanged:: 0.33.0
         The cube is created using ``vtk.vtkCubeSource``. For
-        compatibility with :func:`pyvista.PlatonicSolid`, face indices
+        compatibility with :func:`pv.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
-        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        :func:`PlatonicSolid() <pv.PlatonicSolid>`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
         The cube points are also cleaned by default now, leaving only
         the 8 corners and a watertight (manifold) mesh.
@@ -1774,8 +1774,8 @@ def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
     .. deprecated:: 0.39.0
-       To deal with more than 3 points use :func:`pyvista.Quadrilateral()
-       <pyvista.examples.cells.Quadrilateral>` instead.
+       To deal with more than 3 points use :func:`pv.Quadrilateral()
+       <pv.examples.cells.Quadrilateral>` instead.
 
     The 3 points must define an orthogonal set of vectors.
 
@@ -1802,7 +1802,7 @@ def Rectangle(points=None):
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     if len(points) == 4:
         warnings.warn(
-            'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.',
+            'Rectangle defined by 4 points is deprecated. Please use ``pv.Quadrilateral``.',
             PyVistaDeprecationWarning,
         )
         return Quadrilateral(points)
@@ -2270,7 +2270,7 @@ def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
 
     nsub : int, default: 3
         This is the number of times each triangle of the original
-        :func:`pyvista.Icosahedron` is subdivided.
+        :func:`pv.Icosahedron` is subdivided.
 
     Returns
     -------
