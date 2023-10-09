@@ -762,6 +762,7 @@ def test_plot_invalid_add_scalar_bar():
         plotter = pv.Plotter()
         plotter.add_scalar_bar()
 
+
 # https://github.com/pyvista/pyvista/pull/4950
 @pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 def test_plot_list():
