@@ -265,7 +265,7 @@ def test_plot_update(sphere):
 
 
 # https://github.com/pyvista/pyvista/pull/4950
-@pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+@pytest.mark.skipif(platform.system() == 'Linux', reason='Does not display correctly within latest ubuntu')
 @pytest.mark.parametrize('anti_aliasing', [True, "msaa", False])
 def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
@@ -766,7 +766,7 @@ def test_plot_invalid_add_scalar_bar():
 
 
 # https://github.com/pyvista/pyvista/pull/4950
-@pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+@pytest.mark.skipif(platform.system() == 'Linux', reason='Does not display correctly within latest ubuntu')
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)
