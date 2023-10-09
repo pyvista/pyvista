@@ -1,12 +1,14 @@
 """Module managing parametric objects."""
 
 from math import pi
+import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
+from .errors import PyVistaDeprecationWarning
 from .geometric_objects import translate
 from .helpers import wrap
 from .misc import check_valid_vector
@@ -850,13 +852,21 @@ def ParametricPseudosphere(**kwargs):
 
 def ParametricRandomHills(
     numberofhills=None,
+    number_of_hills=None,
     hillxvariance=None,
+    hill_x_variance=None,
     hillyvariance=None,
+    hill_y_variance=None,
     hillamplitude=None,
+    hill_amplitude=None,
     randomseed=None,
+    random_seed=None,
     xvariancescalefactor=None,
+    x_variance_scale_factor=None,
     yvariancescalefactor=None,
+    y_variance_scale_factor=None,
     amplitudescalefactor=None,
+    amplitude_scale_factor=None,
     **kwargs,
 ):
     """Generate a surface covered with randomly placed hills.
@@ -873,13 +883,37 @@ def ParametricRandomHills(
     numberofhills : int, default: 30
         The number of hills.
 
+        .. versionchanged:: 0.43.0
+            The ``numberofhills`` parameter has been renamed to ``number_of_hills``.
+
+    number_of_hills : int, default: 30
+        The number of hills.
+
     hillxvariance : float, default: 2.5
+        The hill variance in the x-direction.
+
+        .. versionchanged:: 0.43.0
+            The ``hillxvariance`` parameter has been renamed to ``hill_x_variance``.
+
+    hill_x_variance : float, default: 2.5
         The hill variance in the x-direction.
 
     hillyvariance : float, default: 2.5
         The hill variance in the y-direction.
 
+        .. versionchanged:: 0.43.0
+            The ``hillyvariance`` parameter has been renamed to ``hill_y_variance``.
+
+    hill_y_variance : float, default: 2.5
+        The hill variance in the y-direction.
+
     hillamplitude : float, default: 2
+        The hill amplitude (height).
+
+        .. versionchanged:: 0.43.0
+            The ``hillamplitude`` parameter has been renamed to ``hill_amplitude``.
+
+    hill_amplitude : float, default: 2
         The hill amplitude (height).
 
     randomseed : int, default: 1
@@ -887,13 +921,39 @@ def ParametricRandomHills(
         a value of 1 will initialize the random number generator,
         a negative value will initialize it with the system time.
 
+        .. versionchanged:: 0.43.0
+            The ``randomseed`` parameter has been renamed to ``random_seed``.
+
+    random_seed : int, default: 1
+        The Seed for the random number generator,
+        a value of 1 will initialize the random number generator,
+        a negative value will initialize it with the system time.
+
     xvariancescalefactor : float, default: 13
+        The scaling factor for the variance in the x-direction.
+
+        .. versionchanged:: 0.43.0
+            The ``xvariancescalefactor`` parameter has been renamed to ``x_variance_scale_factor``.
+
+    x_variance_scale_factor : float, default: 13
         The scaling factor for the variance in the x-direction.
 
     yvariancescalefactor : float, default: 13
         The scaling factor for the variance in the y-direction.
 
+        .. versionchanged:: 0.43.0
+            The ``yvariancescalefactor`` parameter has been renamed to ``y_variance_scale_factor``.
+
+    y_variance_scale_factor : float, default: 13
+        The scaling factor for the variance in the y-direction.
+
     amplitudescalefactor : float, default: 13
+        The scaling factor for the amplitude.
+
+        .. versionchanged:: 0.43.0
+            The ``amplitudescalefactor`` parameter has been renamed to ``amplitude_scale_factor``.
+
+    amplitude_scale_factor : float, default: 13
         The scaling factor for the amplitude.
 
     **kwargs : dict, optional
@@ -916,27 +976,83 @@ def ParametricRandomHills(
     parametric_function = _vtk.vtkParametricRandomHills()
     if numberofhills is not None:
         parametric_function.SetNumberOfHills(numberofhills)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`numberofhills` argument is deprecated. Please use `number_of_hills`.',
+            PyVistaDeprecationWarning,
+        )
+    elif number_of_hills is not None:
+        parametric_function.SetNumberOfHills(number_of_hills)
 
     if hillxvariance is not None:
         parametric_function.SetHillXVariance(hillxvariance)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`hillxvariance` argument is deprecated. Please use `hill_x_variance`.',
+            PyVistaDeprecationWarning,
+        )
+    elif hill_x_variance is not None:
+        parametric_function.SetHillXVariance(hill_x_variance)
 
     if hillyvariance is not None:
         parametric_function.SetHillYVariance(hillyvariance)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`hillyvariance` argument is deprecated. Please use `hill_y_variance`.',
+            PyVistaDeprecationWarning,
+        )
+    elif hill_y_variance is not None:
+        parametric_function.SetHillYVariance(hill_y_variance)
 
     if hillamplitude is not None:
         parametric_function.SetHillAmplitude(hillamplitude)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`hillvariance` argument is deprecated. Please use `hill_variance`.',
+            PyVistaDeprecationWarning,
+        )
+    elif hill_amplitude is not None:
+        parametric_function.SetHillAmplitude(hill_amplitude)
 
     if randomseed is not None:
         parametric_function.SetRandomSeed(randomseed)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`randomseed` argument is deprecated. Please use `random_seed`.',
+            PyVistaDeprecationWarning,
+        )
+    elif random_seed is not None:
+        parametric_function.SetRandomSeed(random_seed)
 
     if xvariancescalefactor is not None:
         parametric_function.SetXVarianceScaleFactor(xvariancescalefactor)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`xvariancescalefactor` argument is deprecated. Please use `x_variance_scale_factor`.',
+            PyVistaDeprecationWarning,
+        )
+    elif x_variance_scale_factor is not None:
+        parametric_function.SetXVarianceScaleFactor(x_variance_scale_factor)
 
     if yvariancescalefactor is not None:
         parametric_function.SetYVarianceScaleFactor(yvariancescalefactor)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`yvariancescalefactor` argument is deprecated. Please use `y_variance_scale_factor`.',
+            PyVistaDeprecationWarning,
+        )
+    elif y_variance_scale_factor is not None:
+        parametric_function.SetYVarianceScaleFactor(y_variance_scale_factor)
 
     if amplitudescalefactor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`amplitudescalefactor` argument is deprecated. Please use `amplitude_scale_factor`.',
+            PyVistaDeprecationWarning,
+        )
+    elif amplitude_scale_factor is not None:
+        parametric_function.SetAmplitudeScaleFactor(amplitude_scale_factor)
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
