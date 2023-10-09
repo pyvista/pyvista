@@ -1802,7 +1802,7 @@ def Rectangle(points=None):
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     if len(points) == 4:
         warnings.warn(
-            'Rectangle defined by 4 points is deprecated. Please use ``pv.Quadrilateral``.',
+            'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.',
             PyVistaDeprecationWarning,
         )
         return Quadrilateral(points)
