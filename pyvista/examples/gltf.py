@@ -30,11 +30,11 @@ def download_damaged_helmet():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.set_environment_texture(cubemap)
     >>> pl.show()
@@ -55,11 +55,11 @@ def download_sheen_chair():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_sheen_chair()
     >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
+    >>> pl = pv.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
     >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
     >>> pl.show()  # doctest:+SKIP
@@ -80,10 +80,10 @@ def download_gearbox():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_gearbox()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
 
@@ -103,10 +103,10 @@ def download_avocado():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_avocado()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
 
@@ -126,10 +126,10 @@ def download_milk_truck():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_milk_truck()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
 

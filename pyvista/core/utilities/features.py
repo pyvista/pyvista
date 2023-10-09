@@ -7,7 +7,7 @@ from typing import Sequence
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
 from .helpers import wrap
@@ -18,7 +18,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
-    mesh : pyvista.DataSet
+    mesh : pv.DataSet
         Mesh to voxelize.
 
     density : float | array_like[float]
@@ -34,7 +34,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Returns
     -------
-    pyvista.UnstructuredGrid
+    pv.UnstructuredGrid
         Voxelized unstructured grid of the original mesh.
 
     Notes
@@ -58,7 +58,7 @@ def voxelize(mesh, density=None, check_surface=True):
     >>> vox.plot(show_edges=True)
 
     """
-    if not pyvista.is_pyvista_dataset(mesh):
+    if not pv.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
     if density is None:
         density = mesh.length / 100
@@ -87,8 +87,8 @@ def voxelize(mesh, density=None, check_surface=True):
     # see https://github.com/pyvista/pyvista/pull/4365
 
     # Create unstructured grid from the structured grid
-    grid = pyvista.StructuredGrid(x, y, z)
-    ugrid = pyvista.UnstructuredGrid(grid)
+    grid = pv.StructuredGrid(x, y, z)
+    ugrid = pv.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
     selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
@@ -135,7 +135,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # somewhere
         raise NotImplementedError('Please specify dimensions.')
     dimensions = np.array(dimensions, dtype=int)
-    image = pyvista.ImageData()
+    image = pv.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
@@ -158,7 +158,7 @@ def grid_from_sph_coords(theta, phi, r):
 
     Returns
     -------
-    pyvista.StructuredGrid
+    pv.StructuredGrid
         Structured grid.
 
     """
@@ -168,7 +168,7 @@ def grid_from_sph_coords(theta, phi, r):
     y_cart = z * np.sin(y) * np.sin(x)
     z_cart = z * np.cos(y)
     # Make a grid object
-    return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
+    return pv.StructuredGrid(x_cart, y_cart, z_cart)
 
 
 def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT02
@@ -306,7 +306,7 @@ def merge(
 
     Returns
     -------
-    pyvista.DataSet
+    pv.DataSet
         :class:`pyvista.PolyData` if all items in datasets are
         :class:`pyvista.PolyData`, otherwise returns a
         :class:`pyvista.UnstructuredGrid`.
@@ -315,10 +315,10 @@ def merge(
     --------
     Merge two polydata datasets.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere(center=(0, 0, 1))
-    >>> cube = pyvista.Cube()
-    >>> mesh = pyvista.merge([cube, sphere])
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere(center=(0, 0, 1))
+    >>> cube = pv.Cube()
+    >>> mesh = pv.merge([cube, sphere])
     >>> mesh.plot()
 
     """
@@ -329,7 +329,7 @@ def merge(
         raise ValueError("Expected at least one dataset.")
 
     first = datasets[0]
-    if not isinstance(first, pyvista.DataSet):
+    if not isinstance(first, pv.DataSet):
         raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
 
     return datasets[0].merge(
@@ -389,12 +389,12 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     Create a Perlin noise function with an amplitude of 0.1, frequency
     for all axes of 1, and a phase of 0 for all axes.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
 
     Sample Perlin noise over a structured grid and plot it.
 
-    >>> grid = pyvista.sample_function(noise, [0, 5, 0, 5, 0, 5])
+    >>> grid = pv.sample_function(noise, [0, 5, 0, 5, 0, 5])
     >>> grid.plot()
 
     """
@@ -480,16 +480,16 @@ def sample_function(
 
     Returns
     -------
-    pyvista.ImageData
+    pv.ImageData
         Uniform grid with sampled data.
 
     Examples
     --------
     Sample Perlin noise over a structured grid in 3D.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-    >>> grid = pyvista.sample_function(
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
     >>> grid.plot(
@@ -498,8 +498,8 @@ def sample_function(
 
     Sample Perlin noise in 2D and plot it.
 
-    >>> noise = pyvista.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
-    >>> surf = pyvista.sample_function(noise, dim=(200, 200, 1))
+    >>> noise = pv.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
+    >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
     See :ref:`perlin_noise_2d_example` for a full example using this function.

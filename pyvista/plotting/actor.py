@@ -23,10 +23,10 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     Parameters
     ----------
-    mapper : pyvista.DataSetMapper, optional
+    mapper : pv.DataSetMapper, optional
         DataSetMapper.
 
-    prop : pyvista.Property, optional
+    prop : pv.Property, optional
         Property of the actor.
 
     name : str, optional
@@ -285,7 +285,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Actor
+        pv.Actor
             Deep or shallow copy of this actor.
 
         Examples
@@ -351,7 +351,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Property
+        pv.Property
             The object describing backfaces.
 
         Examples

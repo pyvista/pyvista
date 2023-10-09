@@ -104,9 +104,9 @@ class AffineWidget3D:
 
     Parameters
     ----------
-    plotter : pyvista.Plotter
+    plotter : pv.Plotter
         The plotter object.
-    actor : pyvista.Actor
+    actor : pv.Actor
         The actor to which the widget is attached to.
     origin : sequence[float], optional
         Origin of the widget. Default is the center of the main actor.

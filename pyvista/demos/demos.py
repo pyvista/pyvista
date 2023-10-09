@@ -20,7 +20,7 @@ def glyphs(grid_sz=3):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         Mesh of supertoroids.
 
     See Also
@@ -106,10 +106,10 @@ def orientation_cube():
     --------
     Load the cube mesh and plot it
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import demos
     >>> ocube = demos.orientation_cube()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
     >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
     >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
@@ -184,7 +184,7 @@ def orientation_plotter():
 
     Returns
     -------
-    pyvista.Plotter
+    pv.Plotter
         Orientation cube plotter.
 
     Examples
@@ -311,7 +311,7 @@ def plot_ants_plane(notebook=None):
 
     .. code:: python
 
-       >>> import pyvista
+       >>> import pyvista as pv
        >>> from pyvista import examples
 
        Load and shrink airplane
@@ -331,7 +331,7 @@ def plot_ants_plane(notebook=None):
 
        Create plotting object.
 
-       >>> plotter = pyvista.Plotter()
+       >>> plotter = pv.Plotter()
        >>> _ = plotter.add_mesh(ant, 'r')
        >>> _ = plotter.add_mesh(ant_copy, 'b')
 

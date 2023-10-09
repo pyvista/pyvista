@@ -3,7 +3,7 @@ import traceback
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -20,7 +20,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
 
     Parameters
     ----------
-    mesh_or_algo : pyvista.DataSet | vtk.vtkAlgorithm | vtk.vtkAlgorithmOutput
+    mesh_or_algo : pv.DataSet | vtk.vtkAlgorithm | vtk.vtkAlgorithmOutput
         The input to be used as a data set (mesh) or vtkAlgorithm object.
 
     port : int, default: 0
@@ -29,7 +29,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
 
     Returns
     -------
-    mesh : pyvista.DataSet
+    mesh : pv.DataSet
         The resulting mesh data set from the input.
 
     algorithm : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or None
@@ -127,7 +127,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
             The input data object.
         """
         inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
-        if isinstance(inp, pyvista.PointSet):
+        if isinstance(inp, pv.PointSet):
             return inp.cast_to_polydata()
         return inp
 
@@ -381,7 +381,7 @@ def outline_algorithm(inp, generate_faces=False):
 
     Parameters
     ----------
-    inp : pyvista.Common
+    inp : pv.Common
         Input data to be filtered.
     generate_faces : bool, default: False
         Whether to generate faces for the outline.
@@ -402,7 +402,7 @@ def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlin
 
     Parameters
     ----------
-    inp : pyvista.Common
+    inp : pv.Common
         Input data to be filtered.
     pass_pointid : bool, default: False
         If ``True``, pass point IDs to the output.
@@ -430,7 +430,7 @@ def active_scalars_algorithm(inp, name, preference='point'):
 
     Parameters
     ----------
-    inp : pyvista.Common
+    inp : pv.Common
         Input data to be filtered.
     name : str
         Name of the scalars to set as active.
@@ -455,7 +455,7 @@ def pointset_to_polydata_algorithm(inp):
 
     Parameters
     ----------
-    inp : pyvista.PointSet
+    inp : pv.PointSet
         Input point set to be cast to PolyData.
 
     Returns
@@ -473,7 +473,7 @@ def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pv.DataSet
         The input data to which the IDs will be added.
     point_ids : bool, default: True
         If ``True``, point IDs will be added to the input data.
@@ -495,9 +495,9 @@ def crinkle_algorithm(clip, source):
 
     Parameters
     ----------
-    clip : pyvista.DataSet
+    clip : pv.DataSet
         The input data to be crinkled.
-    source : pyvista.DataSet
+    source : pv.DataSet
         The source of the crinkle.
 
     Returns
@@ -517,7 +517,7 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pv.DataSet
         The input data whose cell data will be converted to point data.
     pass_cell_data : bool, default: False
         If ``True``, the original cell data will be passed to the output.
@@ -538,7 +538,7 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pv.DataSet
         The input data whose point data will be converted to cell data.
     pass_point_data : bool, default: False
         If ``True``, the original point data will be passed to the output.
