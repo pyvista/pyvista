@@ -36,9 +36,9 @@ vtk_version_info = VTKVersionInfo()
 
 
 _cmd = """\
-import pyvista; \
-plotter = pyvista.Plotter(notebook=False, off_screen=True); \
-plotter.add_mesh(pyvista.Sphere()); \
+import pyvista as pv; \
+plotter = pv.Plotter(notebook=False, off_screen=True); \
+plotter.add_mesh(pv.Sphere()); \
 plotter.show(auto_close=False); \
 gpu_info = plotter.render_window.ReportCapabilities(); \
 print(gpu_info); \

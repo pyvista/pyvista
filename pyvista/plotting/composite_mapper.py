@@ -22,10 +22,10 @@ class BlockAttributes:
 
     Parameters
     ----------
-    block : pyvista.DataObject
+    block : pv.DataObject
         PyVista data object.
 
-    attr : pyvista.plotting.composite_mapper.CompositeAttributes
+    attr : pv.plotting.composite_mapper.CompositeAttributes
         Parent attributes.
 
     Notes
@@ -263,10 +263,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
     Parameters
     ----------
-    mapper : pyvista.plotting.composite_mapper.CompositePolyDataMapper
+    mapper : pv.plotting.composite_mapper.CompositePolyDataMapper
         Parent mapper.
 
-    dataset : pyvista.MultiBlock
+    dataset : pv.MultiBlock
         Multiblock dataset.
 
     Notes
@@ -425,7 +425,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         Returns
         -------
-        pyvista.DataObject
+        pv.DataObject
             PyVista data object.
 
         Notes
@@ -521,10 +521,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
     Parameters
     ----------
-    dataset : pyvista.MultiBlock, optional
+    dataset : pv.MultiBlock, optional
         Multiblock dataset.
 
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pv.plotting.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional
@@ -754,7 +754,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        cmap : str, list, or pyvista.LookupTable
+        cmap : str, list, or pv.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.

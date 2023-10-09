@@ -54,7 +54,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     Parameters
     ----------
-    camera : pyvista.Camera
+    camera : pv.Camera
         Camera to link to the axes actor.
 
     minor_ticks : bool, default: False
