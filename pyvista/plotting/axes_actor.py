@@ -12,7 +12,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor, vtkMatrix4x4
+from ._vtk import vtkAxesActor, vtkMatrix4x4, vtkTransform
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -1048,6 +1048,15 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         """Wrap method for orientation workaround."""
         super().SetPosition(*args)
         self._update_UserMatrix() if self._enable_orientation_workaround else None
+
+    @wraps(vtkAxesActor.GetUserTransform)
+    def GetUserTransform(self):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        transform = super().GetUserTransform()
+        if self._enable_orientation_workaround:
+            transform_out = vtkTransform()
+            transform_out.SetMatrix(transform.GetMatrix())
+        return transform
 
     @property
     def user_matrix(self) -> np.ndarray:  # numpydoc ignore=RT01
