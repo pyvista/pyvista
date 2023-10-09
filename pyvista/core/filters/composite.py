@@ -2,7 +2,7 @@
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -23,7 +23,7 @@ class CompositeFilters:
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Surface of the composite dataset.
 
         """
@@ -46,18 +46,18 @@ class CompositeFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
+        pv.UnstructuredGrid
             Combined blocks.
 
         Examples
         --------
         Combine blocks within a multiblock without merging points.
 
-        >>> import pyvista
-        >>> block = pyvista.MultiBlock(
+        >>> import pyvista as pv
+        >>> block = pv.MultiBlock(
         ...     [
-        ...         pyvista.Cube(clean=False),
-        ...         pyvista.Cube(center=(1, 0, 0), clean=False),
+        ...         pv.Cube(clean=False),
+        ...         pv.Cube(center=(1, 0, 0), clean=False),
         ...     ]
         ... )
         >>> merged = block.combine()
@@ -127,7 +127,7 @@ class CompositeFilters:
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh containing the outline.
 
         """
@@ -135,7 +135,7 @@ class CompositeFilters:
             return DataSetFilters.outline(
                 self, generate_faces=generate_faces, progress_bar=progress_bar
             )
-        box = pyvista.Box(bounds=self.bounds)
+        box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
     def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
@@ -155,13 +155,13 @@ class CompositeFilters:
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh containing outlined corners.
 
         """
         if nested:
             return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
-        box = pyvista.Box(bounds=self.bounds)
+        box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
@@ -187,7 +187,7 @@ class CompositeFilters:
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:
-                ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
+                ids = np.arange(block.n_points, dtype=pv.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
         alg = _vtk.vtkPolyDataNormals()

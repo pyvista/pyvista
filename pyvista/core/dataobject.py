@@ -7,7 +7,7 @@ from typing import Any, DefaultDict, Dict, Type, Union
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -55,7 +55,7 @@ class DataObject:
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : pv.DataObject or vtk.vtkDataObject
             Data object to perform a shallow copy from.
 
         """
@@ -66,7 +66,7 @@ class DataObject:
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : pv.DataObject or vtk.vtkDataObject
             Data object to perform a deep copy from.
 
         """
@@ -293,7 +293,7 @@ class DataObject:
 
         Returns
         -------
-        pyvista.DataSet
+        pv.DataSet
             Deep or shallow copy of the input.  Type is identical to
             the input.
 
@@ -301,8 +301,8 @@ class DataObject:
         --------
         Create and make a deep copy of a PolyData object.
 
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere()
         >>> mesh_b = mesh_a.copy()
         >>> mesh_a == mesh_b
         True
@@ -372,16 +372,16 @@ class DataObject:
         --------
         Add field data to a PolyData dataset.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.ImageData(dimensions=(2, 2, 1))
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(
         ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
         ... )
@@ -390,9 +390,9 @@ class DataObject:
 
         Add field data to a MultiBlock dataset.
 
-        >>> blocks = pyvista.MultiBlock()
-        >>> blocks.append(pyvista.Sphere())
-        >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+        >>> blocks = pv.MultiBlock()
+        >>> blocks.append(pv.Sphere())
+        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
@@ -420,9 +420,9 @@ class DataObject:
         --------
         Add field data to a PolyData dataset and then return it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = np.arange(10)
         >>> mesh.field_data['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -439,8 +439,8 @@ class DataObject:
         --------
         Add field data to a PolyData dataset and then remove it.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = range(10)
         >>> len(mesh.field_data)
         1
@@ -465,8 +465,8 @@ class DataObject:
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.memory_address
         'Addr=...'
 
@@ -517,7 +517,7 @@ class DataObject:
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pv.DataSet
             Dataset to copy the data attributes from.
 
         Examples
@@ -541,7 +541,7 @@ class DataObject:
         """
         state = self.__dict__.copy()
 
-        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+        if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
             # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
@@ -568,7 +568,7 @@ class DataObject:
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
+        elif pv.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -580,7 +580,7 @@ class DataObject:
 
         # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
         # processes
-        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
+        state['PICKLE_FORMAT'] = pv.PICKLE_FORMAT
         return state
 
     def __setstate__(self, state):
