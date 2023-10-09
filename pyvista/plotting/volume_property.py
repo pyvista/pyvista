@@ -17,7 +17,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
     Parameters
     ----------
-    lookup_table : pyvista.LookupTable, optional
+    lookup_table : pv.LookupTable, optional
         Lookup table to set the color and opacity transfer functions.
 
     interpolation_type : str, optional
@@ -116,7 +116,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Parameters
         ----------
-        lookup_table : pyvista.LookupTable, optional
+        lookup_table : pv.LookupTable, optional
             Lookup table to set the color and opacity transfer functions.
 
         Examples
@@ -335,7 +335,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Returns
         -------
-        pyvista.plotting.volume_property.VolumeProperty
+        pv.plotting.volume_property.VolumeProperty
             Deep copy of this property.
 
         """

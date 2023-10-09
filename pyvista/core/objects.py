@@ -5,7 +5,7 @@ The data objects does not have any sort of spatial reference.
 """
 import numpy as np
 
-import pyvista
+import pyvista as pv
 
 from . import _vtk_core as _vtk
 from .dataset import DataObject
@@ -212,7 +212,7 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pv.pyvista_ndarray
             PyVista array.
 
         """
@@ -235,7 +235,7 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pv.pyvista_ndarray
             PyVista array.
         """
         return self[index]
@@ -290,8 +290,8 @@ class Table(_vtk.vtkTable, DataObject):
                 """Format array information for printing (internal helper)."""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
-                dl = pyvista.FLOAT_FORMAT.format(dl)
-                dh = pyvista.FLOAT_FORMAT.format(dh)
+                dl = pv.FLOAT_FORMAT.format(dl)
+                dh = pv.FLOAT_FORMAT.format(dh)
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]
                 else:

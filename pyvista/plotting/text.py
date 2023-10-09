@@ -226,7 +226,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     Parameters
     ----------
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pv.plotting.themes.Theme, optional
         Plot-specific theme.
 
     color : ColorLike, optional

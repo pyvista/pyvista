@@ -3,7 +3,7 @@ import collections
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
@@ -32,7 +32,7 @@ def wrap(dataset):
 
     Returns
     -------
-    pyvista.DataSet
+    pv.DataSet
         The PyVista wrapped dataset.
 
     Examples
@@ -99,21 +99,21 @@ def wrap(dataset):
     if dataset is None:
         return
 
-    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+    if isinstance(dataset, tuple(pv._wrappers.values())):
         # Return object if it is already wrapped
         return dataset
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
-    if isinstance(dataset, (np.ndarray, pyvista.pyvista_ndarray)):
+    if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
         if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pyvista.PolyData(dataset)
+            return pv.PolyData(dataset)
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
-            return pyvista.PolyData(dataset)
+            return pv.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.ImageData(dimensions=dataset.shape)
-            if isinstance(dataset, pyvista.pyvista_ndarray):
+            mesh = pv.ImageData(dimensions=dataset.shape)
+            if isinstance(dataset, pv.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.array(dataset, copy=False)
             mesh['values'] = dataset.ravel(order='F')
@@ -124,13 +124,13 @@ def wrap(dataset):
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
-        return pyvista.pyvista_ndarray(dataset)
+        return pv.pyvista_ndarray(dataset)
 
     # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return pyvista._wrappers[key](dataset)
+            return pv._wrappers[key](dataset)
         except KeyError:
             raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
         return
@@ -146,7 +146,7 @@ def wrap(dataset):
         faces = np.empty((n_face, 4), dataset.faces.dtype)
         faces[:, 1:] = dataset.faces
         faces[:, 0] = 3
-        polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        polydata = pv.PolyData(np.asarray(dataset.vertices), faces)
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
             polydata.active_t_coords = np.asarray(dataset.visual.uv)
@@ -170,7 +170,7 @@ def is_pyvista_dataset(obj):
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
+    return isinstance(obj, (pv.DataSet, pv.MultiBlock))
 
 
 def generate_plane(normal, origin):
@@ -230,11 +230,11 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     Rotate a set of points by 90 degrees about the x-axis in-place.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> points = examples.load_airplane().points
     >>> points_orig = points.copy()
-    >>> pyvista.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
+    >>> pv.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
     >>> assert np.all(np.isclose(points[:, 0], points_orig[:, 0]))
     >>> assert np.all(np.isclose(points[:, 1], -points_orig[:, 2]))
     >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))
