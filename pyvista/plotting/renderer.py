@@ -460,12 +460,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (
-                hasattr(actor, 'bounds')
-                and actor.bounds is not None
-                and id(actor) != id(self.bounding_box_actor)
-            ):
-                _update_bounds(actor.bounds)
-            elif (
                 hasattr(actor, 'GetBounds')
                 and actor.GetBounds() is not None
                 and id(actor) != id(self.bounding_box_actor)
@@ -839,12 +833,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'scale'):
-            # Use PyVista implementation if available
-            actor.scale = np.array(actor.scale) * np.array(self.scale)
-        elif hasattr(actor, 'SetScale'):
+        if hasattr(actor, 'SetScale'):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
-
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
@@ -2452,9 +2442,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            if hasattr(actor, 'scale'):
-                actor.scale = self.scale
-            elif hasattr(actor, 'SetScale'):
+            if hasattr(actor, 'SetScale'):
                 actor.SetScale(self.scale)
 
         self.parent.render()
