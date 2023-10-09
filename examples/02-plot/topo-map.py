@@ -1,10 +1,10 @@
 """
-.. _ref_topo_map_example:
+.. _topo_map_example:
 
 Topographic Map
 ~~~~~~~~~~~~~~~
 
-This is very similar to the :ref:`ref_texture_example` example except it is
+This is very similar to the :ref:`texture_example` example except it is
 focused on plotting aerial imagery from a GeoTIFF on top of some topography
 mesh.
 

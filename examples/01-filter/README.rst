@@ -2,7 +2,7 @@ Filtering
 ---------
 
 These examples show case various mesh analysis and filtering routines present
-in the :ref:`filters_ref` module. Explore these demos to perform tasks such as:
+in the :ref:`filters` module. Explore these demos to perform tasks such as:
 
 * Slicing and cutting meshes
 * Computing mesh properties like volume, area, and surface normals

@@ -61,7 +61,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         Returns
         -------
-        pyvista.DataSetMapper
+        pv.DataSetMapper
             A copy of this dataset mapper.
 
         Examples
@@ -364,10 +364,10 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     Parameters
     ----------
-    dataset : pyvista.DataSet, optional
+    dataset : pv.DataSet, optional
         Dataset to assign to this mapper.
 
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pv.plotting.themes.Theme, optional
         Plot-specific theme.
 
     Examples
@@ -553,21 +553,21 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : pyvista.ColorLike, optional
+        nan_color : pv.ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : pyvista.ColorLike, optional
+        above_color : pv.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'above'``.
 
-        below_color : pyvista.ColorLike, optional
+        below_color : pv.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
 
-        cmap : str, list, or pyvista.LookupTable
+        cmap : str, list, or pv.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.
@@ -752,7 +752,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Opacity array to color the dataset. Array length must match either
             the number of points or cells.
 
-        color : pyvista.ColorLike
+        color : pv.ColorLike
             The color to use with the opacity array.
 
         n_colors : int
@@ -811,7 +811,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     Parameters
     ----------
-    theme : pyvista.Theme, optional
+    theme : pv.Theme, optional
         The theme to be used.
     emissive : bool, optional
         Whether or not the point should appear emissive. Default is set by the

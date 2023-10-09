@@ -1,4 +1,4 @@
-"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+"""Contains pyvista_ndarray a numpy ndarray type used in pv."""
 from collections.abc import Iterable
 from typing import Union
 
@@ -18,10 +18,10 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
     array : Iterable or vtk.vtkAbstractArray
         Array like.
 
-    dataset : pyvista.DataSet
+    dataset : pv.DataSet
         Input dataset.
 
-    association : pyvista.core.utilities.arrays.FieldAssociation
+    association : pv.core.utilities.arrays.FieldAssociation
         Field association.
 
     Examples
@@ -73,7 +73,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
         #
-        # the VTKArray class uses attributes called `DataSet` and `Assocation`
+        # the VTKArray class uses attributes called `DataSet` and `Association`
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class

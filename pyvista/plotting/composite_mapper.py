@@ -22,10 +22,10 @@ class BlockAttributes:
 
     Parameters
     ----------
-    block : pyvista.DataObject
+    block : pv.DataObject
         PyVista data object.
 
-    attr : pyvista.plotting.composite_mapper.CompositeAttributes
+    attr : pv.plotting.composite_mapper.CompositeAttributes
         Parent attributes.
 
     Notes
@@ -263,10 +263,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
     Parameters
     ----------
-    mapper : pyvista.plotting.composite_mapper.CompositePolyDataMapper
+    mapper : pv.plotting.composite_mapper.CompositePolyDataMapper
         Parent mapper.
 
-    dataset : pyvista.MultiBlock
+    dataset : pv.MultiBlock
         Multiblock dataset.
 
     Notes
@@ -425,7 +425,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         Returns
         -------
-        pyvista.DataObject
+        pv.DataObject
             PyVista data object.
 
         Notes
@@ -521,10 +521,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
     Parameters
     ----------
-    dataset : pyvista.MultiBlock
+    dataset : pv.MultiBlock, optional
         Multiblock dataset.
 
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pv.plotting.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional
@@ -541,16 +541,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     """
 
     def __init__(
-        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
+        self, dataset=None, theme=None, color_missing_with_nan=None, interpolate_before_map=None
     ):
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
-        self.SetInputDataObject(dataset)
-
         # this must be added to set the color, opacity, and visibility of
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
-        self._dataset = dataset
+        self.dataset = dataset
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
@@ -578,6 +576,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         """
         return self._dataset
+
+    @dataset.setter
+    def dataset(self, obj: 'pv.MultiBlock'):  # numpydoc ignore=GL08
+        self.SetInputDataObject(obj)
+        self._dataset = obj
+        self._attr._dataset = obj
 
     @property
     def block_attr(self) -> CompositeAttributes:  # numpydoc ignore=RT01
@@ -750,7 +754,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        cmap : str, list, or pyvista.LookupTable
+        cmap : str, list, or pv.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.

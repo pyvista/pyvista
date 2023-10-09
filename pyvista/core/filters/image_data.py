@@ -3,7 +3,7 @@ import collections.abc
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 from pyvista.core.filters import _get_output, _update_alg
@@ -36,7 +36,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             Uniform grid with smoothed scalars.
 
         Notes
@@ -53,9 +53,9 @@ class ImageDataFilters(DataSetFilters):
         to create meaningful data.
 
         >>> import numpy as np
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
         ... )
         >>> grid.plot(show_scalar_bar=False)
@@ -128,7 +128,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             Uniform grid with smoothed scalars.
 
         Warnings
@@ -144,9 +144,9 @@ class ImageDataFilters(DataSetFilters):
         to create meaningful data.
 
         >>> import numpy as np
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
         ... )
         >>> grid.plot(show_scalar_bar=False)
@@ -207,7 +207,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             ImageData subset.
         """
         alg = _vtk.vtkExtractVOI()
@@ -219,7 +219,7 @@ class ImageDataFilters(DataSetFilters):
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
+        fixed = pv.ImageData()
         fixed.origin = result.bounds[::2]
         fixed.spacing = result.spacing
         fixed.dimensions = result.dimensions
@@ -264,7 +264,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             Dataset that has been dilated/eroded on the boundary of the specified scalars.
 
         Notes
@@ -365,7 +365,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             Dataset with the specified scalars thresholded.
 
         Examples
@@ -450,7 +450,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             :class:`pyvista.ImageData` with applied FFT.
 
         See Also
@@ -529,7 +529,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             :class:`pyvista.ImageData` with the applied reverse FFT.
 
         See Also
@@ -621,7 +621,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             :class:`pyvista.ImageData` with the applied low pass filter.
 
         See Also
@@ -699,7 +699,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             :class:`pyvista.ImageData` with the applied high pass filter.
 
         See Also
@@ -761,7 +761,7 @@ class ImageDataFilters(DataSetFilters):
                 '`numpy.complex128`.'
             )
 
-    def _flip_uniform(self, axis) -> 'pyvista.ImageData':
+    def _flip_uniform(self, axis) -> 'pv.ImageData':
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.

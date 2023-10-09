@@ -5,7 +5,7 @@ from itertools import count, islice
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
 
@@ -69,11 +69,11 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
         raise TypeError('Indices must be either a mask or an integer array-like')
 
     if ind.dtype == np.bool_:
-        ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
-    elif ind.dtype != pyvista.ID_TYPE:
-        ind = ind.astype(pyvista.ID_TYPE)
+        ind = ind.nonzero()[0].astype(pv.ID_TYPE)
+    elif ind.dtype != pv.ID_TYPE:
+        ind = ind.astype(pv.ID_TYPE)
     elif not ind.flags['C_CONTIGUOUS']:
-        ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
+        ind = np.ascontiguousarray(ind, dtype=pv.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
     vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
@@ -193,7 +193,7 @@ def get_mixed_cells(vtkobj):
 
     Parameters
     ----------
-    vtkobj : pyvista.UnstructuredGrid
+    vtkobj : pv.UnstructuredGrid
         The unstructured grid for which the cells dictionary should be computed.
 
     Returns
@@ -212,7 +212,7 @@ def get_mixed_cells(vtkobj):
 
     return_dict = {}
 
-    if not isinstance(vtkobj, pyvista.UnstructuredGrid):
+    if not isinstance(vtkobj, pv.UnstructuredGrid):
         raise ValueError("Expected a pyvista object")
 
     nr_cells = vtkobj.n_cells

@@ -153,10 +153,18 @@ def test_ParametricTorus():
 def test_direction():
     geom1 = pv.ParametricEllipsoid(300, 100, 10, direction=[1, 0, 0])
     geom2 = pv.ParametricEllipsoid(300, 100, 10, direction=[0, 1, 0])
+    geom3 = pv.ParametricEllipsoid(300, 100, 10, direction=[0, -1, 0])
     assert geom1.n_points
     assert geom2.n_points
+    assert geom3.n_points
     points1 = geom1.points
     points2 = geom2.points
+    points3 = geom3.points
+
     assert np.allclose(points1[:, 0], points2[:, 1])
     assert np.allclose(points1[:, 1], -points2[:, 0])
     assert np.allclose(points1[:, 2], points2[:, 2])
+
+    assert np.allclose(points1[:, 0], -points3[:, 1])
+    assert np.allclose(points1[:, 1], points3[:, 0])
+    assert np.allclose(points1[:, 2], points3[:, 2])

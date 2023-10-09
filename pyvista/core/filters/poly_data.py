@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import (
     DeprecationError,
@@ -51,8 +51,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Plot the mask of points that exceed 45 degrees.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube().triangulate().subdivide(4)
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube().triangulate().subdivide(4)
         >>> mask = mesh.edge_mask(45)
         >>> mesh.plot(scalars=mask)
 
@@ -63,8 +63,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
-            poly_data = pyvista.PolyData(poly_data)
+        if not isinstance(poly_data, pv.PolyData):  # pragma: no cover
+            poly_data = pv.PolyData(poly_data)
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -75,7 +75,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = pyvista.point_array(edges, 'point_ind')
+        orig_id = pv.point_array(edges, 'point_ind')
 
         return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -86,7 +86,7 @@ class PolyDataFilters(DataSetFilters):
                 raise ValueError(
                     "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface."
                 )
-        if not isinstance(other_mesh, pyvista.PolyData):
+        if not isinstance(other_mesh, pv.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
@@ -161,7 +161,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pyvista.PolyData
+        other_mesh : pv.PolyData
             Mesh operating on the source mesh.
 
         tolerance : float, tolerance: 1e-5
@@ -173,7 +173,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The result of the boolean operation.
 
         Examples
@@ -181,11 +181,11 @@ class PolyDataFilters(DataSetFilters):
         Demonstrate a boolean union with two spheres.  Note how the
         final mesh includes both spheres.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_union(sphere_b)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
         ... )
@@ -234,7 +234,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pyvista.PolyData
+        other_mesh : pv.PolyData
             Mesh operating on the source mesh.
 
         tolerance : float, default: 1e-5
@@ -246,7 +246,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The result of the boolean operation.
 
         Examples
@@ -254,11 +254,11 @@ class PolyDataFilters(DataSetFilters):
         Demonstrate a boolean intersection with two spheres.  Note how
         the final mesh only includes the intersection of the two.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_intersection(sphere_b)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
         ... )
@@ -311,7 +311,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pyvista.PolyData
+        other_mesh : pv.PolyData
             Mesh operating on the source mesh.
 
         tolerance : float, default: 1e-5
@@ -323,7 +323,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The result of the boolean operation.
 
         Examples
@@ -331,11 +331,11 @@ class PolyDataFilters(DataSetFilters):
         Demonstrate a boolean difference with two spheres.  Note how
         the final mesh only includes ``sphere_a``.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_difference(sphere_b)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
         ... )
@@ -391,7 +391,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        *meshes : list[pyvista.PolyData]
+        *meshes : list[pv.PolyData]
             The PolyData(s) to append with the current one.
 
         inplace : bool, default: False
@@ -402,7 +402,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Appended PolyData(s).
 
         Examples
@@ -419,7 +419,7 @@ class PolyDataFilters(DataSetFilters):
         >>> appended = sp0.append_polydata(sp1, sp2)
         >>> appended.plot()
         """
-        if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
+        if not all(isinstance(mesh, pv.PolyData) for mesh in meshes):
             raise TypeError("All meshes need to be of PolyData type")
 
         append_filter = _vtk.vtkAppendPolyData()
@@ -477,7 +477,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pv.DataSet
             PyVista dataset to merge this mesh with.
 
         merge_points : bool, optional
@@ -503,25 +503,25 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.DataSet
+        pv.DataSet
             :class:`pyvista.PolyData` if ``dataset`` is a
             :class:`pyvista.PolyData`, otherwise a
             :class:`pyvista.UnstructuredGrid`.
 
         Examples
         --------
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> merged = sphere_a.merge(sphere_b)
         >>> merged.plot(style='wireframe', color='lightblue')
 
         """
         # check if dataset or datasets are not polydata
-        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
+        if isinstance(dataset, (list, tuple, pv.MultiBlock)):
+            is_polydata = all(isinstance(data, pv.PolyData) for data in dataset)
         else:
-            is_polydata = isinstance(dataset, pyvista.PolyData)
+            is_polydata = isinstance(dataset, pv.PolyData)
 
         if inplace and not is_polydata:
             raise TypeError("In-place merge requires both input datasets to be PolyData.")
@@ -542,7 +542,7 @@ class PolyDataFilters(DataSetFilters):
             # must use extract_geometry to ensure they get converted back
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
-            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+            if isinstance(dataset, (list, tuple, pv.MultiBlock)):
                 dataset_has_lines_strips = any(
                     [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
                 )
@@ -552,7 +552,7 @@ class PolyDataFilters(DataSetFilters):
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
                 merged = merged.extract_geometry()
             else:
-                polydata_merged = pyvista.PolyData(
+                polydata_merged = pv.PolyData(
                     merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
@@ -588,7 +588,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        mesh : pyvista.PolyData
+        mesh : pv.PolyData
             The mesh to intersect with.
 
         split_first : bool, default: True
@@ -604,14 +604,14 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The intersection line.
 
-        pyvista.PolyData
+        pv.PolyData
             The first mesh split along the intersection. Returns the
             original first mesh if ``split_first=False``.
 
-        pyvista.PolyData
+        pv.PolyData
             The second mesh split along the intersection. Returns the
             original second mesh if ``split_second=False``.
 
@@ -656,6 +656,9 @@ class PolyDataFilters(DataSetFilters):
 
     def curvature(self, curv_type='mean', progress_bar=False):
         """Return the pointwise curvature of a mesh.
+
+        See :ref:`connectivity_example` for more examples using this
+        filter.
 
         Parameters
         ----------
@@ -731,7 +734,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.CameraPosition
+        pv.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -766,15 +769,15 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh containing only triangles.
 
         Examples
         --------
         Generate a mesh with quadrilateral faces.
 
-        >>> import pyvista
-        >>> plane = pyvista.Plane()
+        >>> import pyvista as pv
+        >>> plane = pv.Plane()
         >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
@@ -850,7 +853,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Smoothed mesh.
 
         Examples
@@ -960,7 +963,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Smoothed mesh.
 
         Notes
@@ -1088,15 +1091,15 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Decimated mesh.
 
         Examples
         --------
         Decimate a sphere.  First plot the sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
         >>> sphere.plot(show_edges=True, line_width=2)
 
         Now decimate it and plot it.
@@ -1183,7 +1186,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Tube-filtered mesh.
 
         Examples
@@ -1203,8 +1206,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pyvista.PolyData(poly_data)
+        if not isinstance(poly_data, pv.PolyData):
+            poly_data = pv.PolyData(poly_data)
         if n_sides < 3:
             n_sides = 3
         tube = _vtk.vtkTubeFilter()
@@ -1279,7 +1282,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Subdivided mesh.
 
         Examples
@@ -1287,8 +1290,8 @@ class PolyDataFilters(DataSetFilters):
         First, create an example coarse sphere mesh and plot it.
 
         >>> from pyvista import examples
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere(phi_resolution=10, theta_resolution=10)
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(phi_resolution=10, theta_resolution=10)
         >>> mesh.plot(show_edges=True, line_width=3)
 
         Subdivide the sphere mesh using linear subdivision.
@@ -1399,16 +1402,16 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Subdivided mesh.
 
         Examples
         --------
         First, load the example airplane mesh and plot it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> mesh = pyvista.PolyData(examples.planefile)
+        >>> mesh = pv.PolyData(examples.planefile)
         >>> mesh.plot(show_edges=True, line_width=3)
 
         Subdivide the mesh
@@ -1523,7 +1526,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Decimated mesh.
 
         Notes
@@ -1536,8 +1539,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Decimate a sphere.  First plot the sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
         >>> sphere.plot(show_edges=True, line_width=2)
 
         Now decimate it by 75% and plot it.
@@ -1655,7 +1658,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Updated mesh with cell and point normals.
 
         Notes
@@ -1701,7 +1704,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
+                np.arange(self.n_points, dtype=pv.ID_TYPE), 'pyvistaOriginalPointIds'
             )
 
         normal = _vtk.vtkPolyDataNormals()
@@ -1772,7 +1775,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The clipped mesh.
 
         Examples
@@ -1851,7 +1854,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh with holes filled if ``inplace=False``.
 
         Examples
@@ -1934,7 +1937,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Cleaned mesh.
 
         Examples
@@ -1973,7 +1976,7 @@ class PolyDataFilters(DataSetFilters):
         output = _get_output(alg)
 
         # Check output so no segfaults occur
-        if output.n_points < 1:
+        if output.n_points < 1 and self.n_cells > 0:
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
@@ -2025,7 +2028,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             ``PolyData`` object consisting of the line segment between the
             two given vertices. If ``inplace`` is ``True`` this is the
             same object as the input mesh.
@@ -2197,7 +2200,7 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells = np.array(intersection_cells)
 
         if plot:
-            plotter = pyvista.Plotter(off_screen=off_screen)
+            plotter = pv.Plotter(off_screen=off_screen)
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
@@ -2352,7 +2355,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.CameraPosition
+        pv.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -2365,7 +2368,7 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
-        plotter = pyvista.Plotter(
+        plotter = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None)
         )
         plotter.add_mesh(
@@ -2409,7 +2412,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.CameraPosition
+        pv.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -2428,13 +2431,13 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
-        plotter = pyvista.Plotter(
+        plotter = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None)
         )
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
 
-        color = pyvista.Color(color, default_color=pyvista.global_theme.edge_color)
+        color = pv.Color(color, default_color=pv.global_theme.edge_color)
 
         if faces:
             centers = self.cell_centers().points[::use_every]
@@ -2477,7 +2480,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh without the points flagged for removal.
 
         numpy.ndarray
@@ -2522,11 +2525,11 @@ class PolyDataFilters(DataSetFilters):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
+        faces = np.empty((nfaces, 4), dtype=pv.ID_TYPE)
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
-        newmesh = pyvista.PolyData(new_points, faces, deep=True)
+        newmesh = pv.PolyData(new_points, faces, deep=True)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested
@@ -2615,7 +2618,7 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, overwrite this mesh with the triangulated
             mesh.
 
-        edge_source : pyvista.PolyData, optional
+        edge_source : pv.PolyData, optional
             Specify the source object used to specify constrained
             edges and loops. If set, and lines/polygons are defined, a
             constrained triangulation is created. The lines/polygons
@@ -2628,7 +2631,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh from the 2D delaunay filter.
 
         Examples
@@ -2740,7 +2743,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             The points of this mesh projected onto a plane.
 
         Examples
@@ -2822,7 +2825,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Ribbon mesh.  Empty if there are no lines in the input dataset.
 
         Examples
@@ -2830,7 +2833,7 @@ class PolyDataFilters(DataSetFilters):
         Convert a line to a ribbon and plot it.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> n = 1000
         >>> theta = np.linspace(-10 * np.pi, 10 * np.pi, n)
         >>> z = np.linspace(-2, 2, n)
@@ -2838,7 +2841,7 @@ class PolyDataFilters(DataSetFilters):
         >>> x = r * np.sin(theta)
         >>> y = r * np.cos(theta)
         >>> points = np.column_stack((x, y, z))
-        >>> pdata = pyvista.PolyData(points)
+        >>> pdata = pv.PolyData(points)
         >>> pdata.lines = np.hstack((n, range(n)))
         >>> pdata['distance'] = range(n)
         >>> ribbon = pdata.ribbon(width=0.2)
@@ -2927,21 +2930,21 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Extruded mesh.
 
         Examples
         --------
         Extrude a half circle arc.
 
-        >>> import pyvista
-        >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+        >>> import pyvista as pv
+        >>> arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
         >>> mesh.plot(color='lightblue')
 
         Extrude and cap an 8 sided polygon.
 
-        >>> poly = pyvista.Polygon(n_sides=8)
+        >>> poly = pv.Polygon(n_sides=8)
         >>> mesh = poly.extrude((0, 0, 1.5), capping=True)
         >>> mesh.plot(line_width=5, show_edges=True)
 
@@ -3049,15 +3052,15 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Rotationally extruded mesh.
 
         Examples
         --------
         Create a "spring" using the rotational extrusion filter.
 
-        >>> import pyvista
-        >>> profile = pyvista.Polygon(
+        >>> import pyvista as pv
+        >>> profile = pv.Polygon(
         ...     center=[1.25, 0.0, 0.0],
         ...     radius=0.2,
         ...     normal=(0, 1, 0),
@@ -3088,7 +3091,7 @@ class PolyDataFilters(DataSetFilters):
         ...         [-0.2, 0, 1.0],
         ...     ]
         ... )
-        >>> spline = pyvista.Spline(points, 30)
+        >>> spline = pv.Spline(points, 30)
         >>> extruded = spline.extrude_rotate(resolution=20, capping=False)
         >>> extruded.plot(color='lightblue')
 
@@ -3117,7 +3120,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        if pyvista.vtk_version_info >= (9, 1, 0):
+        if pv.vtk_version_info >= (9, 1, 0):
             alg.SetRotationAxis(rotation_axis)
         else:  # pragma: no cover
             if rotation_axis != (0, 0, 1):
@@ -3155,7 +3158,7 @@ class PolyDataFilters(DataSetFilters):
         direction : numpy.ndarray or sequence
             Direction vector to extrude.
 
-        trim_surface : pyvista.PolyData
+        trim_surface : pv.PolyData
             Surface which trims the surface.
 
         extrusion : str, default: "boundary_edges"
@@ -3184,19 +3187,17 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Extruded mesh trimmed by a surface.
 
         Examples
         --------
         Extrude a disc.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> plane = pyvista.Plane(
-        ...     i_size=2, j_size=2, direction=[0, 0.8, 1]
-        ... )
-        >>> disc = pyvista.Disc(center=(0, 0, -1), c_res=50)
+        >>> plane = pv.Plane(i_size=2, j_size=2, direction=[0, 0.8, 1])
+        >>> disc = pv.Disc(center=(0, 0, -1), c_res=50)
         >>> direction = [0, 0, 1]
         >>> extruded_disc = disc.extrude_trim(direction, plane)
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
@@ -3302,7 +3303,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Stripped mesh.
 
         Examples
@@ -3350,7 +3351,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pyvista.DataSet
+        other_mesh : pv.DataSet
             Other mesh to test collision with.  If the other mesh is
             not a surface, its external surface will be extracted and
             triangulated.
@@ -3387,7 +3388,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Mesh containing collisions in the ``field_data``
             attribute named ``"ContactCells"``.  Array only exists
             when there are collisions.
@@ -3418,9 +3419,9 @@ class PolyDataFilters(DataSetFilters):
         cube and output the cell indices of the first 10 collisions.
 
         >>> import numpy as np
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere(radius=0.5)
-        >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere(radius=0.5)
+        >>> mesh_b = pv.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
         pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])
@@ -3431,7 +3432,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> scalars = np.zeros(collision.n_cells, dtype=bool)
         >>> scalars[collision.field_data['ContactCells']] = True
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     collision,
         ...     scalars=scalars,
@@ -3459,7 +3460,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # other mesh must be a polydata
-        if not isinstance(other_mesh, pyvista.PolyData):
+        if not isinstance(other_mesh, pv.PolyData):
             other_mesh = other_mesh.extract_surface()
 
         # according to VTK limitations
@@ -3560,10 +3561,10 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        output : pyvista.PolyData
+        output : pv.PolyData
             Surface containing the contour surface.
 
-        edges : pyvista.PolyData
+        edges : pv.PolyData
             Optional edges when ``generate_contour_edges`` is ``True``.
 
         Examples
@@ -3698,7 +3699,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        pv.PolyData
             Reconstructed surface.
 
         Examples

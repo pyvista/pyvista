@@ -1,4 +1,4 @@
-.. _citation_ref:
+.. _citation:
 
 Citing PyVista
 --------------

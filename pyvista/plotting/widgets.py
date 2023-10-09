@@ -2,7 +2,7 @@
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -155,15 +155,33 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows an interactive clip box.
+        Shows an interactive box that is used to resize and relocate a sphere.
 
         >>> import pyvista as pv
-        >>> mesh = pv.ParametricConicSpiral()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
-        >>> pl.show()
-
-        For a full example see :ref:`box_widget_example`.
+        >>> import numpy as np
+        >>> plotter = pv.Plotter()
+        >>> def simulate(widget):
+        ...     bounds = widget.bounds
+        ...     new_center = np.array(
+        ...         [
+        ...             (bounds[0] + bounds[1]) / 2,
+        ...             (bounds[2] + bounds[3]) / 2,
+        ...             (bounds[4] + bounds[5]) / 2,
+        ...         ]
+        ...     )
+        ...     new_radius = (
+        ...         min(
+        ...             (bounds[1] - bounds[0]) / 2,
+        ...             (bounds[3] - bounds[2]) / 2,
+        ...             (bounds[5] - bounds[4]) / 2,
+        ...         )
+        ...         - 0.3
+        ...     )
+        ...     sphere = pv.Sphere(new_radius, new_center)
+        ...     _ = plotter.add_mesh(sphere, name="Sphere")
+        ...
+        >>> _ = plotter.add_box_widget(callback=simulate)
+        >>> plotter.show()
 
         """
         interaction_event = _parse_interaction_event(interaction_event)
@@ -172,7 +190,7 @@ class WidgetHelper:
             bounds = self.bounds
 
         def _the_callback(box_widget, event_id):
-            the_box = pyvista.PolyData()
+            the_box = pv.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
@@ -188,7 +206,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
+            Color(color, default_color=pv.global_theme.font.color).float_rgb
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -229,7 +247,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
@@ -279,6 +297,18 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive clip box.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`.
+
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -320,7 +350,7 @@ class WidgetHelper:
             clipper.SetBoxClip(*bounds)
             clipper.Update()
             if crinkle:
-                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+                clipped = pv.wrap(crinkler.GetOutputDataObject(0))
             else:
                 clipped = _get_output(clipper, oport=port)
             box_clipped_mesh.shallow_copy(clipped)
@@ -437,6 +467,33 @@ class WidgetHelper:
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
             Plane widget.
 
+        Examples
+        --------
+        Shows an interactive plane moving along the x-axis in the random-hill example, which is used to mark the max altitude
+        at a particular distance x.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_random_hills()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> def callback(normal, origin):
+        ...     slc = mesh.slice(normal=normal, origin=origin)
+        ...     origin = list(origin)
+        ...     origin[2] = slc.bounds[5]
+        ...     peak_plane = pv.Plane(
+        ...         center=origin,
+        ...         direction=[0, 0, 1],
+        ...         i_size=20,
+        ...         j_size=20,
+        ...     )
+        ...     _ = pl.add_mesh(
+        ...         peak_plane, name="Peak", color='red', opacity=0.4
+        ...     )
+        ...
+        >>> _ = pl.add_plane_widget(callback, normal_rotation=False)
+        >>> pl.show()
+
         """
         interaction_event = _parse_interaction_event(interaction_event)
 
@@ -448,7 +505,7 @@ class WidgetHelper:
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
 
-        color = Color(color, default_color=pyvista.global_theme.font.color)
+        color = Color(color, default_color=pv.global_theme.font.color)
 
         if assign_to_axis:
             normal_rotation = False
@@ -584,7 +641,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
@@ -653,6 +710,20 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used to clip the mesh and store it.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> vol = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
+        >>> pl.show(cpos=[-2.1, 0.6, 1.5])
+        >>> pl.plane_clipped_meshes  # doctest:+SKIP
+
+        For a full example see :ref:`plane_widget_example`.
+
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -692,9 +763,9 @@ class WidgetHelper:
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
             if crinkle:
-                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+                clipped = pv.wrap(crinkler.GetOutputDataObject(0))
             else:
-                clipped = pyvista.wrap(clipper.GetOutput())
+                clipped = pv.wrap(clipper.GetOutput())
             plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
@@ -738,7 +809,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pyvista.plotting.volume.Volume or pyvista.ImageData or pyvista.RectilinearGrid
+        volume : pv.plotting.volume.Volume or pv.ImageData or pv.RectilinearGrid
             New dataset of type :class:`pyvista.ImageData` or
             :class:`pyvista.RectilinearGrid`, or the return value from
             :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
@@ -802,12 +873,12 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
-        if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
+        if isinstance(volume, (pv.ImageData, pv.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
-        elif not isinstance(volume, pyvista.plotting.volume.Volume):
+        elif not isinstance(volume, pv.plotting.volume.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.ImageData, '
-                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
+                'pv.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
         else:
@@ -867,7 +938,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and slice or algorithm that
             produces said mesh.
 
@@ -924,6 +995,20 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used specifically for slicing.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_channels()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
+        >>> pl.show()
+
+        For a full example see :ref:`plane_widget_example`.
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -941,7 +1026,7 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        plane_sliced_mesh = pv.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
         def callback(normal, origin):  # numpydoc ignore=GL08
@@ -985,7 +1070,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and threshold or algorithm
             that produces said mesh.
 
@@ -1018,6 +1103,17 @@ class WidgetHelper:
         -------
         list
             List of vtk.vtkActor(s).
+
+        Examples
+        --------
+        Shows an interactive plane sliced along each cartesian axis of the mesh.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Wavelet()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice_orthogonal(mesh)
+        >>> pl.show()
 
         """
         actors = []
@@ -1096,11 +1192,31 @@ class WidgetHelper:
         vtk.vtkLineWidget
             Created line widget.
 
+        Examples
+        --------
+        Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> model = examples.load_channels()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(model, opacity=0.4)
+        >>> def move_center(pointa, pointb):
+        ...     center = (np.array(pointa) + np.array(pointb)) / 2
+        ...     normal = np.array(pointa) - np.array(pointb)
+        ...     single_slc = model.slice(normal=normal, origin=center)
+        ...
+        ...     _ = pl.add_mesh(single_slc, name="slc")
+        ...
+        >>> _ = pl.add_line_widget(callback=move_center, use_vertices=True)
+        >>> pl.show()
+
         """
         if bounds is None:
             bounds = self.bounds
 
-        color = Color(color, default_color=pyvista.global_theme.font.color)
+        color = Color(color, default_color=pv.global_theme.font.color)
 
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
@@ -1109,7 +1225,7 @@ class WidgetHelper:
                 if use_vertices:
                     args = [pointa, pointb]
                 else:
-                    the_line = pyvista.Line(pointa, pointb, resolution=resolution)
+                    the_line = pv.Line(pointa, pointb, resolution=resolution)
                     args = [the_line]
                 if pass_widget:
                     args.append(widget)
@@ -1386,11 +1502,11 @@ class WidgetHelper:
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
-        color = Color(color, default_color=pyvista.global_theme.font.color)
+        color = Color(color, default_color=pv.global_theme.font.color)
         title_color = Color(title_color, default_color=color)
 
         if fmt is None:
-            fmt = pyvista.global_theme.font.fmt
+            fmt = pv.global_theme.font.fmt
 
         def normalize(point, viewport):  # numpydoc ignore=GL08
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
@@ -1422,7 +1538,7 @@ class WidgetHelper:
                 raise TypeError(
                     f"Expected type for ``style`` is str but {type(style).__name__} was given."
                 )
-            slider_style = getattr(pyvista.global_theme.slider_styles, style)
+            slider_style = getattr(pv.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
             slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.float_rgb)
@@ -1491,7 +1607,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and threshold or algorithm
             that produces said mesh.
 
@@ -1566,12 +1682,12 @@ class WidgetHelper:
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
-        if isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pv.PointSet):
             # vtkThreshold is CELL-wise and PointSets have no cells
             algo = pointset_to_polydata_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
-        if isinstance(mesh, pyvista.MultiBlock):
+        if isinstance(mesh, pv.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
@@ -1597,7 +1713,7 @@ class WidgetHelper:
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
 
-        threshold_mesh = pyvista.wrap(alg.GetOutput())
+        threshold_mesh = pv.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):  # numpydoc ignore=GL08
@@ -1649,7 +1765,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and contour or algorithm
             that produces said mesh.
 
@@ -1708,11 +1824,23 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive slider controlling the altitude of the contours.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_random_hills()
+        >>> _ = pl.add_mesh(mesh, opacity=0.4)
+        >>> _ = pl.add_mesh_isovalue(mesh)
+        >>> pl.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
-        if isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pv.PointSet):
             raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
-        if isinstance(mesh, pyvista.MultiBlock):
+        if isinstance(mesh, pv.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
         name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
@@ -1723,7 +1851,7 @@ class WidgetHelper:
         else:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != pyvista.FieldAssociation.POINT:
+        if field != pv.FieldAssociation.POINT:
             raise TypeError(
                 f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
             )
@@ -1744,7 +1872,7 @@ class WidgetHelper:
 
         self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
-        isovalue_mesh = pyvista.wrap(alg.GetOutput())
+        isovalue_mesh = pv.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
         def callback(value):  # numpydoc ignore=GL08
@@ -1850,18 +1978,18 @@ class WidgetHelper:
         if initial_points is not None and len(initial_points) != n_handles:
             raise ValueError("`initial_points` must be length `n_handles`.")
 
-        color = Color(color, default_color=pyvista.global_theme.color)
+        color = Color(color, default_color=pv.global_theme.color)
 
         if bounds is None:
             bounds = self.bounds
 
-        ribbon = pyvista.PolyData()
+        ribbon = pv.PolyData()
 
         def _the_callback(widget, event_id):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
-            polyline = pyvista.wrap(para_source.GetOutput())
+            polyline = pv.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
                 if pass_widget:
@@ -1879,7 +2007,7 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
+            spline_widget.InitializeHandles(pv.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
@@ -1922,7 +2050,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or vtk.vtkAlgorithm
+        mesh : pv.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and slice along the spline
             or algorithm that produces said mesh.
 
@@ -1995,7 +2123,7 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        spline_sliced_mesh = pv.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
         def callback(spline):  # numpydoc ignore=GL08
@@ -2059,7 +2187,7 @@ class WidgetHelper:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if color is None:
-            color = pyvista.global_theme.font.color.float_rgb
+            color = pv.global_theme.font.color.float_rgb
         color = Color(color)
 
         compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
@@ -2188,7 +2316,7 @@ class WidgetHelper:
 
         """
         if color is None:
-            color = pyvista.global_theme.color.float_rgb
+            color = pv.global_theme.color.float_rgb
         selected_color = Color(selected_color)
 
         center = np.array(center)
@@ -2276,7 +2404,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        actor : pyvista.Actor
+        actor : pv.Actor
             The actor to which the widget is attached to.
         origin : sequence[float], optional
             Origin of the widget. Default is the origin of the main actor.
@@ -2306,7 +2434,7 @@ class WidgetHelper:
 
         Returns
         -------
-        pyvista.widgets.AffineWidget3D
+        pv.widgets.AffineWidget3D
             The affine widget.
 
         Notes
@@ -2423,7 +2551,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.ImageData(dimensions=dims)
+            button = pv.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[
@@ -2483,9 +2611,9 @@ class WidgetHelper:
         --------
         Add a camera orientation widget to the scene.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     mesh, scalars=range(6), show_scalar_bar=False
         ... )

@@ -17,7 +17,7 @@ class Property(_vtk.vtkProperty):
 
     Parameters
     ----------
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pv.plotting.themes.Theme, optional
         Plot-specific theme.
 
     interpolation : str, default: :attr:`pyvista.plotting.themes._LightingConfig.interpolation`
@@ -1167,7 +1167,7 @@ class Property(_vtk.vtkProperty):
 
         Returns
         -------
-        pyvista.Property
+        pv.Property
             Deep copy of this property.
 
         Examples

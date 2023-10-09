@@ -78,6 +78,9 @@ skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason="Flaky on 9
 skip_lesser_9_0_X = pytest.mark.skipif(
     pv.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
 )
+skip_lesser_9_3_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X"
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -1937,6 +1940,36 @@ def test_user_annotations_scalar_bar_volume(uniform, verify_image_cache):
     p.show()
 
 
+def test_user_matrix_volume(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 1
+
+    p = pv.Plotter()
+    volume = p.add_volume(uniform, user_matrix=shear)
+    np.testing.assert_almost_equal(volume.user_matrix, shear)
+
+    with pytest.raises(ValueError):
+        p.add_volume(uniform, user_matrix=np.eye(5))
+
+    with pytest.raises(TypeError):
+        p.add_volume(uniform, user_matrix='invalid')
+
+
+def test_user_matrix_mesh(sphere):
+    shear = np.eye(4)
+    shear[0, 1] = 1
+
+    p = pv.Plotter()
+    actor = p.add_mesh(sphere, user_matrix=shear)
+    np.testing.assert_almost_equal(actor.user_matrix, shear)
+
+    with pytest.raises(ValueError):
+        p.add_mesh(sphere, user_matrix=np.eye(5))
+
+    with pytest.raises(TypeError):
+        p.add_mesh(sphere, user_matrix='invalid')
+
+
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {"vertical": True}
     sargs_copy = sargs.copy()
@@ -3381,7 +3414,7 @@ def test_add_point_scalar_labels_list():
 
 
 def test_plot_algorithm_cone():
-    algo = vtk.vtkConeSource()
+    algo = pv.ConeSource()
     algo.SetResolution(10)
 
     pl = pv.Plotter()
@@ -3429,7 +3462,7 @@ def test_algorithm_add_points():
 
 @skip_9_1_0
 def test_algorithm_add_point_labels():
-    algo = vtk.vtkConeSource()
+    algo = pv.ConeSource()
     elev = vtk.vtkElevationFilter()
     elev.SetInputConnection(algo.GetOutputPort())
     elev.SetLowPoint(0, 0, -1)
@@ -3732,3 +3765,22 @@ def test_show_bounds_n_labels():
     )
     plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
     plotter.show()
+
+
+@skip_lesser_9_3_X
+def test_radial_gradient_background():
+    plotter = pv.Plotter()
+    plotter.set_background('white', right='black')
+    plotter.show()
+
+    plotter = pv.Plotter()
+    plotter.set_background('white', side='black')
+    plotter.show()
+
+    plotter = pv.Plotter()
+    plotter.set_background('white', corner='black')
+    plotter.show()
+
+    with pytest.raises(ValueError):
+        plotter = pv.Plotter()
+        plotter.set_background('white', top='black', right='black')
