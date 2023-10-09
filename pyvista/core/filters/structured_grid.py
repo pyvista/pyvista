@@ -1,7 +1,7 @@
 """Filters module with class to manage filters/algorithms for structured grid datasets."""
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
@@ -45,7 +45,7 @@ class StructuredGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.StructuredGrid
+        pv.StructuredGrid
             StructuredGrid with extracted subset.
 
         Examples
@@ -53,7 +53,7 @@ class StructuredGridFilters(DataSetFilters):
         Split a grid in half.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_structured()
         >>> voi_1 = grid.extract_subset(
@@ -88,7 +88,7 @@ class StructuredGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        other : pyvista.StructuredGrid
+        other : pv.StructuredGrid
             Structured grid to concatenate.
 
         axis : int
@@ -99,7 +99,7 @@ class StructuredGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.StructuredGrid
+        pv.StructuredGrid
             Concatenated grid.
 
         Examples
@@ -107,7 +107,7 @@ class StructuredGridFilters(DataSetFilters):
         Split a grid in half and join them.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_structured()
         >>> voi_1 = grid.extract_subset(
@@ -188,7 +188,7 @@ class StructuredGridFilters(DataSetFilters):
             new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
-        joined = pyvista.StructuredGrid()
+        joined = pv.StructuredGrid()
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)

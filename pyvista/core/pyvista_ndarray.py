@@ -1,4 +1,4 @@
-"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+"""Contains pyvista_ndarray a numpy ndarray type used in pv."""
 from collections.abc import Iterable
 from typing import Union
 
@@ -18,10 +18,10 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
     array : Iterable or vtk.vtkAbstractArray
         Array like.
 
-    dataset : pyvista.DataSet
+    dataset : pv.DataSet
         Input dataset.
 
-    association : pyvista.core.utilities.arrays.FieldAssociation
+    association : pv.core.utilities.arrays.FieldAssociation
         Field association.
 
     Examples

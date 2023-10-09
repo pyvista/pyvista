@@ -5,7 +5,7 @@ can easily apply common filters in an intuitive manner.
 
 Examples
 --------
->>> import pyvista
+>>> import pyvista as pv
 >>> from pyvista import examples
 >>> dataset = examples.load_uniform()
 
@@ -24,7 +24,7 @@ Examples
 """
 # flake8: noqa: F401
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
@@ -44,14 +44,14 @@ def _get_output(
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = wrap(algorithm.GetInputDataObject(iport, iconnection))
     data = wrap(algorithm.GetOutputDataObject(oport))
-    if not isinstance(data, pyvista.MultiBlock):
+    if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:
             data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
-    if isinstance(ido, pyvista.PointSet):
+    if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
 
