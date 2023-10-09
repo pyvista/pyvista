@@ -762,9 +762,8 @@ def test_plot_invalid_add_scalar_bar():
         plotter = pv.Plotter()
         plotter.add_scalar_bar()
 
-
-@skip_mac
-@skip_windows
+# https://github.com/pyvista/pyvista/pull/4950
+@pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)
