@@ -28,7 +28,7 @@ class OfflineViewerDirective(Directive):
         source_file = os.path.join(
             os.path.dirname(self.state.document.current_source), self.arguments[0]
         )
-        source_file = pathlib.Path(source_file).absolute()
+        source_file = pathlib.Path(source_file).absolute().resolve()
         if not os.path.isfile(source_file):
             logger.warn(f'Source file {source_file} does not exist.')
             return []
@@ -49,9 +49,9 @@ class OfflineViewerDirective(Directive):
         # dest_path: ${HOME}/pyvista/pyvista/doc/_build/html/_images/plot_directive/getting-started/index-2_00_00.vtksz
 
         if source_file.is_relative_to(build_dir):
-            dest_partial_path = pathlib.Path(source_file).relative_to(build_dir)
+            dest_partial_path = pathlib.Path(source_file.parent).relative_to(build_dir)
         elif source_file.is_relative_to(source_dir):
-            dest_partial_path = pathlib.Path(source_file).relative_to(source_dir)
+            dest_partial_path = pathlib.Path(source_file.parent).relative_to(source_dir)
         else:
             logger.warn(
                 f'Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extarct base path'
@@ -60,11 +60,12 @@ class OfflineViewerDirective(Directive):
 
         dest_path = pathlib.Path(output_dir).joinpath('_images').joinpath(dest_partial_path)
         dest_path.mkdir(parents=True, exist_ok=True)
-        dest_file = dest_path.joinpath(source_file.name)
-        try:
-            shutil.copy(source_file, dest_file)
-        except Exception as e:
-            logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
+        dest_file = dest_path.joinpath(source_file.name).resolve()
+        if source_file != dest_file:
+            try:
+                shutil.copy(source_file, dest_file)
+            except Exception as e:
+                logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
         # Compute the relative path of the current source to the source directory,
         # which is the same as the relative path of the '_static' directory to the
