@@ -3,7 +3,7 @@
 
 import warnings
 
-import pyvista
+import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [
@@ -104,11 +104,11 @@ def set_jupyter_backend(backend, name=None, **kwargs):
     >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
     """
-    pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
+    pv.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
     if backend in ['server', 'client', 'trame']:
         # Launch the trame server
         from pyvista.trame.jupyter import elegantly_launch
 
         if not name:
-            name = pyvista.global_theme.trame.jupyter_server_name
+            name = pv.global_theme.trame.jupyter_server_name
         elegantly_launch(name, **kwargs)

@@ -27,7 +27,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.ImageData], optional
+    uinput : str, vtkImageData, vtkTexture, sequence[pv.ImageData], optional
         Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
@@ -84,9 +84,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     >>> ny = examples.download_sky(direction='negy')  # doctest:+SKIP
     >>> pz = examples.download_sky(direction='posz')  # doctest:+SKIP
     >>> nz = examples.download_sky(direction='negz')  # doctest:+SKIP
-    >>> texture = pyvista.Texture(
-    ...     [px, nx, py, ny, pz, nz]
-    ... )  # doctest:+SKIP
+    >>> texture = pv.Texture([px, nx, py, ny, pz, nz])  # doctest:+SKIP
     >>> texture.cube_map  # doctest:+SKIP
     True
 
@@ -287,7 +285,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.Texture
+        pv.Texture
             Flipped texture.
 
         Examples
@@ -305,7 +303,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.Texture
+        pv.Texture
             Flipped texture.
 
         Examples
@@ -323,7 +321,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.ImageData
+        pv.ImageData
             Texture represented as a uniform grid.
 
         """
@@ -366,7 +364,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.Texture
+        pv.Texture
             Rotated texture.
 
         Examples
@@ -384,7 +382,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.Texture
+        pv.Texture
             Rotated texture.
 
         Examples
@@ -411,7 +409,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.Texture
+        pv.Texture
             Copied texture.
         """
         return Texture(self.to_image().copy())
@@ -621,7 +619,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pyvista.Texture
+        pv.Texture
             Texture converted to grayscale. If already grayscale, the original
             texture itself is returned.
 
@@ -659,12 +657,12 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : pyvista.ImageData | vtkImageData
+    image : pv.ImageData | vtkImageData
         Image to convert.
 
     Returns
     -------
-    pyvista.Texture
+    pv.Texture
         The texture.
 
     """
@@ -681,7 +679,7 @@ def numpy_to_texture(image):
 
     Returns
     -------
-    pyvista.Texture
+    pv.Texture
         PyVista texture.
 
     Examples

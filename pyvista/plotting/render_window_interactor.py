@@ -62,7 +62,7 @@ class RenderWindowInteractor:
 
     Parameters
     ----------
-    plotter : pyvista.Plotter
+    plotter : pv.Plotter
         Plotter object upon which the initialization of
         RenderWindowInteractor is based.
 
@@ -205,8 +205,8 @@ class RenderWindowInteractor:
         --------
         Add a custom observer.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> obs_enter = pl.iren.add_observer(
         ...     "EnterEvent", lambda *_: print('Enter!')
         ... )
@@ -230,8 +230,8 @@ class RenderWindowInteractor:
         --------
         Add an observer and immediately remove it.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> obs_enter = pl.iren.add_observer(
         ...     "EnterEvent", lambda *_: print('Enter!')
         ... )
@@ -255,8 +255,8 @@ class RenderWindowInteractor:
         --------
         Add two observers and immediately remove them.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> obs_enter = pl.iren.add_observer(
         ...     "EnterEvent", lambda *_: print('Enter!')
         ... )

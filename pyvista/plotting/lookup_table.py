@@ -1026,8 +1026,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        >>> import pyvista
-        >>> lut = pyvista.LookupTable()
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
         >>> tf = lut.to_color_tf()
         >>> tf
         <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(...) at ...>
@@ -1049,8 +1049,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        >>> import pyvista
-        >>> lut = pyvista.LookupTable()
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
         >>> tf = lut.to_opacity_tf()
         >>> tf
         <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(...) at ...>
@@ -1079,8 +1079,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        >>> import pyvista
-        >>> lut = pyvista.LookupTable()
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
         >>> rgba_color = lut.map_value(0.0)
         >>> rgba_color
         (1.0, 0.0, 0.0, 1.0)
