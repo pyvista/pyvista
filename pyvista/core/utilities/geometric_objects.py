@@ -52,11 +52,11 @@ def Cylinder(
     """Create the surface of a cylinder.
 
     .. warning::
-       :func:`pv.Cylinder` function rotates the :class:`pv.CylinderSource` 's :class:`pv.PolyData` in its own way.
-       It rotates the :attr:`pv.CylinderSource.output` 90 degrees in z-axis, translates and
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
-    See also :func:`pv.CylinderStructured`.
+    See also :func:`pyvista.CylinderStructured`.
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ def CylinderStructured(
     theta_resolution=32,
     z_resolution=10,
 ):
-    """Create a cylinder mesh as a :class:`pv.StructuredGrid`.
+    """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
 
     The end caps are left open. This can create a surface mesh if a single
     value for the ``radius`` is given or a 3D mesh if multiple radii are given
@@ -310,7 +310,7 @@ def Sphere(
     """Create a sphere.
 
     A sphere describes a 2D surface in comparison to
-    :func:`pv.SolidSphere`, which fills a 3D volume.
+    :func:`pyvista.SolidSphere`, which fills a 3D volume.
 
     pv uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
@@ -415,10 +415,10 @@ def SolidSphere(
     """Create a solid sphere.
 
     A solid sphere fills space in 3D in comparison to
-    :func:`pv.Sphere`, which is a 2D surface.
+    :func:`pyvista.Sphere`, which is a 2D surface.
 
     This function uses a linear sampling of each spherical
-    coordinate, whereas :func:`pv.SolidSphereGeneric`
+    coordinate, whereas :func:`pyvista.SolidSphereGeneric`
     allows for nonuniform sampling. Angles are by default
     specified in degrees.
 
@@ -506,7 +506,7 @@ def SolidSphere(
     >>> solid_sphere = pv.SolidSphere()
     >>> solid_sphere.plot(show_edges=True)
 
-    A solid sphere is 3D in comparison to the 2d :func:`pv.Sphere`.
+    A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
     Generate a solid hemisphere to see the internal structure.
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
@@ -568,10 +568,10 @@ def SolidSphereGeneric(
     """Create a solid sphere with flexible sampling.
 
     A solid sphere fills space in 3D in comparison to
-    :func:`pv.Sphere`, which is a 2D surface.
+    :func:`pyvista.Sphere`, which is a 2D surface.
 
     This function allows user defined sampling of each spherical
-    coordinate, whereas :func:`pv.SolidSphere`
+    coordinate, whereas :func:`pyvista.SolidSphere`
     only allows linear sampling.   Angles are by default
     specified in degrees.
 
@@ -1100,7 +1100,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     .. versionchanged:: 0.33.0
         The cube is created using ``vtk.vtkCubeSource``. For
-        compatibility with :func:`pv.PlatonicSolid`, face indices
+        compatibility with :func:`pyvista.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
         :func:`PlatonicSolid() <pv.PlatonicSolid>`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
@@ -1774,7 +1774,7 @@ def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
     .. deprecated:: 0.39.0
-       To deal with more than 3 points use :func:`pv.Quadrilateral()
+       To deal with more than 3 points use :func:`pyvista.Quadrilateral()
        <pv.examples.cells.Quadrilateral>` instead.
 
     The 3 points must define an orthogonal set of vectors.
@@ -2270,7 +2270,7 @@ def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
 
     nsub : int, default: 3
         This is the number of times each triangle of the original
-        :func:`pv.Icosahedron` is subdivided.
+        :func:`pyvista.Icosahedron` is subdivided.
 
     Returns
     -------
