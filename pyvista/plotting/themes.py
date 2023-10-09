@@ -1,4 +1,4 @@
-"""API description for managing plotting theme parameters in pyvista.
+"""API description for managing plotting theme parameters in pv.
 
 Examples
 --------
@@ -18,7 +18,7 @@ Load a theme into pyvista
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
-pyvista.
+pv.
 
 >>> my_theme = DocumentTheme()
 >>> my_theme.font.size = 20
@@ -36,7 +36,7 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
-import pyvista
+import pyvista as pv
 from pyvista.core._typing_core import Number
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
@@ -71,7 +71,7 @@ def load_theme(filename):
 
     Returns
     -------
-    pyvista.Theme
+    pv.Theme
         The loaded theme.
 
     Examples
@@ -117,7 +117,7 @@ def set_plot_theme(theme):
     >>> pv.set_plot_theme('paraview')
 
     """
-    import pyvista
+    import pyvista as pv
 
     if isinstance(theme, str):
         theme = theme.lower()
@@ -125,9 +125,9 @@ def set_plot_theme(theme):
             new_theme_type = _NATIVE_THEMES[theme].value
         except KeyError:
             raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
-        pyvista.global_theme.load_theme(new_theme_type())
+        pv.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
+        pv.global_theme.load_theme(theme)
     else:
         raise TypeError(
             f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
@@ -1637,7 +1637,7 @@ class Theme(_ThemeConfig):
 
         See Also
         --------
-        pyvista.Plotter.enable_hidden_line_removal
+        pv.Plotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -2091,7 +2091,7 @@ class Theme(_ThemeConfig):
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set the default color of meshes in pyvista.
+        """Return or set the default color of meshes in pv.
 
         Used for meshes without ``scalars``.
 
@@ -2700,14 +2700,12 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:  # numpydoc ignore=RT01
+    def before_close_callback(self) -> Callable[['pv.Plotter'], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
-    def before_close_callback(
-        self, value: Callable[['pyvista.Plotter'], None]
-    ):  # numpydoc ignore=GL08
+    def before_close_callback(self, value: Callable[['pv.Plotter'], None]):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
     def restore_defaults(self):  # numpydoc ignore=GL08
@@ -2786,7 +2784,7 @@ class Theme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pyvista.plotting.themes.Theme
+        theme : pv.plotting.themes.Theme
             Theme to use to overwrite this theme.
 
         Examples
@@ -2805,7 +2803,7 @@ class Theme(_ThemeConfig):
         20
 
         Create a custom theme from the dark theme and load it into
-        pyvista.
+        pv.
 
         >>> from pyvista.plotting.themes import DarkTheme
         >>> my_theme = DarkTheme()

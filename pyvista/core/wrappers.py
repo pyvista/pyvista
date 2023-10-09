@@ -38,5 +38,5 @@ _wrappers = {
     'vtkMultiBlockDataSet': MultiBlock,
     'vtkTable': Table,
     'vtkPointSet': PointSet,
-    # 'vtkParametricSpline': pyvista.Spline,
+    # 'vtkParametricSpline': pv.Spline,
 }

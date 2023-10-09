@@ -4,7 +4,7 @@ from math import pi
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
 from .geometric_objects import translate
@@ -27,7 +27,7 @@ def Spline(points, n_points=None):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         Line mesh of spline.
 
     Examples
@@ -51,7 +51,7 @@ def Spline(points, n_points=None):
 
     """
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points, False))
+    spline_function.SetPoints(pv.vtk_points(points, False))
 
     # get interpolation density
     u_res = n_points
@@ -86,7 +86,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         Kochanek spline.
 
     Examples
@@ -132,7 +132,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         )
 
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points, False))
+    spline_function.SetPoints(pv.vtk_points(points, False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
@@ -180,15 +180,15 @@ def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricBohemianDome surface.
 
     Examples
     --------
     Create a ParametricBohemianDome mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBohemianDome()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricBohemianDome()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -218,15 +218,15 @@ def ParametricBour(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricBour surface.
 
     Examples
     --------
     Create a ParametricBour mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBour()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricBour()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -261,15 +261,15 @@ def ParametricBoy(zscale=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricBoy surface.
 
     Examples
     --------
     Create a ParametricBoy mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBoy()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricBoy()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -299,15 +299,15 @@ def ParametricCatalanMinimal(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricCatalanMinimal surface.
 
     Examples
     --------
     Create a ParametricCatalanMinimal mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricCatalanMinimal()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricCatalanMinimal()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -351,15 +351,15 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricConicSpiral surface.
 
     Examples
     --------
     Create a ParametricConicSpiral mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricConicSpiral()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricConicSpiral()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -399,15 +399,15 @@ def ParametricCrossCap(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricCrossCap surface.
 
     Examples
     --------
     Create a ParametricCrossCap mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricCrossCap()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricCrossCap()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -443,15 +443,15 @@ def ParametricDini(a=None, b=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricDini surface.
 
     Examples
     --------
     Create a ParametricDini mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricDini()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricDini()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -497,15 +497,15 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricEllipsoid surface.
 
     Examples
     --------
     Create a ParametricEllipsoid mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricEllipsoid()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricEllipsoid()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -554,15 +554,15 @@ def ParametricEnneper(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricEnneper surface.
 
     Examples
     --------
     Create a ParametricEnneper mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricEnneper()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricEnneper()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -594,15 +594,15 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricFigure8Klein surface.
 
     Examples
     --------
     Create a ParametricFigure8Klein mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricFigure8Klein()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricFigure8Klein()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -628,15 +628,15 @@ def ParametricHenneberg(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricHenneberg surface.
 
     Examples
     --------
     Create a ParametricHenneberg mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricHenneberg()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricHenneberg()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -666,15 +666,15 @@ def ParametricKlein(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricKlein surface.
 
     Examples
     --------
     Create a ParametricKlein mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricKlein()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricKlein()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -708,15 +708,15 @@ def ParametricKuen(deltav0=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricKuen surface.
 
     Examples
     --------
     Create a ParametricKuen mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricKuen()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricKuen()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -745,15 +745,15 @@ def ParametricMobius(radius=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricMobius surface.
 
     Examples
     --------
     Create a ParametricMobius mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricMobius()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricMobius()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -786,15 +786,15 @@ def ParametricPluckerConoid(n=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricPluckerConoid surface.
 
     Examples
     --------
     Create a ParametricPluckerConoid mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricPluckerConoid()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricPluckerConoid()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -826,15 +826,15 @@ def ParametricPseudosphere(**kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricPseudosphere surface.
 
     Examples
     --------
     Create a ParametricPseudosphere mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricPseudosphere()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricPseudosphere()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -901,15 +901,15 @@ def ParametricRandomHills(
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricRandomHills surface.
 
     Examples
     --------
     Create a ParametricRandomHills mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricRandomHills()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricRandomHills()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -960,15 +960,15 @@ def ParametricRoman(radius=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricRoman surface.
 
     Examples
     --------
     Create a ParametricRoman mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricRoman()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricRoman()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -1015,14 +1015,14 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricSuperEllipsoid surface.
 
     See Also
     --------
-    pyvista.ParametricSuperToroid :
+    pv.ParametricSuperToroid :
         Toroidal equivalent of ParametricSuperEllipsoid.
-    pyvista.Superquadric :
+    pv.Superquadric :
         Geometric object with additional parameters.
 
     Examples
@@ -1030,13 +1030,13 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
     Create a ParametricSuperEllipsoid surface that looks like a box
     with smooth edges.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricSuperEllipsoid(n1=0.02, n2=0.02)
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricSuperEllipsoid(n1=0.02, n2=0.02)
     >>> mesh.plot(color='w', smooth_shading=True)
 
     Create one that looks like a spinning top.
 
-    >>> mesh = pyvista.ParametricSuperEllipsoid(n1=4, n2=0.5)
+    >>> mesh = pv.ParametricSuperEllipsoid(n1=4, n2=0.5)
     >>> mesh.plot(color='w', smooth_shading=True, cpos='xz')
 
     """
@@ -1115,22 +1115,22 @@ def ParametricSuperToroid(
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricSuperToroid surface.
 
     See Also
     --------
-    pyvista.ParametricSuperEllipsoid :
+    pv.ParametricSuperEllipsoid :
         Ellipsoidal equivalent of ParametricSuperToroid.
-    pyvista.Superquadric :
+    pv.Superquadric :
         Geometric object with additional parameters.
 
     Examples
     --------
     Create a ParametricSuperToroid mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricSuperToroid(n1=2, n2=0.3)
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricSuperToroid(n1=2, n2=0.3)
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -1181,15 +1181,15 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         ParametricTorus surface.
 
     Examples
     --------
     Create a ParametricTorus mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricTorus()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricTorus()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -1306,7 +1306,7 @@ def surface_from_para(
 
     Returns
     -------
-    pyvista.PolyData
+    pv.PolyData
         Surface from the parametric function.
 
     """
