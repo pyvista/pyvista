@@ -312,7 +312,7 @@ def Sphere(
     A sphere describes a 2D surface in comparison to
     :func:`pyvista.SolidSphere`, which fills a 3D volume.
 
-    pv uses a convention where ``theta`` represents the azimuthal
+    PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
