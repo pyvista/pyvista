@@ -51,16 +51,16 @@ def test_tinypages(tmpdir):
 
     assert html_dir.is_dir()
 
-    def plot_file(plt, num, subnum):
-        return html_dir / f'some_plots-{plt}_{num:02d}_{subnum:02d}.png'
+    def plot_file(plt, num, subnum, extension="vtksz"):
+        return html_dir / f'some_plots-{plt}_{num:02d}_{subnum:02d}.{extension}'
 
     # verify directives generating a figure generated figures
     assert plot_file(1, 0, 0).exists()
     assert plot_file(2, 0, 0).exists()
     assert plot_file(4, 0, 0).exists()
-    assert plot_file(8, 0, 0).exists()
-    assert plot_file(9, 0, 0).exists()
-    assert plot_file(9, 1, 0).exists()
+    assert plot_file(8, 0, 0, "png").exists()
+    assert plot_file(9, 0, 0, "png").exists()
+    assert plot_file(9, 1, 0, "png").exists()
 
     # test skip directive
     assert not plot_file(10, 0, 0).exists()
