@@ -422,7 +422,7 @@ def SolidSphere(
     allows for nonuniform sampling. Angles are by default
     specified in degrees.
 
-    pv uses a convention where ``theta`` represents the azimuthal
+    PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
     globe). In contrast to latitude on the globe, here
