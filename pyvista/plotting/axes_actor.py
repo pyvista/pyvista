@@ -11,7 +11,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor, vtkProp3D
+from ._vtk import vtkAxesActor, vtkProp3D, vtkTransform
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -1090,7 +1090,9 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             matrix = self._concatenate_implicit_matrix_and_user_matrix()
         else:
             matrix = self._user_matrix
-        self.SetUserMatrix(vtkmatrix_from_array(matrix))
+        transform = vtkTransform()
+        transform.SetMatrix(vtkmatrix_from_array(matrix))
+        self.SetUserTransform(transform)
 
     def _concatenate_implicit_matrix_and_user_matrix(self):
         return self._user_matrix @ self._implicit_matrix
