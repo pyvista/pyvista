@@ -2,6 +2,7 @@
 import os
 import pathlib
 import shutil
+import sys
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
@@ -10,6 +11,20 @@ from sphinx.util import logging
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
 
 logger = logging.getLogger(__name__)
+
+
+def is_path_relative_to(path, other):
+    """Path.is_relative_to was introduced in Python 3.9 [1].
+    Provide a replacement that works for all supported versions
+
+    [1] https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to
+    """
+    if sys.version_info < (3, 9):
+        path = str(path.resolve())
+        other = str(other.resolve())
+        return path.startswith(other)
+    else:
+        return path.is_relative_to(other)
 
 
 class OfflineViewerDirective(Directive):
@@ -48,9 +63,9 @@ class OfflineViewerDirective(Directive):
         # dest_partial_path: plot_directive/getting-started
         # dest_path: ${HOME}/pyvista/pyvista/doc/_build/html/_images/plot_directive/getting-started/index-2_00_00.vtksz
 
-        if source_file.is_relative_to(build_dir):
+        if is_path_relative_to(source_file, build_dir):
             dest_partial_path = pathlib.Path(source_file.parent).relative_to(build_dir)
-        elif source_file.is_relative_to(source_dir):
+        elif is_path_relative_to(source_file, source_dir):
             dest_partial_path = pathlib.Path(source_file.parent).relative_to(source_dir)
         else:
             logger.warn(
