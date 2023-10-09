@@ -264,6 +264,8 @@ def test_plot_update(sphere):
     pl.close()
 
 
+# https://github.com/pyvista/pyvista/pull/4950
+@pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 @pytest.mark.parametrize('anti_aliasing', [True, "msaa", False])
 def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
