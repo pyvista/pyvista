@@ -1,4 +1,5 @@
 """Axes actor module."""
+from functools import wraps
 from typing import Sequence, Tuple, Union
 import warnings
 
@@ -11,7 +12,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor, vtkProp3D, vtkTransform
+from ._vtk import vtkAxesActor, vtkMatrix4x4, vtkTransform
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -321,27 +322,6 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         self.origin = origin
         self.orientation = orientation
         self.scale = scale
-
-    def __setattr__(self, name, value):
-        """Conditionally update UserMatrix when setting properties."""
-        # Check to see if any of the following properties are being modified
-        is_modified = False
-        if name in [
-            'orientation',
-            'user_matrix',
-            'position',
-            'origin',
-            'scale',
-            '_enable_orientation_workaround',
-        ] and not np.array_equal(getattr(self, name), value):
-            is_modified = True
-
-        # Use default behavior to set attribute
-        object.__setattr__(self, name, value)
-
-        if is_modified:
-            # UserMatrix needs to be updated
-            self._update_UserMatrix()
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -1020,41 +1000,54 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             label_actor.SetWidth(size[0])
             label_actor.SetHeight(size[1])
 
-    def rotate_x(self, angle: float):  # numpydoc ignore=RT01
-        """Rotate the axes about the x-axis by some angle.
+    @wraps(vtkAxesActor.GetBounds)
+    def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01,GL08
+        """Wrap method for orientation workaround."""
+        if self._enable_orientation_workaround:
+            return self._compute_transformed_bounds()
+        return super().GetBounds()
 
-        Parameters
-        ----------
-        angle : float
-            Rotation angle in degrees.
+    @wraps(vtkAxesActor.RotateX)
+    def RotateX(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().RotateX(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-        """
-        super().rotate_x(angle)
-        self._update_UserMatrix()
+    @wraps(vtkAxesActor.RotateY)
+    def RotateY(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().RotateY(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-    def rotate_y(self, angle: float):  # numpydoc ignore=RT01
-        """Rotate the axes about the y-axis by some angle.
+    @wraps(vtkAxesActor.RotateZ)
+    def RotateZ(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().RotateZ(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-        Parameters
-        ----------
-        angle : float
-            Rotation angle in degrees.
+    @wraps(vtkAxesActor.SetScale)
+    def SetScale(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().SetScale(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-        """
-        super().rotate_y(angle)
-        self._update_UserMatrix()
+    @wraps(vtkAxesActor.SetOrientation)
+    def SetOrientation(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().SetOrientation(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-    def rotate_z(self, angle: float):  # numpydoc ignore=RT01
-        """Rotate the axes about the z-axis by some angle.
+    @wraps(vtkAxesActor.SetOrigin)
+    def SetOrigin(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().SetOrigin(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-        Parameters
-        ----------
-        angle : float
-            Rotation angle in degrees.
-
-        """
-        super().rotate_z(angle)
-        self._update_UserMatrix()
+    @wraps(vtkAxesActor.SetPosition)
+    def SetPosition(self, *args):  # numpydoc ignore=RT01,PR01
+        """Wrap method for orientation workaround."""
+        super().SetPosition(*args)
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
 
     @property
     def user_matrix(self) -> np.ndarray:  # numpydoc ignore=RT01
@@ -1064,16 +1057,25 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         rendering. It can be used with, or in place of, the implicit
         transformation that is created through the use of ``scale``,
         ``position``, ``origin``, and ``orientation``.
+
         """
         return self._user_matrix
 
     @user_matrix.setter
     def user_matrix(self, value):  # numpydoc ignore=GL08
-        try:
-            arr = array_from_vtkmatrix(value)
-        except TypeError:
-            arr = value
-        self._user_matrix = arr
+        self._update_UserMatrix() if self._enable_orientation_workaround else None
+        if isinstance(value, np.ndarray):
+            if value.shape != (4, 4):
+                raise ValueError('User matrix array must be 4x4.')
+        elif isinstance(value, vtkMatrix4x4):
+            value = array_from_vtkmatrix(value)
+        else:
+            raise TypeError(
+                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
+            )
+
+        self._user_matrix = value
+        self._update_UserMatrix()
 
     @property
     def _implicit_matrix(self) -> np.ndarray:  # numpydoc ignore=GL08
@@ -1117,13 +1119,6 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         zmin, zmax = np.min(points[:, 2]), np.max(points[:, 2])
         return xmin, xmax, ymin, ymax, zmin, zmax
 
-    def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Get the bounds for the axes. The bounds are symmetric."""
-        if self._enable_orientation_workaround:
-            return self._compute_transformed_bounds()
-        else:
-            return super(vtkProp3D, self).GetBounds()
-
     @property
     def _enable_orientation_workaround(self) -> bool:
         return self.__enable_orientation_workaround
@@ -1131,3 +1126,4 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
     @_enable_orientation_workaround.setter
     def _enable_orientation_workaround(self, value: bool):
         self.__enable_orientation_workaround = value
+        self._update_UserMatrix()
