@@ -111,7 +111,7 @@ def system_supports_plotting():
     return SUPPORTS_PLOTTING
 
 
-def create_axes_marker(**kwargs):
+def create_axes_marker(**kwargs):  # numpydoc ignore=RT01,PR01
     """Create a default AxesActor marker.
 
     See :class:``pyvista.AxesActor()`` for keyword arguments.

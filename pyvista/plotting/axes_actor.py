@@ -17,7 +17,13 @@ from .colors import Color, ColorLike
 from .prop3d import Prop3D
 
 
-class AxesActor(Prop3D, vtkAxesActor):
+class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
+    """Wrapper for vtkAxesActor.
+
+    Hybrid 2D/3D actor used to represent 3D axes in a scene.
+
+    """
+
     class ShaftType(AnnotatedIntEnum):
         """Types of shaft shapes available."""
 
@@ -61,12 +67,10 @@ class AxesActor(Prop3D, vtkAxesActor):
         properties=None,
         **kwargs,
     ):
-        """Create an AxesActor.
+        """Create a hybrid 2D/3D actor to represent 3D axes in a scene.
 
-        Hybrid 2D/3D actor used to represent 3D axes in a scene. The
-        axes colors, labels, and shaft/tip geometry can all be customized.
-        The axes can also be arbitrarily positioned and oriented in
-        a scene.
+        The axes colors, labels, and shaft/tip geometry can all be customized.
+        The axes can also be arbitrarily positioned and oriented in a scene.
 
         Parameters
         ----------
@@ -80,13 +84,13 @@ class AxesActor(Prop3D, vtkAxesActor):
             Text label for the z-axis.
 
         label_color : ColorLike, optional
-            Color of the label text.
+            Color of the label text for all axes.
 
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
 
         label_size : Sequence[float], default: (0.25, 0.1)
-            The width and height of the axes label actors. Values should
+            The width and height of the axes labels. Values should
             be in range ``[0, 1]``.
 
         label_position : float | Sequence[float], default: 1
@@ -116,6 +120,8 @@ class AxesActor(Prop3D, vtkAxesActor):
             Line width of the axes shafts in screen units. Only has
             an effect if ``shaft_type`` is ``'line'``.
 
+        shaft_resolution
+
         tip_type : str | AxesActor.TipType, default: 'cone'
             Tip type of the axes, either ``'cone'`` or ``'sphere'``.
 
@@ -124,6 +130,8 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         tip_length : float | Sequence[float], default: 0.2
             Normalized length of the axes tips in range ``[0, 1]``.
+
+        tip_resolution
 
         total_length float | Sequence[float], default: 1
 
@@ -196,7 +204,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         """
         super().__init__()
-        self.__enable_orientation = True
+        self.__enable_orientation_workaround = True
 
         # Supported aliases (inherited from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
@@ -304,6 +312,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.scale = scale
 
     def __setattr__(self, name, value):
+        """Conditionally update UserMatrix when setting properties."""
         # Check to see if any of the following properties are being modified
         is_modified = False
         if name in [
@@ -312,7 +321,7 @@ class AxesActor(Prop3D, vtkAxesActor):
             'position',
             'origin',
             'scale',
-            '_enable_orientation',
+            '_enable_orientation_workaround',
         ] and not np.array_equal(getattr(self, name), value):
             is_modified = True
 
@@ -325,16 +334,15 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set AxesActor visibility.
+        """Enable or disable the visibility of the axes.
 
         Examples
         --------
-        Create an Axes object and then access the
-        visibility attribute of its AxesActor.
+        Create an AxesActor and check its visibility
 
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.visibility
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.visibility
         True
 
         """
@@ -346,7 +354,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def total_length(self) -> tuple:  # numpydoc ignore=RT01
-        """Return or set the total length of all axes.
+        """Total length of each axis (shaft plus tip).
 
         Examples
         --------
@@ -373,7 +381,9 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def shaft_length(self) -> tuple:  # numpydoc ignore=RT01
-        """Return or set the length of the axes shaft.
+        """Normalizd length of the shaft for each axis.
+
+        Values should be in range ``[0, 1]``.
 
         Examples
         --------
@@ -400,7 +410,9 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the normalized length of the tip.
+        """Normalized length of the tip for each axis.
+
+        Values should be in range ``[0, 1]``.
 
         Examples
         --------
@@ -427,7 +439,9 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def label_position(self) -> tuple:  # numpydoc ignore=RT01
-        """Normalized label position of the label along the axes.
+        """Normalized position of the text label along each axis.
+
+        Values should be in range ``[0, 1]``.
 
         Examples
         --------
@@ -454,7 +468,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def tip_resolution(self) -> int:  # numpydoc ignore=RT01
-        """Return or set the resolution of the tip.
+        """Resolution of the axes tips.
 
         Examples
         --------
@@ -482,7 +496,10 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def cone_resolution(self) -> int:  # numpydoc ignore=RT01
-        """Deprecated parameter. Use `tip_resolution` instead."""
+        """Resolution of the axes cone tips.
+
+        This parameter is deprecated. Use `tip_resolution` instead.
+        """
         warnings.warn(
             "Use of `cone_resolution` is deprecated. Use `tip_resolution` instead.",
             PyVistaDeprecationWarning,
@@ -499,7 +516,10 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def sphere_resolution(self) -> int:  # numpydoc ignore=RT01
-        """Deprecated parameter. Use `tip_resolution` instead."""
+        """Resolution of the axes sphere tips.
+
+        This parameter is deprecated. Use `tip_resolution` instead.
+        """
         warnings.warn(
             "Use of `sphere_resolution` is deprecated. Use `tip_resolution` instead.",
             PyVistaDeprecationWarning,
@@ -522,10 +542,10 @@ class AxesActor(Prop3D, vtkAxesActor):
         --------
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
-        >>> axes_actor.shaft_resoltiuon
+        >>> axes_actor.shaft_resolution
         16
-        >>> axes_actor.shaft_resoltiuon = 24
-        >>> axes_actor.shaft_resoltiuon
+        >>> axes_actor.shaft_resolution = 24
+        >>> axes_actor.shaft_resolution
         24
 
         """
@@ -537,7 +557,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def cylinder_resolution(self) -> int:  # numpydoc ignore=RT01
-        """Deprecated parameter. Use `shaft_resolution` instead."""
+        """Cylinder resolution of the axes shafts.
+
+        This parameter is deprecated. Use `shaft_resolution` instead.
+
+        """
         warnings.warn(
             "Use of `cylinder_resolution` is deprecated. Use `shaft_resolution` instead.",
             PyVistaDeprecationWarning,
@@ -554,7 +578,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def tip_radius(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the radius of the tip.
+        """Radius of the axes tips.
 
         Examples
         --------
@@ -572,7 +596,6 @@ class AxesActor(Prop3D, vtkAxesActor):
 
         # Make sure our assumption is true and reset value for cone and sphere
         self.tip_radius = radius
-
         return radius
 
     @tip_radius.setter
@@ -582,7 +605,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def cone_radius(self) -> float:  # numpydoc ignore=RT01
-        """Deprecated parameter. Use `tip_radius` instead."""
+        """Radius of the axes cone tips.
+
+        This parameter is deprecated. Use `tip_radius` instead.
+
+        """
         warnings.warn(
             "Use of `cone_radius` is deprecated. Use `tip_radius` instead.",
             PyVistaDeprecationWarning,
@@ -599,7 +626,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def sphere_radius(self) -> float:  # numpydoc ignore=RT01
-        """Deprecated parameter. Use `tip_radius` instead."""
+        """Radius of the axes sphere tips.
+
+        This parameter is deprecated. Use `tip_radius` instead.
+
+        """
         warnings.warn(
             "Use of `sphere_radius` is deprecated. Use `tip_radius` instead.",
             PyVistaDeprecationWarning,
@@ -616,7 +647,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def cylinder_radius(self) -> float:  # numpydoc ignore=RT01
-        """Deprecated parameter. Use `shaft_radius` instead."""
+        """Cylinder radius of the axes shafts.
+
+        This parameter is deprecated. Use `shaft_radius` instead.
+
+        """
         warnings.warn(
             "Use of `cylinder_radius` is deprecated. Use `shaft_radius` instead.",
             PyVistaDeprecationWarning,
@@ -632,8 +667,10 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.shaft_radius = radius
 
     @property
-    def shaft_radius(self):
-        """Return or set the radius of the shaft cylinder.
+    def shaft_radius(self):  # numpydoc ignore=RT01
+        """Cylinder radius of the axes shafts.
+
+        This property only has an effect if ``shaft_type`` is ``'cylinder'``.
 
         Examples
         --------
@@ -653,7 +690,12 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.SetCylinderRadius(radius)
 
     @property
-    def shaft_width(self):
+    def shaft_width(self):  # numpydoc ignore=RT01
+        """Line width of the axes shafts in screen units.
+
+        This property only has an effect if ``shaft_type`` is ``'line'``.
+
+        """
         # Get x width and assume width is the same for each x, y, and z
         width_x = self.GetXAxisShaftProperty().GetLineWidth()
 
@@ -670,9 +712,9 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def shaft_type(self) -> ShaftType:  # numpydoc ignore=RT01
-        """Return or set the shaft type.
+        """Tip type for all axes.
 
-        Can be either a cylinder (0 or "cylinder") or a line (1 or "line").
+        Can be a cylinder (``0`` or ``'cylinder'``) or a line (``1`` or ``'line'``).
 
         Examples
         --------
@@ -695,9 +737,9 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def tip_type(self) -> TipType:  # numpydoc ignore=RT01
-        """Return or set the shaft type.
+        """Tip type for all axes.
 
-        Can be either a cone (0 or "cone") or a sphere (1 or "sphere").
+        Can be a cone (``0`` or ``'cone'``) or a sphere (``1`` or ``'sphere'``).
 
         Examples
         --------
@@ -720,7 +762,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the X axis.
+        """Text label for the x-axis.
 
         Examples
         --------
@@ -739,6 +781,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the x-axis.
+
+        This parameter is deprecated. Use `x_label` instead.
+
+        """
         warnings.warn(
             "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
             PyVistaDeprecationWarning,
@@ -755,7 +802,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the Y axis.
+        """Text label for the y-axis.
 
         Examples
         --------
@@ -774,6 +821,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def y_axis_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the y-axis.
+
+        This parameter is deprecated. Use `y_label` instead.
+
+        """
         warnings.warn(
             "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
             PyVistaDeprecationWarning,
@@ -790,7 +842,7 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the Z axis.
+        """Text label for the z-axis.
 
         Examples
         --------
@@ -809,6 +861,11 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def z_axis_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the z-axis.
+
+        This parameter is deprecated. Use `z_label` instead.
+
+        """
         warnings.warn(
             "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
             PyVistaDeprecationWarning,
@@ -825,36 +882,37 @@ class AxesActor(Prop3D, vtkAxesActor):
 
     @property
     def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis shaft."""
+        """:class:`~pyvista.ActorProperties` of the x-axis shaft."""
         return ActorProperties(self.GetXAxisShaftProperty())
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis shaft."""
+        """:class:`~pyvista.ActorProperties` of the y-axis shaft."""
         return ActorProperties(self.GetYAxisShaftProperty())
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis shaft."""
+        """:class:`~pyvista.ActorProperties` of the z-axis shaft."""
         return ActorProperties(self.GetZAxisShaftProperty())
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis tip."""
+        """:class:`~pyvista.ActorProperties` of the x-axis tip."""
         return ActorProperties(self.GetXAxisTipProperty())
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis tip."""
+        """:class:`~pyvista.ActorProperties` of the y-axis tip."""
         return ActorProperties(self.GetYAxisTipProperty())
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis tip."""
+        """:class:`~pyvista.ActorProperties` of the z-axis tip."""
         return ActorProperties(self.GetZAxisTipProperty())
 
     @property
-    def label_color(self) -> Color:
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the label text for all axes."""
         # Get x color and assume label color is the same for each x, y, and z
         prop_x = self.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         color = Color(prop_x.GetColor())
@@ -864,7 +922,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return color
 
     @label_color.setter
-    def label_color(self, color: ColorLike):
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
         prop_x = self.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = self.GetYAxisCaptionActor2D().GetCaptionTextProperty()
@@ -874,13 +932,14 @@ class AxesActor(Prop3D, vtkAxesActor):
             prop.SetShadow(False)
 
     @property
-    def x_color(self):
+    def x_color(self):  # numpydoc ignore=RT01
+        """Color of the x-axis shaft and tip."""
         color = self.x_axis_tip_properties.color
         opacity = self.x_axis_tip_properties.opacity
         return Color(color=color, opacity=opacity)
 
     @x_color.setter
-    def x_color(self, color: ColorLike):
+    def x_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
         self.x_axis_shaft_properties.color = color.float_rgb
         self.x_axis_tip_properties.color = color.float_rgb
@@ -888,13 +947,14 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.x_axis_tip_properties.opacity = color.float_rgba[3]
 
     @property
-    def y_color(self):
+    def y_color(self):  # numpydoc ignore=RT01
+        """Color of the y-axis shaft and tip."""
         color = self.y_axis_tip_properties.color
         opacity = self.y_axis_tip_properties.opacity
         return Color(color=color, opacity=opacity)
 
     @y_color.setter
-    def y_color(self, color: ColorLike):
+    def y_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
         self.y_axis_shaft_properties.color = color.float_rgb
         self.y_axis_tip_properties.color = color.float_rgb
@@ -902,13 +962,14 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.y_axis_tip_properties.opacity = color.float_rgba[3]
 
     @property
-    def z_color(self):
+    def z_color(self):  # numpydoc ignore=RT01
+        """Color of the z-axis shaft and tip."""
         color = self.z_axis_tip_properties.color
         opacity = self.z_axis_tip_properties.opacity
         return Color(color=color, opacity=opacity)
 
     @z_color.setter
-    def z_color(self, color: ColorLike):
+    def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
         self.z_axis_shaft_properties.color = color.float_rgb
         self.z_axis_tip_properties.color = color.float_rgb
@@ -916,15 +977,20 @@ class AxesActor(Prop3D, vtkAxesActor):
         self.z_axis_tip_properties.opacity = color.float_rgba[3]
 
     @property
-    def labels_off(self) -> bool:
+    def labels_off(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable the text labels for the axes."""
         return not bool(self.GetAxisLabels())
 
     @labels_off.setter
-    def labels_off(self, is_on: bool):
-        self.SetAxisLabels(not is_on)
+    def labels_off(self, value: bool):  # numpydoc ignore=GL08
+        self.SetAxisLabels(not value)
 
     @property
-    def label_size(self) -> Tuple[float, float]:
+    def label_size(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+        """The width and height of the axes labels.
+
+        Values should be in range ``[0, 1]``.
+        """
         # Assume label size for x is same as y and z
         label_actor = self.GetXAxisCaptionActor2D()
         size = (label_actor.GetWidth(), label_actor.GetHeight())
@@ -934,7 +1000,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return size
 
     @label_size.setter
-    def label_size(self, size: Sequence[float]):
+    def label_size(self, size: Sequence[float]):  # numpydoc ignore=GL08
         for label_actor in [
             self.GetXAxisCaptionActor2D(),
             self.GetYAxisCaptionActor2D(),
@@ -943,20 +1009,51 @@ class AxesActor(Prop3D, vtkAxesActor):
             label_actor.SetWidth(size[0])
             label_actor.SetHeight(size[1])
 
-    def rotate_x(self, angle: float):
+    def rotate_x(self, angle: float):  # numpydoc ignore=RT01
+        """Rotate the axes about the x-axis by some angle.
+
+        Parameters
+        ----------
+        angle : float
+            Rotation angle in degrees.
+
+        """
         super().rotate_x(angle)
         self._update_UserMatrix()
 
-    def rotate_y(self, angle: float):
+    def rotate_y(self, angle: float):  # numpydoc ignore=RT01
+        """Rotate the axes about the y-axis by some angle.
+
+        Parameters
+        ----------
+        angle : float
+            Rotation angle in degrees.
+
+        """
         super().rotate_y(angle)
         self._update_UserMatrix()
 
-    def rotate_z(self, angle: float):
+    def rotate_z(self, angle: float):  # numpydoc ignore=RT01
+        """Rotate the axes about the z-axis by some angle.
+
+        Parameters
+        ----------
+        angle : float
+            Rotation angle in degrees.
+
+        """
         super().rotate_z(angle)
         self._update_UserMatrix()
 
     @property
-    def user_matrix(self) -> np.ndarray:
+    def user_matrix(self) -> np.ndarray:  # numpydoc ignore=RT01
+        """User-specified transformation matrix.
+
+        This is the last transformation applied to the actor before
+        rendering. It can be used with, or in place of, the implicit
+        transformation that is created through the use of ``scale``,
+        ``position``, ``origin``, and ``orientation``.
+        """
         return self._user_matrix
 
     @user_matrix.setter
@@ -978,7 +1075,7 @@ class AxesActor(Prop3D, vtkAxesActor):
         return array_from_vtkmatrix(temp_actor.GetMatrix())
 
     def _update_UserMatrix(self):
-        if self._enable_orientation:
+        if self._enable_orientation_workaround:
             matrix = self._concatenate_implicit_matrix_and_user_matrix()
         else:
             matrix = self._user_matrix
@@ -1007,16 +1104,17 @@ class AxesActor(Prop3D, vtkAxesActor):
         zmin, zmax = np.min(points[:, 2]), np.max(points[:, 2])
         return xmin, xmax, ymin, ymax, zmin, zmax
 
-    def GetBounds(self) -> BoundsLike:
-        if self._enable_orientation:
+    def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Get the bounds for the axes. The bounds are symmetric."""
+        if self._enable_orientation_workaround:
             return self._compute_transformed_bounds()
         else:
             return super(vtkProp3D, self).GetBounds()
 
     @property
-    def _enable_orientation(self) -> bool:
-        return self.__enable_orientation
+    def _enable_orientation_workaround(self) -> bool:
+        return self.__enable_orientation_workaround
 
-    @_enable_orientation.setter
-    def _enable_orientation(self, value: bool):
-        self.__enable_orientation = value
+    @_enable_orientation_workaround.setter
+    def _enable_orientation_workaround(self, value: bool):
+        self.__enable_orientation_workaround = value
