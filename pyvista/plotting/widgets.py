@@ -155,7 +155,7 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows interactive box which is used to resize and relocate a sphere.
+        Shows an interactive box that is used to resize and relocate a sphere.
 
         >>> import pyvista as pv
         >>> import numpy as np
@@ -469,7 +469,7 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows an interactive plane moving along x-axis in random-hill example, which is used to mark the max altitude
+        Shows an interactive plane moving along the x-axis in the random-hill example, which is used to mark the max altitude
         at a particular distance x.
 
         >>> import pyvista as pv
