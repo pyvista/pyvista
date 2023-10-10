@@ -51,7 +51,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkTextMapper,
-    vtkTextProperty,
 )
 
 import pyvista as pv
@@ -134,8 +133,8 @@ def main(argv):
     iren.SetInteractorStyle(style)
 
     # Create a common text property.
-    text_property = vtkTextProperty()
-    text_property.SetFontSize(24)
+    text_property = pv.TextProperty()
+    text_property.font_size = 24
     text_property.SetJustificationToCentered()
 
     lut = get_diverging_lut()
