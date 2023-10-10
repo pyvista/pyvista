@@ -12,7 +12,7 @@ import os
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 # get location of this folder and the example files
 dir_path = os.path.dirname(os.path.realpath(__file__))

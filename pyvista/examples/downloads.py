@@ -27,7 +27,7 @@ import pooch
 from pooch import Unzip
 from pooch.utils import get_logger
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture

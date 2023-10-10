@@ -11,7 +11,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.report import vtk_version_info
 
 from . import _vtk

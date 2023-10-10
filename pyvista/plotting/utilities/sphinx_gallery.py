@@ -3,7 +3,7 @@
 import os
 import shutil
 
-import pyvista as pv
+import pyvista
 
 BUILDING_GALLERY_ERROR_MSG = (
     "pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture "

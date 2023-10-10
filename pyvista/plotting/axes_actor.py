@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from enum import Enum
 from typing import Union
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk
 from .actor_properties import ActorProperties

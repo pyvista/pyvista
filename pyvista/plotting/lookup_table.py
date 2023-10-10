@@ -3,7 +3,7 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 

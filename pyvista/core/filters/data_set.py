@@ -6,7 +6,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pyvista as pv
+import pyvista
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,

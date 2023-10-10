@@ -7,7 +7,7 @@ from typing import Sequence
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 

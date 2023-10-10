@@ -1,7 +1,7 @@
 """Cubemap utilities."""
 import os
 
-import pyvista as pv
+import pyvista
 from pyvista.plotting import _vtk
 
 

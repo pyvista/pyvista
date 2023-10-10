@@ -2,7 +2,7 @@
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane

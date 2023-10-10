@@ -21,7 +21,7 @@ import matplotlib
 import numpy as np
 import scooby
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import (

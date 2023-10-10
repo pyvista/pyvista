@@ -7,7 +7,7 @@ import weakref
 import matplotlib
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import convert_array, convert_string_array
 from pyvista.core.utilities.misc import _check_range
 from pyvista.report import vtk_version_info

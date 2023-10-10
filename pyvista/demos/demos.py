@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista import examples
 
 from .logo import text_3d

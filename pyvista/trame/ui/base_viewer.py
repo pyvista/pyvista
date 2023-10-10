@@ -10,7 +10,7 @@ import io
 from trame.app import get_server
 from trame.widgets import html
 
-import pyvista as pv
+import pyvista
 
 
 class BaseViewer:

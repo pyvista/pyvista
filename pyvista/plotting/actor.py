@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk

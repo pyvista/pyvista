@@ -1,7 +1,7 @@
 """Affine widget module."""
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import try_callback
 

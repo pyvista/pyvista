@@ -36,7 +36,7 @@ vtk_version_info = VTKVersionInfo()
 
 
 _cmd = """\
-import pyvista as pv; \
+import pyvista; \
 plotter = pv.Plotter(notebook=False, off_screen=True); \
 plotter.add_mesh(pv.Sphere()); \
 plotter.show(auto_close=False); \

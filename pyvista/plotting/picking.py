@@ -6,7 +6,7 @@ import weakref
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
 

@@ -3,7 +3,7 @@ import weakref
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista import MAX_N_COLOR_BARS
 
 from . import _vtk

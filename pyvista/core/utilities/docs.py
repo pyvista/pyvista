@@ -33,7 +33,7 @@ def linkcode_resolve(domain, info, edit=False):
 
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
     """
-    import pyvista as pv
+    import pyvista
 
     if domain != 'py':
         return None

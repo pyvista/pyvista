@@ -1,7 +1,7 @@
 """This module contains the Property class."""
 from typing import Union
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk

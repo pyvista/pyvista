@@ -18,7 +18,7 @@ except ImportError:
     HTML = object
 
 
-import pyvista as pv
+import pyvista
 from pyvista.trame.ui import UI_TITLE, get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
 

@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista import MAX_N_COLOR_BARS, vtk_version_info
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning

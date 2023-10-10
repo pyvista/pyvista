@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.dataset import DataObject
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.fileio import _try_imageio_imread

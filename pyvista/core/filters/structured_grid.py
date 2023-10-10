@@ -1,7 +1,7 @@
 """Filters module with class to manage filters/algorithms for structured grid datasets."""
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters

@@ -7,7 +7,7 @@ from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk
 from .colors import Color

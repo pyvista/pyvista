@@ -4,7 +4,7 @@ from typing import Tuple
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 

@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from .fileio import _get_ext_force, _process_filename
 from .helpers import wrap

@@ -5,7 +5,7 @@ from itertools import count, islice
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 

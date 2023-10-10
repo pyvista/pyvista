@@ -5,7 +5,7 @@ from weakref import proxy
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer

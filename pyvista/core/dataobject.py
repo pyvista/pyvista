@@ -7,7 +7,7 @@ from typing import Any, DefaultDict, Dict, Type, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes

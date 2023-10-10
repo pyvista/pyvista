@@ -9,7 +9,7 @@ from typing import Sequence, Tuple, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike

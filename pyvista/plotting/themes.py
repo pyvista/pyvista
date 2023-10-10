@@ -36,7 +36,7 @@ import os
 from typing import Callable, List, Optional, Union
 import warnings
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import Number
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
@@ -117,7 +117,7 @@ def set_plot_theme(theme):
     >>> pv.set_plot_theme('paraview')
 
     """
-    import pyvista as pv
+    import pyvista
 
     if isinstance(theme, str):
         theme = theme.lower()

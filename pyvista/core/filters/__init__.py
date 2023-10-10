@@ -24,7 +24,7 @@ Examples
 """
 # flake8: noqa: F401
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 

@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -393,7 +393,7 @@ def read_exodus(
     """
     from .helpers import wrap
 
-    # lazy import here to avoid loading module on import pyvista as pv
+    # lazy import here to avoid loading module on import pyvista
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
     except ImportError:

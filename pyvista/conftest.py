@@ -2,7 +2,7 @@
 
 import pytest
 
-import pyvista as pv
+import pyvista
 
 
 @pytest.fixture(autouse=True)

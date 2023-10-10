@@ -3,7 +3,7 @@
 
 import warnings
 
-import pyvista as pv
+import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [

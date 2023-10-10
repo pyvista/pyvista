@@ -3,7 +3,7 @@ import traceback
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk

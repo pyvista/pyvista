@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import (
     FieldAssociation,

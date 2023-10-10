@@ -112,7 +112,7 @@ import jinja2  # Sphinx dependency.
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
-import pyvista as pv
+import pyvista
 
 pv.BUILDING_GALLERY = True
 pv.OFF_SCREEN = True

@@ -5,7 +5,7 @@ import os
 import pathlib
 from typing import Sequence
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
