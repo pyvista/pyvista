@@ -1,6 +1,7 @@
 """Module containing useful plotting tools."""
 
 from enum import Enum
+from functools import wraps
 import os
 import platform
 from subprocess import PIPE, Popen, TimeoutExpired
@@ -8,6 +9,7 @@ from subprocess import PIPE, Popen, TimeoutExpired
 import numpy as np
 
 import pyvista as pv
+from pyvista.plotting.axes_actor import AxesActor
 
 from ._vtk import (
     VTK_ARIAL,
@@ -111,12 +113,10 @@ def system_supports_plotting():
     return SUPPORTS_PLOTTING
 
 
-def create_axes_marker(**kwargs):  # numpydoc ignore=RT01,PR01
-    """Create a default AxesActor marker.
-
-    See :class:``pyvista.AxesActor()`` for keyword arguments.
-    """
-    return pv.AxesActor(**kwargs)
+@wraps(AxesActor.__init__)
+def create_axes_marker(*args, **kwargs):  # numpydoc ignore=RT01,PR01
+    """Wrap ``AxesActor`` constructor."""
+    return AxesActor(*args, **kwargs)
 
 
 def create_axes_orientation_box(

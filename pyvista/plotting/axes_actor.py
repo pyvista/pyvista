@@ -58,11 +58,11 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         tip_length=0.2,
         tip_type="cone",
         tip_resolution=16,
-        total_length=1,
-        scale=1,
+        total_length=(1, 1, 1),
         position=(0, 0, 0),
-        origin=(0, 0, 0),
         orientation=(0, 0, 0),
+        origin=(0, 0, 0),
+        scale=(1, 1, 1),
         user_matrix=np.eye(4),
         visibility=True,
         properties=None,
@@ -137,18 +137,11 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         tip_resolution : int , default: 16
             Resolution of the axes tips.
 
-        total_length float | Sequence[float], default: 1
+        total_length : float | Sequence[float], default: (1, 1, 1)
             Total length of each axis (shaft plus tip).
-
-        scale : float | Sequence[float], default: (1, 1, 1)
-            Scaling factor for the axes.
 
         position : Sequence[float], default: (0, 0, 0)
             Position of the axes.
-
-        origin : Sequence[float], default: (0, 0, 0)
-            Origin of the axes. This is the point about which all
-            rotations take place.
 
         orientation : Sequence[float], default: (0, 0, 0)
             Orientation angles of the axes which define rotations about
@@ -156,6 +149,13 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             and in x-y-z order. However, the actual rotations are
             applied in the following order: rotate_z first,
             then rotate_x, and finally rotate_y.
+
+        origin : Sequence[float], default: (0, 0, 0)
+            Origin of the axes. This is the point about which all
+            rotations take place.
+
+        scale : float | Sequence[float], default: (1, 1, 1)
+            Scaling factor for the axes.
 
         user_matrix : TransformLike
             Transformation to apply to the axes. Can be a vtkTransformation,

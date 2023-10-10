@@ -16,6 +16,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
 from . import _vtk
 from .actor import Actor
+from .axes_actor import AxesActor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color, get_cycler
@@ -872,48 +873,89 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         return actor, prop
 
-    def add_axes_at_origin(
+    def add_axes_at_origin(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Add axes actor at the origin.
+
+        This method is deprecated. Use `add_axes_marker` instead.
+        """
+        warnings.warn(
+            "Use of `add_axes_at_origin` is deprecated. Use `add_axes_marker` instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.add_axes_marker(*args, **kwargs)
+
+    def add_axes_marker(
         self,
+        x_label='X',
+        y_label='Y',
+        z_label='Z',
+        labels_off=False,
         x_color=None,
         y_color=None,
         z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
-        line_width=2,
-        labels_off=False,
-    ):
-        """Add axes actor at origin.
+        total_length=(1, 1, 1),
+        position=(0, 0, 0),
+        orientation=(0, 0, 0),
+        origin=(0, 0, 0),
+        scale=(1, 1, 1),
+        user_matrix=np.eye(4),
+        **kwargs,
+    ) -> AxesActor:
+        """Add axes actor to the scene.
 
         Parameters
         ----------
-        x_color : ColorLike, optional
-            The color of the x axes arrow.
+        x_label : str, default: "X"
+            Text label for the x-axis.
 
-        y_color : ColorLike, optional
-            The color of the y axes arrow.
+        y_label : str, default: "Y"
+            Text label for the y-axis.
 
-        z_color : ColorLike, optional
-            The color of the z axes arrow.
-
-        xlabel : str, default: "X"
-            The label of the x axes arrow.
-
-        ylabel : str, default: "Y"
-            The label of the y axes arrow.
-
-        zlabel : str, default: "Z"
-            The label of the z axes arrow.
-
-        line_width : int, default: 2
-            Width of the arrows.
+        z_label : str, default: "Z"
+            Text label for the z-axis.
 
         labels_off : bool, default: False
-            Disables the label text when ``True``.
+            Enable or disable the text labels for the axes.
+
+        x_color : ColorLike, optional
+            Color of the x-axis shaft and tip.
+
+        y_color : ColorLike, optional
+            Color of the y-axis shaft and tip.
+
+        z_color : ColorLike, optional
+            Color of the z-axis shaft and tip.
+
+        total_length : float | Sequence[float], default: 1
+            Total length of each axis (shaft plus tip).
+
+        position : Sequence[float], default: (0, 0, 0)
+            Position of the axes.
+
+        orientation : Sequence[float], default: (0, 0, 0)
+            Orientation angles of the axes which define rotations about
+            the world's x-y-z axes. The angles are specified in degrees
+            and in x-y-z order. However, the actual rotations are
+            applied in the following order: rotate_z first,
+            then rotate_x, and finally rotate_y.
+
+        origin : Sequence[float], default: (0, 0, 0)
+            Origin of the axes. This is the point about which all
+            rotations take place.
+
+        scale : float | Sequence[float], default: (1, 1, 1)
+            Scaling factor for the axes.
+
+        user_matrix : TransformLike
+            Transformation to apply to the axes. Can be a vtkTransformation,
+            3x3 transformation matrix, or 4x4 transformation matrix.
+
+        **kwargs : dict
+            See :class:`~pyvista.AxesActor` for additional keyword arguments.
 
         Returns
         -------
-        vtk.vtkAxesActor
+        pyvista.AxesActor
             Actor of the axes.
 
         Examples
@@ -923,19 +965,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.add_mesh(pv.Sphere(center=(2, 0, 0)), color='r')
         >>> _ = pl.add_mesh(pv.Sphere(center=(0, 2, 0)), color='g')
         >>> _ = pl.add_mesh(pv.Sphere(center=(0, 0, 2)), color='b')
-        >>> _ = pl.add_axes_at_origin()
+        >>> _ = pl.add_axes_marker()
         >>> pl.show()
 
         """
-        self._marker_actor = create_axes_marker(
-            shaft_width=line_width,
+        self._marker_actor = AxesActor(
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
+            labels_off=labels_off,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            zlabel=zlabel,
-            labels_off=labels_off,
+            total_length=total_length,
+            position=position,
+            orientation=orientation,
+            origin=origin,
+            scale=scale,
+            user_matrix=user_matrix,
+            **kwargs,
         )
         self.AddActor(self._marker_actor)
         memory_address = self._marker_actor.GetAddressAsString("")

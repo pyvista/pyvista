@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import DeprecationError, MissingDataError
+from pyvista.core.errors import DeprecationError, MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -435,3 +435,17 @@ def test_plotter_zoom_camera():
 def test_plotter_reset_key_events():
     pl = pv.Plotter()
     pl.reset_key_events()
+
+
+def test_add_axes_marker(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    actor = pl.add_axes_marker()
+    assert np.allclose(actor.position, (0, 0, 0))
+
+    actor = pl.add_axes_marker(position=(1, 2, 3))
+    assert np.allclose(actor.position, (1, 2, 3))
+
+    with pytest.raises(PyVistaDeprecationWarning):
+        pl = pv.Plotter()
+        pl.add_axes_at_origin()
