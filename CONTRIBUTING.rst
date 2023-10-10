@@ -642,7 +642,7 @@ To test this locally you need to run a http server in the html directory with:
 
 .. code:: bash
 
-   make -C doc serve-html
+   make serve-html
 
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
