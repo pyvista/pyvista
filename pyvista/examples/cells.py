@@ -77,7 +77,7 @@ def Empty() -> UnstructuredGrid:
     >>> grid.points
     pyvista_ndarray([], shape=(0, 3), dtype=float64)
 
-    >>> grid.celltypes  # same as pv.CellType.EMPTY_CELL
+    >>> grid.celltypes  # same as pyvista.CellType.EMPTY_CELL
     array([0], dtype=uint8)
 
     """
@@ -112,7 +112,7 @@ def Vertex() -> UnstructuredGrid:
     >>> grid.points
     pyvista_ndarray([[0., 0., 0.]])
 
-    >>> grid.celltypes  # same as pv.CellType.VERTEX
+    >>> grid.celltypes  # same as pyvista.CellType.VERTEX
     array([1], dtype=uint8)
 
     """
@@ -156,7 +156,7 @@ def PolyVertex() -> UnstructuredGrid:
                      [1. , 0. , 0.4],
                      [0. , 1. , 0.6]])
 
-    >>> grid.celltypes  # same as pv.CellType.POLY_VERTEX
+    >>> grid.celltypes  # same as pyvista.CellType.POLY_VERTEX
     array([2], dtype=uint8)
 
     """
@@ -194,7 +194,7 @@ def Line() -> UnstructuredGrid:
     pyvista_ndarray([[0., 0., 0.],
                      [1., 0., 0.]])
 
-    >>> grid.celltypes  # same as pv.CellType.LINE
+    >>> grid.celltypes  # same as pyvista.CellType.LINE
     array([3], dtype=uint8)
 
     """
@@ -236,7 +236,7 @@ def PolyLine() -> UnstructuredGrid:
                      [0.5, 1. , 0. ],
                      [0. , 1. , 0. ]])
 
-    >>> grid.celltypes  # same as pv.CellType.POLY_LINE
+    >>> grid.celltypes  # same as pyvista.CellType.POLY_LINE
     array([4], dtype=uint8)
 
     """
@@ -281,7 +281,7 @@ def Triangle() -> UnstructuredGrid:
                      [0., 0., 0.],
                      [0., 1., 0.]])
 
-    >>> grid.celltypes  # same as pv.CellType.TRIANGLE
+    >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE
     array([5], dtype=uint8)
 
     """
@@ -325,7 +325,7 @@ def TriangleStrip() -> UnstructuredGrid:
                      [1., 3., 0.],
                      [0., 3., 0.]])
 
-    >>> grid.celltypes  # same as pv.CellType.TRIANGLE_STRIP
+    >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE_STRIP
     array([6], dtype=uint8)
 
     """
@@ -376,7 +376,7 @@ def Polygon() -> UnstructuredGrid:
                      [ 0.6,  1.2,  0. ],
                      [ 0. ,  0.8,  0. ]])
 
-    >>> grid.celltypes  # same as pv.CellType.POLYGON
+    >>> grid.celltypes  # same as pyvista.CellType.POLYGON
     array([7], dtype=uint8)
 
     """
@@ -411,7 +411,7 @@ def Polyhedron() -> UnstructuredGrid:
     ..., Cell...
     ...]
 
-    >>> grid.celltypes  # same as pv.CellType.POLYHEDRON
+    >>> grid.celltypes  # same as pyvista.CellType.POLYHEDRON
     array([42], dtype=uint8)
 
     """
@@ -452,7 +452,7 @@ def Pixel() -> UnstructuredGrid:
                      [0., 1., 0.],
                      [1., 1., 0.]])
 
-    >>> grid.celltypes  # same as pv.CellType.PIXEL
+    >>> grid.celltypes  # same as pyvista.CellType.PIXEL
     array([8], dtype=uint8)
 
     """
@@ -492,7 +492,7 @@ def Quadrilateral() -> UnstructuredGrid:
                      [1., 1., 0.],
                      [0., 1., 0.]])
 
-    >>> grid.celltypes  # same as pv.CellType.QUAD
+    >>> grid.celltypes  # same as pyvista.CellType.QUAD
     array([9], dtype=uint8)
 
     """
@@ -532,7 +532,7 @@ def Tetrahedron() -> UnstructuredGrid:
                      [-1.,  1., -1.],
                      [-1., -1.,  1.]])
 
-    >>> grid.celltypes  # same as pv.CellType.TETRA
+    >>> grid.celltypes  # same as pyvista.CellType.TETRA
     array([10], dtype=uint8)
 
     """
@@ -581,7 +581,7 @@ def Hexahedron() -> UnstructuredGrid:
                      [1., 1., 1.],
                      [0., 1., 1.]])
 
-    >>> grid.celltypes  # same as pv.CellType.HEXAHEDRON
+    >>> grid.celltypes  # same as pyvista.CellType.HEXAHEDRON
     array([12], dtype=uint8)
 
     """
@@ -638,7 +638,7 @@ def HexagonalPrism() -> UnstructuredGrid:
                      [ 0. ,  1. ,  0. ],
                      [-0.5,  0.5,  0. ]])
 
-    >>> grid.celltypes  # same as pv.CellType.HEXAGONAL_PRISM
+    >>> grid.celltypes  # same as pyvista.CellType.HEXAGONAL_PRISM
     array([16], dtype=uint8)
 
     """
@@ -693,7 +693,7 @@ def Wedge() -> UnstructuredGrid:
                      [1. , 0. , 0. ],
                      [1. , 0.5, 0.5]])
 
-    >>> grid.celltypes  # same as pv.CellType.WEDGE
+    >>> grid.celltypes  # same as pyvista.CellType.WEDGE
     array([13], dtype=uint8)
 
     """
@@ -739,7 +739,7 @@ def PentagonalPrism() -> UnstructuredGrid:
                      [2., 4., 4.],
                      [0., 2., 4.]])
 
-    >>> grid.celltypes  # same as pv.CellType.PENTAGONAL_PRISM
+    >>> grid.celltypes  # same as pyvista.CellType.PENTAGONAL_PRISM
     array([15], dtype=uint8)
 
     """
@@ -791,7 +791,7 @@ def Pyramid() -> UnstructuredGrid:
                      [ 1.        , -1.        ,  0.        ],
                      [ 0.        ,  0.        ,  1.60803807]])
 
-    >>> grid.celltypes  # same as pv.CellType.PYRAMID
+    >>> grid.celltypes  # same as pyvista.CellType.PYRAMID
     array([14], dtype=uint8)
 
     """
@@ -841,7 +841,7 @@ def Voxel() -> UnstructuredGrid:
                      [1., 1., 1.],
                      [0., 1., 1.]])
 
-    >>> grid.celltypes  # same as pv.CellType.VOXEL
+    >>> grid.celltypes  # same as pyvista.CellType.VOXEL
     array([11], dtype=uint8)
 
     """
