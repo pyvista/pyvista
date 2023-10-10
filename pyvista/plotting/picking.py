@@ -1592,7 +1592,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         >>> import pyvista as pv
         >>> multiblock = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(multiblock)
