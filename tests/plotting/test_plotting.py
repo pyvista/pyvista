@@ -794,7 +794,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     movie_sphere = sphere.copy()
     plotter = pv.Plotter()
     plotter.open_movie(filename)
-    actor = plotter.add_axes_at_origin()
+    actor = plotter.add_axes_marker()
     plotter.remove_actor(actor, reset_camera=False, render=True)
     plotter.add_mesh(movie_sphere, scalars=np.random.random(movie_sphere.n_faces))
     plotter.show(auto_close=False, window_size=[304, 304])
