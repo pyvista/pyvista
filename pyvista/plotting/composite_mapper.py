@@ -114,7 +114,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -148,7 +148,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -188,7 +188,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -223,7 +223,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -299,7 +299,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
     >>> import pyvista as pv
     >>> dataset = pv.MultiBlock(
-    ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+    ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
     ... )
     >>> pl = pv.Plotter()
     >>> actor, mapper = pl.add_composite(dataset)
@@ -333,7 +333,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -357,7 +357,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -383,7 +383,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset, color='w')
@@ -408,7 +408,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -460,7 +460,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -567,7 +567,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         --------
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -615,7 +615,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -641,7 +641,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
@@ -670,7 +670,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
