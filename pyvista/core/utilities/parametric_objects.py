@@ -852,20 +852,20 @@ def ParametricPseudosphere(**kwargs):
 
 def ParametricRandomHills(
     numberofhills=None,
-    number_of_hills=None,
     hillxvariance=None,
-    hill_x_variance=None,
     hillyvariance=None,
-    hill_y_variance=None,
     hillamplitude=None,
-    hill_amplitude=None,
     randomseed=None,
-    random_seed=None,
     xvariancescalefactor=None,
-    x_variance_scale_factor=None,
     yvariancescalefactor=None,
-    y_variance_scale_factor=None,
     amplitudescalefactor=None,
+    number_of_hills=None,
+    hill_x_variance=None,
+    hill_y_variance=None,
+    hill_amplitude=None,
+    random_seed=None,
+    x_variance_scale_factor=None,
+    y_variance_scale_factor=None,
     amplitude_scale_factor=None,
     **kwargs,
 ):
@@ -886,17 +886,11 @@ def ParametricRandomHills(
         .. versionchanged:: 0.43.0
             The ``numberofhills`` parameter has been renamed to ``number_of_hills``.
 
-    number_of_hills : int, default: 30
-        The number of hills.
-
     hillxvariance : float, default: 2.5
         The hill variance in the x-direction.
 
         .. versionchanged:: 0.43.0
             The ``hillxvariance`` parameter has been renamed to ``hill_x_variance``.
-
-    hill_x_variance : float, default: 2.5
-        The hill variance in the x-direction.
 
     hillyvariance : float, default: 2.5
         The hill variance in the y-direction.
@@ -904,17 +898,11 @@ def ParametricRandomHills(
         .. versionchanged:: 0.43.0
             The ``hillyvariance`` parameter has been renamed to ``hill_y_variance``.
 
-    hill_y_variance : float, default: 2.5
-        The hill variance in the y-direction.
-
     hillamplitude : float, default: 2
         The hill amplitude (height).
 
         .. versionchanged:: 0.43.0
             The ``hillamplitude`` parameter has been renamed to ``hill_amplitude``.
-
-    hill_amplitude : float, default: 2
-        The hill amplitude (height).
 
     randomseed : int, default: 1
         The Seed for the random number generator,
@@ -924,19 +912,11 @@ def ParametricRandomHills(
         .. versionchanged:: 0.43.0
             The ``randomseed`` parameter has been renamed to ``random_seed``.
 
-    random_seed : int, default: 1
-        The Seed for the random number generator,
-        a value of 1 will initialize the random number generator,
-        a negative value will initialize it with the system time.
-
     xvariancescalefactor : float, default: 13
         The scaling factor for the variance in the x-direction.
 
         .. versionchanged:: 0.43.0
             The ``xvariancescalefactor`` parameter has been renamed to ``x_variance_scale_factor``.
-
-    x_variance_scale_factor : float, default: 13
-        The scaling factor for the variance in the x-direction.
 
     yvariancescalefactor : float, default: 13
         The scaling factor for the variance in the y-direction.
@@ -944,14 +924,34 @@ def ParametricRandomHills(
         .. versionchanged:: 0.43.0
             The ``yvariancescalefactor`` parameter has been renamed to ``y_variance_scale_factor``.
 
-    y_variance_scale_factor : float, default: 13
-        The scaling factor for the variance in the y-direction.
-
     amplitudescalefactor : float, default: 13
         The scaling factor for the amplitude.
 
         .. versionchanged:: 0.43.0
             The ``amplitudescalefactor`` parameter has been renamed to ``amplitude_scale_factor``.
+
+    number_of_hills : int, default: 30
+        The number of hills.
+
+    hill_x_variance : float, default: 2.5
+        The hill variance in the x-direction.
+
+    hill_y_variance : float, default: 2.5
+        The hill variance in the y-direction.
+
+    hill_amplitude : float, default: 2
+        The hill amplitude (height).
+
+    random_seed : int, default: 1
+        The Seed for the random number generator,
+        a value of 1 will initialize the random number generator,
+        a negative value will initialize it with the system time.
+
+    x_variance_scale_factor : float, default: 13
+        The scaling factor for the variance in the x-direction.
+
+    y_variance_scale_factor : float, default: 13
+        The scaling factor for the variance in the y-direction.
 
     amplitude_scale_factor : float, default: 13
         The scaling factor for the amplitude.
