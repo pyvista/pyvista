@@ -638,6 +638,12 @@ The first time you build the documentation locally will take a while as all the
 examples need to be built. After the first build, the documentation should take
 a fraction of the time.
 
+To test this locally you need to run a http server in the html directory with:
+
+.. code:: bash
+
+   make -C doc serve-html
+
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
