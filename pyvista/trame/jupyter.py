@@ -38,7 +38,7 @@ JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
-    pyvista.set_jupyter_backend('trame')
+    pv.set_jupyter_backend('trame')
 
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
