@@ -897,7 +897,8 @@ def SolidSphereGeneric(
         celltypes.append(pv.CellType.HEXAHEDRON)
 
     mesh = pv.UnstructuredGrid(cells, celltypes, points)
-    translate(mesh, center, direction, start_direction=(0.0, 0.0, 1.0))
+    mesh.rotate_y(90, inplace=True)
+    translate(mesh, center, direction)
     return mesh
 
 
