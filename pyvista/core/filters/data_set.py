@@ -230,7 +230,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData or Tuple[pyvista.PolyData]
+        pyvista.PolyData or tuple[pyvista.PolyData]
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
