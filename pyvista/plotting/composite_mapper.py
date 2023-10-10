@@ -56,7 +56,7 @@ class BlockAttributes:
 
     >>> import pyvista as pv
     >>> dataset = pv.MultiBlock(
-    ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+    ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
     ... )
     >>> pl = pv.Plotter()
     >>> actor, mapper = pl.add_composite(dataset)
