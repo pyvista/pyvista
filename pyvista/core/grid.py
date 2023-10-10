@@ -746,7 +746,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(grid, show_edges=True)
-        >>> _ = pl.add_axes_at_origin(ylabel=None)
+        >>> _ = pl.add_axes_marker(y_label=None)
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
@@ -756,7 +756,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         >>> grid.origin = (1, 1, 1)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(grid, show_edges=True)
-        >>> _ = pl.add_axes_at_origin(ylabel=None)
+        >>> _ = pl.add_axes_marker(y_label=None)
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
