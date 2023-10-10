@@ -30,7 +30,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     See Also
     --------
-    pv.plot
+    pyvista.plot
 
     Examples
     --------
@@ -106,7 +106,7 @@ def plot_compare_four(
 
     Returns
     -------
-    pv.Plotter
+    pyvista.Plotter
         The plotter object.
     """
     datasets = [[data_a, data_b], [data_c, data_d]]

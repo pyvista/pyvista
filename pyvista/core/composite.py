@@ -501,7 +501,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.DataSet or pv.MultiBlock or None
+        pyvista.DataSet or pv.MultiBlock or None
             Dataset from the given index if it exists.
 
         Examples
@@ -823,7 +823,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.DataSet or pv.MultiBlock
+        pyvista.DataSet or pv.MultiBlock
             Dataset from the given index that was removed.
 
         Examples
@@ -997,7 +997,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.MultiBlock
+        pyvista.MultiBlock
            Deep or shallow copy of the ``MultiBlock``.
 
         Examples
@@ -1049,7 +1049,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.core.utilities.arrays.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray
@@ -1127,7 +1127,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.MultiBlock
+        pyvista.MultiBlock
             MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
         Notes

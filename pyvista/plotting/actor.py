@@ -285,7 +285,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Deep or shallow copy of this actor.
 
         Examples
@@ -351,7 +351,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pv.Property
+        pyvista.Property
             The object describing backfaces.
 
         Examples

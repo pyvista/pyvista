@@ -285,7 +285,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Flipped texture.
 
         Examples
@@ -303,7 +303,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Flipped texture.
 
         Examples
@@ -321,7 +321,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             Texture represented as a uniform grid.
 
         """
@@ -364,7 +364,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Rotated texture.
 
         Examples
@@ -382,7 +382,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Rotated texture.
 
         Examples
@@ -409,7 +409,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Copied texture.
         """
         return Texture(self.to_image().copy())
@@ -619,7 +619,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Texture converted to grayscale. If already grayscale, the original
             texture itself is returned.
 
@@ -662,7 +662,7 @@ def image_to_texture(image):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         The texture.
 
     """
@@ -679,7 +679,7 @@ def numpy_to_texture(image):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         PyVista texture.
 
     Examples

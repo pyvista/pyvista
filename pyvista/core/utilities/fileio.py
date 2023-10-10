@@ -121,7 +121,7 @@ def read_legacy(filename, progress_bar=False):
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         Wrapped pyvista mesh.
 
     Examples
@@ -186,7 +186,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -307,7 +307,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         PyVista texture object.
 
     Examples
@@ -382,7 +382,7 @@ def read_exodus(
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -461,7 +461,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
 
     Returns
     -------
-    pv.MultiBlock
+    pyvista.MultiBlock
         Data read from the file.
 
     """
@@ -514,7 +514,7 @@ def from_meshio(mesh):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         A PyVista unstructured grid representation of the input ``meshio`` mesh.
 
     Raises
@@ -581,7 +581,7 @@ def read_meshio(filename, file_format=None):
 
     Returns
     -------
-    pv.Dataset
+    pyvista.Dataset
         The mesh read from the file.
 
     Raises

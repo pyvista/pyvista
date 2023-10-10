@@ -118,7 +118,7 @@ class Camera(_vtk.vtkCamera):
 
         Returns
         -------
-        pv.Camera
+        pyvista.Camera
             Camera from the camera file.
 
         Examples
@@ -608,7 +608,7 @@ class Camera(_vtk.vtkCamera):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             View frustum.
 
         Examples
@@ -722,7 +722,7 @@ class Camera(_vtk.vtkCamera):
 
         Returns
         -------
-        pv.Camera
+        pyvista.Camera
             Deep copy of the camera.
 
         Examples

@@ -162,7 +162,7 @@ def get_reader(filename, force_ext=None):
 
     Returns
     -------
-    pv.BaseReader
+    pyvista.BaseReader
         A subclass of :class:`pyvista.BaseReader` is returned based on file type.
 
     Examples
@@ -316,7 +316,7 @@ class BaseReader:
 
         Returns
         -------
-        pv.BaseReader
+        pyvista.BaseReader
             An instance of the Reader object.
 
         """
@@ -372,7 +372,7 @@ class BaseReader:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             PyVista Dataset.
         """
         from pyvista.core.filters import _update_alg  # avoid circular import

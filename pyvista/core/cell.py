@@ -112,7 +112,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.CellType
+        pyvista.CellType
             Type of cell.
 
         Examples
@@ -167,7 +167,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             This cell cast to a :class:`pyvista.UnstructuredGrid`.
 
         Examples
@@ -325,7 +325,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             Edge given by ``index``.
 
         Examples
@@ -400,7 +400,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             Face given by ``index``.
 
         Examples
@@ -509,7 +509,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             Deep or shallow copy of the cell.
 
         Examples
@@ -704,7 +704,7 @@ class CellArray(_vtk.vtkCellArray):
 
         Returns
         -------
-        pv.CellArray
+        pyvista.CellArray
             Constructed ``CellArray``.
         """
         cells = np.asarray(cells, dtype=pv.ID_TYPE)

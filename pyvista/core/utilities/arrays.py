@@ -31,7 +31,7 @@ def parse_field_choice(field):
 
     Returns
     -------
-    pv.FieldAssociation
+    pyvista.FieldAssociation
         Field association.
 
     """
@@ -252,7 +252,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Returns
     -------
-    pv.pyvista_ndarray or ``None``
+    pyvista.pyvista_ndarray or ``None``
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -316,7 +316,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
 
     Returns
     -------
-    pv.core.utilities.arrays.FieldAssociation
+    pyvista.core.utilities.arrays.FieldAssociation
         Association of the array. If array is not present and ``err`` is
         ``False``, ``FieldAssociation.NONE`` is returned.
 
@@ -411,7 +411,7 @@ def point_array(obj, name):
 
     Returns
     -------
-    pv.pyvista_ndarray or None
+    pyvista.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -431,7 +431,7 @@ def field_array(obj, name):
 
     Returns
     -------
-    pv.pyvista_ndarray or None
+    pyvista.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -451,7 +451,7 @@ def cell_array(obj, name):
 
     Returns
     -------
-    pv.pyvista_ndarray or None
+    pyvista.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """

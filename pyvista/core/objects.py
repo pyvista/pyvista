@@ -212,7 +212,7 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             PyVista array.
 
         """
@@ -235,7 +235,7 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             PyVista array.
         """
         return self[index]

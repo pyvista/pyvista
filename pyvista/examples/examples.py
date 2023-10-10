@@ -32,7 +32,7 @@ def load_ant():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Dataset.
 
     Examples
@@ -50,7 +50,7 @@ def load_airplane():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Dataset.
 
     Examples
@@ -68,7 +68,7 @@ def load_sphere():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Dataset.
 
     Examples
@@ -86,7 +86,7 @@ def load_uniform():
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         Dataset.
 
     Examples
@@ -104,7 +104,7 @@ def load_rectilinear():
 
     Returns
     -------
-    pv.RectilinearGrid
+    pyvista.RectilinearGrid
         Dataset.
 
     Examples
@@ -122,7 +122,7 @@ def load_hexbeam():
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Dataset.
 
     Examples
@@ -140,7 +140,7 @@ def load_tetbeam():
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Dataset.
 
     Examples
@@ -163,7 +163,7 @@ def load_structured():
 
     Returns
     -------
-    pv.StructuredGrid
+    pyvista.StructuredGrid
         Dataset.
 
     Examples
@@ -186,7 +186,7 @@ def load_globe():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Globe dataset with earth texture.
 
     Examples
@@ -206,7 +206,7 @@ def load_globe_texture():
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Dataset.
 
     Examples
@@ -224,7 +224,7 @@ def load_channels():
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         Dataset.
 
     Examples
@@ -256,7 +256,7 @@ def load_spline():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Spline mesh.
 
     Examples
@@ -290,7 +290,7 @@ def load_random_hills():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Random hills mesh.
 
     Examples
@@ -309,7 +309,7 @@ def load_sphere_vectors():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh containing vectors.
 
     Examples
@@ -357,7 +357,7 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
 
     Returns
     -------
-    pv.ExplicitStructuredGrid
+    pyvista.ExplicitStructuredGrid
         An explicit structured grid.
 
     Examples
@@ -399,7 +399,7 @@ def load_nut():
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         A sample nut surface dataset.
 
     Examples
@@ -445,7 +445,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         ImageData containing two ``point_data`` arrays:
 
         * ``'real_wf'`` - Real part of the wave function.

@@ -335,7 +335,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         Returns
         -------
-        pv.plotting.volume_property.VolumeProperty
+        pyvista.plotting.volume_property.VolumeProperty
             Deep copy of this property.
 
         """

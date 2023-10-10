@@ -61,7 +61,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         Returns
         -------
-        pv.DataSetMapper
+        pyvista.DataSetMapper
             A copy of this dataset mapper.
 
         Examples

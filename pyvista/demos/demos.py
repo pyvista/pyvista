@@ -20,7 +20,7 @@ def glyphs(grid_sz=3):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh of supertoroids.
 
     See Also
@@ -184,7 +184,7 @@ def orientation_plotter():
 
     Returns
     -------
-    pv.Plotter
+    pyvista.Plotter
         Orientation cube plotter.
 
     Examples

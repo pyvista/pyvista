@@ -1167,7 +1167,7 @@ class Property(_vtk.vtkProperty):
 
         Returns
         -------
-        pv.Property
+        pyvista.Property
             Deep copy of this property.
 
         Examples

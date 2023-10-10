@@ -109,7 +109,7 @@ def line_segments_from_points(points):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         PolyData with lines and cells.
 
     Examples
@@ -156,7 +156,7 @@ def lines_from_points(points, close=False):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         PolyData with lines and cells.
 
     Examples
@@ -196,7 +196,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Plane mesh.
 
     numpy.ndarray
@@ -318,7 +318,7 @@ def make_tri_mesh(points, faces):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         PolyData instance containing the triangle mesh.
 
     Examples
@@ -380,7 +380,7 @@ def vector_poly_data(orig, vec):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh containing the ``orig`` points along with the
         ``'vectors'`` and ``'mag'`` point arrays representing the
         vectors and magnitude of the vectors at each point.

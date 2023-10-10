@@ -41,7 +41,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture with cubemap.
 
     Notes
@@ -83,7 +83,7 @@ def cubemap_from_filenames(image_paths):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture with cubemap.
 
     Examples

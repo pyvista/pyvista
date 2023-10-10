@@ -173,7 +173,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The result of the boolean operation.
 
         Examples
@@ -246,7 +246,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The result of the boolean operation.
 
         Examples
@@ -323,7 +323,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The result of the boolean operation.
 
         Examples
@@ -402,7 +402,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Appended PolyData(s).
 
         Examples
@@ -503,7 +503,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             :class:`pyvista.PolyData` if ``dataset`` is a
             :class:`pyvista.PolyData`, otherwise a
             :class:`pyvista.UnstructuredGrid`.
@@ -604,14 +604,14 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The intersection line.
 
-        pv.PolyData
+        pyvista.PolyData
             The first mesh split along the intersection. Returns the
             original first mesh if ``split_first=False``.
 
-        pv.PolyData
+        pyvista.PolyData
             The second mesh split along the intersection. Returns the
             original second mesh if ``split_second=False``.
 
@@ -734,7 +734,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.CameraPosition
+        pyvista.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -769,7 +769,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing only triangles.
 
         Examples
@@ -853,7 +853,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Smoothed mesh.
 
         Examples
@@ -963,7 +963,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Smoothed mesh.
 
         Notes
@@ -1091,7 +1091,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Decimated mesh.
 
         Examples
@@ -1186,7 +1186,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Tube-filtered mesh.
 
         Examples
@@ -1282,7 +1282,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Subdivided mesh.
 
         Examples
@@ -1402,7 +1402,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Subdivided mesh.
 
         Examples
@@ -1526,7 +1526,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Decimated mesh.
 
         Notes
@@ -1658,7 +1658,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Updated mesh with cell and point normals.
 
         Notes
@@ -1775,7 +1775,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The clipped mesh.
 
         Examples
@@ -1854,7 +1854,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh with holes filled if ``inplace=False``.
 
         Examples
@@ -1937,7 +1937,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Cleaned mesh.
 
         Examples
@@ -2028,7 +2028,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             ``PolyData`` object consisting of the line segment between the
             two given vertices. If ``inplace`` is ``True`` this is the
             same object as the input mesh.
@@ -2355,7 +2355,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.CameraPosition
+        pyvista.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -2412,7 +2412,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.CameraPosition
+        pyvista.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -2480,7 +2480,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh without the points flagged for removal.
 
         numpy.ndarray
@@ -2631,7 +2631,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh from the 2D delaunay filter.
 
         Examples
@@ -2743,7 +2743,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The points of this mesh projected onto a plane.
 
         Examples
@@ -2825,7 +2825,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Ribbon mesh.  Empty if there are no lines in the input dataset.
 
         Examples
@@ -2930,7 +2930,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Extruded mesh.
 
         Examples
@@ -3052,7 +3052,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Rotationally extruded mesh.
 
         Examples
@@ -3187,7 +3187,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Extruded mesh trimmed by a surface.
 
         Examples
@@ -3303,7 +3303,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Stripped mesh.
 
         Examples
@@ -3388,7 +3388,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing collisions in the ``field_data``
             attribute named ``"ContactCells"``.  Array only exists
             when there are collisions.
@@ -3699,7 +3699,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Reconstructed surface.
 
         Examples

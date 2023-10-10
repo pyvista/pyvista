@@ -114,7 +114,7 @@ class PointPickingElementHandler:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Picked mesh.
 
         """
@@ -132,7 +132,7 @@ class PointPickingElementHandler:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing the picked cell.
 
         """
@@ -155,7 +155,7 @@ class PointPickingElementHandler:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing the picked face.
 
         """
@@ -186,7 +186,7 @@ class PointPickingElementHandler:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing the picked edge.
 
         """
@@ -212,7 +212,7 @@ class PointPickingElementHandler:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Picked mesh containing the point.
 
         """
@@ -668,7 +668,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pv.Actor or None
+        pyvista.Actor or None
             Picked actor if available.
 
         """
@@ -684,7 +684,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pv.DataSet or None
+        pyvista.DataSet or None
             Picked mesh if available.
 
         """
@@ -698,7 +698,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pv.Cell or None
+        pyvista.Cell or None
             Picked cell if available.
 
         """
@@ -712,7 +712,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pv.Cell or None
+        pyvista.Cell or None
             Picked cell if available.
 
         """

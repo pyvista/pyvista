@@ -2434,7 +2434,7 @@ class WidgetHelper:
 
         Returns
         -------
-        pv.widgets.AffineWidget3D
+        pyvista.widgets.AffineWidget3D
             The affine widget.
 
         Notes

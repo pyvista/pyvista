@@ -449,7 +449,7 @@ class Renderers:
 
         Returns
         -------
-        pv.BackgroundRenderer
+        pyvista.BackgroundRenderer
             Newly created background renderer.
 
         """
@@ -519,7 +519,7 @@ class Renderers:
 
         Returns
         -------
-        pv.plotting.renderer.Renderer
+        pyvista.plotting.renderer.Renderer
             Shadow renderer.
         """
         return self._shadow_renderer

@@ -292,7 +292,7 @@ class ConeSource(_vtk.vtkConeSource):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Cone surface.
         """
         self.Update()
@@ -517,7 +517,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Cylinder surface.
         """
         self.Update()
@@ -572,7 +572,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Line mesh.
         """
         self.Update()

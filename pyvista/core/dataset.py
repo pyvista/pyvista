@@ -540,7 +540,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Active vectors represented as arrows.
 
         Examples
@@ -625,7 +625,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.core.utilities.arrays.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Association of the scalars matching ``name``.
 
         numpy.ndarray
@@ -908,7 +908,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Rotated dataset.
 
         Examples
@@ -961,7 +961,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Rotated dataset.
 
         Examples
@@ -1015,7 +1015,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Rotated dataset.
 
         Examples
@@ -1077,7 +1077,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Rotated dataset.
 
         Examples
@@ -1129,7 +1129,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Translated dataset.
 
         Examples
@@ -1180,7 +1180,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Scaled dataset.
 
         Examples
@@ -1234,7 +1234,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Flipped dataset.
 
         Examples
@@ -1285,7 +1285,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Flipped dataset.
 
         Examples
@@ -1336,7 +1336,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Flipped dataset.
 
         Examples
@@ -1392,7 +1392,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset flipped about its normal.
 
         Examples
@@ -1813,7 +1813,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Requested array.
 
         Examples
@@ -1867,7 +1867,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.core.utilities.arrays.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the array.
 
         Examples
@@ -2131,7 +2131,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Dataset cast into a :class:`pyvista.UnstructuredGrid`.
 
         Examples
@@ -2165,7 +2165,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.PointSet
+        pyvista.PointSet
             Dataset cast into a :class:`pyvista.PointSet`.
 
         Notes
@@ -2202,7 +2202,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Dataset cast into a :class:`pyvista.PolyData`.
 
         Notes
@@ -2678,7 +2678,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             The i-th pyvista.Cell.
 
         Notes
@@ -2746,11 +2746,11 @@ class DataSet(DataSetFilters, DataObject):
 
         Yields
         ------
-        pv.Cell
+        pyvista.Cell
 
         See Also
         --------
-        pv.DataSet.get_cell
+        pyvista.DataSet.get_cell
 
         Examples
         --------
@@ -2793,7 +2793,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pv.DataSet.cell_neighbors_levels
+        pyvista.DataSet.cell_neighbors_levels
 
         Examples
         --------
@@ -2927,7 +2927,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pv.DataSet.point_neighbors_levels
+        pyvista.DataSet.point_neighbors_levels
 
         Examples
         --------
@@ -2990,7 +2990,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pv.DataSet.point_neighbors
+        pyvista.DataSet.point_neighbors
 
         Examples
         --------
@@ -3074,7 +3074,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pv.DataSet.cell_neighbors
+        pyvista.DataSet.cell_neighbors
 
         Examples
         --------

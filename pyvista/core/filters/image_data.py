@@ -36,7 +36,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             Uniform grid with smoothed scalars.
 
         Notes
@@ -128,7 +128,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             Uniform grid with smoothed scalars.
 
         Warnings
@@ -207,7 +207,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             ImageData subset.
         """
         alg = _vtk.vtkExtractVOI()
@@ -264,7 +264,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             Dataset that has been dilated/eroded on the boundary of the specified scalars.
 
         Notes
@@ -365,7 +365,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             Dataset with the specified scalars thresholded.
 
         Examples
@@ -450,7 +450,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             :class:`pyvista.ImageData` with applied FFT.
 
         See Also
@@ -529,7 +529,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             :class:`pyvista.ImageData` with the applied reverse FFT.
 
         See Also
@@ -621,7 +621,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             :class:`pyvista.ImageData` with the applied low pass filter.
 
         See Also
@@ -699,7 +699,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             :class:`pyvista.ImageData` with the applied high pass filter.
 
         See Also

@@ -45,7 +45,7 @@ class StructuredGridFilters(DataSetFilters):
 
         Returns
         -------
-        pv.StructuredGrid
+        pyvista.StructuredGrid
             StructuredGrid with extracted subset.
 
         Examples
@@ -99,7 +99,7 @@ class StructuredGridFilters(DataSetFilters):
 
         Returns
         -------
-        pv.StructuredGrid
+        pyvista.StructuredGrid
             Concatenated grid.
 
         Examples

@@ -32,7 +32,7 @@ def wrap(dataset):
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         The PyVista wrapped dataset.
 
     Examples

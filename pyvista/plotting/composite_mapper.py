@@ -425,7 +425,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         Returns
         -------
-        pv.DataObject
+        pyvista.DataObject
             PyVista data object.
 
         Notes

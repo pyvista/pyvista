@@ -95,7 +95,7 @@ def make_legend_face(face):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         The legend face as a PolyData object.
 
     Raises
@@ -369,7 +369,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        pv.CameraPosition
+        pyvista.CameraPosition
             Camera position.
 
         """

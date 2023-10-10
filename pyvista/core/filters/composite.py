@@ -23,7 +23,7 @@ class CompositeFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Surface of the composite dataset.
 
         """
@@ -46,7 +46,7 @@ class CompositeFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Combined blocks.
 
         Examples
@@ -127,7 +127,7 @@ class CompositeFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing the outline.
 
         """
@@ -155,7 +155,7 @@ class CompositeFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing outlined corners.
 
         """

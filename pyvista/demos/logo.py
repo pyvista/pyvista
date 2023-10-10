@@ -40,7 +40,7 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         The atomized mesh with individually shifted and scaled cells.
     """
     cent = grid.center
@@ -68,7 +68,7 @@ def text_3d(string, depth=0.5):
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         The 3D text in the form of a PyVista DataSet.
 
     """
@@ -103,7 +103,7 @@ def logo_letters(merge=False, depth=0.3):
 
     Returns
     -------
-    pv.PolyData or dict[str, pv.PolyData]
+    pyvista.PolyData or dict[str, pv.PolyData]
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
@@ -139,7 +139,7 @@ def logo_voxel(density=0.03):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Voxelized PyVista logo as an unstructured grid.
     """
     return pv.voxelize(text_3d(LOGO_TITLE, depth=0.3), density)
@@ -150,7 +150,7 @@ def logo_basic():
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Grid containing the pyvista letters.
 
     Examples
@@ -333,7 +333,7 @@ def logo_atomized(density=0.05, scale=0.6, depth=0.05):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         A merged UnstructuredGrid representing the voxelized PyVista logo.
 
     """

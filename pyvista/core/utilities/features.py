@@ -34,7 +34,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Voxelized unstructured grid of the original mesh.
 
     Notes
@@ -158,7 +158,7 @@ def grid_from_sph_coords(theta, phi, r):
 
     Returns
     -------
-    pv.StructuredGrid
+    pyvista.StructuredGrid
         Structured grid.
 
     """
@@ -306,7 +306,7 @@ def merge(
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         :class:`pyvista.PolyData` if all items in datasets are
         :class:`pyvista.PolyData`, otherwise returns a
         :class:`pyvista.UnstructuredGrid`.
@@ -480,7 +480,7 @@ def sample_function(
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         Uniform grid with sampled data.
 
     Examples

@@ -426,7 +426,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         Returns
         -------
-        pv.StructuredGrid
+        pyvista.StructuredGrid
             This grid as a structured grid.
 
         """
@@ -815,7 +815,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
         Returns
         -------
-        pv.StructuredGrid
+        pyvista.StructuredGrid
             This grid as a structured grid.
 
         """
@@ -829,7 +829,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
         Returns
         -------
-        pv.RectilinearGrid
+        pyvista.RectilinearGrid
             This uniform grid as a rectilinear grid.
 
         """

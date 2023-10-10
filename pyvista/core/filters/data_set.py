@@ -230,7 +230,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData or tuple(pv.PolyData)
+        pyvista.PolyData or tuple(pv.PolyData)
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -329,7 +329,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Clipped dataset.
 
         Examples
@@ -421,7 +421,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset containing the ``'implicit_distance'`` array in
             ``point_data``.
 
@@ -513,7 +513,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData or tuple
+        pyvista.PolyData or tuple
             Clipped dataset if ``both=False``.  If ``both=True`` then
             returns a tuple of both clipped datasets.
 
@@ -625,7 +625,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Clipped surface.
 
         Examples
@@ -687,7 +687,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Sliced dataset.
 
         Examples
@@ -750,7 +750,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Sliced dataset.
 
         Examples
@@ -813,7 +813,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Sliced dataset.
 
         Examples
@@ -925,7 +925,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Sliced dataset.
 
         Examples
@@ -1021,7 +1021,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Sliced dataset.
 
         Examples
@@ -1172,7 +1172,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Dataset containing geometry that meets the threshold requirements.
 
         Examples
@@ -1331,7 +1331,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Dataset containing geometry that meets the threshold requirements.
 
         Examples
@@ -1418,7 +1418,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing an outline of the original dataset.
 
         Examples
@@ -1454,7 +1454,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing outlined corners.
 
         Examples
@@ -1494,7 +1494,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Surface of the dataset.
 
         Examples
@@ -1552,7 +1552,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Edges extracted from the dataset.
 
         Examples
@@ -1644,7 +1644,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
 
@@ -1757,7 +1757,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Contoured surface.
 
         Examples
@@ -1938,7 +1938,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Original dataset with texture coordinates if
             ``inplace=True``, otherwise a copied dataset.
 
@@ -2018,7 +2018,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset containing the texture mapped to a sphere.  Return
             type matches input.
 
@@ -2069,7 +2069,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with `cell_data` containing the ``"Length"``,
             ``"Area"``, and ``"Volume"`` arrays if set in the
             parameters.  Return type matches input.
@@ -2113,7 +2113,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Polydata where the points are the cell centers of the
             original dataset.
 
@@ -2215,7 +2215,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Glyphs at either the cell centers or points.
 
         Examples
@@ -2493,7 +2493,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with labeled connected bodies. Return type is
             ``pyvista.PolyData`` if input type is ``pyvista.PolyData`` and
             ``pyvista.UnstructuredGrid`` otherwise.
@@ -2813,7 +2813,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Largest connected set in the dataset.  Return type matches input.
 
         Examples
@@ -2853,7 +2853,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.MultiBlock
+        pyvista.MultiBlock
             MultiBlock with a split bodies.
 
         Examples
@@ -2923,7 +2923,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Warped Dataset.  Return type matches input.
 
         Examples
@@ -2997,7 +2997,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The warped mesh resulting from the operation.
 
         Examples
@@ -3070,7 +3070,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -3126,7 +3126,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with the cell data transformed into point data.
             Return type matches input.
 
@@ -3153,7 +3153,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -3213,7 +3213,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -3237,7 +3237,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing only triangles.
 
         Examples
@@ -3296,7 +3296,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing the Delaunay triangulation.
 
         Examples
@@ -3366,7 +3366,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Mesh containing the ``point_data['SelectedPoints']`` array.
 
         Examples
@@ -3461,7 +3461,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset containing the probed data.
 
         Examples
@@ -3576,12 +3576,12 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset containing resampled data.
 
         See Also
         --------
-        pv.DataSetFilters.interpolate
+        pyvista.DataSetFilters.interpolate
 
         Examples
         --------
@@ -3717,12 +3717,12 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Interpolated dataset.  Return type matches input.
 
         See Also
         --------
-        pv.DataSetFilters.sample
+        pyvista.DataSetFilters.sample
 
         Examples
         --------
@@ -4002,7 +4002,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Streamlines. This produces polylines as the output, with
             each cell (i.e., polyline) representing a streamline. The
             attribute values associated with each streamline are
@@ -4176,7 +4176,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute
             values associated with each streamline are stored in the
@@ -4283,7 +4283,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Decimated boundary.
 
         Examples
@@ -4321,7 +4321,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Line object with sampled data from dataset.
 
         Examples
@@ -4476,7 +4476,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Line object with sampled data from dataset.
 
         Examples
@@ -4544,7 +4544,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Arc containing the sampled data.
 
         Examples
@@ -4636,7 +4636,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Sampled Dataset.
 
         Examples
@@ -4932,7 +4932,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Subselected grid.
 
         Examples
@@ -5000,7 +5000,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Subselected grid.
 
         Examples
@@ -5080,7 +5080,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Surface mesh of the grid.
 
         Examples
@@ -5208,7 +5208,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Extracted edges.
 
         Examples
@@ -5291,7 +5291,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Merged grid.
 
         Notes
@@ -5422,7 +5422,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with the computed mesh quality in the
             ``cell_data`` as the ``"CellQuality"`` array.
 
@@ -5550,7 +5550,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with calculated derivative.
 
         Examples
@@ -5631,7 +5631,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with shrunk faces.  Return type matches input.
 
         Examples
@@ -5684,7 +5684,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with tessellated mesh.  Return type matches input.
 
         Examples
@@ -5772,7 +5772,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Transformed dataset.  Return type matches input unless
             input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
@@ -5940,7 +5940,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Reflected dataset.  Return type matches input.
 
         Examples
@@ -5977,7 +5977,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Mesh with 1 point and 1 vertex cell with integrated data in point
             and cell data.
 
@@ -6044,7 +6044,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.MultiBlock or pv.UnstructuredGrid
+        pyvista.MultiBlock or pv.UnstructuredGrid
             UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
 
         Examples
@@ -6106,7 +6106,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing the exploded cells.
 
         Notes
@@ -6143,7 +6143,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid with isolated cells.
 
         Examples
@@ -6195,7 +6195,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Dataset with the extracted cells. Type is the same as the input.
 
         Notes

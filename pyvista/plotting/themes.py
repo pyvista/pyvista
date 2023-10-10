@@ -18,7 +18,7 @@ Load a theme into pyvista
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
-pv.
+pyvista.
 
 >>> my_theme = DocumentTheme()
 >>> my_theme.font.size = 20
@@ -71,7 +71,7 @@ def load_theme(filename):
 
     Returns
     -------
-    pv.Theme
+    pyvista.Theme
         The loaded theme.
 
     Examples
@@ -1637,7 +1637,7 @@ class Theme(_ThemeConfig):
 
         See Also
         --------
-        pv.Plotter.enable_hidden_line_removal
+        pyvista.Plotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -2803,7 +2803,7 @@ class Theme(_ThemeConfig):
         20
 
         Create a custom theme from the dark theme and load it into
-        pv.
+        pyvista.
 
         >>> from pyvista.plotting.themes import DarkTheme
         >>> my_theme = DarkTheme()

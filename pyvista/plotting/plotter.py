@@ -383,7 +383,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Theme
+        pyvista.Theme
             Theme of this plotter.
 
         Examples
@@ -842,7 +842,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.ScalarBars
+        pyvista.ScalarBars
             Scalar bar object.
 
         Examples
@@ -904,7 +904,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Renderer
+        pyvista.Renderer
             Active render.
 
         Examples
@@ -1525,7 +1525,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Camera
+        pyvista.Camera
             Camera from the active renderer.
 
         """
@@ -1797,7 +1797,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Image array of current render window.
 
         Examples
@@ -2621,10 +2621,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the composite dataset.
 
-        pv.CompositePolyDataMapper
+        pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
 
         Examples
@@ -3219,7 +3219,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.plotting.actor.Actor
+        pyvista.plotting.actor.Actor
             Actor of the mesh.
 
         Examples
@@ -3959,7 +3959,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the volume.
 
         Examples
@@ -4365,7 +4365,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the silhouette.
 
         Examples
@@ -5096,7 +5096,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Image of depth values from camera orthogonal to image
             plane.
 
@@ -5576,7 +5576,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -5627,7 +5627,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the arrows.
 
         Examples
@@ -5809,7 +5809,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array containing pixel RGB and alpha.  Sized:
 
             * [Window height x Window width x 3] if
@@ -5892,7 +5892,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             PolyData containing the orbital path.
 
         Examples

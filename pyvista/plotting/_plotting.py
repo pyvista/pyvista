@@ -57,7 +57,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Always a surface as we need to compute point normals.
 
     """

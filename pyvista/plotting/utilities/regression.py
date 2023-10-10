@@ -17,7 +17,7 @@ def remove_alpha(img):
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         The output image data with the alpha channel removed.
 
     """
@@ -46,7 +46,7 @@ def wrap_image_array(arr):
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         A PyVista ImageData object with the wrapped array data.
 
     """

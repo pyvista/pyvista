@@ -57,7 +57,7 @@ def Empty() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single empty cell.
 
     Examples
@@ -91,7 +91,7 @@ def Vertex() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single vertex.
 
     Examples
@@ -130,7 +130,7 @@ def PolyVertex() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single poly vertex.
 
     Examples
@@ -172,7 +172,7 @@ def Line() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single line.
 
     Examples
@@ -212,7 +212,7 @@ def PolyLine() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single polyline.
 
     Examples
@@ -258,7 +258,7 @@ def Triangle() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single triangle.
 
     Examples
@@ -297,7 +297,7 @@ def TriangleStrip() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single triangle strip.
 
     Examples
@@ -350,7 +350,7 @@ def Polygon() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single polygon.
 
     Examples
@@ -392,7 +392,7 @@ def Polyhedron() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single polyhedron.
 
     Examples
@@ -428,7 +428,7 @@ def Pixel() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single pixel.
 
     Examples
@@ -468,7 +468,7 @@ def Quadrilateral() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single quadrilateral.
 
     Examples
@@ -508,7 +508,7 @@ def Tetrahedron() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single Tetrahedron.
 
     Examples
@@ -553,7 +553,7 @@ def Hexahedron() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single hexahedron.
 
     Examples
@@ -606,7 +606,7 @@ def HexagonalPrism() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single hexagonal prism.
 
     Examples
@@ -667,7 +667,7 @@ def Wedge() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single wedge.
 
     Examples
@@ -709,7 +709,7 @@ def PentagonalPrism() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single pentagonal prism.
 
     Examples
@@ -766,7 +766,7 @@ def Pyramid() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single pyramid.
 
     Examples
@@ -813,7 +813,7 @@ def Voxel() -> UnstructuredGrid:
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         UnstructuredGrid containing a single voxel.
 
     Examples

@@ -245,7 +245,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
@@ -271,7 +271,7 @@ def download_masonry_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -302,7 +302,7 @@ def download_usa_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -327,7 +327,7 @@ def download_puppy_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -354,7 +354,7 @@ def download_puppy(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -378,7 +378,7 @@ def download_usa(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -402,7 +402,7 @@ def download_st_helens(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -436,7 +436,7 @@ def download_bunny(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     See Also
@@ -473,7 +473,7 @@ def download_bunny_coarse(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     See Also
@@ -508,7 +508,7 @@ def download_cow(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -540,7 +540,7 @@ def download_cow_head(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -564,7 +564,7 @@ def download_faults(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -588,7 +588,7 @@ def download_tensors(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -612,7 +612,7 @@ def download_head(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -648,7 +648,7 @@ def download_head_2(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -676,7 +676,7 @@ def download_bolt_nut(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock or tuple
+    pyvista.MultiBlock or tuple
         DataSet or tuple of filenames depending on ``load``.
 
     Examples
@@ -721,7 +721,7 @@ def download_clown(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -745,7 +745,7 @@ def download_topo_global(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -774,7 +774,7 @@ def download_topo_land(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -805,7 +805,7 @@ def download_coastlines(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -829,7 +829,7 @@ def download_knee(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -859,7 +859,7 @@ def download_knee_full(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -895,7 +895,7 @@ def download_lidar(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -924,7 +924,7 @@ def download_exodus(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -948,7 +948,7 @@ def download_nefertiti(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -985,7 +985,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1023,7 +1023,7 @@ def download_iron_protein(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1047,7 +1047,7 @@ def download_tetrahedron(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1074,7 +1074,7 @@ def download_saddle_surface(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1103,7 +1103,7 @@ def download_sparse_points(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1146,7 +1146,7 @@ def download_foot_bones(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1173,7 +1173,7 @@ def download_guitar(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1197,7 +1197,7 @@ def download_quadratic_pyramid(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1224,7 +1224,7 @@ def download_bird(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1248,7 +1248,7 @@ def download_bird_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1272,7 +1272,7 @@ def download_office(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.StructuredGrid | str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1299,7 +1299,7 @@ def download_horse_points(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1323,7 +1323,7 @@ def download_horse(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1350,7 +1350,7 @@ def download_cake_easy(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1374,7 +1374,7 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1398,7 +1398,7 @@ def download_rectilinear_grid(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.RectilinearGrid | str
+    pyvista.RectilinearGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1427,7 +1427,7 @@ def download_gourds(zoom=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1459,7 +1459,7 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet | str
+    pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1485,7 +1485,7 @@ def download_gourds_pnm(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1509,7 +1509,7 @@ def download_unstructured_grid(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1533,7 +1533,7 @@ def download_letter_k(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1557,7 +1557,7 @@ def download_letter_a(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1584,7 +1584,7 @@ def download_poly_line(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1608,7 +1608,7 @@ def download_cad_model(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1635,7 +1635,7 @@ def download_frog(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1673,7 +1673,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1748,7 +1748,7 @@ def download_chest(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1775,7 +1775,7 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1799,7 +1799,7 @@ def download_prostate(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1823,7 +1823,7 @@ def download_filled_contours(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1847,7 +1847,7 @@ def download_doorman(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1875,7 +1875,7 @@ def download_mug(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1899,7 +1899,7 @@ def download_oblique_cone(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1923,7 +1923,7 @@ def download_emoji(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1947,7 +1947,7 @@ def download_emoji_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1971,7 +1971,7 @@ def download_teapot(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2000,7 +2000,7 @@ def download_brain(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2032,7 +2032,7 @@ def download_structured_grid(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.StructuredGrid | str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2056,7 +2056,7 @@ def download_structured_grid_two(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.StructuredGrid | str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2080,7 +2080,7 @@ def download_trumpet(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2104,7 +2104,7 @@ def download_face(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2133,7 +2133,7 @@ def download_sky_box_nz(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2157,7 +2157,7 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2181,7 +2181,7 @@ def download_disc_quads(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2205,7 +2205,7 @@ def download_honolulu(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2234,7 +2234,7 @@ def download_motor(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2258,7 +2258,7 @@ def download_tri_quadratic_hexahedron(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2290,7 +2290,7 @@ def download_human(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2314,7 +2314,7 @@ def download_vtk(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2338,7 +2338,7 @@ def download_spider(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2362,7 +2362,7 @@ def download_carotid(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2403,7 +2403,7 @@ def download_blow(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2438,7 +2438,7 @@ def download_shark(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2467,7 +2467,7 @@ def download_dragon(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2498,7 +2498,7 @@ def download_armadillo(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2529,7 +2529,7 @@ def download_gears(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2561,7 +2561,7 @@ def download_torso(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2592,7 +2592,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.StructuredGrid | str
+    pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2650,7 +2650,7 @@ def download_tetra_dc_mesh():  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock
+    pyvista.MultiBlock
         DataSet containing the high resolution forward modeled mesh
         and a coarse inverse modeled mesh.
 
@@ -2680,7 +2680,7 @@ def download_model_with_variance(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2706,7 +2706,7 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2737,7 +2737,7 @@ def download_carburator(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     """
@@ -2755,7 +2755,7 @@ def download_carburetor(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2779,7 +2779,7 @@ def download_turbine_blade(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2803,7 +2803,7 @@ def download_pine_roots(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2829,7 +2829,7 @@ def download_crater_topo(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2858,7 +2858,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2889,7 +2889,7 @@ def download_dolfin(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2913,7 +2913,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2950,7 +2950,7 @@ def download_delaunay_example(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2974,7 +2974,7 @@ def download_embryo(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3012,7 +3012,7 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3045,7 +3045,7 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3071,7 +3071,7 @@ def download_beach(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3095,7 +3095,7 @@ def download_rgba_texture(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3121,7 +3121,7 @@ def download_vtk_logo(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3139,7 +3139,7 @@ def download_sky_box_cube_map():  # pragma: no cover
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture containing a skybox.
 
     Examples
@@ -3177,7 +3177,7 @@ def download_cubemap_park():  # pragma: no cover
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture containing a skybox.
 
     Examples
@@ -3211,7 +3211,7 @@ def download_cubemap_space_4k():  # pragma: no cover
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture containing a skybox.
 
     Examples
@@ -3248,7 +3248,7 @@ def download_cubemap_space_16k():  # pragma: no cover
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture containing a skybox.
 
     Notes
@@ -3289,7 +3289,7 @@ def download_backward_facing_step(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3352,7 +3352,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3384,7 +3384,7 @@ def download_woman(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3415,7 +3415,7 @@ def download_lobster(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3441,7 +3441,7 @@ def download_face2(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3467,7 +3467,7 @@ def download_urn(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3498,7 +3498,7 @@ def download_pepper(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3524,7 +3524,7 @@ def download_drill(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3550,7 +3550,7 @@ def download_action_figure(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3629,7 +3629,7 @@ def download_notch_stress(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3653,7 +3653,7 @@ def download_notch_displacement(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3683,7 +3683,7 @@ def download_louis_louvre(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3720,7 +3720,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3753,7 +3753,7 @@ def download_naca(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3789,7 +3789,7 @@ def download_wavy(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3818,7 +3818,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3870,7 +3870,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3967,7 +3967,7 @@ def download_cavity(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4002,7 +4002,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4054,7 +4054,7 @@ def download_lucy(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4252,7 +4252,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData, str, or List[str]
+    pyvista.PolyData, str, or List[str]
         The example ParaView can DataSet or file path(s).
 
     Examples
@@ -4304,7 +4304,7 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         Crushed can dataset or path depending on the value of ``load``.
 
     Examples
@@ -4334,7 +4334,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         Structured, 12 block, 3-D constricting channel, with example use of
         Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
@@ -4369,7 +4369,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         Multiblock format with only 1 data block, simple geometric shape.
         If ``load`` is ``False``, then the path of the example Tecplot file
         is returned.
@@ -4404,7 +4404,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.MultiBlock | str
+    pyvista.MultiBlock | str
         Structured, 4 blocks, 2D (2 planes in third dimension) multielement
         airfoil, with cell centered solution. If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
@@ -4457,7 +4457,7 @@ def download_dicom_stack(load: bool = True) -> Union[pv.ImageData, str]:  # prag
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or path depending on ``load``.
 
     References
@@ -4507,7 +4507,7 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.Texture | str
+    pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4531,7 +4531,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4563,7 +4563,7 @@ def download_moonlanding_image(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         ``DataSet`` or filename depending on ``load``.
 
     Examples
@@ -4594,7 +4594,7 @@ def download_angular_sector(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4625,7 +4625,7 @@ def download_mount_damavand(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4656,7 +4656,7 @@ def download_particles_lethe(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4689,7 +4689,7 @@ def download_gif_simple(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4733,7 +4733,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PointSet | str
+    pyvista.PointSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4787,7 +4787,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PointSet | str
+    pyvista.PointSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4853,7 +4853,7 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4903,7 +4903,7 @@ def download_fea_bracket(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4942,7 +4942,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5004,7 +5004,7 @@ def download_black_vase(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5058,7 +5058,7 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5116,7 +5116,7 @@ def download_bird_bath(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5169,7 +5169,7 @@ def download_owl(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5227,7 +5227,7 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5280,7 +5280,7 @@ def download_sea_vase(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5320,7 +5320,7 @@ def download_dikhololo_night():  # pragma: no cover
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         HDR Texture.
 
     Examples
@@ -5359,7 +5359,7 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData | str
+    pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5411,7 +5411,7 @@ def download_aero_bracket(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5477,7 +5477,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData or str
+    pyvista.ImageData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5563,7 +5563,7 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.UnstructuredGrid or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
