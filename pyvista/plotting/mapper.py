@@ -100,7 +100,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -143,7 +143,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -197,7 +197,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
@@ -269,7 +269,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
@@ -336,7 +336,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
