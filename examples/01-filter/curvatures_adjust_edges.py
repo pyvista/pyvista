@@ -44,7 +44,6 @@ from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingCore import (
-    vtkActor,
     vtkActor2D,
     vtkColorTransferFunction,
     vtkPolyDataMapper,
@@ -175,7 +174,7 @@ def main(argv):
         mapper.SetScalarRange(scalar_range)
         mapper.SetLookupTable(lut)
 
-        actor = vtkActor()
+        actor = pv.Actor()
         actor.SetMapper(mapper)
 
         # Create a scalar bar
@@ -712,7 +711,7 @@ def get_source(source):
         return get_mobius()
     elif surface == 'randomhills':
         source = pv.ParametricRandomHills(
-            randomseed=1, numberofhills=30, u_res=51, v_res=51, generate_texture_coordinates=True
+            random_seed=1, number_of_hills=30, u_res=51, v_res=51, generate_texture_coordinates=True
         )
         return source.translate((0.0, 5.0, 15.0)).rotate_x(-90.0)
     elif surface == 'sphere':
