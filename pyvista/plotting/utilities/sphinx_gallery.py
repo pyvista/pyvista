@@ -27,7 +27,7 @@ def _get_sg_image_scraper():
 
 def html_rst(
     figure_list, sources_dir, fig_titles='', srcsetpaths=None
-):  # numpydoc ignore=PR01,RT01  # pragma: no cover
+):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
 
