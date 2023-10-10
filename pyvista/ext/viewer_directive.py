@@ -23,7 +23,7 @@ def is_path_relative_to(path, other):
         path = str(path.resolve())
         other = str(other.resolve())
         return path.startswith(other)
-    else:
+    else:  # pragma: no cover
         return path.is_relative_to(other)
 
 
