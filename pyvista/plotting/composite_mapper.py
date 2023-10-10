@@ -22,10 +22,10 @@ class BlockAttributes:
 
     Parameters
     ----------
-    block : pv.DataObject
+    block : pyvista.DataObject
         PyVista data object.
 
-    attr : pv.plotting.composite_mapper.CompositeAttributes
+    attr : pyvista.plotting.composite_mapper.CompositeAttributes
         Parent attributes.
 
     Notes
@@ -55,7 +55,9 @@ class BlockAttributes:
     cube is ``1`` as the index of the entire multiblock is ``0``.
 
     >>> import pyvista as pv
-    >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+    >>> dataset = pv.MultiBlock(
+    ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+    ... )
     >>> pl = pv.Plotter()
     >>> actor, mapper = pl.add_composite(dataset)
     >>> mapper.block_attr[1].color = 'b'
@@ -112,7 +114,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -146,7 +148,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -186,7 +188,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -221,7 +223,7 @@ class BlockAttributes:
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -263,10 +265,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
     Parameters
     ----------
-    mapper : pv.plotting.composite_mapper.CompositePolyDataMapper
+    mapper : pyvista.plotting.composite_mapper.CompositePolyDataMapper
         Parent mapper.
 
-    dataset : pv.MultiBlock
+    dataset : pyvista.MultiBlock
         Multiblock dataset.
 
     Notes
@@ -296,7 +298,9 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     cube is ``1`` as the index of the entire multiblock is ``0``.
 
     >>> import pyvista as pv
-    >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
+    >>> dataset = pv.MultiBlock(
+    ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
+    ... )
     >>> pl = pv.Plotter()
     >>> actor, mapper = pl.add_composite(dataset)
     >>> mapper.block_attr[1].color = 'b'
@@ -329,7 +333,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -353,7 +357,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -379,7 +383,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset, color='w')
@@ -404,7 +408,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -456,7 +460,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -521,10 +525,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
     Parameters
     ----------
-    dataset : pv.MultiBlock, optional
+    dataset : pyvista.MultiBlock, optional
         Multiblock dataset.
 
-    theme : pv.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     color_missing_with_nan : bool, optional
@@ -556,14 +560,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':  # numpydoc ignore=RT01
+    def dataset(self) -> 'pyvista.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -578,7 +582,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: 'pv.MultiBlock'):  # numpydoc ignore=GL08
+    def dataset(self, obj: 'pyvista.MultiBlock'):  # numpydoc ignore=GL08
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
@@ -611,7 +615,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -637,7 +641,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
@@ -666,7 +670,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         >>> import pyvista as pv
         >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
+        ...     [pyvista.Cube(), pv.Sphere(center=(0, 0, 1))]
         ... )
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
@@ -754,7 +758,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        cmap : str, list, or pv.LookupTable
+        cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.
@@ -809,7 +813,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
-        if isinstance(cmap, pv.LookupTable):
+        if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
         else:
             if dtype == np.bool_:
@@ -837,7 +841,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
             if cmap is None:
                 if self._theme is None:
-                    cmap = pv.global_theme.cmap
+                    cmap = pyvista.global_theme.cmap
                 else:
                     cmap = self._theme.cmap
 

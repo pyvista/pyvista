@@ -18,7 +18,7 @@ class BaseViewer:
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         Target Plotter instance to view.
     server : trame.Server, optional
         Current Server for Trame Application.
@@ -151,7 +151,7 @@ class BaseViewer:
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
             for _, actor in renderer.actors.items():
-                if isinstance(actor, pv.Actor):
+                if isinstance(actor, pyvista.Actor):
                     actor.prop.show_edges = value
         self.update()
 
@@ -231,7 +231,7 @@ class BaseViewer:
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
-        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pv.Actor)}
+        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
 
     def screenshot(self):
         """Take screenshot and add attachament.

@@ -88,7 +88,7 @@ class StructuredGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        other : pv.StructuredGrid
+        other : pyvista.StructuredGrid
             Structured grid to concatenate.
 
         axis : int
@@ -188,7 +188,7 @@ class StructuredGridFilters(DataSetFilters):
             new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
-        joined = pv.StructuredGrid()
+        joined = pyvista.StructuredGrid()
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)

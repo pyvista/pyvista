@@ -91,7 +91,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target : pv.DataSet
+        target : pyvista.DataSet
             The target dataset to align to.
 
         max_landmarks : int, default: 100
@@ -114,7 +114,7 @@ class DataSetFilters:
 
         Returns
         -------
-        aligned : pv.DataSet
+        aligned : pyvista.DataSet
             The dataset aligned to the target mesh.
 
         matrix : numpy.ndarray
@@ -175,7 +175,7 @@ class DataSetFilters:
         icp.SetCheckMeanDistance(check_mean_distance)
         icp.SetStartByMatchingCentroids(start_by_matching_centroids)
         icp.Update()
-        matrix = pv.array_from_vtkmatrix(icp.GetMatrix())
+        matrix = pyvista.array_from_vtkmatrix(icp.GetMatrix())
         if return_matrix:
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
@@ -359,7 +359,7 @@ class DataSetFilters:
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
         if isinstance(bounds, (float, int)):
             bounds = [bounds, bounds, bounds]
-        elif isinstance(bounds, pv.PolyData):
+        elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
@@ -410,7 +410,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        surface : pv.DataSet
+        surface : pyvista.DataSet
             The surface used to compute the distance.
 
         inplace : bool, default: False
@@ -474,14 +474,14 @@ class DataSetFilters:
         """
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
-        points = pv.convert_array(self.points)
+        points = pyvista.convert_array(self.points)
         dists = _vtk.vtkDoubleArray()
         function.FunctionValue(points, dists)
         if inplace:
-            self.point_data['implicit_distance'] = pv.convert_array(dists)
+            self.point_data['implicit_distance'] = pyvista.convert_array(dists)
             return self
         result = self.copy()
-        result.point_data['implicit_distance'] = pv.convert_array(dists)
+        result.point_data['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
     def clip_scalar(
@@ -596,7 +596,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        surface : pv.PolyData
+        surface : pyvista.PolyData
             The ``PolyData`` surface mesh to use as a clipping
             function.  If this input mesh is not a :class`pyvista.PolyData`,
             the external surface will be extracted.
@@ -647,10 +647,10 @@ class DataSetFilters:
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
-            points = pv.convert_array(self.points)
+            points = pyvista.convert_array(self.points)
             dists = _vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            self['implicit_distance'] = pv.convert_array(dists)
+            self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(
             self,
@@ -835,8 +835,8 @@ class DataSetFilters:
             y = self.center[1]
         if z is None:
             z = self.center[2]
-        output = pv.MultiBlock()
-        if isinstance(self, pv.MultiBlock):
+        output = pyvista.MultiBlock()
+        if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
                 output.append(
                     self[i].slice_orthogonal(
@@ -971,8 +971,8 @@ class DataSetFilters:
         rng = np.linspace(bounds[ax_index * 2] + tolerance, bounds[ax_index * 2 + 1] - tolerance, n)
         center = list(center)
         # Make each of the slices
-        output = pv.MultiBlock()
-        if isinstance(self, pv.MultiBlock):
+        output = pyvista.MultiBlock()
+        if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
                 output.append(
                     self[i].slice_along_axis(
@@ -1006,7 +1006,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        line : pv.PolyData
+        line : pyvista.PolyData
             A PolyData object containing one single PolyLine cell.
 
         generate_triangles : bool, default: False
@@ -2314,7 +2314,7 @@ class DataSetFilters:
 
         if orient:
             try:
-                pv.set_default_active_vectors(dataset)
+                pyvista.set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn("No vector-like data to use for orient. orient will be set to False.")
                 orient = False
@@ -2339,7 +2339,7 @@ class DataSetFilters:
 
         # Clean the points before glyphing
         if tolerance is not None:
-            small = pv.PolyData(source_data.points)
+            small = pyvista.PolyData(source_data.points)
             small.point_data.update(source_data.point_data)
             source_data = small.clean(
                 point_merging=True,
@@ -2581,7 +2581,7 @@ class DataSetFilters:
             _output = _input.extract_points(points, progress_bar=progress_bar)
             has_cells = _output.n_cells != 0
 
-            if isinstance(_input, pv.PolyData):
+            if isinstance(_input, pyvista.PolyData):
                 # Output is UnstructuredGrid, so apply vtkRemovePolyData
                 # to input to make the output as PolyData type instead
                 all_ids = set(range(_input.n_cells))
@@ -2593,7 +2593,7 @@ class DataSetFilters:
                 if len(ids_to_remove) == 0:
                     _output = _input
                 else:
-                    if pv.vtk_version_info < (9, 1, 0):
+                    if pyvista.vtk_version_info < (9, 1, 0):
                         raise VTKVersionError(
                             '`connectivity` with PolyData requires vtk>=9.1.0'
                         )  # pragma: no cover
@@ -2754,7 +2754,7 @@ class DataSetFilters:
                 # which will need to be fixed
                 output_needs_fixing = True
 
-        elif extraction_mode == 'largest' and isinstance(output, pv.PolyData):
+        elif extraction_mode == 'largest' and isinstance(output, pyvista.PolyData):
             # PolyData with 'largest' mode generates bad output with unreferenced points
             output_needs_fixing = True
 
@@ -2874,7 +2874,7 @@ class DataSetFilters:
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
         classifier = labeled.cell_data['RegionId']
-        bodies = pv.MultiBlock()
+        bodies = pyvista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
             b = labeled.threshold(
@@ -3022,7 +3022,7 @@ class DataSetFilters:
 
         """
         if vectors is None:
-            pv.set_default_active_vectors(self)
+            pyvista.set_default_active_vectors(self)
             field, vectors = self.active_vectors_info
         arr = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
@@ -3099,7 +3099,7 @@ class DataSetFilters:
         alg.SetPassCellData(pass_cell_data)
         _update_alg(alg, progress_bar, 'Transforming cell data into point data.')
         active_scalars = None
-        if not isinstance(self, pv.MultiBlock):
+        if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
@@ -3186,7 +3186,7 @@ class DataSetFilters:
         alg.SetPassPointData(pass_point_data)
         _update_alg(alg, progress_bar, 'Transforming point data into cell data')
         active_scalars = None
-        if not isinstance(self, pv.MultiBlock):
+        if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
@@ -3342,7 +3342,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        surface : pv.PolyData
+        surface : pyvista.PolyData
             Set the surface to be used to test for containment. This must be a
             :class:`pyvista.PolyData` object.
 
@@ -3389,7 +3389,7 @@ class DataSetFilters:
         >>> pl.show()
 
         """
-        if not isinstance(surface, pv.PolyData):
+        if not isinstance(surface, pyvista.PolyData):
             raise TypeError("`surface` must be `pyvista.PolyData`")
         if check_surface and surface.n_open_edges > 0:
             raise RuntimeError(
@@ -3432,7 +3432,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        points : pv.DataSet
+        points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
             or something :func:`wrap` can handle.
 
@@ -3487,7 +3487,7 @@ class DataSetFilters:
             PyVistaDeprecationWarning,
         )
 
-        if not pv.is_pyvista_dataset(points):
+        if not pyvista.is_pyvista_dataset(points):
             points = wrap(points)
         alg = _vtk.vtkProbeFilter()
         alg.SetInputData(points)
@@ -3535,7 +3535,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target : pv.DataSet
+        target : pyvista.DataSet
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh.
 
@@ -3608,7 +3608,7 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
-        if not pv.is_pyvista_dataset(target):
+        if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
@@ -3673,7 +3673,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target : pv.DataSet
+        target : pyvista.DataSet
             The vtk data object to sample from. Point and cell arrays from
             this object are interpolated onto this mesh.
 
@@ -3749,12 +3749,12 @@ class DataSetFilters:
         See :ref:`interpolate_example` for more examples using this filter.
 
         """
-        if not pv.is_pyvista_dataset(target):
+        if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pv.ImageData, pv.RectilinearGrid)):
+        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
@@ -3853,13 +3853,13 @@ class DataSetFilters:
 
         Returns
         -------
-        streamlines : pv.PolyData
+        streamlines : pyvista.PolyData
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
 
-        source : pv.PolyData
+        source : pyvista.PolyData
             The points of the source are the seed points for the streamlines.
             Only returned if ``return_source=True``.
 
@@ -3930,7 +3930,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        source : pv.DataSet
+        source : pyvista.DataSet
             The points of the source provide the starting points of the
             streamlines.  This will override both sphere and line sources.
 
@@ -4034,17 +4034,17 @@ class DataSetFilters:
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
         elif vectors is None:
-            pv.set_default_active_vectors(self)
+            pyvista.set_default_active_vectors(self)
 
         if max_time is None:
             max_velocity = self.get_data_range()[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
-        if not isinstance(source, pv.DataSet):
+        if not isinstance(source, pyvista.DataSet):
             raise TypeError("source must be a pyvista.DataSet")
 
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
-        if isinstance(self, pv.StructuredGrid) and isinstance(source, pv.StructuredGrid):
+        if isinstance(self, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
             source = source.cast_to_unstructured_grid()
 
         # Build the algorithm
@@ -4220,7 +4220,7 @@ class DataSetFilters:
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
         elif vectors is None:
-            pv.set_default_active_vectors(self)
+            pyvista.set_default_active_vectors(self)
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -4352,7 +4352,7 @@ class DataSetFilters:
         if resolution is None:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
-        line = pv.Line(pointa, pointb, resolution=resolution)
+        line = pyvista.Line(pointa, pointb, resolution=resolution)
         sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
         return sampled_line
 
@@ -4507,7 +4507,7 @@ class DataSetFilters:
 
         """
         # Make a multiple lines and sample the dataset
-        multiple_lines = pv.MultipleLines(points=points)
+        multiple_lines = pyvista.MultipleLines(points=points)
         sampled_multiple_lines = multiple_lines.sample(
             self, tolerance=tolerance, progress_bar=progress_bar
         )
@@ -4583,7 +4583,7 @@ class DataSetFilters:
         if resolution is None:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
-        circular_arc = pv.CircularArc(pointa, pointb, center, resolution=resolution)
+        circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
         sampled_circular_arc = circular_arc.sample(
             self, tolerance=tolerance, progress_bar=progress_bar
         )
@@ -4667,7 +4667,7 @@ class DataSetFilters:
         if resolution is None:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
-        circular_arc = pv.CircularArcFromNormal(
+        circular_arc = pyvista.CircularArcFromNormal(
             center, resolution=resolution, normal=normal, polar=polar, angle=angle
         )
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
@@ -5319,9 +5319,9 @@ class DataSetFilters:
         if not main_has_priority:
             append_filter.AddInputData(self)
 
-        if isinstance(grid, pv.DataSet):
+        if isinstance(grid, pyvista.DataSet):
             append_filter.AddInputData(grid)
-        elif isinstance(grid, (list, tuple, pv.MultiBlock)):
+        elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
             for grid in grids:
                 append_filter.AddInputData(grid)
@@ -5801,7 +5801,7 @@ class DataSetFilters:
         >>> transformed.plot(show_edges=True)
 
         """
-        if inplace and isinstance(self, pv.Grid):
+        if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
         if isinstance(trans, _vtk.vtkMatrix4x4):
@@ -5885,7 +5885,7 @@ class DataSetFilters:
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
         _update_alg(f, progress_bar, 'Transforming')
-        res = pv.core.filters._get_output(f)
+        res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
         if active_point_scalars_name is not None:
@@ -5902,8 +5902,8 @@ class DataSetFilters:
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
-        if isinstance(self, pv.Grid):
-            output = pv.StructuredGrid()
+        if isinstance(self, pyvista.Grid):
+            output = pyvista.StructuredGrid()
         else:
             output = self.__class__()
         output.copy_from(res, deep=True)
@@ -6067,12 +6067,12 @@ class DataSetFilters:
         """
         # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
         # work correctly, returning the wrong number of partitions.
-        if pv.vtk_version_info < (9, 1, 0):
+        if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
             raise VTKVersionError(
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
-                f'was not found in VTK {pv.vtk_version_info}'
+                f'was not found in VTK {pyvista.vtk_version_info}'
             )  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
@@ -6085,13 +6085,13 @@ class DataSetFilters:
         # pyvista does not yet support vtkPartitionedDataSet
         part = alg.GetOutput()
         datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
-        output = pv.MultiBlock(datasets)
+        output = pyvista.MultiBlock(datasets)
         if not as_composite:
             # note, SetPreservePartitionsInOutput does not work correctly in
             # vtk 9.2.0, so instead we set it to True always and simply merge
             # the result. See:
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
-            return pv.merge(list(output), merge_points=False)
+            return pyvista.merge(list(output), merge_points=False)
         return output
 
     def explode(self, factor=0.1):
@@ -6127,7 +6127,7 @@ class DataSetFilters:
 
         """
         split = self.separate_cells()
-        if not isinstance(split, pv.UnstructuredGrid):
+        if not isinstance(split, pyvista.UnstructuredGrid):
             split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
@@ -6265,7 +6265,7 @@ def _set_threshold_limit(alg, value, method, invert):
         raise TypeError('Value must either be a single scalar or a sequence.')
     alg.SetInvert(invert)
     # Set values and function
-    if pv.vtk_version_info >= (9, 1):
+    if pyvista.vtk_version_info >= (9, 1):
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])

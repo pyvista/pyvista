@@ -104,16 +104,16 @@ def make_legend_face(face):
         If the provided face value is invalid.
     """
     if face is None:
-        legendface = pv.PolyData([0.0, 0.0, 0.0])
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
-        legendface = pv.Triangle()
+        legendface = pyvista.Triangle()
     elif face in ["o", "circle"]:
-        legendface = pv.Circle()
+        legendface = pyvista.Circle()
     elif face in ["r", "rectangle"]:
-        legendface = pv.Rectangle()
-    elif isinstance(face, pv.PolyData):
+        legendface = pyvista.Rectangle()
+    elif isinstance(face, pyvista.PolyData):
         legendface = face
     else:
         raise ValueError(
@@ -481,7 +481,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         float
             Length of the diagional of the bounding box.
         """
-        return pv.Box(self.bounds).length
+        return pyvista.Box(self.bounds).length
 
     @property
     def center(self):  # numpydoc ignore=RT01
@@ -572,7 +572,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if aa_type == 'fxaa':
             if uses_egl():  # pragma: no cover
                 # only display the warning when not building documentation
-                if not pv.BUILDING_GALLERY:
+                if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
                         "VTK compiled with OSMesa/EGL does not properly support "
                         "FXAA anti-aliasing and SSAA will be used instead."
@@ -624,7 +624,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
 
-        poly = pv.PolyData()
+        poly = pyvista.PolyData()
         poly.points = points
         poly.lines = lines
 
@@ -805,7 +805,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        actor : vtk.vtkActor or pv.Actor
+        actor : vtk.vtkActor or pyvista.Actor
             The actor.
 
         actor_properties : vtk.Properties
@@ -987,12 +987,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(actor, pv.DataSet):
+        if isinstance(actor, pyvista.DataSet):
             mapper = _vtk.vtkDataSetMapper()
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = pv.Actor(mapper=mapper)
+            actor = pyvista.Actor(mapper=mapper)
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
@@ -1268,7 +1268,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        mesh : pv.DataSet | pyvista.MultiBlock, optional
+        mesh : pyvista.DataSet | pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
         bounds : sequence[float], optional
@@ -1499,7 +1499,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
-        cube_axes_actor = pv.CubeAxesActor(
+        cube_axes_actor = pyvista.CubeAxesActor(
             self.camera,
             minor_ticks=minor_ticks,
             tick_location=ticks,
@@ -1949,7 +1949,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             j_size = ranges[1]
         else:
             raise NotImplementedError(f'Face ({face}) not implemented')
-        self._floor = pv.Plane(
+        self._floor = pyvista.Plane(
             center=center,
             direction=normal,
             i_size=i_size,
@@ -2048,15 +2048,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        light : vtk.vtkLight or pv.Light
+        light : vtk.vtkLight or pyvista.Light
             Light to add.
 
         """
         # convert from a vtk type if applicable
-        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pv.Light):
-            light = pv.Light.from_vtk(light)
+        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
+            light = pyvista.Light.from_vtk(light)
 
-        if not isinstance(light, pv.Light):
+        if not isinstance(light, pyvista.Light):
             raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
         self._lights.append(light)
         self.AddLight(light)
@@ -3115,7 +3115,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        texture : pv.Texture
+        texture : pyvista.Texture
             Texture.
 
         is_srgb : bool, default: False
@@ -3422,7 +3422,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
                 if face is None:
                     # dummy vtk object
-                    vtk_object = pv.PolyData([0.0, 0.0, 0.0])
+                    vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
 
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
@@ -3835,7 +3835,7 @@ def _line_for_legend():
             0,
         ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
     ]
-    legendface = pv.PolyData()
+    legendface = pyvista.PolyData()
     legendface.points = np.array(points)
     legendface.faces = [4, 0, 1, 2, 3]
     return legendface

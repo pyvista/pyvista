@@ -114,8 +114,8 @@ import jinja2  # Sphinx dependency.
 # enable offscreen to hide figures when generating them.
 import pyvista
 
-pv.BUILDING_GALLERY = True
-pv.OFF_SCREEN = True
+pyvista.BUILDING_GALLERY = True
+pyvista.OFF_SCREEN = True
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -191,7 +191,7 @@ def setup(app):
     app.add_config_value('plot_template', None, True)
     app.add_config_value('plot_setup', None, True)
     app.add_config_value('plot_cleanup', None, True)
-    return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pv.__version__}
+    return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
 # -----------------------------------------------------------------------------
@@ -318,8 +318,8 @@ def _run_code(code, code_path, ns=None, function_name=None):
         return ns
 
     try:
-        if pv.PLOT_DIRECTIVE_THEME is not None:
-            pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
+        if pyvista.PLOT_DIRECTIVE_THEME is not None:
+            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
@@ -367,7 +367,7 @@ def render_figures(
             )
 
             images = []
-            figures = pv.plotting.plotter._ALL_PLOTTERS
+            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
@@ -382,7 +382,7 @@ def render_figures(
                         continue
                 images.append(image_file)
 
-            pv.close_all()  # close and clear all plotters
+            pyvista.close_all()  # close and clear all plotters
 
             results.append((code_piece, images))
     finally:

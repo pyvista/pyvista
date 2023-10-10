@@ -84,7 +84,7 @@ class Renderers:
                 rangem = range(m)
 
             if splitting_position is None:
-                splitting_position = pv.global_theme.multi_rendering_splitting_position
+                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
                 if n >= m:

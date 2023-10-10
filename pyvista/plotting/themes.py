@@ -1,4 +1,4 @@
-"""API description for managing plotting theme parameters in pv.
+"""API description for managing plotting theme parameters in pyvista.
 
 Examples
 --------
@@ -125,9 +125,9 @@ def set_plot_theme(theme):
             new_theme_type = _NATIVE_THEMES[theme].value
         except KeyError:
             raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
-        pv.global_theme.load_theme(new_theme_type())
+        pyvista.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, Theme):
-        pv.global_theme.load_theme(theme)
+        pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
             f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
@@ -2091,7 +2091,7 @@ class Theme(_ThemeConfig):
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set the default color of meshes in pv.
+        """Return or set the default color of meshes in pyvista.
 
         Used for meshes without ``scalars``.
 
@@ -2700,12 +2700,14 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[['pv.Plotter'], None]:  # numpydoc ignore=RT01
+    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
-    def before_close_callback(self, value: Callable[['pv.Plotter'], None]):  # numpydoc ignore=GL08
+    def before_close_callback(
+        self, value: Callable[['pyvista.Plotter'], None]
+    ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
     def restore_defaults(self):  # numpydoc ignore=GL08
@@ -2784,7 +2786,7 @@ class Theme(_ThemeConfig):
 
         Parameters
         ----------
-        theme : pv.plotting.themes.Theme
+        theme : pyvista.plotting.themes.Theme
             Theme to use to overwrite this theme.
 
         Examples

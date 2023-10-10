@@ -18,7 +18,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Mesh to voxelize.
 
     density : float | array_like[float]
@@ -58,7 +58,7 @@ def voxelize(mesh, density=None, check_surface=True):
     >>> vox.plot(show_edges=True)
 
     """
-    if not pv.is_pyvista_dataset(mesh):
+    if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
     if density is None:
         density = mesh.length / 100
@@ -87,8 +87,8 @@ def voxelize(mesh, density=None, check_surface=True):
     # see https://github.com/pyvista/pyvista/pull/4365
 
     # Create unstructured grid from the structured grid
-    grid = pv.StructuredGrid(x, y, z)
-    ugrid = pv.UnstructuredGrid(grid)
+    grid = pyvista.StructuredGrid(x, y, z)
+    ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
     selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
@@ -135,7 +135,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # somewhere
         raise NotImplementedError('Please specify dimensions.')
     dimensions = np.array(dimensions, dtype=int)
-    image = pv.ImageData()
+    image = pyvista.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
@@ -168,7 +168,7 @@ def grid_from_sph_coords(theta, phi, r):
     y_cart = z * np.sin(y) * np.sin(x)
     z_cart = z * np.cos(y)
     # Make a grid object
-    return pv.StructuredGrid(x_cart, y_cart, z_cart)
+    return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
 
 
 def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT02
@@ -329,7 +329,7 @@ def merge(
         raise ValueError("Expected at least one dataset.")
 
     first = datasets[0]
-    if not isinstance(first, pv.DataSet):
+    if not isinstance(first, pyvista.DataSet):
         raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
 
     return datasets[0].merge(

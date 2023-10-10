@@ -27,7 +27,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         Plotter to return or create the viewer instance for.
 
     server : trame.Server, optional
@@ -70,7 +70,7 @@ def plotter_ui(
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         Plotter to create the UI for.
 
     mode : str, default: 'trame'
@@ -98,7 +98,7 @@ def plotter_ui(
     Returns
     -------
     PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
-        Trame view interface for pv.
+        Trame view interface for pyvista.
 
     """
     viewer = get_viewer(plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client')

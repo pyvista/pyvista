@@ -219,7 +219,7 @@ class ImageDataFilters(DataSetFilters):
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pv.ImageData()
+        fixed = pyvista.ImageData()
         fixed.origin = result.bounds[::2]
         fixed.spacing = result.spacing
         fixed.dimensions = result.dimensions
@@ -761,7 +761,7 @@ class ImageDataFilters(DataSetFilters):
                 '`numpy.complex128`.'
             )
 
-    def _flip_uniform(self, axis) -> 'pv.ImageData':
+    def _flip_uniform(self, axis) -> 'pyvista.ImageData':
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.

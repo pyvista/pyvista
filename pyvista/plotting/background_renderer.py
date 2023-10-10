@@ -29,7 +29,7 @@ class BackgroundRenderer(Renderer):
 
         # read the image first as we don't need to create a render if
         # the image path is invalid
-        image_data = pv.read(image_path)
+        image_data = pyvista.read(image_path)
 
         super().__init__(parent, border=False)
         self.SetLayer(0)

@@ -23,10 +23,10 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     Parameters
     ----------
-    mapper : pv.DataSetMapper, optional
+    mapper : pyvista.DataSetMapper, optional
         DataSetMapper.
 
-    prop : pv.Property, optional
+    prop : pyvista.Property, optional
         Property of the actor.
 
     name : str, optional
@@ -269,7 +269,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.plot()
 
         """
-        pl = pv.Plotter()
+        pl = pyvista.Plotter()
         pl.add_actor(self)
         pl.show(**kwargs)
 
@@ -340,7 +340,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> Optional['pv.Property']:  # numpydoc ignore=RT01
+    def backface_prop(self) -> Optional['pyvista.Property']:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -381,5 +381,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()
 
     @backface_prop.setter
-    def backface_prop(self, value: 'pv.Property'):  # numpydoc ignore=GL08
+    def backface_prop(self, value: 'pyvista.Property'):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)

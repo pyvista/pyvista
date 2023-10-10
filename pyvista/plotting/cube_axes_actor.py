@@ -54,7 +54,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     Parameters
     ----------
-    camera : pv.Camera
+    camera : pyvista.Camera
         Camera to link to the axes actor.
 
     minor_ticks : bool, default: False
@@ -180,15 +180,15 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._z_label_visibility = z_label_visibility
 
         if x_label_format is None:
-            x_label_format = pv.global_theme.font.fmt
+            x_label_format = pyvista.global_theme.font.fmt
             if x_label_format is None:
                 x_label_format = '%.1f'
         if y_label_format is None:
-            y_label_format = pv.global_theme.font.fmt
+            y_label_format = pyvista.global_theme.font.fmt
             if y_label_format is None:
                 y_label_format = '%.1f'
         if z_label_format is None:
-            z_label_format = pv.global_theme.font.fmt
+            z_label_format = pyvista.global_theme.font.fmt
             if z_label_format is None:
                 z_label_format = '%.1f'
 
@@ -293,12 +293,12 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetTitleOffset(offset)
 
     @property
-    def camera(self) -> 'pv.Camera':  # numpydoc ignore=RT01
+    def camera(self) -> 'pyvista.Camera':  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: 'pv.Camera'):  # numpydoc ignore=GL08
+    def camera(self, camera: 'pyvista.Camera'):  # numpydoc ignore=GL08
         self.SetCamera(camera)
 
     @property

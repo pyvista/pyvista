@@ -135,7 +135,7 @@ class CompositeFilters:
             return DataSetFilters.outline(
                 self, generate_faces=generate_faces, progress_bar=progress_bar
             )
-        box = pv.Box(bounds=self.bounds)
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
     def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
@@ -161,7 +161,7 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
-        box = pv.Box(bounds=self.bounds)
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
@@ -187,7 +187,7 @@ class CompositeFilters:
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:
-                ids = np.arange(block.n_points, dtype=pv.ID_TYPE)
+                ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
         alg = _vtk.vtkPolyDataNormals()

@@ -62,7 +62,7 @@ class RenderWindowInteractor:
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         Plotter object upon which the initialization of
         RenderWindowInteractor is based.
 

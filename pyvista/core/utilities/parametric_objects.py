@@ -51,7 +51,7 @@ def Spline(points, n_points=None):
 
     """
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pv.vtk_points(points, False))
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # get interpolation density
     u_res = n_points
@@ -132,7 +132,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         )
 
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pv.vtk_points(points, False))
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()

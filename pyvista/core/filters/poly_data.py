@@ -63,8 +63,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pv.PolyData):  # pragma: no cover
-            poly_data = pv.PolyData(poly_data)
+        if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
+            poly_data = pyvista.PolyData(poly_data)
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -75,7 +75,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = pv.point_array(edges, 'point_ind')
+        orig_id = pyvista.point_array(edges, 'point_ind')
 
         return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -86,7 +86,7 @@ class PolyDataFilters(DataSetFilters):
                 raise ValueError(
                     "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface."
                 )
-        if not isinstance(other_mesh, pv.PolyData):
+        if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
@@ -161,7 +161,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pv.PolyData
+        other_mesh : pyvista.PolyData
             Mesh operating on the source mesh.
 
         tolerance : float, tolerance: 1e-5
@@ -234,7 +234,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pv.PolyData
+        other_mesh : pyvista.PolyData
             Mesh operating on the source mesh.
 
         tolerance : float, default: 1e-5
@@ -311,7 +311,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pv.PolyData
+        other_mesh : pyvista.PolyData
             Mesh operating on the source mesh.
 
         tolerance : float, default: 1e-5
@@ -391,7 +391,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        *meshes : list[pv.PolyData]
+        *meshes : list[pyvista.PolyData]
             The PolyData(s) to append with the current one.
 
         inplace : bool, default: False
@@ -419,7 +419,7 @@ class PolyDataFilters(DataSetFilters):
         >>> appended = sp0.append_polydata(sp1, sp2)
         >>> appended.plot()
         """
-        if not all(isinstance(mesh, pv.PolyData) for mesh in meshes):
+        if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
             raise TypeError("All meshes need to be of PolyData type")
 
         append_filter = _vtk.vtkAppendPolyData()
@@ -477,7 +477,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        dataset : pv.DataSet
+        dataset : pyvista.DataSet
             PyVista dataset to merge this mesh with.
 
         merge_points : bool, optional
@@ -518,10 +518,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # check if dataset or datasets are not polydata
-        if isinstance(dataset, (list, tuple, pv.MultiBlock)):
-            is_polydata = all(isinstance(data, pv.PolyData) for data in dataset)
+        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
         else:
-            is_polydata = isinstance(dataset, pv.PolyData)
+            is_polydata = isinstance(dataset, pyvista.PolyData)
 
         if inplace and not is_polydata:
             raise TypeError("In-place merge requires both input datasets to be PolyData.")
@@ -542,7 +542,7 @@ class PolyDataFilters(DataSetFilters):
             # must use extract_geometry to ensure they get converted back
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
-            if isinstance(dataset, (list, tuple, pv.MultiBlock)):
+            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
                 dataset_has_lines_strips = any(
                     [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
                 )
@@ -552,7 +552,7 @@ class PolyDataFilters(DataSetFilters):
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
                 merged = merged.extract_geometry()
             else:
-                polydata_merged = pv.PolyData(
+                polydata_merged = pyvista.PolyData(
                     merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
@@ -588,7 +588,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        mesh : pv.PolyData
+        mesh : pyvista.PolyData
             The mesh to intersect with.
 
         split_first : bool, default: True
@@ -1206,8 +1206,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pv.PolyData):
-            poly_data = pv.PolyData(poly_data)
+        if not isinstance(poly_data, pyvista.PolyData):
+            poly_data = pyvista.PolyData(poly_data)
         if n_sides < 3:
             n_sides = 3
         tube = _vtk.vtkTubeFilter()
@@ -1704,7 +1704,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(
-                np.arange(self.n_points, dtype=pv.ID_TYPE), 'pyvistaOriginalPointIds'
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE), 'pyvistaOriginalPointIds'
             )
 
         normal = _vtk.vtkPolyDataNormals()
@@ -2200,7 +2200,7 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells = np.array(intersection_cells)
 
         if plot:
-            plotter = pv.Plotter(off_screen=off_screen)
+            plotter = pyvista.Plotter(off_screen=off_screen)
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
@@ -2368,7 +2368,7 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
-        plotter = pv.Plotter(
+        plotter = pyvista.Plotter(
             off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None)
         )
         plotter.add_mesh(
@@ -2431,13 +2431,13 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
-        plotter = pv.Plotter(
+        plotter = pyvista.Plotter(
             off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None)
         )
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
 
-        color = pv.Color(color, default_color=pv.global_theme.edge_color)
+        color = pyvista.Color(color, default_color=pyvista.global_theme.edge_color)
 
         if faces:
             centers = self.cell_centers().points[::use_every]
@@ -2525,11 +2525,11 @@ class PolyDataFilters(DataSetFilters):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=pv.ID_TYPE)
+        faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
-        newmesh = pv.PolyData(new_points, faces, deep=True)
+        newmesh = pyvista.PolyData(new_points, faces, deep=True)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested
@@ -2618,7 +2618,7 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, overwrite this mesh with the triangulated
             mesh.
 
-        edge_source : pv.PolyData, optional
+        edge_source : pyvista.PolyData, optional
             Specify the source object used to specify constrained
             edges and loops. If set, and lines/polygons are defined, a
             constrained triangulation is created. The lines/polygons
@@ -3120,7 +3120,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        if pv.vtk_version_info >= (9, 1, 0):
+        if pyvista.vtk_version_info >= (9, 1, 0):
             alg.SetRotationAxis(rotation_axis)
         else:  # pragma: no cover
             if rotation_axis != (0, 0, 1):
@@ -3158,7 +3158,7 @@ class PolyDataFilters(DataSetFilters):
         direction : numpy.ndarray or sequence
             Direction vector to extrude.
 
-        trim_surface : pv.PolyData
+        trim_surface : pyvista.PolyData
             Surface which trims the surface.
 
         extrusion : str, default: "boundary_edges"
@@ -3351,7 +3351,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pv.DataSet
+        other_mesh : pyvista.DataSet
             Other mesh to test collision with.  If the other mesh is
             not a surface, its external surface will be extracted and
             triangulated.
@@ -3460,7 +3460,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # other mesh must be a polydata
-        if not isinstance(other_mesh, pv.PolyData):
+        if not isinstance(other_mesh, pyvista.PolyData):
             other_mesh = other_mesh.extract_surface()
 
         # according to VTK limitations
@@ -3561,10 +3561,10 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        output : pv.PolyData
+        output : pyvista.PolyData
             Surface containing the contour surface.
 
-        edges : pv.PolyData
+        edges : pyvista.PolyData
             Optional edges when ``generate_contour_edges`` is ``True``.
 
         Examples

@@ -20,7 +20,7 @@ class Camera(_vtk.vtkCamera):
 
     Parameters
     ----------
-    renderer : pv.Renderer, optional
+    renderer : pyvista.Renderer, optional
         Renderer to attach the camera to.
 
     Examples
@@ -47,7 +47,7 @@ class Camera(_vtk.vtkCamera):
         self._is_set = False
 
         if renderer:
-            if not isinstance(renderer, pv.Renderer):
+            if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
                     'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 )
@@ -632,7 +632,7 @@ class Camera(_vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         frustum_source.Update()
 
-        frustum = pv.wrap(frustum_source.GetOutput())
+        frustum = pyvista.wrap(frustum_source.GetOutput())
         return frustum
 
     @property

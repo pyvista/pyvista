@@ -421,7 +421,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             "defined and thus cannot be set."
         )
 
-    def cast_to_structured_grid(self) -> 'pv.StructuredGrid':
+    def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
         """Cast this rectilinear grid to a structured grid.
 
         Returns
@@ -455,7 +455,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
     Parameters
     ----------
-    uinput : str, vtk.vtkImageData, pv.ImageData, optional
+    uinput : str, vtk.vtkImageData, pyvista.ImageData, optional
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
@@ -806,11 +806,11 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
-        fmt = "{}, {}, {}".format(*[pv.FLOAT_FORMAT] * 3)
+        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT] * 3)
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
 
-    def cast_to_structured_grid(self) -> 'pv.StructuredGrid':
+    def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
         """Cast this uniform grid to a structured grid.
 
         Returns
@@ -844,7 +844,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         xcoords = gen_coords(0)
         ycoords = gen_coords(1)
         zcoords = gen_coords(2)
-        grid = pv.RectilinearGrid(xcoords, ycoords, zcoords)
+        grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)

@@ -48,7 +48,7 @@ def _check_callable(func, name='callback'):
 
 def _make_quarter_arc():
     """Make a quarter circle centered at the origin."""
-    circ = pv.Circle(resolution=100)
+    circ = pyvista.Circle(resolution=100)
     circ.faces = np.empty(0, dtype=int)
     circ.lines = np.hstack(([26], np.arange(0, 26)))
     return circ
@@ -104,9 +104,9 @@ class AffineWidget3D:
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         The plotter object.
-    actor : pv.Actor
+    actor : pyvista.Actor
         The actor to which the widget is attached to.
     origin : sequence[float], optional
         Origin of the widget. Default is the center of the main actor.
@@ -121,7 +121,7 @@ class AffineWidget3D:
         the widget geometry to be hidden by other actors in the plotter.
     axes_colors : tuple[ColorLike], optional
         Uses the theme by default. Configure the individual axis colors by
-        modifying either the theme with ``pv.global_theme.axes.x_color =
+        modifying either the theme with ``pyvista.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
     axes : numpy.ndarray, optional
         ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default this
@@ -179,7 +179,7 @@ class AffineWidget3D:
     ):
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
-        if pv.vtk_version_info < (9, 2):
+        if pyvista.vtk_version_info < (9, 2):
             raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
         self._axes = np.eye(4)
@@ -203,9 +203,9 @@ class AffineWidget3D:
         self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (
-                pv.global_theme.axes.x_color,
-                pv.global_theme.axes.y_color,
-                pv.global_theme.axes.z_color,
+                pyvista.global_theme.axes.x_color,
+                pyvista.global_theme.axes.y_color,
+                pyvista.global_theme.axes.z_color,
             )
         self._axes_colors = axes_colors
         self._circ = _make_quarter_arc()
@@ -232,7 +232,7 @@ class AffineWidget3D:
     def _init_actors(self, scale, always_visible):
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
-            arrow = pv.Arrow(
+            arrow = pyvista.Arrow(
                 (0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
@@ -313,12 +313,12 @@ class AffineWidget3D:
 
         # convert camera coordinates to world coordinates
         camera = ren.GetActiveCamera()
-        projection_matrix = pv.array_from_vtkmatrix(
+        projection_matrix = pyvista.array_from_vtkmatrix(
             camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1)
         )
         inverse_projection_matrix = np.linalg.inv(projection_matrix)
         camera_coords = np.dot(inverse_projection_matrix, [ndc_x, ndc_y, ndc_z, 1])
-        modelview_matrix = pv.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
+        modelview_matrix = pyvista.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
         inverse_modelview_matrix = np.linalg.inv(modelview_matrix)
         world_coords = np.dot(inverse_modelview_matrix, camera_coords)
 
@@ -364,7 +364,7 @@ class AffineWidget3D:
                 )
                 trans.Translate(-self._origin)
                 trans.Update()
-                rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
+                rot_matrix = pyvista.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
 
             if self._user_interact_callback:

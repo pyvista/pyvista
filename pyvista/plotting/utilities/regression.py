@@ -25,7 +25,7 @@ def remove_alpha(img):
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
     ec.Update()
-    return pv.wrap(ec.GetOutput())
+    return pyvista.wrap(ec.GetOutput())
 
 
 def wrap_image_array(arr):
@@ -59,7 +59,7 @@ def wrap_image_array(arr):
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
-    wrap_img = pv.wrap(img)
+    wrap_img = pyvista.wrap(img)
     wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 

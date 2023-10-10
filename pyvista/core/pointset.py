@@ -78,7 +78,7 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        to_copy : pv.DataSet
+        to_copy : pyvista.DataSet
             Data object to perform the shallow copy from.
 
         """
@@ -271,7 +271,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         the class being abstract.
 
         """
-        if pv.vtk_version_info < (9, 1, 0):
+        if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
         return super().__new__(cls, *args, **kwargs)
 
@@ -684,9 +684,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @staticmethod
     def _make_vertex_cells(npoints):
-        cells = np.empty((npoints, 2), dtype=pv.ID_TYPE)
+        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
         cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
+        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
         return cells
 
     @property
@@ -1204,7 +1204,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
+    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the point normals.
 
         If the point data already contains an array named ``'Normals'``, this
@@ -1239,7 +1239,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def cell_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
+    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         If the cell data already contains an array named ``'Normals'``, this
@@ -1273,7 +1273,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def face_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
+    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.

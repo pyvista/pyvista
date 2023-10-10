@@ -201,7 +201,7 @@ def CylinderStructured(
     zz = zz.ravel(order='f')
 
     # Create the grid
-    grid = pv.StructuredGrid()
+    grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
@@ -1209,7 +1209,7 @@ def Pyramid(points=None):
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = _vtk.vtkUnstructuredGrid()
-    ug.SetPoints(pv.vtk_points(np.array(points), False))
+    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return wrap(ug)
@@ -1249,7 +1249,7 @@ def Triangle(points=None):
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Rectangle(points=None):
@@ -1326,7 +1326,7 @@ def Rectangle(points=None):
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return pv.PolyData(points, cells)
+    return pyvista.PolyData(points, cells)
 
 
 def Quadrilateral(points=None):
@@ -1361,7 +1361,7 @@ def Quadrilateral(points=None):
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius=0.5, resolution=100):
@@ -1399,7 +1399,7 @@ def Circle(radius=0.5, resolution=100):
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
@@ -1438,7 +1438,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Superquadric(

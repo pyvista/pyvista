@@ -290,8 +290,8 @@ class Table(_vtk.vtkTable, DataObject):
                 """Format array information for printing (internal helper)."""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
-                dl = pv.FLOAT_FORMAT.format(dl)
-                dh = pv.FLOAT_FORMAT.format(dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)
+                dh = pyvista.FLOAT_FORMAT.format(dh)
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]
                 else:

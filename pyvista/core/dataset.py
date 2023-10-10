@@ -54,7 +54,7 @@ class ActiveArrayInfo:
 
     Parameters
     ----------
-    association : pv.core.utilities.arrays.FieldAssociation
+    association : pyvista.core.utilities.arrays.FieldAssociation
         Array association.
         Association of the array.
 
@@ -134,7 +134,7 @@ class DataSet(DataSetFilters, DataObject):
 
     """
 
-    plot = pv._plot.plot
+    plot = pyvista._plot.plot
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -531,7 +531,7 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> Optional[pv.PolyData]:  # numpydoc ignore=RT01
+    def arrows(self) -> Optional[pyvista.PolyData]:  # numpydoc ignore=RT01
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -1425,7 +1425,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        ido : pv.DataSet
+        ido : pyvista.DataSet
             Dataset to copy the metadata from.
 
         deep : bool, default: True
@@ -1798,7 +1798,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(
         self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
-    ) -> pv.pyvista_ndarray:
+    ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -2003,15 +2003,15 @@ class DataSet(DataSetFilters, DataObject):
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
-        if isinstance(self, pv.PolyData):
+        if isinstance(self, pyvista.PolyData):
             attrs.append(("N Strips", self.n_strips, "{}"))
         bds = self.bounds
-        fmt = f"{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}"
+        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
         attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
         attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
-        # if self.n_cells <= pv.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), pv.FLOAT_FORMAT))
+        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
+        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
     def _repr_html_(self) -> str:
@@ -2040,8 +2040,8 @@ class DataSet(DataSetFilters, DataObject):
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
                 dl, dh = self.get_data_range(arr)
-                dl = pv.FLOAT_FORMAT.format(dl)
-                dh = pv.FLOAT_FORMAT.format(dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)
+                dh = pyvista.FLOAT_FORMAT.format(dh)
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
                 if arr.ndim > 1:
@@ -2126,7 +2126,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         self.copy_from(mesh)
 
-    def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
+    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
@@ -2153,7 +2153,7 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, pass_cell_data: bool = False) -> pv.PointSet:
+    def cast_to_pointset(self, pass_cell_data: bool = False) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -2182,7 +2182,7 @@ class DataSet(DataSetFilters, DataObject):
         <class 'pyvista.core.pointset.PointSet'>
 
         """
-        pset = pv.PointSet()
+        pset = pyvista.PointSet()
         pset.points = self.points.copy()
         if pass_cell_data:
             self = self.cell_data_to_point_data()
@@ -2190,7 +2190,7 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self, pass_cell_data: bool = False) -> pv.PolyData:
+    def cast_to_poly_points(self, pass_cell_data: bool = False) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -2239,7 +2239,7 @@ class DataSet(DataSetFilters, DataObject):
             Spatial Cell Data       float64    (1000,)
 
         """
-        pset = pv.PolyData(self.points.copy())
+        pset = pyvista.PolyData(self.points.copy())
         if pass_cell_data:
             cell_data = self.copy()
             cell_data.clear_point_data()
@@ -2613,7 +2613,7 @@ class DataSet(DataSetFilters, DataObject):
         array([  86, 1653])
 
         """
-        if pv.vtk_version_info < (9, 2, 0):
+        if pyvista.vtk_version_info < (9, 2, 0):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.2.0")
 
         if np.array(pointa).size != 3:
@@ -2668,7 +2668,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self, index: int) -> pv.Cell:
+    def get_cell(self, index: int) -> pyvista.Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2729,13 +2729,13 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pv.Cell()
+        cell = pyvista.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
 
     @property
-    def cell(self) -> Iterator[pv.Cell]:  # numpydoc ignore=RT01
+    def cell(self) -> Iterator[pyvista.Cell]:  # numpydoc ignore=RT01
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.

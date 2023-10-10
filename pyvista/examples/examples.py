@@ -42,7 +42,7 @@ def load_ant():
     >>> dataset.plot()
 
     """
-    return pv.PolyData(antfile)
+    return pyvista.PolyData(antfile)
 
 
 def load_airplane():
@@ -60,7 +60,7 @@ def load_airplane():
     >>> dataset.plot()
 
     """
-    return pv.PolyData(planefile)
+    return pyvista.PolyData(planefile)
 
 
 def load_sphere():
@@ -78,7 +78,7 @@ def load_sphere():
     >>> dataset.plot()
 
     """
-    return pv.PolyData(spherefile)
+    return pyvista.PolyData(spherefile)
 
 
 def load_uniform():
@@ -96,7 +96,7 @@ def load_uniform():
     >>> dataset.plot()
 
     """
-    return pv.ImageData(uniformfile)
+    return pyvista.ImageData(uniformfile)
 
 
 def load_rectilinear():
@@ -114,7 +114,7 @@ def load_rectilinear():
     >>> dataset.plot()
 
     """
-    return pv.RectilinearGrid(rectfile)
+    return pyvista.RectilinearGrid(rectfile)
 
 
 def load_hexbeam():
@@ -132,7 +132,7 @@ def load_hexbeam():
     >>> dataset.plot()
 
     """
-    return pv.UnstructuredGrid(hexbeamfile)
+    return pyvista.UnstructuredGrid(hexbeamfile)
 
 
 def load_tetbeam():
@@ -154,7 +154,7 @@ def load_tetbeam():
     xrng = np.linspace(0, 1, 3)
     yrng = np.linspace(0, 1, 3)
     zrng = np.linspace(0, 5, 11)
-    grid = pv.RectilinearGrid(xrng, yrng, zrng)
+    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
     return grid.to_tetrahedra()
 
 
@@ -178,7 +178,7 @@ def load_structured():
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
-    return pv.StructuredGrid(x, y, z)
+    return pyvista.StructuredGrid(x, y, z)
 
 
 def load_globe():
@@ -197,7 +197,7 @@ def load_globe():
     >>> dataset.plot(texture=texture)
 
     """
-    globe = pv.PolyData(globefile)
+    globe = pyvista.PolyData(globefile)
     return globe
 
 
@@ -216,7 +216,7 @@ def load_globe_texture():
     >>> dataset.plot()
 
     """
-    return pv.read_texture(mapfile)
+    return pyvista.read_texture(mapfile)
 
 
 def load_channels():
@@ -234,7 +234,7 @@ def load_channels():
     >>> dataset.plot()
 
     """
-    return pv.read(channelsfile)
+    return pyvista.read(channelsfile)
 
 
 def load_spline():
@@ -272,7 +272,7 @@ def load_spline():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    return pv.Spline(points, 1000)
+    return pyvista.Spline(points, 1000)
 
 
 def load_random_hills():
@@ -300,7 +300,7 @@ def load_random_hills():
     >>> mesh.plot()
 
     """
-    mesh = pv.ParametricRandomHills()
+    mesh = pyvista.ParametricRandomHills()
     return mesh.elevation()
 
 
@@ -328,7 +328,7 @@ def load_sphere_vectors():
         vectors                 float32    (842, 3)             VECTORS
 
     """
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
     vectors = np.vstack(
@@ -390,7 +390,7 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()
 
-    grid = pv.ExplicitStructuredGrid(dimensions, corners)
+    grid = pyvista.ExplicitStructuredGrid(dimensions, corners)
     return grid
 
 
@@ -411,7 +411,7 @@ def load_nut():
     >>> mesh.plot(smooth_shading=True, split_sharp_edges=True)
 
     """
-    return pv.read(os.path.join(dir_path, 'nut.ply'))
+    return pyvista.read(os.path.join(dir_path, 'nut.ply'))
 
 
 def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
@@ -495,13 +495,13 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     dim = 100
     sp = (org * 2) / (dim - 1)
-    grid = pv.ImageData(
+    grid = pyvista.ImageData(
         dimensions=(dim, dim, dim),
         spacing=(sp, sp, sp),
         origin=(-org, -org, -org),
     )
 
-    r, theta, phi = pv.cartesian_to_spherical(grid.x, grid.y, grid.z)
+    r, theta, phi = pyvista.cartesian_to_spherical(grid.x, grid.y, grid.z)
     wfc = psi(r, phi, theta).reshape(grid.dimensions)
 
     grid['real_wf'] = np.real(wfc.ravel())

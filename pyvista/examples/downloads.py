@@ -704,7 +704,7 @@ def download_bolt_nut(load=True):  # pragma: no cover
     """
     if not load:
         return (_download_and_read('bolt.slc', load=load), _download_and_read('nut.slc', load=load))
-    blocks = pv.MultiBlock()
+    blocks = pyvista.MultiBlock()
     blocks['bolt'] = _download_and_read('bolt.slc')
     blocks['nut'] = _download_and_read('nut.slc')
     return blocks
@@ -971,7 +971,7 @@ def download_nefertiti(load=True):  # pragma: no cover
 
     if not load:
         return filename
-    return pv.read(filename)
+    return pyvista.read(filename)
 
 
 def download_blood_vessels(load=True):  # pragma: no cover
@@ -1007,7 +1007,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
     if not load:
         return filename
-    mesh = pv.read(filename)
+    mesh = pyvista.read(filename)
     mesh.set_active_vectors('velocity')
     return mesh
 
@@ -1132,7 +1132,7 @@ def download_sparse_points(load=True):  # pragma: no cover
     table_points.SetYColumn('y')
     table_points.SetZColumn('z')
     table_points.Update()
-    return pv.wrap(table_points.GetOutput())
+    return pyvista.wrap(table_points.GetOutput())
 
 
 def download_foot_bones(load=True):  # pragma: no cover
@@ -2631,13 +2631,13 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
         'cookingPlate': (17, 19, 7, 9, 6, 6),
         'furniture': (17, 19, 7, 9, 11, 11),
     }
-    kitchen = pv.MultiBlock()
+    kitchen = pyvista.MultiBlock()
     for key, extent in extents.items():  # pragma: no cover
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = pv.core.filters._get_output(alg)
+        result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -2662,11 +2662,11 @@ def download_tetra_dc_mesh():  # pragma: no cover
 
     """
     fnames = _download_archive('dc-inversion.zip')
-    fwd = pv.read(file_from_files('mesh-forward.vtu', fnames))
+    fwd = pyvista.read(file_from_files('mesh-forward.vtu', fnames))
     fwd.set_active_scalars('Resistivity(log10)-fwd')
-    inv = pv.read(file_from_files('mesh-inverse.vtu', fnames))
+    inv = pyvista.read(file_from_files('mesh-inverse.vtu', fnames))
     inv.set_active_scalars('Resistivity(log10)')
-    return pv.MultiBlock({'forward': fwd, 'inverse': inv})
+    return pyvista.MultiBlock({'forward': fwd, 'inverse': inv})
 
 
 def download_model_with_variance(load=True):  # pragma: no cover
@@ -2993,7 +2993,7 @@ def download_embryo(load=True):  # pragma: no cover
     filename = _download_and_read('embryo.slc', load=False)
     if load:
         # cleanup artifact
-        dataset = pv.read(filename)
+        dataset = pyvista.read(filename)
         mask = dataset['SLCImage'] == 255
         dataset['SLCImage'][mask] = 0
         return dataset
@@ -3161,7 +3161,7 @@ def download_sky_box_cube_map():  # pragma: no cover
     for image in images:
         download_file(image)
 
-    return pv.cubemap(str(FETCHER.path), prefix)
+    return pyvista.cubemap(str(FETCHER.path), prefix)
 
 
 def download_cubemap_park():  # pragma: no cover
@@ -3195,7 +3195,7 @@ def download_cubemap_park():  # pragma: no cover
 
     """
     fnames = download_file('cubemap_park/cubemap_park.zip')
-    return pv.cubemap(os.path.dirname(fnames[0]))
+    return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
 def download_cubemap_space_4k():  # pragma: no cover
@@ -3232,7 +3232,7 @@ def download_cubemap_space_4k():  # pragma: no cover
 
     """
     fnames = download_file('cubemap_space/4k.zip')
-    return pv.cubemap(os.path.dirname(fnames[0]))
+    return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
 def download_cubemap_space_16k():  # pragma: no cover
@@ -3275,7 +3275,7 @@ def download_cubemap_space_16k():  # pragma: no cover
 
     """
     fnames = download_file('cubemap_space/16k.zip')
-    return pv.cubemap(os.path.dirname(fnames[0]))
+    return pyvista.cubemap(os.path.dirname(fnames[0]))
 
 
 def download_backward_facing_step(load=True):  # pragma: no cover
@@ -3302,7 +3302,7 @@ def download_backward_facing_step(load=True):  # pragma: no cover
     filename = _download_archive('EnSight.zip', 'foam_case_0_0_0_0.case')
     if not load:
         return filename
-    return pv.read(filename)
+    return pyvista.read(filename)
 
 
 def download_gpr_data_array(load=True):  # pragma: no cover
@@ -3368,7 +3368,7 @@ def download_gpr_path(load=True):  # pragma: no cover
     if not load:
         return saved_file
     path = np.loadtxt(saved_file, skiprows=1)
-    return pv.PolyData(path)
+    return pyvista.PolyData(path)
 
 
 def download_woman(load=True):  # pragma: no cover
@@ -3598,7 +3598,7 @@ def download_mars_jpg():
         " load=False",
         PyVistaDeprecationWarning,
     )
-    return pv.examples.planets.download_mars_surface(load=False)
+    return pyvista.examples.planets.download_mars_surface(load=False)
 
 
 def download_stars_jpg():
@@ -3615,7 +3615,7 @@ def download_stars_jpg():
         " examples.planets.download_stars_sky_background with load=False",
         PyVistaDeprecationWarning,
     )
-    return pv.examples.planets.download_stars_sky_background(load=False)
+    return pyvista.examples.planets.download_stars_sky_background(load=False)
 
 
 def download_notch_stress(load=True):  # pragma: no cover
@@ -3739,7 +3739,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
     download_file('EnSight/CylinderCrossflow/cylinder_Re35.vel')
     if not load:
         return filename
-    return pv.read(filename)
+    return pyvista.read(filename)
 
 
 def download_naca(load=True):  # pragma: no cover
@@ -3775,7 +3775,7 @@ def download_naca(load=True):  # pragma: no cover
     download_file('EnSight/naca.gold.bin.geo')
     if not load:
         return filename
-    return pv.read(filename)
+    return pyvista.read(filename)
 
 
 def download_wavy(load=True):  # pragma: no cover
@@ -3804,7 +3804,7 @@ def download_wavy(load=True):  # pragma: no cover
     filename = _download_archive('PVD/wavy.zip', 'unzip/wavy.pvd')
     if not load:
         return filename
-    return pv.PVDReader(filename).read()
+    return pyvista.PVDReader(filename).read()
 
 
 def download_single_sphere_animation(load=True):  # pragma: no cover
@@ -3856,7 +3856,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     )
     if not load:
         return filename
-    return pv.PVDReader(filename).read()
+    return pyvista.PVDReader(filename).read()
 
 
 def download_dual_sphere_animation(load=True):  # pragma: no cover
@@ -3910,7 +3910,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     if not load:
         return filename
-    return pv.PVDReader(filename).read()
+    return pyvista.PVDReader(filename).read()
 
 
 def download_osmnx_graph():  # pragma: no cover
@@ -3981,7 +3981,7 @@ def download_cavity(load=True):  # pragma: no cover
     filename = _download_archive('OpenFOAM.zip', target_file='cavity/case.foam')
     if not load:
         return filename
-    return pv.OpenFOAMReader(filename).read()
+    return pyvista.OpenFOAMReader(filename).read()
 
 
 def download_openfoam_tubes(load=True):  # pragma: no cover
@@ -4034,7 +4034,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
     )
     if not load:
         return filename
-    reader = pv.OpenFOAMReader(filename)
+    reader = pyvista.OpenFOAMReader(filename)
     reader.set_active_time_value(1000)
     return reader.read()
 
@@ -4153,7 +4153,7 @@ def download_pump_bracket(load=True):  # pragma: no cover
         'pump_bracket.vtk',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -4231,7 +4231,7 @@ def download_electronics_cooling(load=True):  # pragma: no cover
         # return the structure dataset first
         if fnames[1].endswith('structure.vtp'):
             fnames = fnames[::-1]
-        return pv.read(fnames[0]), pv.read(fnames[1])
+        return pyvista.read(fnames[0]), pyvista.read(fnames[1])
     return fnames
 
 
@@ -4265,7 +4265,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
     >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
     """
-    if pv.vtk_version_info > (9, 1):  # pragma: no cover
+    if pyvista.vtk_version_info > (9, 1):  # pragma: no cover
         raise VTKVersionError(
             'This example file is deprecated for VTK v9.2.0 and newer. '
             'Use `download_can_crushed_hdf` instead.'
@@ -4282,7 +4282,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
     ]
 
     if load:
-        return pv.merge(cans)
+        return pyvista.merge(cans)
     return cans
 
 
@@ -4352,7 +4352,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
     filename = download_file('cgns/sqnz_s.adf.cgns')
     if not load:
         return filename
-    return pv.get_reader(filename).read()
+    return pyvista.get_reader(filename).read()
 
 
 def download_tecplot_ascii(load=True):  # pragma: no cover
@@ -4387,7 +4387,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
     filename = download_file('tecplot_ascii.dat')
     if not load:
         return filename
-    return pv.get_reader(filename).read()
+    return pyvista.get_reader(filename).read()
 
 
 def download_cgns_multi(load=True):  # pragma: no cover
@@ -4432,7 +4432,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     filename = download_file('cgns/multi.cgns')
     if not load:
         return filename
-    reader = pv.get_reader(filename)
+    reader = pyvista.get_reader(filename)
 
     # disable reading the boundary patch. As of VTK 9.1.0 this generates
     # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
@@ -4441,7 +4441,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     return reader.read()
 
 
-def download_dicom_stack(load: bool = True) -> Union[pv.ImageData, str]:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)
@@ -4770,7 +4770,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
     filename = download_file('point-clouds/findus23/halo_low_res.npy')
 
     if load:
-        return pv.PointSet(np.load(filename))
+        return pyvista.PointSet(np.load(filename))
     return filename
 
 
@@ -4825,7 +4825,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
     filename = download_file('point-clouds/findus23/halo_high_res.npy')
 
     if load:
-        return pv.PointSet(np.load(filename))
+        return pyvista.PointSet(np.load(filename))
     return filename
 
 
@@ -4980,7 +4980,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
         target_file='bfac9fd1-e982-4825-9a95-9e5d8c5b4d3e_result_1.pvtu',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -5034,7 +5034,7 @@ def download_black_vase(load=True):  # pragma: no cover
         'blackVase.vtp',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -5092,7 +5092,7 @@ def download_ivan_angel(load=True):  # pragma: no cover
         'Angel.vtp',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -5145,7 +5145,7 @@ def download_bird_bath(load=True):  # pragma: no cover
         'birdBath.vtp',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -5203,7 +5203,7 @@ def download_owl(load=True):  # pragma: no cover
         'owl.vtp',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -5256,7 +5256,7 @@ def download_plastic_vase(load=True):  # pragma: no cover
         'plasticVase.vtp',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 
@@ -5309,7 +5309,7 @@ def download_sea_vase(load=True):  # pragma: no cover
         'seaVase.vtp',
     )
     if load:
-        return pv.read(filename)
+        return pyvista.read(filename)
     return filename
 
 

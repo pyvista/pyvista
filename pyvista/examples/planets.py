@@ -32,7 +32,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
-    sphere = pv.StructuredGrid(x, y, z)
+    sphere = pyvista.StructuredGrid(x, y, z)
     texture_coords = np.empty((sphere.n_points, 2))
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
@@ -396,7 +396,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> pl.show()
 
     """
-    disc = pv.Disc(inner=inner, outer=outer, c_res=c_res)
+    disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
     disc.active_t_coords = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     disc.active_t_coords[:, 0] = radius / np.max(radius)

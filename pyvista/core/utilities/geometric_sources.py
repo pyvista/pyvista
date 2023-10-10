@@ -23,7 +23,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    surf : pv.core.pointset.PolyData
+    surf : pyvista.core.pointset.PolyData
         Mesh to be translated and oriented.
     center : tuple, optional, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
@@ -564,7 +564,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
             raise ValueError('>=2 points need to define multiple lines.')
-        self.SetPoints(pv.vtk_points(points))
+        self.SetPoints(pyvista.vtk_points(points))
 
     @property
     def output(self):

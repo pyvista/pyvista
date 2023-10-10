@@ -269,7 +269,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Fill color of the shapes drawn using this brush. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
-    texture : pv.Texture, optional
+    texture : pyvista.Texture, optional
         Texture used to fill shapes drawn using this brush. Any object
         convertible to a :class:`pyvista.Texture` is allowed. Defaults to
         ``None``.
@@ -330,7 +330,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self._texture = None
             self.SetTexture(None)
         else:
-            self._texture = pv.Texture(val)
+            self._texture = pyvista.Texture(val)
             self.SetTexture(self._texture.to_image())
 
     @property
@@ -1497,11 +1497,11 @@ class _Chart(DocSubs):
 
         """
         if off_screen is None:
-            off_screen = pv.OFF_SCREEN
-        pl = pv.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
+            off_screen = pyvista.OFF_SCREEN
+        pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        if interactive and (not off_screen or pv.BUILDING_GALLERY):  # pragma: no cover
+        if interactive and (not off_screen or pyvista.BUILDING_GALLERY):  # pragma: no cover
             pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
@@ -1963,7 +1963,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
     _DOC_SUBS = {
         "plot_name": "2D line plot",
-        "chart_init": "pv.Chart2D()",
+        "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
@@ -1972,7 +1972,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
-        self._table = pv.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
         self.update(x, y)
         self.color = color
@@ -2112,7 +2112,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     }
     _DOC_SUBS = {
         "plot_name": "2D scatter plot",
-        "chart_init": "pv.Chart2D()",
+        "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
@@ -2121,7 +2121,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
-        self._table = pv.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
         self.update(x, y)
         self.color = color
@@ -2304,14 +2304,14 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
     _DOC_SUBS = {
         "plot_name": "area plot",
-        "chart_init": "pv.Chart2D()",
+        "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
     }
 
     def __init__(self, chart, x, y1, y2=None, color="b", label=""):
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
-        self._table = pv.Table(
+        self._table = pyvista.Table(
             {
                 "x": np.empty(0, np.float32),
                 "y1": np.empty(0, np.float32),
@@ -2480,9 +2480,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     ORIENTATIONS = {"H": _vtk.vtkPlotBar.HORIZONTAL, "V": _vtk.vtkPlotBar.VERTICAL}
     _DOC_SUBS = {
         "plot_name": "bar plot",
-        "chart_init": "pv.Chart2D()",
+        "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
-        "multichart_init": "pv.Chart2D()",
+        "multichart_init": "pyvista.Chart2D()",
         "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
@@ -2494,7 +2494,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         if not isinstance(y[0], (Sequence, np.ndarray)):
             y = (y,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(y))}
-        self._table = pv.Table({"x": np.empty(0, np.float32), **y_data})
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, "x", "y0")
         for i in range(1, len(y)):
             self.SetInputArray(i + 1, f"y{i}")
@@ -2667,9 +2667,9 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     _DOC_SUBS = {
         "plot_name": "stack plot",
-        "chart_init": "pv.Chart2D()",
+        "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
-        "multichart_init": "pv.Chart2D()",
+        "multichart_init": "pyvista.Chart2D()",
         "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
@@ -2679,7 +2679,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         if not isinstance(ys[0], (Sequence, np.ndarray)):
             ys = (ys,)
         y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(ys))}
-        self._table = pv.Table({"x": np.empty(0, np.float32), **y_data})
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, "x", "y0")
         for i in range(1, len(ys)):
             self.SetInputArray(i + 1, f"y{i}")
@@ -3548,16 +3548,18 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     _DOC_SUBS = {
         "plot_name": "box plot",
-        "chart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
+        "chart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
         "plot_init": "chart.plot",
-        "multichart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 4, 5], [0, 1, 2, 2, 3, 4, 5], [0, 1, 2, 3, 3, 4, 5], [0, 1, 2, 3, 4, 4, 5]])",
+        "multichart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 4, 5], [0, 1, 2, 2, 3, 4, 5], [0, 1, 2, 3, 3, 4, 5], [0, 1, 2, 3, 4, 4, 5]])",
         "multiplot_init": "chart.plot",
     }
 
     def __init__(self, chart, data, colors=None, labels=None):
         """Initialize a new box plot instance."""
         super().__init__(chart)
-        self._table = pv.Table({f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)})
+        self._table = pyvista.Table(
+            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
+        )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
         self.SetInputData(self._quartiles.GetOutput())
@@ -3598,7 +3600,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         >>> chart.show()
 
         """
-        stats_table = pv.Table(self._quartiles.GetOutput())
+        stats_table = pyvista.Table(self._quartiles.GetOutput())
         return tuple(stats_table[f"data_{i}"] for i in range(stats_table.n_arrays))
 
     def update(self, data):
@@ -3853,16 +3855,16 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     _DOC_SUBS = {
         "plot_name": "pie plot",
-        "chart_init": "pv.ChartPie([4, 3, 2, 1])",
+        "chart_init": "pyvista.ChartPie([4, 3, 2, 1])",
         "plot_init": "chart.plot",
-        "multichart_init": "pv.ChartPie([4, 3, 2, 1])",
+        "multichart_init": "pyvista.ChartPie([4, 3, 2, 1])",
         "multiplot_init": "chart.plot",
     }
 
     def __init__(self, chart, data, colors=None, labels=None):
         """Initialize a new pie plot instance."""
         super().__init__(chart)
-        self._table = pv.Table(data)
+        self._table = pyvista.Table(data)
         self.SetInputData(self._table)
         self.SetInputArray(0, self._table.keys()[0])
         self.update(data)
@@ -4195,7 +4197,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         # once as a pyvista plot (fetched by the 'pyvista' scraper) and once as a
         # matplotlib figure (fetched by the 'matplotlib' scraper).
         # See #1999 and #2031.
-        if pv.BUILDING_GALLERY:  # pragma: no cover
+        if pyvista.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
 
     @property
@@ -4266,7 +4268,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
-            img_data = pv.Texture(img_arr).to_image()  # Convert to vtkImageData
+            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
     def _render_event(self, *args, plotter_render=False, **kwargs):
@@ -4383,7 +4385,7 @@ class Charts:
 
     Parameters
     ----------
-    renderer : pv.Renderer
+    renderer : pyvista.Renderer
         The renderer to which the charts should be added.
 
     """

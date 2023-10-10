@@ -55,7 +55,7 @@ class DataObject:
 
         Parameters
         ----------
-        to_copy : pv.DataObject or vtk.vtkDataObject
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
             Data object to perform a shallow copy from.
 
         """
@@ -66,7 +66,7 @@ class DataObject:
 
         Parameters
         ----------
-        to_copy : pv.DataObject or vtk.vtkDataObject
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
             Data object to perform a deep copy from.
 
         """
@@ -517,7 +517,7 @@ class DataObject:
 
         Parameters
         ----------
-        dataset : pv.DataSet
+        dataset : pyvista.DataSet
             Dataset to copy the data attributes from.
 
         Examples
@@ -541,7 +541,7 @@ class DataObject:
         """
         state = self.__dict__.copy()
 
-        if pv.PICKLE_FORMAT.lower() == 'xml':
+        if pyvista.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
             # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
@@ -568,7 +568,7 @@ class DataObject:
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pv.PICKLE_FORMAT.lower() == 'legacy':
+        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -580,7 +580,7 @@ class DataObject:
 
         # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
         # processes
-        state['PICKLE_FORMAT'] = pv.PICKLE_FORMAT
+        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
     def __setstate__(self, state):

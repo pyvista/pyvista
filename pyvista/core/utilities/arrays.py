@@ -236,7 +236,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to get the array from.
 
     name : str
@@ -358,7 +358,7 @@ def raise_not_matching(scalars, dataset):
     scalars : numpy.ndarray
         Array of scalars.
 
-    dataset : pv.DataSet
+    dataset : pyvista.DataSet
         Dataset to check against.
 
     Raises
@@ -387,14 +387,14 @@ def _assoc_array(obj, name, association='point'):
     vtk_attr = f'Get{association.title()}Data'
     python_attr = f'{association.lower()}_data'
 
-    if isinstance(obj, pv.DataSet):
+    if isinstance(obj, pyvista.DataSet):
         try:
             return getattr(obj, python_attr).get_array(name)
         except KeyError:  # pragma: no cover
             return None
     abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
     if abstract_array is not None:
-        return pv.pyvista_ndarray(abstract_array)
+        return pyvista.pyvista_ndarray(abstract_array)
     return None
 
 
@@ -403,7 +403,7 @@ def point_array(obj, name):
 
     Parameters
     ----------
-    obj : pv.DataSet | vtk.vtkDataSet
+    obj : pyvista.DataSet | vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -423,7 +423,7 @@ def field_array(obj, name):
 
     Parameters
     ----------
-    obj : pv.DataSet or vtk.vtkDataSet
+    obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -443,7 +443,7 @@ def cell_array(obj, name):
 
     Parameters
     ----------
-    obj : pv.DataSet or vtk.vtkDataSet
+    obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -646,7 +646,7 @@ def vtkmatrix_from_array(array):
     return matrix
 
 
-def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
+def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -657,7 +657,7 @@ def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to set default active vectors.
 
     Raises
@@ -702,7 +702,7 @@ def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
         )
 
 
-def set_default_active_scalars(mesh: 'pv.DataSet') -> None:
+def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
     """Set a default scalars array on mesh, if not already set.
 
     If an active scalars already exists, no changes are made.
@@ -713,7 +713,7 @@ def set_default_active_scalars(mesh: 'pv.DataSet') -> None:
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to set default active scalars.
 
     Raises
