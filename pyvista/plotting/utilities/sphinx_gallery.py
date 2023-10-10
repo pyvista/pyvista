@@ -27,7 +27,7 @@ def _get_sg_image_scraper():
 
 def html_rst(
     figure_list, sources_dir, fig_titles='', srcsetpaths=None
-):  # numpydoc ignore=PR01,RT01
+):  # numpydoc ignore=PR01,RT01  # pragma: no cover
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
 
@@ -104,7 +104,7 @@ class DynamicScraper:
 
     """
 
-    def __call__(self, block, block_vars, gallery_conf):
+    def __call__(self, block, block_vars, gallery_conf):  # pragma: no cover
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.
