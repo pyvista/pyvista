@@ -252,7 +252,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Returns
     -------
-    pyvista.pyvista_ndarray or ``None``
+    pyvista.pyvista_ndarray or None
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 

@@ -103,7 +103,7 @@ def logo_letters(merge=False, depth=0.3):
 
     Returns
     -------
-    pyvista.PolyData or dict[str, pv.PolyData]
+    pyvista.PolyData or dict[str, pyvista.PolyData]
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.

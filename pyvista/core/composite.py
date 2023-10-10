@@ -501,7 +501,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pv.MultiBlock or None
+        pyvista.DataSet or pyvista.MultiBlock or None
             Dataset from the given index if it exists.
 
         Examples
@@ -823,7 +823,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pv.MultiBlock
+        pyvista.DataSet or pyvista.MultiBlock
             Dataset from the given index that was removed.
 
         Examples

@@ -230,7 +230,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData or tuple(pv.PolyData)
+        pyvista.PolyData or Tuple[pyvista.PolyData]
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -6044,7 +6044,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.MultiBlock or pv.UnstructuredGrid
+        pyvista.MultiBlock or pyvista.UnstructuredGrid
             UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
 
         Examples

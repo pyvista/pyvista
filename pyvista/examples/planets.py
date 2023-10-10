@@ -540,7 +540,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -570,7 +570,7 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -600,7 +600,7 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -633,7 +633,7 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -666,7 +666,7 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -696,7 +696,7 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -726,7 +726,7 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -756,7 +756,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.ImageData, pv.Texture, or str
+    pyvista.ImageData, pyvista.Texture, or str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples
@@ -785,7 +785,7 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -815,7 +815,7 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -845,7 +845,7 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -875,7 +875,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -914,7 +914,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
 
     Returns
     -------
-    pyvista.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
