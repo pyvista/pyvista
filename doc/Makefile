@@ -78,3 +78,6 @@ linkcheck:
 
 linkcheck-grep:
 	@! grep -h "^.*:.*: \[\(\(local\)\|\(broken\)\)\]" _build/linkcheck/output.txt
+
+serve-html:
+	python -m http.server --directory "$(BUILDDIR)"/html
