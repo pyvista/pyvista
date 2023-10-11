@@ -891,6 +891,7 @@ def test_add_axes_parameters():
     plotter = pv.Plotter()
     plotter.add_axes()
     plotter.add_axes(
+        shaft_type='line',
         shaft_width=5,
         tip_radius=0.6,
         shaft_length=0.7,
@@ -3679,22 +3680,126 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-def test_axes_actor_orientation():
-    axes_actor1 = pv.AxesActor()
-    axes_actor2 = pv.AxesActor(
-        position=(-0.7, 0.8, 0.3),
-        orientation=(13, 25, 68),
-        origin=(-0.3, -0.2, -0.1),
-        scale=(2, 3, 4),
+@pytest.fixture
+def axes_marker_reference_points():
+    # Create 3 spheres positioned near the tips of XYZ axes markers.
+    # The spheres can be used to validate the correct positioning and
+    # sizing of an AxesActor
+    x = pv.Sphere(center=(1.1, 0, 0), radius=0.1)
+    y = pv.Sphere(center=(0, 1.1, 0), radius=0.1)
+    z = pv.Sphere(center=(0, 0, 1.1), radius=0.1)
+    return x + y + z
+
+
+def test_axes_actor_vtkAxesActor_orientation_bug(axes_marker_reference_points):
+    # Verify that vtkAxesActor scaling/positioning does not work by default.
+    # Despite setting properties, the actor will plot at the origin
+    # aligned with the world x,y,z axes
+    actor = vtk.vtkAxesActor()
+    actor.SetScale(3)
+    actor.SetPosition(1, 2, 3)
+    actor.SetOrientation(10, 20, 30)
+
+    # Increase shaft size so that axes take up more space in the image
+    actor.SetShaftTypeToCylinder()
+    actor.SetCylinderRadius(0.1)
+
+    plot = pv.Plotter()
+    plot.add_actor(actor)
+    # Add points and grid for visual reference
+    plot.add_mesh(axes_marker_reference_points, color="purple")
+    plot.show_grid()
+    plot.show()
+
+
+def test_axes_actor_vtkAxesActor_text_labels_bug():
+    # Test vtkAxesActor text labels show up in unexpected locations
+    import vtk
+
+    import pyvista as pv
+
+    actor1 = vtk.vtkAxesActor()
+    actor1.SetShaftTypeToCylinder()
+    actor1.SetCylinderRadius(0.5)
+    actor1.SetTotalLength(0.5, 0.5, 0.5)
+    actor1.SetNormalizedShaftLength(1, 1, 1)
+
+    actor2 = vtk.vtkAxesActor()
+    actor2.SetShaftTypeToCylinder()
+    actor2.SetConeRadius(0.5)
+    actor2.SetTotalLength(1, 1, 1)
+    actor2.SetNormalizedShaftLength(0, 0, 0)
+    actor2.SetNormalizedTipLength(0.5, 0.5, 0.5)
+    actor2.SetXAxisLabelText('i')
+    actor2.SetYAxisLabelText('j')
+    actor2.SetZAxisLabelText('k')
+
+    plot = pv.Plotter()
+    plot.add_actor(actor1)
+    plot.add_actor(actor2)
+    plot.show()
+
+
+def test_axes_actor(axes_marker_reference_points):
+    # Create axes with implicit transformation
+    actor_implicit = pv.AxesActor(
+        scale=3,
+        position=(1, 2, 3),
+        orientation=(10, 20, 30),
+        shaft_radius=0.5,
+        total_length=0.5,
+        shaft_length=1,
+    )
+
+    matrix = actor_implicit._implicit_matrix
+    assert np.allclose(
+        matrix,
+        [
+            [2.35230628, -1.47721163, 1.13335826, 1.0],
+            [1.56384173, 2.5586056, 0.08908676, 2.0],
+            [-1.01047227, 0.52094453, 2.77624974, 3.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    )
+
+    # Create axes with explicit transformation
+    actor_explicit = pv.AxesActor(
+        user_matrix=matrix,
+        tip_radius=0.5,
+        total_length=1,
+        tip_length=0.5,
         x_label='i',
         y_label='j',
         z_label='k',
+        x_color='magenta',
+        y_color='yellow',
+        z_color='cyan',
     )
+
+    reference = axes_marker_reference_points.transform(matrix)
+    plot = pv.Plotter()
+    plot.add_actor(actor_implicit)
+    plot.add_actor(actor_explicit)
+    plot.add_mesh(reference, color="purple")
+    plot.show_grid()
+    plot.show()
+
+
+def test_axes_marker():
+    # Create actor from three different methods
+    kwargs = dict(properties=dict(specular=0.1), shaft_radius=0.5, shaft_length=1)
+    axes_actor1 = pv.create_axes_marker(position=(0, 0, 0), **kwargs)
+    axes_actor2 = pv.AxesActor(position=(1.5, 0, 0), **kwargs)
+
     plot = pv.Plotter()
     plot.add_actor(axes_actor1)
     plot.add_actor(axes_actor2)
+    plot.add_axes_marker(position=(-1.5, 0, 0), **kwargs)
     plot.show_grid()
     plot.show()
+
+
+# def test_axes_actor_shaft_tip_radius():
 
 
 @skip_lesser_9_0_X
