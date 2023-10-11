@@ -135,12 +135,14 @@ def test_property_set_font_file(prop):
 def test_property_horizontal_justify(prop, horizontal):
     prop.justify = horizontal
     assert prop.GetJustificationAsString().lower() == horizontal
+    assert prop.justify[0] == horizontal
 
 
 @pytest.mark.parametrize('vertical', ['bottom', 'middle', 'top'])
 def test_property_vertical_justify(prop, vertical):
     prop.justify = vertical
     assert prop.GetVerticalJustificationAsString().lower() == vertical
+    assert prop.justify[1] == vertical
 
 
 @pytest.mark.parametrize('horizontal', ['left', 'center', 'right'])
@@ -149,3 +151,4 @@ def test_property_justify(prop, horizontal, vertical):
     prop.justify = horizontal, vertical
     assert prop.GetJustificationAsString().lower() == horizontal
     assert prop.GetVerticalJustificationAsString().lower() == vertical
+    assert prop.justify == (horizontal, vertical)
