@@ -3679,8 +3679,8 @@ def test_add_remove_scalar_bar(sphere):
     assert len(pl._scalar_bar_slots) == init_slots
     pl.show()
 
-
-@pytest.fixture
+# Avoid using this as a fixture since it will cause GC to fail
+# @pytest.fixture()
 def axes_marker_reference_points():
     # Create 3 spheres positioned near the tips of XYZ axes markers.
     # The spheres can be used to validate the correct positioning and
@@ -3691,7 +3691,7 @@ def axes_marker_reference_points():
     return x + y + z
 
 
-def test_axes_actor_vtkAxesActor_orientation_bug(axes_marker_reference_points):
+def test_axes_actor_vtkAxesActor_orientation_bug():
     # Verify that vtkAxesActor scaling/positioning does not work by default.
     # Despite setting properties, the actor will plot at the origin
     # aligned with the world x,y,z axes
@@ -3707,7 +3707,7 @@ def test_axes_actor_vtkAxesActor_orientation_bug(axes_marker_reference_points):
     plot = pv.Plotter()
     plot.add_actor(actor)
     # Add points and grid for visual reference
-    plot.add_mesh(axes_marker_reference_points, color="purple")
+    plot.add_mesh(axes_marker_reference_points(), color="purple")
     plot.show_grid()
     plot.show()
 
@@ -3740,7 +3740,7 @@ def test_axes_actor_vtkAxesActor_text_labels_bug():
     plot.show()
 
 
-def test_axes_actor(axes_marker_reference_points):
+def test_axes_actor():
     # Create axes with implicit transformation
     actor_implicit = pv.AxesActor(
         scale=3,
@@ -3776,7 +3776,7 @@ def test_axes_actor(axes_marker_reference_points):
         z_color='cyan',
     )
 
-    reference = axes_marker_reference_points.transform(matrix)
+    reference = axes_marker_reference_points().transform(matrix)
     plot = pv.Plotter()
     plot.add_actor(actor_implicit)
     plot.add_actor(actor_explicit)
