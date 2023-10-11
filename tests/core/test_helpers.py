@@ -36,7 +36,7 @@ def test_wrap_pyvista_ndarray(sphere):
 )
 def test_wrap_pyvista_ndarray_vtk(dtypes):
     np_dtype, vtk_class = dtypes
-    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]], dtype=np_dtype)
+    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]]).astype(np_dtype)
 
     vtk_array = vtk_class()
     vtk_array.SetNumberOfComponents(3)

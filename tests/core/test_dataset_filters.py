@@ -3087,10 +3087,10 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
     hex_cells = combined.extract_cells_by_type([pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID])
-    assert np.alltrue(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
+    assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
-    assert np.alltrue(tet_cells.celltypes == pv.CellType.TETRA)
+    assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
 
     should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
