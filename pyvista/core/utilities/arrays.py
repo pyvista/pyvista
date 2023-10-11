@@ -1,6 +1,7 @@
 """Internal array utilities."""
 import collections.abc
 import enum
+from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -9,7 +10,6 @@ import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import NumericArray, VectorArray
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
-from itertools import product
 
 
 class FieldAssociation(enum.Enum):
