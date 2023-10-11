@@ -129,3 +129,23 @@ def test_property_set_font_file(prop):
     prop.set_font_file(font_file)
     with pytest.raises(FileNotFoundError):
         prop.set_font_file("foo.ttf")
+
+
+@pytest.mark.parametrize('horizontal', ['left', 'center', 'right'])
+def test_property_horizontal_justify(prop, horizontal):
+    prop.justify = horizontal
+    assert prop.GetJustificationAsString().lower() == horizontal
+
+
+@pytest.mark.parametrize('vertical', ['bottom', 'middle', 'top'])
+def test_property_vertical_justify(prop, vertical):
+    prop.justify = vertical
+    assert prop.GetVerticalJustificationAsString().lower() == vertical
+
+
+@pytest.mark.parametrize('horizontal', ['left', 'center', 'right'])
+@pytest.mark.parametrize('vertical', ['bottom', 'middle', 'top'])
+def test_property_justify(prop, horizontal, vertical):
+    prop.justify = horizontal, vertical
+    assert prop.GetJustificationAsString().lower() == horizontal
+    assert prop.GetVerticalJustificationAsString().lower() == vertical
