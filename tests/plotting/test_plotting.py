@@ -3679,6 +3679,7 @@ def test_add_remove_scalar_bar(sphere):
     assert len(pl._scalar_bar_slots) == init_slots
     pl.show()
 
+
 # Avoid using this as a fixture since it will cause GC to fail
 # @pytest.fixture()
 def axes_marker_reference_points():
