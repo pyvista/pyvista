@@ -490,7 +490,8 @@ def test_save(sphere, extension, binary, tmpdir):
 
     if binary:
         if extension == '.vtp':
-            assert 'binary' in open(filename).read(1000)
+            with open(filename) as f:
+                assert 'binary' in f.read(1000)
         else:
             is_binary(filename)
     else:
