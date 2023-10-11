@@ -1,11 +1,12 @@
 """Internal array utilities."""
 import collections.abc
 import enum
+from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import NumericArray, VectorArray
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
@@ -31,7 +32,7 @@ def parse_field_choice(field):
 
     Returns
     -------
-    pyvista.FieldAssociation
+    pv.FieldAssociation
         Field association.
 
     """
@@ -123,11 +124,11 @@ def copy_vtk_array(array, deep=True):
     Perform a deep copy of a vtk array.
 
     >>> import vtk
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> arr = vtk.vtkFloatArray()
     >>> _ = arr.SetNumberOfValues(10)
     >>> arr.SetValue(0, 1)
-    >>> arr_copy = pyvista.core.utilities.arrays.copy_vtk_array(arr)
+    >>> arr_copy = pv.core.utilities.arrays.copy_vtk_array(arr)
     >>> arr_copy.GetValue(0)
     1.0
 
@@ -236,7 +237,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Parameters
     ----------
-    mesh : pyvista.DataSet
+    mesh : pv.DataSet
         Dataset to get the array from.
 
     name : str
@@ -252,7 +253,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Returns
     -------
-    pyvista.pyvista_ndarray or ``None``
+    pv.pyvista_ndarray or ``None``
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -316,7 +317,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
 
     Returns
     -------
-    pyvista.core.utilities.arrays.FieldAssociation
+    pv.core.utilities.arrays.FieldAssociation
         Association of the array. If array is not present and ``err`` is
         ``False``, ``FieldAssociation.NONE`` is returned.
 
@@ -358,7 +359,7 @@ def raise_not_matching(scalars, dataset):
     scalars : numpy.ndarray
         Array of scalars.
 
-    dataset : pyvista.DataSet
+    dataset : pv.DataSet
         Dataset to check against.
 
     Raises
@@ -387,14 +388,14 @@ def _assoc_array(obj, name, association='point'):
     vtk_attr = f'Get{association.title()}Data'
     python_attr = f'{association.lower()}_data'
 
-    if isinstance(obj, pyvista.DataSet):
+    if isinstance(obj, pv.DataSet):
         try:
             return getattr(obj, python_attr).get_array(name)
         except KeyError:  # pragma: no cover
             return None
     abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
     if abstract_array is not None:
-        return pyvista.pyvista_ndarray(abstract_array)
+        return pv.pyvista_ndarray(abstract_array)
     return None
 
 
@@ -403,7 +404,7 @@ def point_array(obj, name):
 
     Parameters
     ----------
-    obj : pyvista.DataSet | vtk.vtkDataSet
+    obj : pv.DataSet | vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -411,7 +412,7 @@ def point_array(obj, name):
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    pv.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -423,7 +424,7 @@ def field_array(obj, name):
 
     Parameters
     ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
+    obj : pv.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -431,7 +432,7 @@ def field_array(obj, name):
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    pv.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -443,7 +444,7 @@ def cell_array(obj, name):
 
     Parameters
     ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
+    obj : pv.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -451,7 +452,7 @@ def cell_array(obj, name):
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    pv.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -610,9 +611,8 @@ def array_from_vtkmatrix(matrix):
             f' got {type(matrix).__name__} instead.'
         )
     array = np.zeros(shape)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            array[i, j] = matrix.GetElement(i, j)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
     return array
 
 
@@ -640,13 +640,12 @@ def vtkmatrix_from_array(array):
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
-    for i in range(m):
-        for j in range(n):
-            matrix.SetElement(i, j, array[i, j])
+    for i, j in product(range(m), range(n)):
+        matrix.SetElement(i, j, array[i, j])
     return matrix
 
 
-def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
+def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
     """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -657,7 +656,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
 
     Parameters
     ----------
-    mesh : pyvista.DataSet
+    mesh : pv.DataSet
         Dataset to set default active vectors.
 
     Raises
@@ -702,7 +701,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
         )
 
 
-def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
+def set_default_active_scalars(mesh: 'pv.DataSet') -> None:
     """Set a default scalars array on mesh, if not already set.
 
     If an active scalars already exists, no changes are made.
@@ -713,7 +712,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
 
     Parameters
     ----------
-    mesh : pyvista.DataSet
+    mesh : pv.DataSet
         Dataset to set default active scalars.
 
     Raises
