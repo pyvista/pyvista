@@ -9,6 +9,7 @@ import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import NumericArray, VectorArray
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
+from itertools import product
 
 
 class FieldAssociation(enum.Enum):
@@ -610,9 +611,8 @@ def array_from_vtkmatrix(matrix):
             f' got {type(matrix).__name__} instead.'
         )
     array = np.zeros(shape)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            array[i, j] = matrix.GetElement(i, j)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
     return array
 
 
@@ -640,9 +640,8 @@ def vtkmatrix_from_array(array):
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
-    for i in range(m):
-        for j in range(n):
-            matrix.SetElement(i, j, array[i, j])
+    for i, j in product(range(m), range(n)):
+        matrix.SetElement(i, j, array[i, j])
     return matrix
 
 
