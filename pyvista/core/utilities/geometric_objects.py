@@ -410,7 +410,7 @@ def SolidSphere(
     direction=(0.0, 0.0, 1.0),
     radians=False,
     tol_radius=1.0e-8,
-    tol_angle=1.0e-8,
+    tol_angle=None,
 ):
     """Create a solid sphere.
 
@@ -483,9 +483,11 @@ def SolidSphere(
     tol_radius : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
 
-    tol_angle : bool, default: 1.0e-8
-        Absolute tolerance (specified in radians) for endpoint detection
-        for ``phi`` and ``theta``.
+    tol_angle : bool, default: 1.0e-8 in degrees
+        Absolute tolerance for endpoint detection
+        for ``phi`` and ``theta``. Unit is determined by choice
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
+        equivalent in radians.
 
     Returns
     -------
@@ -563,7 +565,7 @@ def SolidSphereGeneric(
     direction=(0.0, 0.0, 1.0),
     radians=False,
     tol_radius=1.0e-8,
-    tol_angle=1.0e-8,
+    tol_angle=None,
 ):
     """Create a solid sphere with flexible sampling.
 
@@ -613,9 +615,11 @@ def SolidSphereGeneric(
     tol_radius : bool, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
 
-    tol_angle : bool, default: 1.0e-8
-        Absolute tolerance (specified in radians) for endpoint detection
-        for ``phi`` and ``theta``.
+    tol_angle : bool, default: 1.0e-8 in degrees
+        Absolute tolerance for endpoint detection
+        for ``phi`` and ``theta``. Unit is determined by choice
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
+        equivalent in radians.
 
     Returns
     -------
@@ -664,8 +668,13 @@ def SolidSphereGeneric(
         radius = np.linspace(0, 0.5, 5)
     radius = np.asanyarray(radius)
 
-    # Hereafter all degrees are in radians
-    # Also radius, phi, theta are now np.ndarrays
+    # Default tolerance from user is set in degrees
+    # But code is in radians.
+    if tol_angle is None:
+        tol_angle = np.deg2rad(1e-8)
+    elif not radians:
+        tol_angle = np.deg2rad(tol_angle)
+
     if theta is None:
         theta = np.linspace(0, 2 * np.pi, 30)
     else:
@@ -675,6 +684,9 @@ def SolidSphereGeneric(
         phi = np.linspace(0, np.pi, 30)
     else:
         phi = np.asanyarray(phi) if radians else np.deg2rad(phi)
+
+    # Hereafter all degrees are in radians
+    # radius, phi, theta are now np.ndarrays
 
     nr = len(radius)
     ntheta = len(theta)
