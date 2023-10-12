@@ -516,7 +516,7 @@ class TextProperty(_vtk.vtkTextProperty):
             justification = 'center'
         return justification
 
-    @justification.setter
+    @justification_horizontal.setter
     def justification_horizontal(self, justification: str):  # numpydoc ignore=GL08
         if justification.lower() == 'left':
             self.SetJustificationToLeft()
