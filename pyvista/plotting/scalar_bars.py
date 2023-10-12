@@ -3,7 +3,7 @@ import weakref
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista import MAX_N_COLOR_BARS
 
 from . import _vtk
@@ -16,7 +16,7 @@ class ScalarBars:
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         Plotter that the scalar bars are associated with.
 
     """
@@ -299,7 +299,7 @@ class ScalarBars:
         render : bool, default: False
             Force a render when True.
 
-        theme : pv.plotting.themes.Theme, optional
+        theme : pyvista.plotting.themes.Theme, optional
             Plot-specific theme.  By default, calling from the
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
@@ -340,7 +340,7 @@ class ScalarBars:
             raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
 
         if theme is None:
-            theme = pv.global_theme
+            theme = pyvista.global_theme
 
         if interactive is None:
             interactive = theme.interactive
@@ -424,7 +424,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = pv.LookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0

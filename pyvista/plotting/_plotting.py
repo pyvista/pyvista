@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -31,13 +31,13 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to prepare smooth shading for.
 
     scalars : sequence
         Sequence of scalars.
 
-    texture : pv.Texture or np.ndarray, optional
+    texture : pyvista.Texture or np.ndarray, optional
         A texture to apply to the mesh.
 
     split_sharp_edges : bool
@@ -57,11 +57,11 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Always a surface as we need to compute point normals.
 
     """
-    is_polydata = isinstance(mesh, pv.PolyData)
+    is_polydata = isinstance(mesh, pyvista.PolyData)
     indices_array = None
 
     has_scalars = scalars is not None
@@ -115,7 +115,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to process the opacity for.
 
     opacity : str, sequence

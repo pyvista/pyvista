@@ -2,7 +2,7 @@
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from .downloads import _download_and_read
 
@@ -23,7 +23,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Sphere mesh with texture coordinates.
 
     """
@@ -32,7 +32,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
-    sphere = pv.StructuredGrid(x, y, z)
+    sphere = pyvista.StructuredGrid(x, y, z)
     texture_coords = np.empty((sphere.n_points, 2))
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
@@ -56,7 +56,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Sun dataset.
 
     Examples
@@ -96,7 +96,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Moon dataset.
 
     Examples
@@ -136,7 +136,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mercury dataset.
 
     Examples
@@ -176,7 +176,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Venus dataset.
 
     Examples
@@ -216,7 +216,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Earth dataset.
 
     Examples
@@ -256,7 +256,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mars dataset.
 
     Examples
@@ -296,7 +296,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Jupiter dataset.
 
     Examples
@@ -336,7 +336,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Saturn dataset.
 
     Examples
@@ -378,7 +378,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Dataset with texture for Saturn's rings.
 
     Examples
@@ -396,7 +396,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> pl.show()
 
     """
-    disc = pv.Disc(inner=inner, outer=outer, c_res=c_res)
+    disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
     disc.active_t_coords = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     disc.active_t_coords[:, 0] = radius / np.max(radius)
@@ -420,7 +420,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Uranus dataset.
 
     Examples
@@ -460,7 +460,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Neptune dataset.
 
     Examples
@@ -500,7 +500,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Pluto dataset.
 
     Examples
@@ -540,7 +540,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -570,7 +570,7 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -600,7 +600,7 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -633,7 +633,7 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -666,7 +666,7 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -696,7 +696,7 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -726,7 +726,7 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -756,7 +756,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.ImageData, pv.Texture, or str
+    pyvista.ImageData, pyvista.Texture, or str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples
@@ -785,7 +785,7 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -815,7 +815,7 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -845,7 +845,7 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -875,7 +875,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -914,7 +914,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
 
     Returns
     -------
-    pv.DataSet, pv.Texture, or str
+    pyvista.DataSet, pyvista.Texture, or str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 

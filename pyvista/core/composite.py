@@ -10,7 +10,7 @@ from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overl
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -100,7 +100,7 @@ class MultiBlock(
 
     """
 
-    plot = pv._plot.plot
+    plot = pyvista._plot.plot
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
@@ -408,7 +408,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        dataset : pv.DataSet or pv.MultiBlock
+        dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset to append to this multi-block.
 
         name : str, optional
@@ -453,7 +453,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        datasets : Iterable[pv.DataSet or pv.MultiBlock]
+        datasets : Iterable[pyvista.DataSet or pyvista.MultiBlock]
             Datasets to extend.
 
         Examples
@@ -496,12 +496,12 @@ class MultiBlock(
         index : str
             Index or name of the dataset within the multiblock.
 
-        default : pv.DataSet or pv.MultiBlock, optional
+        default : pyvista.DataSet or pyvista.MultiBlock, optional
             Default to return if index is not in the multiblock.
 
         Returns
         -------
-        pv.DataSet or pv.MultiBlock or None
+        pyvista.DataSet or pyvista.MultiBlock or None
             Dataset from the given index if it exists.
 
         Examples
@@ -615,7 +615,7 @@ class MultiBlock(
         ----------
         index : int
             Index of the block to replace.
-        dataset : pv.DataSet or pv.MultiBlock
+        dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset for replacing the one at index.
 
         Examples
@@ -700,7 +700,7 @@ class MultiBlock(
         # data, i, and name are a single value now
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
-        data = cast(pv.DataSet, data)
+        data = cast(pyvista.DataSet, data)
 
         i = range(self.n_blocks)[i]
 
@@ -779,7 +779,7 @@ class MultiBlock(
         ----------
         index : int
             Index before which to insert data.
-        dataset : pv.DataSet or pv.MultiBlock
+        dataset : pyvista.DataSet or pyvista.MultiBlock
             Data to insert.
         name : str, optional
             Name for key to give dataset.  A default name is given
@@ -823,7 +823,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.DataSet or pv.MultiBlock
+        pyvista.DataSet or pyvista.MultiBlock
             Dataset from the given index that was removed.
 
         Examples
@@ -997,7 +997,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.MultiBlock
+        pyvista.MultiBlock
            Deep or shallow copy of the ``MultiBlock``.
 
         Examples
@@ -1049,7 +1049,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.core.utilities.arrays.FieldAssociation
+        pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
         numpy.ndarray
@@ -1127,7 +1127,7 @@ class MultiBlock(
 
         Returns
         -------
-        pv.MultiBlock
+        pyvista.MultiBlock
             MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
         Notes
@@ -1145,9 +1145,9 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     dataset.replace(i, block.as_polydata_blocks(copy=copy))
-                elif isinstance(block, pv.PointSet):
+                elif isinstance(block, pyvista.PointSet):
                     dataset.replace(i, block.cast_to_polydata(deep=True))
-                elif not isinstance(block, pv.PolyData):
+                elif not isinstance(block, pyvista.PolyData):
                     dataset.replace(i, block.extract_surface())
                 elif copy:
                     # dataset is a PolyData
@@ -1155,7 +1155,7 @@ class MultiBlock(
             else:
                 # must have empty polydata within these datasets as some
                 # downstream filters don't work on null pointers (i.e. None)
-                dataset[i] = pv.PolyData()
+                dataset[i] = pyvista.PolyData()
 
         return dataset
 
@@ -1177,7 +1177,7 @@ class MultiBlock(
                 if not block.is_all_polydata:
                     return False
             else:
-                if not isinstance(block, pv.PolyData):
+                if not isinstance(block, pyvista.PolyData):
                     return False
 
         return True

@@ -184,7 +184,7 @@ from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
@@ -739,7 +739,7 @@ class Color:
         # Use default color if no color is provided
         if color is None:
             if default_color is None:
-                color = pv.global_theme.color
+                color = pyvista.global_theme.color
             else:
                 color = default_color
 

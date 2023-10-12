@@ -3,7 +3,7 @@
 import os
 import shutil
 
-import pyvista as pv
+import pyvista
 
 BUILDING_GALLERY_ERROR_MSG = (
     "pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture "
@@ -78,12 +78,12 @@ class Scraper:
         """
         from sphinx_gallery.scrapers import figure_rst
 
-        if not pv.BUILDING_GALLERY:
+        if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
-        figures = pv.plotting.plotter._ALL_PLOTTERS
+        figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for _, plotter in figures.items():
             fname = next(image_path_iterator)
             if hasattr(plotter, "_gif_filename"):
@@ -93,7 +93,7 @@ class Scraper:
             else:
                 plotter.screenshot(fname)
             image_names.append(fname)
-        pv.close_all()  # close and clear all plotters
+        pyvista.close_all()  # close and clear all plotters
         return figure_rst(image_names, gallery_conf["src_dir"])
 
 
@@ -116,12 +116,12 @@ class DynamicScraper:
         Called by sphinx-gallery.
 
         """
-        if not pv.BUILDING_GALLERY:
+        if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
-        figures = pv.plotting.plotter._ALL_PLOTTERS
+        figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for _, plotter in figures.items():
             fname = next(image_path_iterator)
             # if hasattr(plotter, '_gif_filename'):
@@ -134,5 +134,5 @@ class DynamicScraper:
             with open(fname, "wb") as f:
                 f.write(plotter.last_vtksz)
             image_names.append(fname)
-        pv.close_all()  # close and clear all plotters
+        pyvista.close_all()  # close and clear all plotters
         return html_rst(image_names, gallery_conf["src_dir"])

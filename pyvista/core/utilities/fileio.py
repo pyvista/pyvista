@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -33,7 +33,7 @@ def set_pickle_format(format: str):
         raise ValueError(
             f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
         )
-    pv.PICKLE_FORMAT = format
+    pyvista.PICKLE_FORMAT = format
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -121,7 +121,7 @@ def read_legacy(filename, progress_bar=False):
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         Wrapped pyvista mesh.
 
     Examples
@@ -186,7 +186,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -210,7 +210,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
     if isinstance(filename, (list, tuple)):
-        multi = pv.MultiBlock()
+        multi = pyvista.MultiBlock()
         for each in filename:
             if isinstance(each, (str, pathlib.Path)):
                 name = os.path.basename(str(each))
@@ -231,7 +231,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         return read_exodus(filename)
 
     try:
-        reader = pv.get_reader(filename, force_ext)
+        reader = pyvista.get_reader(filename, force_ext)
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
@@ -264,7 +264,7 @@ def _apply_attrs_to_reader(reader, attrs):
 
     Parameters
     ----------
-    reader : pv.BaseReader
+    reader : pyvista.BaseReader
         Reader to call methods on.
 
     attrs : dict
@@ -307,7 +307,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         PyVista texture object.
 
     Examples
@@ -331,12 +331,12 @@ def read_texture(filename, attrs=None, progress_bar=False):
         image = read(filename, attrs=attrs, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")
-        return pv.Texture(image)
+        return pyvista.Texture(image)
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
+    return pyvista.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
 def read_exodus(
@@ -382,7 +382,7 @@ def read_exodus(
 
     Returns
     -------
-    pv.DataSet
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -393,7 +393,7 @@ def read_exodus(
     """
     from .helpers import wrap
 
-    # lazy import here to avoid loading module on import pyvista as pv
+    # lazy import here to avoid loading module on import pyvista
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
     except ImportError:
@@ -461,7 +461,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
 
     Returns
     -------
-    pv.MultiBlock
+    pyvista.MultiBlock
         Data read from the file.
 
     """
@@ -472,7 +472,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress
     )
 
     filename = _process_filename(filename)
-    reader = pv.MultiBlockPlot3DReader(filename)
+    reader = pyvista.MultiBlockPlot3DReader(filename)
     reader.add_q_files(q_filenames)
     reader.auto_detect_format = auto_detect
     if attrs is not None:
@@ -514,7 +514,7 @@ def from_meshio(mesh):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         A PyVista unstructured grid representation of the input ``meshio`` mesh.
 
     Raises
@@ -550,7 +550,7 @@ def from_meshio(mesh):
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
-    grid = pv.UnstructuredGrid(
+    grid = pyvista.UnstructuredGrid(
         np.concatenate(cells).astype(np.int64, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
@@ -581,7 +581,7 @@ def read_meshio(filename, file_format=None):
 
     Returns
     -------
-    pv.Dataset
+    pyvista.Dataset
         The mesh read from the file.
 
     Raises
@@ -610,7 +610,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     filename : str
         Filename to save the mesh to.
 
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Any PyVista mesh/spatial data type.
 
     file_format : str, optional
@@ -645,7 +645,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     filename = os.path.abspath(os.path.expanduser(str(filename)))
 
     # Cast to pyvista.UnstructuredGrid
-    if not isinstance(mesh, pv.UnstructuredGrid):
+    if not isinstance(mesh, pyvista.UnstructuredGrid):
         mesh = mesh.cast_to_unstructured_grid()
 
     # Copy useful arrays to avoid repeated calls to properties
