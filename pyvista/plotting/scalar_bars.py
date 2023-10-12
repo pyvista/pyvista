@@ -3,7 +3,7 @@ import weakref
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista import MAX_N_COLOR_BARS
 
 from . import _vtk
@@ -16,7 +16,7 @@ class ScalarBars:
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         Plotter that the scalar bars are associated with.
 
     """
@@ -97,9 +97,9 @@ class ScalarBars:
         Remove a scalar bar from a plotter.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
+        >>> mesh = pyvista.Sphere()
         >>> mesh['data'] = mesh.points[:, 2]
-        >>> pl = pv.Plotter()
+        >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(mesh, cmap='coolwarm')
         >>> pl.remove_scalar_bar()
         >>> pl.show()
@@ -299,7 +299,7 @@ class ScalarBars:
         render : bool, default: False
             Force a render when True.
 
-        theme : pv.plotting.themes.Theme, optional
+        theme : pyvista.plotting.themes.Theme, optional
             Plot-specific theme.  By default, calling from the
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
@@ -320,9 +320,9 @@ class ScalarBars:
         outline, and has a custom formatting.
 
         >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
+        >>> sphere = pyvista.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pv.Plotter()
+        >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
         >>> _ = plotter.add_scalar_bar(
         ...     'Data',
@@ -340,7 +340,7 @@ class ScalarBars:
             raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
 
         if theme is None:
-            theme = pv.global_theme
+            theme = pyvista.global_theme
 
         if interactive is None:
             interactive = theme.interactive
@@ -424,7 +424,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = pv.LookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
@@ -507,7 +507,7 @@ class ScalarBars:
         self._scalar_bar_mappers[title] = [mapper]
 
         scalar_bar.SetTitle(title)
-        title_text = scalar_bar.GetTitleTextProperty()
+        title_text = pyvista.wrap(scalar_bar.GetTitleTextProperty())
 
         title_text.justification = "center", title_text.justification[1]
 
