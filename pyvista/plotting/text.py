@@ -250,8 +250,11 @@ class TextProperty(_vtk.vtkTextProperty):
     shadow : bool, optional
         If enable the shadow.
 
-    justification : str, tuple
-        Text's justification (horizontal, vertical).
+    justification_horizontal : str
+        Text's horizontal justification.
+
+    justification_vertical : str
+        Text's vertical justification.
 
     Examples
     --------
@@ -284,7 +287,8 @@ class TextProperty(_vtk.vtkTextProperty):
         font_size=None,
         font_file=None,
         shadow=False,
-        justification=None,
+        justification_horizontal=None,
+        justification_vertical=None,
     ):
         """Initialize text's property."""
         super().__init__()
@@ -304,8 +308,10 @@ class TextProperty(_vtk.vtkTextProperty):
             self.set_font_file(font_file)
         if shadow:
             self.enable_shadow()
-        if justification is not None:
-            self.justification = justification
+        if justification_horizontal is not None:
+            self.justification_horizontal = justification_horizontal
+        if justification_vertical is not None:
+            self.justification_vertical = justification_vertical
 
     @property
     def color(self) -> Color:
