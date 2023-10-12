@@ -293,12 +293,6 @@ Status
 +----------------------+----------------+-------------+
 
 
-Project Index
-*************
-
-* :ref:`genindex`
-
-
 Professional Support
 ********************
 
@@ -316,3 +310,9 @@ This section aims to list companies with VTK/PyVista expertise who can help you 
 +---------------+-----------------------------------------+
 | Contact       | https://www.kitware.com/contact/        |
 +---------------+-----------------------------------------+
+
+
+Project Index
+*************
+
+* :ref:`genindex`

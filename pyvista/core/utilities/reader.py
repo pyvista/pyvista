@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from .fileio import _get_ext_force, _process_filename
 from .helpers import wrap
@@ -162,7 +162,7 @@ def get_reader(filename, force_ext=None):
 
     Returns
     -------
-    pv.BaseReader
+    pyvista.BaseReader
         A subclass of :class:`pyvista.BaseReader` is returned based on file type.
 
     Examples
@@ -316,7 +316,7 @@ class BaseReader:
 
         Returns
         -------
-        pv.BaseReader
+        pyvista.BaseReader
             An instance of the Reader object.
 
         """
@@ -372,7 +372,7 @@ class BaseReader:
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             PyVista Dataset.
         """
         from pyvista.core.filters import _update_alg  # avoid circular import
@@ -1921,7 +1921,7 @@ class _PVDReader(BaseVTKReader):
 
     def Update(self):
         """Read data and store it."""
-        self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
+        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value):
         """Set active time."""
@@ -1962,7 +1962,7 @@ class PVDReader(BaseReader, TimeReader):
 
         Returns
         -------
-        list[pv.BaseReader]
+        list[pyvista.BaseReader]
 
         """
         return self.reader._active_readers
@@ -1973,7 +1973,7 @@ class PVDReader(BaseReader, TimeReader):
 
         Returns
         -------
-        list[pv.PVDDataSet]
+        list[pyvista.PVDDataSet]
 
         """
         return self.reader._datasets
@@ -1984,7 +1984,7 @@ class PVDReader(BaseReader, TimeReader):
 
         Returns
         -------
-        list[pv.PVDDataSet]
+        list[pyvista.PVDDataSet]
 
         """
         return self.reader._active_datasets
@@ -2311,7 +2311,7 @@ class HDFReader(BaseReader):
     def read(self):
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
-            with pv.VtkErrorCatcher(raise_errors=True):
+            with pyvista.VtkErrorCatcher(raise_errors=True):
                 return super().read()
         except RuntimeError as err:  # pragma: no cover
             if "Can't find the `Type` attribute." in str(err):
@@ -2368,7 +2368,7 @@ class _GIFReader(BaseVTKReader):
         from PIL import Image, ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
+        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames

@@ -1009,7 +1009,7 @@ class Light(vtkLight):
 
         Returns
         -------
-        pv.Light
+        pyvista.Light
             Copied light.
 
         Examples
@@ -1133,7 +1133,7 @@ class Light(vtkLight):
 
         Returns
         -------
-        pv.Light
+        pyvista.Light
             Wrapped light.
 
         """
