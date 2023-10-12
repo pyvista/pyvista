@@ -131,10 +131,10 @@ def test_property_set_font_file(prop):
         prop.set_font_file("foo.ttf")
 
 
-@pytest.mark.parametrize('horizontal', ['left', 'center', 'right'])
-@pytest.mark.parametrize('vertical', ['bottom', 'center', 'top'])
+@pytest.mark.parametrize('horizontal', [('left', 'left'), ('center', 'centered'), ('right', 'right')])
+@pytest.mark.parametrize('vertical', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')])
 def test_property_justification(prop, horizontal, vertical):
-    prop.justification = horizontal, vertical
-    assert prop.GetJustificationAsString().lower() == horizontal
-    assert prop.GetVerticalJustificationAsString().lower() == vertical
-    assert prop.justification == (horizontal, vertical)
+    prop.justification = horizontal[0], vertical[0]
+    assert prop.GetJustificationAsString().lower() == horizontal[1]
+    assert prop.GetVerticalJustificationAsString().lower() == vertical[1]
+    assert prop.justification == (horizontal[0], vertical[0])
