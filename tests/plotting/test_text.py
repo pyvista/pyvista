@@ -138,7 +138,7 @@ def test_property_justification_horizontal(prop, justification):
     prop.justification_horizontal = horizontal[0]
     assert prop.GetJustificationAsString().lower() == justification[1]
     assert prop.justification_horizontal == justification[0]
-    prop = pv.TextProperty(justification=justification[0])
+    prop = pv.TextProperty(justification_horizontal=justification[0])
     assert prop.GetJustificationAsString().lower() == justification[1]
     assert prop.justification_horizontal == justification[0]
 
@@ -148,6 +148,6 @@ def test_property_justification_vertical(prop, justification):
     prop.justification_vertical = justification[0]
     assert prop.GetVerticalJustificationAsString().lower() == justification[1]
     assert prop.justification_vertical == justification[0]
-    prop = pv.TextProperty(justification=justification[0])
+    prop = pv.TextProperty(justification_vertical=justification[0])
     assert prop.GetVerticalJustificationAsString().lower() == justification[1]
     assert prop.justification_vertical == justification[0]
