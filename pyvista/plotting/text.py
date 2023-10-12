@@ -525,9 +525,9 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification_horizontal.lower() == 'right':
             self.SetJustificationToRight()
         else:
-            raise ValueError(                                                                                                                                                                             
-                f'Invalid {justification_horizontal} for justification_horizontal. '                                                                                                                    
-                'Should be either "left", "center" or "right".'                                                                                                                                                                      
+            raise ValueError(
+                f'Invalid {justification_horizontal} for justification_horizontal. '
+                'Should be either "left", "center" or "right".'
             )
 
     @property
@@ -556,7 +556,7 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification_vertical.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
-            raise ValueError(                                                                                                                                                                             
-                f'Invalid {justification_vertical} for justification_vertical. '                                                                                                                    
-                'Should be either "bottom", "center" or "top".'                                                                                                                                                                      
+            raise ValueError(
+                f'Invalid {justification_vertical} for justification_vertical. '
+                'Should be either "bottom", "center" or "top".'
             )
