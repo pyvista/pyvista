@@ -511,22 +511,22 @@ class TextProperty(_vtk.vtkTextProperty):
             Text's horizontal justification.
             Should be either "left", "center" or "right".
         """
-        justification_horizontal = self.GetJustificationAsString().lower()
-        if justification_horizontal == 'centered':
-            justification_horizontal = 'center'
-        return justification_horizontal
+        justification = self.GetJustificationAsString().lower()
+        if justification == 'centered':
+            justification = 'center'
+        return justification
 
-    @justification_horizontal.setter
-    def justification_horizontal(self, justification_horizontal: str):  # numpydoc ignore=GL08
-        if justification_horizontal.lower() == 'left':
+    @justification.setter
+    def justification_horizontal(self, justification: str):  # numpydoc ignore=GL08
+        if justification.lower() == 'left':
             self.SetJustificationToLeft()
-        elif justification_horizontal.lower() == 'center':
+        elif justification.lower() == 'center':
             self.SetJustificationToCentered()
-        elif justification_horizontal.lower() == 'right':
+        elif justification.lower() == 'right':
             self.SetJustificationToRight()
         else:
             raise ValueError(
-                f'Invalid {justification_horizontal} for justification_horizontal. '
+                f'Invalid {justification} for justification_horizontal. '
                 'Should be either "left", "center" or "right".'
             )
 
@@ -540,23 +540,23 @@ class TextProperty(_vtk.vtkTextProperty):
             Text's vertical justification.
             Should be either "bottom", "center" or "top".
         """
-        justification_vertical = self.GetVerticalJustificationAsString().lower()
-        if justification_vertical == 'centered':
-            justification_vertical = 'center'
-        if justification_vertical == 'centered':
-            justification_vertical = 'center'
-        return justification_vertical
+        justification = self.GetVerticalJustificationAsString().lower()
+        if justification == 'centered':
+            justification = 'center'
+        if justification == 'centered':
+            justification = 'center'
+        return justification
 
     @justification_vertical.setter
-    def justification_vertical(self, justification_vertical: str):  # numpydoc ignore=GL08
-        if justification_vertical.lower() == 'bottom':
+    def justification_vertical(self, justification: str):  # numpydoc ignore=GL08
+        if justification.lower() == 'bottom':
             self.SetVerticalJustificationToBottom()
-        elif justification_vertical.lower() == 'center':
+        elif justification.lower() == 'center':
             self.SetVerticalJustificationToCentered()
-        elif justification_vertical.lower() == 'top':
+        elif justification.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
             raise ValueError(
-                f'Invalid {justification_vertical} for justification_vertical. '
+                f'Invalid {justification} for justification_vertical. '
                 'Should be either "bottom", "center" or "top".'
             )
