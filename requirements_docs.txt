@@ -2,7 +2,7 @@
 cmocean==3.0.3
 colorcet==3.0.1
 enum-tools==0.11.0
-imageio==2.31.4
+imageio==2.31.5
 imageio-ffmpeg==0.4.9
 jupyter_sphinx==0.4.0
 jupyterlab==4.0.7
