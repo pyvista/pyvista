@@ -135,7 +135,7 @@ def test_property_set_font_file(prop):
     'justification', [('left', 'left'), ('center', 'centered'), ('right', 'right')]
 )
 def test_property_justification_horizontal(prop, justification):
-    prop.justification_horizontal = horizontal[0]
+    prop.justification_horizontal = justification[0]
     assert prop.GetJustificationAsString().lower() == justification[1]
     assert prop.justification_horizontal == justification[0]
     prop = pv.TextProperty(justification_horizontal=justification[0])
