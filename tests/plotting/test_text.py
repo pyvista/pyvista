@@ -143,7 +143,9 @@ def test_property_justification_horizontal(prop, justification):
     assert prop.justification_horizontal == justification[0]
 
 
-@pytest.mark.parametrize('justification', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')])
+@pytest.mark.parametrize(
+    'justification', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')]
+)
 def test_property_justification_vertical(prop, justification):
     prop.justification_vertical = justification[0]
     assert prop.GetVerticalJustificationAsString().lower() == justification[1]
