@@ -491,13 +491,13 @@ def SolidSphere(
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Solid sphere mesh.
 
     See Also
     --------
-    pv.Sphere: Sphere that describes outer 2D surface.
-    pv.SolidSphereGeneric: Uses more flexible parameter definition.
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+    pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
 
     Examples
     --------
@@ -623,13 +623,13 @@ def SolidSphereGeneric(
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Solid sphere mesh.
 
     See Also
     --------
-    pv.SolidSphere: Sphere creation using linear sampling.
-    pv.Sphere: Sphere that describes outer 2D surface.
+    pyvista.SolidSphere: Sphere creation using linear sampling.
+    pyvista.Sphere: Sphere that describes outer 2D surface.
 
     Examples
     --------
@@ -748,7 +748,7 @@ def SolidSphereGeneric(
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+        x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
@@ -818,7 +818,7 @@ def SolidSphereGeneric(
             for itheta in range(ntheta - 1):
                 cells.append(4)
                 cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-                celltypes.append(pv.CellType.TETRA)
+                celltypes.append(pyvista.CellType.TETRA)
 
         # Next tetras that form with origin and bottom axis point
         #   origin is 0
@@ -835,7 +835,7 @@ def SolidSphereGeneric(
                         _index(0, nphi - 1, itheta),
                     ]
                 )
-                celltypes.append(pv.CellType.TETRA)
+                celltypes.append(pyvista.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
         for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
@@ -849,7 +849,7 @@ def SolidSphereGeneric(
                     0,
                 ]
             )
-            celltypes.append(pv.CellType.PYRAMID)
+            celltypes.append(pyvista.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
@@ -869,7 +869,7 @@ def SolidSphereGeneric(
                     _index(ir + 1, 0, itheta),
                 ]
             )
-            celltypes.append(pv.CellType.WEDGE)
+            celltypes.append(pyvista.CellType.WEDGE)
 
     # now go downwards
     if negative_axis:
@@ -887,7 +887,7 @@ def SolidSphereGeneric(
                     _index(ir + 1, nphi - 1, itheta + 1),
                 ]
             )
-            celltypes.append(pv.CellType.WEDGE)
+            celltypes.append(pyvista.CellType.WEDGE)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
@@ -906,9 +906,9 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi, itheta + 1),
             ]
         )
-        celltypes.append(pv.CellType.HEXAHEDRON)
+        celltypes.append(pyvista.CellType.HEXAHEDRON)
 
-    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
     mesh.rotate_y(90, inplace=True)
     translate(mesh, center, direction)
     return mesh
