@@ -132,15 +132,22 @@ def test_property_set_font_file(prop):
 
 
 @pytest.mark.parametrize(
-    'horizontal', [('left', 'left'), ('center', 'centered'), ('right', 'right')]
+    'justification', [('left', 'left'), ('center', 'centered'), ('right', 'right')]
 )
-@pytest.mark.parametrize('vertical', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')])
-def test_property_justification(prop, horizontal, vertical):
-    prop.justification = horizontal[0], vertical[0]
-    assert prop.GetJustificationAsString().lower() == horizontal[1]
-    assert prop.GetVerticalJustificationAsString().lower() == vertical[1]
-    assert prop.justification == (horizontal[0], vertical[0])
-    prop = pv.TextProperty(justification=(horizontal[0], vertical[0]))
-    assert prop.GetJustificationAsString().lower() == horizontal[1]
-    assert prop.GetVerticalJustificationAsString().lower() == vertical[1]
-    assert prop.justification == (horizontal[0], vertical[0])
+def test_property_justification_horizontal(prop, justification):
+    prop.justification_horizontal = horizontal[0]
+    assert prop.GetJustificationAsString().lower() == justification[1]
+    assert prop.justification_horizontal == justification[0]
+    prop = pv.TextProperty(justification=justification[0])
+    assert prop.GetJustificationAsString().lower() == justification[1]
+    assert prop.justification_horizontal == justification[0]
+
+
+@pytest.mark.parametrize('justification', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')])
+def test_property_justification_vertical(prop, justification):
+    prop.justification_vertical = justification[0]
+    assert prop.GetVerticalJustificationAsString().lower() == justification[1]
+    assert prop.justification_vertical == justification[0]
+    prop = pv.TextProperty(justification=justification[0])
+    assert prop.GetVerticalJustificationAsString().lower() == justification[1]
+    assert prop.justification_vertical == justification[0]
