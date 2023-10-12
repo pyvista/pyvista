@@ -513,7 +513,7 @@ class TextProperty(_vtk.vtkTextProperty):
         if horizontal.lower() == 'left':
             self.SetJustificationToLeft()
         elif horizontal.lower() == 'center':
-            self.SetJustificationToCenter()
+            self.SetJustificationToCentered()
         elif horizontal.lower() == 'right':
             self.SetJustificationToRight()
         if vertical.lower() == 'bottom':
