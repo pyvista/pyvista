@@ -504,6 +504,10 @@ class TextProperty(_vtk.vtkTextProperty):
         """
         horizontal = self.GetJustificationAsString().lower()
         vertical = self.GetVerticalJustificationAsString().lower()
+        if horizontal == 'centered':
+            horizontal = 'center'
+        if vertical == 'centered':
+            vertical = 'center'
         return horizontal, vertical
 
     @justification.setter
