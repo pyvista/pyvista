@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -29,7 +29,7 @@ def Spline(points, n_points=None):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Line mesh of spline.
 
     Examples
@@ -53,7 +53,7 @@ def Spline(points, n_points=None):
 
     """
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pv.vtk_points(points, False))
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # get interpolation density
     u_res = n_points
@@ -88,7 +88,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Kochanek spline.
 
     Examples
@@ -134,7 +134,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         )
 
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pv.vtk_points(points, False))
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
@@ -182,7 +182,7 @@ def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricBohemianDome surface.
 
     Examples
@@ -220,7 +220,7 @@ def ParametricBour(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricBour surface.
 
     Examples
@@ -263,7 +263,7 @@ def ParametricBoy(zscale=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricBoy surface.
 
     Examples
@@ -301,7 +301,7 @@ def ParametricCatalanMinimal(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricCatalanMinimal surface.
 
     Examples
@@ -353,7 +353,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricConicSpiral surface.
 
     Examples
@@ -401,7 +401,7 @@ def ParametricCrossCap(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricCrossCap surface.
 
     Examples
@@ -445,7 +445,7 @@ def ParametricDini(a=None, b=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricDini surface.
 
     Examples
@@ -499,7 +499,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricEllipsoid surface.
 
     Examples
@@ -556,7 +556,7 @@ def ParametricEnneper(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricEnneper surface.
 
     Examples
@@ -596,7 +596,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricFigure8Klein surface.
 
     Examples
@@ -630,7 +630,7 @@ def ParametricHenneberg(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricHenneberg surface.
 
     Examples
@@ -668,7 +668,7 @@ def ParametricKlein(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricKlein surface.
 
     Examples
@@ -710,7 +710,7 @@ def ParametricKuen(deltav0=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricKuen surface.
 
     Examples
@@ -747,7 +747,7 @@ def ParametricMobius(radius=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricMobius surface.
 
     Examples
@@ -788,7 +788,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricPluckerConoid surface.
 
     Examples
@@ -828,7 +828,7 @@ def ParametricPseudosphere(**kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricPseudosphere surface.
 
     Examples
@@ -961,7 +961,7 @@ def ParametricRandomHills(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricRandomHills surface.
 
     Examples
@@ -1076,7 +1076,7 @@ def ParametricRoman(radius=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricRoman surface.
 
     Examples
@@ -1131,14 +1131,14 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricSuperEllipsoid surface.
 
     See Also
     --------
-    pv.ParametricSuperToroid :
+    pyvista.ParametricSuperToroid :
         Toroidal equivalent of ParametricSuperEllipsoid.
-    pv.Superquadric :
+    pyvista.Superquadric :
         Geometric object with additional parameters.
 
     Examples
@@ -1231,14 +1231,14 @@ def ParametricSuperToroid(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricSuperToroid surface.
 
     See Also
     --------
-    pv.ParametricSuperEllipsoid :
+    pyvista.ParametricSuperEllipsoid :
         Ellipsoidal equivalent of ParametricSuperToroid.
-    pv.Superquadric :
+    pyvista.Superquadric :
         Geometric object with additional parameters.
 
     Examples
@@ -1297,7 +1297,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         ParametricTorus surface.
 
     Examples
@@ -1410,7 +1410,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Surface from the parametric function.
 
     """
