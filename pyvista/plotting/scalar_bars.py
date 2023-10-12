@@ -509,7 +509,7 @@ class ScalarBars:
         scalar_bar.SetTitle(title)
         title_text = scalar_bar.GetTitleTextProperty()
 
-        title_text.justification = ("center", title_text.justification[1])
+        title_text.justification = "center", title_text.justification[1]
 
         title_text.SetItalic(italic)
         title_text.SetBold(bold)
