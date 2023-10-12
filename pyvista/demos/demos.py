@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista import examples
 
 from .logo import text_3d
@@ -20,7 +20,7 @@ def glyphs(grid_sz=3):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh of supertoroids.
 
     See Also
@@ -41,12 +41,12 @@ def glyphs(grid_sz=3):
     rng = np.random.default_rng()
     params = rng.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
 
-    geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
+    geoms = [pyvista.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
     # get dataset where to put glyphs
     grid_sz = float(grid_sz)
     x, y, z = np.mgrid[:grid_sz, :grid_sz, :grid_sz]
-    mesh = pv.StructuredGrid(x, y, z)
+    mesh = pyvista.StructuredGrid(x, y, z)
 
     # add random scalars
     rng_int = rng.integers(0, n, size=x.size)
@@ -89,7 +89,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
     kwargs.setdefault('smooth_shading', True)
 
     # create plotter and add our glyphs with some nontrivial lighting
-    plotter = pv.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(mesh, show_scalar_bar=False, **kwargs)
     return plotter.show()
 
@@ -121,7 +121,7 @@ def orientation_cube():
     >>> pl.show()
 
     """
-    cube = pv.Cube()
+    cube = pyvista.Cube()
 
     x_p = text_3d('X+', depth=0.2)
     x_p.points *= 0.45
@@ -184,7 +184,7 @@ def orientation_plotter():
 
     Returns
     -------
-    pv.Plotter
+    pyvista.Plotter
         Orientation cube plotter.
 
     Examples
@@ -195,7 +195,7 @@ def orientation_plotter():
 
     """
     ocube = orientation_cube()
-    pl = pv.Plotter()
+    pl = pyvista.Plotter()
     pl.add_mesh(ocube['cube'], show_edges=True)
     pl.add_mesh(ocube['x_p'], color='blue')
     pl.add_mesh(ocube['x_n'], color='blue')
@@ -255,14 +255,14 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
     Z = np.sin(R)
 
     # Create and plot structured grid
-    sgrid = pv.StructuredGrid(X, Y, Z)
+    sgrid = pyvista.StructuredGrid(X, Y, Z)
 
     # Get pointer to points
     points = sgrid.points.copy()
     mesh = sgrid.extract_surface()
 
     # Start a plotter object and set the scalars to the Z height
-    plotter = pv.Plotter(notebook=notebook)
+    plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
@@ -372,7 +372,7 @@ def plot_ants_plane(notebook=None):
     ant_copy.translate([30, 0, -10], inplace=True)
 
     # Create plotting object
-    plotter = pv.Plotter(notebook=notebook)
+    plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
 
@@ -415,7 +415,7 @@ def plot_beam(notebook=None):
     cmap = 'bwr'
 
     # plot this displaced beam
-    plotter = pv.Plotter(notebook=notebook)
+    plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(
         grid,
         scalars=d,
@@ -472,7 +472,7 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # uniform grid
-    image = pv.ImageData(dimensions=(6, 6, 1))
+    image = pyvista.ImageData(dimensions=(6, 6, 1))
     image.spacing = (3, 2, 1)
 
     ###########################################################################
@@ -480,7 +480,7 @@ def plot_datasets(dataset_type=None):
     xrng = np.array([0, 0.3, 1, 4, 5, 6, 6.2, 6.6])
     yrng = np.linspace(-2, 2, 5)
     zrng = [1]
-    rec_grid = pv.RectilinearGrid(xrng, yrng, zrng)
+    rec_grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
 
     ###########################################################################
     # structured grid
@@ -492,34 +492,34 @@ def plot_datasets(dataset_type=None):
     x = r * np.sin(ang)
     y = r * np.cos(ang)
 
-    struct_grid = pv.StructuredGrid(x[::-1], y[::-1], z[::-1])
+    struct_grid = pyvista.StructuredGrid(x[::-1], y[::-1], z[::-1])
 
     ###########################################################################
     # polydata
-    points = pv.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
+    points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
-    line = pv.Line()
+    line = pyvista.Line()
     line.points += np.array((2, 0, 0))
     line.clear_data()
 
-    tri = pv.Triangle()
+    tri = pyvista.Triangle()
     tri.points += np.array([0, 1, 0])
-    circ = pv.Circle()
+    circ = pyvista.Circle()
     circ.points += np.array([1.5, 1.5, 0])
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
-    pyr = pv.Pyramid()
+    pyr = pyvista.Pyramid()
     pyr.points *= 0.7
-    cube = pv.Cube(center=(2, 0, 0))
+    cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
     if dataset_type is not None:
-        pl = pv.Plotter()
+        pl = pyvista.Plotter()
     else:
-        pl = pv.Plotter(shape='3/2')
+        pl = pyvista.Plotter(shape='3/2')
 
     # polydata
     if dataset_type is None:

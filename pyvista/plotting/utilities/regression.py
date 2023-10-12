@@ -1,7 +1,7 @@
 """Image regression module."""
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -17,7 +17,7 @@ def remove_alpha(img):
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         The output image data with the alpha channel removed.
 
     """
@@ -25,7 +25,7 @@ def remove_alpha(img):
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
     ec.Update()
-    return pv.wrap(ec.GetOutput())
+    return pyvista.wrap(ec.GetOutput())
 
 
 def wrap_image_array(arr):
@@ -46,7 +46,7 @@ def wrap_image_array(arr):
 
     Returns
     -------
-    pv.ImageData
+    pyvista.ImageData
         A PyVista ImageData object with the wrapped array data.
 
     """
@@ -59,7 +59,7 @@ def wrap_image_array(arr):
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
-    wrap_img = pv.wrap(img)
+    wrap_img = pyvista.wrap(img)
     wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 

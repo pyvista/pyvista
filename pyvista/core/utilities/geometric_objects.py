@@ -22,7 +22,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -80,7 +80,7 @@ def Cylinder(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Cylinder surface.
 
     Examples
@@ -157,7 +157,7 @@ def CylinderStructured(
 
     Returns
     -------
-    pv.StructuredGrid
+    pyvista.StructuredGrid
         Structured cylinder.
 
     Notes
@@ -202,7 +202,7 @@ def CylinderStructured(
     zz = zz.ravel(order='f')
 
     # Create the grid
-    grid = pv.StructuredGrid()
+    grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
@@ -263,7 +263,7 @@ def Arrow(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Arrow mesh.
 
     Examples
@@ -354,13 +354,13 @@ def Sphere(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Sphere mesh.
 
     See Also
     --------
-    pv.Icosphere : Sphere created from projection of icosahedron.
-    pv.SolidSphere : Sphere that fills 3D space.
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
 
     Examples
     --------
@@ -946,7 +946,7 @@ def Plane(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Plane mesh.
 
     Examples
@@ -988,7 +988,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Line mesh.
 
     Examples
@@ -1029,7 +1029,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Line mesh.
 
     Examples
@@ -1069,7 +1069,7 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Tube mesh.
 
     Examples
@@ -1148,7 +1148,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh of the cube.
 
     Examples
@@ -1204,7 +1204,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh of the box.
 
     Examples
@@ -1268,7 +1268,7 @@ def Cone(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Cone mesh.
 
     Examples
@@ -1314,7 +1314,7 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh of the polygon.
 
     Examples
@@ -1365,7 +1365,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Disk mesh.
 
     Examples
@@ -1404,7 +1404,7 @@ def Text3D(string, depth=0.5):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         3D text mesh.
 
     Examples
@@ -1487,7 +1487,7 @@ def Wavelet(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Wavelet mesh.
 
     Examples
@@ -1562,7 +1562,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Circular arc mesh.
 
     Examples
@@ -1639,7 +1639,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Circular arc mesh.
 
     Examples
@@ -1700,7 +1700,7 @@ def Pyramid(points=None):
 
     Returns
     -------
-    pv.UnstructuredGrid
+    pyvista.UnstructuredGrid
         Unstructured grid containing a single pyramid cell.
 
     Examples
@@ -1740,7 +1740,7 @@ def Pyramid(points=None):
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = _vtk.vtkUnstructuredGrid()
-    ug.SetPoints(pv.vtk_points(np.array(points), False))
+    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return wrap(ug)
@@ -1757,7 +1757,7 @@ def Triangle(points=None):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Triangle mesh.
 
     Examples
@@ -1780,7 +1780,7 @@ def Triangle(points=None):
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Rectangle(points=None):
@@ -1799,7 +1799,7 @@ def Rectangle(points=None):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Rectangle mesh.
 
     Examples
@@ -1857,7 +1857,7 @@ def Rectangle(points=None):
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return pv.PolyData(points, cells)
+    return pyvista.PolyData(points, cells)
 
 
 def Quadrilateral(points=None):
@@ -1870,7 +1870,7 @@ def Quadrilateral(points=None):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Quadrilateral mesh.
 
     Examples
@@ -1892,7 +1892,7 @@ def Quadrilateral(points=None):
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius=0.5, resolution=100):
@@ -1908,7 +1908,7 @@ def Circle(radius=0.5, resolution=100):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Circle mesh.
 
     Notes
@@ -1930,7 +1930,7 @@ def Circle(radius=0.5, resolution=100):
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
@@ -1949,7 +1949,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Ellipse mesh.
 
     Notes
@@ -1969,7 +1969,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Superquadric(
@@ -2022,14 +2022,14 @@ def Superquadric(
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Superquadric mesh.
 
     See Also
     --------
-    pv.ParametricSuperEllipsoid :
+    pyvista.ParametricSuperEllipsoid :
         Parametric superquadric if toroidal is ``False``.
-    pv.ParametricSuperToroid :
+    pyvista.ParametricSuperToroid :
         Parametric superquadric if toroidal is ``True``.
 
     Examples
@@ -2080,7 +2080,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         One of the five Platonic solids. Cell scalars are defined that
         assign integer labels to each face (with array name
         ``"FaceIndex"``).
@@ -2142,7 +2142,7 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh for the tetrahedron. Cell scalars are defined that assign
         integer labels to each face (with array name ``"FaceIndex"``).
 
@@ -2176,7 +2176,7 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh for the octahedron. Cell scalars are defined that assign
         integer labels to each face (with array name ``"FaceIndex"``).
 
@@ -2209,7 +2209,7 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh for the dodecahedron. Cell scalars are defined that assign
         integer labels to each face (with array name ``"FaceIndex"``).
 
@@ -2243,7 +2243,7 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh for the icosahedron. Cell scalars are defined that assign
         integer labels to each face (with array name ``"FaceIndex"``).
 
@@ -2287,12 +2287,12 @@ def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
 
     Returns
     -------
-    pv.PolyData
+    pyvista.PolyData
         Mesh of the icosphere.
 
     See Also
     --------
-    pv.Sphere
+    pyvista.Sphere
 
     Examples
     --------

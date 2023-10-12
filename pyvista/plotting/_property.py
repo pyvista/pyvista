@@ -1,7 +1,7 @@
 """This module contains the Property class."""
 from typing import Union
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
@@ -17,7 +17,7 @@ class Property(_vtk.vtkProperty):
 
     Parameters
     ----------
-    theme : pv.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     interpolation : str, default: :attr:`pyvista.plotting.themes._LightingConfig.interpolation`
@@ -168,11 +168,11 @@ class Property(_vtk.vtkProperty):
         culling=None,
     ):
         """Initialize this property."""
-        self._theme = pv.themes.Theme()
+        self._theme = pyvista.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pv.global_theme)
+            self._theme.load_theme(pyvista.global_theme)
         else:
             self._theme.load_theme(theme)
 
@@ -1151,7 +1151,7 @@ class Property(_vtk.vtkProperty):
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
-        pl = pv.Plotter(**kwargs)
+        pl = pyvista.Plotter(**kwargs)
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
@@ -1167,7 +1167,7 @@ class Property(_vtk.vtkProperty):
 
         Returns
         -------
-        pv.Property
+        pyvista.Property
             Deep copy of this property.
 
         Examples

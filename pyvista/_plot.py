@@ -9,7 +9,7 @@ decouple the ``core`` and ``plotting`` APIs.
 """
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 
 def plot(
@@ -47,7 +47,7 @@ def plot(
 
     Parameters
     ----------
-    var_item : pv.DataSet
+    var_item : pyvista.DataSet
         See :func:`Plotter.add_mesh <pyvista.Plotter.add_mesh>` for all
         supported types.
 
@@ -128,7 +128,7 @@ def plot(
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
-    theme : pv.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     hidden_line_removal : bool, default: :attr:`pyvista.plotting.themes.Theme.hidden_line_removal`
@@ -221,7 +221,7 @@ def plot(
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
-    pl = pv.Plotter(
+    pl = pyvista.Plotter(
         window_size=window_size,
         off_screen=off_screen,
         notebook=notebook,
@@ -238,7 +238,7 @@ def plot(
 
     if anti_aliasing:
         if anti_aliasing is True:
-            pl.enable_anti_aliasing('msaa', multi_samples=pv.global_theme.multi_samples)
+            pl.enable_anti_aliasing('msaa', multi_samples=pyvista.global_theme.multi_samples)
         else:
             pl.enable_anti_aliasing(anti_aliasing)
     elif anti_aliasing is False:
@@ -267,7 +267,7 @@ def plot(
     else:
         if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
             pl.add_volume(var_item, **kwargs)
-        elif isinstance(var_item, pv.MultiBlock):
+        elif isinstance(var_item, pyvista.MultiBlock):
             pl.add_composite(var_item, **kwargs)
         else:
             pl.add_mesh(var_item, **kwargs)
