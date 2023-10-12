@@ -1,4 +1,4 @@
-# pyvista-docs
+# Repository pyvista-docs
 
 A place where we automatically deploy the PyVista documentation.
 
