@@ -480,14 +480,14 @@ def SolidSphere(
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``. Default is degrees.
 
-    tol_radius : bool, default: 1.0e-8
+    tol_radius : float, default: 1.0e-8
         Absolute tolerance for endpoint detection for ``radius``.
 
-    tol_angle : bool, default: 1.0e-8 in degrees
+    tol_angle : float, optional
         Absolute tolerance for endpoint detection
         for ``phi`` and ``theta``. Unit is determined by choice
         of ``radians`` parameter.  Default is 1.0e-8 degrees or
-        equivalent in radians.
+        1.0e-8 degrees converted to radians.
 
     Returns
     -------
@@ -619,7 +619,7 @@ def SolidSphereGeneric(
         Absolute tolerance for endpoint detection
         for ``phi`` and ``theta``. Unit is determined by choice
         of ``radians`` parameter.  Default is 1.0e-8 degrees or
-        equivalent in radians.
+        1.0e-8 degrees converted to radians.
 
     Returns
     -------
