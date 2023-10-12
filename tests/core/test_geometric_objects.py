@@ -273,7 +273,7 @@ def test_solid_sphere_theta_range():
     assert np.isclose(reference.volume, both_sides.volume)
 
 
-def test_solid_sphere_tolerance():
+def test_solid_sphere_tol_radius():
     solid_sphere = pv.SolidSphere(inner_radius=1e-5)
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-5])
 
@@ -283,32 +283,37 @@ def test_solid_sphere_tolerance():
     solid_sphere = pv.SolidSphere(inner_radius=1e-10, tol_radius=1e-11)
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
 
+
+@pytest.mark.parametrize("radians", (True, False))
+def test_solid_sphere_tol_angle(radians):
+    max_phi = np.pi if radians else 180.0
+
     # when phi point not on axis, it is skipped in point ordering
     # When radius_resolution=2, there are a maximum of two axis points
-    solid_sphere = pv.SolidSphere(start_phi=1e-3, radius_resolution=2, radians=True)
+    solid_sphere = pv.SolidSphere(start_phi=1e-3, radius_resolution=2, radians=radians)
     # start_phi is greater than tol, so the positive axis point is skipped
     assert np.allclose(solid_sphere.points[1, :], [0.0, 0.0, -0.5])
     # when end_phi is greater than tol, the negative axis point is skipped
     # that next points is above the z axis
-    solid_sphere = pv.SolidSphere(end_phi=np.pi - 1e-3, radius_resolution=2, radians=True)
+    solid_sphere = pv.SolidSphere(end_phi=max_phi - 1e-3, radius_resolution=2, radians=radians)
     assert solid_sphere.points[2, 2] > 0.0
 
-    solid_sphere = pv.SolidSphere(start_phi=1e-3, radius_resolution=2, radians=True, tol_angle=1e-2)
+    solid_sphere = pv.SolidSphere(
+        start_phi=1e-3, radius_resolution=2, radians=radians, tol_angle=1e-2
+    )
     # Positive axis point is there, but it is now slightly offset.
     assert np.allclose(solid_sphere.points[1, :], [0.0, 0.0, 0.5], atol=1e-3)
     # Negative axis point is there
     solid_sphere = pv.SolidSphere(
-        end_phi=np.pi - 1e-3, radius_resolution=2, radians=True, tol_angle=1e-2
+        end_phi=max_phi - 1e-3, radius_resolution=2, radians=radians, tol_angle=1e-2
     )
     assert np.allclose(solid_sphere.points[2, :], [0.0, 0.0, -0.5], atol=1e-3)
 
     # When theta is not detected to overlap it will result in more points
-    reference = pv.SolidSphere(radians=True)
-    solid_sphere = pv.SolidSphere(start_theta=1e-3, end_theta=2 * np.pi, radians=True)
+    reference = pv.SolidSphere(radians=radians)
+    solid_sphere = pv.SolidSphere(start_theta=1e-3, radians=radians)
     assert solid_sphere.n_points > reference.n_points
-    solid_sphere = pv.SolidSphere(
-        start_theta=1e-3, end_theta=2 * np.pi, radians=True, tol_angle=1e-1
-    )
+    solid_sphere = pv.SolidSphere(start_theta=1e-3, radians=radians, tol_angle=1e-1)
     assert solid_sphere.n_points == reference.n_points
 
 
