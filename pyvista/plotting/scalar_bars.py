@@ -205,15 +205,15 @@ class ScalarBars:
 
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to :attr:`pv.plotting.themes.Theme.font`.
+            according to :attr:`pyvista.plotting.themes.Theme.font`.
 
         label_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to :attr:`pv.plotting.themes.Theme.font`.
+            according to :attr:`pyvista.plotting.themes.Theme.font`.
 
         color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Default
-            set by :attr:`pv.plotting.themes.Theme.font`.  Can be
+            set by :attr:`pyvista.plotting.themes.Theme.font`.  Can be
             in one of the following formats:
 
             * ``color='white'``
@@ -223,7 +223,7 @@ class ScalarBars:
 
         font_family : {'courier', 'times', 'arial'}
             Font family.  Default is set by
-            :attr:`pv.plotting.themes.Theme.font`.
+            :attr:`pyvista.plotting.themes.Theme.font`.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
@@ -231,44 +231,44 @@ class ScalarBars:
         width : float, optional
             The percentage (0 to 1) width of the window for the colorbar.
             Default set by
-            :attr:`pv.plotting.themes.Theme.colorbar_vertical` or
-            :attr:`pv.plotting.themes.Theme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         height : float, optional
             The percentage (0 to 1) height of the window for the
             colorbar.  Default set by
-            :attr:`pv.plotting.themes.Theme.colorbar_vertical` or
-            :attr:`pv.plotting.themes.Theme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         position_x : float, optional
             The percentage (0 to 1) along the windows's horizontal
             direction to place the bottom left corner of the colorbar.
             Default set by
-            :attr:`pv.plotting.themes.Theme.colorbar_vertical` or
-            :attr:`pv.plotting.themes.Theme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         position_y : float, optional
             The percentage (0 to 1) along the windows's vertical
             direction to place the bottom left corner of the colorbar.
             Default set by
-            :attr:`pv.plotting.themes.Theme.colorbar_vertical` or
-            :attr:`pv.plotting.themes.Theme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         vertical : bool, optional
             Use vertical or horizontal scalar bar.  Default set by
-            :attr:`pv.plotting.themes.Theme.colorbar_orientation`.
+            :attr:`pyvista.plotting.themes.Theme.colorbar_orientation`.
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
-            Default set by :attr:`pv.plotting.themes.Theme.interactive`.
+            Default set by :attr:`pyvista.plotting.themes.Theme.interactive`.
 
         fmt : str, optional
             ``printf`` format for labels.
-            Default set by :attr:`pv.plotting.themes.Theme.font`.
+            Default set by :attr:`pyvista.plotting.themes.Theme.font`.
 
         use_opacity : bool, default: True
             Optionally display the opacity mapping on the scalar bar.
