@@ -494,35 +494,61 @@ class TextProperty(_vtk.vtkTextProperty):
         self.SetFontFile(str(path))
 
     @property
-    def justification(self) -> tuple:
-        """Text's justification.
+    def justification_horizontal(self) -> str:
+        """Text's justification horizontal.
 
         Returns
         -------
-        tuple
-            Text's justification (horizontal, vertical).
+        str
+            Text's horizontal justification.
+            Should be either "bottom", "center" or "top".
         """
-        horizontal = self.GetJustificationAsString().lower()
-        vertical = self.GetVerticalJustificationAsString().lower()
-        if horizontal == 'centered':
-            horizontal = 'center'
-        if vertical == 'centered':
-            vertical = 'center'
-        return horizontal, vertical
+        justification_horizontal = self.GetJustificationAsString().lower()
+        if justification_horizontal == 'centered':
+            justification_horizontal = 'center'
+        return justification_horizontal
 
-    @justification.setter
-    def justification(self, justification: tuple):  # numpydoc ignore=GL08
-        horizontal = justification[0]
-        vertical = justification[1]
-        if horizontal.lower() == 'left':
+    @justification_horizontal.setter
+    def justification_horizontal(self, justification_horizontal: str):  # numpydoc ignore=GL08
+        if justification_horizontal.lower() == 'left':
             self.SetJustificationToLeft()
-        elif horizontal.lower() == 'center':
+        elif justification_horizontal.lower() == 'center':
             self.SetJustificationToCentered()
-        elif horizontal.lower() == 'right':
+        elif justification_horizontal.lower() == 'right':
             self.SetJustificationToRight()
-        if vertical.lower() == 'bottom':
+        else:
+            raise ValueError(                                                                                                                                                                             
+                f'Invalid {justification_horizontal} for justification_horizontal. '                                                                                                                    
+                'Should be either "left", "center" or "right".'                                                                                                                                                                      
+            )
+
+    @property
+    def justification_vertical(self) -> str:
+        """Text's vertical justification.
+
+        Returns
+        -------
+        str
+            Text's vertical justification.
+            Should be either "bottom", "center" or "top".
+        """
+        justification_vertical = self.GetVerticalJustificationAsString().lower()
+        if justification_vertical == 'centered':
+            justification_vertical = 'center'
+        if justification_vertical == 'centered':
+            justification_vertical = 'center'
+        return justification_vertical
+
+    @justification_vertical.setter
+    def justification_vertical(self, justification_vertical: str):  # numpydoc ignore=GL08
+        if justification_vertical.lower() == 'bottom':
             self.SetVerticalJustificationToBottom()
-        elif vertical.lower() == 'center':
+        elif justification_vertical.lower() == 'center':
             self.SetVerticalJustificationToCentered()
-        elif vertical.lower() == 'top':
+        elif justification_vertical.lower() == 'top':
             self.SetVerticalJustificationToTop()
+        else:
+            raise ValueError(                                                                                                                                                                             
+                f'Invalid {justification_vertical} for justification_vertical. '                                                                                                                    
+                'Should be either "bottom", "center" or "top".'                                                                                                                                                                      
+            )
