@@ -252,9 +252,11 @@ class TextProperty(_vtk.vtkTextProperty):
 
     justification_horizontal : str
         Text's horizontal justification.
+        Should be either "left", "center" or "right".
 
     justification_vertical : str
         Text's vertical justification.
+        Should be either "bottom", "center" or "top".
 
     Examples
     --------
@@ -507,7 +509,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         str
             Text's horizontal justification.
-            Should be either "bottom", "center" or "top".
+            Should be either "left", "center" or "right".
         """
         justification_horizontal = self.GetJustificationAsString().lower()
         if justification_horizontal == 'centered':
