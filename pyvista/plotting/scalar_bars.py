@@ -507,7 +507,7 @@ class ScalarBars:
         self._scalar_bar_mappers[title] = [mapper]
 
         scalar_bar.SetTitle(title)
-        title_text = pv.wrap(scalar_bar.GetTitleTextProperty())
+        title_text = scalar_bar.GetTitleTextProperty()
 
         title_text.SetJustificationToCentered()
 
