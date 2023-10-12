@@ -3,7 +3,7 @@ import weakref
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 
 from . import _vtk
@@ -509,7 +509,7 @@ class ScalarBars:
         scalar_bar.SetTitle(title)
         title_text = pyvista.wrap(scalar_bar.GetTitleTextProperty())
 
-        title_text.justification = "center", title_text.justification[1]
+        title_text.SetJustificationToCentered()
 
         title_text.SetItalic(italic)
         title_text.SetBold(bold)
