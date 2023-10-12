@@ -250,6 +250,9 @@ class TextProperty(_vtk.vtkTextProperty):
     shadow : bool, optional
         If enable the shadow.
 
+    justification : str, tuple
+        Text's justification (horizontal, vertical).
+
     Examples
     --------
     Create a text's property.
@@ -281,6 +284,7 @@ class TextProperty(_vtk.vtkTextProperty):
         font_size=None,
         font_file=None,
         shadow=False,
+        justification=None,
     ):
         """Initialize text's property."""
         super().__init__()
@@ -300,6 +304,8 @@ class TextProperty(_vtk.vtkTextProperty):
             self.set_font_file(font_file)
         if shadow:
             self.enable_shadow()
+        if justification is not None:
+            self.justification = justification
 
     @property
     def color(self) -> Color:
@@ -486,3 +492,33 @@ class TextProperty(_vtk.vtkTextProperty):
             raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
+
+    @property
+    def justification(self) -> tuple:
+        """Text's justification.
+
+        Returns
+        -------
+        tuple
+            Text's justification (horizontal, vertical).
+        """
+        horizontal = self.GetJustificationAsString().lower()
+        vertical = self.GetVerticalJustificationAsString().lower()
+        return horizontal, vertical
+
+    @justification.setter
+    def justification(self, justification: tuple):  # numpydoc ignore=GL08
+        horizontal = justification[0]
+        vertical = justification[1]
+        if horizontal.lower() == 'left':
+            self.SetJustificationToLeft()
+        elif horizontal.lower() == 'center':
+            self.SetJustificationToCenter()
+        elif horizontal.lower() == 'right':
+            self.SetJustificationToRight()
+        if vertical.lower() == 'bottom':
+            self.SetVerticalJustificationToBottom()
+        elif vertical.lower() == 'middle':
+            self.SetVerticalJustificationToCentered()
+        elif vertical.lower() == 'top':
+            self.SetVerticalJustificationToTop()
