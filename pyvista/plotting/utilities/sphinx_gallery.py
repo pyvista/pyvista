@@ -115,7 +115,7 @@ class DynamicScraper:
 
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
-        figures = pv.plotting.plotter._ALL_PLOTTERS
+        figures = pyvista.plotting.plotter._ALL_PLOTTERS
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
             "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT", False
@@ -140,5 +140,5 @@ class DynamicScraper:
                     with open(fname, "wb") as f:
                         f.write(plotter.last_vtksz)
                         image_names.append(fname)
-        pv.close_all()  # close and clear all plotters
+        pyvista.close_all()  # close and clear all plotters
         return html_rst(image_names, gallery_conf["src_dir"])
