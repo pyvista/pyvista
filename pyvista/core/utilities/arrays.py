@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumericArray, VectorArray
+from pyvista.core._typing_core import NumericArray, TransformLike, VectorArray
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -751,3 +751,44 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             f"point data: {possible_scalars_point}.\n"
             "Set one as active using DataSet.set_active_scalars(name, preference=type)"
         )
+
+
+def _coerce_transformlike_arg(transform_like: TransformLike):
+    """Check and coerce transform-like arg to a 4x4 numpy array.
+
+    Parameters
+    ----------
+    transform_like : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
+        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
+        from a vtkTransform.
+
+    Returns
+    -------
+    np.ndarray
+        4x4 transformation matrix.
+
+    """
+    transform_array = np.eye(4)
+    if isinstance(transform_like, _vtk.vtkMatrix4x4):
+        transform_array = array_from_vtkmatrix(transform_like)
+    elif isinstance(transform_like, _vtk.vtkMatrix3x3):
+        transform_array[:3, :3] = array_from_vtkmatrix(transform_like)
+    elif isinstance(transform_like, _vtk.vtkTransform):
+        transform_array = array_from_vtkmatrix(transform_like.GetMatrix())
+    elif isinstance(transform_like, np.ndarray):
+        if transform_like.shape == (3, 3):
+            transform_array[:3, :3] = transform_like
+        elif transform_like.shape == (4, 4):
+            transform_array = transform_like
+        else:
+            raise ValueError('Transformation array must be 3x3 or 4x4.')
+    else:
+        raise TypeError(
+            'Input transform must be one of:\n'
+            '\tvtk.vtkMatrix4x4\n'
+            '\tvtk.vtkMatrix3x3\n'
+            '\tvtk.vtkTransform\n'
+            '\t4x4 np.ndarray\n'
+            '\t3x3 np.ndarray\n'
+        )
+    return transform_array
