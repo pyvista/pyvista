@@ -156,4 +156,4 @@ def test_property_justification_vertical(prop, justification):
     assert prop.GetVerticalJustificationAsString().lower() == justification[1]
     assert prop.justification_vertical == justification[0]
     with pytest.raises(ValueError):
-        prop.justification_horizontal = "invalid"
+        prop.justification_vertical = "invalid"
