@@ -543,8 +543,6 @@ class TextProperty(_vtk.vtkTextProperty):
         justification = self.GetVerticalJustificationAsString().lower()
         if justification == 'centered':
             justification = 'center'
-        if justification == 'centered':
-            justification = 'center'
         return justification
 
     @justification_vertical.setter
