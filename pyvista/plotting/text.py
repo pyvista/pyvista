@@ -363,7 +363,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         float
             Background opacity of the text. A single float value that will be applied globally.
-            background opacity of the text and uniformly applied everywhere. Between 0 and 1.
+            Background opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
         return self.GetBackgroundOpacity()
