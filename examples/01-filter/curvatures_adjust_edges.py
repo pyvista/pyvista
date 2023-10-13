@@ -135,7 +135,7 @@ def main(argv):
     # Create a common text property.
     text_property = pv.TextProperty()
     text_property.font_size = 24
-    text_property.SetJustificationToCentered()
+    text_property.justification_horizontal = "center"
 
     lut = get_diverging_lut()
     # lut = get_diverging_lut1()
