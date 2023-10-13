@@ -35,7 +35,7 @@ p.show()
 
 warp_factors = [0, 1.5, 3.5, 5.5]
 p = pv.Plotter(shape=(2, 2))
-for i, j in product(range(2), range(2)):
+for i, j in product(range(2), repeat=2):
     idx = 2 * i + j
     p.subplot(i, j)
     p.add_mesh(sphere.warp_by_vector(factor=warp_factors[idx]))
