@@ -370,7 +370,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array of the active texture coordinates.
 
         Examples
@@ -476,7 +476,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Returns a :class:`pyvista.pyvista_ndarray`.
 
         Raises

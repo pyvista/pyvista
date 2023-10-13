@@ -36,7 +36,7 @@ dependencies = [
 dynamic = ['version']
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter,trame]']
+all = ['pyvista[colormaps,io,jupyter]']
 colormaps = [
     'cmocean',
     'colorcet',

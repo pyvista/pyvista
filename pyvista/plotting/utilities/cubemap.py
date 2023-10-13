@@ -1,7 +1,7 @@
 """Cubemap utilities."""
 import os
 
-import pyvista as pv
+import pyvista
 from pyvista.plotting import _vtk
 
 
@@ -41,7 +41,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture with cubemap.
 
     Notes
@@ -83,7 +83,7 @@ def cubemap_from_filenames(image_paths):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         Texture with cubemap.
 
     Examples
@@ -118,14 +118,14 @@ def _cubemap_from_paths(image_paths):
                 f'{file_str}'
             )
 
-    texture = pv.Texture()
+    texture = pyvista.Texture()
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
     texture.cube_map = True  # Must be set prior to setting images
 
     # add each image to the cubemap
     for i, fn in enumerate(image_paths):
-        image = pv.read(fn)
+        image = pyvista.read(fn)
         flip = _vtk.vtkImageFlip()
         flip.SetInputDataObject(image)
         flip.SetFilteredAxis(1)  # flip y axis
