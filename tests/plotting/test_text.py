@@ -141,8 +141,6 @@ def test_property_justification_horizontal(prop, justification):
     prop = pv.TextProperty(justification_horizontal=justification[0])
     assert prop.GetJustificationAsString().lower() == justification[1]
     assert prop.justification_horizontal == justification[0]
-    with pytest.raises(ValueError):
-        prop.justification_horizontal = "invalid"
 
 
 @pytest.mark.parametrize(
@@ -155,5 +153,9 @@ def test_property_justification_vertical(prop, justification):
     prop = pv.TextProperty(justification_vertical=justification[0])
     assert prop.GetVerticalJustificationAsString().lower() == justification[1]
     assert prop.justification_vertical == justification[0]
+
+def test_property_justification_invalid(prop):
+    with pytest.raises(ValueError):
+        prop.justification_horizontal = "invalid"
     with pytest.raises(ValueError):
         prop.justification_vertical = "invalid"
