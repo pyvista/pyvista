@@ -9,7 +9,6 @@ import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
-from ._typing import ColorLike
 from .colors import Color
 from .themes import Theme
 from .tools import FONTS
