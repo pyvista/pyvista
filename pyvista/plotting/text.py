@@ -106,7 +106,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         self.SetText(position, text)
 
     @property
-    def prop(self) -> pyvista.TextProperty:
+    def prop(self) -> TextProperty:
         """Property of this actor.
 
         Returns
@@ -117,7 +117,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: pyvista.TextProperty):  # numpydoc ignore=GL08
+    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
         self.SetTextProperty(prop)
 
     @property
@@ -201,7 +201,7 @@ class Text(_vtk.vtkTextActor):
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: pyvista.TextProperty):  # numpydoc ignore=GL08
+    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
         self.SetTextProperty(prop)
 
     @property
