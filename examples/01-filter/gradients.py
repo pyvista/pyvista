@@ -12,6 +12,7 @@ an input array {u, v, w}.
 
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
+from itertools import product
 
 import numpy as np
 
@@ -62,12 +63,11 @@ mesh_g
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
 p = pv.Plotter(shape=keys.shape)
-for i in range(keys.shape[0]):
-    for j in range(keys.shape[1]):
-        name = keys[i, j]
-        p.subplot(i, j)
-        p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-        p.add_mesh(mesh_g.outline(), color="k")
+for i, j in product(range(keys.shape[0]), range(keys.shape[1])):
+    name = keys[i, j]
+    p.subplot(i, j)
+    p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
+    p.add_mesh(mesh_g.outline(), color="k")
 p.link_views()
 p.view_isometric()
 p.show()
