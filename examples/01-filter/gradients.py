@@ -63,8 +63,7 @@ mesh_g
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
 p = pv.Plotter(shape=keys.shape)
-for i, j in product(range(keys.shape[0]), range(keys.shape[1])):
-    name = keys[i, j]
+for (i, j), name in np.ndenumerate(keys):
     p.subplot(i, j)
     p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
     p.add_mesh(mesh_g.outline(), color="k")

@@ -72,9 +72,9 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     }
 
     cijkl = np.zeros((3, 3, 3, 3))
-    for i, j, k, l in product(range(3), range(3), range(3), range(3)):
-        u = coord_mapping[(i + 1, j + 1)]
-        v = coord_mapping[(k + 1, l + 1)]
+    for i, j, k, l in product(range(3), repeat=4):
+        u = coord_mapping[i + 1, j + 1]
+        v = coord_mapping[k + 1, l + 1]
         cijkl[i, j, k, l] = cij[u - 1, v - 1]
     return cijkl, cij
 
