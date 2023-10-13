@@ -29,7 +29,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     text : str
         Text input.
 
-    prop : TextProperty, optional
+    prop : pyvista.TextProperty, optional
         Text property.
 
     linear_font_scale_factor : float, optional
@@ -150,7 +150,7 @@ class Text(_vtk.vtkTextActor):
     position : Sequence[float], optional
         The position coordinate.
 
-    prop : TextProperty, optional
+    prop : pyvista.TextProperty, optional
         The property of this actor.
 
     Examples
