@@ -302,7 +302,7 @@ class TextProperty(_vtk.vtkTextProperty):
             self.enable_shadow()
 
     @property
-    def color(self) -> pyvista.Color:
+    def color(self) -> Color:
         """Color of text's property.
 
         Returns
@@ -338,7 +338,7 @@ class TextProperty(_vtk.vtkTextProperty):
         self.SetOpacity(opacity)
 
     @property
-    def background_color(self) -> pyvista.Color:
+    def background_color(self) -> Color:
         """Background color of text's property.
 
         Returns
@@ -390,7 +390,7 @@ class TextProperty(_vtk.vtkTextProperty):
         self.SetFrame(frame)
 
     @property
-    def frame_color(self) -> pyvista.Color:
+    def frame_color(self) -> Color:
         """Frame color of text property.
 
         Returns
