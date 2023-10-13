@@ -106,18 +106,18 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         self.SetText(position, text)
 
     @property
-    def prop(self) -> TextProperty:
+    def prop(self) -> pyvista.TextProperty:
         """Property of this actor.
 
         Returns
         -------
-        TextProperty
+        pyvista.TextProperty
             Property of this actor.
         """
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
+    def prop(self, prop: pyvista.TextProperty):  # numpydoc ignore=GL08
         self.SetTextProperty(prop)
 
     @property
@@ -201,7 +201,7 @@ class Text(_vtk.vtkTextActor):
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
+    def prop(self, prop: pyvista.TextProperty):  # numpydoc ignore=GL08
         self.SetTextProperty(prop)
 
     @property
@@ -229,7 +229,7 @@ class TextProperty(_vtk.vtkTextProperty):
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    color : ColorLike, optional
+    color : pyvista.ColorLike, optional
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
@@ -302,7 +302,7 @@ class TextProperty(_vtk.vtkTextProperty):
             self.enable_shadow()
 
     @property
-    def color(self) -> Color:
+    def color(self) -> pyvista.Color:
         """Color of text's property.
 
         Returns
@@ -314,7 +314,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def color(self, color: pyvista.ColorLike):  # numpydoc ignore=GL08
         self._color_set = color is not None
         rgb_color = Color(color, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
@@ -338,7 +338,7 @@ class TextProperty(_vtk.vtkTextProperty):
         self.SetOpacity(opacity)
 
     @property
-    def background_color(self) -> Color:
+    def background_color(self) -> pyvista.Color:
         """Background color of text's property.
 
         Returns
@@ -350,7 +350,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
-    def background_color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def background_color(self, color: pyvista.ColorLike):  # numpydoc ignore=GL08
         self._background_color_set = color is not None
         rgb_color = Color(color)
         self.SetBackgroundColor(rgb_color.float_rgb)
@@ -390,7 +390,7 @@ class TextProperty(_vtk.vtkTextProperty):
         self.SetFrame(frame)
 
     @property
-    def frame_color(self) -> Color:
+    def frame_color(self) -> pyvista.Color:
         """Frame color of text property.
 
         Returns
