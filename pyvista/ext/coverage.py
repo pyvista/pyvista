@@ -49,7 +49,7 @@ def compile_regex_list(name: str, exps: str) -> List[Pattern]:
 def method_from_obj(obj_name):
     """Return the class and method from an object name.
 
-    pv.core.filters.poly_data.PolyDataFilters.boolean_add
+    pyvista.core.filters.poly_data.PolyDataFilters.boolean_add
 
     becomes
 

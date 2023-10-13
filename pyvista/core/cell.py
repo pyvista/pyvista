@@ -5,7 +5,7 @@ from typing import List, Tuple, cast
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk_core as _vtk
 from .celltype import CellType
@@ -112,7 +112,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.CellType
+        pyvista.CellType
             Type of cell.
 
         Examples
@@ -162,12 +162,12 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
 
-    def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
+    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             This cell cast to a :class:`pyvista.UnstructuredGrid`.
 
         Examples
@@ -195,7 +195,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
             cell_ids.insert(0, len(cell_ids))
         else:
             cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
-        return pv.UnstructuredGrid(
+        return pyvista.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
             self.points.copy(),
@@ -325,7 +325,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             Edge given by ``index``.
 
         Examples
@@ -400,7 +400,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             Face given by ``index``.
 
         Examples
@@ -482,7 +482,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         attrs.append(("N Faces", self.n_faces, "{}"))
         attrs.append(("N Edges", self.n_edges, "{}"))
         bds = self.bounds
-        fmt = f"{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}"
+        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
         attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
         attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
@@ -509,7 +509,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        pv.Cell
+        pyvista.Cell
             Deep or shallow copy of the cell.
 
         Examples
@@ -704,12 +704,12 @@ class CellArray(_vtk.vtkCellArray):
 
         Returns
         -------
-        pv.CellArray
+        pyvista.CellArray
             Constructed ``CellArray``.
         """
-        cells = np.asarray(cells, dtype=pv.ID_TYPE)
+        cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
         cellarr = cls()
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr

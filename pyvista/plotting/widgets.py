@@ -2,7 +2,7 @@
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -190,7 +190,7 @@ class WidgetHelper:
             bounds = self.bounds
 
         def _the_callback(box_widget, event_id):
-            the_box = pv.PolyData()
+            the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
@@ -206,7 +206,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pv.global_theme.font.color).float_rgb
+            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -247,7 +247,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
@@ -350,7 +350,7 @@ class WidgetHelper:
             clipper.SetBoxClip(*bounds)
             clipper.Update()
             if crinkle:
-                clipped = pv.wrap(crinkler.GetOutputDataObject(0))
+                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
             else:
                 clipped = _get_output(clipper, oport=port)
             box_clipped_mesh.shallow_copy(clipped)
@@ -505,7 +505,7 @@ class WidgetHelper:
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
 
-        color = Color(color, default_color=pv.global_theme.font.color)
+        color = Color(color, default_color=pyvista.global_theme.font.color)
 
         if assign_to_axis:
             normal_rotation = False
@@ -641,7 +641,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
@@ -763,9 +763,9 @@ class WidgetHelper:
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
             if crinkle:
-                clipped = pv.wrap(crinkler.GetOutputDataObject(0))
+                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
             else:
-                clipped = pv.wrap(clipper.GetOutput())
+                clipped = pyvista.wrap(clipper.GetOutput())
             plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
@@ -809,7 +809,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        volume : pv.plotting.volume.Volume or pv.ImageData or pv.RectilinearGrid
+        volume : pyvista.plotting.volume.Volume or pyvista.ImageData or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.ImageData` or
             :class:`pyvista.RectilinearGrid`, or the return value from
             :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
@@ -873,12 +873,12 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
-        if isinstance(volume, (pv.ImageData, pv.RectilinearGrid)):
+        if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
-        elif not isinstance(volume, pv.plotting.volume.Volume):
+        elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.ImageData, '
-                'pv.RectilinearGrid, or a pyvista.plotting.volume.Volume '
+                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
             )
         else:
@@ -938,7 +938,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and slice or algorithm that
             produces said mesh.
 
@@ -1026,7 +1026,7 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        plane_sliced_mesh = pv.wrap(alg.GetOutput())
+        plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
         def callback(normal, origin):  # numpydoc ignore=GL08
@@ -1070,7 +1070,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and threshold or algorithm
             that produces said mesh.
 
@@ -1216,7 +1216,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        color = Color(color, default_color=pv.global_theme.font.color)
+        color = Color(color, default_color=pyvista.global_theme.font.color)
 
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
@@ -1225,7 +1225,7 @@ class WidgetHelper:
                 if use_vertices:
                     args = [pointa, pointb]
                 else:
-                    the_line = pv.Line(pointa, pointb, resolution=resolution)
+                    the_line = pyvista.Line(pointa, pointb, resolution=resolution)
                     args = [the_line]
                 if pass_widget:
                     args.append(widget)
@@ -1502,11 +1502,11 @@ class WidgetHelper:
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
-        color = Color(color, default_color=pv.global_theme.font.color)
+        color = Color(color, default_color=pyvista.global_theme.font.color)
         title_color = Color(title_color, default_color=color)
 
         if fmt is None:
-            fmt = pv.global_theme.font.fmt
+            fmt = pyvista.global_theme.font.fmt
 
         def normalize(point, viewport):  # numpydoc ignore=GL08
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
@@ -1538,7 +1538,7 @@ class WidgetHelper:
                 raise TypeError(
                     f"Expected type for ``style`` is str but {type(style).__name__} was given."
                 )
-            slider_style = getattr(pv.global_theme.slider_styles, style)
+            slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
             slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.float_rgb)
@@ -1607,7 +1607,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and threshold or algorithm
             that produces said mesh.
 
@@ -1682,12 +1682,12 @@ class WidgetHelper:
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
-        if isinstance(mesh, pv.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             # vtkThreshold is CELL-wise and PointSets have no cells
             algo = pointset_to_polydata_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
-        if isinstance(mesh, pv.MultiBlock):
+        if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
@@ -1713,7 +1713,7 @@ class WidgetHelper:
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
 
-        threshold_mesh = pv.wrap(alg.GetOutput())
+        threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):  # numpydoc ignore=GL08
@@ -1765,7 +1765,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and contour or algorithm
             that produces said mesh.
 
@@ -1838,9 +1838,9 @@ class WidgetHelper:
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
-        if isinstance(mesh, pv.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
-        if isinstance(mesh, pv.MultiBlock):
+        if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
         name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
@@ -1851,7 +1851,7 @@ class WidgetHelper:
         else:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != pv.FieldAssociation.POINT:
+        if field != pyvista.FieldAssociation.POINT:
             raise TypeError(
                 f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
             )
@@ -1872,7 +1872,7 @@ class WidgetHelper:
 
         self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
 
-        isovalue_mesh = pv.wrap(alg.GetOutput())
+        isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
         def callback(value):  # numpydoc ignore=GL08
@@ -1978,18 +1978,18 @@ class WidgetHelper:
         if initial_points is not None and len(initial_points) != n_handles:
             raise ValueError("`initial_points` must be length `n_handles`.")
 
-        color = Color(color, default_color=pv.global_theme.color)
+        color = Color(color, default_color=pyvista.global_theme.color)
 
         if bounds is None:
             bounds = self.bounds
 
-        ribbon = pv.PolyData()
+        ribbon = pyvista.PolyData()
 
         def _the_callback(widget, event_id):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
-            polyline = pv.wrap(para_source.GetOutput())
+            polyline = pyvista.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
                 if pass_widget:
@@ -2007,7 +2007,7 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pv.vtk_points(initial_points))
+            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
@@ -2050,7 +2050,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pv.DataSet or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or vtk.vtkAlgorithm
             The input dataset to add to the scene and slice along the spline
             or algorithm that produces said mesh.
 
@@ -2123,7 +2123,7 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        spline_sliced_mesh = pv.wrap(alg.GetOutput())
+        spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
         def callback(spline):  # numpydoc ignore=GL08
@@ -2187,7 +2187,7 @@ class WidgetHelper:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if color is None:
-            color = pv.global_theme.font.color.float_rgb
+            color = pyvista.global_theme.font.color.float_rgb
         color = Color(color)
 
         compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
@@ -2316,7 +2316,7 @@ class WidgetHelper:
 
         """
         if color is None:
-            color = pv.global_theme.color.float_rgb
+            color = pyvista.global_theme.color.float_rgb
         selected_color = Color(selected_color)
 
         center = np.array(center)
@@ -2404,7 +2404,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        actor : pv.Actor
+        actor : pyvista.Actor
             The actor to which the widget is attached to.
         origin : sequence[float], optional
             Origin of the widget. Default is the origin of the main actor.
@@ -2419,7 +2419,7 @@ class WidgetHelper:
             the widget geometry to be hidden by other actors in the plotter.
         axes_colors : tuple[ColorLike], optional
             Uses the theme by default. Configure the individual axis colors by
-            modifying either the theme with ``pv.global_theme.axes.x_color =
+            modifying either the theme with ``pyvista.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
         axes : numpy.ndarray, optional
             ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default
@@ -2434,7 +2434,7 @@ class WidgetHelper:
 
         Returns
         -------
-        pv.widgets.AffineWidget3D
+        pyvista.widgets.AffineWidget3D
             The affine widget.
 
         Notes
@@ -2551,7 +2551,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pv.ImageData(dimensions=dims)
+            button = pyvista.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[

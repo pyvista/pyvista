@@ -4,7 +4,7 @@ from typing import Tuple
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 
@@ -30,7 +30,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     See Also
     --------
-    pv.plot
+    pyvista.plot
 
     Examples
     --------
@@ -51,7 +51,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> pv.plot_arrows(cent, direction)
 
     """
-    return pv.plot([cent, direction], **kwargs)
+    return pyvista.plot([cent, direction], **kwargs)
 
 
 def plot_compare_four(
@@ -74,13 +74,13 @@ def plot_compare_four(
 
     Parameters
     ----------
-    data_a : pv.DataSet
+    data_a : pyvista.DataSet
         The data object to display in the top-left corner.
-    data_b : pv.DataSet
+    data_b : pyvista.DataSet
         The data object to display in the top-right corner.
-    data_c : pv.DataSet
+    data_c : pyvista.DataSet
         The data object to display in the bottom-left corner.
-    data_d : pv.DataSet
+    data_d : pyvista.DataSet
         The data object to display in the bottom-right corner.
     display_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``add_mesh`` method.
@@ -93,7 +93,7 @@ def plot_compare_four(
         a screenshot array.
     camera_position : list, default: None
         The camera position to use in the plot.
-    outline : pv.DataSet, default: None
+    outline : pyvista.DataSet, default: None
         An outline to plot around the data objects.
     outline_color : str, default: 'k'
         The color of the outline.
@@ -106,7 +106,7 @@ def plot_compare_four(
 
     Returns
     -------
-    pv.Plotter
+    pyvista.Plotter
         The plotter object.
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
@@ -121,7 +121,7 @@ def plot_compare_four(
 
     plotter_kwargs['notebook'] = notebook
 
-    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
+    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):

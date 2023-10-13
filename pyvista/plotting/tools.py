@@ -8,7 +8,7 @@ from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.plotting.axes_actor import AxesActor
 
 from ._vtk import (
@@ -216,10 +216,10 @@ def create_axes_orientation_box(
     >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
-    edge_color = Color(edge_color, default_color=pv.global_theme.edge_color)
+    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
+    edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
     x_face_color = Color(x_face_color)
     y_face_color = Color(y_face_color)
     z_face_color = Color(z_face_color)
@@ -258,7 +258,7 @@ def create_axes_orientation_box(
         axes_actor.GetCubeProperty().SetOpacity(0)
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
-        cube = pv.Cube()
+        cube = pyvista.Cube()
         cube.clear_data()  # remove normals
         face_colors = np.array(
             [
@@ -278,7 +278,7 @@ def create_axes_orientation_box(
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = pv.Actor(mapper=cube_mapper)
+        cube_actor = pyvista.Actor(mapper=cube_mapper)
         cube_actor.prop.culling = 'back'
         cube_actor.prop.opacity = opacity
 
@@ -289,7 +289,7 @@ def create_axes_orientation_box(
     else:
         actor = axes_actor
 
-    color = Color(label_color, default_color=pv.global_theme.font.color)
+    color = Color(label_color, default_color=pyvista.global_theme.font.color)
     axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
     return actor
@@ -520,11 +520,11 @@ def check_matplotlib_vtk_compatibility():
     import matplotlib
 
     mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
-    if pv.vtk_version_info <= (9, 2, 2):
+    if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False
         return True
-    elif pv.vtk_version_info > (9, 2, 2):
+    elif pyvista.vtk_version_info > (9, 2, 2):
         if mpl_vers >= (3, 6):
             return True
         return False  # pragma: no cover

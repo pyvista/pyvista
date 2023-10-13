@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
@@ -256,7 +256,7 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
             properties.setdefault('ambient', ambient)
 
         # Set axis shaft and tip properties
-        properties.setdefault('lighting', pv.global_theme.lighting)
+        properties.setdefault('lighting', pyvista.global_theme.lighting)
         if len(properties) > 0:
             x_shaft = self.x_axis_shaft_properties
             y_shaft = self.y_axis_shaft_properties
@@ -282,13 +282,13 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
 
         # Set shaft and tip color
         if x_color is None:
-            x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
+            x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
         self.x_color = x_color
         if y_color is None:
-            y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
+            y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
         self.y_color = y_color
         if z_color is None:
-            z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
+            z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
         self.z_color = z_color
 
         # Set shaft properties
@@ -313,7 +313,7 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         self.label_position = label_position
 
         if label_color is None:
-            label_color = Color(label_color, default_color=pv.global_theme.font.color)
+            label_color = Color(label_color, default_color=pyvista.global_theme.font.color)
         self.label_color = label_color
 
         # Set Prop3D properties

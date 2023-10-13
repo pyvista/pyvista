@@ -3,7 +3,7 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -539,7 +539,7 @@ class LookupTable(_vtk.vtkLookupTable):
             return
         color = self.nan_color
         if color is None:
-            color = Color(pv.global_theme.nan_color)
+            color = Color(pyvista.global_theme.nan_color)
         self.nan_color = Color(self.nan_color, opacity=value)
 
     @property
@@ -632,7 +632,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if value in (None, False):
             self.SetUseAboveRangeColor(False)
         elif value is True:
-            self.SetAboveRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
+            self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
             self.SetUseAboveRangeColor(True)
         else:
             self.SetAboveRangeColor(*Color(value).float_rgba)
@@ -660,7 +660,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def above_range_opacity(self, value):  # numpydoc ignore=GL08
         color = self.above_range_color
         if color is None:
-            color = Color(pv.global_theme.above_range_color)
+            color = Color(pyvista.global_theme.above_range_color)
         self.above_range_color = Color(color, opacity=value)
 
     @property
@@ -696,7 +696,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if value in (None, False):
             self.SetUseBelowRangeColor(False)
         elif value is True:
-            self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
+            self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
@@ -724,7 +724,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def below_range_opacity(self, value):  # numpydoc ignore=GL08
         color = self.below_range_color
         if color is None:
-            color = Color(pv.global_theme.below_range_color)
+            color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
     def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
@@ -980,10 +980,10 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         # need a trivial polydata for this
-        mesh = pv.PolyData(np.zeros((2, 3)))
+        mesh = pyvista.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pv.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
+        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False

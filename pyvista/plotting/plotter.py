@@ -21,7 +21,7 @@ import matplotlib
 import numpy as np
 import scooby
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import (
@@ -129,7 +129,7 @@ def _warn_xserver():  # pragma: no cover
         return
 
     if not hasattr(_warn_xserver, 'has_support'):
-        _warn_xserver.has_support = pv.system_supports_plotting()
+        _warn_xserver.has_support = pyvista.system_supports_plotting()
 
     if not _warn_xserver.has_support:
         # check if a display has been set
@@ -137,7 +137,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pv.global_theme.jupyter_backend in [
+        if pyvista.global_theme.jupyter_backend in [
             'client',
         ]:
             return
@@ -209,7 +209,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         * ``'three lights'``: illumination using 3 lights.
         * ``'none'``: no light sources at instantiation.
 
-    theme : pv.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     image_scale : int, optional
@@ -260,9 +260,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
             # after creation.
-            self._theme.load_theme(pv.global_theme)
+            self._theme.load_theme(pyvista.global_theme)
         else:
-            if not isinstance(theme, pv.plotting.themes.Theme):
+            if not isinstance(theme, pyvista.plotting.themes.Theme):
                 raise TypeError(
                     'Expected ``pyvista.plotting.themes.Theme`` for '
                     f'``theme``, not {type(theme).__name__}.'
@@ -383,7 +383,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Theme
+        pyvista.Theme
             Theme of this plotter.
 
         Examples
@@ -402,7 +402,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme):  # numpydoc ignore=GL08
-        if not isinstance(theme, pv.plotting.themes.Theme):
+        if not isinstance(theme, pyvista.plotting.themes.Theme):
             raise TypeError(
                 'Expected a pyvista theme like '
                 '``pyvista.plotting.themes.Theme``, '
@@ -580,9 +580,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ImportError('Please install trame to export')
 
         # Ensure trame server is launched
-        server = get_server(pv.global_theme.trame.jupyter_server_name)
+        server = get_server(pyvista.global_theme.trame.jupyter_server_name)
         if not server.running:
-            elegantly_launch(pv.global_theme.trame.jupyter_server_name)
+            elegantly_launch(pyvista.global_theme.trame.jupyter_server_name)
 
         view = PyVistaLocalView(self, trame_server=server)
 
@@ -679,7 +679,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             if mapper is None:
                                 continue
                             dataset = mapper.dataset
-                            if not isinstance(dataset, pv.PolyData):
+                            if not isinstance(dataset, pyvista.PolyData):
                                 warnings.warn(
                                     'Plotter contains non-PolyData datasets. These have been '
                                     'overwritten with PolyData surfaces and are internally '
@@ -842,7 +842,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.ScalarBars
+        pyvista.ScalarBars
             Scalar bar object.
 
         Examples
@@ -904,7 +904,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Renderer
+        pyvista.Renderer
             Active render.
 
         Examples
@@ -1056,7 +1056,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         intensities = [1, 0.6, 0.5]
         all_angles = [(45.0, 45.0), (-30.0, -60.0), (-30.0, 60.0)]
         for intensity, angles in zip(intensities, all_angles):
-            light = pv.Light(light_type='camera light')
+            light = pyvista.Light(light_type='camera light')
             light.intensity = intensity
             light.position = _to_pos(*angles)
             for renderer in renderers:
@@ -1107,7 +1107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             vtk_lights = renderer.lights
             renderer.remove_all_lights()
             for vtk_light in vtk_lights:
-                light = pv.Light.from_vtk(vtk_light)
+                light = pyvista.Light.from_vtk(vtk_light)
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
@@ -1530,7 +1530,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Camera
+        pyvista.Camera
             Camera from the active renderer.
 
         """
@@ -1802,7 +1802,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Image array of current render window.
 
         Examples
@@ -1996,7 +1996,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[pv.Actor]
+        list[pyvista.Actor]
             List of actors.
 
         Examples
@@ -2359,7 +2359,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        dataset : pv.MultiBlock
+        dataset : pyvista.MultiBlock
             A :class:`pyvista.MultiBlock` dataset.
 
         color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.color`
@@ -2626,10 +2626,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the composite dataset.
 
-        pv.CompositePolyDataMapper
+        pyvista.CompositePolyDataMapper
             Composite PolyData mapper.
 
         Examples
@@ -2904,7 +2904,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pv.DataSet or pv.MultiBlock or vtk.vtkAlgorithm
+        mesh : pyvista.DataSet or pyvista.MultiBlock or vtk.vtkAlgorithm
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points. Plotting also supports VTK algorithm
@@ -3038,7 +3038,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : pv.Texture or np.ndarray, optional
+        texture : pyvista.Texture or np.ndarray, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
             datasets.
@@ -3224,7 +3224,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.plotting.actor.Actor
+        pyvista.plotting.actor.Actor
             Actor of the mesh.
 
         Examples
@@ -3336,14 +3336,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
-        if isinstance(mesh, pv.PointSet):
+        if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             if algo is not None:
                 algo = pointset_to_polydata_algorithm(algo)
                 mesh, algo = algorithm_to_mesh_handler(algo)
             else:
                 mesh = mesh.cast_to_polydata(deep=False)
-        elif isinstance(mesh, pv.MultiBlock):
+        elif isinstance(mesh, pyvista.MultiBlock):
             if algo is not None:
                 raise TypeError(
                     'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
@@ -3469,7 +3469,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
-        scalars_name = pv.DEFAULT_SCALARS_NAME
+        scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
             self.mapper.array_name = scalars
 
@@ -3692,9 +3692,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
-        geom = pv.Triangle()
+        geom = pyvista.Triangle()
         if scalars is not None:
-            geom = pv.Box()
+            geom = pyvista.Box()
             color = Color('black')
         geom.points -= geom.center
         addr = actor.GetAddressAsString("")
@@ -3964,7 +3964,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the volume.
 
         Examples
@@ -4079,7 +4079,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
 
-        if isinstance(volume, pv.MultiBlock):
+        if isinstance(volume, pyvista.MultiBlock):
             from itertools import cycle
 
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
@@ -4133,34 +4133,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure structured grids are not less than 3D
         # ImageData and RectilinearGrid should be olay as <3D
-        if isinstance(volume, pv.StructuredGrid):
+        if isinstance(volume, pyvista.StructuredGrid):
             if any(d < 2 for d in volume.dimensions):
                 raise ValueError('StructuredGrids must be 3D dimensional.')
 
-        if isinstance(volume, pv.PolyData):
+        if isinstance(volume, pyvista.PolyData):
             raise TypeError(
                 f'Type {type(volume)} not supported for volume rendering as it is not 3D.'
             )
-        elif not isinstance(volume, (pv.ImageData, pv.RectilinearGrid, pv.UnstructuredGrid)):
+        elif not isinstance(
+            volume, (pyvista.ImageData, pyvista.RectilinearGrid, pyvista.UnstructuredGrid)
+        ):
             volume = volume.cast_to_unstructured_grid()
 
         # Override mapper choice for UnstructuredGrid
-        if isinstance(volume, pv.UnstructuredGrid):
+        if isinstance(volume, pyvista.UnstructuredGrid):
             # Unstructured grid must be all tetrahedrals
-            if not (volume.celltypes == pv.CellType.TETRA).all():
+            if not (volume.celltypes == pyvista.CellType.TETRA).all():
                 volume = volume.triangulate()
             mapper = 'ugrid'
 
-        if mapper == 'fixed_point' and not isinstance(volume, pv.ImageData):
+        if mapper == 'fixed_point' and not isinstance(volume, pyvista.ImageData):
             raise TypeError(
                 f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.ImageData`.'
             )
-        elif isinstance(volume, pv.UnstructuredGrid) and mapper != 'ugrid':
+        elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
             raise TypeError(
                 f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
             )
 
-        if opacity_unit_distance is None and not isinstance(volume, pv.UnstructuredGrid):
+        if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
         if scalars is None:
@@ -4259,7 +4261,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mapper.scalar_range = clim
 
-        if isinstance(cmap, pv.LookupTable):
+        if isinstance(cmap, pyvista.LookupTable):
             self.mapper.lookup_table = cmap
         else:
             if cmap is None:
@@ -4339,7 +4341,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pv.DataSet | vtk.vtkAlgorithm
+        mesh : pyvista.DataSet | vtk.vtkAlgorithm
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
@@ -4370,7 +4372,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the silhouette.
 
         Examples
@@ -4386,7 +4388,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
-        if not isinstance(mesh, pv.PolyData):
+        if not isinstance(mesh, pyvista.PolyData):
             algo = extract_surface_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
@@ -4649,7 +4651,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, (collections.abc.Iterable, pv.MultiBlock)):
+        if isinstance(mesh, (collections.abc.Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
@@ -4779,7 +4781,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
-        if not pv.BUILDING_GALLERY:
+        if not pyvista.BUILDING_GALLERY:
             if _ALL_PLOTTERS is not None:
                 _ALL_PLOTTERS.pop(self._id_name, None)
 
@@ -4973,8 +4975,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
             ) from None
 
-        if isinstance(pv.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pv.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(
@@ -5047,8 +5049,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
-        if isinstance(pv.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pv.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
 
         kwargs['mode'] = 'I'
@@ -5101,7 +5103,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Image of depth values from camera orthogonal to image
             plane.
 
@@ -5228,7 +5230,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
 
-        lines = pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
+        lines = (
+            pyvista.lines_from_points(lines)
+            if connected
+            else pyvista.line_segments_from_points(lines)
+        )
 
         actor = Actor(mapper=DataSetMapper(lines))
         actor.prop.line_width = width
@@ -5413,12 +5419,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             points = np.array(points)
 
         if isinstance(points, np.ndarray):
-            points = pv.PolyData(points)  # Cast to poly data
+            points = pyvista.PolyData(points)  # Cast to poly data
         elif not is_pyvista_dataset(points) and not isinstance(points, _vtk.vtkAlgorithm):
             raise TypeError(f'Points type not usable: {type(points)}')
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
-            if pv.vtk_version_info < (9, 1):  # pragma: no cover
+            if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
                 from pyvista.core.errors import VTKVersionError
 
                 raise VTKVersionError(
@@ -5438,7 +5444,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
                 )
-            points = pv.PolyData(points.points)
+            points = pyvista.PolyData(points.points)
             if len(points.points) != len(labels):
                 raise ValueError('There must be one label for each point')
             vtklabels = _vtk.vtkStringArray()
@@ -5566,7 +5572,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : numpy.ndarray or pv.DataSet
+        points : numpy.ndarray or pyvista.DataSet
             Array of points or the points from a pyvista object.
 
         style : str, default: 'points'
@@ -5581,7 +5587,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -5632,7 +5638,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Actor of the arrows.
 
         Examples
@@ -5661,7 +5667,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mag != 1:
             direction = direction * mag
 
-        pdata = pv.vector_poly_data(cent, direction)
+        pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
         arrow = _vtk.vtkArrowSource()
         arrow.Update()
@@ -5689,8 +5695,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             if isinstance(filename, (str, pathlib.Path)):
                 filename = pathlib.Path(filename)
-                if isinstance(pv.FIGURE_PATH, str) and not filename.is_absolute():
-                    filename = pathlib.Path(os.path.join(pv.FIGURE_PATH, filename))
+                if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+                    filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
                 if not filename.suffix:
                     filename = filename.with_suffix('.png')
                 elif filename.suffix not in SUPPORTED_FORMATS:
@@ -5752,10 +5758,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        if isinstance(pv.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pv.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))
-        extension = pv.core.utilities.fileio.get_ext(filename)
+        extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
         modes = {
@@ -5814,7 +5820,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array containing pixel RGB and alpha.  Sized:
 
             * [Window height x Window width x 3] if
@@ -5897,7 +5903,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             PolyData containing the orbital path.
 
         Examples
@@ -5924,7 +5930,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if y > radius:
             radius = y
         center += np.array(viewup) * shift
-        return pv.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
+        return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
     def fly_to(self, point):
         """Move the current camera's focal point to a position point.
@@ -5954,7 +5960,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        path : pv.PolyData
+        path : pyvista.PolyData
             Path of orbital points. The order in the points is the order of
             travel.
 
@@ -6015,7 +6021,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
-            path = pv.PolyData(path)
+            path = pyvista.PolyData(path)
         points = path.points
 
         # Make sure the whole scene is visible
@@ -6098,8 +6104,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pv.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pv.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
 
@@ -6372,7 +6378,7 @@ class Plotter(BasePlotter):
         The default is a ``'light kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
-    theme : pv.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     image_scale : int, optional
@@ -6441,7 +6447,7 @@ class Plotter(BasePlotter):
         _warn_xserver()
 
         if off_screen is None:
-            off_screen = pv.OFF_SCREEN
+            off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
             if self._theme.notebook is not None:
@@ -6508,7 +6514,7 @@ class Plotter(BasePlotter):
         self._window_size_unset = False
         if window_size is None:
             self.window_size = self._theme.window_size
-            if self.window_size == pv.plotting.themes.Theme().window_size:
+            if self.window_size == pyvista.plotting.themes.Theme().window_size:
                 self._window_size_unset = True
         else:
             self.window_size = window_size
@@ -6688,7 +6694,7 @@ class Plotter(BasePlotter):
         assert_empty_kwargs(**kwargs)
 
         if before_close_callback is None:
-            before_close_callback = pv.global_theme._before_close_callback
+            before_close_callback = pyvista.global_theme._before_close_callback
         self._before_close_callback = before_close_callback
 
         if interactive_update and auto_close is None:
@@ -6756,7 +6762,7 @@ class Plotter(BasePlotter):
             self.title = title
 
         # Keep track of image for sphinx-gallery
-        if pv.BUILDING_GALLERY:
+        if pyvista.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
@@ -6776,7 +6782,7 @@ class Plotter(BasePlotter):
                         self.iren.process_events()
                     self.iren.start()
 
-                if pv.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
                     self.iren.initialize()
 
             except KeyboardInterrupt:
@@ -6960,8 +6966,8 @@ class Plotter(BasePlotter):
 
         Returns
         -------
-        List[Union[pv.DataSet, PyVista.MultiBlock]]
-            List of mesh objects such as pv.PolyData, pv.UnstructuredGrid, etc.
+        List[Union[pyvista.DataSet, PyVista.MultiBlock]]
+            List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
         meshes = []
         for actor in self.actors.values():
