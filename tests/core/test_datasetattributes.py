@@ -228,15 +228,15 @@ def test_set_invalid_vectors(hexbeam):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
 
 
-def test_set_tcoords_name():
+def test_set_texture_coordinates_name():
     mesh = pv.Cube()
-    old_name = mesh.point_data.active_t_coords_name
-    assert mesh.point_data.active_t_coords_name is not None
-    mesh.point_data.active_t_coords_name = None
-    assert mesh.point_data.active_t_coords_name is None
+    old_name = mesh.point_data.active_texture_coordinates_name
+    assert mesh.point_data.active_texture_coordinates_name is not None
+    mesh.point_data.active_texture_coordinates_name = None
+    assert mesh.point_data.active_texture_coordinates_name is None
 
-    mesh.point_data.active_t_coords_name = old_name
-    assert mesh.point_data.active_t_coords_name == old_name
+    mesh.point_data.active_texture_coordinates_name = old_name
+    assert mesh.point_data.active_texture_coordinates_name == old_name
 
 
 def test_set_bitarray(hexbeam):
@@ -597,12 +597,12 @@ def test_active_vectors_eq():
     assert mesh != other_mesh
 
 
-def test_active_t_coords_name(plane):
-    plane.point_data['arr'] = plane.point_data.active_t_coords
-    plane.point_data.active_t_coords_name = 'arr'
+def test_active_texture_coordinates_name(plane):
+    plane.point_data['arr'] = plane.point_data.active_texture_coordinates
+    plane.point_data.active_texture_coordinates_name = 'arr'
 
     with raises(AttributeError):
-        plane.field_data.active_t_coords_name = 'arr'
+        plane.field_data.active_texture_coordinates_name = 'arr'
 
 
 @skip_windows  # windows doesn't support np.complex256

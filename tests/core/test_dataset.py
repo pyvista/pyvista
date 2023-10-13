@@ -484,8 +484,8 @@ def test_invalid_vector(grid):
         grid["vectors"] = np.empty((3, 3))
 
 
-def test_no_t_coords(grid):
-    assert grid.active_t_coords is None
+def test_no_texture_coordinates(grid):
+    assert grid.active_texture_coordinates is None
 
 
 def test_no_arrows(grid):
@@ -557,18 +557,18 @@ def test_set_active_tensors(grid):
     active_component_consistency_check(grid, "tensors", "point")
 
 
-def test_set_t_coords(grid):
+def test_set_texture_coordinates(grid):
     with pytest.raises(TypeError):
-        grid.active_t_coords = [1, 2, 3]
+        grid.active_texture_coordinates = [1, 2, 3]
 
     with pytest.raises(ValueError):
-        grid.active_t_coords = np.empty(10)
+        grid.active_texture_coordinates = np.empty(10)
 
     with pytest.raises(ValueError):
-        grid.active_t_coords = np.empty((3, 3))
+        grid.active_texture_coordinates = np.empty((3, 3))
 
     with pytest.raises(ValueError):
-        grid.active_t_coords = np.empty((grid.n_points, 1))
+        grid.active_texture_coordinates = np.empty((grid.n_points, 1))
 
 
 def test_set_active_vectors_fail(grid):

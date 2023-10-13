@@ -176,7 +176,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> plane = pv.Plane()
-        >>> plane.active_t_coords is not None
+        >>> plane.active_texture_coordinates is not None
         True
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane)

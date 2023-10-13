@@ -569,7 +569,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def active_t_coords(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
         """Return the active texture coordinates on the points.
 
         Returns
@@ -583,7 +583,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
-        >>> globe.active_t_coords
+        >>> globe.active_texture_coordinates
         pyvista_ndarray([[0.        , 0.        ],
                          [0.        , 0.07142857],
                          [0.        , 0.14285714],
@@ -593,18 +593,18 @@ class DataSet(DataSetFilters, DataObject):
                          [1.        , 1.        ]])
 
         """
-        return self.point_data.active_t_coords
+        return self.point_data.active_texture_coordinates
 
-    @active_t_coords.setter
-    def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
+    @active_texture_coordinates.setter
+    def active_texture_coordinates(self, texture_coordinates: np.ndarray):  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters
         ----------
-        t_coords : np.ndarray
+        texture_coordinates : np.ndarray
             Active texture coordinates on the points.
         """
-        self.point_data.active_t_coords = t_coords  # type: ignore
+        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
