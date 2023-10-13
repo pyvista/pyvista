@@ -250,11 +250,11 @@ class TextProperty(_vtk.vtkTextProperty):
     shadow : bool, optional
         If enable the shadow.
 
-    justification_horizontal : str
+    justification_horizontal : str, optional
         Text's horizontal justification.
         Should be either "left", "center" or "right".
 
-    justification_vertical : str
+    justification_vertical : str, optional
         Text's vertical justification.
         Should be either "bottom", "center" or "top".
 
