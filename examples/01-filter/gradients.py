@@ -12,7 +12,6 @@ an input array {u, v, w}.
 
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
-from itertools import product
 
 import numpy as np
 
