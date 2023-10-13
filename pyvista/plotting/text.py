@@ -307,14 +307,14 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Color of text's property.
 
         """
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, color: pyvista.ColorLike):  # numpydoc ignore=GL08
+    def color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._color_set = color is not None
         rgb_color = Color(color, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
@@ -350,7 +350,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
-    def background_color(self, color: pyvista.ColorLike):  # numpydoc ignore=GL08
+    def background_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._background_color_set = color is not None
         rgb_color = Color(color)
         self.SetBackgroundColor(rgb_color.float_rgb)
