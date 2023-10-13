@@ -194,7 +194,7 @@ class Text(_vtk.vtkTextActor):
 
         Returns
         -------
-        str
+        pyvista.TextProperty
             Property of this actor.
         """
         return self.GetTextProperty()
