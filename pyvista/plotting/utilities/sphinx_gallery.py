@@ -68,7 +68,7 @@ class Scraper:
 
     def __repr__(self):
         """Return a stable representation of the class instance."""
-        return f"<{self.__class__.__name__} object>"
+        return f"<{type(self).__name__} object>"
 
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
