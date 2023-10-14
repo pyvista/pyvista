@@ -7,7 +7,7 @@ from typing import Sequence
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -23,7 +23,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
     Parameters
     ----------
-    surf : pv.core.pointset.PolyData
+    surf : pyvista.core.pointset.PolyData
         Mesh to be translated and oriented.
     center : tuple, optional, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
@@ -292,7 +292,7 @@ class ConeSource(_vtk.vtkConeSource):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Cone surface.
         """
         self.Update()
@@ -517,7 +517,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Cylinder surface.
         """
         self.Update()
@@ -564,7 +564,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
             raise ValueError('>=2 points need to define multiple lines.')
-        self.SetPoints(pv.vtk_points(points))
+        self.SetPoints(pyvista.vtk_points(points))
 
     @property
     def output(self):
@@ -572,7 +572,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             Line mesh.
         """
         self.Update()

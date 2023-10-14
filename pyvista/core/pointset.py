@@ -9,7 +9,7 @@ from typing import Sequence, Tuple, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -78,7 +78,7 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        to_copy : pv.DataSet
+        to_copy : pyvista.DataSet
             Data object to perform the shallow copy from.
 
         """
@@ -101,7 +101,7 @@ class _PointSet(DataSet):
 
         Returns
         -------
-        pv.DataSet
+        pyvista.DataSet
             Same type as the input, but with the specified cells
             removed.
 
@@ -137,7 +137,7 @@ class _PointSet(DataSet):
 
         Returns
         -------
-        pv.PointSet
+        pyvista.PointSet
             Pointset with points in double precision.
 
         Notes
@@ -183,7 +183,7 @@ class _PointSet(DataSet):
 
         Returns
         -------
-        pv.PointSet
+        pyvista.PointSet
             Translated pointset.
 
         Examples
@@ -271,7 +271,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         the class being abstract.
 
         """
-        if pv.vtk_version_info < (9, 1, 0):
+        if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
         return super().__new__(cls, *args, **kwargs)
 
@@ -310,7 +310,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             PointSet cast to a ``pyvista.PolyData``.
 
         """
@@ -531,7 +531,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     See Also
     --------
-    pv.PolyData.from_regular_faces
+    pyvista.PolyData.from_regular_faces
 
     Examples
     --------
@@ -684,9 +684,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @staticmethod
     def _make_vertex_cells(npoints):
-        cells = np.empty((npoints, 2), dtype=pv.ID_TYPE)
+        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
         cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
+        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
         return cells
 
     @property
@@ -784,7 +784,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         See Also
         --------
-        pv.PolyData.regular_faces
+        pyvista.PolyData.regular_faces
 
         Notes
         -----
@@ -843,7 +843,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         See Also
         --------
-        pv.PolyData.faces
+        pyvista.PolyData.faces
 
         Notes
         -----
@@ -892,7 +892,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        pv.PolyData
+        pyvista.PolyData
             The newly constructed mesh.
 
         Examples
@@ -1204,7 +1204,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
+    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the point normals.
 
         If the point data already contains an array named ``'Normals'``, this
@@ -1214,7 +1214,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array of point normals.
 
         Examples
@@ -1239,7 +1239,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def cell_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
+    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         If the cell data already contains an array named ``'Normals'``, this
@@ -1249,7 +1249,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array of cell normals.
 
         Examples
@@ -1273,14 +1273,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def face_normals(self) -> 'pv.pyvista_ndarray':  # numpydoc ignore=RT01
+    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array of face normals.
 
         Examples
@@ -1658,9 +1658,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pv.DataSet.get_cell
-        pv.UnstructuredGrid.cell_connectivity
-        pv.UnstructuredGrid.offset
+        pyvista.DataSet.get_cell
+        pyvista.UnstructuredGrid.cell_connectivity
+        pyvista.UnstructuredGrid.offset
 
         Notes
         -----
@@ -1713,7 +1713,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pv.DataSet.get_cell
+        pyvista.DataSet.get_cell
 
         Examples
         --------
@@ -1754,7 +1754,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pv.DataSet.get_cell
+        pyvista.DataSet.get_cell
 
         Examples
         --------
@@ -1788,7 +1788,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing only linear cells when
             ``deep=False``.
 
@@ -1945,7 +1945,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Returns
         -------
-        pv.ExplicitStructuredGrid
+        pyvista.ExplicitStructuredGrid
             An explicit structured grid.
 
         Raises
@@ -1956,7 +1956,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        pv.ExplicitStructuredGrid.cast_to_unstructured_grid
+        pyvista.ExplicitStructuredGrid.cast_to_unstructured_grid
 
         Examples
         --------
@@ -2269,7 +2269,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Returns
         -------
-        pv.StructuredGrid
+        pyvista.StructuredGrid
             Structured grid with hidden cells.
 
         Examples
@@ -2320,7 +2320,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Returns
         -------
-        pv.PointSet
+        pyvista.PointSet
             Point set with hidden points.
 
         Examples
@@ -2497,8 +2497,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        pv.DataSetFilters.extract_cells : Extract a subset of a dataset.
-        pv.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
+        pyvista.DataSetFilters.extract_cells : Extract a subset of a dataset.
+        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
 
         Notes
         -----
@@ -2740,7 +2740,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        pv.ExplicitStructuredGrid.cell_coords : Return the cell structured coordinates.
+        pyvista.ExplicitStructuredGrid.cell_coords : Return the cell structured coordinates.
 
         Examples
         --------
@@ -2787,7 +2787,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        pv.ExplicitStructuredGrid.cell_id : Return the cell ID.
+        pyvista.ExplicitStructuredGrid.cell_id : Return the cell ID.
 
         Examples
         --------

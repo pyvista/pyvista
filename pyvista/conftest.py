@@ -2,14 +2,14 @@
 
 import pytest
 
-import pyvista as pv
+import pyvista
 
 
 @pytest.fixture(autouse=True)
 def autoclose_plotters():
     """Close all plotters."""
     yield
-    pv.close_all()
+    pyvista.close_all()
 
 
 @pytest.fixture(autouse=True)
@@ -18,4 +18,4 @@ def reset_gloal_theme():
     # this stops any doctest-module tests from overriding the global theme and
     # creating test side effects
     yield
-    pv.global_theme.restore_defaults()
+    pyvista.global_theme.restore_defaults()

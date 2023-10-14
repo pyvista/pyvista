@@ -18,7 +18,7 @@ except ImportError:
     HTML = object
 
 
-import pyvista as pv
+import pyvista
 from pyvista.trame.ui import UI_TITLE, get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
 
@@ -38,7 +38,7 @@ JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
-    pv.set_jupyter_backend('trame')
+    pyvista.set_jupyter_backend('trame')
 
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
@@ -124,11 +124,11 @@ def launch_server(server=None, port=None, host=None, **kwargs):
 
     """
     if server is None:
-        server = pv.global_theme.trame.jupyter_server_name
+        server = pyvista.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
         server = get_server(server, **kwargs)
     if port is None:
-        port = pv.global_theme.trame.jupyter_server_port
+        port = pyvista.global_theme.trame.jupyter_server_port
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
@@ -171,10 +171,10 @@ def build_url(
     """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
-        server_proxy_enabled = pv.global_theme.trame.server_proxy_enabled
+        server_proxy_enabled = pyvista.global_theme.trame.server_proxy_enabled
     if server_proxy_enabled:
         if server_proxy_prefix is None:
-            server_proxy_prefix = pv.global_theme.trame.server_proxy_prefix
+            server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
         src = (
             f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
@@ -226,7 +226,7 @@ def show_trame(
 
     Parameters
     ----------
-    plotter : pv.Plotter
+    plotter : pyvista.Plotter
         The PyVista plotter to show.
 
     mode : str, optional
@@ -272,14 +272,14 @@ def show_trame(
             import pyvista as pv
             from IPython.display import IFrame
 
-            mesh = pv.Wavelet()
+            mesh = pyvista.Wavelet()
 
 
             def handler(viewer, src, **kwargs):
                 return IFrame(src, '75%', '500px')
 
 
-            p = pv.Plotter(notebook=True)
+            p = pyvista.Plotter(notebook=True)
             _ = p.add_mesh(mesh)
             iframe = p.show(
                 jupyter_backend='trame',
@@ -304,7 +304,7 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if name is None:
-        server = get_server(name=pv.global_theme.trame.jupyter_server_name)
+        server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
     if name is None and not server.running:

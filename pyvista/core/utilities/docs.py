@@ -33,7 +33,7 @@ def linkcode_resolve(domain, info, edit=False):
 
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
     """
-    import pyvista as pv
+    import pyvista
 
     if domain != 'py':
         return None
@@ -72,7 +72,7 @@ def linkcode_resolve(domain, info, edit=False):
             return None
         return None
 
-    fn = op.relpath(fn, start=op.dirname(pv.__file__))
+    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
     fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows
 
     try:
@@ -85,10 +85,10 @@ def linkcode_resolve(domain, info, edit=False):
     else:
         linespec = ""
 
-    if 'dev' in pv.__version__:
+    if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pv.__version__.split('.')[:2]))
+        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))
 
     blob_or_edit = 'edit' if edit else 'blob'
 
