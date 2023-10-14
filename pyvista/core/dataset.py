@@ -18,7 +18,6 @@ from typing import (
     Union,
     cast,
 )
-import warnings
 
 import numpy as np
 
@@ -28,7 +27,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import PyVistaDeprecationWarning, VTKVersionError
+from .errors import VTKVersionError
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import transformations
@@ -2106,25 +2105,6 @@ class DataSet(DataSetFilters, DataObject):
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
-
-    def overwrite(self, mesh: _vtk.vtkDataSet):  # numpydoc ignore=GL09
-        """Overwrite this dataset inplace with the new dataset's geometries and data.
-
-        .. deprecated:: 0.37.0
-            Use :func:`DataSet.copy_from` instead.
-
-        Parameters
-        ----------
-        mesh : vtk.vtkDataSet
-            The overwriting mesh.
-
-        """
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(
-            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.copy_from(mesh)
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
