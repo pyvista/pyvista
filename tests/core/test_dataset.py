@@ -1708,3 +1708,17 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert all([0 <= id < grid.n_points for id in ids])
             assert len(ids) > 0
         assert i == n_levels - 1
+
+
+def test_active_t_coords_deprecated(grid):
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        t_coords = grid.active_t_coords
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        grid.active_t_coords = t_coords
+
+
+def test_active_t_coords_name_deprecated(grid):
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        name = grid.active_t_coords_name
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        grid.active_t_coords_name = name
