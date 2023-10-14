@@ -594,7 +594,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            "Use of `DataSet.active_t_coords` is deprecated.",
+            "Use `DataSet.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -609,7 +610,8 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
         """
         warnings.warn(
-            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            "Use of `DataSet.active_t_coords` is deprecated.",
+            "Use `DataSet.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore
