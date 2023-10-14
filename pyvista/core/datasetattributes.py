@@ -378,20 +378,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         pyvista.pyvista_ndarray
             Array of the active texture coordinates.
 
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> mesh.point_data.active_t_coords
-        pyvista_ndarray([[ 0.,  0.],
-                         [ 1.,  0.],
-                         [ 1.,  1.],
-                         [ 0.,  1.],
-                         [-0.,  0.],
-                         [-0.,  1.],
-                         [-1.,  1.],
-                         [-1.,  0.]], dtype=float32)
-
         """
         warnings.warn(
             "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
