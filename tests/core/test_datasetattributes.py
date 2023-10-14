@@ -7,9 +7,11 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
 import numpy as np
+import pytest
 from pytest import fixture, mark, raises
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation, convert_array
 
 skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
@@ -635,3 +637,19 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
+
+
+def test_active_t_coords_deprecated():
+    mesh = pv.Cube()
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        t_coords = mesh.active_t_coords
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        mesh.active_t_coords = t_coords
+
+
+def test_active_t_coords_name_deprecated():
+    mesh = pv.Cube()
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        name = mesh.active_t_coords_name
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        mesh.active_t_coords_name = name
