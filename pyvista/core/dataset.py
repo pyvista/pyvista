@@ -577,21 +577,6 @@ class DataSet(DataSetFilters, DataObject):
         Optional[pyvista_ndarray]
             Active texture coordinates on the points.
 
-        Examples
-        --------
-        Return the active texture coordinates from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.active_t_coords
-        pyvista_ndarray([[0.        , 0.        ],
-                         [0.        , 0.07142857],
-                         [0.        , 0.14285714],
-                         ...,
-                         [1.        , 0.85714286],
-                         [1.        , 0.92857143],
-                         [1.        , 1.        ]])
-
         """
         warnings.warn(
             "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
