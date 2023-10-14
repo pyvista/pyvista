@@ -1,4 +1,5 @@
 from itertools import permutations
+import re
 
 import numpy as np
 import pytest
@@ -47,6 +48,7 @@ def test_sphere_direction_points(expected):
     assert np.array_equal(expected, actual)
 
 
+# test_sphere_phi and test_sphere_theta are similar to ones for SolidSphere
 def test_sphere_phi():
     atol = 1e-16
     north_hemisphere = pv.Sphere(start_phi=0, end_phi=90)
@@ -73,6 +75,246 @@ def test_sphere_theta():
     quadrant4 = pv.Sphere(start_theta=270, end_theta=360)
     assert np.all(quadrant4.points[:, 0] >= -atol)  # +X
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
+
+
+def test_solid_sphere():
+    sphere = pv.SolidSphere()
+    assert isinstance(sphere, pv.UnstructuredGrid)
+    assert np.any(sphere.points)
+
+    # make sure cell creation gives positive volume.
+    for i, cell in enumerate(sphere.cell):
+        assert cell.cast_to_unstructured_grid().volume > 0
+    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
+
+
+def test_solid_sphere_hollow():
+    sphere = pv.SolidSphere(
+        outer_radius=1.0,
+        inner_radius=0.5,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * (1.0**3 - 0.5**3), rel=1e-3)
+
+
+def test_solid_sphere_generic():
+    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
+    sphere_seq = pv.SolidSphereGeneric(
+        radius=np.linspace(0, 0.5, 5), theta=np.linspace(0, 360, 11), phi=np.linspace(0, 180, 13)
+    )
+    assert sphere == sphere_seq
+
+
+def test_solid_sphere_theta_start_end():
+    sphere = pv.SolidSphere(
+        start_theta=0, end_theta=180, radius_resolution=5, theta_resolution=100, phi_resolution=100
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
+
+    sphere = pv.SolidSphere(
+        start_theta=180,
+        end_theta=360,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
+
+    sphere = pv.SolidSphere(
+        start_theta=90, end_theta=120, radius_resolution=5, theta_resolution=100, phi_resolution=100
+    )
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 12, rel=1e-3)
+
+
+def test_solid_sphere_phi_start_end():
+    exp_sphere_volume = 4.0 / 3.0 * np.pi * 0.5**3
+
+    sphere = pv.SolidSphere(
+        start_phi=0, end_phi=90, radius_resolution=5, theta_resolution=100, phi_resolution=100
+    )
+    assert sphere.volume == pytest.approx(exp_sphere_volume / 2, rel=1e-3)
+
+    sphere = pv.SolidSphere(
+        start_phi=90,
+        end_phi=180,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
+    )
+    assert sphere.volume == pytest.approx(exp_sphere_volume / 2, rel=1e-3)
+
+    sphere = pv.SolidSphere(
+        start_phi=45,
+        end_phi=135,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
+    )
+
+    hcone = 0.5 * np.sin(np.pi / 4)
+    vcone = np.pi / 3 * hcone**3
+    hcap = 0.5 - hcone
+    vcap = np.pi / 3 * hcap**2 * (3 * 0.5 - hcap)
+
+    assert sphere.volume == pytest.approx(exp_sphere_volume - 2 * (vcone + vcap), rel=1e-3)
+
+
+def test_solid_sphere_resolution_edge_cases():
+    sphere = pv.SolidSphere(radius_resolution=2)
+    assert sphere.volume > 0
+
+    sphere = pv.SolidSphere(radius_resolution=2, inner_radius=0.1)
+    assert sphere.volume > 0
+
+    sphere = pv.SolidSphere(theta_resolution=2, start_theta=45, end_theta=90)
+    assert sphere.volume > 0
+
+    sphere = pv.SolidSphere(phi_resolution=2, start_phi=45, end_phi=90)
+    assert sphere.volume > 0
+
+
+def test_solid_sphere_resolution_errors():
+    with pytest.raises(ValueError, match="minimum radius cannot be negative"):
+        pv.SolidSphere(inner_radius=-1)
+    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
+        pv.SolidSphere(start_theta=-1)
+    with pytest.raises(ValueError, match="minimum phi cannot be negative"):
+        pv.SolidSphere(start_phi=-1)
+    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
+        pv.SolidSphere(end_theta=370)
+    with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
+        pv.SolidSphere(end_phi=190)
+    with pytest.raises(
+        ValueError, match=re.escape("max theta and min theta must be within 2 * np.pi")
+    ):
+        pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
+    with pytest.raises(ValueError, match="maximum phi cannot be > np.pi"):
+        pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
+
+    with pytest.raises(ValueError, match="radius is not monotonically increasing"):
+        pv.SolidSphereGeneric(radius=(0, 10, 1))
+    with pytest.raises(ValueError, match="theta is not monotonically increasing"):
+        pv.SolidSphereGeneric(theta=(0, 180, 90))
+    with pytest.raises(ValueError, match="phi is not monotonically increasing"):
+        pv.SolidSphereGeneric(phi=(0, 180, 90))
+
+    with pytest.raises(ValueError, match="radius resolution must be 2 or more"):
+        pv.SolidSphere(radius_resolution=1)
+    with pytest.raises(ValueError, match="theta resolution must be 2 or more"):
+        pv.SolidSphere(theta_resolution=1)
+    with pytest.raises(ValueError, match="phi resolution must be 2 or more"):
+        pv.SolidSphere(phi_resolution=1)
+
+
+# test_solid_sphere_phi and test_solid_sphere_theta are similar to ones for Sphere
+def test_solid_sphere_phi():
+    atol = 1e-16
+    north_hemisphere = pv.SolidSphere(start_phi=0, end_phi=90)
+    assert np.all(north_hemisphere.points[:, 2] >= -atol)  # north is above XY plane
+    south_hemisphere = pv.SolidSphere(start_phi=90, end_phi=180)
+    assert np.all(south_hemisphere.points[:, 2] <= atol)  # south is below XY plane
+
+
+def test_solid_sphere_theta():
+    atol = 1e-16
+
+    quadrant1 = pv.SolidSphere(start_theta=0, end_theta=90)
+    assert np.all(quadrant1.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant1.points[:, 1] >= -atol)  # +Y
+
+    quadrant2 = pv.SolidSphere(start_theta=90, end_theta=180)
+    assert np.all(quadrant2.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant2.points[:, 1] >= -atol)  # +Y
+
+    quadrant3 = pv.SolidSphere(start_theta=180, end_theta=270)
+    assert np.all(quadrant3.points[:, 0] <= atol)  # -X
+    assert np.all(quadrant3.points[:, 1] <= atol)  # -Y
+
+    quadrant4 = pv.SolidSphere(start_theta=270, end_theta=360)
+    assert np.all(quadrant4.points[:, 0] >= -atol)  # +X
+    assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
+
+
+def test_solid_sphere_radians():
+    deg = pv.SolidSphere()
+    rad = pv.SolidSphere(radians=True)
+    assert np.allclose(deg.points, rad.points)
+
+    deg = pv.SolidSphere(start_theta=15, end_theta=180, start_phi=30, end_phi=90)
+    rad = pv.SolidSphere(
+        start_theta=np.deg2rad(15),
+        end_theta=np.deg2rad(180),
+        start_phi=np.deg2rad(30),
+        end_phi=np.deg2rad(90),
+        radians=True,
+    )
+    assert np.allclose(deg.points, rad.points)
+
+    deg = pv.SolidSphereGeneric()
+    rad = pv.SolidSphereGeneric(radians=True)
+    assert np.allclose(deg.points, rad.points)
+
+    theta = np.linspace(15, 180, 30)
+    phi = np.linspace(30, 90, 30)
+    deg = pv.SolidSphereGeneric(theta=theta, phi=phi)
+    rad = pv.SolidSphereGeneric(theta=np.deg2rad(theta), phi=np.deg2rad(phi), radians=True)
+    assert np.allclose(deg.points, rad.points)
+
+
+def test_solid_sphere_theta_range():
+    reference = pv.SolidSphere(start_theta=15, end_theta=105)
+    pos = pv.SolidSphere(start_theta=15 + 720, end_theta=105 + 720)
+    assert np.allclose(reference.points, pos.points)
+
+    both_sides = pv.SolidSphere(start_theta=-45, end_theta=45)
+    assert np.isclose(reference.volume, both_sides.volume)
+
+
+def test_solid_sphere_tol_radius():
+    solid_sphere = pv.SolidSphere(inner_radius=1e-5)
+    assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-5])
+
+    solid_sphere = pv.SolidSphere(inner_radius=1e-10)
+    assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 0.0])
+
+    solid_sphere = pv.SolidSphere(inner_radius=1e-10, tol_radius=1e-11)
+    assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
+
+
+@pytest.mark.parametrize("radians", (True, False))
+def test_solid_sphere_tol_angle(radians):
+    max_phi = np.pi if radians else 180.0
+
+    # when phi point not on axis, it is skipped in point ordering
+    # When radius_resolution=2, there are a maximum of two axis points
+    solid_sphere = pv.SolidSphere(start_phi=1e-3, radius_resolution=2, radians=radians)
+    # start_phi is greater than tol, so the positive axis point is skipped
+    assert np.allclose(solid_sphere.points[1, :], [0.0, 0.0, -0.5])
+    # when end_phi is greater than tol, the negative axis point is skipped
+    # that next points is above the z axis
+    solid_sphere = pv.SolidSphere(end_phi=max_phi - 1e-3, radius_resolution=2, radians=radians)
+    assert solid_sphere.points[2, 2] > 0.0
+
+    solid_sphere = pv.SolidSphere(
+        start_phi=1e-3, radius_resolution=2, radians=radians, tol_angle=1e-2
+    )
+    # Positive axis point is there, but it is now slightly offset.
+    assert np.allclose(solid_sphere.points[1, :], [0.0, 0.0, 0.5], atol=1e-3)
+    # Negative axis point is there
+    solid_sphere = pv.SolidSphere(
+        end_phi=max_phi - 1e-3, radius_resolution=2, radians=radians, tol_angle=1e-2
+    )
+    assert np.allclose(solid_sphere.points[2, :], [0.0, 0.0, -0.5], atol=1e-3)
+
+    # When theta is not detected to overlap it will result in more points
+    reference = pv.SolidSphere(radians=radians)
+    solid_sphere = pv.SolidSphere(start_theta=1e-3, radians=radians)
+    assert solid_sphere.n_points > reference.n_points
+    solid_sphere = pv.SolidSphere(start_theta=1e-3, radians=radians, tol_angle=1e-1)
+    assert solid_sphere.n_points == reference.n_points
 
 
 def test_plane():
