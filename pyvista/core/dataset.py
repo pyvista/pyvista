@@ -593,7 +593,11 @@ class DataSet(DataSetFilters, DataObject):
                          [1.        , 1.        ]])
 
         """
-        return self.point_data.active_t_coords
+        warnings.warn(
+            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.active_texture_coordinates
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
@@ -604,7 +608,11 @@ class DataSet(DataSetFilters, DataObject):
         t_coords : np.ndarray
             Active texture coordinates on the points.
         """
-        self.point_data.active_t_coords = t_coords  # type: ignore
+        warnings.warn(
+            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.active_texture_coordinates = t_coords  # type: ignore
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
