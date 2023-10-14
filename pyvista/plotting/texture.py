@@ -8,7 +8,6 @@ import numpy as np
 
 import pyvista
 from pyvista.core.dataset import DataObject
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
@@ -258,27 +257,6 @@ class Texture(_vtk.vtkTexture, DataObject):
     @repeat.setter
     def repeat(self, flag: bool):  # numpydoc ignore=GL08
         self.SetRepeat(flag)
-
-    def flip(self, axis):
-        """Flip this texture inplace along the specified axis.
-
-        0 for X and 1 for Y.
-
-        .. deprecated:: 0.37.0
-           ``flip`` is deprecated. Use :func:`Texture.flip_x` or
-           :func:`Texture.flip_y` instead.
-
-        """
-        warnings.warn(
-            '`flip` is deprecated. Use `flip_x` or `flip_y` instead',
-            PyVistaDeprecationWarning,
-        )
-
-        if not 0 <= axis <= 1:
-            raise ValueError(f"Axis {axis} out of bounds")  # pragma: no cover
-        array = self.to_array()
-        array = np.flip(array, axis=1 - axis)
-        self._from_array(array)
 
     def flip_x(self) -> 'Texture':
         """Flip the texture in the x direction.
