@@ -416,13 +416,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Optional[str]
             Name of the active texture coordinates array.
 
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> mesh.point_data.active_t_coords_name
-        'TCoords'
-
         """
         warnings.warn(
             "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
