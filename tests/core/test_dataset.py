@@ -14,7 +14,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataset import DataSet
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
+from pyvista.core.errors import VTKVersionError
 from pyvista.examples import (
     load_airplane,
     load_explicit_structured,
@@ -33,15 +33,9 @@ def grid():
     return pv.UnstructuredGrid(examples.hexbeamfile)
 
 
-def test_invalid_overwrite(grid):
+def test_invalid_copy_from(grid):
     with pytest.raises(TypeError):
         grid.copy_from(pv.Plane())
-
-
-def test_overwrite_deprecation(grid):
-    mesh = type(grid)()
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.overwrite(grid)
 
 
 @composite
