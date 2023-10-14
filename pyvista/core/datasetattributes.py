@@ -1,11 +1,12 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
-
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+import warnings
 
 import numpy as np
 
 from . import _vtk_core as _vtk
 from ._typing_core import Number
+from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
 
@@ -391,6 +392,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                          [-1.,  0.]], dtype=float32)
 
         """
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
         return self.active_texture_coordinates
 
     @active_t_coords.setter
@@ -406,6 +411,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Array of the active texture coordinates.
 
         """
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
         self.active_texture_coordinates = t_coords
 
     @property
@@ -428,6 +437,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         'TCoords'
 
         """
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            PyVistaDeprecationWarning,
+        )
         return self.active_texture_coordinates_name
 
     @active_t_coords_name.setter
@@ -443,6 +456,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Name of the active texture coordinates array.
 
         """
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            PyVistaDeprecationWarning,
+        )
         self.active_texture_coordinates_name = name
 
     def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
