@@ -73,6 +73,8 @@ from .geometric_objects import (
     Pyramid,
     Quadrilateral,
     Rectangle,
+    SolidSphere,
+    SolidSphereGeneric,
     Sphere,
     Superquadric,
     Tetrahedron,
