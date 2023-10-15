@@ -1,6 +1,5 @@
 name: Preview Documentation
 on:
-  push:
   pull_request:
   pull_request_target:
     types: [labeled]
