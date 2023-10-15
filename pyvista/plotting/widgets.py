@@ -1310,10 +1310,6 @@ class WidgetHelper:
         **kwargs : dict, optional
             Deprecated keyword arguments.
 
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
-
         Returns
         -------
         vtk.vtkSliderWidget
@@ -1464,10 +1460,6 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
