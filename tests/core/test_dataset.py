@@ -14,7 +14,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataset import DataSet
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.examples import (
     load_airplane,
     load_explicit_structured,
