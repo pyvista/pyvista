@@ -31,6 +31,7 @@ from .mapper import (
 )
 from .picking import PickingHelper
 from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
+from .prop3d import Prop3D
 from .render_window_interactor import RenderWindowInteractor, Timer
 from .renderer import CameraPosition, Renderer, scale_point
 from .text import CornerAnnotation, Text, TextProperty
@@ -57,7 +58,6 @@ from .utilities.sphinx_gallery import _get_sg_image_scraper
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import AffineWidget3D, WidgetHelper
-from .prop3d import Prop3D
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01
