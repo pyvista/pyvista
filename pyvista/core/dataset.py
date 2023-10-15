@@ -18,6 +18,7 @@ from typing import (
     Union,
     cast,
 )
+import warnings
 
 import numpy as np
 
@@ -27,7 +28,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import VTKVersionError
+from .errors import PyVistaDeprecationWarning, VTKVersionError
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import transformations
@@ -576,23 +577,12 @@ class DataSet(DataSetFilters, DataObject):
         Optional[pyvista_ndarray]
             Active texture coordinates on the points.
 
-        Examples
-        --------
-        Return the active texture coordinates from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.active_t_coords
-        pyvista_ndarray([[0.        , 0.        ],
-                         [0.        , 0.07142857],
-                         [0.        , 0.14285714],
-                         ...,
-                         [1.        , 0.85714286],
-                         [1.        , 0.92857143],
-                         [1.        , 1.        ]])
-
         """
-        return self.point_data.active_t_coords
+        warnings.warn(
+            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.active_texture_coordinates
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
@@ -603,7 +593,11 @@ class DataSet(DataSetFilters, DataObject):
         t_coords : np.ndarray
             Active texture coordinates on the points.
         """
-        self.point_data.active_t_coords = t_coords  # type: ignore
+        warnings.warn(
+            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.active_texture_coordinates = t_coords  # type: ignore
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
@@ -3275,3 +3269,41 @@ class DataSet(DataSetFilters, DataObject):
         if singular:
             return in_cell[0]
         return in_cell
+
+    @property
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+        """Return the active texture coordinates on the points.
+
+        Returns
+        -------
+        Optional[pyvista_ndarray]
+            Active texture coordinates on the points.
+
+        Examples
+        --------
+        Return the active texture coordinates from the globe example.
+
+        >>> from pyvista import examples
+        >>> globe = examples.load_globe()
+        >>> globe.active_texture_coordinates
+        pyvista_ndarray([[0.        , 0.        ],
+                         [0.        , 0.07142857],
+                         [0.        , 0.14285714],
+                         ...,
+                         [1.        , 0.85714286],
+                         [1.        , 0.92857143],
+                         [1.        , 1.        ]])
+
+        """
+        return self.point_data.active_texture_coordinates
+
+    @active_texture_coordinates.setter
+    def active_texture_coordinates(self, texture_coordinates: np.ndarray):  # numpydoc ignore=GL08
+        """Set the active texture coordinates on the points.
+
+        Parameters
+        ----------
+        texture_coordinates : np.ndarray
+            Active texture coordinates on the points.
+        """
+        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore

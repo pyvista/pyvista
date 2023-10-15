@@ -1965,11 +1965,11 @@ class DataSetFilters:
         output = _get_output(alg)
         if not inplace:
             return output
-        t_coords = output.GetPointData().GetTCoords()
-        t_coords.SetName(name)
+        texture_coordinates = output.GetPointData().GetTCoords()
+        texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(t_coords)
-        self.GetPointData().AddArray(t_coords)
+        self.GetPointData().SetTCoords(texture_coordinates)
+        self.GetPointData().AddArray(texture_coordinates)
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
@@ -2039,11 +2039,11 @@ class DataSetFilters:
         output = _get_output(alg)
         if not inplace:
             return output
-        t_coords = output.GetPointData().GetTCoords()
-        t_coords.SetName(name)
+        texture_coordinates = output.GetPointData().GetTCoords()
+        texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(t_coords)
-        self.GetPointData().AddArray(t_coords)
+        self.GetPointData().SetTCoords(texture_coordinates)
+        self.GetPointData().AddArray(texture_coordinates)
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
