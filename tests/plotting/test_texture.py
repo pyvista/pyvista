@@ -4,7 +4,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
+from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.texture import numpy_to_texture
 
 
@@ -85,11 +85,6 @@ def test_skybox_example():
 
     skybox = texture.to_skybox()
     assert isinstance(skybox, vtk.vtkOpenGLSkybox)
-
-
-def test_flip_deprecated(texture):
-    with pytest.warns(PyVistaDeprecationWarning, match='flip_x'):
-        _ = texture.flip(0)
 
 
 def test_flip_x(texture):
