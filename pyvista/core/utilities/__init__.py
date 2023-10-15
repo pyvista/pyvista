@@ -72,7 +72,6 @@ from .geometric_objects import (
     Polygon,
     Pyramid,
     Quadrilateral,
-    Rectangle,
     SolidSphere,
     SolidSphereGeneric,
     Sphere,

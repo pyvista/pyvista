@@ -2333,7 +2333,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity=1.0,
         culling=None,
         rgb=None,
-        categories=None,
         below_color=None,
         above_color=None,
         annotations=None,
@@ -2529,15 +2528,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             a scalars array ending with ``"_rgba"`` is passed, the default
             becomes ``True``.  This can be overridden by setting this
             parameter to ``False``.
-
-        categories : bool, optional
-            If set to ``True``, then the number of unique values in
-            the scalar array will be used as the ``n_colors``
-            argument.
-
-            .. deprecated:: 0.39.0
-               This keyword argument is no longer used. Instead, use
-               ``n_colors``.
 
         below_color : ColorLike, optional
             Solid color for values below the scalars range
@@ -2765,16 +2755,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'`scalars` must be a string for `add_composite`, not ({type(scalars)})'
                 )
-
-            if categories:
-                # Deprecated on 0.39.0, estimated removal on v0.42.0
-                warnings.warn(
-                    '`categories` is deprecated for composite datasets. Use `n_colors` instead.',
-                    PyVistaDeprecationWarning,
-                )
-                if not isinstance(categories, int):
-                    raise TypeError('Categories must be an integer for a composite dataset.')
-                n_colors = categories
 
             if scalars is not None:
                 scalar_bar_args = self.mapper.set_scalars(
