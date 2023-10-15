@@ -250,6 +250,14 @@ class TextProperty(_vtk.vtkTextProperty):
     shadow : bool, optional
         If enable the shadow.
 
+    justification_horizontal : str, optional
+        Text's horizontal justification.
+        Should be either "left", "center" or "right".
+
+    justification_vertical : str, optional
+        Text's vertical justification.
+        Should be either "bottom", "center" or "top".
+
     Examples
     --------
     Create a text's property.
@@ -281,6 +289,8 @@ class TextProperty(_vtk.vtkTextProperty):
         font_size=None,
         font_file=None,
         shadow=False,
+        justification_horizontal=None,
+        justification_vertical=None,
     ):
         """Initialize text's property."""
         super().__init__()
@@ -300,6 +310,10 @@ class TextProperty(_vtk.vtkTextProperty):
             self.set_font_file(font_file)
         if shadow:
             self.enable_shadow()
+        if justification_horizontal is not None:
+            self.justification_horizontal = justification_horizontal
+        if justification_vertical is not None:
+            self.justification_vertical = justification_vertical
 
     @property
     def color(self) -> Color:
@@ -363,7 +377,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         float
             Background opacity of the text. A single float value that will be applied globally.
-            background opacity of the text and uniformly applied everywhere. Between 0 and 1.
+            Background opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
         return self.GetBackgroundOpacity()
@@ -486,3 +500,61 @@ class TextProperty(_vtk.vtkTextProperty):
             raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
+
+    @property
+    def justification_horizontal(self) -> str:
+        """Text's justification horizontal.
+
+        Returns
+        -------
+        str
+            Text's horizontal justification.
+            Should be either "left", "center" or "right".
+        """
+        justification = self.GetJustificationAsString().lower()
+        if justification == 'centered':
+            justification = 'center'
+        return justification
+
+    @justification_horizontal.setter
+    def justification_horizontal(self, justification: str):  # numpydoc ignore=GL08
+        if justification.lower() == 'left':
+            self.SetJustificationToLeft()
+        elif justification.lower() == 'center':
+            self.SetJustificationToCentered()
+        elif justification.lower() == 'right':
+            self.SetJustificationToRight()
+        else:
+            raise ValueError(
+                f'Invalid {justification} for justification_horizontal. '
+                'Should be either "left", "center" or "right".'
+            )
+
+    @property
+    def justification_vertical(self) -> str:
+        """Text's vertical justification.
+
+        Returns
+        -------
+        str
+            Text's vertical justification.
+            Should be either "bottom", "center" or "top".
+        """
+        justification = self.GetVerticalJustificationAsString().lower()
+        if justification == 'centered':
+            justification = 'center'
+        return justification
+
+    @justification_vertical.setter
+    def justification_vertical(self, justification: str):  # numpydoc ignore=GL08
+        if justification.lower() == 'bottom':
+            self.SetVerticalJustificationToBottom()
+        elif justification.lower() == 'center':
+            self.SetVerticalJustificationToCentered()
+        elif justification.lower() == 'top':
+            self.SetVerticalJustificationToTop()
+        else:
+            raise ValueError(
+                f'Invalid {justification} for justification_vertical. '
+                'Should be either "bottom", "center" or "top".'
+            )
