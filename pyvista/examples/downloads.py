@@ -2723,27 +2723,6 @@ def download_thermal_probes(load=True):  # pragma: no cover
     return _download_and_read("probes.vtp", load=load)
 
 
-def download_carburator(load=True):  # pragma: no cover
-    """Download scan of a carburetor.
-
-    .. deprecated:: 0.37.0
-       Please use :func:`pyvista.examples.downloads.download_carburetor` instead
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.PolyData | str
-        DataSet or filename depending on ``load``.
-
-    """
-    return _download_and_read("carburetor.ply", load=load)
-
-
 def download_carburetor(load=True):  # pragma: no cover
     """Download scan of a carburetor.
 
