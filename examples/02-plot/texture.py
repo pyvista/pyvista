@@ -188,9 +188,9 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 # produce 4 repetitions of the same texture on this mesh.
 #
 # Then we must associate those texture coordinates with the mesh through the
-# :attr:`pyvista.DataSet.active_t_coords` property.
+# :attr:`pyvista.DataSet.active_texture_coordinates` property.
 
-curvsurf.active_t_coords = puppy_coords
+curvsurf.active_texture_coordinates = puppy_coords
 
 ###############################################################################
 # Now display all the puppies.
@@ -225,11 +225,11 @@ sphere = pv.Sphere(
 )
 
 # Initialize the texture coordinates array
-sphere.active_t_coords = np.zeros((sphere.points.shape[0], 2))
+sphere.active_texture_coordinates = np.zeros((sphere.points.shape[0], 2))
 
 # Populate by manually calculating
 for i in range(sphere.points.shape[0]):
-    sphere.active_t_coords[i] = [
+    sphere.active_texture_coordinates[i] = [
         0.5 + np.arctan2(-sphere.points[i, 0], sphere.points[i, 1]) / (2 * np.pi),
         0.5 + np.arcsin(sphere.points[i, 2]) / np.pi,
     ]

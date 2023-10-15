@@ -128,9 +128,9 @@ def read_legacy(filename, progress_bar=False):
     --------
     Load an example mesh using the legacy reader.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
+    >>> mesh = pv.read_legacy(examples.uniformfile)  # doctest:+SKIP
 
     """
     # Deprecated on v0.35.0, estimated removal on v0.40.0
@@ -193,18 +193,18 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     --------
     Load an example mesh.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = pyvista.read(examples.antfile)
+    >>> mesh = pv.read(examples.antfile)
     >>> mesh.plot(cpos='xz')
 
     Load a vtk file.
 
-    >>> mesh = pyvista.read('my_mesh.vtk')  # doctest:+SKIP
+    >>> mesh = pv.read('my_mesh.vtk')  # doctest:+SKIP
 
     Load a meshio file.
 
-    >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
+    >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
@@ -315,11 +315,11 @@ def read_texture(filename, attrs=None, progress_bar=False):
     Read in an example jpg map file as a texture.
 
     >>> import os
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> os.path.basename(examples.mapfile)
     '2k_earth_daymap.jpg'
-    >>> texture = pyvista.read_texture(examples.mapfile)
+    >>> texture = pv.read_texture(examples.mapfile)
     >>> type(texture)
     <class 'pyvista.plotting.texture.Texture'>
 
@@ -626,9 +626,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     --------
     Save a pyvista sphere to a Abaqus data file.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere()
-    >>> pyvista.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
+    >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
     try:

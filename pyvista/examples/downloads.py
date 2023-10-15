@@ -278,10 +278,10 @@ def download_masonry_texture(load=True):  # pragma: no cover
     --------
     Create plot the masonry testure on a surface.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> texture = examples.download_masonry_texture()
-    >>> surf = pyvista.Cylinder()
+    >>> surf = pv.Cylinder()
     >>> surf.plot(texture=texture)
 
     See :ref:`texture_example` for an example using this
@@ -307,7 +307,7 @@ def download_usa_texture(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_usa_texture()
     >>> dataset.plot(cpos="xy")
@@ -617,10 +617,10 @@ def download_head(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_head()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_volume(dataset, cmap="cool", opacity="sigmoid_6")
     >>> pl.camera_position = [
     ...     (-228.0, -418.0, -158.0),
@@ -653,10 +653,10 @@ def download_head_2(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_head_2()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_volume(dataset, cmap="cool", opacity="sigmoid_6")
     >>> pl.show()
 
@@ -681,10 +681,10 @@ def download_bolt_nut(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_bolt_nut()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_volume(
     ...     dataset,
     ...     cmap="coolwarm",
@@ -2723,27 +2723,6 @@ def download_thermal_probes(load=True):  # pragma: no cover
     return _download_and_read("probes.vtp", load=load)
 
 
-def download_carburator(load=True):  # pragma: no cover
-    """Download scan of a carburetor.
-
-    .. deprecated:: 0.37.0
-       Please use :func:`pyvista.examples.downloads.download_carburetor` instead
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.PolyData | str
-        DataSet or filename depending on ``load``.
-
-    """
-    return _download_and_read("carburetor.ply", load=load)
-
-
 def download_carburetor(load=True):  # pragma: no cover
     """Download scan of a carburetor.
 
@@ -3559,12 +3538,12 @@ def download_action_figure(load=True):  # pragma: no cover
     physically based rendering and lighting to make a good looking
     plot.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_action_figure()
     >>> _ = dataset.clean(inplace=True)
-    >>> pl = pyvista.Plotter(lighting=None)
-    >>> pl.add_light(pyvista.Light((30, 10, 10)))
+    >>> pl = pv.Plotter(lighting=None)
+    >>> pl.add_light(pv.Light((30, 10, 10)))
     >>> _ = pl.add_mesh(
     ...     dataset,
     ...     color='w',
@@ -3691,11 +3670,11 @@ def download_louis_louvre(load=True):  # pragma: no cover
     Plot the Louis XIV statue with custom lighting and camera angle.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_louis_louvre()
-    >>> pl = pyvista.Plotter(lighting=None)
+    >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_mesh(dataset, smooth_shading=True)
-    >>> pl.add_light(pyvista.Light((10, -10, 10)))
+    >>> pl.add_light(pv.Light((10, -10, 10)))
     >>> pl.camera_position = [
     ...     [-6.71, -14.55, 15.17],
     ...     [1.44, 2.54, 9.84],
@@ -3825,10 +3804,10 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     --------
     >>> import os
     >>> from tempfile import mkdtemp
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> filename = examples.download_single_sphere_animation(load=False)
-    >>> reader = pyvista.PVDReader(filename)
+    >>> reader = pv.PVDReader(filename)
 
     Write the gif to a temporary directory. Normally you would write to a local
     path.
@@ -3837,7 +3816,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Generate the animation.
 
-    >>> plotter = pyvista.Plotter()
+    >>> plotter = pv.Plotter()
     >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
@@ -3877,10 +3856,10 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     --------
     >>> import os
     >>> from tempfile import mkdtemp
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> filename = examples.download_dual_sphere_animation(load=False)
-    >>> reader = pyvista.PVDReader(filename)
+    >>> reader = pv.PVDReader(filename)
 
     Write the gif to a temporary directory. Normally you would write to a local
     path.
@@ -3889,7 +3868,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Generate the animation.
 
-    >>> plotter = pyvista.Plotter()
+    >>> plotter = pv.Plotter()
     >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
@@ -4062,12 +4041,12 @@ def download_lucy(load=True):  # pragma: no cover
     Plot the Lucy Angel dataset with custom lighting.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_lucy()
 
     Create a light at the "flame".
 
-    >>> flame_light = pyvista.Light(
+    >>> flame_light = pv.Light(
     ...     color=[0.886, 0.345, 0.133],
     ...     position=[550, 140, 950],
     ...     intensity=1.5,
@@ -4078,9 +4057,9 @@ def download_lucy(load=True):  # pragma: no cover
 
     Create a scene light.
 
-    >>> scene_light = pyvista.Light(intensity=0.2)
+    >>> scene_light = pv.Light(intensity=0.2)
 
-    >>> pl = pyvista.Plotter(lighting=None)
+    >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_mesh(dataset, smooth_shading=True)
     >>> pl.add_light(flame_light)
     >>> pl.add_light(scene_light)
@@ -4260,7 +4239,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
     Plot the can dataset.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_can()  # doctest:+SKIP
     >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
@@ -4312,7 +4291,7 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
     Plot the crushed can dataset.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_can_crushed_hdf()
     >>> dataset.plot(smooth_shading=True)
 
@@ -4344,7 +4323,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
     Plot the example CGNS dataset.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_cgns_structured()
     >>> dataset[0].plot(scalars='Density')
 
@@ -4379,7 +4358,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
     Plot the example Tecplot dataset.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_tecplot_ascii()
     >>> dataset.plot()
 
@@ -4416,7 +4395,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     dataset, the solution is stored within the cells.
 
     >>> from pyvista import examples
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> dataset = examples.download_cgns_multi()
     >>> ugrid = dataset.combine()
     >>> ugrid = ugrid = ugrid.cell_data_to_point_data()
@@ -5325,11 +5304,11 @@ def download_dikhololo_night():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> texture = examples.download_dikhololo_night()
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.set_environment_texture(texture)
     >>> pl.show()

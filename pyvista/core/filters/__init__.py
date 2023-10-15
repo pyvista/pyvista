@@ -5,7 +5,7 @@ can easily apply common filters in an intuitive manner.
 
 Examples
 --------
->>> import pyvista
+>>> import pyvista as pv
 >>> from pyvista import examples
 >>> dataset = examples.load_uniform()
 

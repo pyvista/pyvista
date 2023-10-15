@@ -149,7 +149,7 @@ def wrap(dataset):
         polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
-            polydata.active_t_coords = np.asarray(dataset.visual.uv)
+            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
@@ -230,11 +230,11 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     Rotate a set of points by 90 degrees about the x-axis in-place.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> points = examples.load_airplane().points
     >>> points_orig = points.copy()
-    >>> pyvista.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
+    >>> pv.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
     >>> assert np.all(np.isclose(points[:, 0], points_orig[:, 0]))
     >>> assert np.all(np.isclose(points[:, 1], -points_orig[:, 2]))
     >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))

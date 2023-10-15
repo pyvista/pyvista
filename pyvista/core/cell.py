@@ -287,8 +287,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).point_ids
         [2, 30, 0]
         """

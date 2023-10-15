@@ -11,8 +11,8 @@ The source code for the plot may be included in one of two ways:
 
     .. pyvista-plot::
 
-       >>> import pyvista
-       >>> sphere = pyvista.Sphere()
+       >>> import pyvista as pv
+       >>> sphere = pv.Sphere()
        >>> out = sphere.plot()
 
 2. **A path to a source file** as the argument to the directive::
@@ -219,10 +219,10 @@ def _split_code_at_show(text):
 
     Includes logic to deal with edge cases like:
 
-    >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+    >>> import pyvista as pv
+    >>> pv.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red', cpos='xy')
+    >>> pv.Sphere().plot(color='red', cpos='xy')
 
     """
     parts = []

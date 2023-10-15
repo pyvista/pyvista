@@ -245,14 +245,14 @@ def load_spline():
     .. code:: python
 
        >>> import numpy as np
-       >>> import pyvista
+       >>> import pyvista as pv
        >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
        >>> z = np.linspace(-2, 2, 100)
        >>> r = z**2 + 1
        >>> x = r * np.sin(theta)
        >>> y = r * np.cos(theta)
        >>> points = np.column_stack((x, y, z))
-       >>> mesh = pyvista.Spline(points, 1000)
+       >>> mesh = pv.Spline(points, 1000)
 
     Returns
     -------
@@ -285,7 +285,7 @@ def load_random_hills():
 
     .. code:: python
 
-       >>> mesh = pyvista.ParametricRandomHills()  # doctest:+SKIP
+       >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
        >>> mesh = mesh.elevation()  # doctest:+SKIP
 
     Returns

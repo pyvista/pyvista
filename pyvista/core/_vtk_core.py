@@ -387,7 +387,11 @@ from vtkmodules.vtkImagingCore import (
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
-from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+
+try:
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+except ImportError:  # pragma: no cover
+    pass
 
 try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem

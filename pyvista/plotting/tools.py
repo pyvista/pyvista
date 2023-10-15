@@ -339,8 +339,8 @@ def create_axes_orientation_box(
     --------
     Create and plot an orientation box
 
-    >>> import pyvista
-    >>> actor = pyvista.create_axes_orientation_box(
+    >>> import pyvista as pv
+    >>> actor = pv.create_axes_orientation_box(
     ...     line_width=1,
     ...     text_scale=0.53,
     ...     edge_color='black',
@@ -354,7 +354,7 @@ def create_axes_orientation_box(
     ...     labels_off=False,
     ...     opacity=1.0,
     ... )
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(actor)
     >>> pl.show()
 

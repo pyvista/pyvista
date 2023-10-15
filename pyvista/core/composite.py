@@ -661,14 +661,14 @@ class MultiBlock(
 
         Examples
         --------
-        >>> import pyvista
-        >>> multi = pyvista.MultiBlock()
-        >>> multi.append(pyvista.PolyData())
-        >>> multi[0] = pyvista.UnstructuredGrid()
-        >>> multi.append(pyvista.PolyData(), 'poly')
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock()
+        >>> multi.append(pv.PolyData())
+        >>> multi[0] = pv.UnstructuredGrid()
+        >>> multi.append(pv.PolyData(), 'poly')
         >>> multi.keys()
         ['Block-00', 'poly']
-        >>> multi['bar'] = pyvista.PolyData()
+        >>> multi['bar'] = pv.PolyData()
         >>> multi.n_blocks
         3
 
