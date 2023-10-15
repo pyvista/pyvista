@@ -18,6 +18,7 @@ from typing import (
     Union,
     cast,
 )
+import warnings
 
 import numpy as np
 
@@ -27,7 +28,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import VTKVersionError
+from .errors import PyVistaDeprecationWarning, VTKVersionError
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import transformations
