@@ -29,7 +29,7 @@ from .filters import (
     UniformGridFilters,
     UnstructuredGridFilters,
 )
-from .grid import Grid, ImageData, RectilinearGrid, UniformGrid
+from .grid import Grid, ImageData, RectilinearGrid
 from .objects import Table
 from .pointset import (
     ExplicitStructuredGrid,
