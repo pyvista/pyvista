@@ -2,6 +2,7 @@
 
 import multiprocessing
 import pickle
+from .errors import PyVistaDeprecationWarning
 
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import array_shapes, arrays
