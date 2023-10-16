@@ -16,7 +16,7 @@ from .helpers import wrap
 def voxelize(mesh, density=None, vol=False, check_surface=True):
     """Voxelize mesh to create an UnstructuredGrid or a StructuredGrid.
        1. Voxelize the input mesh : UnstructuredGrid
-       2. Create a voxel volume of the input mesh. Volume is constructed to 
+       2. Create a voxel volume of the input mesh. Volume is constructed to
           boundaries of input mesh : StructuredGrid
 
     Parameters
@@ -28,7 +28,7 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
         The uniform size of the voxels when single float passed.
         Nonuniform voxel size if a list of floats are passed along x,y,z directions.
         Defaults to 1/100th of the mesh length.
-        
+
     vol : bool, default : False
         When this parameter is ``True``, a volume is created that encloses
         the input mesh. Volume dimensions are equal to input mesh extents min,max(x,y,z).
@@ -51,11 +51,11 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
     -------
     Prior to version 0.39.0, this method improperly handled the order of
     structured coordinates.
-    
+
     TODO: Add option to populate voxels with array elements based on
     the approximate volume of the input mesh in each voxel.
     e.g., input mesh volume comprises >50% of individual voxel volume
-    
+
     Examples
     ----------
     Create an equal density voxelized mesh.
@@ -71,7 +71,7 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
 
     >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
     >>> vox.plot(show_edges=True)
-    
+
     ----------
     Create a voxel volume from input mesh.
 
@@ -101,7 +101,7 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
-    
+
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)
     y = np.arange(y_min, y_max, density_y)
@@ -109,25 +109,26 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
-    
-    if vol == True:
 
+    if vol == True:
         g = lambda a, b, d: int(np.ceil((b - a) / d))
         voi = pyvista.ImageData()
         voi.origin = (x_min, y_min, z_min)
-        
+
         # Create volume that encompasses mesh extents
         voi.spacing = density_x, density_y, density_z
-        voi.dimensions = g(x_min, x_max, density_x), \
-                         g(y_min, y_max, density_y), \
-                         g(z_min, z_max, density_z)
-        
+        voi.dimensions = (
+            g(x_min, x_max, density_x),
+            g(y_min, y_max, density_y),
+            g(z_min, z_max, density_z),
+        )
+
         # get part of the mesh within the mesh's bounding surface.
         selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
         mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
 
         # Label CellVolIds within the newly created volume - not sure this is necessary
-        #voi['CellVolIds'] = np.arange(voi.n_cells)
+        # voi['CellVolIds'] = np.arange(voi.n_cells)
 
         # Get voxels that fall within input mesh boundaries
         cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))['vtkOriginalCellIds'])
@@ -136,26 +137,25 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
         # given new name 'MeshCells' and a value of 1
         voi['MeshCells'] = np.zeros(voi.n_cells)
         voi['MeshCells'][cell_ids] = 1
-        
+
         # Create new element of grid where background cells in volume are
         # given a new name 'BackgroundCells' and a value of 0
         voi['BackgroundCells'] = np.zeros(voi.n_cells)
         voi['BackgroundCells'][0] = 0
-        
+
         voi_grid = voi.cast_to_structured_grid()
         vox = voi_grid
 
     else:
-        
         # Create a structured grid from the input data
         grid = pyvista.StructuredGrid(x, y, z)
-        
+
         # get part of the mesh within the mesh's bounding surface.
         selection = grid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
         mask = selection.point_data['SelectedPoints'].view(np.bool_)
-        
+
         vox = grid.extract_points(mask)
-    
+
     return vox
 
 
