@@ -749,11 +749,11 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When a label is added to your branch, it is automatically triggering
+When a label is applied to your branch, it automatically triggers
 deploying the Preview Documentation. Please check the documentation that
 is deployed by your Pull Request before merging.
 
-If you push additional commits after adding the label, you will need to
+If you push additional commits after applying the label, you will need to
 reapply the label. In this situation, kindly request the maintainer to
 dismiss and apply ``documentation`` label again. This process is essential
 to safeguard the deployment site against potentially harmful commits.
