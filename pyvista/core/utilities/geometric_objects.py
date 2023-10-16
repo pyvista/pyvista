@@ -1783,6 +1783,7 @@ def Triangle(points=None):
 
 def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
+
     The 3 points must define an orthogonal set of vectors.
 
     Parameters
