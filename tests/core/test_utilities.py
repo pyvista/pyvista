@@ -12,7 +12,6 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
