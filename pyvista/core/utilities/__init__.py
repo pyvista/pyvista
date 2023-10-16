@@ -72,6 +72,7 @@ from .geometric_objects import (
     Polygon,
     Pyramid,
     Quadrilateral,
+    Rectangle,
     SolidSphere,
     SolidSphereGeneric,
     Sphere,
@@ -82,7 +83,6 @@ from .geometric_objects import (
     Tube,
     Wavelet,
     translate,
-    Rectangle,
 )
 from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
