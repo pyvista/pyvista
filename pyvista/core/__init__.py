@@ -26,7 +26,6 @@ from .filters import (
     DataSetFilters,
     ImageDataFilters,
     PolyDataFilters,
-    UniformGridFilters,
     UnstructuredGridFilters,
 )
 from .grid import Grid, ImageData, RectilinearGrid
