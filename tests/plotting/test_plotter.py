@@ -366,16 +366,6 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
         pl.add_volume(sphere)
 
 
-def test_deprecated_store_image():
-    """Test to make sure store_image is deprecated."""
-    pl = pv.Plotter()
-    with pytest.raises(DeprecationError):
-        assert isinstance(pl.store_image, bool)
-
-    with pytest.raises(DeprecationError):
-        pl.store_image = True
-
-
 def test_plotter_add_volume_clim(uniform: pv.ImageData):
     """Verify clim is set correctly for volume."""
     arr = uniform.x.astype(np.uint8)
