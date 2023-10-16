@@ -866,7 +866,7 @@ def test_find_closest_cells():
 
 
 def test_find_closest_cell_surface_point():
-    mesh = pv.Quadrilateral()
+    mesh = pv.Rectangle()
 
     point = np.array([0.5, 0.5, -1.0])
     point2 = np.array([1.0, 1.0, -1.0])
