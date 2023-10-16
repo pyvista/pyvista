@@ -2779,16 +2779,6 @@ def test_plot_composite_raise(sphere, multiblock_poly):
         pl.add_composite(sphere)
     with pytest.raises(TypeError, match='must be a string for'):
         pl.add_composite(multiblock_poly, scalars=range(10))
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        with pytest.raises(TypeError, match='must be an int'):
-            pl.add_composite(multiblock_poly, categories='abc')
-
-
-def test_plot_composite_categories(multiblock_poly):
-    pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
-    pl.show()
 
 
 def test_plot_composite_lookup_table(multiblock_poly, verify_image_cache):
