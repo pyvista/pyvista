@@ -78,7 +78,7 @@ jobs:
 
       - name: List HTML documentation
         if: always()
-        run: if [ -e doc/sphinx_warnings.txt ]; then ls -R doc/_build/html/
+        run: ls -R doc/_build/html/
 
       - name: Preview HTML documentation
         uses: nwtgck/actions-netlify@v2.0
