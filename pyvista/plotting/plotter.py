@@ -3357,7 +3357,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 nan_opacity=nan_opacity,
                 culling=culling,
                 rgb=rgb,
-                categories=categories,
                 below_color=below_color,
                 above_color=above_color,
                 pickable=pickable,
