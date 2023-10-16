@@ -1377,7 +1377,6 @@ class WidgetHelper:
         fmt=None,
         slider_width=None,
         tube_width=None,
-        **kwargs,
     ):
         """Add a slider bar widget.
 
