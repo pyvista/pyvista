@@ -58,7 +58,7 @@ class RectilinearGridFilters:
 
         Returns
         -------
-        pv.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing the tetrahedral cells.
 
         Examples

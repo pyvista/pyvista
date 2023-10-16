@@ -5,7 +5,7 @@ from weakref import proxy
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
@@ -84,7 +84,7 @@ class Renderers:
                 rangem = range(m)
 
             if splitting_position is None:
-                splitting_position = pv.global_theme.multi_rendering_splitting_position
+                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
                 if n >= m:
@@ -449,7 +449,7 @@ class Renderers:
 
         Returns
         -------
-        pv.BackgroundRenderer
+        pyvista.BackgroundRenderer
             Newly created background renderer.
 
         """
@@ -519,7 +519,7 @@ class Renderers:
 
         Returns
         -------
-        pv.plotting.renderer.Renderer
+        pyvista.plotting.renderer.Renderer
             Shadow renderer.
         """
         return self._shadow_renderer

@@ -1,13 +1,14 @@
 """Internal array utilities."""
 import collections.abc
 import enum
+from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumericArray, VectorArray
+from pyvista.core._typing_core import NumericArray, TransformLike, VectorArray
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -31,7 +32,7 @@ def parse_field_choice(field):
 
     Returns
     -------
-    pv.FieldAssociation
+    pyvista.FieldAssociation
         Field association.
 
     """
@@ -236,7 +237,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to get the array from.
 
     name : str
@@ -252,7 +253,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Returns
     -------
-    pv.pyvista_ndarray or ``None``
+    pyvista.pyvista_ndarray or None
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -316,7 +317,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
 
     Returns
     -------
-    pv.core.utilities.arrays.FieldAssociation
+    pyvista.core.utilities.arrays.FieldAssociation
         Association of the array. If array is not present and ``err`` is
         ``False``, ``FieldAssociation.NONE`` is returned.
 
@@ -358,7 +359,7 @@ def raise_not_matching(scalars, dataset):
     scalars : numpy.ndarray
         Array of scalars.
 
-    dataset : pv.DataSet
+    dataset : pyvista.DataSet
         Dataset to check against.
 
     Raises
@@ -387,14 +388,14 @@ def _assoc_array(obj, name, association='point'):
     vtk_attr = f'Get{association.title()}Data'
     python_attr = f'{association.lower()}_data'
 
-    if isinstance(obj, pv.DataSet):
+    if isinstance(obj, pyvista.DataSet):
         try:
             return getattr(obj, python_attr).get_array(name)
         except KeyError:  # pragma: no cover
             return None
     abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
     if abstract_array is not None:
-        return pv.pyvista_ndarray(abstract_array)
+        return pyvista.pyvista_ndarray(abstract_array)
     return None
 
 
@@ -403,7 +404,7 @@ def point_array(obj, name):
 
     Parameters
     ----------
-    obj : pv.DataSet | vtk.vtkDataSet
+    obj : pyvista.DataSet | vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -411,7 +412,7 @@ def point_array(obj, name):
 
     Returns
     -------
-    pv.pyvista_ndarray or None
+    pyvista.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -423,7 +424,7 @@ def field_array(obj, name):
 
     Parameters
     ----------
-    obj : pv.DataSet or vtk.vtkDataSet
+    obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -431,7 +432,7 @@ def field_array(obj, name):
 
     Returns
     -------
-    pv.pyvista_ndarray or None
+    pyvista.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -443,7 +444,7 @@ def cell_array(obj, name):
 
     Parameters
     ----------
-    obj : pv.DataSet or vtk.vtkDataSet
+    obj : pyvista.DataSet or vtk.vtkDataSet
         PyVista or VTK dataset.
 
     name : str | int
@@ -451,7 +452,7 @@ def cell_array(obj, name):
 
     Returns
     -------
-    pv.pyvista_ndarray or None
+    pyvista.pyvista_ndarray or None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -610,9 +611,8 @@ def array_from_vtkmatrix(matrix):
             f' got {type(matrix).__name__} instead.'
         )
     array = np.zeros(shape)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            array[i, j] = matrix.GetElement(i, j)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
     return array
 
 
@@ -640,13 +640,12 @@ def vtkmatrix_from_array(array):
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
-    for i in range(m):
-        for j in range(n):
-            matrix.SetElement(i, j, array[i, j])
+    for i, j in product(range(m), range(n)):
+        matrix.SetElement(i, j, array[i, j])
     return matrix
 
 
-def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
+def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -657,7 +656,7 @@ def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to set default active vectors.
 
     Raises
@@ -702,7 +701,7 @@ def set_default_active_vectors(mesh: 'pv.DataSet') -> None:
         )
 
 
-def set_default_active_scalars(mesh: 'pv.DataSet') -> None:
+def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
     """Set a default scalars array on mesh, if not already set.
 
     If an active scalars already exists, no changes are made.
@@ -713,7 +712,7 @@ def set_default_active_scalars(mesh: 'pv.DataSet') -> None:
 
     Parameters
     ----------
-    mesh : pv.DataSet
+    mesh : pyvista.DataSet
         Dataset to set default active scalars.
 
     Raises
@@ -752,3 +751,44 @@ def set_default_active_scalars(mesh: 'pv.DataSet') -> None:
             f"point data: {possible_scalars_point}.\n"
             "Set one as active using DataSet.set_active_scalars(name, preference=type)"
         )
+
+
+def _coerce_transformlike_arg(transform_like: TransformLike):
+    """Check and coerce transform-like arg to a 4x4 numpy array.
+
+    Parameters
+    ----------
+    transform_like : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
+        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
+        from a vtkTransform.
+
+    Returns
+    -------
+    np.ndarray
+        4x4 transformation matrix.
+
+    """
+    transform_array = np.eye(4)
+    if isinstance(transform_like, _vtk.vtkMatrix4x4):
+        transform_array = array_from_vtkmatrix(transform_like)
+    elif isinstance(transform_like, _vtk.vtkMatrix3x3):
+        transform_array[:3, :3] = array_from_vtkmatrix(transform_like)
+    elif isinstance(transform_like, _vtk.vtkTransform):
+        transform_array = array_from_vtkmatrix(transform_like.GetMatrix())
+    elif isinstance(transform_like, np.ndarray):
+        if transform_like.shape == (3, 3):
+            transform_array[:3, :3] = transform_like
+        elif transform_like.shape == (4, 4):
+            transform_array = transform_like
+        else:
+            raise ValueError('Transformation array must be 3x3 or 4x4.')
+    else:
+        raise TypeError(
+            'Input transform must be one of:\n'
+            '\tvtk.vtkMatrix4x4\n'
+            '\tvtk.vtkMatrix3x3\n'
+            '\tvtk.vtkTransform\n'
+            '\t4x4 np.ndarray\n'
+            '\t3x3 np.ndarray\n'
+        )
+    return transform_array

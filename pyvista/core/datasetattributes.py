@@ -1,11 +1,13 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+import warnings
 
 import numpy as np
 
 from . import _vtk_core as _vtk
 from ._typing_core import Number
+from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
 
@@ -158,7 +160,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
             info.append(f'Active Scalars  : {self.active_scalars_name}')
             info.append(f'Active Vectors  : {self.active_vectors_name}')
-            info.append(f'Active Texture  : {self.active_t_coords_name}')
+            info.append(f'Active Texture  : {self.active_texture_coordinates_name}')
             info.append(f'Active Normals  : {self.active_normals_name}')
 
         info.append(f'Contains arrays :{array_info}')
@@ -368,35 +370,27 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def active_t_coords(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
         """Return the active texture coordinates array.
 
+        .. deprecated:: 0.43.0
+            Use :func:`DataSetAttributes.active_texture_coordinates` instead.
+
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Array of the active texture coordinates.
 
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> mesh.point_data.active_t_coords
-        pyvista_ndarray([[ 0.,  0.],
-                         [ 1.,  0.],
-                         [ 1.,  1.],
-                         [ 0.,  1.],
-                         [-0.,  0.],
-                         [-0.,  1.],
-                         [-1.,  1.],
-                         [-1.,  0.]], dtype=float32)
-
         """
-        self._raise_no_t_coords()
-        t_coords = self.GetTCoords()
-        if t_coords is not None:
-            return pyvista_ndarray(t_coords, dataset=self.dataset, association=self.association)
-        return None
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.active_texture_coordinates
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
         """Set the active texture coordinates array.
+
+        .. deprecated:: 0.43.0
+            Use :func:`DataSetAttributes.active_texture_coordinates` instead.
 
         Parameters
         ----------
@@ -404,49 +398,37 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Array of the active texture coordinates.
 
         """
-        self._raise_no_t_coords()
-        if not isinstance(t_coords, np.ndarray):
-            raise TypeError('Texture coordinates must be a numpy array')
-        if t_coords.ndim != 2:
-            raise ValueError('Texture coordinates must be a 2-dimensional array')
-        valid_length = self.valid_array_len
-        if t_coords.shape[0] != valid_length:
-            raise ValueError(
-                f'Number of texture coordinates ({t_coords.shape[0]}) must match number of points ({valid_length})'
-            )
-        if t_coords.shape[1] != 2:
-            raise ValueError(
-                f'Texture coordinates must only have 2 components, not ({t_coords.shape[1]})'
-            )
-        vtkarr = _vtk.numpyTovtkDataArray(t_coords, name='Texture Coordinates')
-        self.SetTCoords(vtkarr)
-        self.Modified()
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.active_texture_coordinates = t_coords
 
     @property
     def active_t_coords_name(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Return the name of the active texture coordinates array.
+
+        .. deprecated:: 0.43.0
+            Use :func:`DataSetAttributes.active_texture_coordinates_name` instead.
 
         Returns
         -------
         Optional[str]
             Name of the active texture coordinates array.
 
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> mesh.point_data.active_t_coords_name
-        'TCoords'
-
         """
-        self._raise_no_t_coords()
-        if self.GetTCoords() is not None:
-            return str(self.GetTCoords().GetName())
-        return None
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.active_texture_coordinates_name
 
     @active_t_coords_name.setter
     def active_t_coords_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set the name of the active texture coordinates array.
+
+        .. deprecated:: 0.43.0
+            Use :func:`DataSetAttributes.active_texture_coordinates_name` instead.
 
         Parameters
         ----------
@@ -454,15 +436,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Name of the active texture coordinates array.
 
         """
-        if name is None:
-            self.SetActiveTCoords(None)
-            return
-
-        self._raise_no_t_coords()
-        dtype = self[name].dtype
-        # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or dtype == bool:
-            self.SetActiveTCoords(name)
+        warnings.warn(
+            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.active_texture_coordinates_name = name
 
     def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
         """Get an array in this object.
@@ -476,7 +454,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        pv.pyvista_ndarray
+        pyvista.pyvista_ndarray
             Returns a :class:`pyvista.pyvista_ndarray`.
 
         Raises
@@ -547,7 +525,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         * :attr:`active_scalars_name <DataSetAttributes.active_scalars_name>`
         * :attr:`active_vectors_name <DataSetAttributes.active_vectors_name>`
         * :attr:`active_normals_name <DataSetAttributes.active_normals_name>`
-        * :attr:`active_t_coords_name <DataSetAttributes.active_t_coords_name>`
+        * :attr:`active_texture_coordinates_name <DataSetAttributes.active_texture_coordinates_name>`
 
         Parameters
         ----------
@@ -1205,7 +1183,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         # check the name of the active attributes
         if self.association != FieldAssociation.NONE:
-            for name in ['scalars', 'vectors', 't_coords', 'normals']:
+            for name in ['scalars', 'vectors', 'texture_coordinates', 'normals']:
                 attr = f'active_{name}_name'
                 if getattr(other, attr) != getattr(self, attr):
                     return False
@@ -1343,7 +1321,109 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active normals.')
 
-    def _raise_no_t_coords(self):
-        """Raise AttributeError when attempting access t_coords for field data."""
+    def _raise_no_texture_coordinates(self):
+        """Raise AttributeError when attempting access texture_coordinates for field data."""
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active texture coordinates.')
+
+    @property
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+        """Return the active texture coordinates array.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            Array of the active texture coordinates.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.point_data.active_texture_coordinates
+        pyvista_ndarray([[ 0.,  0.],
+                         [ 1.,  0.],
+                         [ 1.,  1.],
+                         [ 0.,  1.],
+                         [-0.,  0.],
+                         [-0.,  1.],
+                         [-1.,  1.],
+                         [-1.,  0.]], dtype=float32)
+
+        """
+        self._raise_no_texture_coordinates()
+        texture_coordinates = self.GetTCoords()
+        if texture_coordinates is not None:
+            return pyvista_ndarray(
+                texture_coordinates, dataset=self.dataset, association=self.association
+            )
+        return None
+
+    @active_texture_coordinates.setter
+    def active_texture_coordinates(self, texture_coordinates: np.ndarray):  # numpydoc ignore=GL08
+        """Set the active texture coordinates array.
+
+        Parameters
+        ----------
+        texture_coordinates : np.ndarray
+            Array of the active texture coordinates.
+
+        """
+        self._raise_no_texture_coordinates()
+        if not isinstance(texture_coordinates, np.ndarray):
+            raise TypeError('Texture coordinates must be a numpy array')
+        if texture_coordinates.ndim != 2:
+            raise ValueError('Texture coordinates must be a 2-dimensional array')
+        valid_length = self.valid_array_len
+        if texture_coordinates.shape[0] != valid_length:
+            raise ValueError(
+                f'Number of texture coordinates ({texture_coordinates.shape[0]}) must match number of points ({valid_length})'
+            )
+        if texture_coordinates.shape[1] != 2:
+            raise ValueError(
+                f'Texture coordinates must only have 2 components, not ({texture_coordinates.shape[1]})'
+            )
+        vtkarr = _vtk.numpyTovtkDataArray(texture_coordinates, name='Texture Coordinates')
+        self.SetTCoords(vtkarr)
+        self.Modified()
+
+    @property
+    def active_texture_coordinates_name(self) -> Optional[str]:  # numpydoc ignore=RT01
+        """Return the name of the active texture coordinates array.
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active texture coordinates array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.point_data.active_texture_coordinates_name
+        'TCoords'
+
+        """
+        self._raise_no_texture_coordinates()
+        if self.GetTCoords() is not None:
+            return str(self.GetTCoords().GetName())
+        return None
+
+    @active_texture_coordinates_name.setter
+    def active_texture_coordinates_name(self, name: str) -> None:  # numpydoc ignore=GL08
+        """Set the name of the active texture coordinates array.
+
+        Parameters
+        ----------
+        name : str
+            Name of the active texture coordinates array.
+
+        """
+        if name is None:
+            self.SetActiveTCoords(None)
+            return
+
+        self._raise_no_texture_coordinates()
+        dtype = self[name].dtype
+        # only vtkDataArray subclasses can be set as active attributes
+        if np.issubdtype(dtype, np.number) or dtype == bool:
+            self.SetActiveTCoords(name)

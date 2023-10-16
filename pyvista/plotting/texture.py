@@ -6,9 +6,8 @@ import warnings
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.dataset import DataObject
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
@@ -27,7 +26,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, sequence[pv.ImageData], optional
+    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.ImageData], optional
         Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
@@ -129,7 +128,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             # add each image to the cubemap
             for i, image in enumerate(uinput):
-                if not isinstance(image, pv.ImageData):
+                if not isinstance(image, pyvista.ImageData):
                     raise TypeError(
                         'If a sequence, the each item in the first argument must be a '
                         'pyvista.ImageData'
@@ -143,7 +142,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def _from_file(self, filename, **kwargs):
         try:
-            image = pv.read(filename, **kwargs)
+            image = pyvista.read(filename, **kwargs)
             if image.n_points < 2:
                 raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
             self._from_image_data(image)
@@ -190,8 +189,8 @@ class Texture(_vtk.vtkTexture, DataObject):
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
-        if not isinstance(image, pv.ImageData):
-            image = pv.ImageData(image)
+        if not isinstance(image, pyvista.ImageData):
+            image = pyvista.ImageData(image)
         self.SetInputDataObject(image)
         self.Update()
 
@@ -208,7 +207,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         elif image.ndim == 2:
             n_components = 1
 
-        grid = pv.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
+        grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
             (-1, n_components), order='F'
         )
@@ -234,7 +233,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
         >>> plane = pv.Plane()
-        >>> plane.active_t_coords *= 2
+        >>> plane.active_texture_coordinates *= 2
 
         This is the texture plotted with repeat set to ``False``.
 
@@ -259,33 +258,12 @@ class Texture(_vtk.vtkTexture, DataObject):
     def repeat(self, flag: bool):  # numpydoc ignore=GL08
         self.SetRepeat(flag)
 
-    def flip(self, axis):
-        """Flip this texture inplace along the specified axis.
-
-        0 for X and 1 for Y.
-
-        .. deprecated:: 0.37.0
-           ``flip`` is deprecated. Use :func:`Texture.flip_x` or
-           :func:`Texture.flip_y` instead.
-
-        """
-        warnings.warn(
-            '`flip` is deprecated. Use `flip_x` or `flip_y` instead',
-            PyVistaDeprecationWarning,
-        )
-
-        if not 0 <= axis <= 1:
-            raise ValueError(f"Axis {axis} out of bounds")  # pragma: no cover
-        array = self.to_array()
-        array = np.flip(array, axis=1 - axis)
-        self._from_array(array)
-
     def flip_x(self) -> 'Texture':
         """Flip the texture in the x direction.
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Flipped texture.
 
         Examples
@@ -303,7 +281,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Flipped texture.
 
         Examples
@@ -321,7 +299,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.ImageData
+        pyvista.ImageData
             Texture represented as a uniform grid.
 
         """
@@ -364,7 +342,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Rotated texture.
 
         Examples
@@ -382,7 +360,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Rotated texture.
 
         Examples
@@ -409,7 +387,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Copied texture.
         """
         return Texture(self.to_image().copy())
@@ -430,7 +408,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def __repr__(self):
         """Return the object representation."""
-        return pv.DataSet.__repr__(self)
+        return pyvista.DataSet.__repr__(self)
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -515,7 +493,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         kwargs.setdefault('lighting', False)
         kwargs.setdefault('show_axes', False)
         kwargs.setdefault('show_scalar_bar', False)
-        mesh = pv.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
+        mesh = pyvista.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
         return mesh.plot(texture=self, **kwargs)
 
     def _plot_skybox(self, **kwargs):
@@ -524,10 +502,10 @@ class Texture(_vtk.vtkTexture, DataObject):
         zoom = kwargs.pop('zoom', 0.5)
         show_axes = kwargs.pop('show_axes', True)
         lighting = kwargs.pop('lighting', None)
-        pl = pv.Plotter(lighting=lighting)
+        pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
         pl.set_environment_texture(self, True)
-        pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
+        pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
@@ -563,7 +541,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
         >>> plane = pv.Plane()
-        >>> plane.active_t_coords *= 2
+        >>> plane.active_texture_coordinates *= 2
 
         Let's now set the texture wrap to clamp to edge and visualize it.
 
@@ -619,7 +597,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        pv.Texture
+        pyvista.Texture
             Texture converted to grayscale. If already grayscale, the original
             texture itself is returned.
 
@@ -657,12 +635,12 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : pv.ImageData | vtkImageData
+    image : pyvista.ImageData | vtkImageData
         Image to convert.
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         The texture.
 
     """
@@ -679,7 +657,7 @@ def numpy_to_texture(image):
 
     Returns
     -------
-    pv.Texture
+    pyvista.Texture
         PyVista texture.
 
     Examples

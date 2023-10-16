@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
@@ -29,11 +29,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     _new_attr_exceptions = ('_theme',)
 
     def __init__(self, theme=None, **kwargs):
-        self._theme = pv.themes.Theme()
+        self._theme = pyvista.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pv.global_theme)
+            self._theme.load_theme(pyvista.global_theme)
         else:
             self._theme.load_theme(theme)
         self.lookup_table = LookupTable()
@@ -61,7 +61,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         Returns
         -------
-        pv.DataSetMapper
+        pyvista.DataSetMapper
             A copy of this dataset mapper.
 
         Examples
@@ -116,7 +116,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetScalarRange(*clim)
 
     @property
-    def lookup_table(self) -> 'pv.LookupTable':  # numpydoc ignore=RT01
+    def lookup_table(self) -> 'pyvista.LookupTable':  # numpydoc ignore=RT01
         """Return or set the lookup table.
 
         Examples
@@ -364,10 +364,10 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     Parameters
     ----------
-    dataset : pv.DataSet, optional
+    dataset : pyvista.DataSet, optional
         Dataset to assign to this mapper.
 
-    theme : pv.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
     Examples
@@ -387,8 +387,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     def __init__(
         self,
-        dataset: Optional['pv.DataSet'] = None,
-        theme: Optional['pv.themes.Theme'] = None,
+        dataset: Optional['pyvista.DataSet'] = None,
+        theme: Optional['pyvista.themes.Theme'] = None,
     ):
         """Initialize this class."""
         super().__init__(theme=theme)
@@ -396,13 +396,13 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pv.core.dataset.DataSet']:  # numpydoc ignore=RT01
+    def dataset(self) -> Optional['pyvista.core.dataset.DataSet']:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         return wrap(self.GetInputAsDataSet())
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+        self, obj: Union['pyvista.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
     ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
@@ -463,7 +463,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if use_points:
             if (
                 scalars_name not in self.dataset.point_data
-                or scalars_name == pv.DEFAULT_SCALARS_NAME
+                or scalars_name == pyvista.DEFAULT_SCALARS_NAME
             ):
                 self.dataset.point_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
@@ -471,7 +471,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif use_cells:
             if (
                 scalars_name not in self.dataset.cell_data
-                or scalars_name == pv.DEFAULT_SCALARS_NAME
+                or scalars_name == pyvista.DEFAULT_SCALARS_NAME
             ):
                 self.dataset.cell_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
@@ -553,21 +553,21 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : pv.ColorLike, optional
+        nan_color : pyvista.ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : pv.ColorLike, optional
+        above_color : pyvista.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'above'``.
 
-        below_color : pv.ColorLike, optional
+        below_color : pyvista.ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
 
-        cmap : str, list, or pv.LookupTable
+        cmap : str, list, or pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.
@@ -614,7 +614,9 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if custom_opac:
             scalars_name = '__custom_rgba'
 
-        if not np.issubdtype(scalars.dtype, np.number) and not isinstance(cmap, pv.LookupTable):
+        if not np.issubdtype(scalars.dtype, np.number) and not isinstance(
+            cmap, pyvista.LookupTable
+        ):
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')
@@ -676,7 +678,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]
 
-        if isinstance(cmap, pv.LookupTable):
+        if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
             self.scalar_range = self.lookup_table.scalar_range
         else:
@@ -684,7 +686,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             # Set default map
             if cmap is None:
                 if self._theme is None:
-                    cmap = pv.global_theme.cmap
+                    cmap = pyvista.global_theme.cmap
                 else:
                     cmap = self._theme.cmap
 
@@ -752,7 +754,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             Opacity array to color the dataset. Array length must match either
             the number of points or cells.
 
-        color : pv.ColorLike
+        color : pyvista.ColorLike
             The color to use with the opacity array.
 
         n_colors : int
@@ -778,7 +780,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         if self._theme is not None:
             default_color = self._theme.color
         else:
-            default_color = pv.global_theme.color
+            default_color = pyvista.global_theme.color
 
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
@@ -811,7 +813,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     Parameters
     ----------
-    theme : pv.Theme, optional
+    theme : pyvista.Theme, optional
         The theme to be used.
     emissive : bool, optional
         Whether or not the point should appear emissive. Default is set by the
@@ -981,7 +983,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pv.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+        self, obj: Union['pyvista.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
     ):
         set_algorithm_input(self, obj)
 

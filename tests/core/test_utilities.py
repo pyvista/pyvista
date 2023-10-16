@@ -16,11 +16,13 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
+    _coerce_transformlike_arg,
     copy_vtk_array,
     get_array,
     has_duplicates,
     raise_has_duplicates,
     vtk_id_list_to_array,
+    vtkmatrix_from_array,
 )
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
@@ -917,3 +919,27 @@ def test_fit_plane_to_points():
             157.70724487304688,
         ],
     )
+
+
+@pytest.mark.parametrize(
+    'transform_like',
+    [
+        np.array(np.eye(3)),
+        np.array(np.eye(4)),
+        vtkmatrix_from_array(np.eye(3)),
+        vtkmatrix_from_array(np.eye(4)),
+        vtk.vtkTransform(),
+    ],
+)
+def test_coerce_transformlike_arg(transform_like):
+    result = _coerce_transformlike_arg(transform_like)
+    assert np.array_equal(result, np.eye(4))
+
+
+def test_coerce_transformlike_arg_raises():
+    with pytest.raises(ValueError, match="must be 3x3 or 4x4"):
+        _coerce_transformlike_arg(np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match="must be one of"):
+        _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    with pytest.raises(TypeError, match="must be one of"):
+        _coerce_transformlike_arg("abc")

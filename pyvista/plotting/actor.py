@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -23,10 +23,10 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     Parameters
     ----------
-    mapper : pv.DataSetMapper, optional
+    mapper : pyvista.DataSetMapper, optional
         DataSetMapper.
 
-    prop : pv.Property, optional
+    prop : pyvista.Property, optional
         Property of the actor.
 
     name : str, optional
@@ -176,7 +176,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> plane = pv.Plane()
-        >>> plane.active_t_coords is not None
+        >>> plane.active_texture_coordinates is not None
         True
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane)
@@ -269,7 +269,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.plot()
 
         """
-        pl = pv.Plotter()
+        pl = pyvista.Plotter()
         pl.add_actor(self)
         pl.show(**kwargs)
 
@@ -285,7 +285,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pv.Actor
+        pyvista.Actor
             Deep or shallow copy of this actor.
 
         Examples
@@ -340,7 +340,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> Optional['pv.Property']:  # numpydoc ignore=RT01
+    def backface_prop(self) -> Optional['pyvista.Property']:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -351,7 +351,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pv.Property
+        pyvista.Property
             The object describing backfaces.
 
         Examples
@@ -381,5 +381,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()
 
     @backface_prop.setter
-    def backface_prop(self, value: 'pv.Property'):  # numpydoc ignore=GL08
+    def backface_prop(self, value: 'pyvista.Property'):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)
