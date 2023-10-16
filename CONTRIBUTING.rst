@@ -746,6 +746,18 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a label is added to your branch, it is automatically triggering
+deploying the Preview Documentation. Please check the documentation that
+is deployed by your Pull Request before merging.
+
+If you push additional commits after adding the label, you will need to
+reapply the label. In this situation, kindly request the maintainer to
+dismiss and apply 'documentation' label again. This process is essential
+to safeguard the deployment site against potentially harmful commits.
+
 Branching Model
 ~~~~~~~~~~~~~~~
 
