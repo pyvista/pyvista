@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import DeprecationError, MissingDataError
+from pyvista.core.errors import MissingDataError
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
