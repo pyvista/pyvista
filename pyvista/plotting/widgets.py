@@ -1260,7 +1260,6 @@ class WidgetHelper:
         color=None,
         interaction_event='end',
         style=None,
-        **kwargs,
     ):
         """Add a text slider bar widget.
 
