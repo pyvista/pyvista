@@ -99,12 +99,6 @@ def test_read(tmpdir, use_pathlib):
     for i, filename in enumerate(fnames):
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
-    # Now test the standard_reader_routine
-    for i, filename in enumerate(fnames):
-        # Pass attrs to for the standard_reader_routine to be used
-        with pytest.warns(PyVistaDeprecationWarning):
-            obj = fileio.read(filename, attrs={'DebugOn': None})
-        assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.rand(10, 10)
@@ -150,20 +144,6 @@ def test_read_force_ext(tmpdir):
 
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
-def test_read_attrs(mock_reader, mock_read):
-    """Test passing attrs in read."""
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read(ex.antfile, attrs={'test': 'test_arg'})
-    mock_reader.test.assert_called_once_with('test_arg')
-
-    mock_reader.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
-    mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
-
-
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
     """Test passing attrs in read."""
@@ -196,13 +176,6 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.core.utilities.fileio.read')
-def test_read_legacy(read_mock):
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read_legacy(ex.globefile, progress_bar=False)
-    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
-
-
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
@@ -211,22 +184,6 @@ def test_pyvista_read_exodus(read_exodus_mock):
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == ex.globefile
-
-
-@pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.core.utilities.reader.BaseReader.read')
-@mock.patch('pyvista.core.utilities.reader.BaseReader.path')
-def test_read_plot3d(path_mock, read_mock, auto_detect):
-    # with grid only
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    read_mock.assert_called_once()
-
-    # with grid and q
-    read_mock.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    read_mock.assert_called_once()
 
 
 def test_get_array_cell(hexbeam):
