@@ -755,8 +755,10 @@ is deployed by your Pull Request before merging.
 
 If you push additional commits after applying the label, you will need to
 reapply the label. In this situation, kindly request the maintainer to
-dismiss and apply ``documentation`` label again. This process is essential
-to safeguard the deployment site against potentially harmful commits.
+dismiss and apply
+`documentation <https://github.com/pyvista/pyvista/labels/documentation>`_
+label again. This process is essential to safeguard the deployment site
+against potentially harmful commits.
 
 Branching Model
 ~~~~~~~~~~~~~~~
