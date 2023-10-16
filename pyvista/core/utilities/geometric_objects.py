@@ -1790,10 +1790,12 @@ def Rectangle(points=None):
     ----------
     points : array_like[float], optional
         Points of the rectangle. Defaults to a unit square in xy-plane.
+
     Returns
     -------
     pyvista.PolyData
         Rectangle mesh.
+
     Examples
     --------
     >>> import pyvista as pv
