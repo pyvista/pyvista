@@ -33,15 +33,9 @@ def grid():
     return pv.UnstructuredGrid(examples.hexbeamfile)
 
 
-def test_invalid_overwrite(grid):
+def test_invalid_copy_from(grid):
     with pytest.raises(TypeError):
         grid.copy_from(pv.Plane())
-
-
-def test_overwrite_deprecation(grid):
-    mesh = type(grid)()
-    with pytest.warns(PyVistaDeprecationWarning):
-        mesh.overwrite(grid)
 
 
 @composite
@@ -484,8 +478,8 @@ def test_invalid_vector(grid):
         grid["vectors"] = np.empty((3, 3))
 
 
-def test_no_t_coords(grid):
-    assert grid.active_t_coords is None
+def test_no_texture_coordinates(grid):
+    assert grid.active_texture_coordinates is None
 
 
 def test_no_arrows(grid):
@@ -557,18 +551,18 @@ def test_set_active_tensors(grid):
     active_component_consistency_check(grid, "tensors", "point")
 
 
-def test_set_t_coords(grid):
+def test_set_texture_coordinates(grid):
     with pytest.raises(TypeError):
-        grid.active_t_coords = [1, 2, 3]
+        grid.active_texture_coordinates = [1, 2, 3]
 
     with pytest.raises(ValueError):
-        grid.active_t_coords = np.empty(10)
+        grid.active_texture_coordinates = np.empty(10)
 
     with pytest.raises(ValueError):
-        grid.active_t_coords = np.empty((3, 3))
+        grid.active_texture_coordinates = np.empty((3, 3))
 
     with pytest.raises(ValueError):
-        grid.active_t_coords = np.empty((grid.n_points, 1))
+        grid.active_texture_coordinates = np.empty((grid.n_points, 1))
 
 
 def test_set_active_vectors_fail(grid):
@@ -1708,3 +1702,19 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert all([0 <= id < grid.n_points for id in ids])
             assert len(ids) > 0
         assert i == n_levels - 1
+
+
+@pytest.fixture()
+def mesh():
+    return examples.load_globe()
+
+
+def test_active_t_coords_deprecated(mesh):
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        t_coords = mesh.active_t_coords
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated property')
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        mesh.active_t_coords = t_coords
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated property')
