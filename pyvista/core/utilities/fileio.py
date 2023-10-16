@@ -234,7 +234,7 @@ def _apply_attrs_to_reader(reader, attrs):
             attr()
 
 
-def read_texture(filename, attrs=None, progress_bar=False):
+def read_texture(filename, progress_bar=False):
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -244,12 +244,6 @@ def read_texture(filename, attrs=None, progress_bar=False):
     ----------
     filename : str
         The path of the texture file to read.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
 
     progress_bar : bool, default: False
         Optionally show a progress bar.
@@ -277,7 +271,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
     try:
         # initialize the reader using the extension to find it
 
-        image = read(filename, attrs=attrs, progress_bar=progress_bar)
+        image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")
         return pyvista.Texture(image)
