@@ -1307,8 +1307,6 @@ class WidgetHelper:
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
 
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
 
         Returns
         -------
@@ -1457,9 +1455,6 @@ class WidgetHelper:
 
         tube_width : float, optional
             Normalized width of the tube. Defaults to the theme's tube width.
-
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
 
         Returns
         -------
