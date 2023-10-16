@@ -105,5 +105,5 @@ jobs:
           wget --quiet ${CARTOPY_FEATURE}
           mkdir -p ${CARTOPY_SHARE_DIR}
           python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
-      - run: pytest -m "not image"
+      - run: pytest
         working-directory: geovista
