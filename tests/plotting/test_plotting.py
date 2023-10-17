@@ -1220,6 +1220,8 @@ def test_multi_block_plot(verify_image_cache):
     multi.plot(scalars='Random Data')
 
     multi.plot(multi_colors=True)
+    multi.plot(multi_colors=['red', 'green', 'blue'])
+    multi.plot(multi_colors='all')
 
 
 def test_clear(sphere):
