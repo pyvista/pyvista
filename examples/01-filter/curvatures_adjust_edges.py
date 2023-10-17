@@ -661,7 +661,7 @@ def get_source(source):
         return get_mobius()
     elif surface == 'randomhills':
         source = pv.ParametricRandomHills(
-            random_seed=1, number_of_hills=30, u_res=51, v_res=51, generate_texture_coordinates=True
+            random_seed=1, number_of_hills=30, u_res=51, v_res=51, texture_coordinates=True
         )
         return source.translate((0.0, 5.0, 15.0)).rotate_x(-90.0)
     elif surface == 'sphere':
