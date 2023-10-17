@@ -189,9 +189,9 @@ def main(argv):
         renderer = plotter.renderers[0]
         renderer.SetBackground(colors.GetColor3d('ParaViewBkg'))
 
-        renderer.AddActor(actor)
-        renderer.AddActor(text_actor)
-        renderer.AddActor(scalar_bar)
+        renderer.add_actor(actor)
+        renderer.add_actor(text_actor)
+        renderer.add_actor(scalar_bar)
 
         ren_win.AddRenderer(renderer)
 
