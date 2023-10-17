@@ -149,7 +149,7 @@ def main(argv):
     camera = None
 
     has_cow = False
-    if vtk_version_ok(9, 0, 20210718):
+    if pv.vtk_version_info >= (9, 0, 20210718):
         cam_orient_manipulator = vtkCameraOrientationWidget()
         has_cow = True
 
@@ -325,8 +325,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     # average of the neighbours.
     count_invalid = 0
     for p_id in boundary_ids:
-        # p_ids_neighbors = point_neighbourhood(p_id)
-        p_ids_neighbors = edges.point_neighbors(p_id)
+        p_ids_neighbors = point_neighbourhood(p_id)
         # Keep only interior points.
         p_ids_neighbors -= p_ids_set
         # Compute distances and extract curvature values.
