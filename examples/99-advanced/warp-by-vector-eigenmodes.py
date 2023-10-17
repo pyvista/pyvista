@@ -18,6 +18,8 @@ https://asa.scitation.org/doi/10.1121/1.401643
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
 
+from itertools import product
+
 import numpy as np
 from scipy.linalg import eigh
 
@@ -70,13 +72,10 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     }
 
     cijkl = np.zeros((3, 3, 3, 3))
-    for i in range(3):
-        for j in range(3):
-            for k in range(3):
-                for l in range(3):
-                    u = coord_mapping[(i + 1, j + 1)]
-                    v = coord_mapping[(k + 1, l + 1)]
-                    cijkl[i, j, k, l] = cij[u - 1, v - 1]
+    for i, j, k, l in product(range(3), repeat=4):
+        u = coord_mapping[i + 1, j + 1]
+        v = coord_mapping[k + 1, l + 1]
+        cijkl[i, j, k, l] = cij[u - 1, v - 1]
     return cijkl, cij
 
 
@@ -106,9 +105,8 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
-    for i in range(3):
-        for triplet in triplets:
-            quadruplets.append((i, *triplet))
+    for i, triplet in product(range(3), triplets):
+        quadruplets.append((i, *triplet))
     assert len(quadruplets) == 3 * (N + 1) * (N + 2) * (N + 3) // 6
 
     # assembling the mass and stiffness matrix in a single loop
@@ -234,14 +232,13 @@ pl.show()
 
 
 pl = pv.Plotter(shape=(2, 4))
-for i in range(2):
-    for j in range(4):
-        pl.subplot(i, j)
-        current_index = 4 * i + j
-        vector = f"eigenmode_{current_index:02}"
-        pl.add_text(
-            f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
-            font_size=10,
-        )
-        pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)
+for i, j in product(range(2), range(4)):
+    pl.subplot(i, j)
+    current_index = 4 * i + j
+    vector = f"eigenmode_{current_index:02}"
+    pl.add_text(
+        f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
+        font_size=10,
+    )
+    pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)
 pl.show()
