@@ -186,7 +186,7 @@ def main(argv):
         text_actor.SetPosition(250, 16)
 
         plotter = pv.Plotter()
-        renderer = plotter.rendereres[0]
+        renderer = plotter.renderers[0]
         renderer.SetBackground(colors.GetColor3d('ParaViewBkg'))
 
         renderer.AddActor(actor)
