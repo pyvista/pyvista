@@ -198,7 +198,7 @@ def main(argv):
         if idx == 0:
             if has_cow:
                 cam_orient_manipulator.SetParentRenderer(renderer)
-            camera = renderer.GetActiveCamera()
+            camera = renderer.camera
             camera.Elevation(60)
         else:
             renderer.SetActiveCamera(camera)
