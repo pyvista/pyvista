@@ -16,7 +16,6 @@ from vtkmodules.vtkCommonCore import (
     VTK_DOUBLE,
     vtkDoubleArray,
     vtkFloatArray,
-    vtkIdList,
     vtkLookupTable,
     vtkPoints,
 )
