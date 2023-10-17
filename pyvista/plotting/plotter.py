@@ -6015,26 +6015,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             orbit()
 
-    def export_vtkjs(self, *args, **kwargs):
-        """Export the current rendering scene as a VTKjs scene.
-
-        .. deprecated:: 0.40.0
-            This export routine has been broken for some time and has
-            been completely removed in version 0.40.0.  Use :func:`pyvista.Plotter.export_vtksz` instead.
-
-        Parameters
-        ----------
-        *args : tuple
-            Positional arguments.
-
-        **kwargs : dict, optional
-            Keyword arguments.
-
-        """
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError('export_vtkjs is deprecated. Use export_vtksz instead.')
-
     def export_obj(self, filename):
         """Export scene to OBJ format.
 
