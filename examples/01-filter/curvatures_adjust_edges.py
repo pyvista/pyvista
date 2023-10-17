@@ -199,11 +199,11 @@ def main(argv):
             if has_cow:
                 cam_orient_manipulator.SetParentRenderer(renderer)
             camera = renderer.camera
-            camera.Elevation(60)
+            camera.elevation = 60
         else:
-            renderer.SetActiveCamera(camera)
+           renderer.camera = camera
         renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
-        renderer.ResetCamera()
+        renderer.reset_camera()
 
     if has_cow:
         # Enable the widget.
