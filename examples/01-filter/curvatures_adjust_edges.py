@@ -223,26 +223,6 @@ def main(argv):
     iren.Start()
 
 
-def vtk_version_ok(major, minor, build):
-    """
-    Check the VTK version.
-
-    :param major: Requested major version.
-    :param minor: Requested minor version.
-    :param build: Requested build version.
-    :return: True if the requested VTK version is >= the actual VTK version.
-    """
-    requested_version = (100 * int(major) + int(minor)) * 100000000 + int(build)
-    ver = vtkVersion()
-    actual_version = (
-        100 * ver.GetVTKMajorVersion() + ver.GetVTKMinorVersion()
-    ) * 100000000 + ver.GetVTKBuildVersion()
-    if actual_version >= requested_version:
-        return True
-    else:
-        return False
-
-
 def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     """
     This function adjusts curvatures along the edges of the surface by replacing
