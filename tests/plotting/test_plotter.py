@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import DeprecationError, MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import MissingDataError
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -364,16 +364,6 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
 
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
-
-
-def test_deprecated_store_image():
-    """Test to make sure store_image is deprecated."""
-    pl = pv.Plotter()
-    with pytest.raises(DeprecationError):
-        assert isinstance(pl.store_image, bool)
-
-    with pytest.raises(DeprecationError):
-        pl.store_image = True
 
 
 def test_plotter_add_volume_clim(uniform: pv.ImageData):

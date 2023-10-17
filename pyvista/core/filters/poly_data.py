@@ -7,7 +7,6 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import (
-    DeprecationError,
     MissingDataError,
     NotAllTrianglesError,
     PyVistaFutureWarning,
@@ -107,26 +106,6 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(bfilter, progress_bar, 'Performing Boolean Operation')
 
         return _get_output(bfilter)
-
-    def boolean_cut(self, *args, **kwargs):  # pragma: no cover
-        """Cut two meshes.
-
-        .. deprecated:: 0.32.0
-           Use :func:`PolyDataFilters.boolean_difference` instead.
-
-        """
-        raise DeprecationError(
-            '``boolean_cut`` has been deprecated.  Please use ``boolean_difference``.'
-        )
-
-    def boolean_add(self, *args, **kwargs):  # pragma: no cover
-        """Merge two meshes together.
-
-        .. deprecated:: 0.32.0
-           Use :func:`PolyDataFilters.merge` instead.
-
-        """
-        raise DeprecationError('``boolean_add`` has been deprecated.  ' 'Please use ``merge``.')
 
     def boolean_union(self, other_mesh, tolerance=1e-5, progress_bar=False):
         """Perform a boolean union operation on two meshes.
