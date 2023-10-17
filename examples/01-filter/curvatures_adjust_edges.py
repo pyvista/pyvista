@@ -19,7 +19,6 @@ from vtkmodules.vtkCommonCore import (
     vtkIdList,
     vtkLookupTable,
     vtkPoints,
-    vtkVersion,
 )
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkCommonTransforms import vtkTransform
