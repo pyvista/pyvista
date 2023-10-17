@@ -187,6 +187,7 @@ def main(argv):
         text_actor.SetPosition(250, 16)
 
         renderer = vtkRenderer()
+        renderer = pv.Renderer(renderer)
         renderer.SetBackground(colors.GetColor3d('ParaViewBkg'))
 
         renderer.AddActor(actor)
