@@ -41,10 +41,10 @@ def vtk_points(points, deep=True, force_float=False):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>> points = np.random.random((10, 3))
-    >>> vpoints = pyvista.vtk_points(points)
+    >>> vpoints = pv.vtk_points(points)
     >>> vpoints  # doctest:+SKIP
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
 
@@ -124,10 +124,10 @@ def line_segments_from_points(points):
     --------
     This example plots two line segments at right angles to each other.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = pyvista.line_segments_from_points(points)
+    >>> lines = pv.line_segments_from_points(points)
     >>> lines.plot()
 
     """
@@ -170,9 +170,9 @@ def lines_from_points(points, close=False):
     Examples
     --------
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> poly = pyvista.lines_from_points(points)
+    >>> poly = pv.lines_from_points(points)
     >>> poly.plot(line_width=5)
 
     """
@@ -857,7 +857,7 @@ def fit_plane_to_points(
     Fit a plane to a random point cloud.
 
     >>> import numpy.random
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>>
     >>> # Create point cloud
@@ -866,12 +866,12 @@ def fit_plane_to_points(
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane
-    >>> plane, center, normal = pyvista.fit_plane_to_points(
+    >>> plane, center, normal = pv.fit_plane_to_points(
     ...     cloud, return_meta=True
     ... )
     >>>
     >>> # Plot the fitted plane
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     plane, color='lightblue', style='wireframe', line_width=4
     ... )
@@ -897,7 +897,7 @@ def fit_plane_to_points(
 
     Fit a plane to a mesh.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>>
     >>> # Create mesh
@@ -914,10 +914,9 @@ def fit_plane_to_points(
                      [-7.4325546e+01, -3.2057564e+01,  4.7211194e-07],
                      [ 7.6249199e+01, -2.8280909e+01,  2.9473117e-07]],
                     dtype=float32)
-
     >>>
     >>> # Plot the fitted plane
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     plane, show_edges=True, color='lightblue', opacity=0.25
     ... )
@@ -1014,7 +1013,7 @@ def make_tri_mesh(points, faces):
     nine vertices and eight faces.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> points = np.array(
     ...     [
     ...         [0, 0, 0],
@@ -1040,7 +1039,7 @@ def make_tri_mesh(points, faces):
     ...         [4, 8, 7],
     ...     ]
     ... )
-    >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
+    >>> tri_mesh = pv.make_tri_mesh(points, faces)
     >>> tri_mesh.plot(show_edges=True, line_width=5)
 
     """
@@ -1077,7 +1076,7 @@ def vector_poly_data(orig, vec):
     Create basic vector field.  This is a point cloud where each point
     has a vector and magnitude attached to it.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>> x, y = np.meshgrid(np.linspace(-5, 5, 10), np.linspace(-5, 5, 10))
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
@@ -1086,7 +1085,7 @@ def vector_poly_data(orig, vec):
     >>> vectors = np.vstack(
     ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
     ... ).T
-    >>> pdata = pyvista.vector_poly_data(points, vectors)
+    >>> pdata = pv.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
 

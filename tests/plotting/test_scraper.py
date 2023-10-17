@@ -19,9 +19,12 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     plotter_gif = pv.Plotter()
 
     scraper = Scraper()
+
+    # test stable repr
+    assert repr(scraper) == '<Scraper object>'
+
     src_dir = str(tmpdir)
     out_dir = op.join(str(tmpdir), '_build', 'html')
-
     img_fnames = [
         op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
     ]

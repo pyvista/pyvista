@@ -38,7 +38,7 @@ JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
-    pv.set_jupyter_backend('trame')
+    pyvista.set_jupyter_backend('trame')
 
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
@@ -272,14 +272,14 @@ def show_trame(
             import pyvista as pv
             from IPython.display import IFrame
 
-            mesh = pv.Wavelet()
+            mesh = pyvista.Wavelet()
 
 
             def handler(viewer, src, **kwargs):
                 return IFrame(src, '75%', '500px')
 
 
-            p = pv.Plotter(notebook=True)
+            p = pyvista.Plotter(notebook=True)
             _ = p.add_mesh(mesh)
             iframe = p.show(
                 jupyter_backend='trame',

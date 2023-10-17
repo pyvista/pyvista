@@ -315,10 +315,10 @@ def merge(
     --------
     Merge two polydata datasets.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere(center=(0, 0, 1))
-    >>> cube = pyvista.Cube()
-    >>> mesh = pyvista.merge([cube, sphere])
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere(center=(0, 0, 1))
+    >>> cube = pv.Cube()
+    >>> mesh = pv.merge([cube, sphere])
     >>> mesh.plot()
 
     """
@@ -389,12 +389,12 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     Create a Perlin noise function with an amplitude of 0.1, frequency
     for all axes of 1, and a phase of 0 for all axes.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
 
     Sample Perlin noise over a structured grid and plot it.
 
-    >>> grid = pyvista.sample_function(noise, [0, 5, 0, 5, 0, 5])
+    >>> grid = pv.sample_function(noise, [0, 5, 0, 5, 0, 5])
     >>> grid.plot()
 
     """
@@ -487,9 +487,9 @@ def sample_function(
     --------
     Sample Perlin noise over a structured grid in 3D.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-    >>> grid = pyvista.sample_function(
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
     >>> grid.plot(
@@ -498,8 +498,8 @@ def sample_function(
 
     Sample Perlin noise in 2D and plot it.
 
-    >>> noise = pyvista.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
-    >>> surf = pyvista.sample_function(noise, dim=(200, 200, 1))
+    >>> noise = pv.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
+    >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
     See :ref:`perlin_noise_2d_example` for a full example using this function.

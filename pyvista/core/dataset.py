@@ -161,8 +161,8 @@ class DataSet(DataSetFilters, DataObject):
         scalars info.  Note how when the scalars are added, they
         automatically become the active scalars.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_info
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
@@ -219,8 +219,8 @@ class DataSet(DataSetFilters, DataObject):
         vectors to the normals, and show that the active vectors are
         the ``'Normals'`` array associated with points.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> _ = mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
@@ -275,8 +275,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh, compute the normals inplace, and return the
         normals vector array.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> _ = mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors  # doctest:+SKIP
         pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
@@ -359,8 +359,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh, compute the normals, set them as active, and
         return the name of the active vectors.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
         >>> mesh_w_normals.active_vectors_name
@@ -395,8 +395,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh, add scalars to the mesh, and return the name of
         the active scalars.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_name
         'Z Height'
@@ -430,8 +430,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh and return the points of the mesh as a numpy
         array.
 
-        >>> import pyvista
-        >>> cube = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> cube = pv.Cube()
         >>> points = cube.points
         >>> points
         pyvista_ndarray([[-0.5, -0.5, -0.5],
@@ -536,8 +536,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh, compute the normals and set them active, and
         plot the active vectors.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
         >>> arrows = mesh_w_normals.arrows
@@ -565,23 +565,12 @@ class DataSet(DataSetFilters, DataObject):
         Optional[pyvista_ndarray]
             Active texture coordinates on the points.
 
-        Examples
-        --------
-        Return the active texture coordinates from the globe example.
-
-        >>> from pyvista import examples
-        >>> globe = examples.load_globe()
-        >>> globe.active_t_coords
-        pyvista_ndarray([[0.        , 0.        ],
-                         [0.        , 0.07142857],
-                         [0.        , 0.14285714],
-                         ...,
-                         [1.        , 0.85714286],
-                         [1.        , 0.92857143],
-                         [1.        , 1.        ]])
-
         """
-        return self.point_data.active_t_coords
+        warnings.warn(
+            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        return self.active_texture_coordinates
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
@@ -592,7 +581,11 @@ class DataSet(DataSetFilters, DataObject):
         t_coords : np.ndarray
             Active texture coordinates on the points.
         """
-        self.point_data.active_t_coords = t_coords  # type: ignore
+        warnings.warn(
+            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            PyVistaDeprecationWarning,
+        )
+        self.active_texture_coordinates = t_coords  # type: ignore
 
     def set_active_scalars(self, name: Optional[str], preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
@@ -748,9 +741,9 @@ class DataSet(DataSetFilters, DataObject):
         Create a cube, assign a point array to the mesh named
         ``'my_array'``, and rename it to ``'my_renamed_array'``.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> cube = pyvista.Cube()
+        >>> cube = pv.Cube()
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
@@ -814,8 +807,8 @@ class DataSet(DataSetFilters, DataObject):
         active normals for the dataset.  Show that this is the same size
         as the number of points.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh = mesh.compute_normals()
         >>> normals = mesh.active_normals
         >>> normals.shape
@@ -903,13 +896,13 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Rotate a mesh 30 degrees about the x-axis.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> rot = mesh.rotate_x(30, inplace=False)
 
         Plot the rotated mesh.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
         >>> _ = pl.add_axes_at_origin()
@@ -956,13 +949,13 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Rotate a cube 30 degrees about the y-axis.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> rot = mesh.rotate_y(30, inplace=False)
 
         Plot the rotated mesh.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
         >>> _ = pl.add_axes_at_origin()
@@ -1010,13 +1003,13 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Rotate a mesh 30 degrees about the z-axis.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> rot = mesh.rotate_z(30, inplace=False)
 
         Plot the rotated mesh.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
         >>> _ = pl.add_axes_at_origin()
@@ -1072,13 +1065,13 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
 
         Plot the rotated mesh.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
         >>> _ = pl.add_axes_at_origin()
@@ -1197,8 +1190,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.center
         [0.0, 0.0, 0.0]
         >>> trans = mesh.translate((2, 1, 2), inplace=False)
@@ -1246,9 +1239,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
         >>> _ = pl.show_grid()
@@ -1300,9 +1293,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
         >>> mesh1 = examples.download_teapot()
@@ -1351,9 +1344,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
         >>> mesh1 = examples.download_teapot()
@@ -1402,9 +1395,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
         >>> mesh1 = examples.download_teapot().rotate_x(90, inplace=False)
@@ -1458,9 +1451,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> pl.show_axes()
         >>> mesh1 = examples.download_teapot()
@@ -1520,9 +1513,9 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Add point arrays to a mesh and list the available ``point_data``.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Cube()
+        >>> mesh = pv.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
@@ -1559,9 +1552,9 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Clear all point arrays from a mesh.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.point_data.keys()
         ['Normals']
         >>> mesh.clear_point_data()
@@ -1582,9 +1575,9 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Clear all arrays from a mesh.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.point_data.keys()
         ['Normals']
         >>> mesh.clear_data()
@@ -1609,9 +1602,9 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Add cell arrays to a mesh and list the available ``cell_data``.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Cube()
+        >>> mesh = pv.Cube()
         >>> mesh.clear_data()
         >>> mesh.cell_data['my_array'] = np.random.random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
@@ -1655,8 +1648,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh and return the number of points in the
         mesh.
 
-        >>> import pyvista
-        >>> cube = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> cube = pv.Cube()
         >>> cube.n_points
         8
 
@@ -1682,8 +1675,8 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh and return the number of cells in the
         mesh.
 
-        >>> import pyvista
-        >>> cube = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> cube = pv.Cube()
         >>> cube.n_cells
         6
 
@@ -1728,8 +1721,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Create a cube and return the bounds of the mesh.
 
-        >>> import pyvista
-        >>> cube = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> cube = pv.Cube()
         >>> cube.bounds
         (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
@@ -1751,8 +1744,8 @@ class DataSet(DataSetFilters, DataObject):
         match ``3**(1/2)`` since it is the diagonal of a cube that is
         ``1 x 1 x 1``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> mesh.length
         1.7320508075688772
 
@@ -1772,8 +1765,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Get the center of a mesh.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere(center=(1, 2, 0))
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(center=(1, 2, 0))
         >>> mesh.center
         [1.0, 2.0, 0.0]
 
@@ -1929,8 +1922,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Create a DataSet with a variety of arrays.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
@@ -1983,8 +1976,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Create a DataSet with a variety of arrays.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
@@ -2089,8 +2082,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Return the array names for a mesh.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.point_data['my_array'] = range(mesh.n_points)
         >>> mesh.array_names
         ['my_array', 'Normals']
@@ -2195,9 +2188,9 @@ class DataSet(DataSetFilters, DataObject):
         Create two meshes and overwrite ``mesh_a`` with ``mesh_b``.
         Show that ``mesh_a`` is equal to ``mesh_b``.
 
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere()
-        >>> mesh_b = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere()
+        >>> mesh_b = pv.Cube()
         >>> mesh_a.copy_from(mesh_b)
         >>> mesh_a == mesh_b
         True
@@ -2216,25 +2209,6 @@ class DataSet(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def overwrite(self, mesh: _vtk.vtkDataSet):  # numpydoc ignore=GL09
-        """Overwrite this dataset inplace with the new dataset's geometries and data.
-
-        .. deprecated:: 0.37.0
-            Use :func:`DataSet.copy_from` instead.
-
-        Parameters
-        ----------
-        mesh : vtk.vtkDataSet
-            The overwriting mesh.
-
-        """
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(
-            "Use of `DataSet.overwrite` is deprecated. Use `DataSet.copy_from` instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.copy_from(mesh)
-
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
@@ -2248,8 +2222,8 @@ class DataSet(DataSetFilters, DataObject):
         Cast a :class:`pyvista.PolyData` to a
         :class:`pyvista.UnstructuredGrid`.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> type(mesh)
         <class 'pyvista.core.pointset.PolyData'>
         >>> grid = mesh.cast_to_unstructured_grid()
@@ -2284,8 +2258,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Wavelet()
+        >>> import pyvista as pv
+        >>> mesh = pv.Wavelet()
         >>> pointset = mesh.cast_to_pointset()
         >>> type(pointset)
         <class 'pyvista.core.pointset.PointSet'>
@@ -2391,8 +2365,8 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Find the index of the closest point to ``(0, 1, 0)``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> index = mesh.find_closest_point((0, 1, 0))
         >>> index
         239
@@ -2473,8 +2447,8 @@ class DataSet(DataSetFilters, DataObject):
         Find nearest cell on a sphere centered on the
         origin to the point ``[0.1, 0.2, 0.3]``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> point = [0.1, 0.2, 0.3]
         >>> index = mesh.find_closest_cell(point)
         >>> index
@@ -2504,7 +2478,7 @@ class DataSet(DataSetFilters, DataObject):
         ``z`` normal and ``z=0``.  The closest point inside the cell is
         not usually at a nodal point.
 
-        >>> unit_square = pyvista.Rectangle()
+        >>> unit_square = pv.Rectangle()
         >>> index, closest_point = unit_square.find_closest_cell(
         ...     [0.25, 0.25, 0.5], return_closest_point=True
         ... )
@@ -2585,8 +2559,8 @@ class DataSet(DataSetFilters, DataObject):
         A unit square with 16 equal sized cells is created and a cell
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
-        >>> import pyvista
-        >>> mesh = pyvista.ImageData(
+        >>> import pyvista as pv
+        >>> mesh = pv.ImageData(
         ...     dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0]
         ... )
         >>> mesh
@@ -2661,8 +2635,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
         array([  86,   87, 1652, 1653])
 
@@ -2716,8 +2690,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
         array([  86, 1653])
 
@@ -2761,8 +2735,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> index = mesh.find_cells_within_bounds(
         ...     [-2.0, 2.0, -2.0, 2.0, -2.0, 2.0]
         ... )
@@ -2931,10 +2905,10 @@ class DataSet(DataSetFilters, DataObject):
         Show a visual example.
 
         >>> from functools import partial
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere(theta_resolution=10)
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=10)
         >>>
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.link_views()
         >>> add_point_labels = partial(
         ...     pl.add_point_labels,
@@ -3404,3 +3378,41 @@ class DataSet(DataSetFilters, DataObject):
         if singular:
             return in_cell[0]
         return in_cell
+
+    @property
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+        """Return the active texture coordinates on the points.
+
+        Returns
+        -------
+        Optional[pyvista_ndarray]
+            Active texture coordinates on the points.
+
+        Examples
+        --------
+        Return the active texture coordinates from the globe example.
+
+        >>> from pyvista import examples
+        >>> globe = examples.load_globe()
+        >>> globe.active_texture_coordinates
+        pyvista_ndarray([[0.        , 0.        ],
+                         [0.        , 0.07142857],
+                         [0.        , 0.14285714],
+                         ...,
+                         [1.        , 0.85714286],
+                         [1.        , 0.92857143],
+                         [1.        , 1.        ]])
+
+        """
+        return self.point_data.active_texture_coordinates
+
+    @active_texture_coordinates.setter
+    def active_texture_coordinates(self, texture_coordinates: np.ndarray):  # numpydoc ignore=GL08
+        """Set the active texture coordinates on the points.
+
+        Parameters
+        ----------
+        texture_coordinates : np.ndarray
+            Active texture coordinates on the points.
+        """
+        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore

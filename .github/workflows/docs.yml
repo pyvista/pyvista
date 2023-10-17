@@ -1,8 +1,6 @@
 name: Build Documentation
 on:
   pull_request:  # Uses cache
-  pull_request_target:
-    types: [labeled]
   workflow_dispatch:  # Able to not use cache by user demand
     inputs:
       cache:

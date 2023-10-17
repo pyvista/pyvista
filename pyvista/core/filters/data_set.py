@@ -232,7 +232,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData or tuple(pyvista.PolyData)
+        pyvista.PolyData or tuple[pyvista.PolyData]
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -634,9 +634,9 @@ class DataSetFilters:
         --------
         Clip a cube with a sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(center=(-0.4, -0.4, -0.4))
-        >>> cube = pyvista.Cube().triangulate().subdivide(3)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(center=(-0.4, -0.4, -0.4))
+        >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped = cube.clip_surface(sphere)
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
@@ -759,8 +759,8 @@ class DataSetFilters:
         --------
         Slice the surface of a sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> slice_x = sphere.slice(normal='x')
         >>> slice_y = sphere.slice(normal='y')
         >>> slice_z = sphere.slice(normal='z')
@@ -1031,20 +1031,18 @@ class DataSetFilters:
         Slice the random hills dataset along a circular arc.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> center = np.array(hills.center)
         >>> point_a = center + np.array([5, 0, 0])
         >>> point_b = center + np.array([-5, 0, 0])
-        >>> arc = pyvista.CircularArc(
-        ...     point_a, point_b, center, resolution=100
-        ... )
+        >>> arc = pv.CircularArc(point_a, point_b, center, resolution=100)
         >>> line_slice = hills.slice_along_line(arc)
 
         Plot the circular arc and the hills mesh.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(hills, smooth_shading=True, style='wireframe')
         >>> _ = pl.add_mesh(
         ...     line_slice,
@@ -1342,9 +1340,9 @@ class DataSetFilters:
         --------
         Apply a 50% threshold filter.
 
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
-        >>> grid = pyvista.sample_function(
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
+        >>> grid = pv.sample_function(
         ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30)
         ... )
         >>> threshed = grid.threshold_percent(0.5)
@@ -1430,10 +1428,10 @@ class DataSetFilters:
         Generate and plot the outline of a sphere.  This is
         effectively the ``(x, y, z)`` bounds of the mesh.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> outline = sphere.outline()
-        >>> pyvista.plot([sphere, outline], line_width=5)
+        >>> pv.plot([sphere, outline], line_width=5)
 
         See :ref:`common_filter_example` for more examples using this filter.
 
@@ -1466,10 +1464,10 @@ class DataSetFilters:
         Generate and plot the corners of a sphere.  This is
         effectively the ``(x, y, z)`` bounds of the mesh.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> corners = sphere.outline_corners(factor=0.1)
-        >>> pyvista.plot([sphere, corners], line_width=5)
+        >>> pv.plot([sphere, corners], line_width=5)
 
         """
         alg = _vtk.vtkOutlineCornerFilter()
@@ -1505,9 +1503,9 @@ class DataSetFilters:
         --------
         Extract the surface of a sample unstructured grid.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.extract_geometry()
         PolyData (...)
           N Cells:    88
@@ -1564,9 +1562,9 @@ class DataSetFilters:
         Extract the edges of a sample unstructured grid and plot the edges.
         Note how it plots interior edges.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> edges = hex_beam.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
 
@@ -1657,8 +1655,8 @@ class DataSetFilters:
         Generate the "elevation" scalars for a sphere mesh.  This is
         simply the height in Z from the XY plane.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> sphere_elv = sphere.elevation()
         >>> sphere_elv.plot(smooth_shading=True)
 
@@ -1969,11 +1967,11 @@ class DataSetFilters:
         output = _get_output(alg)
         if not inplace:
             return output
-        t_coords = output.GetPointData().GetTCoords()
-        t_coords.SetName(name)
+        texture_coordinates = output.GetPointData().GetTCoords()
+        texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(t_coords)
-        self.GetPointData().AddArray(t_coords)
+        self.GetPointData().SetTCoords(texture_coordinates)
+        self.GetPointData().AddArray(texture_coordinates)
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
@@ -2043,11 +2041,11 @@ class DataSetFilters:
         output = _get_output(alg)
         if not inplace:
             return output
-        t_coords = output.GetPointData().GetTCoords()
-        t_coords.SetName(name)
+        texture_coordinates = output.GetPointData().GetTCoords()
+        texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(t_coords)
-        self.GetPointData().AddArray(t_coords)
+        self.GetPointData().SetTCoords(texture_coordinates)
+        self.GetPointData().AddArray(texture_coordinates)
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
@@ -2123,11 +2121,11 @@ class DataSetFilters:
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Plane()
+        >>> import pyvista as pv
+        >>> mesh = pv.Plane()
         >>> mesh.point_data.clear()
         >>> centers = mesh.cell_centers()
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, show_edges=True)
         >>> actor = pl.add_points(
         ...     centers,
@@ -2227,13 +2225,13 @@ class DataSetFilters:
         Create arrow glyphs oriented by vectors and scaled by scalars.
         Factor parameter is used to reduce the size of the arrows.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_random_hills()
         >>> arrows = mesh.glyph(
         ...     scale="Normals", orient="Normals", tolerance=0.05
         ... )
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(arrows, color="black")
         >>> actor = pl.add_mesh(
         ...     mesh,
@@ -2511,14 +2509,14 @@ class DataSetFilters:
         Create a single mesh with three disconnected regions where each
         region has a different cell count.
 
-        >>> import pyvista
-        >>> large = pyvista.Sphere(
+        >>> import pyvista as pv
+        >>> large = pv.Sphere(
         ...     center=(-4, 0, 0), phi_resolution=40, theta_resolution=40
         ... )
-        >>> medium = pyvista.Sphere(
+        >>> medium = pv.Sphere(
         ...     center=(-2, 0, 0), phi_resolution=15, theta_resolution=15
         ... )
-        >>> small = pyvista.Sphere(
+        >>> small = pv.Sphere(
         ...     center=(0, 0, 0), phi_resolution=7, theta_resolution=7
         ... )
         >>> mesh = large + medium + small
@@ -2824,8 +2822,8 @@ class DataSetFilters:
         --------
         Join two meshes together, extract the largest, and plot it.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere() + pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere() + pv.Cube()
         >>> largest = mesh.extract_largest()
         >>> largest.plot()
 
@@ -3171,15 +3169,15 @@ class DataSetFilters:
         First, plot these values as point values to show the
         difference between point and cell data.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=10, phi_resolution=10)
         >>> sphere['Z Coordinates'] = sphere.points[:, 2]
         >>> sphere.plot()
 
         Now, convert these values to cell data and then plot it.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=10, phi_resolution=10)
         >>> sphere['Z Coordinates'] = sphere.points[:, 2]
         >>> sphere = sphere.point_data_to_cell_data()
         >>> sphere.plot()
@@ -3248,8 +3246,8 @@ class DataSetFilters:
         --------
         Generate a mesh with quadrilateral faces.
 
-        >>> import pyvista
-        >>> plane = pyvista.Plane()
+        >>> import pyvista as pv
+        >>> plane = pv.Plane()
         >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
@@ -3308,8 +3306,8 @@ class DataSetFilters:
         Generate a 3D Delaunay triangulation of a surface mesh of a
         sphere and plot the interior edges generated.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(theta_resolution=5, phi_resolution=5)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=5, phi_resolution=5)
         >>> grid = sphere.delaunay_3d()
         >>> edges = grid.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
@@ -3379,15 +3377,15 @@ class DataSetFilters:
         surface mesh.  Extract these points using the
         :func:`DataSetFilters.extract_points` filter and then plot them.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
-        >>> plane = pyvista.Plane()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plane = pv.Plane()
         >>> selected = plane.select_enclosed_points(sphere)
         >>> pts = plane.extract_points(
         ...     selected['SelectedPoints'].view(bool),
         ...     adjacent_cells=False,
         ... )
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, style='wireframe')
         >>> _ = pl.add_points(pts, color='r')
         >>> pl.show()
@@ -3732,18 +3730,18 @@ class DataSetFilters:
         --------
         Interpolate the values of 5 points onto a sample plane.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> np.random.seed(7)
         >>> point_cloud = np.random.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
-        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
-        >>> plane = pyvista.Plane()
+        >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     pdata, render_points_as_spheres=True, point_size=50
         ... )
@@ -4193,7 +4191,7 @@ class DataSetFilters:
         This dataset is a multiblock dataset, and the fluid velocity is in the
         first block.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_cylinder_crossflow()
         >>> streams = mesh[0].streamlines_evenly_spaced_2D(
@@ -4201,7 +4199,7 @@ class DataSetFilters:
         ...     separating_distance=3,
         ...     separating_distance_ratio=0.2,
         ... )
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     streams.tube(radius=0.02), scalars="vorticity_mag"
         ... )
@@ -4332,19 +4330,19 @@ class DataSetFilters:
         --------
         Sample over a plane that is interpolating a point cloud.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> np.random.seed(12)
         >>> point_cloud = np.random.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
-        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
-        >>> plane = pyvista.Plane()
+        >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     pdata, render_points_as_spheres=True, point_size=50
         ... )
@@ -4487,21 +4485,21 @@ class DataSetFilters:
         --------
         Sample over a plane that is interpolating a point cloud.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> np.random.seed(12)
         >>> point_cloud = np.random.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
-        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
-        >>> plane = pyvista.Plane()
+        >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_multiple_lines(
         ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
         ... )
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     pdata, render_points_as_spheres=True, point_size=50
         ... )
@@ -4555,7 +4553,7 @@ class DataSetFilters:
         --------
         Sample a dataset over a circular arc and plot it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
@@ -4577,7 +4575,7 @@ class DataSetFilters:
         >>> sampled_arc = uniform.sample_over_circular_arc(
         ...     pointa, pointb, center
         ... )
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(sampled_arc, line_width=10)
         >>> pl.show_axes()
@@ -4647,7 +4645,7 @@ class DataSetFilters:
         --------
         Sample a dataset over a circular arc.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
@@ -4661,7 +4659,7 @@ class DataSetFilters:
         >>> arc = uniform.sample_over_circular_arc_normal(
         ...     center, normal=normal, polar=polar
         ... )
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(arc, line_width=10)
         >>> pl.show_axes()
@@ -4941,13 +4939,13 @@ class DataSetFilters:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> grid = pyvista.read(examples.hexbeamfile)
+        >>> grid = pv.read(examples.hexbeamfile)
         >>> subset = grid.extract_cells(range(20))
         >>> subset.n_cells
         20
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(
         ...     grid, style='wireframe', line_width=5, color='black'
         ... )
@@ -5011,8 +5009,8 @@ class DataSetFilters:
         --------
         Extract all the points of a sphere with a Z coordinate greater than 0
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
         >>> extracted = sphere.extract_points(
         ...     sphere.points[:, 2] > 0, include_cells=False
         ... )
@@ -5091,7 +5089,7 @@ class DataSetFilters:
         --------
         Extract the surface of an UnstructuredGrid.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
         >>> surf = grid.extract_surface()
@@ -5219,9 +5217,9 @@ class DataSetFilters:
         --------
         Extract the edges from an unstructured grid.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> feat_edges = hex_beam.extract_feature_edges()
         >>> feat_edges.clear_data()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
@@ -5308,10 +5306,10 @@ class DataSetFilters:
         --------
         Merge three separate spheres into a single mesh.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere(center=(1, 0, 0))
-        >>> sphere_b = pyvista.Sphere(center=(0, 1, 0))
-        >>> sphere_c = pyvista.Sphere(center=(0, 0, 1))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere(center=(1, 0, 0))
+        >>> sphere_b = pv.Sphere(center=(0, 1, 0))
+        >>> sphere_c = pv.Sphere(center=(0, 0, 1))
         >>> merged = sphere_a.merge([sphere_b, sphere_c])
         >>> merged.plot()
 
@@ -5434,8 +5432,8 @@ class DataSetFilters:
         --------
         Compute and plot the minimum angle of a sample sphere mesh.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
         >>> cqual = sphere.compute_cell_quality('min_angle')
         >>> cqual.plot(show_edges=True)
 
@@ -5642,8 +5640,8 @@ class DataSetFilters:
         --------
         First, plot the original cube.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
         >>> mesh.plot(show_edges=True, line_width=5)
 
         Now, plot the mesh with shrunk faces.
@@ -5695,7 +5693,7 @@ class DataSetFilters:
         --------
         First, plot the high order FEM-like elements.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
         >>> points = np.array(
         ...     [
@@ -5709,7 +5707,7 @@ class DataSetFilters:
         ... )
         >>> cells = np.array([6, 0, 1, 2, 3, 4, 5])
         >>> cell_types = np.array([69])
-        >>> mesh = pyvista.UnstructuredGrid(cells, cell_types, points)
+        >>> mesh = pv.UnstructuredGrid(cells, cell_types, points)
         >>> mesh.plot(show_edges=True, line_width=5)
 
         Now, plot the tessellated mesh.
@@ -5973,11 +5971,9 @@ class DataSetFilters:
         --------
         Integrate data on a sphere mesh.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> sphere = pyvista.Sphere(
-        ...     theta_resolution=100, phi_resolution=100
-        ... )
+        >>> sphere = pv.Sphere(theta_resolution=100, phi_resolution=100)
         >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
         >>> integrated = sphere.integrate_data()
 

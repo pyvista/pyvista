@@ -17,13 +17,12 @@ vtkSuperquadricSource
 as well as some pure-python helpers.
 
 """
-import warnings
+from itertools import product
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource, translate
@@ -84,15 +83,15 @@ def Cylinder(
 
     Examples
     --------
-    >>> import pyvista
-    >>> cylinder = pyvista.Cylinder(
+    >>> import pyvista as pv
+    >>> cylinder = pv.Cylinder(
     ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
 
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pyvista.Cylinder(
+    ...     pv.Cylinder(
     ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ...     ),
     ...     show_edges=True,
@@ -169,15 +168,15 @@ def CylinderStructured(
     --------
     Default structured cylinder
 
-    >>> import pyvista
-    >>> mesh = pyvista.CylinderStructured()
+    >>> import pyvista as pv
+    >>> mesh = pv.CylinderStructured()
     >>> mesh.plot(show_edges=True)
 
     Structured cylinder with an inner radius of 1, outer of 2, with 5
     segments.
 
     >>> import numpy as np
-    >>> mesh = pyvista.CylinderStructured(radius=np.linspace(1, 2, 5))
+    >>> mesh = pv.CylinderStructured(radius=np.linspace(1, 2, 5))
     >>> mesh.plot(show_edges=True)
 
     """
@@ -269,8 +268,8 @@ def Arrow(
     --------
     Plot a default arrow.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Arrow()
+    >>> import pyvista as pv
+    >>> mesh = pv.Arrow()
     >>> mesh.plot(show_edges=True)
 
     """
@@ -308,37 +307,48 @@ def Sphere(
 ):
     """Create a sphere.
 
+    A sphere describes a 2D surface in comparison to
+    :func:`pyvista.SolidSphere`, which fills a 3D volume.
+
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
+
     Parameters
     ----------
     radius : float, default: 0.5
         Sphere radius.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
-        Center in ``[x, y, z]``.
+        Center coordinate vector in ``[x, y, z]``.
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees latitude.
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
-        Set the number of points in the longitude direction (ranging
+        Set the number of points in the azimuthal direction (ranging
         from ``start_theta`` to ``end_theta``).
 
     phi_resolution : int, default: 30
-        Set the number of points in the latitude direction (ranging from
+        Set the number of points in the polar direction (ranging from
         ``start_phi`` to ``end_phi``).
 
     start_theta : float, default: 0.0
-        Starting longitude angle in degrees ``[0, 360]``.
+        Starting azimuthal angle in degrees ``[0, 360]``.
 
     end_theta : float, default: 360.0
-        Ending longitude angle in degrees ``[0, 360]``.
+        Ending azimuthal angle in degrees ``[0, 360]``.
 
     start_phi : float, default: 0.0
-        Starting latitude angle in degrees ``[0, 180]``.
+        Starting polar angle in degrees ``[0, 180]``.
 
     end_phi : float, default: 180.0
-        Ending latitude angle in degrees ``[0, 180]``.
+        Ending polar angle in degrees ``[0, 180]``.
 
     Returns
     -------
@@ -347,24 +357,25 @@ def Sphere(
 
     See Also
     --------
-    pyvista.Icosphere
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
 
     Examples
     --------
     Create a sphere using default parameters.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere()
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
     >>> sphere.plot(show_edges=True)
 
     Create a quarter sphere by setting ``end_theta``.
 
-    >>> sphere = pyvista.Sphere(end_theta=90)
+    >>> sphere = pv.Sphere(end_theta=90)
     >>> out = sphere.plot(show_edges=True)
 
     Create a hemisphere by setting ``end_phi``.
 
-    >>> sphere = pyvista.Sphere(end_phi=90)
+    >>> sphere = pv.Sphere(end_phi=90)
     >>> out = sphere.plot(show_edges=True)
 
     """
@@ -381,6 +392,524 @@ def Sphere(
     surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
+
+
+def SolidSphere(
+    outer_radius=0.5,
+    inner_radius=0.0,
+    radius_resolution=5,
+    start_theta=0.0,
+    end_theta=None,
+    theta_resolution=30,
+    start_phi=0.0,
+    end_phi=None,
+    phi_resolution=30,
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
+    radians=False,
+    tol_radius=1.0e-8,
+    tol_angle=None,
+):
+    """Create a solid sphere.
+
+    A solid sphere fills space in 3D in comparison to
+    :func:`pyvista.Sphere`, which is a 2D surface.
+
+    This function uses a linear sampling of each spherical
+    coordinate, whereas :func:`pyvista.SolidSphereGeneric`
+    allows for nonuniform sampling. Angles are by default
+    specified in degrees.
+
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
+
+    While values for theta can be any value with a maximum span of
+    360 degrees, large magnitudes may result in problems with endpoint
+    overlap detection.
+
+    Parameters
+    ----------
+    outer_radius : float, default: 0.5
+        Outer radius of sphere.  Must be non-negative.
+
+    inner_radius : float, default: 0.0
+        Inner radius of sphere.  Must be non-negative
+        and smaller than ``outer_radius``.
+
+    radius_resolution : int, default: 5
+        Number of points in radial direction.
+
+    start_theta : float, default: 0.0
+        Starting azimuthal angle.
+
+    end_theta : float, default: 360.0
+        Ending azimuthal angle.
+        ``end_theta`` must be greater than ``start_theta``.
+
+    theta_resolution : int, default: 30
+        Number of points in ``theta`` direction.
+
+    start_phi : float, default: 0.0
+        Starting polar angle.
+        ``phi`` must lie between 0 and 180 in degrees.
+
+    end_phi : float, default: 180.0
+        Ending polar angle.
+        ``phi`` must lie between 0 and 180 in degrees.
+        ``end_phi`` must be greater than ``start_phi``.
+
+    phi_resolution : int, default: 30
+        Number of points in ``phi`` direction,
+        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
+        in degrees, if applicable.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center coordinate vector in ``[x, y, z]``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
+    radians : bool, default: False
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
+
+    tol_radius : float, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``radius``.
+
+    tol_angle : float, optional
+        Absolute tolerance for endpoint detection
+        for ``phi`` and ``theta``. Unit is determined by choice
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
+        1.0e-8 degrees converted to radians.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Solid sphere mesh.
+
+    See Also
+    --------
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+    pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
+
+    Examples
+    --------
+    Create a solid sphere.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> solid_sphere = pv.SolidSphere()
+    >>> solid_sphere.plot(show_edges=True)
+
+    A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
+    Generate a solid hemisphere to see the internal structure.
+
+    >>> isinstance(solid_sphere, pv.UnstructuredGrid)
+    True
+    >>> partial_solid_sphere = pv.SolidSphere(
+    ...     start_theta=180, end_theta=360
+    ... )
+    >>> partial_solid_sphere.plot(show_edges=True)
+
+    To see the cell structure inside the solid sphere,
+    only 1/4 of the sphere is generated. The cells are exploded
+    and colored by radial position.
+
+    >>> partial_solid_sphere = pv.SolidSphere(
+    ...     start_theta=180,
+    ...     end_theta=360,
+    ...     start_phi=0,
+    ...     end_phi=90,
+    ...     radius_resolution=5,
+    ...     theta_resolution=8,
+    ...     phi_resolution=8,
+    ... )
+    >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
+    ...     partial_solid_sphere.cell_centers().points, axis=-1
+    ... )
+    >>> partial_solid_sphere.explode(1).plot()
+
+    """
+    if end_theta is None:
+        end_theta = 2 * np.pi if radians else 360.0
+    if end_phi is None:
+        end_phi = np.pi if radians else 180.0
+
+    radius = np.linspace(inner_radius, outer_radius, radius_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    phi = np.linspace(start_phi, end_phi, phi_resolution)
+    return SolidSphereGeneric(
+        radius,
+        theta,
+        phi,
+        center,
+        direction,
+        radians=radians,
+        tol_radius=tol_radius,
+        tol_angle=tol_angle,
+    )
+
+
+def SolidSphereGeneric(
+    radius=None,
+    theta=None,
+    phi=None,
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
+    radians=False,
+    tol_radius=1.0e-8,
+    tol_angle=None,
+):
+    """Create a solid sphere with flexible sampling.
+
+    A solid sphere fills space in 3D in comparison to
+    :func:`pyvista.Sphere`, which is a 2D surface.
+
+    This function allows user defined sampling of each spherical
+    coordinate, whereas :func:`pyvista.SolidSphere`
+    only allows linear sampling.   Angles are by default
+    specified in degrees.
+
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
+
+    Parameters
+    ----------
+    radius : sequence[float], optional
+        A monotonically increasing sequence of values specifying radial
+        points. Must have at least two points and be non-negative.
+
+    theta : sequence[float], optional
+        A monotonically increasing sequence of values specifying ``theta``
+        points. Must have at least two points.  Can have any value as long
+        as range is within 360 degrees. Large magnitudes may result in
+        problems with endpoint overlap detection.
+
+    phi : sequence[float], optional
+        A monotonically increasing sequence of values specifying ``phi``
+        points. Must have at least two points.  Must be between
+        0 and 180 degrees.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center coordinate vector in ``[x, y, z]``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
+    radians : bool, default: False
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
+
+    tol_radius : float, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``radius``.
+
+    tol_angle : float, optional
+        Absolute tolerance for endpoint detection
+        for ``phi`` and ``theta``. Unit is determined by choice
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
+        1.0e-8 degrees converted to radians.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Solid sphere mesh.
+
+    See Also
+    --------
+    pyvista.SolidSphere: Sphere creation using linear sampling.
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+
+    Examples
+    --------
+    Linearly sampling spherical coordinates does not lead to
+    cells of all the same size at each radial position.
+    Cells near the poles have smaller sizes.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> solid_sphere = pv.SolidSphereGeneric(
+    ...     radius=np.linspace(0, 0.5, 2),
+    ...     theta=np.linspace(180, 360, 30),
+    ...     phi=np.linspace(0, 180, 30),
+    ... )
+    >>> solid_sphere = solid_sphere.compute_cell_sizes()
+    >>> solid_sphere.plot(
+    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
+    ... )
+
+    Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
+    `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
+
+    >>> phi = np.rad2deg(np.arccos(np.linspace(1, -1, 30)))
+    >>> solid_sphere = pv.SolidSphereGeneric(
+    ...     radius=np.linspace(0, 0.5, 2),
+    ...     theta=np.linspace(180, 360, 30),
+    ...     phi=phi,
+    ... )
+    >>> solid_sphere = solid_sphere.compute_cell_sizes()
+    >>> solid_sphere.plot(
+    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
+    ... )
+
+    """
+    if radius is None:
+        radius = np.linspace(0, 0.5, 5)
+    radius = np.asanyarray(radius)
+
+    # Default tolerance from user is set in degrees
+    # But code is in radians.
+    if tol_angle is None:
+        tol_angle = np.deg2rad(1e-8)
+    elif not radians:
+        tol_angle = np.deg2rad(tol_angle)
+
+    if theta is None:
+        theta = np.linspace(0, 2 * np.pi, 30)
+    else:
+        theta = np.asanyarray(theta) if radians else np.deg2rad(theta)
+
+    if phi is None:
+        phi = np.linspace(0, np.pi, 30)
+    else:
+        phi = np.asanyarray(phi) if radians else np.deg2rad(phi)
+
+    # Hereafter all degrees are in radians
+    # radius, phi, theta are now np.ndarrays
+
+    nr = len(radius)
+    ntheta = len(theta)
+    nphi = len(phi)
+
+    if nr < 2:
+        raise ValueError("radius resolution must be 2 or more")
+    if ntheta < 2:
+        raise ValueError("theta resolution must be 2 or more")
+    if nphi < 2:
+        raise ValueError("phi resolution must be 2 or more")
+
+    def _is_sorted(a):
+        return np.all(a[:-1] < a[1:])
+
+    if not _is_sorted(radius):
+        raise ValueError("radius is not monotonically increasing")
+    if not _is_sorted(theta):
+        raise ValueError("theta is not monotonically increasing")
+    if not _is_sorted(phi):
+        raise ValueError("phi is not monotonically increasing")
+
+    def _greater_than_equal_or_close(value1, value2, atol):
+        return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
+
+    def _less_than_equal_or_close(value1, value2, atol):
+        return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
+
+    if not _greater_than_equal_or_close(radius[0], 0.0, tol_radius):
+        raise ValueError("minimum radius cannot be negative")
+
+    # range of theta cannot be greater than 360 degrees
+    if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle):
+        max_angle = "2 * np.pi" if radians else "360 degrees"
+        raise ValueError(f"max theta and min theta must be within {max_angle}")
+
+    if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
+        raise ValueError("minimum phi cannot be negative")
+    if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle):
+        max_angle = "np.pi" if radians else "180 degrees"
+        raise ValueError(f"maximum phi cannot be > {max_angle}")
+
+    def _spherical_to_cartesian(r, phi, theta):
+        """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
+
+        Parameters
+        ----------
+        r : sequence[float]
+            Ordered sequence of floats of radii.
+        phi : sequence[float]
+            Ordered sequence of floats for phi direction.
+        theta : sequence[float]
+            Ordered sequence of floats for theta direction.
+
+        Returns
+        -------
+        np.ndarray
+            ``(n, 3)`` Cartesian coordinate array.
+
+        """
+        r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
+        x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
+        return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
+
+    points = []
+
+    npoints_on_axis = 0
+
+    if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
+        points.append([0.0, 0.0, 0.0])
+        include_origin = True
+        nr = nr - 1
+        radius = radius[1:]
+        npoints_on_axis += 1
+    else:
+        include_origin = False
+
+    if np.isclose(theta[-1] - theta[0], 2 * np.pi, rtol=0.0, atol=tol_angle):
+        duplicate_theta = True
+        theta = theta[:-1]
+    else:
+        duplicate_theta = False
+
+    if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle):
+        points.extend(_spherical_to_cartesian(radius, 0.0, theta[0]))
+        positive_axis = True
+        phi = phi[1:]
+        nphi = nphi - 1
+        npoints_on_axis += nr
+    else:
+        positive_axis = False
+    npoints_on_pos_axis = npoints_on_axis
+
+    if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle):
+        points.extend(_spherical_to_cartesian(radius, np.pi, theta[0]))
+        negative_axis = True
+        phi = phi[:-1]
+        nphi = nphi - 1
+        npoints_on_axis += nr
+    else:
+        negative_axis = False
+
+    # rest of points with theta changing quickest
+    for ir, iphi in product(radius, phi):
+        points.extend(_spherical_to_cartesian(ir, iphi, theta))
+
+    cells = []
+    celltypes = []
+
+    def _index(ir, iphi, itheta):
+        """Index for points not on axis.
+
+        Values of ir and phi here are relative to the first nonaxis values.
+        """
+        if duplicate_theta:
+            ntheta_ = ntheta - 1
+            itheta = itheta % ntheta_
+        else:
+            ntheta_ = ntheta
+
+        return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
+
+    if include_origin:
+        # First make the tetras that form with origin and axis point
+        #   origin is 0
+        #   first axis point is 1
+        #   other points at first phi position off axis
+        if positive_axis:
+            for itheta in range(ntheta - 1):
+                cells.append(4)
+                cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
+                celltypes.append(pyvista.CellType.TETRA)
+
+        # Next tetras that form with origin and bottom axis point
+        #   origin is 0
+        #   axis point is first in negative dir
+        #   other points at last phi position off axis
+        if negative_axis:
+            for itheta in range(ntheta - 1):
+                cells.append(4)
+                cells.extend(
+                    [
+                        0,
+                        npoints_on_pos_axis,
+                        _index(0, nphi - 1, itheta + 1),
+                        _index(0, nphi - 1, itheta),
+                    ]
+                )
+                celltypes.append(pyvista.CellType.TETRA)
+
+        # Pyramids that form to origin but without an axis point
+        for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
+            cells.append(5)
+            cells.extend(
+                [
+                    _index(0, iphi, itheta),
+                    _index(0, iphi, itheta + 1),
+                    _index(0, iphi + 1, itheta + 1),
+                    _index(0, iphi + 1, itheta),
+                    0,
+                ]
+            )
+            celltypes.append(pyvista.CellType.PYRAMID)
+
+    # Wedges form between two r levels at first and last phi position
+    #   At each r level, the triangle is formed with axis point,  two theta positions
+    # First go upwards
+    if positive_axis:
+        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+            axis0 = ir + 1 if include_origin else ir
+            axis1 = ir + 2 if include_origin else ir + 1
+            cells.append(6)
+            cells.extend(
+                [
+                    axis0,
+                    _index(ir, 0, itheta + 1),
+                    _index(ir, 0, itheta),
+                    axis1,
+                    _index(ir + 1, 0, itheta + 1),
+                    _index(ir + 1, 0, itheta),
+                ]
+            )
+            celltypes.append(pyvista.CellType.WEDGE)
+
+    # now go downwards
+    if negative_axis:
+        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+            axis0 = npoints_on_pos_axis + ir
+            axis1 = npoints_on_pos_axis + ir + 1
+            cells.append(6)
+            cells.extend(
+                [
+                    axis0,
+                    _index(ir, nphi - 1, itheta),
+                    _index(ir, nphi - 1, itheta + 1),
+                    axis1,
+                    _index(ir + 1, nphi - 1, itheta),
+                    _index(ir + 1, nphi - 1, itheta + 1),
+                ]
+            )
+            celltypes.append(pyvista.CellType.WEDGE)
+
+    # Form Hexahedra
+    # Hexahedra form between two r levels and two phi levels and two theta levels
+    #   Order by r levels
+    for ir, iphi, itheta in product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
+        cells.append(8)
+        cells.extend(
+            [
+                _index(ir, iphi, itheta),
+                _index(ir, iphi + 1, itheta),
+                _index(ir, iphi + 1, itheta + 1),
+                _index(ir, iphi, itheta + 1),
+                _index(ir + 1, iphi, itheta),
+                _index(ir + 1, iphi + 1, itheta),
+                _index(ir + 1, iphi + 1, itheta + 1),
+                _index(ir + 1, iphi, itheta + 1),
+            ]
+        )
+        celltypes.append(pyvista.CellType.HEXAHEDRON)
+
+    mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
+    mesh.rotate_y(90, inplace=True)
+    translate(mesh, center, direction)
+    return mesh
 
 
 def Plane(
@@ -422,8 +951,8 @@ def Plane(
     --------
     Create a default plane.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Plane()
+    >>> import pyvista as pv
+    >>> mesh = pv.Plane()
     >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
@@ -464,8 +993,8 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     --------
     Create a line between ``(0, 0, 0)`` and ``(0, 0, 1)``.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Line((0, 0, 0), (0, 0, 1))
+    >>> import pyvista as pv
+    >>> mesh = pv.Line((0, 0, 0), (0, 0, 1))
     >>> mesh.plot(color='k', line_width=10)
 
     """
@@ -505,11 +1034,9 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     --------
     Create a multiple lines between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
 
-    >>> import pyvista
-    >>> mesh = pyvista.MultipleLines(
-    ...     points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]]
-    ... )
-    >>> plotter = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> mesh = pv.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
+    >>> plotter = pv.Plotter()
     >>> actor = plotter.add_mesh(mesh, color='k', line_width=10)
     >>> plotter.camera.azimuth = 45
     >>> plotter.camera.zoom(0.8)
@@ -547,8 +1074,8 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     --------
     Create a tube between ``(0, 0, 0)`` and ``(0, 0, 1)``.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Tube((0, 0, 0), (0, 0, 1))
+    >>> import pyvista as pv
+    >>> mesh = pv.Tube((0, 0, 0), (0, 0, 1))
     >>> mesh.plot()
 
     """
@@ -626,8 +1153,8 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     --------
     Create a default cube.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Cube()
+    >>> import pyvista as pv
+    >>> mesh = pv.Cube()
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
@@ -682,8 +1209,8 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     --------
     Create a box with subdivision ``level=2``.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Box(level=2)
+    >>> import pyvista as pv
+    >>> mesh = pv.Box(level=2)
     >>> mesh.plot(show_edges=True)
 
     """
@@ -746,8 +1273,8 @@ def Cone(
     --------
     Create a default Cone.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Cone()
+    >>> import pyvista as pv
+    >>> mesh = pv.Cone()
     >>> mesh.plot(show_edges=True, line_width=5)
     """
     algo = ConeSource(
@@ -792,8 +1319,8 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=
     --------
     Create an 8 sided polygon.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Polygon(n_sides=8)
+    >>> import pyvista as pv
+    >>> mesh = pv.Polygon(n_sides=8)
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
@@ -843,8 +1370,8 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     --------
     Create a disc with 50 points in the circumferential direction.
 
-    >>> import pyvista
-    >>> mesh = pyvista.Disc(c_res=50)
+    >>> import pyvista as pv
+    >>> mesh = pv.Disc(c_res=50)
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
@@ -880,8 +1407,8 @@ def Text3D(string, depth=0.5):
 
     Examples
     --------
-    >>> import pyvista
-    >>> text_mesh = pyvista.Text3D('PyVista')
+    >>> import pyvista as pv
+    >>> text_mesh = pv.Text3D('PyVista')
     >>> text_mesh.plot(cpos='xy')
     """
     from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -963,8 +1490,8 @@ def Wavelet(
 
     Examples
     --------
-    >>> import pyvista
-    >>> wavelet = pyvista.Wavelet(
+    >>> import pyvista as pv
+    >>> wavelet = pv.Wavelet(
     ...     extent=(0, 50, 0, 50, 0, 10),
     ...     x_freq=20,
     ...     y_freq=10,
@@ -1040,9 +1567,9 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     --------
     Create a quarter arc centered at the origin in the xy plane.
 
-    >>> import pyvista
-    >>> arc = pyvista.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> arc = pv.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
@@ -1117,13 +1644,13 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     --------
     Quarter arc centered at the origin in the xy plane.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pyvista.CircularArcFromNormal(
+    >>> arc = pv.CircularArcFromNormal(
     ...     [0, 0, 0], normal=normal, polar=polar
     ... )
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
@@ -1176,13 +1703,13 @@ def Pyramid(points=None):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> pointa = [1.0, 1.0, 0.0]
     >>> pointb = [-1.0, 1.0, 0.0]
     >>> pointc = [-1.0, -1.0, 0.0]
     >>> pointd = [1.0, -1.0, 0.0]
     >>> pointe = [0.0, 0.0, 1.608]
-    >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
+    >>> pyramid = pv.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot(show_edges=True, line_width=5)
     """
     if points is None:
@@ -1233,11 +1760,11 @@ def Triangle(points=None):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> pointa = [0, 0, 0]
     >>> pointb = [1, 0, 0]
     >>> pointc = [0.5, 0.707, 0]
-    >>> triangle = pyvista.Triangle([pointa, pointb, pointc])
+    >>> triangle = pv.Triangle([pointa, pointb, pointc])
     >>> triangle.plot(show_edges=True, line_width=5)
     """
     if points is None:
@@ -1257,10 +1784,6 @@ def Triangle(points=None):
 def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
-    .. deprecated:: 0.39.0
-       To deal with more than 3 points use :func:`pyvista.Quadrilateral()
-       <pyvista.examples.cells.Quadrilateral>` instead.
-
     The 3 points must define an orthogonal set of vectors.
 
     Parameters
@@ -1275,21 +1798,15 @@ def Rectangle(points=None):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> pointa = [1.0, 0.0, 0.0]
     >>> pointb = [1.0, 1.0, 0.0]
     >>> pointc = [0.0, 1.0, 0.0]
-    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc])
+    >>> rectangle = pv.Rectangle([pointa, pointb, pointc])
     >>> rectangle.plot(show_edges=True, line_width=5)
     """
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-    if len(points) == 4:
-        warnings.warn(
-            'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.',
-            PyVistaDeprecationWarning,
-        )
-        return Quadrilateral(points)
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
 
@@ -1390,9 +1907,9 @@ def Circle(radius=0.5, resolution=100):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> radius = 0.5
-    >>> circle = pyvista.Circle(radius)
+    >>> circle = pv.Circle(radius)
     >>> circle.plot(show_edges=True, line_width=5)
 
     """
@@ -1431,8 +1948,8 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
 
     Examples
     --------
-    >>> import pyvista
-    >>> ellipse = pyvista.Ellipse(semi_major_axis=8, semi_minor_axis=4)
+    >>> import pyvista as pv
+    >>> ellipse = pv.Ellipse(semi_major_axis=8, semi_minor_axis=4)
     >>> ellipse.plot(show_edges=True, line_width=5)
     """
     points = np.zeros((resolution, 3))
@@ -1505,8 +2022,8 @@ def Superquadric(
 
     Examples
     --------
-    >>> import pyvista
-    >>> superquadric = pyvista.Superquadric(
+    >>> import pyvista as pv
+    >>> superquadric = pv.Superquadric(
     ...     scale=(3.0, 1.0, 0.5),
     ...     phi_roundness=0.1,
     ...     theta_roundness=0.5,
@@ -1560,8 +2077,8 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     --------
     Create and plot a dodecahedron.
 
-    >>> import pyvista
-    >>> dodeca = pyvista.PlatonicSolid('dodecahedron')
+    >>> import pyvista as pv
+    >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.
@@ -1621,8 +2138,8 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     --------
     Create and plot a tetrahedron.
 
-    >>> import pyvista
-    >>> tetra = pyvista.Tetrahedron()
+    >>> import pyvista as pv
+    >>> tetra = pv.Tetrahedron()
     >>> tetra.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.
@@ -1655,8 +2172,8 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     --------
     Create and plot an octahedron.
 
-    >>> import pyvista
-    >>> tetra = pyvista.Octahedron()
+    >>> import pyvista as pv
+    >>> tetra = pv.Octahedron()
     >>> tetra.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.
@@ -1688,8 +2205,8 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     --------
     Create and plot a dodecahedron.
 
-    >>> import pyvista
-    >>> tetra = pyvista.Dodecahedron()
+    >>> import pyvista as pv
+    >>> tetra = pv.Dodecahedron()
     >>> tetra.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.
@@ -1722,8 +2239,8 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     --------
     Create and plot an icosahedron.
 
-    >>> import pyvista
-    >>> tetra = pyvista.Icosahedron()
+    >>> import pyvista as pv
+    >>> tetra = pv.Icosahedron()
     >>> tetra.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.

@@ -568,8 +568,8 @@ class Renderers:
         --------
         Set the background color to black.
 
-        >>> import pyvista
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
         Color(name='black', hex='#000000ff', opacity=255)
@@ -578,9 +578,9 @@ class Renderers:
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Cone())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Cone())
         >>> pl.set_background('black', top='white')
         >>> pl.show()
 
@@ -645,14 +645,14 @@ class Renderers:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.add_background_image(examples.mapfile, as_global=False)
         >>> pl.subplot(0, 1)
-        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> actor = pl.add_mesh(pv.Cube())
         >>> pl.add_background_image(examples.mapfile, as_global=False)
         >>> pl.remove_background_image()
         >>> pl.show()

@@ -1,6 +1,7 @@
 """Internal array utilities."""
 import collections.abc
 import enum
+from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -123,11 +124,11 @@ def copy_vtk_array(array, deep=True):
     Perform a deep copy of a vtk array.
 
     >>> import vtk
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> arr = vtk.vtkFloatArray()
     >>> _ = arr.SetNumberOfValues(10)
     >>> arr.SetValue(0, 1)
-    >>> arr_copy = pyvista.core.utilities.arrays.copy_vtk_array(arr)
+    >>> arr_copy = pv.core.utilities.arrays.copy_vtk_array(arr)
     >>> arr_copy.GetValue(0)
     1.0
 
@@ -252,7 +253,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Returns
     -------
-    pyvista.pyvista_ndarray or ``None``
+    pyvista.pyvista_ndarray or None
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -610,9 +611,8 @@ def array_from_vtkmatrix(matrix):
             f' got {type(matrix).__name__} instead.'
         )
     array = np.zeros(shape)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            array[i, j] = matrix.GetElement(i, j)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
     return array
 
 
@@ -640,9 +640,8 @@ def vtkmatrix_from_array(array):
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
-    for i in range(m):
-        for j in range(n):
-            matrix.SetElement(i, j, array[i, j])
+    for i, j in product(range(m), range(n)):
+        matrix.SetElement(i, j, array[i, j])
     return matrix
 
 

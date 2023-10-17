@@ -704,14 +704,14 @@ class Color:
     Create a transparent green color using a color name, float RGBA sequence,
     integer RGBA sequence and RGBA hexadecimal string.
 
-    >>> import pyvista
-    >>> pyvista.Color("green", opacity=0.5)
+    >>> import pyvista as pv
+    >>> pv.Color("green", opacity=0.5)
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
+    >>> pv.Color([0.0, 0.5, 0.0, 0.5])
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pyvista.Color([0, 128, 0, 128])
+    >>> pv.Color([0, 128, 0, 128])
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pyvista.Color("#00800080")
+    >>> pv.Color("#00800080")
     Color(name='green', hex='#00800080', opacity=128)
 
     """
@@ -902,8 +902,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=128)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
@@ -911,7 +911,7 @@ class Color:
 
         Create a transparent red color using an integer RGBA sequence.
 
-        >>> c = pyvista.Color([255, 0, 0, 64])
+        >>> c = pv.Color([255, 0, 0, 64])
         >>> c
         Color(name='red', hex='#ff000040', opacity=64)
         >>> c.int_rgba
@@ -928,8 +928,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=128)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
@@ -937,7 +937,7 @@ class Color:
 
         Create a red color using an integer RGB sequence.
 
-        >>> c = pyvista.Color([255, 0, 0])
+        >>> c = pv.Color([255, 0, 0])
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.int_rgb
@@ -954,8 +954,8 @@ class Color:
         --------
         Create a blue color with custom opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=0.6)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
@@ -963,7 +963,7 @@ class Color:
 
         Create a transparent red color using a float RGBA sequence.
 
-        >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
+        >>> c = pv.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
         Color(name='red', hex='#ff000033', opacity=51)
         >>> c.float_rgba
@@ -980,8 +980,8 @@ class Color:
         --------
         Create a blue color with custom opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.6)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
@@ -989,7 +989,7 @@ class Color:
 
         Create a red color using a float RGB sequence.
 
-        >>> c = pyvista.Color([1.0, 0.0, 0.0])
+        >>> c = pv.Color([1.0, 0.0, 0.0])
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.float_rgb
@@ -1006,8 +1006,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity="#80")
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
@@ -1015,7 +1015,7 @@ class Color:
 
         Create a transparent red color using an RGBA hexadecimal value.
 
-        >>> c = pyvista.Color("0xff000040")
+        >>> c = pv.Color("0xff000040")
         >>> c
         Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
@@ -1034,8 +1034,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity="#80")
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
@@ -1043,7 +1043,7 @@ class Color:
 
         Create a red color using an RGB hexadecimal value.
 
-        >>> c = pyvista.Color("0xff0000")
+        >>> c = pv.Color("0xff0000")
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
@@ -1071,8 +1071,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.5)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
 
@@ -1087,8 +1087,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.5)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub

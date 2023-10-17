@@ -7,7 +7,7 @@ import weakref
 import matplotlib
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import convert_array, convert_string_array
 from pyvista.core.utilities.misc import _check_range
 from pyvista.report import vtk_version_info
@@ -556,7 +556,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':  # numpydoc ignore=RT01
+    def dataset(self) -> 'pyvista.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -578,7 +578,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: 'pv.MultiBlock'):  # numpydoc ignore=GL08
+    def dataset(self, obj: 'pyvista.MultiBlock'):  # numpydoc ignore=GL08
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
@@ -809,7 +809,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
-        if isinstance(cmap, pv.LookupTable):
+        if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
         else:
             if dtype == np.bool_:
@@ -837,7 +837,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
             if cmap is None:
                 if self._theme is None:
-                    cmap = pv.global_theme.cmap
+                    cmap = pyvista.global_theme.cmap
                 else:
                     cmap = self._theme.cmap
 

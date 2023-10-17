@@ -36,7 +36,7 @@ def test_wrap_pyvista_ndarray(sphere):
 )
 def test_wrap_pyvista_ndarray_vtk(dtypes):
     np_dtype, vtk_class = dtypes
-    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]], dtype=np_dtype)
+    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]]).astype(np_dtype)
 
     vtk_array = vtk_class()
     vtk_array.SetNumberOfComponents(3)
@@ -59,14 +59,14 @@ def test_wrap_trimesh():
     assert np.allclose(tmesh.vertices, mesh.points)
     assert np.allclose(tmesh.faces, mesh.faces[1:])
 
-    assert mesh.active_t_coords is None
+    assert mesh.active_texture_coordinates is None
 
     uvs = [[0, 0], [0, 1], [1, 0]]
     tmesh.visual = trimesh.visual.TextureVisuals(uv=uvs)
     mesh_with_uv = pv.wrap(tmesh)
 
-    assert mesh_with_uv.active_t_coords is not None
-    assert np.allclose(mesh_with_uv.active_t_coords, uvs)
+    assert mesh_with_uv.active_texture_coordinates is not None
+    assert np.allclose(mesh_with_uv.active_texture_coordinates, uvs)
 
 
 def test_make_tri_mesh(sphere):

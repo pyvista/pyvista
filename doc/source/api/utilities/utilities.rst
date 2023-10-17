@@ -34,7 +34,6 @@ File IO
 
    read
    read_exodus
-   read_legacy
    read_texture
    save_meshio
 

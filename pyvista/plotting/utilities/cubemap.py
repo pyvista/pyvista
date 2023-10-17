@@ -53,8 +53,8 @@ def cubemap(path='', prefix='', ext='.jpg'):
     --------
     Load a skybox given a directory, prefix, and file extension.
 
-    >>> import pyvista
-    >>> skybox = pyvista.cubemap(
+    >>> import pyvista as pv
+    >>> skybox = pv.cubemap(
     ...     'my_directory', 'skybox', '.jpeg'
     ... )  # doctest:+SKIP
 
@@ -98,7 +98,7 @@ def cubemap_from_filenames(image_paths):
     ...     '/home/user/_pz.jpg',
     ...     '/home/user/_nz.jpg',
     ... ]
-    >>> skybox = pyvista.cubemap(image_paths=image_paths)  # doctest:+SKIP
+    >>> skybox = pv.cubemap(image_paths=image_paths)  # doctest:+SKIP
 
     """
     if len(image_paths) != 6:

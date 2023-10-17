@@ -27,13 +27,13 @@ class Camera(_vtk.vtkCamera):
     --------
     Create a camera at the pyvista module level.
 
-    >>> import pyvista
-    >>> camera = pyvista.Camera()
+    >>> import pyvista as pv
+    >>> camera = pv.Camera()
 
     Access the active camera of a plotter and get the position of the
     camera.
 
-    >>> pl = pyvista.Plotter()
+    >>> pl = pv.Plotter()
     >>> pl.camera.position
     (1.0, 1.0, 1.0)
 
@@ -239,8 +239,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
         >>> pl.camera.position = (2.0, 1.0, 1.0)
@@ -264,9 +264,9 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.camera.clipping_range = (1, 2)
         >>> pl.camera.reset_clipping_range()  # doctest:+SKIP
         (0.0039213485598532955, 3.9213485598532953)
@@ -284,8 +284,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.focal_point
         (0.0, 0.0, 0.0)
         >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
@@ -305,9 +305,9 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> pl.camera.model_transform_matrix
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
@@ -349,8 +349,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.distance
         1.73205
         >>> pl.camera.distance = 2.0
@@ -371,8 +371,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.thickness
         1000.0
         >>> pl.camera.thickness = 100
@@ -392,8 +392,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.parallel_scale
         1.0
         >>> pl.camera.parallel_scale = 2.0
@@ -464,8 +464,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.up
         (0.0, 0.0, 1.0)
         >>> pl.camera.up = (0.410018, 0.217989, 0.885644)
@@ -489,9 +489,9 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import demos
-        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl = pv.demos.orientation_plotter()
         >>> pl.enable_parallel_projection()
         >>> pl.show()
 
@@ -506,9 +506,9 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import demos
-        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl = pv.demos.orientation_plotter()
         >>> pl.disable_parallel_projection()
         >>> pl.show()
         """
@@ -521,9 +521,9 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import demos
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> pl.disable_parallel_projection()
         >>> pl.parallel_projection
         False
@@ -546,8 +546,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.clipping_range
         (0.01, 1000.01)
         >>> pl.camera.clipping_range = (1, 10)
@@ -569,8 +569,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
         >>> plotter.camera.view_angle
         30.0
         >>> plotter.camera.view_angle = 60.0
@@ -590,8 +590,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.direction  # doctest:+SKIP
         (-0.5773502691896257, -0.5773502691896257, -0.5773502691896257)
 
@@ -613,8 +613,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
         >>> frustum = plotter.camera.view_frustum(1.0)
         >>> frustum.n_points
         8
@@ -643,8 +643,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.roll
         -120.00000000000001
         >>> pl.camera.roll = 45.0
@@ -668,8 +668,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.elevation
         0.0
         >>> pl.camera.elevation = 45.0
@@ -698,8 +698,8 @@ class Camera(_vtk.vtkCamera):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera.azimuth
         0.0
         >>> pl.camera.azimuth = 45.0
