@@ -45,7 +45,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkActor2D,
     vtkColorTransferFunction,
     vtkPolyDataMapper,
-    vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkTextMapper,
@@ -186,8 +185,8 @@ def main(argv):
         text_actor.SetMapper(text_mapper)
         text_actor.SetPosition(250, 16)
 
-        renderer = vtkRenderer()
-        renderer = pv.Renderer(renderer)
+        plotter = pv.Plotter()
+        renderer = plotter.rendereres[0]
         renderer.SetBackground(colors.GetColor3d('ParaViewBkg'))
 
         renderer.AddActor(actor)
