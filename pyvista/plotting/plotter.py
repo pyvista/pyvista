@@ -2432,8 +2432,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene. Defaults to ``True`` unless ``rgba=True``.
 
-        multi_colors : bool, default: False
-            Color each block by a solid color using matplotlib's color cycler.
+        multi_colors : bool | str | cycler.Cycler | sequence[ColorLike], default: False
+            Color each block by a solid color using a custom cycler.
+
+            If ``True``, the default 'matplotlib' color cycler is used.
+
+            See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
+            custom color cyclers.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
@@ -2979,9 +2984,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene.
 
-        multi_colors : bool, default: False
+        multi_colors : bool | str | cycler.Cycler | sequence[ColorLike], default: False
             If a :class:`pyvista.MultiBlock` dataset is given this will color
-            each block by a solid color using matplotlib's color cycler.
+            each block by a solid color using a custom cycler.
+
+            If ``True``, the default 'matplotlib' color cycler is used.
+
+            See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
+            custom color cyclers.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily

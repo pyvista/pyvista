@@ -655,10 +655,20 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
-    def set_unique_colors(self, color_cyler=True ):
+    def set_unique_colors(self, color_cycler=True):
         """Set each block of the dataset to a unique color.
 
-        This uses ``matplotlib``'s color cycler.
+        This uses ``matplotlib``'s color cycler by default.
+
+        When a custom color cycler, or a sequence of
+        color-like objects, is passed it sets the blocks
+        to the corresponding colors.
+
+        Parameters
+        ----------
+        color_cycler : bool | str | cycler.Cycler | sequence[ColorLike]
+            The sequence of colors to cycle through,
+            if ``True``, uses matplotlib cycler.
 
         Examples
         --------
@@ -679,10 +689,10 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         self.scalar_visibility = False
 
         # color_cycler=True still uses 'matplotlib' cycler
-        if isinstance( color_cycler, bool):
+        if isinstance(color_cycler, bool):
             colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
         else:
-            colors = cycle( get_cycler(color_cycler) )
+            colors = cycle(get_cycler(color_cycler))
 
         for attr in self.block_attr:
             attr.color = next(colors)['color']
