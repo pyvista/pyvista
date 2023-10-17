@@ -15,7 +15,7 @@ from .helpers import wrap
 
 def voxelize(mesh, density=None, vol=False, check_surface=True):
     """Voxelize mesh to create an UnstructuredGrid or a StructuredGrid.
-       
+
        1. Voxelize the input mesh : UnstructuredGrid.
        2. Create a voxel volume that encloses the input mesh : StructuredGrid.
 
@@ -107,7 +107,7 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
-    
+
     if vol:
         g = lambda a, b, d: int(np.ceil((b - a) / d))
         voi = pyvista.ImageData()
@@ -135,25 +135,25 @@ def voxelize(mesh, density=None, vol=False, check_surface=True):
         # given new name 'MeshCells' and a value of 1
         voi['MeshCells'] = np.zeros(voi.n_cells)
         voi['MeshCells'][cell_ids] = 1
-        
+
         # Create new element of grid where background cells in volume are
         # given a new name 'BackgroundCells' and a value of 0
         voi['BackgroundCells'] = np.zeros(voi.n_cells)
         voi['BackgroundCells'][0] = 0
-        
+
         voi_grid = voi.cast_to_structured_grid()
         vox = voi_grid
-        
+
     else:
         # Create a structured grid from the input data
         grid = pyvista.StructuredGrid(x, y, z)
-        
+
         # get part of the mesh within the mesh's bounding surface.
         selection = grid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
         mask = selection.point_data['SelectedPoints'].view(np.bool_)
-        
+
         vox = grid.extract_points(mask)
-        
+
     return vox
 
 
