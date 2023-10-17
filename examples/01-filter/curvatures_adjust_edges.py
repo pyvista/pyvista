@@ -230,19 +230,6 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
 
     source = pv.wrap(source)
 
-    def point_neighbourhood(pt_id):
-        """
-        Find the ids of the neighbours of pt_id.
-
-        :param pt_id: The point id.
-        :return: The neighbour ids.
-        """
-        """
-        Extract the topological neighbors for point pId. In two steps:
-        """
-        neighbour = set(source.point_neighbors(pt_id))
-        return neighbour
-
     def compute_distance(pt_id_a, pt_id_b):
         """
         Compute the distance between two points given their ids.
@@ -289,7 +276,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     # average of the neighbours.
     count_invalid = 0
     for p_id in boundary_ids:
-        p_ids_neighbors = point_neighbourhood(p_id)
+        p_ids_neighbors = set(source.point_neighbors(pt_id))
         # Keep only interior points.
         p_ids_neighbors -= p_ids_set
         # Compute distances and extract curvature values.
