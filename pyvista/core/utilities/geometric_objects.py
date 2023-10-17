@@ -18,13 +18,11 @@ as well as some pure-python helpers.
 
 """
 from itertools import product
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource, translate
@@ -1786,10 +1784,6 @@ def Triangle(points=None):
 def Rectangle(points=None):
     """Create a rectangle defined by 3 points.
 
-    .. deprecated:: 0.39.0
-       To deal with more than 3 points use :func:`pyvista.Quadrilateral()
-       <pyvista.examples.cells.Quadrilateral>` instead.
-
     The 3 points must define an orthogonal set of vectors.
 
     Parameters
@@ -1813,12 +1807,6 @@ def Rectangle(points=None):
     """
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-    if len(points) == 4:
-        warnings.warn(
-            'Rectangle defined by 4 points is deprecated. Please use ``pyvista.Quadrilateral``.',
-            PyVistaDeprecationWarning,
-        )
-        return Quadrilateral(points)
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
 

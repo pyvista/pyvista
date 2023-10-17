@@ -18,7 +18,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
@@ -2773,16 +2773,6 @@ def test_plot_composite_raise(sphere, multiblock_poly):
         pl.add_composite(sphere)
     with pytest.raises(TypeError, match='must be a string for'):
         pl.add_composite(multiblock_poly, scalars=range(10))
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        with pytest.raises(TypeError, match='must be an int'):
-            pl.add_composite(multiblock_poly, categories='abc')
-
-
-def test_plot_composite_categories(multiblock_poly):
-    pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
-    pl.show()
 
 
 def test_plot_composite_lookup_table(multiblock_poly, verify_image_cache):
