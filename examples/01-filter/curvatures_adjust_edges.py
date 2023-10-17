@@ -237,18 +237,8 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
         """
         """
         Extract the topological neighbors for point pId. In two steps:
-        1) source.GetPointCells(pt_id, cell_ids)
-        2) source.GetCellPoints(cell_id, cell_point_ids) for all cell_id in cell_ids
         """
-        cell_ids = vtkIdList()
-        source.GetPointCells(pt_id, cell_ids)
-        neighbour = set()
-        for cell_idx in range(0, cell_ids.GetNumberOfIds()):
-            cell_id = cell_ids.GetId(cell_idx)
-            cell_point_ids = vtkIdList()
-            source.GetCellPoints(cell_id, cell_point_ids)
-            for cell_pt_idx in range(0, cell_point_ids.GetNumberOfIds()):
-                neighbour.add(cell_point_ids.GetId(cell_pt_idx))
+        neighbour = set(source.point_neighbors(pt_id))
         return neighbour
 
     def compute_distance(pt_id_a, pt_id_b):
