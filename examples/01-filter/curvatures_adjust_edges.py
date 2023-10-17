@@ -109,13 +109,6 @@ def main(argv):
         constrain_curvatures(mc.GetOutput(), 'Mean_Curvature', 2.0, 2.0)
     source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('Mean_Curvature'))
 
-    # Uncomment the following lines if you want to write out the polydata.
-    # writer = vtkXMLPolyDataWriter()
-    # writer.SetFileName('Source.vtp')
-    # writer.SetInputData(source)
-    # writer.SetDataModeToBinary()
-    # writer.Write()
-
     # Let's visualise what we have done.
 
     colors = vtkNamedColors()
