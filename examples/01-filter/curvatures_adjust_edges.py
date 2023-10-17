@@ -276,7 +276,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     # average of the neighbours.
     count_invalid = 0
     for p_id in boundary_ids:
-        p_ids_neighbors = set(source.point_neighbors(pt_id))
+        p_ids_neighbors = set(source.point_neighbors(p_id))
         # Keep only interior points.
         p_ids_neighbors -= p_ids_set
         # Compute distances and extract curvature values.
