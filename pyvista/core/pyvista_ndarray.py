@@ -1,8 +1,10 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
-from collections.abc import Iterable
 from typing import Union
 
 import numpy as np
+from numpy.typing import ArrayLike
+
+from pyvista.core.input_validation.input_validation import cast_array_to_NDArray
 
 from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation, convert_array
@@ -15,7 +17,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     Parameters
     ----------
-    array : Iterable or vtk.vtkAbstractArray
+    array : ArrayLike or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet
@@ -44,21 +46,22 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Iterable, _vtk.vtkAbstractArray],
+        array: Union[ArrayLike, _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
         """Allocate the array."""
-        if isinstance(array, Iterable):
-            obj = np.asarray(array).view(cls)
-        elif isinstance(array, _vtk.vtkAbstractArray):
+        if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
         else:
-            raise TypeError(
-                f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray'
-            )
+            try:
+                obj = cast_array_to_NDArray(array).view(cls)
+            except ValueError:
+                raise TypeError(
+                    f'pyvista_ndarray got an invalid type {type(array)}. '
+                    'Expected ArrayLike or vtk.vtkAbstractArray'
+                )
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()
