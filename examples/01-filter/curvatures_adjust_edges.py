@@ -228,6 +228,8 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     :return:
     """
 
+    source = pv.wrap(source)
+
     def point_neighbourhood(pt_id):
         """
         Find the ids of the neighbours of pt_id.
