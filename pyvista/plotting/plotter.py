@@ -917,31 +917,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.renderers.active_renderer
 
-    @property
-    def store_image(self):  # numpydoc ignore=RT01
-        """Store last rendered frame on close.
-
-        .. deprecated:: 0.38.0
-           ``store_image`` is no longer used. Images are automatically cached
-           as needed.
-
-        """
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError(
-            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
-            ' Images are automatically cached as needed.'
-        )
-
-    @store_image.setter
-    def store_image(self, value):  # numpydoc ignore=GL08
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError(
-            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
-            ' Images are automatically cached as needed.'
-        )
-
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
 
@@ -4305,7 +4280,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
-        params=None,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -4337,13 +4311,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try ``0.9``  first and decrease until the desired rendering
             performance is achieved.
 
-        params : dict, optional
-            Optional silhouette parameters.
-
-            .. deprecated:: 0.38.0
-               This keyword argument is no longer used. Instead, input the
-               parameters to this function directly.
-
         Returns
         -------
         pyvista.Actor
@@ -4367,15 +4334,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         silhouette_params = self._theme.silhouette.to_dict()
-
-        if params is not None:
-            # Deprecated on 0.38.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`params` is deprecated. Set the arguments directly.',
-                PyVistaDeprecationWarning,
-                stacklevel=3,
-            )
-            silhouette_params.update(params)
 
         if color is None:
             color = silhouette_params["color"]
@@ -6035,26 +5993,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             thread.start()
         else:
             orbit()
-
-    def export_vtkjs(self, *args, **kwargs):
-        """Export the current rendering scene as a VTKjs scene.
-
-        .. deprecated:: 0.40.0
-            This export routine has been broken for some time and has
-            been completely removed in version 0.40.0.  Use :func:`pyvista.Plotter.export_vtksz` instead.
-
-        Parameters
-        ----------
-        *args : tuple
-            Positional arguments.
-
-        **kwargs : dict, optional
-            Keyword arguments.
-
-        """
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError('export_vtkjs is deprecated. Use export_vtksz instead.')
 
     def export_obj(self, filename):
         """Export scene to OBJ format.
