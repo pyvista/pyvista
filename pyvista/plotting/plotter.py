@@ -2714,7 +2714,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if color is not None:
             self.mapper.scalar_visibility = False
         elif multi_colors:
-            self.mapper.set_unique_colors()
+            self.mapper.set_unique_colors(multi_colors)
         else:
             if scalars is None:
                 point_name, cell_name = dataset._get_consistent_active_scalars()

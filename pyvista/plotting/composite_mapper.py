@@ -13,7 +13,7 @@ from pyvista.core.utilities.misc import _check_range
 from pyvista.report import vtk_version_info
 
 from . import _vtk
-from .colors import Color
+from .colors import Color, get_cycler
 from .mapper import _BaseMapper
 
 
@@ -655,7 +655,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
-    def set_unique_colors(self):
+    def set_unique_colors(self, color_cyler=True ):
         """Set each block of the dataset to a unique color.
 
         This uses ``matplotlib``'s color cycler.
@@ -677,7 +677,13 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
-        colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+
+        # color_cycler=True still uses 'matplotlib' cycler
+        if isinstance( color_cycler, bool):
+            colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+        else:
+            colors = cycle( get_cycler(color_cycler) )
+
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
