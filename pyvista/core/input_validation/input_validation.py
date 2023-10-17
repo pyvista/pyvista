@@ -554,16 +554,21 @@ def check_is_instance(
 ):
     if not isinstance(name, str):
         raise TypeError(f"Name must be a string, got {type(name)} instead.")
-    is_instance = isinstance(object, classinfo)
 
-    # Count num classes
+    # Get class info from generics
     if get_origin(classinfo) is Union:
         classinfo = get_args(classinfo)
+
+    # Count num classes
     if isinstance(classinfo, tuple):
         num_classes = len(classinfo)
     else:
         num_classes = 1
 
+    # Check if is instance
+    is_instance = isinstance(object, classinfo)
+
+    # Set flag to raise error if not instance
     is_error = False
     if allow_subclass and not is_instance:
         is_error = True
@@ -571,6 +576,8 @@ def check_is_instance(
             msg_body = "must be an instance of"
         else:
             msg_body = "must be an instance of any type"
+
+    # Set flag to raise error if not not type
     elif not allow_subclass:
         if isinstance(classinfo, tuple):
             if type(object) not in classinfo:
