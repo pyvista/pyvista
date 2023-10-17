@@ -201,7 +201,7 @@ def main(argv):
             camera = renderer.camera
             camera.elevation = 60
         else:
-           renderer.camera = camera
+            renderer.camera = camera
         renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
         renderer.reset_camera()
 
