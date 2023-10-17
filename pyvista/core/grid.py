@@ -891,24 +891,3 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
-
-
-class UniformGrid(ImageData):  # numpydoc ignore=PR01
-    """Deprecated ``UniformGrid`` and renamed to ``ImageData``.
-
-    .. deprecated:: 0.40.0
-        ``pyvista.UniformGrid`` has been deprecated and renamed to :class:`pyvista.ImageData`.
-
-    Future versions of PyVista will implement ``UniformGrid``
-    as a subclass of ``vtkUniformGrid``, not ``vtkImageData``.
-    """
-
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        warnings.warn(
-            '`UniformGrid` is deprecated. Use `ImageData` instead.', PyVistaDeprecationWarning
-        )
