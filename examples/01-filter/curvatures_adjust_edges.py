@@ -19,7 +19,6 @@ from vtkmodules.vtkCommonCore import (
     vtkLookupTable,
     vtkPoints,
 )
-from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import (
     vtkDelaunay2D,
@@ -472,7 +471,7 @@ def get_hills():
             points.InsertNextPoint(x, y, 0)
 
     # Add the grid points to a polydata object.
-    plane = vtkPolyData()
+    plane = pv.PolyData()
     plane.SetPoints(points)
 
     # Triangulate the grid.
