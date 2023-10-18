@@ -162,8 +162,7 @@ def main(argv):
         mapper.SetScalarRange(scalar_range)
         mapper.SetLookupTable(lut)
 
-        actor = pv.Actor()
-        actor.mapper = mapper
+        actor = pv.Actor(mapper = mapper)
 
         # Create a scalar bar
         scalar_bar = vtkScalarBarActor()
