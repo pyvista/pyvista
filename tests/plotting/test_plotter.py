@@ -415,11 +415,11 @@ def test_multi_block_color_cycler():
     assert mapper.block_attr[3].color.name == 'red'
 
     # test wrong args
-    pl = pv.Plotter()
     with pytest.raises(ValueError):
-        pl.set_unique_colors('foo')
+        mapper.set_unique_colors('foo')
+
     with pytest.raises(TypeError):
-        pl.set_unique_colors(5)
+        mapper.set_unique_colors(5)
 
 
 @pytest.mark.parametrize(
