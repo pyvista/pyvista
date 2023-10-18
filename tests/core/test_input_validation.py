@@ -458,13 +458,14 @@ def test_check_is_type():
         check_is_type("str", int)
     with pytest.raises(TypeError):
         check_is_type(0, int, name=1)
-
-    if sys.version_info < (3, 9):
-        msg = "Subscripted generics cannot be used with class and instance checks"
-        with pytest.raises(TypeError, match=msg):
-            check_is_type(0, Union[int, float])
-    else:
         check_is_type(0, Union[int, float])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason="Union type input requires python3.10 or higher"
+)
+def test_check_is_type_union():
+    check_is_type(0, Union[int, float])
 
 
 def test_check_is_string():
