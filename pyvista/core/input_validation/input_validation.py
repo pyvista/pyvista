@@ -577,7 +577,7 @@ def check_is_instance(
         else:
             msg_body = "must be an instance of any type"
 
-    # Set flag to raise error if not not type
+    # Set flag to raise error if not type
     elif not allow_subclass:
         if isinstance(classinfo, tuple):
             if type(object) not in classinfo:
