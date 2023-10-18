@@ -394,9 +394,8 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
-def test_multi_block_color_cycler(verify_image_cache):
+def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
-    verify_image_cache.windows_skip_image_cache = True
     plotter = pv.Plotter()
     data = {
         "sphere1": pv.Sphere(center=(1, 0, 0)),
