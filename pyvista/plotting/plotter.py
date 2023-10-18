@@ -2991,7 +2991,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``True``, the default 'matplotlib' color cycler is used.
 
             See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
-            custom color cyclers.
+            custom color cycles.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
