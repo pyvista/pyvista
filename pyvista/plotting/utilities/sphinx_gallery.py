@@ -40,7 +40,24 @@ def html_rst(
     for i, hinnames in enumerate(srcsetpaths):
         srcset = _get_srcset_st(sources_dir, hinnames)
         if srcset[-5:] == "vtksz":
-            images_rst += f"\n.. offlineviewer:: {figure_list[i]}\n\n"
+            png_file = figure_list[i][:-5] + "png"
+
+            indented_firgure_rst = "\n".join(
+                " " * 5 + line for line in figure_rst([png_file], sources_dir).split("\n")
+            )
+            images_rst += f"""
+\n
+\n
+.. tab-set::\n
+\n
+   .. tab-item:: Static Scene\n
+\n
+       {indented_firgure_rst}
+\n
+   .. tab-item:: Interactive Scene\n
+\n
+       .. offlineviewer:: {figure_list[i]}\n\n"""
+
         else:
             images_rst += "\n" + figure_rst([figure_list[i]], sources_dir) + "\n\n"
 
