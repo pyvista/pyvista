@@ -83,7 +83,7 @@ def test_check_is_subdtype():
     check_is_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
     msg = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
     with pytest.raises(TypeError, match=msg):
-        check_is_subdtype(np.array([1, 2, 3]), float)
+        check_is_subdtype(np.array([1, 2, 3]).astype('int32'), float)
     msg = "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     with pytest.raises(TypeError, match=escape(msg)):
         check_is_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
