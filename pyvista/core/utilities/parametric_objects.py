@@ -1388,12 +1388,7 @@ def parametric_keywords(
 
 
 def surface_from_para(
-    parametric_function,
-    u_res=100,
-    v_res=100,
-    w_res=100,
-    clean=False,
-    texture_coordinates=False,
+    parametric_function, u_res=100, v_res=100, w_res=100, clean=False, texture_coordinates=False
 ):
     """Construct a mesh from a parametric function.
 
