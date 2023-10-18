@@ -1,6 +1,6 @@
-import sys
 from collections import namedtuple
 from re import escape
+import sys
 from typing import Union, get_args, get_origin
 
 import numpy as np
@@ -402,9 +402,7 @@ def test_validate_numeric_array_cases(
 
 
 @pytest.mark.parametrize('object', [0, 0.0, "0"])
-@pytest.mark.parametrize(
-    'classinfo', [int, (int, float), [int, float]]
-)
+@pytest.mark.parametrize('classinfo', [int, (int, float), [int, float]])
 @pytest.mark.parametrize('allow_subclass', [True, False])
 # @pytest.mark.parametrize('name', [True,False])
 def test_check_is_instance(object, classinfo, allow_subclass):
