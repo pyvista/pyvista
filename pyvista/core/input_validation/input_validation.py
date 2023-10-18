@@ -149,11 +149,21 @@ def coerce_transformlike_as_array4x4(
 
     """
     check_is_string(name, name="Name")
-
-    # Check input
-    if not isinstance(transform, (vtkMatrix4x4, vtkMatrix3x3, vtkTransform)):
+    arr = np.eye(4)  # initialize
+    if isinstance(transform, vtkMatrix4x4):
+        arr = array_from_vtkmatrix(transform)
+    elif isinstance(transform, vtkMatrix3x3):
+        arr[:3, :3] = array_from_vtkmatrix(transform)
+    elif isinstance(transform, vtkTransform):
+        arr = array_from_vtkmatrix(transform.GetMatrix())
+    else:
         try:
-            check_is_ArrayLike(transform)
+            valid_arr = validate_numeric_array(transform,
+                                               shape=[(3, 3), (4, 4)])
+            if valid_arr.shape == (3, 3):
+                arr[:3, :3] = valid_arr
+            else:
+                arr = valid_arr
         except ValueError:
             raise TypeError(
                 'Input transform must be one of:\n'
@@ -163,17 +173,8 @@ def coerce_transformlike_as_array4x4(
                 '\t4x4 np.ndarray\n'
                 '\t3x3 np.ndarray\n'
             )
-    arr = np.eye(4)
-    if isinstance(transform, vtkMatrix4x4):
-        arr = array_from_vtkmatrix(transform)
-    elif isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
-    elif isinstance(transform, vtkTransform):
-        arr = array_from_vtkmatrix(transform.GetMatrix())
-    else:
-        valid_arr = validate_numeric_array(transform, shape=[(3, 3), (4, 4)])
-        if valid_arr.shape == (3, 3):
-            arr[:3, :3] = valid_arr
+
+
     return arr
 
 

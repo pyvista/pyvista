@@ -70,7 +70,7 @@ def test_coerce_transformlike_as_array4x4(transform_like):
 
 
 def test_coerce_transformlike_as_array4x4_raises():
-    with pytest.raises(ValueError, match=escape("Shape must be one of [(3, 3), (4, 4)]")):
+    with pytest.raises(TypeError, match=escape("Input transform must be one of")):
         coerce_transformlike_as_array4x4(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must be numeric"):
         coerce_transformlike_as_array4x4("abc")
