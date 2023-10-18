@@ -15,7 +15,6 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities import (
     cells,
     fileio,
