@@ -1,3 +1,4 @@
+import sys
 from collections import namedtuple
 from re import escape
 from typing import Union, get_args, get_origin
@@ -402,7 +403,7 @@ def test_validate_numeric_array_cases(
 
 @pytest.mark.parametrize('object', [0, 0.0, "0"])
 @pytest.mark.parametrize(
-    'classinfo', [int, (int, float), [int, float], Union[float, int], Union[int]]
+    'classinfo', [int, (int, float), [int, float]]
 )
 @pytest.mark.parametrize('allow_subclass', [True, False])
 # @pytest.mark.parametrize('name', [True,False])
@@ -455,11 +456,17 @@ def test_check_is_instance(object, classinfo, allow_subclass):
 def test_check_is_type():
     check_is_type(0, int, name='abc')
     check_is_type(0, Union[int])
-    check_is_type(0, Union[int, float])
     with pytest.raises(TypeError):
         check_is_type("str", int)
     with pytest.raises(TypeError):
         check_is_type(0, int, name=1)
+
+    if sys.version_info < (3, 10):
+        msg = "Subscripted generics cannot be used with class and instance checks"
+        with pytest.raises(TypeError, match=msg):
+            check_is_type(0, Union[int, float])
+    else:
+        check_is_type(0, Union[int, float])
 
 
 def test_check_is_string():
