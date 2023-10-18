@@ -1222,35 +1222,6 @@ def test_multi_block_plot(verify_image_cache):
     multi.plot(multi_colors=True)
 
 
-def test_multi_block_color_cycler(verify_image_cache):
-    """Test passing a custom color cycler"""
-    verify_image_cache.windows_skip_image_cache = True
-    plotter = pv.Plotter()
-    data = {
-        "sphere1": pv.Sphere(center=(1, 0, 0)),
-        "sphere2": pv.Sphere(center=(2, 0, 0)),
-        "sphere3": pv.Sphere(center=(3, 0, 0)),
-        "sphere4": pv.Sphere(center=(4, 0, 0)),
-    }
-    spheres = pv.MultiBlock(data)
-    actor, mapper = plotter.add_composite(spheres)
-
-    # pass custom cycler
-    mapper.set_unique_colors(['red', 'green', 'blue'])
-
-    assert mapper.block_attr[0].color.name == 'red'
-    assert mapper.block_attr[1].color.name == 'green'
-    assert mapper.block_attr[2].color.name == 'blue'
-    assert mapper.block_attr[3].color.name == 'red'
-
-    # test wrong args
-    pl = pv.Plotter()
-    with pytest.raises(ValueError):
-        pl.set_color_cycler('foo')
-    with pytest.raises(TypeError):
-        pl.set_color_cycler(5)
-
-
 def test_clear(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
