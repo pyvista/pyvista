@@ -417,9 +417,9 @@ def test_multi_block_color_cycler():
     # test wrong args
     pl = pv.Plotter()
     with pytest.raises(ValueError):
-        pl.set_color_cycler('foo')
+        pl.set_unique_colors('foo')
     with pytest.raises(TypeError):
-        pl.set_color_cycler(5)
+        pl.set_unique_colors(5)
 
 
 @pytest.mark.parametrize(
