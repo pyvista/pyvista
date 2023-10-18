@@ -17,7 +17,6 @@ from vtkmodules.vtkCommonCore import (
     vtkDoubleArray,
     vtkFloatArray,
     vtkLookupTable,
-    vtkPoints,
 )
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import (
@@ -463,7 +462,7 @@ def get_hills():
     dy = (y_max - y_min) / (x_res - 1)
 
     # Make a grid.
-    points = vtkPoints()
+    points = pv.Points()
     for i in range(0, x_res):
         x = x_min + i * dx
         for j in range(0, y_res):
