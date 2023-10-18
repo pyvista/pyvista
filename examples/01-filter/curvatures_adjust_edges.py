@@ -143,6 +143,7 @@ def main(argv):
 
     curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
     for idx, curvature_name in enumerate(curvature_types):
+        plotter = pv.Plotter()
         curvature_title = curvature_name.replace('_', '\n')
 
         source.GetPointData().SetActiveScalars(curvature_name)
@@ -162,7 +163,7 @@ def main(argv):
         mapper.SetLookupTable(lut)
 
         actor = pv.Actor()
-        actor.SetMapper(mapper)
+        actor.mapper = mapper
 
         # Create a scalar bar
         scalar_bar = vtkScalarBarActor()
@@ -183,7 +184,6 @@ def main(argv):
         text_actor.SetMapper(text_mapper)
         text_actor.SetPosition(250, 16)
 
-        plotter = pv.Plotter()
         renderer = plotter.renderers[0]
         renderer.SetBackground(colors.GetColor3d('ParaViewBkg'))
 
