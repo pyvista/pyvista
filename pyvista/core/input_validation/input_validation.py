@@ -158,8 +158,7 @@ def coerce_transformlike_as_array4x4(
         arr = array_from_vtkmatrix(transform.GetMatrix())
     else:
         try:
-            valid_arr = validate_numeric_array(transform,
-                                               shape=[(3, 3), (4, 4)])
+            valid_arr = validate_numeric_array(transform, shape=[(3, 3), (4, 4)])
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
             else:
@@ -173,7 +172,6 @@ def coerce_transformlike_as_array4x4(
                 '\t4x4 np.ndarray\n'
                 '\t3x3 np.ndarray\n'
             )
-
 
     return arr
 

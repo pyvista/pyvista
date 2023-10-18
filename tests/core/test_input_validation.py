@@ -459,7 +459,7 @@ def test_check_is_type():
     with pytest.raises(TypeError):
         check_is_type(0, int, name=1)
 
-    if sys.version_info < (3, 10):
+    if sys.version_info < (3, 9):
         msg = "Subscripted generics cannot be used with class and instance checks"
         with pytest.raises(TypeError, match=msg):
             check_is_type(0, Union[int, float])
