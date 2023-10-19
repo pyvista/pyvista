@@ -46,14 +46,7 @@ import pyvista as pv
 
 
 def main(argv):
-    # desired_surface = 'Bour'
-    # desired_surface = 'Cube'
-    # desired_surface = 'Hills'
-    # desired_surface = 'Enneper'
-    # desired_surface = 'Mobius'
     desired_surface = 'RandomHills'
-    # desired_surface = 'Sphere'
-    # desired_surface = 'Torus'
     source = get_source(desired_surface)
     if not source:
         print('The surface is not available.')
@@ -63,21 +56,8 @@ def main(argv):
     gc.SetInputData(source)
     gc.SetCurvatureTypeToGaussian()
     gc.Update()
-    if desired_surface in ['Bour', 'Enneper', 'Hills', 'RandomHills', 'Torus']:
+    if desired_surface in ['RandomHills']:
         adjust_edge_curvatures(gc.GetOutput(), 'Gauss_Curvature')
-    if desired_surface == 'Bour':
-        # Gaussian curvature is -1/(r(r+1)^4))
-        constrain_curvatures(gc.GetOutput(), 'Gauss_Curvature', -0.0625, -0.0625)
-    if desired_surface == 'Enneper':
-        # Gaussian curvature is -4/(1 + r^2)^4
-        constrain_curvatures(gc.GetOutput(), 'Gauss_Curvature', -0.25, -0.25)
-    if desired_surface == 'Cube':
-        constrain_curvatures(gc.GetOutput(), 'Gauss_Curvature', 0.0, 0.0)
-    if desired_surface == 'Mobius':
-        constrain_curvatures(gc.GetOutput(), 'Gauss_Curvature', 0.0, 0.0)
-    if desired_surface == 'Sphere':
-        # Gaussian curvature is 1/r^2
-        constrain_curvatures(gc.GetOutput(), 'Gauss_Curvature', 4.0, 4.0)
     source.GetPointData().AddArray(
         gc.GetOutput().GetPointData().GetAbstractArray('Gauss_Curvature')
     )
@@ -86,17 +66,8 @@ def main(argv):
     mc.SetInputData(source)
     mc.SetCurvatureTypeToMean()
     mc.Update()
-    if desired_surface in ['Bour', 'Enneper', 'Hills', 'RandomHills', 'Torus']:
+    if desired_surface in ['RandomHills']:
         adjust_edge_curvatures(mc.GetOutput(), 'Mean_Curvature')
-    if desired_surface == 'Bour':
-        # Mean curvature is 0
-        constrain_curvatures(mc.GetOutput(), 'Mean_Curvature', 0.0, 0.0)
-    if desired_surface == 'Enneper':
-        # Mean curvature is 0
-        constrain_curvatures(mc.GetOutput(), 'Mean_Curvature', 0.0, 0.0)
-    if desired_surface == 'Sphere':
-        # Mean curvature is 1/r
-        constrain_curvatures(mc.GetOutput(), 'Mean_Curvature', 2.0, 2.0)
     source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('Mean_Curvature'))
 
     # Let's visualise what we have done.
@@ -300,306 +271,18 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
         source.GetPointData().SetActiveScalars(curvature_name)
 
 
-def constrain_curvatures(source, curvature_name, lower_bound=0.0, upper_bound=0.0):
-    """
-    This function constrains curvatures to the range [lower_bound ... upper_bound].
-
-    Remember to update the vtkCurvatures object before calling this.
-
-    :param source: A vtkPolyData object corresponding to the vtkCurvatures object.
-    :param curvature_name: The name of the curvature, 'Gauss_Curvature' or 'Mean_Curvature'.
-    :param lower_bound: The lower bound.
-    :param upper_bound: The upper bound.
-    :return:
-    """
-
-    bounds = list()
-    if lower_bound < upper_bound:
-        bounds.append(lower_bound)
-        bounds.append(upper_bound)
-    else:
-        bounds.append(upper_bound)
-        bounds.append(lower_bound)
-
-    # Get the active scalars
-    source.GetPointData().SetActiveScalars(curvature_name)
-    np_source = dsa.WrapDataObject(source)
-    curvatures = np_source.PointData[curvature_name]
-
-    # Set upper and lower bounds.
-    curvatures = np.where(curvatures < bounds[0], bounds[0], curvatures)
-    curvatures = np.where(curvatures > bounds[1], bounds[1], curvatures)
-    # Curvatures is now an ndarray
-    curv = numpy_support.numpy_to_vtk(
-        num_array=curvatures.ravel(), deep=True, array_type=VTK_DOUBLE
-    )
-    curv.SetName(curvature_name)
-    source.GetPointData().RemoveArray(curvature_name)
-    source.GetPointData().AddArray(curv)
-    source.GetPointData().SetActiveScalars(curvature_name)
-
-
-def get_bour():
-    u_resolution = 51
-    v_resolution = 51
-    surface = vtkParametricBour()
-
-    source = vtkParametricFunctionSource()
-    source.SetUResolution(u_resolution)
-    source.SetVResolution(v_resolution)
-    source.GenerateTextureCoordinatesOn()
-    source.SetParametricFunction(surface)
-    source.Update()
-
-    # Build the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(source.GetOutputPort())
-    tangents.Update()
-
-    transform = vtkTransform()
-    transform.RotateX(0.0)
-    transform_filter = vtkTransformPolyDataFilter()
-    transform_filter.SetInputConnection(tangents.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return transform_filter.GetOutput()
-
-
-def get_cube():
-    surface = vtkCubeSource()
-
-    # Triangulate.
-    triangulation = vtkTriangleFilter()
-    triangulation.SetInputConnection(surface.GetOutputPort())
-    # Subdivide the triangles
-    subdivide = vtkLinearSubdivisionFilter()
-    subdivide.SetInputConnection(triangulation.GetOutputPort())
-    subdivide.SetNumberOfSubdivisions(3)
-    # Now the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(subdivide.GetOutputPort())
-    tangents.Update()
-    return tangents.GetOutput()
-
-
-def get_hills():
-    # Create four hills on a plane.
-    # This will have regions of negative, zero and positive Gsaussian curvatures.
-
-    x_res = 50
-    y_res = 50
-    x_min = -5.0
-    x_max = 5.0
-    dx = (x_max - x_min) / (x_res - 1)
-    y_min = -5.0
-    y_max = 5.0
-    dy = (y_max - y_min) / (x_res - 1)
-
-    # Make a grid.
-    points = pv.Points()
-    for i in range(0, x_res):
-        x = x_min + i * dx
-        for j in range(0, y_res):
-            y = y_min + j * dy
-            points.InsertNextPoint(x, y, 0)
-
-    # Add the grid points to a polydata object.
-    plane = pv.PolyData()
-    plane.SetPoints(points)
-
-    # Triangulate the grid.
-    delaunay = vtkDelaunay2D()
-    delaunay.SetInputData(plane)
-    delaunay.Update()
-
-    polydata = delaunay.GetOutput()
-
-    elevation = vtkDoubleArray()
-    elevation.SetNumberOfTuples(points.GetNumberOfPoints())
-
-    #  We define the parameters for the hills here.
-    # [[0: x0, 1: y0, 2: x variance, 3: y variance, 4: amplitude]...]
-    hd = [
-        [-2.5, -2.5, 2.5, 6.5, 3.5],
-        [2.5, 2.5, 2.5, 2.5, 2],
-        [5.0, -2.5, 1.5, 1.5, 2.5],
-        [-5.0, 5, 2.5, 3.0, 3],
-    ]
-    xx = [0.0] * 2
-    for i in range(0, points.GetNumberOfPoints()):
-        x = list(polydata.GetPoint(i))
-        for j in range(0, len(hd)):
-            xx[0] = (x[0] - hd[j][0] / hd[j][2]) ** 2.0
-            xx[1] = (x[1] - hd[j][1] / hd[j][3]) ** 2.0
-            x[2] += hd[j][4] * math.exp(-(xx[0] + xx[1]) / 2.0)
-            polydata.GetPoints().SetPoint(i, x)
-            elevation.SetValue(i, x[2])
-
-    textures = vtkFloatArray()
-    textures.SetNumberOfComponents(2)
-    textures.SetNumberOfTuples(2 * polydata.GetNumberOfPoints())
-    textures.SetName("Textures")
-
-    for i in range(0, x_res):
-        tc = [i / (x_res - 1.0), 0.0]
-        for j in range(0, y_res):
-            # tc[1] = 1.0 - j / (y_res - 1.0)
-            tc[1] = j / (y_res - 1.0)
-            textures.SetTuple(i * y_res + j, tc)
-
-    polydata.GetPointData().SetScalars(elevation)
-    polydata.GetPointData().GetScalars().SetName("Elevation")
-    polydata.GetPointData().SetTCoords(textures)
-
-    normals = vtkPolyDataNormals()
-    normals.SetInputData(polydata)
-    normals.SetInputData(polydata)
-    normals.SetFeatureAngle(30)
-    normals.SplittingOff()
-
-    tr1 = vtkTransform()
-    tr1.RotateX(-90)
-
-    tf1 = vtkTransformPolyDataFilter()
-    tf1.SetInputConnection(normals.GetOutputPort())
-    tf1.SetTransform(tr1)
-    tf1.Update()
-
-    return tf1.GetOutput()
-
-
-def get_enneper():
-    u_resolution = 51
-    v_resolution = 51
-    surface = vtkParametricEnneper()
-
-    source = vtkParametricFunctionSource()
-    source.SetUResolution(u_resolution)
-    source.SetVResolution(v_resolution)
-    source.GenerateTextureCoordinatesOn()
-    source.SetParametricFunction(surface)
-    source.Update()
-
-    # Build the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(source.GetOutputPort())
-    tangents.Update()
-
-    transform = vtkTransform()
-    transform.RotateX(0.0)
-    transform_filter = vtkTransformPolyDataFilter()
-    transform_filter.SetInputConnection(tangents.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return transform_filter.GetOutput()
-
-
-def get_mobius():
-    u_resolution = 51
-    v_resolution = 51
-    surface = vtkParametricMobius()
-    surface.SetMinimumV(-0.25)
-    surface.SetMaximumV(0.25)
-
-    source = vtkParametricFunctionSource()
-    source.SetUResolution(u_resolution)
-    source.SetVResolution(v_resolution)
-    source.GenerateTextureCoordinatesOn()
-    source.SetParametricFunction(surface)
-    source.Update()
-
-    # Build the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(source.GetOutputPort())
-    tangents.Update()
-
-    transform = vtkTransform()
-    transform.RotateX(-90.0)
-    transform_filter = vtkTransformPolyDataFilter()
-    transform_filter.SetInputConnection(tangents.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return transform_filter.GetOutput()
-
-
-def get_sphere():
-    theta_resolution = 32
-    phi_resolution = 32
-    surface = vtkTexturedSphereSource()
-    surface.SetThetaResolution(theta_resolution)
-    surface.SetPhiResolution(phi_resolution)
-
-    # Now the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(surface.GetOutputPort())
-    tangents.Update()
-
-    return tangents.GetOutput()
-
-
-def get_torus():
-    u_resolution = 51
-    v_resolution = 51
-    surface = vtkParametricTorus()
-
-    source = vtkParametricFunctionSource()
-    source.SetUResolution(u_resolution)
-    source.SetVResolution(v_resolution)
-    source.GenerateTextureCoordinatesOn()
-    source.SetParametricFunction(surface)
-    source.Update()
-
-    # Build the tangents.
-    tangents = vtkPolyDataTangents()
-    tangents.SetInputConnection(source.GetOutputPort())
-    tangents.Update()
-
-    transform = vtkTransform()
-    transform.RotateX(-90.0)
-    transform_filter = vtkTransformPolyDataFilter()
-    transform_filter.SetInputConnection(tangents.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return transform_filter.GetOutput()
-
-
 def get_source(source):
     surface = source.lower()
     available_surfaces = [
-        'bour',
-        'cube',
-        'enneper',
-        'hills',
-        'mobius',
         'randomhills',
-        'sphere',
-        'torus',
     ]
     if surface not in available_surfaces:
         return None
-    elif surface == 'bour':
-        return get_bour()
-    elif surface == 'cube':
-        return get_cube()
-    elif surface == 'enneper':
-        return get_enneper()
-    elif surface == 'hills':
-        return get_hills()
-    elif surface == 'mobius':
-        return get_mobius()
-    elif surface == 'randomhills':
+    if surface == 'randomhills':
         source = pv.ParametricRandomHills(
             random_seed=1, number_of_hills=30, u_res=51, v_res=51, texture_coordinates=True
         )
         return source.translate((0.0, 5.0, 15.0)).rotate_x(-90.0)
-    elif surface == 'sphere':
-        return get_sphere()
-    elif surface == 'torus':
-        return get_torus()
     return None
 
 
