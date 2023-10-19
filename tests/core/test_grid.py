@@ -873,48 +873,6 @@ def test_create_image_data_from_specs():
     assert grid != grid_from_grid
 
 
-def test_create_uniform_grid_from_specs():
-    # empty
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pv.UniformGrid()
-
-    # create ImageData
-    dims = (10, 10, 10)
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pv.UniformGrid(dimensions=dims)  # Using default spacing and origin
-    assert grid.dimensions == dims
-    assert grid.extent == (0, 9, 0, 9, 0, 9)
-    assert grid.origin == (0.0, 0.0, 0.0)
-    assert grid.spacing == (1.0, 1.0, 1.0)
-
-    # Using default origin
-    spacing = (2, 1, 5)
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pv.UniformGrid(dimensions=dims, spacing=spacing)
-    assert grid.dimensions == dims
-    assert grid.origin == (0.0, 0.0, 0.0)
-    assert grid.spacing == spacing
-    origin = (10, 35, 50)
-
-    # Everything is specified
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pv.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
-    assert grid.dimensions == dims
-    assert grid.origin == origin
-    assert grid.spacing == spacing
-
-    # uniform grid from a uniform grid
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pv.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid_from_grid = pv.UniformGrid(grid)
-    assert grid == grid_from_grid
-
-    # and is a copy
-    grid.origin = (0, 0, 0)
-    assert grid != grid_from_grid
-
-
 def test_image_data_invald_args():
     with pytest.warns(
         PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"

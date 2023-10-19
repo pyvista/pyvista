@@ -917,31 +917,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.renderers.active_renderer
 
-    @property
-    def store_image(self):  # numpydoc ignore=RT01
-        """Store last rendered frame on close.
-
-        .. deprecated:: 0.38.0
-           ``store_image`` is no longer used. Images are automatically cached
-           as needed.
-
-        """
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError(
-            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
-            ' Images are automatically cached as needed.'
-        )
-
-    @store_image.setter
-    def store_image(self, value):  # numpydoc ignore=GL08
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError(
-            '`store_image` has been deprecated as of 0.38.0 and is no longer used.'
-            ' Images are automatically cached as needed.'
-        )
-
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
 
@@ -2333,7 +2308,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity=1.0,
         culling=None,
         rgb=None,
-        categories=None,
         below_color=None,
         above_color=None,
         annotations=None,
@@ -2458,8 +2432,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene. Defaults to ``True`` unless ``rgba=True``.
 
-        multi_colors : bool, default: False
-            Color each block by a solid color using matplotlib's color cycler.
+        multi_colors : bool | str | cycler.Cycler | sequence[ColorLike], default: False
+            Color each block by a solid color using a custom cycler.
+
+            If ``True``, the default 'matplotlib' color cycler is used.
+
+            See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
+            custom color cyclers.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
@@ -2529,15 +2508,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             a scalars array ending with ``"_rgba"`` is passed, the default
             becomes ``True``.  This can be overridden by setting this
             parameter to ``False``.
-
-        categories : bool, optional
-            If set to ``True``, then the number of unique values in
-            the scalar array will be used as the ``n_colors``
-            argument.
-
-            .. deprecated:: 0.39.0
-               This keyword argument is no longer used. Instead, use
-               ``n_colors``.
 
         below_color : ColorLike, optional
             Solid color for values below the scalars range
@@ -2749,7 +2719,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if color is not None:
             self.mapper.scalar_visibility = False
         elif multi_colors:
-            self.mapper.set_unique_colors()
+            self.mapper.set_unique_colors(multi_colors)
         else:
             if scalars is None:
                 point_name, cell_name = dataset._get_consistent_active_scalars()
@@ -2765,16 +2735,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'`scalars` must be a string for `add_composite`, not ({type(scalars)})'
                 )
-
-            if categories:
-                # Deprecated on 0.39.0, estimated removal on v0.42.0
-                warnings.warn(
-                    '`categories` is deprecated for composite datasets. Use `n_colors` instead.',
-                    PyVistaDeprecationWarning,
-                )
-                if not isinstance(categories, int):
-                    raise TypeError('Categories must be an integer for a composite dataset.')
-                n_colors = categories
 
             if scalars is not None:
                 scalar_bar_args = self.mapper.set_scalars(
@@ -3024,9 +2984,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene.
 
-        multi_colors : bool, default: False
+        multi_colors : bool | str | cycler.Cycler | sequence[ColorLike], default: False
             If a :class:`pyvista.MultiBlock` dataset is given this will color
-            each block by a solid color using matplotlib's color cycler.
+            each block by a solid color using a custom cycler.
+
+            If ``True``, the default 'matplotlib' color cycler is used.
+
+            See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
+            custom color cycles.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
@@ -3377,7 +3342,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 nan_opacity=nan_opacity,
                 culling=culling,
                 rgb=rgb,
-                categories=categories,
                 below_color=below_color,
                 above_color=above_color,
                 pickable=pickable,
@@ -4326,7 +4290,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
-        params=None,
     ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
@@ -4358,13 +4321,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try ``0.9``  first and decrease until the desired rendering
             performance is achieved.
 
-        params : dict, optional
-            Optional silhouette parameters.
-
-            .. deprecated:: 0.38.0
-               This keyword argument is no longer used. Instead, input the
-               parameters to this function directly.
-
         Returns
         -------
         pyvista.Actor
@@ -4388,15 +4344,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         silhouette_params = self._theme.silhouette.to_dict()
-
-        if params is not None:
-            # Deprecated on 0.38.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`params` is deprecated. Set the arguments directly.',
-                PyVistaDeprecationWarning,
-                stacklevel=3,
-            )
-            silhouette_params.update(params)
 
         if color is None:
             color = silhouette_params["color"]
@@ -6056,26 +6003,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             thread.start()
         else:
             orbit()
-
-    def export_vtkjs(self, *args, **kwargs):
-        """Export the current rendering scene as a VTKjs scene.
-
-        .. deprecated:: 0.40.0
-            This export routine has been broken for some time and has
-            been completely removed in version 0.40.0.  Use :func:`pyvista.Plotter.export_vtksz` instead.
-
-        Parameters
-        ----------
-        *args : tuple
-            Positional arguments.
-
-        **kwargs : dict, optional
-            Keyword arguments.
-
-        """
-        from pyvista.core.errors import DeprecationError
-
-        raise DeprecationError('export_vtkjs is deprecated. Use export_vtksz instead.')
 
     def export_obj(self, filename):
         """Export scene to OBJ format.
