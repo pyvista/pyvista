@@ -35,6 +35,7 @@ from typing import Any, Iterable, List, Tuple, Union, get_args, get_origin
 from warnings import warn
 
 import numpy as np
+from numpy.exceptions import VisibleDeprecationWarning
 from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
@@ -359,7 +360,7 @@ def cast_array_to_NDArray(
                 out = out.copy()
         else:
             out = np.array(arr, dtype=dtype, copy=copy)
-    except ValueError as e:
+    except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"{name} cannot be cast as {np.ndarray}.") from e
     return out
 
