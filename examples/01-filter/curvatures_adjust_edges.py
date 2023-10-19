@@ -3,7 +3,6 @@ import math
 import numpy as np
 from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
-from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
 from vtkmodules.vtkFiltersGeneral import vtkCurvatures
@@ -47,9 +46,6 @@ def main(argv):
     source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('Mean_Curvature'))
 
     # Let's visualise what we have done.
-
-    colors = vtkNamedColors()
-    colors.SetColor("ParaViewBkg", [82, 87, 110, 255])
 
     window_width = 1024
     window_height = 512
@@ -124,8 +120,7 @@ def main(argv):
         text_actor.SetPosition(250, 16)
 
         renderer = plotter.renderers[0]
-        renderer.SetBackground(colors.GetColor3d('ParaViewBkg'))
-
+        renderer.set_background([82, 87, 110])
         renderer.add_actor(actor)
         renderer.add_actor(text_actor)
         renderer.add_actor(scalar_bar)
