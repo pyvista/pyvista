@@ -10,20 +10,20 @@ from vtk import vtkTransform
 from pyvista.core import pyvista_ndarray
 from pyvista.core.input_validation.input_validation import (
     _set_default_kwarg_mandatory,
-    cast_array_to_NDArray,
-    cast_array_to_nested_list,
-    cast_array_to_nested_tuple,
+    cast_to_list_array,
+    cast_to_ndarray,
+    cast_to_tuple_array,
     check_has_shape,
-    check_is_ArrayLike,
-    check_is_DTypeLike,
+    check_is_arraylike,
+    check_is_dtypelike,
     check_is_finite,
     check_is_greater_than,
     check_is_in_range,
     check_is_instance,
-    check_is_integer,
+    check_is_integerlike,
     check_is_iterable,
     check_is_less_than,
-    check_is_NDArray,
+    check_is_ndarray,
     check_is_real,
     check_is_sequence,
     check_is_sorted,
@@ -34,15 +34,15 @@ from pyvista.core.input_validation.input_validation import (
     check_iterable_elements_have_type,
     check_string_is_in_list,
     coerce_array_to_arrayNx3,
-    coerce_dtypelike_as_dtype,
     coerce_number_or_array3_as_array3,
-    coerce_shapelike_as_shape,
-    coerce_transformlike_as_array3x3,
-    coerce_transformlike_as_array4x4,
     validate_arrayNx3,
     validate_data_range,
+    validate_dtype,
     validate_number,
     validate_numeric_array,
+    validate_shape_value,
+    validate_transform_as_array3x3,
+    validate_transform_as_array4x4,
 )
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
@@ -64,22 +64,22 @@ def not_ArrayLike():
         vtkTransform(),
     ],
 )
-def test_coerce_transformlike_as_array4x4(transform_like):
-    result = coerce_transformlike_as_array4x4(transform_like)
+def test_validate_transform_as_array4x4(transform_like):
+    result = validate_transform_as_array4x4(transform_like)
     assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(4))
 
 
-def test_coerce_transformlike_as_array4x4_raises():
+def test_validate_transform_as_array4x4_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
-        coerce_transformlike_as_array4x4(np.array([1, 2, 3]))
+        validate_transform_as_array4x4(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must be numeric"):
-        coerce_transformlike_as_array4x4("abc")
+        validate_transform_as_array4x4("abc")
 
 
 def test_check_is_subdtype():
     check_is_subdtype(np.array([1, 2, 3]), np.integer)
-    check_is_subdtype(np.array([1.0, 2, 3]), dtype=float)
+    check_is_subdtype(np.array([1.0, 2, 3]), dtypelike=float)
     check_is_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
     check_is_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
     msg = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
@@ -90,46 +90,33 @@ def test_check_is_subdtype():
         check_is_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
-def test_coerce_dtypelike_as_dtype():
-    dtype = coerce_dtypelike_as_dtype('single')
+def test_validate_dtype():
+    dtype = validate_dtype('single')
     assert isinstance(dtype, np.dtype)
     assert dtype.type is np.float32
 
     with pytest.raises(TypeError):
-        coerce_dtypelike_as_dtype('cat')
+        validate_dtype('cat')
 
 
-def test_coerce_dtypelike_changes_type():
+def test_check_is_subdtype_changes_type():
     # test coercing some types (e.g. np.number) can lead to unexpected
     # failed `np.issubtype` checks due to an implicit change of type
     int_array = np.array([1, 2, 3])
     dtype_expected = np.number
     check_is_subdtype(int_array, dtype_expected)  # int is subtype of np.number
 
-    dtype_coerced = coerce_dtypelike_as_dtype(dtype_expected)
+    dtype_coerced = validate_dtype(dtype_expected)
     assert dtype_coerced.type is np.float64  # np.number is coerced (by NumPy) as a float
     with pytest.raises(TypeError):
         # this check will now fail since int is not subtype of float
         check_is_subdtype(int_array, dtype_coerced)
 
 
-def test_check_is_DTypeLike():
-    check_is_DTypeLike(np.number)
+def test_check_is_dtypelike():
+    check_is_dtypelike(np.number)
     with pytest.raises(TypeError):
-        coerce_dtypelike_as_dtype('cat')
-
-
-#
-# from pyvista.core._typing_core import _Sequence3
-# def test_check_Sequence_typing():
-#     _check_Sequence_typing((1, 2, 3), _Sequence3)
-
-# def test_coerce_ArrayLike_as_NDArray():
-#     arr = coerce_ArrayLike_as_NDArray([1,2,3])
-#     assert np.array_equal(arr, [1,2,3])
-#     with pytest.raises(ValueError, match=escape("Unable to ceorce input as an NDArray. Input must be ArrayLike, got the following instead:\n[[1, 2, 3], [4, 5]]")
-# ):
-#         arr = coerce_ArrayLike_as_NDArray([[1,2,3],[4,5]])
+        validate_dtype('cat')
 
 
 def test_validate_number():
@@ -191,7 +178,7 @@ def test_set_default_kwarg_mandatory():
         _set_default_kwarg_mandatory(kwargs, default_key, default_value)
 
 
-def test_check_array_shape():
+def test_check_has_shape():
     check_has_shape(0, ())
     check_has_shape(0, [(), 2])
     check_has_shape((1, 2, 3), [(), 3])
@@ -207,23 +194,23 @@ def test_check_array_shape():
         check_has_shape((1, 2, 3), [(), (4, 5)])
 
 
-def test_coerce_shapelike_as_shape():
+def test_validate_shape_value():
     msg = "`None` is not a valid shape. Use `()` instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        coerce_shapelike_as_shape(None)
-    shape = coerce_shapelike_as_shape(())
+        validate_shape_value(None)
+    shape = validate_shape_value(())
     assert shape == ()
-    shape = coerce_shapelike_as_shape(1)
+    shape = validate_shape_value(1)
     assert shape == (1,)
-    shape = coerce_shapelike_as_shape(-1)
+    shape = validate_shape_value(-1)
     assert shape == (-1,)
-    shape = coerce_shapelike_as_shape((1, 2, 3))
+    shape = validate_shape_value((1, 2, 3))
     assert shape == (
         1,
         2,
         3,
     )
-    shape = coerce_shapelike_as_shape((-1, 2, -1))
+    shape = validate_shape_value((-1, 2, -1))
     assert shape == (-1, 2, -1)
 
     msg = (
@@ -231,15 +218,15 @@ def test_coerce_shapelike_as_shape():
         "The dtype must be a subtype of <class 'numpy.integer'>."
     )
     with pytest.raises(TypeError, match=escape(msg)):
-        coerce_shapelike_as_shape(1.0)
+        validate_shape_value(1.0)
 
     msg = "Shape values must all be greater than or equal to -1."
     with pytest.raises(ValueError, match=msg):
-        coerce_shapelike_as_shape(-2)
+        validate_shape_value(-2)
 
     msg = "Shape must be scalar or 1-dimensional."
     with pytest.raises(ValueError, match=msg):
-        coerce_shapelike_as_shape(((1, 2), (3, 4)))
+        validate_shape_value(((1, 2), (3, 4)))
 
 
 def test_coerce_array_to_shapeNx3():
@@ -285,20 +272,6 @@ def test_check_is_in_range():
         check_is_in_range((1, 2, 3), [1, 3], strict_lower=True)
 
 
-# def test_check_string_is_in_list():
-#     check_is_string("abc")
-#     check_is_string("abc", name='123')
-#     msg = "Value must be a string, got <class 'int'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         check_is_string(0, name='Value')
-#     msg = "Input must be a string, got <class 'int'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         check_is_string(0)
-#     msg = "Name must be a string, got <class 'float'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         check_is_string("abc", name=0.0)
-
-
 def numeric_array_test_cases():
     Case = namedtuple("Case", ["kwarg", "valid_array", "invalid_array", "error_type", "error_msg"])
     return (
@@ -336,8 +309,8 @@ def test_validate_numeric_array_cases(
         invalid_array = np.stack((invalid_array, invalid_array), axis=1)
 
     if input_type is tuple:
-        valid_array = cast_array_to_nested_tuple(valid_array)
-        invalid_array = cast_array_to_nested_tuple(invalid_array)
+        valid_array = cast_to_tuple_array(valid_array)
+        invalid_array = cast_to_tuple_array(invalid_array)
     elif input_type is list:
         valid_array = valid_array.tolist()
         invalid_array = invalid_array.tolist()
@@ -390,7 +363,7 @@ def test_validate_numeric_array_cases(
             if (
                 not copy
                 and isinstance(array_in, np.ndarray)
-                and coerce_dtypelike_as_dtype(dtype_out) is array_in.dtype
+                and validate_dtype(dtype_out) is array_in.dtype
             ):
                 assert array_out is array_in
             else:
@@ -405,8 +378,8 @@ def test_validate_numeric_array_cases(
 @pytest.mark.parametrize('object', [0, 0.0, "0"])
 @pytest.mark.parametrize('classinfo', [int, (int, float), [int, float]])
 @pytest.mark.parametrize('allow_subclass', [True, False])
-# @pytest.mark.parametrize('name', [True,False])
-def test_check_is_instance(object, classinfo, allow_subclass):
+@pytest.mark.parametrize('name', ["_input", "_object"])
+def test_check_is_instance(object, classinfo, allow_subclass, name):
     if isinstance(classinfo, list):
         with pytest.raises(TypeError):
             check_is_instance(object, classinfo)
@@ -418,32 +391,32 @@ def test_check_is_instance(object, classinfo, allow_subclass):
         else:
             with pytest.raises(TypeError, match='Object must be an instance of'):
                 check_is_instance(object, classinfo)
-            with pytest.raises(TypeError, match='Input must be an instance of'):
-                check_is_instance(object, classinfo, name='Input')
+            with pytest.raises(TypeError, match=f'{name} must be an instance of'):
+                check_is_instance(object, classinfo, name=name)
 
     else:
         if type(classinfo) is tuple:
             if type(object) in classinfo:
                 check_is_type(object, classinfo)
             else:
-                with pytest.raises(TypeError, match='Input must have one of the following types'):
-                    check_is_type(object, classinfo, name='Input')
+                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                    check_is_type(object, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have one of the following types'):
                     check_is_type(object, classinfo)
         elif get_origin(classinfo) is Union:
             if type(object) in get_args(classinfo):
                 check_is_type(object, classinfo)
             else:
-                with pytest.raises(TypeError, match='Input must have one of the following types'):
-                    check_is_type(object, classinfo, name='Input')
+                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                    check_is_type(object, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have one of the following types'):
                     check_is_type(object, classinfo)
         else:
             if type(object) is classinfo:
                 check_is_type(object, classinfo)
             else:
-                with pytest.raises(TypeError, match='Input must have type'):
-                    check_is_type(object, classinfo, name='Input')
+                with pytest.raises(TypeError, match=f'{name} must have type'):
+                    check_is_type(object, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have type'):
                     check_is_type(object, classinfo)
 
@@ -490,18 +463,18 @@ def test_check_is_string():
         check_is_string(str_subclass(), allow_subclass=False)
 
 
-def test_check_is_ArrayLike():
-    check_is_ArrayLike([1, 2])
+def test_check_is_arraylike():
+    check_is_arraylike([1, 2])
     with pytest.raises(ValueError, match="_input"):
-        check_is_ArrayLike([[1], [2, 3]], name="_input")
+        check_is_arraylike([[1], [2, 3]], name="_input")
 
 
 @pytest.mark.parametrize('as_any', [True, False])
 @pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize('dtype', [None, float])
-def test_cast_as_NDArray(as_any, copy, dtype):
+def test_cast_to_ndarray(as_any, copy, dtype):
     array_in = pyvista_ndarray([1, 2])
-    array_out = cast_array_to_NDArray(array_in, copy=copy, as_any=as_any, dtype=dtype)
+    array_out = cast_to_ndarray(array_in, copy=copy, as_any=as_any, dtype=dtype)
     assert np.array_equal(array_out, array_in)
     if as_any:
         assert type(array_out) is pyvista_ndarray
@@ -517,32 +490,32 @@ def test_cast_as_NDArray(as_any, copy, dtype):
         assert array_out.dtype.type is np.dtype(dtype).type
 
 
-def test_cast_to_NDArray_raises():
+def test_cast_to_ndarray_raises():
     msg = "Input cannot be cast as <class 'numpy.ndarray'>."
     with pytest.raises(ValueError, match=msg):
-        cast_array_to_NDArray([[1], [2, 3]])
+        cast_to_ndarray([[1], [2, 3]])
 
 
 def test_cast_to_tuple_array(not_ArrayLike):
     array_in = np.zeros(shape=(2, 2, 3))
-    array_tuple = cast_array_to_nested_tuple(array_in)
+    array_tuple = cast_to_tuple_array(array_in)
     assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
     array_list = array_in.tolist()
     assert np.array_equal(array_tuple, array_list)
     with pytest.raises(ValueError, match="_input"):
-        cast_array_to_nested_tuple(not_ArrayLike, name='_input')
+        cast_to_tuple_array(not_ArrayLike, name='_input')
 
 
 def test_cast_to_list_array(not_ArrayLike):
     array_in = np.zeros(shape=(3, 4, 5))
-    array_list = cast_array_to_nested_list(array_in)
+    array_list = cast_to_list_array(array_in)
     assert np.array_equal(array_in, array_list)
     with pytest.raises(ValueError, match="_input"):
-        cast_array_to_nested_list(not_ArrayLike, name='_input')
+        cast_to_list_array(not_ArrayLike, name='_input')
 
 
 def test_coerce_transformlike_as_array3x3():
-    coerce_transformlike_as_array3x3
+    validate_transform_as_array3x3
 
 
 def test_check_iterable_elements_have_type():
@@ -570,7 +543,7 @@ def test_check_is_finite():
 
 
 def test_check_is_integer():
-    check_is_integer
+    check_is_integerlike
 
 
 def test_check_is_sequence():
@@ -599,7 +572,7 @@ def test_check_is_string_sequence():
 
 
 def test_check_is_NDArray():
-    check_is_NDArray
+    check_is_ndarray
 
 
 def test_coerce_number_or_array3_as_array3():
@@ -608,3 +581,16 @@ def test_coerce_number_or_array3_as_array3():
 
 def test_check_string_is_in_list():
     check_string_is_in_list
+
+
+#     check_is_string("abc")
+#     check_is_string("abc", name='123')
+#     msg = "Value must be a string, got <class 'int'> instead."
+#     with pytest.raises(TypeError, match=msg):
+#         check_is_string(0, name='Value')
+#     msg = "Input must be a string, got <class 'int'> instead."
+#     with pytest.raises(TypeError, match=msg):
+#         check_is_string(0)
+#     msg = "Name must be a string, got <class 'float'> instead."
+#     with pytest.raises(TypeError, match=msg):
+#         check_is_string("abc", name=0.0)
