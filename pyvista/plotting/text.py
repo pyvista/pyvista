@@ -357,7 +357,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Background color of text's property.
 
         """
@@ -409,7 +409,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Frame color of text property.
         """
         return Color(self.GetFrameColor())
