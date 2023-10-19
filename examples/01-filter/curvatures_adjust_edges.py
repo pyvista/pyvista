@@ -1,4 +1,5 @@
 import math
+
 import numpy as np
 from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
@@ -16,6 +17,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindowInteractor,
     vtkTextMapper,
 )
+
 import pyvista as pv
 
 
