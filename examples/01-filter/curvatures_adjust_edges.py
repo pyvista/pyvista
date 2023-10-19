@@ -16,7 +16,6 @@ from vtkmodules.vtkCommonCore import (
     VTK_DOUBLE,
     vtkDoubleArray,
     vtkFloatArray,
-    vtkLookupTable,
 )
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import (
