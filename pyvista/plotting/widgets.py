@@ -2644,8 +2644,8 @@ class WidgetHelper:
 
         Parameters
         ----------
-        logo : pyvista.ImageData or str or pathlib.Path
-            The logo to display. If a string is passed, it is assumed to be a
+        logo : pyvista.ImageData or pathlib.Path
+            The logo to display. If a pathlike is passed, it is assumed to be a
             file path to an image.
 
         position : tuple(float), optional
@@ -2679,6 +2679,11 @@ class WidgetHelper:
         """
         if logo is None:
             logo = pyvista.global_theme.logo_file
+        if logo is None:
+            # Fallback to PyVista logo
+            from pyvista import examples
+
+            logo = examples.logofile
         if isinstance(logo, (str, pathlib.Path)):
             logo = pyvista.read(logo)
         if not isinstance(logo, pyvista.ImageData):

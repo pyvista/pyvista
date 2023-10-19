@@ -38,7 +38,6 @@ from typing import Callable, List, Optional, Union
 import warnings
 
 import pyvista
-from pyvista import examples
 from pyvista.core._typing_core import Number
 from pyvista.core.utilities.misc import _check_range
 
@@ -1630,7 +1629,7 @@ class Theme(_ThemeConfig):
         self._interpolate_before_map = True
         self._opacity = 1.0
 
-        self._logo_file = examples.logofile
+        self._logo_file = None
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2920,7 +2919,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = config
 
     @property
-    def logo_file(self) -> pathlib.Path:  # numpydoc ignore=RT01
+    def logo_file(self) -> Optional[pathlib.Path]:  # numpydoc ignore=RT01
         """Return or set the logo file.
 
         Examples
@@ -2932,10 +2931,13 @@ class Theme(_ThemeConfig):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: Union[str, pathlib.Path]):  # numpydoc ignore=GL08
-        path = pathlib.Path(logo_file)
-        if not path.exists():
-            raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+    def logo_file(self, logo_file: Optional[pathlib.Path]):  # numpydoc ignore=GL08
+        if logo_file is None:
+            path = None
+        else:
+            path = pathlib.Path(logo_file)
+            if not path.exists():
+                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
         self._logo_file = path
 
 
