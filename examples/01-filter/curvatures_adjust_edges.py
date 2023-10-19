@@ -6,29 +6,12 @@ import numpy as np
 from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.vtkCommonComputationalGeometry import (
-    vtkParametricBour,
-    vtkParametricEnneper,
-    vtkParametricMobius,
-    vtkParametricTorus,
-)
-from vtkmodules.vtkCommonCore import VTK_DOUBLE, vtkDoubleArray, vtkFloatArray
-from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkCommonCore import VTK_DOUBLE
 from vtkmodules.vtkFiltersCore import (
-    vtkDelaunay2D,
     vtkFeatureEdges,
     vtkIdFilter,
-    vtkPolyDataNormals,
-    vtkPolyDataTangents,
-    vtkTriangleFilter,
 )
-from vtkmodules.vtkFiltersGeneral import vtkCurvatures, vtkTransformPolyDataFilter
-from vtkmodules.vtkFiltersModeling import vtkLinearSubdivisionFilter
-from vtkmodules.vtkFiltersSources import (
-    vtkCubeSource,
-    vtkParametricFunctionSource,
-    vtkTexturedSphereSource,
-)
+from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 
 # noinspection PyUnresolvedReferences
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
