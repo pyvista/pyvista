@@ -582,3 +582,15 @@ def test_affine_widget(sphere):
     widget.remove()
     assert not widget._circles
     assert not widget._arrows
+
+
+def test_logo_widget(verify_image_cache):
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_logo_widget()
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_logo_widget(position=(0.075, 0.05), size=(0.2, 0.1))
+    pl.show()

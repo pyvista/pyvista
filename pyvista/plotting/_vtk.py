@@ -35,6 +35,8 @@ from vtkmodules.vtkInteractionWidgets import (
     vtkDistanceWidget,
     vtkImplicitPlaneWidget,
     vtkLineWidget,
+    vtkLogoRepresentation,
+    vtkLogoWidget,
     vtkOrientationMarkerWidget,
     vtkPlaneWidget,
     vtkPointHandleRepresentation3D,

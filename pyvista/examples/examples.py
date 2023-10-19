@@ -25,6 +25,7 @@ rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
+logofile = os.path.join(dir_path, 'pyvista_logo.png')
 
 
 def load_ant():
@@ -507,3 +508,21 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     grid['real_wf'] = np.real(wfc.ravel())
     grid['wf'] = wfc.ravel()
     return grid
+
+
+def load_logo():
+    """Load the PyVista logo as a :class:`pyvista.ImageData`.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture containing the PyVista logo.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> logo = examples.load_logo()
+    >>> logo.plot()
+
+    """
+    return pyvista.read(logofile)

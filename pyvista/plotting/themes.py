@@ -33,10 +33,12 @@ pyvista.
 from enum import Enum
 import json
 import os
+import pathlib
 from typing import Callable, List, Optional, Union
 import warnings
 
 import pyvista
+from pyvista import examples
 from pyvista.core._typing_core import Number
 from pyvista.core.utilities.misc import _check_range
 
@@ -1544,6 +1546,7 @@ class Theme(_ThemeConfig):
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_logo_file',
     ]
 
     def __init__(self):
@@ -1626,6 +1629,8 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+
+        self._logo_file = examples.logofile
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2913,6 +2918,25 @@ class Theme(_ThemeConfig):
         if not isinstance(config, _LightingConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
+
+    @property
+    def logo_file(self) -> pathlib.Path:  # numpydoc ignore=RT01
+        """Return or set the logo file.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.silhouette.opacity = 1.0
+
+        """
+        return self._logo_file
+
+    @logo_file.setter
+    def logo_file(self, logo_file: Union[str, pathlib.Path]):  # numpydoc ignore=GL08
+        path = pathlib.Path(logo_file)
+        if not path.exists():
+            raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+        self._logo_file = path
 
 
 class DarkTheme(Theme):
