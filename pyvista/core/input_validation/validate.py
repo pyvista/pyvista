@@ -146,7 +146,7 @@ def validate_numeric_array(
             * a number if the input is scalar.
 
     """
-    arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy, name=name)
+    arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
 
     # Check type
     try:
@@ -214,7 +214,7 @@ def validate_transform_as_array4x4(transformlike, /, *, name="Transform") -> np.
         arr = array_from_vtkmatrix(transformlike.GetMatrix())
     else:
         try:
-            valid_arr = validate_numeric_array(transformlike, shape=[(3, 3), (4, 4)])
+            valid_arr = validate_numeric_array(transformlike, shape=[(3, 3), (4, 4)], name=name)
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
             else:

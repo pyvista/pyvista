@@ -46,7 +46,6 @@ def check_iterable_elements_have_type(
         If the input is not a Sequence with elements of the specified type(s).
 
     """
-    check_is_string(name, name="Name")
     check_is_iterable(obj, name=name)
     _ = (check_is_instance(element, check_type, allow_subclass=allow_subclass) for element in obj)
 
@@ -78,8 +77,7 @@ def check_is_subdtype(arr, /, dtypelike, *, name='Input'):
         Returns ``True`` if the array data is a subtupe of ``dtype``.
 
     """
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     if not isinstance(dtypelike, (list, tuple)):
         dtypelike = [dtypelike]
     valid = False
@@ -120,7 +118,7 @@ def check_is_arraylike(arr, /, *, name="Input"):
         Array to check.
 
     """
-    cast_to_ndarray(arr, name=name)
+    cast_to_ndarray(arr)
 
 
 def check_is_real(arr, /, *, as_warning=False, name="Array"):
@@ -140,8 +138,7 @@ def check_is_real(arr, /, *, as_warning=False, name="Array"):
         Issue a UserWarning instead of raising a TypeError.
 
     """
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     # Do not use np.isreal as it will fail in some cases (e.g. scalars).
     # Check dtype directly instead
     try:
@@ -162,8 +159,7 @@ def check_is_sorted(arr, /, *, name="Array"):
         Array to check.
 
     """
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     if not np.array_equal(np.sort(arr), arr):
         raise ValueError(f"{name} must be sorted.")
 
@@ -177,8 +173,7 @@ def check_is_finite(arr, /, *, as_warning=False, name="Array"):
         Array to check.
 
     """
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     if not np.all(np.isfinite(arr)):
         if as_warning:
             warn(f"{name} has non-finite values.", UserWarning)
@@ -201,10 +196,9 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
         (i.e. float types are not allowed).
 
     """
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     if strict:
-        check_is_subdtype(arr, np.integer, name=name)
+        check_is_subdtype(arr, np.integer)
     elif not np.array_equal(arr, np.floor(arr)):
         raise ValueError(f"{name} must have integer-like values.")
 
@@ -228,9 +222,7 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
         ``Value``.
 
     """
-    check_is_string(name, name="Name")
-
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     if strict and not np.all(arr > value):
         raise ValueError(f"{name} values must all be greater than {value}.")
     elif not np.all(arr >= value):
@@ -259,8 +251,7 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
         If the check fails.
 
     """
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     if strict and not np.all(arr < value):
         raise ValueError(f"{name} values must all be less than {value}.")
     elif not np.all(arr <= value):
@@ -298,8 +289,7 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     # Avoid circular import
     from pyvista.core.input_validation.validate import validate_data_range
 
-    check_is_string(name, name="Name")
-    arr = cast_to_ndarray(arr, name=name)
+    arr = cast_to_ndarray(arr)
     rng = validate_data_range(rng)
 
     check_is_greater_than(arr, rng[0], strict=strict_lower, name=name)
@@ -334,7 +324,6 @@ def check_has_shape(
     """
     from pyvista.core.input_validation.validate import validate_shape_value
 
-    check_is_string(name, name="Name")
     arr = cast_to_ndarray(arr)
     is_error = True
     # NumPy allows shape as an input parameter to be array-like, but
@@ -370,31 +359,26 @@ def check_has_shape(
 
 def check_is_ndarray(arr, /, *, allow_subclass=True, name="Input"):
     """Check that object is a NumPy ndarray."""
-    check_is_string(name, name="Name")
     check_is_instance(arr, np.ndarray, allow_subclass=allow_subclass, name=name)
 
 
 def check_is_number(num, /, *, allow_subclass=True, name='Number'):
     """Check that object is a number."""
-    check_is_string(name, name="Name")
     check_is_instance(num, Number, allow_subclass=allow_subclass, name=name)
 
 
 def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
     """Check that object is a string."""
-    check_is_instance(name, str, allow_subclass=True, name="Name")
     check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
 def check_is_sequence(obj: Sequence, /, *, allow_subclass=True, name: str = 'Object'):
     """Check that object is a sequence."""
-    check_is_string(name, name="Name")
     check_is_instance(obj, Sequence, allow_subclass=allow_subclass, name=name)
 
 
 def check_is_iterable(obj: Iterable, /, *, allow_subclass=True, name: str = 'Object'):
     """Check that object is iterable."""
-    check_is_string(name, name="Name")
     check_is_instance(obj, Iterable, allow_subclass=allow_subclass, name=name)
 
 

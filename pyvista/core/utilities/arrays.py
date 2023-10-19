@@ -794,7 +794,7 @@ def _coerce_transformlike_arg(transform_like: TransformLike):
     return transform_array
 
 
-def cast_to_list_array(arr, /, *, name="Input"):
+def cast_to_list_array(arr):
     """Cast an array to a nested list.
 
     Parameters
@@ -807,10 +807,10 @@ def cast_to_list_array(arr, /, *, name="Input"):
     list
         List or nested list array.
     """
-    return cast_to_ndarray(arr, name=name).tolist()
+    return cast_to_ndarray(arr).tolist()
 
 
-def cast_to_tuple_array(arr, /, *, name="Input"):
+def cast_to_tuple_array(arr):
     """Cast an array to a nested tuple.
 
     Parameters
@@ -823,7 +823,7 @@ def cast_to_tuple_array(arr, /, *, name="Input"):
     tuple
         Tuple or nested tuple array.
     """
-    arr = cast_to_ndarray(arr, name=name).tolist()
+    arr = cast_to_ndarray(arr).tolist()
 
     def _to_tuple(s):
         return tuple(_to_tuple(i) for i in s) if isinstance(s, list) else s
@@ -831,7 +831,7 @@ def cast_to_tuple_array(arr, /, *, name="Input"):
     return _to_tuple(arr)
 
 
-def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False, name="Input"):
+def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
     """Cast array to a NumPy ndarray.
 
     Parameters
@@ -863,5 +863,5 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False, name="Input"
             # error manually
             raise ValueError
     except (ValueError, np.VisibleDeprecationWarning) as e:
-        raise ValueError(f"{name} cannot be cast as {np.ndarray}.") from e
+        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     return out

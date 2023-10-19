@@ -454,7 +454,7 @@ def test_check_is_string():
     msg = "Object must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):
         check_is_string(0)
-    msg = "Name must be an instance of <class 'str'>. Got <class 'float'> instead."
+    msg = "Name must be a string, got <class 'float'> instead."
     with pytest.raises(TypeError, match=msg):
         check_is_string("abc", name=0.0)
 
@@ -468,8 +468,6 @@ def test_check_is_string():
 
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
-    with pytest.raises(ValueError, match="_input"):
-        check_is_arraylike([[1], [2, 3]], name="_input")
 
 
 def test_coerce_transformlike_as_array3x3():
