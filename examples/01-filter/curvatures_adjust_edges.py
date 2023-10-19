@@ -1,3 +1,9 @@
+"""
+.. _curvatures_adjust_edges:
+
+curvatures Adjust Edges
+~~~~~~~~~~~~~~~~~~~~~~~
+"""
 import math
 
 import numpy as np
