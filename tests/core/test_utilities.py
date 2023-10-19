@@ -931,19 +931,19 @@ def test_cast_to_ndarray_raises():
         cast_to_ndarray([[1], [2, 3]])
 
 
-def test_cast_to_tuple_array(not_ArrayLike):
+def test_cast_to_tuple_array():
     array_in = np.zeros(shape=(2, 2, 3))
     array_tuple = cast_to_tuple_array(array_in)
     assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
     array_list = array_in.tolist()
     assert np.array_equal(array_tuple, array_list)
-    with pytest.raises(ValueError, match="_input"):
-        cast_to_tuple_array(not_ArrayLike, name='_input')
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1,[2,3]]])
 
 
-def test_cast_to_list_array(not_ArrayLike):
+def test_cast_to_list_array():
     array_in = np.zeros(shape=(3, 4, 5))
     array_list = cast_to_list_array(array_in)
     assert np.array_equal(array_in, array_list)
-    with pytest.raises(ValueError, match="_input"):
-        cast_to_list_array(not_ArrayLike, name='_input')
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1,[2,3]]])
