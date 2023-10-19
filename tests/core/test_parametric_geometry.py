@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -212,3 +213,11 @@ def test_direction():
     assert np.allclose(points1[:, 0], -points3[:, 1])
     assert np.allclose(points1[:, 1], points3[:, 0])
     assert np.allclose(points1[:, 2], points3[:, 2])
+
+
+def test_surface_from_para():
+    parametric_function = vtk.vtkParametricBour()
+    geom = pv.surface_from_para(parametric_function, texture_coordinates=False)
+    assert geom.active_texture_coordinates is None
+    geom = pv.surface_from_para(parametric_function, texture_coordinates=True)
+    assert geom.active_texture_coordinates is not None
