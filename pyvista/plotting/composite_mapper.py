@@ -4,7 +4,6 @@ import sys
 from typing import Optional
 import weakref
 
-import matplotlib
 import numpy as np
 
 import pyvista
