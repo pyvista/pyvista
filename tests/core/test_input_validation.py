@@ -21,6 +21,7 @@ from pyvista.core.input_validation.input_validation import (
     check_is_in_range,
     check_is_instance,
     check_is_integer,
+    check_is_iterable,
     check_is_less_than,
     check_is_NDArray,
     check_is_real,
@@ -30,7 +31,7 @@ from pyvista.core.input_validation.input_validation import (
     check_is_string_sequence,
     check_is_subdtype,
     check_is_type,
-    check_sequence_elements_have_type,
+    check_iterable_elements_have_type,
     check_string_is_in_list,
     coerce_array_to_arrayNx3,
     coerce_dtypelike_as_dtype,
@@ -573,7 +574,20 @@ def test_check_is_integer():
 
 
 def test_check_is_sequence():
-    check_is_sequence
+    check_is_sequence((1,), name='abc')
+    check_is_sequence(range(3))
+    check_is_sequence("abc")
+    with pytest.raises(TypeError, match="_input"):
+        check_is_sequence(np.array(1), name="_input")
+
+
+def test_check_is_iterable():
+    check_is_iterable((1,), name='abc')
+    check_is_iterable(range(3))
+    check_is_iterable("abc")
+    check_is_iterable(np.array(1))
+    with pytest.raises(TypeError, match="_input"):
+        check_is_iterable(1, name="_input")
 
 
 def test_check_is_sorted():

@@ -29,7 +29,7 @@ Some function naming conventions used in this module are:
             * returned dtype may be specified (e.g. float, double)
             * values known to be integral, sorted, within some range, etc.
 """
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from functools import wraps
 from typing import Any, List, Tuple, Union, get_args, get_origin
 from warnings import warn
@@ -285,23 +285,22 @@ def coerce_transformlike_as_array3x3(matrix: Union[vtkMatrix3x3, NDArray]) -> ND
     return matrix
 
 
-def check_sequence_elements_have_type(
-    object: Sequence, check_type: Union[type, Tuple[type, ...]], allow_subclass=True, name='Object'
+def check_iterable_elements_have_type(
+    object, check_type: Union[type, Tuple[type, ...]], allow_subclass=True, name='Object'
 ):
-    """Check if all elements of a Sequence or nested Sequence are an
-    instance of a specific type or types.
+    """Check the type of all items in an Iterable.
 
     Parameters
     ----------
-    object : Sequence
-        Sequence to check.
+    object : Iterable
+        Iterable to check.
 
-    check_type : type | Tuple[type]
+    check_type : type | Tuple[type, ...]
         Class type(s) to check for. Each element of the sequence must
         have the type or one of the types specified.
 
     name : str, optional
-        Name to use in the error messages if any are raised.
+        Variable name to use in the error messages if any are raised.
 
     Raises
     ------
@@ -620,22 +619,28 @@ def coerce_array_to_arrayNx3(arr, **kwargs):
     return validate_numeric_array(arr, **kwargs).reshape((-1, 3))
 
 
-def check_is_string(object: str, allow_subclass=True, name: str = 'Object'):
+def check_is_string(obj: str, allow_subclass=True, name: str = 'Object'):
     """Check that object is a string."""
     check_is_instance(name, str, allow_subclass=True, name="Name")
-    check_is_instance(object, str, allow_subclass=allow_subclass, name=name)
+    check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
-def check_is_sequence(object: Any, allow_subclass=True, name: str = 'Object'):
+def check_is_sequence(obj: Any, allow_subclass=True, name: str = 'Object'):
     """Check that object is a sequence."""
     check_is_string(name, name="Name")
-    check_is_instance(object, Sequence, allow_subclass=allow_subclass, name=name)
+    check_is_instance(obj, Sequence, allow_subclass=allow_subclass, name=name)
+
+
+def check_is_iterable(obj: Any, allow_subclass=True, name: str = 'Object'):
+    """Check that object is iterable."""
+    check_is_string(name, name="Name")
+    check_is_instance(obj, Iterable, allow_subclass=allow_subclass, name=name)
 
 
 def check_is_instance(
-    object, classinfo: Union[type, Tuple[type, ...]], allow_subclass=True, name: str = 'Object'
+    obj, classinfo: Union[type, Tuple[type, ...]], allow_subclass=True, name: str = 'Object'
 ):
-    """Check that object is an instance of the given types."""
+    """Check that an object is an instance of the given types."""
     if not isinstance(name, str):
         raise TypeError(f"Name must be a string, got {type(name)} instead.")
 
@@ -650,7 +655,7 @@ def check_is_instance(
         num_classes = 1
 
     # Check if is instance
-    is_instance = isinstance(object, classinfo)
+    is_instance = isinstance(obj, classinfo)
 
     # Set flag to raise error if not instance
     is_error = False
@@ -664,21 +669,21 @@ def check_is_instance(
     # Set flag to raise error if not type
     elif not allow_subclass:
         if isinstance(classinfo, tuple):
-            if type(object) not in classinfo:
+            if type(obj) not in classinfo:
                 is_error = True
                 msg_body = "must have one of the following types"
-        elif type(object) is not classinfo:
+        elif type(obj) is not classinfo:
             is_error = True
             msg_body = "must have type"
 
     if is_error:
-        msg = f"{name} {msg_body} {classinfo}. Got {type(object)} instead."
+        msg = f"{name} {msg_body} {classinfo}. Got {type(obj)} instead."
         raise TypeError(msg)
 
 
-def check_is_type(object, classinfo, name: str = 'Object'):
+def check_is_type(obj, classinfo, name: str = 'Object'):
     """Check that object is one of the given types."""
-    return check_is_instance(object, classinfo, allow_subclass=False, name=name)
+    return check_is_instance(obj, classinfo, allow_subclass=False, name=name)
 
 
 def check_is_string_sequence():
