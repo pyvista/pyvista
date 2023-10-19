@@ -32,11 +32,11 @@ from pyvista.core.input_validation.check import (
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
+    validate_array,
     validate_arrayNx3,
     validate_data_range,
     validate_dtype,
     validate_number,
-    validate_array,
     validate_shape_value,
     validate_transform_as_array3x3,
     validate_transform_as_array4x4,
