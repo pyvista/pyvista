@@ -8,11 +8,12 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.input_validation.input_validation import (
-    _set_default_kwarg_mandatory,
+from pyvista.core.input_validation.cast import (
     cast_to_list_array,
     cast_to_ndarray,
     cast_to_tuple_array,
+)
+from pyvista.core.input_validation.check import (
     check_has_shape,
     check_is_arraylike,
     check_is_dtypelike,
@@ -33,6 +34,9 @@ from pyvista.core.input_validation.input_validation import (
     check_is_type,
     check_iterable_elements_have_type,
     check_string_is_in_list,
+)
+from pyvista.core.input_validation.validate import (
+    _set_default_kwarg_mandatory,
     coerce_number_or_array3_as_array3,
     validate_arrayNx3,
     validate_data_range,
