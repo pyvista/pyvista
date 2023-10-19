@@ -7,10 +7,7 @@ from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
-from vtkmodules.vtkFiltersCore import (
-    vtkFeatureEdges,
-    vtkIdFilter,
-)
+from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
 from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 
 # noinspection PyUnresolvedReferences
