@@ -340,6 +340,11 @@ def cast_array_to_NDArray(
                 out = out.copy()
         else:
             out = np.array(arr, dtype=dtype, copy=copy)
+        if out.dtype.name == 'object':
+            # NumPy will normally raise ValueError automatically for
+            # object arrays, but on some systems it will not, so raise
+            # error manually
+            raise ValueError
     except (ValueError, np.VisibleDeprecationWarning) as e:
         raise ValueError(f"{name} cannot be cast as {np.ndarray}.") from e
     return out
