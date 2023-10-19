@@ -33,7 +33,6 @@ from pyvista.core.input_validation.input_validation import (
     check_is_type,
     check_iterable_elements_have_type,
     check_string_is_in_list,
-    coerce_array_to_arrayNx3,
     coerce_number_or_array3_as_array3,
     validate_arrayNx3,
     validate_data_range,
@@ -229,12 +228,18 @@ def test_validate_shape_value():
         validate_shape_value(((1, 2), (3, 4)))
 
 
-def test_coerce_array_to_shapeNx3():
-    arr = coerce_array_to_arrayNx3((1, 2, 3))
+@pytest.mark.parametrize('reshape', [True, False])
+def test_validate_arrayNx3(reshape):
+    arr = validate_arrayNx3((1, 2, 3))
     assert arr.shape == (1, 3)
     assert np.array_equal(arr, [[1, 2, 3]])
 
-    arr = coerce_array_to_arrayNx3([(1, 2, 3), (4, 5, 6)])
+    if not reshape:
+        msg = "Array has shape (3,) which is not allowed. Shape must be (-1, 3)."
+        with pytest.raises(ValueError, match=escape(msg)):
+            validate_arrayNx3((1, 2, 3), reshape=False)
+
+    arr = validate_arrayNx3([(1, 2, 3), (4, 5, 6)], reshape=reshape)
     assert arr.shape == (2, 3)
 
     msg = (
@@ -242,13 +247,13 @@ def test_coerce_array_to_shapeNx3():
         "automatically set to `[3, (-1, 3)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
-        coerce_array_to_arrayNx3((1, 2, 3), shape=1)
+        validate_arrayNx3((1, 2, 3), shape=1)
     msg = "Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)]."
     with pytest.raises(ValueError, match=escape(msg)):
-        coerce_array_to_arrayNx3(0)
+        validate_arrayNx3(0)
     msg = "Array has shape (4,)"
     with pytest.raises(ValueError, match=escape(msg)):
-        coerce_array_to_arrayNx3([1, 2, 3, 4])
+        validate_arrayNx3([1, 2, 3, 4])
 
 
 def test_check_is_in_range():
@@ -520,10 +525,6 @@ def test_coerce_transformlike_as_array3x3():
 
 def test_check_iterable_elements_have_type():
     check_iterable_elements_have_type
-
-
-def test_validate_arrayNx3():
-    validate_arrayNx3
 
 
 def test_check_is_less_than():

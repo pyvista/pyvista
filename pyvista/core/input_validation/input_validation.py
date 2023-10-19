@@ -767,23 +767,37 @@ def validate_data_range(rng, **kwargs):
     return validate_numeric_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr, **kwargs):
-    """Validate an array is numeric and has Nx3 shape."""
-    name = 'Array'
-    kwargs.setdefault('name', name)
-    _set_default_kwarg_mandatory(kwargs, 'shape', [(-1, 3)], name=name)
-    return validate_numeric_array(arr, **kwargs)
+def validate_arrayNx3(arr, reshape=True, **kwargs):
+    """Validate an array is numeric and has shape Nx3.
 
+    Parameters
+    ----------
+    arr : array_like
+        Array to validate.
 
-def coerce_array_to_arrayNx3(arr, **kwargs):
-    """Validate an array is numeric and ensure out has Nx3 shape.
-    Input array can be 1D array-like with 3 elements or array-like with
-    shape Nx3. The output is reshaped to ensure it is 2D with Nx3 shape.
+    reshape : bool, True
+        If ``True``, 1D arrays with 3 elements are considered valid input
+        and are reshaped to (1,3) to ensure the output is two-dimensional.
+
+    Returns
+    -------
+    np.ndarray
+        Validated array with shape Nx3.
+
     """
     name = 'Array'
     kwargs.setdefault('name', name)
-    _set_default_kwarg_mandatory(kwargs, 'shape', [3, (-1, 3)], name=name)
-    return validate_numeric_array(arr, **kwargs).reshape((-1, 3))
+
+    if reshape:
+        shape = [3, (-1, 3)]
+    else:
+        shape = (-1, 3)
+
+    _set_default_kwarg_mandatory(kwargs, 'shape', shape, name=name)
+    arr = validate_numeric_array(arr, **kwargs)
+    if reshape:
+        return arr.reshape((-1, 3))
+    return arr
 
 
 def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
