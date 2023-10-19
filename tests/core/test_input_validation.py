@@ -545,8 +545,8 @@ def test_coerce_transformlike_as_array3x3():
     coerce_transformlike_as_array3x3
 
 
-def test_check_sequence_elements_have_type():
-    check_sequence_elements_have_type
+def test_check_iterable_elements_have_type():
+    check_iterable_elements_have_type
 
 
 def test_validate_arrayNx3():
