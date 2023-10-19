@@ -40,7 +40,6 @@ from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingCore import (
     vtkActor2D,
-    vtkColorTransferFunction,
     vtkPolyDataMapper,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
