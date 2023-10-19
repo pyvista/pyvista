@@ -938,7 +938,7 @@ def test_cast_to_tuple_array():
     array_list = array_in.tolist()
     assert np.array_equal(array_tuple, array_list)
     with pytest.raises(ValueError):
-        cast_to_tuple_array([[1,[2,3]]])
+        cast_to_tuple_array([[1, [2, 3]]])
 
 
 def test_cast_to_list_array():
@@ -946,4 +946,4 @@ def test_cast_to_list_array():
     array_list = cast_to_list_array(array_in)
     assert np.array_equal(array_in, array_list)
     with pytest.raises(ValueError):
-        cast_to_tuple_array([[1,[2,3]]])
+        cast_to_tuple_array([[1, [2, 3]]])
