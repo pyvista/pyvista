@@ -688,7 +688,6 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         """
         self.scalar_visibility = False
 
-        # color_cycler=True still uses 'matplotlib' cycler
         if isinstance(color_cycler, bool):
             colors = cycle(get_cycler("matplotlib"))
         else:
