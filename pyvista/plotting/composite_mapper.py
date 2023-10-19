@@ -690,7 +690,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         # color_cycler=True still uses 'matplotlib' cycler
         if isinstance(color_cycler, bool):
-            colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+            colors = cycle(get_cycler("matplotlib"))
         else:
             colors = cycle(get_cycler(color_cycler))
 
