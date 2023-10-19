@@ -13,7 +13,7 @@ from warnings import warn
 
 import numpy as np
 
-from pyvista.core.input_validation.cast import cast_to_ndarray
+from pyvista.core.utilities.arrays import cast_to_ndarray
 
 ShapeLike = Union[int, Tuple[int, ...], Tuple[None]]
 

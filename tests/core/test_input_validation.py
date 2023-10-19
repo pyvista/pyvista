@@ -8,11 +8,6 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.input_validation.cast import (
-    cast_to_list_array,
-    cast_to_ndarray,
-    cast_to_tuple_array,
-)
 from pyvista.core.input_validation.check import (
     check_has_shape,
     check_is_arraylike,
@@ -37,7 +32,6 @@ from pyvista.core.input_validation.check import (
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
-    coerce_number_or_array3_as_array3,
     validate_arrayNx3,
     validate_data_range,
     validate_dtype,
@@ -47,7 +41,7 @@ from pyvista.core.input_validation.validate import (
     validate_transform_as_array3x3,
     validate_transform_as_array4x4,
 )
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 
 
 @pytest.fixture
@@ -478,51 +472,6 @@ def test_check_is_arraylike():
         check_is_arraylike([[1], [2, 3]], name="_input")
 
 
-@pytest.mark.parametrize('as_any', [True, False])
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize('dtype', [None, float])
-def test_cast_to_ndarray(as_any, copy, dtype):
-    array_in = pyvista_ndarray([1, 2])
-    array_out = cast_to_ndarray(array_in, copy=copy, as_any=as_any, dtype=dtype)
-    assert np.array_equal(array_out, array_in)
-    if as_any:
-        assert type(array_out) is pyvista_ndarray
-    else:
-        assert type(array_out) is np.ndarray
-
-    if copy:
-        assert array_out is not array_in
-
-    if dtype is None:
-        assert array_out.dtype.type is array_in.dtype.type
-    else:
-        assert array_out.dtype.type is np.dtype(dtype).type
-
-
-def test_cast_to_ndarray_raises():
-    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
-    with pytest.raises(ValueError, match=msg):
-        cast_to_ndarray([[1], [2, 3]])
-
-
-def test_cast_to_tuple_array(not_ArrayLike):
-    array_in = np.zeros(shape=(2, 2, 3))
-    array_tuple = cast_to_tuple_array(array_in)
-    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
-    array_list = array_in.tolist()
-    assert np.array_equal(array_tuple, array_list)
-    with pytest.raises(ValueError, match="_input"):
-        cast_to_tuple_array(not_ArrayLike, name='_input')
-
-
-def test_cast_to_list_array(not_ArrayLike):
-    array_in = np.zeros(shape=(3, 4, 5))
-    array_list = cast_to_list_array(array_in)
-    assert np.array_equal(array_in, array_list)
-    with pytest.raises(ValueError, match="_input"):
-        cast_to_list_array(not_ArrayLike, name='_input')
-
-
 def test_coerce_transformlike_as_array3x3():
     validate_transform_as_array3x3
 
@@ -578,10 +527,6 @@ def test_check_is_string_sequence():
 
 def test_check_is_NDArray():
     check_is_ndarray
-
-
-def test_coerce_number_or_array3_as_array3():
-    coerce_number_or_array3_as_array3
 
 
 def test_check_string_is_in_list():

@@ -9,19 +9,26 @@ A `validate_` function typically :
 
 """
 from functools import wraps
-from typing import Any, Union, Tuple
+from typing import Any, Tuple, Union
 
 import numpy as np
-from vtkmodules.vtkCommonMath import vtkMatrix4x4, vtkMatrix3x3
+from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
 
 from pyvista import array_from_vtkmatrix
-from pyvista.core.input_validation.check import check_is_subdtype, check_is_real, check_has_shape, check_is_finite, \
-    check_is_integerlike, check_is_in_range, check_is_sorted, \
-    check_is_dtypelike, check_is_string, \
-    check_is_greater_than
-from pyvista.core.input_validation.cast import cast_to_tuple_array, \
-    cast_to_ndarray
+from pyvista.core.input_validation.check import (
+    check_has_shape,
+    check_is_dtypelike,
+    check_is_finite,
+    check_is_greater_than,
+    check_is_in_range,
+    check_is_integerlike,
+    check_is_real,
+    check_is_sorted,
+    check_is_string,
+    check_is_subdtype,
+)
+from pyvista.core.utilities.arrays import cast_to_ndarray, cast_to_tuple_array
 
 
 def validate_numeric_array(
@@ -303,6 +310,7 @@ def validate_dtype(dtype_like, /, *, name="Data type") -> np.dtype:
 
 @wraps(validate_numeric_array)
 def validate_number(num, **kwargs):
+    """Validate a number."""
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
     _set_default_kwarg_mandatory(kwargs, 'shape', (), name="Number")
@@ -352,15 +360,6 @@ def validate_arrayNx3(arr, reshape=True, **kwargs):
     if reshape:
         return arr.reshape((-1, 3))
     return arr
-
-
-def validate_numeric_array_shape3():
-    pass
-
-
-def coerce_number_or_array3_as_array3():
-    """Check that a sequence's elements are all strings."""
-    pass
 
 
 def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any, *, name="Array"):
