@@ -31,7 +31,7 @@ Some function naming conventions used in this module are:
 """
 from collections.abc import Sequence
 from functools import wraps
-from typing import Any, Iterable, List, Tuple, Union, get_args, get_origin
+from typing import Any, List, Tuple, Union, get_args, get_origin
 from warnings import warn
 
 import numpy as np
@@ -47,9 +47,9 @@ def validate_numeric_array(
     arr: ArrayLike,
     /,
     *,
-    shape: Union[ShapeLike, List[ShapeLike], None] = None,
-    dtype_base: Union[DTypeLike, Iterable[DTypeLike], None] = None,
-    dtype_out: Union[DTypeLike, None] = None,
+    shape=None,
+    dtype_base=None,
+    dtype_out=None,
     name="Array",
     as_any=True,
     copy=False,
@@ -63,15 +63,100 @@ def validate_numeric_array(
     to_list=False,
     to_tuple=False,
 ) -> Any:
-    """Check and validate an array.
+    """Check and validate a numeric array meets specific requirements.
+
+    Validate an array to ensure it is numeric, has a specific shape, has
+    a particular data-type, and/or has values that meet specific
+    requirements such as being sorted, integer-like, or finite.
 
     Parameters
     ----------
-    copy:
-        Return a copy of the array. A copy is always returned if:
-            * ``to_list`` or ``to_tuple`` is set
-            * output type differs from input type (e.g. tuple in, np.ndarray out)
-            * dtypes do not match (e.g. int input, float output)
+    arr : ArrayLike
+        Array to be validated, in any form that can be converted to
+        a NumPy ndarray. This includes lists, lists of tuples, tuples,
+        tuples of tuples, tuples of lists and ndarrays.
+
+    shape : int, Tuple[int,...] | List[int, Tuple[int,...]], optional
+        Check the array has a specific shape. Specify a single shape or
+        a list of any allowable shapes. If an integer, the array must
+        be 1-dimensional with that length. Use a value of -1 for any
+        dimension where its size is allowed to vary. Use ``()`` to allow
+        scalar values (i.e. 0-dimensional). Set to ``None`` if the array
+        can have any shape (default).
+
+    dtype_base : DTypeLike | Iterable[DTypeLike], optional
+        Check the array's data-type. Specify a NumPy dtype or dtype-like
+        base class which the array's data must be a subtype of. If
+        iterable, the array's data must be a subtype of at least one of
+        specified dtypes.
+
+    dtype_out : DTypeLike
+        The desired data-type to cast the output data as.
+
+    as_any :
+        Allow subclasses of ``np.ndarray`` to pass through without
+        making a copy.
+
+    copy : bool, default: False
+        If ``True``, a copy of the array is returned. A copy is always
+        returned if the array:
+
+            * is a nested sequence
+            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
+
+        A copy may also be made to satisfy ``dtype_out`` requirements.
+
+    must_be_finite : bool, default: False
+        Check that all elements of the array are finite, i.e. not
+        infinity and not Not a Number (NaN).
+
+    must_be_real : bool, default: True
+        Check that the array's has real numbers, i.e. its data type is
+        integer or floating.
+
+    must_be_integer_like : bool, default: False
+        Check that the array's values are integer-like (i.e. that
+        ``np.all(arr, np.floor(arr))``).
+
+    must_be_sorted : bool, default: False
+        Check that the array's values are sorted in ascending order.
+
+    must_be_in_range : ArrayLike, optional
+        Check that the array's values are all within a specific range.
+        Range must be array-like with two elements specifying the minimum
+        and maximum data values allowed, respectively. By default, the
+        range endpoints are inclusive, i.e. values must be >= minimum
+        and <= maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
+        to further restrict the allowable range.
+
+    strict_lower_bound : bool, False
+        Enforce a strict lower bound for the range specified by
+        ``must_be_in_range``, i.e. array values must be strictly greater
+        than the specified minimum.
+
+    strict_upper_bound : bool, False
+        Enforce a strict upper bound for the range specified by
+        ``must_be_in_range``, i.e. array values must be strictly less
+        than the specified maximum.
+
+    to_list : bool, False
+        Return the validated array as a list or nested list. Scalar
+        values are always returned as a number. Has no effect if
+        ``to_tuple=True``.
+
+    to_tuple : bool, False
+        Return the validated array as a tuple or nested tuple. Scalar
+        values are always returned as a number.
+
+    Returns
+    -------
+    array_like
+        Validated array. Returned object is:
+            * an instance of ``np.ndarray`` (default), or
+            * a nested list (if ``to_list=True``), or
+            * nested tuples (if ``to_tuple=True``), or
+            * a number if the input is scalar.
+
     """
     arr_out = cast_array_to_NDArray(arr, as_any=as_any, copy=copy, name=name)
 
@@ -117,6 +202,7 @@ def validate_numeric_array(
 
 
 def cast_array_to_nested_tuple(arr: ArrayLike, name="Input"):
+    """Cast an array to nested tuples."""
     check_is_string(name, name="Name")
     arr = cast_array_to_NDArray(arr, name=name).tolist()
 
@@ -127,6 +213,7 @@ def cast_array_to_nested_tuple(arr: ArrayLike, name="Input"):
 
 
 def cast_array_to_nested_list(arr: ArrayLike, name="Input"):
+    """Cast an array to a nested list."""
     check_is_string(name, name="Name")
     return cast_array_to_NDArray(arr, name=name).tolist()
 
@@ -282,7 +369,7 @@ def coerce_dtypelike_as_dtype(dtype_like: DTypeLike) -> np.dtype:
     .. warning::
 
         Coercing a type to a dtype can lead to an unintended change of
-        type. E.g., coercing type ``np.number`` will produce a ``dtype``
+        data type. E.g., coercing type ``np.number`` will produce a ``dtype``
         object with type ``np.float64``, not ``np.number``. To check that
         an input is ``DTypeLike`` without coercion, use :func:`~check_is_DTypeLike`
         instead.
@@ -301,7 +388,7 @@ def check_is_DTypeLike(dtype_like: DTypeLike):
 def coerce_shapelike_as_shape(
     shape: Union[int, Tuple[int, ...], Tuple[None]]
 ) -> Union[Tuple[None], Tuple[int, ...]]:
-    """Coerce shape-like input into a tuple representation"""
+    """Coerce shape-like input into a tuple representation."""
     if shape is None:
         # `None` is used to mean 'any shape is allowed` by the array
         #  validation methods, so raise an error here.
@@ -331,7 +418,7 @@ def check_is_ArrayLike(arr: Any, name="Input"):
 def cast_array_to_NDArray(
     arr: ArrayLike, as_any=True, dtype=None, copy=False, name="Input"
 ) -> NDArray:
-    """Raise a ValueError if input cannot be cast as an array."""
+    """Raise a ValueError if input cannot be cast as a NumPy ndarray."""
     check_is_string(name, name="Name")
     try:
         if as_any:
@@ -404,7 +491,8 @@ def check_is_integer(arr: ArrayLike, name="Array", strict=False):
 def check_is_greater_than(arr: ArrayLike, value, strict=True, name="Array"):
     """Check array elements are all greater than some value.
 
-    Raise ValueError if the check fails."""
+    Raise ValueError if the check fails.
+    """
     check_is_string(name, name="Name")
     arr = cast_array_to_NDArray(arr, name=name)
     if strict and not np.all(arr > value):
@@ -416,7 +504,8 @@ def check_is_greater_than(arr: ArrayLike, value, strict=True, name="Array"):
 def check_is_less_than(arr: ArrayLike, value, strict=True, name="Array"):
     """Check array elements are all less than some value.
 
-    Raise ValueError if the check fails."""
+    Raise ValueError if the check fails.
+    """
     check_is_string(name, name="Name")
     arr = cast_array_to_NDArray(arr, name=name)
     if strict and not np.all(arr < value):
@@ -490,6 +579,7 @@ def validate_number(num, **kwargs):
 
 
 def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any, name="Array"):
+    """Set a kwarg and raise ValueError if not set to its default value."""
     val = kwargs.pop(key, default)
     if val != default:
         msg = (
@@ -501,6 +591,7 @@ def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any, name="Arr
 
 
 def validate_data_range(rng, **kwargs):
+    """Validate a data range."""
     name = 'Data Range'
     kwargs.setdefault('name', name)
     _set_default_kwarg_mandatory(kwargs, 'shape', 2, name=name)
@@ -511,6 +602,7 @@ def validate_data_range(rng, **kwargs):
 
 
 def validate_arrayNx3(arr, **kwargs):
+    """Validate an array is numeric and has Nx3 shape."""
     name = 'Array'
     kwargs.setdefault('name', name)
     _set_default_kwarg_mandatory(kwargs, 'shape', [(-1, 3)], name=name)
@@ -518,6 +610,10 @@ def validate_arrayNx3(arr, **kwargs):
 
 
 def coerce_array_to_arrayNx3(arr, **kwargs):
+    """Validate an array is numeric and ensure out has Nx3 shape.
+    Input array can be 1D array-like with 3 elements or array-like with
+    shape Nx3. The output is reshaped to ensure it is 2D with Nx3 shape.
+    """
     name = 'Array'
     kwargs.setdefault('name', name)
     _set_default_kwarg_mandatory(kwargs, 'shape', [3, (-1, 3)], name=name)
@@ -525,11 +621,13 @@ def coerce_array_to_arrayNx3(arr, **kwargs):
 
 
 def check_is_string(object: str, allow_subclass=True, name: str = 'Object'):
+    """Check that object is a string."""
     check_is_instance(name, str, allow_subclass=True, name="Name")
     check_is_instance(object, str, allow_subclass=allow_subclass, name=name)
 
 
 def check_is_sequence(object: Any, allow_subclass=True, name: str = 'Object'):
+    """Check that object is a sequence."""
     check_is_string(name, name="Name")
     check_is_instance(object, Sequence, allow_subclass=allow_subclass, name=name)
 
@@ -537,6 +635,7 @@ def check_is_sequence(object: Any, allow_subclass=True, name: str = 'Object'):
 def check_is_instance(
     object, classinfo: Union[type, Tuple[type, ...]], allow_subclass=True, name: str = 'Object'
 ):
+    """Check that object is an instance of the given types."""
     if not isinstance(name, str):
         raise TypeError(f"Name must be a string, got {type(name)} instead.")
 
@@ -578,14 +677,17 @@ def check_is_instance(
 
 
 def check_is_type(object, classinfo, name: str = 'Object'):
+    """Check that object is one of the given types."""
     return check_is_instance(object, classinfo, allow_subclass=False, name=name)
 
 
 def check_is_string_sequence():
+    """Check that a sequence's elements are all strings."""
     pass
 
 
 def coerce_number_or_array3_as_array3():
+    """Check that a sequence's elements are all strings."""
     pass
 
 

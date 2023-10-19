@@ -1,3 +1,4 @@
+"""Input validation module."""
 # from .input_validation import (
 #     cast_array_to_NDArray,
 #     cast_array_to_nested_list,
