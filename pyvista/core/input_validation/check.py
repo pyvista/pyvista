@@ -1,33 +1,10 @@
-"""Internal input validation functions.
+"""Functions that check the type and value of inputs.
 
-Some function naming conventions used in this module are:
+A `check_` function typically:
+    * performs a simple validation on a single input variable
+    * raises an error if the check fails due to invalid input
+    * does not modify input or return anything
 
-    check_ :
-        * performs a simple validation on a single input variable
-        * raises an error if the check fails due to invalid input
-        * does not modify input or return anything
-        * "name" parameter is typically specified
-
-    coerce_ :
-        * accepts an input variable which may have variable type and/or
-        properties
-        * typically used when inputs may not be array-like or when
-        array shape of the input differs from the output
-        * input is coerced and possibly modified into a standard form
-        * uses `check_` functions to validate all input args/kwargs
-        * "name" parameter is typically specified
-
-    validate_ :
-        * uses `check_` functions to validate all input args/kwargs
-        * returns a similar version of an input but with constraints applied
-        * is mainly used for array-like input -> array-like output
-        * input shape is the same as output shape
-        * "name" parameter is typically specified
-        * Examples of constraints on the output:
-            * returned type may be specified (e.g. as np.array or tuple
-            array or list array)
-            * returned dtype may be specified (e.g. float, double)
-            * values known to be integral, sorted, within some range, etc.
 """
 from collections.abc import Iterable, Sequence
 from numbers import Number

@@ -1,3 +1,13 @@
+"""Functions that validate input and return a standard representation.
+
+A `validate_` function typically :
+    * uses `check_` functions to validate input args/kwargs
+    * accepts multiple input types with similar representations
+        and standardizes the output as a single representation
+    * applies (optional) constraints, e.g. input or output must have a
+        specific length, shape, type, data-type, etc.
+
+"""
 from functools import wraps
 from typing import Any, Union, Tuple
 
