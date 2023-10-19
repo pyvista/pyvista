@@ -36,7 +36,7 @@ from pyvista.core.input_validation.validate import (
     validate_data_range,
     validate_dtype,
     validate_number,
-    validate_numeric_array,
+    validate_array,
     validate_shape_value,
     validate_transform_as_array3x3,
     validate_transform_as_array4x4,
@@ -336,14 +336,14 @@ def test_validate_numeric_array_cases(
 
     # Test raises correct error with invalid input
     with pytest.raises(case.error_type, match=case.error_msg):
-        validate_numeric_array(invalid_array, **common_kwargs)
+        validate_array(invalid_array, **common_kwargs)
     # Test error has correct name
     with pytest.raises(case.error_type, match=name):
-        validate_numeric_array(invalid_array, **common_kwargs)
+        validate_array(invalid_array, **common_kwargs)
 
     # Test no error with valid input
     array_in = valid_array
-    array_out = validate_numeric_array(array_in, **common_kwargs)
+    array_out = validate_array(array_in, **common_kwargs)
     assert np.array_equal(array_out, array_in)
 
     # Check output

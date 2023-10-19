@@ -31,7 +31,7 @@ from pyvista.core.input_validation.check import (
 from pyvista.core.utilities.arrays import cast_to_ndarray, cast_to_tuple_array
 
 
-def validate_numeric_array(
+def validate_array(
     arr,
     /,
     *,
@@ -214,7 +214,7 @@ def validate_transform_as_array4x4(transformlike, /, *, name="Transform") -> np.
         arr = array_from_vtkmatrix(transformlike.GetMatrix())
     else:
         try:
-            valid_arr = validate_numeric_array(transformlike, shape=[(3, 3), (4, 4)], name=name)
+            valid_arr = validate_array(transformlike, shape=[(3, 3), (4, 4)], name=name)
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
             else:
@@ -308,14 +308,14 @@ def validate_dtype(dtype_like, /, *, name="Data type") -> np.dtype:
         raise TypeError(f"'{dtype_like}' is not a valid NumPy data type.") from e
 
 
-@wraps(validate_numeric_array)
+@wraps(validate_array)
 def validate_number(num, **kwargs):
     """Validate a number."""
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
     _set_default_kwarg_mandatory(kwargs, 'shape', (), name="Number")
     _set_default_kwarg_mandatory(kwargs, 'must_be_real', True)
-    return validate_numeric_array(num, **kwargs)
+    return validate_array(num, **kwargs)
 
 
 def validate_data_range(rng, **kwargs):
@@ -326,7 +326,7 @@ def validate_data_range(rng, **kwargs):
     _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True, name=name)
     if 'to_list' not in kwargs:
         kwargs.setdefault('to_tuple', True)
-    return validate_numeric_array(rng, **kwargs)
+    return validate_array(rng, **kwargs)
 
 
 def validate_arrayNx3(arr, reshape=True, **kwargs):
@@ -356,7 +356,7 @@ def validate_arrayNx3(arr, reshape=True, **kwargs):
         shape = (-1, 3)
 
     _set_default_kwarg_mandatory(kwargs, 'shape', shape, name=name)
-    arr = validate_numeric_array(arr, **kwargs)
+    arr = validate_array(arr, **kwargs)
     if reshape:
         return arr.reshape((-1, 3))
     return arr
