@@ -12,11 +12,7 @@ from vtkmodules.vtkCommonComputationalGeometry import (
     vtkParametricMobius,
     vtkParametricTorus,
 )
-from vtkmodules.vtkCommonCore import (
-    VTK_DOUBLE,
-    vtkDoubleArray,
-    vtkFloatArray,
-)
+from vtkmodules.vtkCommonCore import VTK_DOUBLE, vtkDoubleArray, vtkFloatArray
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import (
     vtkDelaunay2D,
@@ -159,7 +155,7 @@ def main(argv):
         mapper.SetScalarRange(scalar_range)
         mapper.SetLookupTable(lut)
 
-        actor = pv.Actor(mapper = mapper)
+        actor = pv.Actor(mapper=mapper)
 
         # Create a scalar bar
         scalar_bar = vtkScalarBarActor()
