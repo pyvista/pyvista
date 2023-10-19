@@ -125,8 +125,7 @@ def main(argv):
     text_property.font_size = 24
     text_property.justification_horizontal = "center"
 
-    lut = get_diverging_lut()
-    # lut = get_diverging_lut1()
+    lut = pv.LookupTable('coolwarm', n_values=256)
 
     # Define viewport ranges
     xmins = [0, 0.5]
@@ -344,63 +343,6 @@ def constrain_curvatures(source, curvature_name, lower_bound=0.0, upper_bound=0.
     source.GetPointData().RemoveArray(curvature_name)
     source.GetPointData().AddArray(curv)
     source.GetPointData().SetActiveScalars(curvature_name)
-
-
-def get_diverging_lut():
-    """
-    See: [Diverging Color Maps for Scientific Visualization](https://www.kennethmoreland.com/color-maps/)
-                       start point         midPoint            end point
-     cool to warm:     0.230, 0.299, 0.754 0.865, 0.865, 0.865 0.706, 0.016, 0.150
-     purple to orange: 0.436, 0.308, 0.631 0.865, 0.865, 0.865 0.759, 0.334, 0.046
-     green to purple:  0.085, 0.532, 0.201 0.865, 0.865, 0.865 0.436, 0.308, 0.631
-     blue to brown:    0.217, 0.525, 0.910 0.865, 0.865, 0.865 0.677, 0.492, 0.093
-     green to red:     0.085, 0.532, 0.201 0.865, 0.865, 0.865 0.758, 0.214, 0.233
-
-    :return:
-    """
-    ctf = vtkColorTransferFunction()
-    ctf.SetColorSpaceToDiverging()
-    # Cool to warm.
-    ctf.AddRGBPoint(0.0, 0.230, 0.299, 0.754)
-    ctf.AddRGBPoint(0.5, 0.865, 0.865, 0.865)
-    ctf.AddRGBPoint(1.0, 0.706, 0.016, 0.150)
-
-    table_size = 256
-    lut = vtkLookupTable()
-    lut.SetNumberOfTableValues(table_size)
-    lut.Build()
-
-    for i in range(0, table_size):
-        rgba = list(ctf.GetColor(float(i) / table_size))
-        rgba.append(1)
-        lut.SetTableValue(i, rgba)
-
-    return lut
-
-
-def get_diverging_lut1():
-    colors = vtkNamedColors()
-    # Colour transfer function.
-    ctf = vtkColorTransferFunction()
-    ctf.SetColorSpaceToDiverging()
-    p1 = [0.0] + list(colors.GetColor3d('MidnightBlue'))
-    p2 = [0.5] + list(colors.GetColor3d('Gainsboro'))
-    p3 = [1.0] + list(colors.GetColor3d('DarkOrange'))
-    ctf.AddRGBPoint(*p1)
-    ctf.AddRGBPoint(*p2)
-    ctf.AddRGBPoint(*p3)
-
-    table_size = 256
-    lut = vtkLookupTable()
-    lut.SetNumberOfTableValues(table_size)
-    lut.Build()
-
-    for i in range(0, table_size):
-        rgba = list(ctf.GetColor(float(i) / table_size))
-        rgba.append(1)
-        lut.SetTableValue(i, rgba)
-
-    return lut
 
 
 def get_bour():
