@@ -515,8 +515,8 @@ def load_logo():
 
     Returns
     -------
-    pyvista.Texture
-        Texture containing the PyVista logo.
+    pyvista.ImageData
+        ImageData of the PyVista logo.
 
     Examples
     --------
