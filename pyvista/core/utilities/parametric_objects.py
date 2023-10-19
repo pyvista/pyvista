@@ -1387,7 +1387,9 @@ def parametric_keywords(
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
-def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clean=False):
+def surface_from_para(
+    parametric_function, u_res=100, v_res=100, w_res=100, clean=False, texture_coordinates=False
+):
     """Construct a mesh from a parametric function.
 
     Parameters
@@ -1408,6 +1410,11 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
         Clean and merge duplicate points to avoid "creases" when
         plotting with smooth shading.
 
+    texture_coordinates : bool, default: False
+        The generation of texture coordinates.
+        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
+        Note that texturing may fail in some cases.
+
     Returns
     -------
     pyvista.PolyData
@@ -1420,6 +1427,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
     para_source.SetUResolution(u_res)
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
+    para_source.SetGenerateTextureCoordinates(texture_coordinates)
     para_source.Update()
     surf = wrap(para_source.GetOutput())
     if clean:
