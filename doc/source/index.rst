@@ -176,7 +176,7 @@ Subtract a sphere from a cube mesh.
     boolean.plot(color='darkgrey', smooth_shading=True, split_sharp_edges=True)
 
 
-Plot volumetric data
+Plot Volumetric Data
 ~~~~~~~~~~~~~~~~~~~~
 Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
 
