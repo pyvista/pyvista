@@ -151,7 +151,7 @@ Generate a spline from an array of NumPy points.
     spline.plot(scalars='arc_length', show_scalar_bar=False)
 
 
-Boolean operations on meshes
+Boolean Operations on Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Subtract a sphere from a cube mesh.
 
