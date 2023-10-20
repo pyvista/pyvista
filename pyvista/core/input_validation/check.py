@@ -433,39 +433,59 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
     check_is_instance(obj, classinfo, allow_subclass=False, name=name)
 
 
-def check_is_sequence_of_strings(obj, /, *, name: str = 'Sequence'):
-    """Check that a sequence's elements are all strings."""
-    check_is_sequence(obj, name=name)
-    [check_is_string(s, name=f"Element of {name}") for s in obj]
+def check_is_iterable_of_some_type(
+    iterable_obj: Iterable, some_type: Union[type, tuple[type, ...]], /, *, name: str = 'Iterable'
+):
+    """Check that an iterable's items all have a specified type."""
+    check_is_iterable(iterable_obj, name=name)
+    [check_is_instance(item, some_type, name=f"All items of {name}") for item in iterable_obj]
 
 
-def check_string_is_in_list(string_in, string_list, /, *, name: str = 'String'):
-    """Check that a string is in a list of strings."""
+def check_is_iterable_of_strings(iterable_obj: Iterable, /, *, name: str = 'String Iterable'):
+    """Check that an iterable's items are all strings."""
+    check_is_iterable_of_some_type(iterable_obj, str, name=name)
+
+
+def check_string_is_in_iterable(string_in, string_iterable, /, *, name: str = 'String'):
+    """Check that a string is in an iterable of strings."""
     check_is_string(string_in, name=name)
-    check_is_sequence_of_strings(string_list, name="String List")
-    if string_in not in string_list:
+    check_is_iterable_of_strings(string_iterable)
+    if string_in not in string_iterable:
         raise ValueError(
-            f"{name} '{string_in}' is not in list. "
-            f"{name} must be one of: \n\t" + str(string_list)
+            f"{name} '{string_in}' is not in the iterable. "
+            f"{name} must be one of: \n\t" + str(string_iterable)
         )
 
 
 def check_length(
-    arr, /, min_length=None, max_length=None, *, must_be_1D=False, allow_scalars=False, name="Array"
+    arr,
+    /,
+    *,
+    exact_length=None,
+    min_length=None,
+    max_length=None,
+    must_be_1D=False,
+    allow_scalars=False,
+    name="Array",
 ):
-    """Check the length of an array is within a specified range.
+    """Check the length of an array meets specific requirements.
 
     Notes
     -----
     By default, this function operates on multidimensional arrays,
     where ``len(arr)`` may differ from the number of elements in the
     array. For one-dimensional cases (where ``len(arr) == arr.size``),
-    use ``must_be_1D=True``.
+    set ``must_be_1D=True``.
 
     Parameters
     ----------
     arr : array_like
         Array to check.
+
+    exact_length : array_like
+        Check that the array has the given length. If multiple
+        numbers are given, the array's length must match one of the
+        numbers.
 
     min_length : int, optional
         Check that array has this length or larger.
@@ -474,7 +494,7 @@ def check_length(
         Check that array has this length or smaller.
 
     must_be_1D : bool, False
-        If ``True``, the array is also checked if it is one-dimensional.
+        If ``True``, the array is also checked that it is one-dimensional.
 
     allow_scalars : bool, False
         If ``True``, a scalar input will be reshaped to have a length of
@@ -496,7 +516,16 @@ def check_length(
     check_is_instance(arr, (Sequence, np.ndarray), name=name)
 
     if must_be_1D:
-        check_has_shape(arr, shape=-1)
+        check_has_shape(arr, shape=(-1))
+
+    if exact_length is not None:
+        exact_length = np.array(exact_length)
+        check_is_integerlike(exact_length, name="'exact_length'")
+        if len(arr) not in exact_length:
+            raise ValueError(
+                f"{name} must have a length equal to any of: {exact_length}. "
+                f"Got length {len(arr)} instead."
+            )
 
     # Validate min/max length
     if min_length is not None and max_length is not None:

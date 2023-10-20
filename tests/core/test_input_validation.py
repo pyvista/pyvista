@@ -8,7 +8,7 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.input_validation.check import (
+from pyvista.core.input_validation.check import (  # check_is_iterable_of_some_type,
     check_has_shape,
     check_is_arraylike,
     check_is_dtypelike,
@@ -18,23 +18,24 @@ from pyvista.core.input_validation.check import (
     check_is_instance,
     check_is_integerlike,
     check_is_iterable,
+    check_is_iterable_of_strings,
     check_is_less_than,
     check_is_ndarray,
     check_is_number,
     check_is_real,
     check_is_sequence,
-    check_is_sequence_of_strings,
     check_is_sorted,
     check_is_string,
     check_is_subdtype,
     check_is_type,
     check_iterable_elements_have_type,
     check_length,
-    check_string_is_in_list,
+    check_string_is_in_iterable,
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
     validate_array,
+    validate_array3,
     validate_arrayN,
     validate_arrayNx3,
     validate_data_range,
@@ -281,29 +282,77 @@ def test_validate_arrayNx3(reshape):
 
 @pytest.mark.parametrize('reshape', [True, False])
 def test_validate_arrayN(reshape):
+    # test 0D input is reshaped to 1D by default
     arr = validate_arrayN(0)
     assert arr.shape == (1,)
     assert np.array_equal(arr, [0])
+
+    # test 2D input is reshaped to 1D by default
+    arr = validate_arrayN([[1, 2, 3]])
+    assert arr.shape == (3,)
+    assert np.array_equal(arr, [1, 2, 3])
 
     if not reshape:
         msg = 'Array has shape () which is not allowed. Shape must be -1.'
         with pytest.raises(ValueError, match=escape(msg)):
             validate_arrayN(0, reshape=False)
 
+        msg = 'Array has shape (1, 3) which is not allowed. Shape must be -1.'
+        with pytest.raises(ValueError, match=escape(msg)):
+            validate_arrayN([[1, 2, 3]], reshape=False)
+
     arr = validate_arrayN((1, 2, 3, 4, 5, 6), reshape=reshape)
     assert arr.shape == (6,)
 
     msg = (
         "Parameter 'shape' cannot be set for function `validate_arrayN`.\n"
-        "Its value is automatically set to `[(), -1]`."
+        "Its value is automatically set to `[(), -1, (1, -1)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayN((1, 2, 3), shape=1)
-    msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1].'
+
+    msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1)].'
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayN(((1, 2), (3, 4)))
     with pytest.raises(ValueError, match="_input"):
         validate_arrayN(((1, 2), (3, 4)), name="_input")
+
+
+@pytest.mark.parametrize('reshape', [True, False])
+def test_validate_array3(reshape):
+    # test 0D input is reshaped to len-3 1D vector with broadcasting enabled
+    arr = validate_array3(0, broadcast=True)
+    assert arr.shape == (3,)
+    assert np.array_equal(arr, [0, 0, 0])
+
+    # test 2D input is reshaped to 1D by default
+    arr = validate_array3([[1, 2, 3]])
+    assert arr.shape == (3,)
+    assert np.array_equal(arr, [1, 2, 3])
+
+    if not reshape:
+        # test check fails with 2D input and no reshape
+        msg = 'Array has shape (1, 3) which is not allowed. Shape must be (3,).'
+        with pytest.raises(ValueError, match=escape(msg)):
+            validate_array3([[1, 2, 3]], reshape=reshape)
+
+        # test correct shape with broadcast and no reshape
+        msg = "Shape must be one of [(3,), (), (1,)]."
+        with pytest.raises(ValueError, match=escape(msg)):
+            validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
+    else:
+        # test error msg shows correct shape with broadcast and with reshape
+        msg = "Shape must be one of [(3,), (1, 3), (), (1,)]"
+        with pytest.raises(ValueError, match=escape(msg)):
+            validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
+
+    # test shape cannot be overridden
+    msg = (
+        "Parameter 'shape' cannot be set for function `validate_array3`.\n"
+        "Its value is automatically set to `[(3,), (1, 3)]`."
+    )
+    with pytest.raises(ValueError, match=escape(msg)):
+        validate_array3((1, 2, 3), shape=3)
 
 
 def test_check_is_in_range():
@@ -348,7 +397,7 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('case', numeric_array_test_cases())
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
-def test_validate_array_cases(
+def test_validate_array(
     name, copy, as_any, to_list, to_tuple, dtype_out, case, stack_input, input_type
 ):
     # Set up
@@ -376,6 +425,7 @@ def test_validate_array_cases(
         valid_array = pyvista_ndarray(valid_array)
         invalid_array = pyvista_ndarray(invalid_array)
 
+    shape = np.array(valid_array).shape
     common_kwargs = dict(
         **case.kwarg,
         name=name,
@@ -385,9 +435,12 @@ def test_validate_array_cases(
         to_tuple=to_tuple,
         dtype_base=np.number,
         dtype_out=dtype_out,
+        length=range(np.array(valid_array).size + 1),
         min_length=1,
         max_length=np.array(valid_array).size,
-        shape=np.array(valid_array).shape,
+        shape=shape,
+        reshape=shape,
+        broadcast_to=shape,
         must_be_in_range=(np.min(valid_array), np.max(valid_array)),
     )
 
@@ -575,7 +628,18 @@ def test_array_length():
         ]
     )
     check_length(np.ndarray((1,)))
-    check_length((1,), min_length=1, max_length=1, must_be_1D=True)
+    check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1D=True)
+    check_length((1,), exact_length=[1, 2.0])
+
+    with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
+        check_length((1,), exact_length=(1, 2.4), name="_input")
+
+    msg = '_input must have a length equal to any of: 1. Got length 2 instead.'
+    with pytest.raises(ValueError, match=msg):
+        check_length((1, 2), exact_length=1, name="_input")
+    msg = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_length((1, 2), exact_length=[3, 4], name="_input")
 
     msg = "_input must have a maximum length of 1. Got length 2 instead."
     with pytest.raises(ValueError, match=msg):
@@ -606,15 +670,15 @@ def test_check_is_sorted():
     check_is_sorted
 
 
-def test_check_is_sequence_of_strings():
-    check_is_sequence_of_strings(["abc", "123"])
-    check_is_sequence_of_strings("abc")
-    msg = "Element of Sequence must be an instance of <class 'str'>. Got <class 'list'> instead."
+def test_check_is_iterable_of_strings():
+    check_is_iterable_of_strings(["abc", "123"])
+    check_is_iterable_of_strings("abc")
+    msg = "All items of String Iterable must be an instance of <class 'str'>. Got <class 'list'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_sequence_of_strings(["abc", ["123"]])
-    msg = "Sequence must be an instance of <class 'collections.abc.Sequence'>. Got <class 'int'> instead."
+        check_is_iterable_of_strings(["abc", ["123"]])
+    msg = "String Iterable must be an instance of <class 'collections.abc.Iterable'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_sequence_of_strings(0)
+        check_is_iterable_of_strings(0)
 
 
 def test_check_is_ndarray():
@@ -625,11 +689,11 @@ def test_check_is_number():
     check_is_number
 
 
-def test_check_string_is_in_list():
-    check_string_is_in_list("foo", ["foo", "bar"])
-    msg = "String 'foo' is not in list. String must be one of: \n\t['cat', 'bar']"
+def test_check_string_is_in_iterable():
+    check_string_is_in_iterable("foo", ["foo", "bar"])
+    msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
-        check_string_is_in_list("foo", ["cat", "bar"])
+        check_string_is_in_iterable("foo", ["cat", "bar"])
 
 
 #     check_is_string("abc")

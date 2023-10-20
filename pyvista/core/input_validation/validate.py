@@ -36,8 +36,11 @@ def validate_array(
     /,
     *,
     shape=None,
+    reshape=None,
+    broadcast_to=None,
     dtype_base=None,
     dtype_out=None,
+    length=None,
     min_length=None,
     max_length=None,
     must_be_finite=False,
@@ -66,13 +69,23 @@ def validate_array(
         a NumPy ndarray. This includes lists, lists of tuples, tuples,
         tuples of tuples, tuples of lists and ndarrays.
 
-    shape : int, Tuple[int,...] | List[int, Tuple[int,...]], optional
+    shape : int | Tuple[int,...] | List[int, Tuple[int,...]], optional
         Check the array has a specific shape. Specify a single shape or
         a list of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of -1 for any
         dimension where its size is allowed to vary. Use ``()`` to allow
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
+
+    reshape : int, Tuple[int,...], optional
+        Reshape the output array with :func:`numpy.reshape`. The shape
+        should be compatible with the original shape. If an integer,
+        then the result will be a 1-D array of that length. One shape
+        dimension can be -1.
+
+    broadcast_to : int, Tuple[int,...}, optional
+        Broadcast the array to a read-only view with the specified shape.
+        Broadcasting is done after reshaping (if ``reshape=True``).
 
     dtype_base : dtype-like | Iterable[dtype-like], optional
         Check the array's data-type. Specify a NumPy dtype or dtype-like
@@ -81,7 +94,19 @@ def validate_array(
         specified dtypes.
 
     dtype_out : dtype-like, optional
-        The desired data-type to cast the output data as.
+        The desired data-type of the returned array.
+
+    length : array_like
+        Check that the array has the given length. If multiple
+        numbers are given, the array's length must match one of the
+        numbers.
+
+        .. note ::
+
+            The array's length is determined after reshaping the array
+            (if ``reshape`` is not ``None``) and after broadcasting (if
+            ``broadcast`` is not ``None``). Therefore, the values of
+            `length`` should take the array's new shape into consideration.
 
     min_length : int, optional
         Check that the array's length is this value or larger.
@@ -145,7 +170,8 @@ def validate_array(
         values are always returned as a number.
 
     name : str, optional
-        Variable name to use in the error messages if any are raised.
+        Variable name to use in the error messages if any of the
+        validation checks fail.
 
     Returns
     -------
@@ -154,7 +180,7 @@ def validate_array(
             * an instance of ``np.ndarray`` (default), or
             * a nested list (if ``to_list=True``), or
             * a nested tuple (if ``to_tuple=True``), or
-            * a number if the input is a number.
+            * a number (scalar) if the input is a number.
 
     """
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
@@ -169,12 +195,26 @@ def validate_array(
     if dtype_base is not None:
         check_is_subdtype(arr_out, dtype_base, name=name)
 
-    # Check dimensions
+    # Check shape
     if shape is not None:
         check_has_shape(arr_out, shape, name=name)
-    if min_length is not None or max_length is not None:
+
+    # Reshape _after_ checking shape to prevent unexpected reshaping
+    if reshape is not None and arr_out.shape != reshape:
+        arr_out = arr_out.reshape(reshape)
+
+    if broadcast_to is not None and arr_out.shape != broadcast_to:
+        arr_out = np.broadcast_to(arr_out, broadcast_to, subok=True)
+
+    # Check length _after_ reshaping otherwise length may be wrong
+    if length is not None or min_length is not None or max_length is not None:
         check_length(
-            arr, min_length=min_length, max_length=max_length, allow_scalars=True, name=name
+            arr,
+            exact_length=length,
+            min_length=min_length,
+            max_length=max_length,
+            allow_scalars=True,
+            name=name,
         )
 
     # Check data values
@@ -350,7 +390,7 @@ def validate_data_range(rng, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr, reshape=True, **kwargs):
+def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     """Validate an array is numeric and has shape Nx3.
 
     Parameters
@@ -368,18 +408,14 @@ def validate_arrayNx3(arr, reshape=True, **kwargs):
         Validated array with shape Nx3.
 
     """
-    name = 'Array'
-    kwargs.setdefault('name', name)
-
     if reshape:
         shape = [3, (-1, 3)]
+        _set_default_kwarg_mandatory(kwargs, 'reshape', (-1, 3))
     else:
         shape = (-1, 3)
-
     _set_default_kwarg_mandatory(kwargs, 'shape', shape)
+
     arr = validate_array(arr, **kwargs)
-    if reshape:
-        return arr.reshape((-1, 3))
     return arr
 
 
@@ -392,8 +428,9 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         Array to validate.
 
     reshape : bool, True
-        If ``True``, 0-dimensional scalars are considered valid input
-        and are reshaped to (1,) to ensure the output is one-dimensional.
+        If ``True``, 0-dimensional scalars and 2D vectors with shape
+        (1, N) are considered valid input, and are reshaped to (1,)
+        to ensure the output is consistently one-dimensional.
 
     Returns
     -------
@@ -401,18 +438,52 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         Validated 1D array.
 
     """
-    name = 'Array'
-    kwargs.setdefault('name', name)
-
     if reshape:
-        shape = [(), (-1)]
+        shape = [(), (-1), (1, -1)]
+        _set_default_kwarg_mandatory(kwargs, 'reshape', (-1))
     else:
         shape = -1
-
     _set_default_kwarg_mandatory(kwargs, 'shape', shape)
+
     arr = validate_array(arr, **kwargs)
+    return arr
+
+
+def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
+    """Validate a numeric 1D array with 3 elements.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to validate.
+
+    reshape : bool, True
+        If ``True``, 2D vectors with shape (1, 3) are considered valid
+        input, and are reshaped to (3,) to ensure the output is
+        consistently one-dimensional.
+
+    broadcast : bool, False
+        If ``True``, scalar values or 1D arrays with a single element
+        are considered valid input and the single value is broadcast to
+        a length 3 array.
+
+    Returns
+    -------
+    np.ndarray
+        Validated 1D array with 3 elements.
+
+    """
+    shape = [(3,)]
     if reshape:
-        return arr.reshape(-1)
+        shape.append((1, 3))
+        _set_default_kwarg_mandatory(kwargs, 'reshape', (-1))
+    if broadcast:
+        shape.append(())  # allow 0D scalars
+        shape.append((1,))  # 1D 1-element vectors
+        _set_default_kwarg_mandatory(kwargs, 'broadcast_to', (3,))
+    _set_default_kwarg_mandatory(kwargs, 'shape', shape)
+
+    arr = validate_array(arr, **kwargs)
     return arr
 
 
