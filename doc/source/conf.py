@@ -256,7 +256,7 @@ autosummary_context = {
 source_suffix = ".rst"
 
 # The main toctree document.
-master_doc = "index"
+root_doc = "index"
 
 
 # General information about the project.
@@ -519,7 +519,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
+    (root_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
 ]
 
 # -- Options for gettext output -------------------------------------------
@@ -531,7 +531,7 @@ gettext_additional_targets = ["raw"]
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
+man_pages = [(root_doc, "pyvista", "pyvista Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -541,7 +541,7 @@ man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        root_doc,
         "pyvista",
         "pyvista Documentation",
         author,
