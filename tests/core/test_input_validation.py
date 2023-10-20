@@ -625,8 +625,11 @@ def test_check_is_number():
     check_is_number
 
 
-def test_check_string_in_list():
-    check_string_is_in_list
+def test_check_string_is_in_list():
+    check_string_is_in_list("foo", ["foo", "bar"])
+    msg = "String 'foo' is not in list. String must be one of: \n\t['cat', 'bar']"
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_string_is_in_list("foo", ["cat", "bar"])
 
 
 #     check_is_string("abc")

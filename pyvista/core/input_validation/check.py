@@ -439,9 +439,15 @@ def check_is_sequence_of_strings(obj, /, *, name: str = 'Sequence'):
     [check_is_string(s, name=f"Element of {name}") for s in obj]
 
 
-def check_string_is_in_list():
+def check_string_is_in_list(string_in, string_list, /, *, name: str = 'String'):
     """Check that a string is in a list of strings."""
-    pass
+    check_is_string(string_in, name=name)
+    check_is_sequence_of_strings(string_list, name="String List")
+    if string_in not in string_list:
+        raise ValueError(
+            f"{name} '{string_in}' is not in list. "
+            f"{name} must be one of: \n\t" + str(string_list)
+        )
 
 
 def check_length(
