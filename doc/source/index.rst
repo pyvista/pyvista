@@ -66,7 +66,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    extras/index
 
 
-Brief Examples
+Brief examples
 **************
 Here are some brief interactive examples that demonstrate how you
 might want to use PyVista:
@@ -84,7 +84,7 @@ might want to use PyVista:
    pyvista.global_theme.anti_aliasing = 'fxaa'
 
 
-Maps and Geoscience
+Maps and geoscience
 ~~~~~~~~~~~~~~~~~~~
 Download the surface elevation map of Mount St. Helens and plot it.
 
@@ -98,7 +98,7 @@ Download the surface elevation map of Mount St. Helens and plot it.
     surf.plot(cmap='gist_earth')
 
 
-Finite Element Analysis
+Finite element analysis
 ~~~~~~~~~~~~~~~~~~~~~~~
 Plot the 'X' component of elastic stress of a 3D notch specimen.
 
@@ -151,7 +151,7 @@ Generate a spline from an array of NumPy points.
     spline.plot(scalars='arc_length', show_scalar_bar=False)
 
 
-Boolean Operations on Meshes
+Boolean operations on meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Subtract a sphere from a cube mesh.
 
@@ -176,7 +176,7 @@ Subtract a sphere from a cube mesh.
     boolean.plot(color='darkgrey', smooth_shading=True, split_sharp_edges=True)
 
 
-Plot Volumetric Data
+Plot volumetric data
 ~~~~~~~~~~~~~~~~~~~~
 Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
 
@@ -190,8 +190,8 @@ Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
     grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
 
-Translating
-***********
+Translate documentation
+***********************
 The recommended way for new contributors to translate PyVista's
 documentation is to join the translation team on Transifex.
 
@@ -214,8 +214,8 @@ Details can be found here: https://docs.transifex.com/getting-started-1/translat
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
-Status
-******
+Status badge
+************
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
@@ -282,7 +282,7 @@ Status
 +----------------------+----------------+-------------+
 
 
-Professional Support
+Professional support
 ********************
 
 While PyVista is an Open Source project with a big community, you might be looking for professional support.
