@@ -383,12 +383,12 @@ def test_validate_array_cases(
         as_any=as_any,
         to_list=to_list,
         to_tuple=to_tuple,
-        dtype_vase=np.number,
+        dtype_base=np.number,
         dtype_out=dtype_out,
         min_length=1,
         max_length=np.array(valid_array).size,
         shape=np.array(valid_array).shape,
-        check_is_in_range=(np.min(valid_array), np.max(valid_array)),
+        must_be_in_range=(np.min(valid_array), np.max(valid_array)),
     )
 
     # Test raises correct error with invalid input
