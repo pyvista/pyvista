@@ -54,6 +54,17 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path:  |
+          requirements.txt
+          requirements_docs.txt
+    - name: Vale Version
+      run: |
+        echo "VALE_VERSION=$(vale --version | sed -e 's/vale version //g')" >> $GITHUB_ENV
     # this is equivalent to
     # vale --config doc/.vale.ini doc pyvista examples
     - name: "Run Vale"
@@ -65,5 +76,6 @@ jobs:
         level: error
         filter_mode: nofilter
         fail_on_error: true
+        version: "${{ env.VALE_VERSION }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
