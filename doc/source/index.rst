@@ -84,7 +84,7 @@ might want to use PyVista:
    pyvista.global_theme.anti_aliasing = 'fxaa'
 
 
-Maps and geoscience
+Maps and Geoscience
 ~~~~~~~~~~~~~~~~~~~
 Download the surface elevation map of Mount St. Helens and plot it.
 
