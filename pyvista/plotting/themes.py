@@ -133,7 +133,16 @@ def set_plot_theme(theme):
         )
 
 
-class _ThemeConfig:
+# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
+class _ForceSlots(type):
+    @classmethod
+    def __prepare__(metaclass, name, bases, **kwds):
+        super_prepared = super().__prepare__(metaclass, name, bases, **kwds)
+        super_prepared['__slots__'] = ()
+        return super_prepared
+
+
+class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
