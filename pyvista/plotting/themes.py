@@ -2920,11 +2920,18 @@ class Theme(_ThemeConfig):
 
     @property
     def logo_file(self) -> Optional[pathlib.Path]:  # numpydoc ignore=RT01
-        """Return or set the logo file."""
+        """Return or set the logo file.
+
+        .. note::
+
+            :func:`pyvista.Plotter.add_logo_widget` will default to
+            PyVista's logo if this is unset.
+
+        """
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: Optional[pathlib.Path]):  # numpydoc ignore=GL08
+    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
         if logo_file is None:
             path = None
         else:
