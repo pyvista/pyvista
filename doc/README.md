@@ -1,4 +1,4 @@
-# Deploy the PyVista documentation
+# Deploy the PyVista Documentation
 
 Repository [`pyvista-docs`](https://github.com/pyvista/pyvista-docs) is a place where we automatically deploy the PyVista documentation.
 
