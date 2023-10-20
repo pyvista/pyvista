@@ -91,7 +91,7 @@ in-place without having to reinstall it for each change.
 Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
-
+The following are a list of optional dependencies and their purpose:
 
 +-----------------------------------+-----------------------------------------+
 | Package                           | Purpose                                 |
