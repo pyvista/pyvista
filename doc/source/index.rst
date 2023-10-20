@@ -214,8 +214,8 @@ Details can be found here: https://docs.transifex.com/getting-started-1/translat
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
-Status badge
-************
+Status
+******
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
@@ -282,7 +282,7 @@ Status badge
 +----------------------+----------------+-------------+
 
 
-Professional support
+Professional Support
 ********************
 
 While PyVista is an Open Source project with a big community, you might be looking for professional support.
