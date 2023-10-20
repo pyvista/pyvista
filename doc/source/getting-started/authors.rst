@@ -1,5 +1,5 @@
-Cite authors
-============
+Authors & Citation
+==================
 
 PyVista is an open-source project with a community of contributors.
 While many of PyVista's contributors are listed in the :ref:`authors`
