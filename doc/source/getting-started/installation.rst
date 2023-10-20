@@ -1,7 +1,7 @@
 .. _install:
 
-PyVista installation
-====================
+Installation
+============
 
 PyVista is supported on Python versions 3.8+.
 
