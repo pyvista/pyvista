@@ -38,8 +38,8 @@ Geosciences
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
 
 
-Many more
----------
+Other
+-----
 
 * VesselVio_: Analysis and visualization of segmented vasculature datasets.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix_ software.
