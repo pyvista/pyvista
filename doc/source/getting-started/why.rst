@@ -112,8 +112,8 @@ to a description of how to use those methods:
 .. figure:: ../images/gifs/documentation.gif
 
 
-Interfacing with other libraries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Interfacing with other library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PyVista is heavily dependent on `numpy <https://numpy.org/>`_ and uses
 it to represent point, cell, field, and other data from the VTK
 meshes. This data can be easily accessed from the dataset attributes
