@@ -2919,7 +2919,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = config
 
     @property
-    def logo_file(self) -> Optional[pathlib.Path]:  # numpydoc ignore=RT01
+    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Return or set the logo file.
 
         .. note::
@@ -2935,10 +2935,9 @@ class Theme(_ThemeConfig):
         if logo_file is None:
             path = None
         else:
-            path = pathlib.Path(logo_file)
-            if not path.exists():
+            if not pathlib.Path(logo_file).exists():
                 raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
-        self._logo_file = path
+        self._logo_file = str(path)
 
 
 class DarkTheme(Theme):
