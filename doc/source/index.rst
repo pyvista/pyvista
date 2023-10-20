@@ -66,8 +66,8 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    extras/index
 
 
-Brief Example
-*************
+Brief Examples
+**************
 Here are some brief interactive examples that demonstrate how you
 might want to use PyVista:
 
