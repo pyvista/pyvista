@@ -1,4 +1,4 @@
-Getting Started
+Getting started
 ***************
 
 This guide is here to help you start creating interactive 3D plots with PyVista
@@ -42,8 +42,8 @@ with the help of our examples and tutorials.
    external_examples
 
 
-Installation
-============
+PyVista installation
+====================
 The only prerequisite for installing PyVista is Python itself. If you don’t
 have Python yet and want the simplest way to get started, we recommend you use
 the `Anaconda Distribution <https://www.anaconda.com/>`_.
@@ -84,7 +84,7 @@ the `Anaconda Distribution <https://www.anaconda.com/>`_.
       :ref:`install` page.
 
 
-First Steps
+First steps
 ===========
 We've provided a variety of resources for you to get used to PyVista's API
 through a range of examples and tutorials.

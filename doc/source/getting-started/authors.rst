@@ -1,4 +1,4 @@
-Authors & Citation
+Authors & citation
 ==================
 
 PyVista is an open-source project with a community of contributors.

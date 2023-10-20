@@ -1,7 +1,7 @@
 .. _install:
 
-Installation
-============
+PyVista installation
+====================
 
 PyVista is supported on Python versions 3.8+.
 
@@ -25,7 +25,7 @@ the following projects are required dependencies of PyVista:
 * `scooby <https://github.com/banesullivan/scooby>`_ - Reporting and debugging tools.
 
 
-Optional Dependencies
+Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 PyVista includes several optional dependencies for visualization and reading a variety of additional file formats, including:
 
@@ -53,8 +53,8 @@ To install all the additional packages that extend PyVista, install using
 
 .. asciinema:: 507562
 
-Anaconda
-~~~~~~~~
+Anaconda package
+~~~~~~~~~~~~~~~~
 
 .. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
@@ -88,7 +88,7 @@ Note the development flag ``-e``. This allows you to change pyvista
 in-place without having to reinstall it for each change.
 
 
-Optional Dependencies
+Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
 The following are a list of optional dependencies and their purpose:
