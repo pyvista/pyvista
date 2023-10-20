@@ -25,9 +25,9 @@ the following projects are required dependencies of PyVista:
 * `scooby <https://github.com/banesullivan/scooby>`_ - Reporting and debugging tools.
 
 
-Optional dependencies
+Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
-PyVista includes several optional dependencies for visualization and reading a variety of additional file formats, including:
+PyVista includes several Optional Dependencies for visualization and reading a variety of additional file formats, including:
 
 * `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
@@ -88,10 +88,10 @@ Note the development flag ``-e``. This allows you to change pyvista
 in-place without having to reinstall it for each change.
 
 
-Optional dependencies
+Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following are a list of optional dependencies and their purpose:
+The following are a list of Optional Dependencies and their purpose:
 
 +-----------------------------------+-----------------------------------------+
 | Package                           | Purpose                                 |
