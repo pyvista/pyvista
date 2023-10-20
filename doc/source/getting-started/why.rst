@@ -112,7 +112,7 @@ to a description of how to use those methods:
 .. figure:: ../images/gifs/documentation.gif
 
 
-Interfacing with other library
+Interfacing with other Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PyVista is heavily dependent on `numpy <https://numpy.org/>`_ and uses
 it to represent point, cell, field, and other data from the VTK
