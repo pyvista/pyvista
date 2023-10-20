@@ -13,10 +13,8 @@ import inspect
 from typing import Any, Tuple, Union
 
 import numpy as np
-from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
-from vtkmodules.vtkCommonTransforms import vtkTransform
 
-from pyvista import array_from_vtkmatrix
+from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.input_validation.check import (
     check_has_shape,
     check_is_dtypelike,
@@ -28,8 +26,9 @@ from pyvista.core.input_validation.check import (
     check_is_sorted,
     check_is_string,
     check_is_subdtype,
+    check_length,
 )
-from pyvista.core.utilities.arrays import cast_to_ndarray, cast_to_tuple_array
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 
 
 def validate_array(
@@ -39,9 +38,8 @@ def validate_array(
     shape=None,
     dtype_base=None,
     dtype_out=None,
-    name="Array",
-    as_any=True,
-    copy=False,
+    min_length=None,
+    max_length=None,
     must_be_finite=False,
     must_be_real=True,
     must_be_integer_like=False,
@@ -49,13 +47,16 @@ def validate_array(
     must_be_in_range=None,
     strict_lower_bound=False,
     strict_upper_bound=False,
+    as_any=True,
+    copy=False,
     to_list=False,
     to_tuple=False,
+    name="Array",
 ) -> Any:
     """Check and validate a numeric array meets specific requirements.
 
-    Validate an array to ensure it is numeric, has a specific shape, has
-    a particular data-type, and/or has values that meet specific
+    Validate an array to ensure it is numeric, has a specific shape,
+    data-type, and/or has values that meet specific
     requirements such as being sorted, integer-like, or finite.
 
     Parameters
@@ -79,21 +80,14 @@ def validate_array(
         iterable, the array's data must be a subtype of at least one of
         specified dtypes.
 
-    dtype_out : dtype-like
+    dtype_out : dtype-like, optional
         The desired data-type to cast the output data as.
 
-    as_any :
-        Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy.
+    min_length : int, optional
+        Check that the array's length is this value or larger.
 
-    copy : bool, default: False
-        If ``True``, a copy of the array is returned. A copy is always
-        returned if the array:
-
-            * is a nested sequence
-            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
-
-        A copy may also be made to satisfy ``dtype_out`` requirements.
+    max_length : int, optional
+        Check that the array' length is this value or smaller.
 
     must_be_finite : bool, default: False
         Check that all elements of the array are finite, i.e. not
@@ -128,6 +122,19 @@ def validate_array(
         ``must_be_in_range``, i.e. array values must be strictly less
         than the specified maximum.
 
+    as_any :
+        Allow subclasses of ``np.ndarray`` to pass through without
+        making a copy.
+
+    copy : bool, default: False
+        If ``True``, a copy of the array is returned. A copy is always
+        returned if the array:
+
+            * is a nested sequence
+            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
+
+        A copy may also be made to satisfy ``dtype_out`` requirements.
+
     to_list : bool, False
         Return the validated array as a list or nested list. Scalar
         values are always returned as a number. Has no effect if
@@ -137,14 +144,17 @@ def validate_array(
         Return the validated array as a tuple or nested tuple. Scalar
         values are always returned as a number.
 
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
     Returns
     -------
     array_like
         Validated array. Returned object is:
             * an instance of ``np.ndarray`` (default), or
             * a nested list (if ``to_list=True``), or
-            * nested tuples (if ``to_tuple=True``), or
-            * a number if the input is scalar.
+            * a nested tuple (if ``to_tuple=True``), or
+            * a number if the input is a number.
 
     """
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
@@ -159,10 +169,15 @@ def validate_array(
     if dtype_base is not None:
         check_is_subdtype(arr_out, dtype_base, name=name)
 
+    # Check dimensions
     if shape is not None:
         check_has_shape(arr_out, shape, name=name)
+    if min_length is not None or max_length is not None:
+        check_length(
+            arr, min_length=min_length, max_length=max_length, allow_scalars=True, name=name
+        )
 
-    # Check values
+    # Check data values
     if must_be_finite:
         check_is_finite(arr_out, name=name)
     if must_be_integer_like:

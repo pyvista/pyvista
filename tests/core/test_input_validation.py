@@ -47,11 +47,6 @@ from pyvista.core.input_validation.validate import (
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 
 
-@pytest.fixture
-def not_ArrayLike():
-    return [[1], [2, 3]]
-
-
 @pytest.mark.parametrize(
     'transform_like',
     [
@@ -332,7 +327,7 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('case', numeric_array_test_cases())
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
-def test_validate_numeric_array_cases(
+def test_validate_array_cases(
     name, copy, as_any, to_list, to_tuple, dtype_out, case, stack_input, input_type
 ):
     # Set up
@@ -368,6 +363,9 @@ def test_validate_numeric_array_cases(
         to_list=to_list,
         to_tuple=to_tuple,
         dtype_out=dtype_out,
+        min_length=1,
+        max_length=np.array(valid_array).size,
+        shape=np.array(valid_array).shape,
     )
 
     # Test raises correct error with invalid input
@@ -383,7 +381,6 @@ def test_validate_numeric_array_cases(
     assert np.array_equal(array_out, array_in)
 
     # Check output
-
     if np.array(array_in).ndim == 0 and (to_tuple or to_list):
         # test scalar input results in scalar output
         assert type(array_out) is float or type(array_out) is int
@@ -414,50 +411,50 @@ def test_validate_numeric_array_cases(
         assert array_out is not array_in
 
 
-@pytest.mark.parametrize('object', [0, 0.0, "0"])
+@pytest.mark.parametrize('obj', [0, 0.0, "0"])
 @pytest.mark.parametrize('classinfo', [int, (int, float), [int, float]])
 @pytest.mark.parametrize('allow_subclass', [True, False])
 @pytest.mark.parametrize('name', ["_input", "_object"])
-def test_check_is_instance(object, classinfo, allow_subclass, name):
+def test_check_is_instance(obj, classinfo, allow_subclass, name):
     if isinstance(classinfo, list):
         with pytest.raises(TypeError):
-            check_is_instance(object, classinfo)
+            check_is_instance(obj, classinfo)
         return
 
     if allow_subclass:
-        if isinstance(object, classinfo):
-            check_is_instance(object, classinfo)
+        if isinstance(obj, classinfo):
+            check_is_instance(obj, classinfo)
         else:
             with pytest.raises(TypeError, match='Object must be an instance of'):
-                check_is_instance(object, classinfo)
+                check_is_instance(obj, classinfo)
             with pytest.raises(TypeError, match=f'{name} must be an instance of'):
-                check_is_instance(object, classinfo, name=name)
+                check_is_instance(obj, classinfo, name=name)
 
     else:
         if type(classinfo) is tuple:
-            if type(object) in classinfo:
-                check_is_type(object, classinfo)
+            if type(obj) in classinfo:
+                check_is_type(obj, classinfo)
             else:
                 with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_is_type(object, classinfo, name=name)
+                    check_is_type(obj, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_is_type(object, classinfo)
+                    check_is_type(obj, classinfo)
         elif get_origin(classinfo) is Union:
-            if type(object) in get_args(classinfo):
-                check_is_type(object, classinfo)
+            if type(obj) in get_args(classinfo):
+                check_is_type(obj, classinfo)
             else:
                 with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_is_type(object, classinfo, name=name)
+                    check_is_type(obj, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_is_type(object, classinfo)
+                    check_is_type(obj, classinfo)
         else:
-            if type(object) is classinfo:
-                check_is_type(object, classinfo)
+            if type(obj) is classinfo:
+                check_is_type(obj, classinfo)
             else:
                 with pytest.raises(TypeError, match=f'{name} must have type'):
-                    check_is_type(object, classinfo, name=name)
+                    check_is_type(obj, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have type'):
-                    check_is_type(object, classinfo)
+                    check_is_type(obj, classinfo)
 
     msg = "Name must be a string, got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):

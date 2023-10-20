@@ -1,4 +1,4 @@
-"""Functions that check the type and value of inputs.
+"""Functions that check the type and/or value of inputs.
 
 A `check_` function typically:
     * performs a simple validation on a single input variable
@@ -105,13 +105,12 @@ def check_is_dtypelike(dtypelike, /, *, name="Data type"):
         DType-like value to check.
 
     """
-    # Avoid circular import
-    from pyvista.core.input_validation.validate import validate_dtype
+    from .validate import validate_dtype  # Avoid circular import
 
     validate_dtype(dtypelike)
 
 
-def check_is_arraylike(arr, /, *, name="Input"):
+def check_is_arraylike(arr):
     """Check if an input can be cast as a NumPy ndarray.
 
     arr : array_like
@@ -290,8 +289,7 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     ValueError if any array value is outside some range.
 
     """
-    # Avoid circular import
-    from pyvista.core.input_validation.validate import validate_data_range
+    from .validate import validate_data_range  # Avoid circular import
 
     arr = cast_to_ndarray(arr)
     rng = validate_data_range(rng)
@@ -445,7 +443,9 @@ def check_string_in_list():
     pass
 
 
-def check_length(arr, /, min_length=None, max_length=None, *, must_be_1D=False, name="Array"):
+def check_length(
+    arr, /, min_length=None, max_length=None, *, must_be_1D=False, allow_scalars=False, name="Array"
+):
     """Check the length of an array is within a specified range.
 
     Notes
@@ -469,13 +469,25 @@ def check_length(arr, /, min_length=None, max_length=None, *, must_be_1D=False, 
     must_be_1D : bool, False
         If ``True``, the array is also checked if it is one-dimensional.
 
+    allow_scalars : bool, False
+        If ``True``, a scalar input will be reshaped to have a length of
+        1. Otherwise, the check will fail since a scalar does not
+        have a length.
+
     Raises
     ------
     ValueError
         If the array's length is outside the specified range.
 
     """
+    if allow_scalars:
+        # Reshape to 1D
+        if isinstance(arr, np.ndarray) and arr.ndim == 0:
+            arr = [arr.tolist()]
+        elif isinstance(arr, Number):
+            arr = [arr]
     check_is_instance(arr, (Sequence, np.ndarray), name=name)
+
     if must_be_1D:
         check_has_shape(arr, shape=-1)
 
