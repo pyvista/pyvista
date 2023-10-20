@@ -98,7 +98,7 @@ Download the surface elevation map of Mount St. Helens and plot it.
     surf.plot(cmap='gist_earth')
 
 
-Finite element analysis
+Finite Element Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~
 Plot the 'X' component of elastic stress of a 3D notch specimen.
 
