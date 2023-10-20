@@ -219,7 +219,7 @@ GitHub Actions, and you can run Vale locally with:
 
 .. code::
 
-   pip install vale
+   pip install vale==2.29.5.0
    vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
 
 If you are on Linux or macOS, you can run:
