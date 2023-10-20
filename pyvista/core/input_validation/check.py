@@ -8,7 +8,7 @@ A `check_` function typically:
 """
 from collections.abc import Iterable, Sequence
 from numbers import Number
-from typing import Tuple, Union, get_args, get_origin
+from typing import Any, Tuple, Union, get_args, get_origin
 from warnings import warn
 
 import numpy as np
@@ -434,7 +434,7 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
 
 
 def check_is_iterable_of_some_type(
-    iterable_obj: Iterable, some_type: Union[type, tuple[type, ...]], /, *, name: str = 'Iterable'
+    iterable_obj: Iterable, some_type: Union[Any, tuple[Any, ...]], /, *, name: str = 'Iterable'
 ):
     """Check that an iterable's items all have a specified type."""
     check_is_iterable(iterable_obj, name=name)
