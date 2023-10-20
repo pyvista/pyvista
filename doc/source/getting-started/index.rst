@@ -42,8 +42,8 @@ with the help of our examples and tutorials.
    external_examples
 
 
-PyVista installation
-====================
+Installation
+============
 The only prerequisite for installing PyVista is Python itself. If you don’t
 have Python yet and want the simplest way to get started, we recommend you use
 the `Anaconda Distribution <https://www.anaconda.com/>`_.
