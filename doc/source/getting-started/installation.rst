@@ -53,7 +53,7 @@ To install all the additional packages that extend PyVista, install using
 
 .. asciinema:: 507562
 
-Anaconda package
+Anaconda Package
 ~~~~~~~~~~~~~~~~
 
 .. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
