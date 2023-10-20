@@ -63,6 +63,7 @@ jobs:
           requirements_docs.txt
     - name: Vale Version
       run: |
+        vale --version
         echo "VALE_VERSION=$(vale --version | sed -e 's/vale version //g')" >> $GITHUB_ENV
     # this is equivalent to
     # vale --config doc/.vale.ini doc pyvista examples
