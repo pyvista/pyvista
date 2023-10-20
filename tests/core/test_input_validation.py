@@ -23,14 +23,14 @@ from pyvista.core.input_validation.check import (
     check_is_number,
     check_is_real,
     check_is_sequence,
+    check_is_sequence_of_strings,
     check_is_sorted,
     check_is_string,
-    check_is_string_sequence,
     check_is_subdtype,
     check_is_type,
     check_iterable_elements_have_type,
     check_length,
-    check_string_in_list,
+    check_string_is_in_list,
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
@@ -606,8 +606,15 @@ def test_check_is_sorted():
     check_is_sorted
 
 
-def test_check_is_string_sequence():
-    check_is_string_sequence
+def test_check_is_sequence_of_strings():
+    check_is_sequence_of_strings(["abc", "123"])
+    check_is_sequence_of_strings("abc")
+    msg = "Element of Sequence must be an instance of <class 'str'>. Got <class 'list'> instead."
+    with pytest.raises(TypeError, match=escape(msg)):
+        check_is_sequence_of_strings(["abc", ["123"]])
+    msg = "Sequence must be an instance of <class 'collections.abc.Sequence'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=escape(msg)):
+        check_is_sequence_of_strings(0)
 
 
 def test_check_is_ndarray():
@@ -619,7 +626,7 @@ def test_check_is_number():
 
 
 def test_check_string_in_list():
-    check_string_in_list
+    check_string_is_in_list
 
 
 #     check_is_string("abc")
@@ -633,3 +640,7 @@ def test_check_string_in_list():
 #     msg = "Name must be a string, got <class 'float'> instead."
 #     with pytest.raises(TypeError, match=msg):
 #         check_is_string("abc", name=0.0)
+
+
+def test_all_check_functions_return_None():
+    pass

@@ -430,16 +430,17 @@ def check_is_instance(
 
 def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
     """Check that object is one of the given types."""
-    return check_is_instance(obj, classinfo, allow_subclass=False, name=name)
+    check_is_instance(obj, classinfo, allow_subclass=False, name=name)
 
 
-def check_is_string_sequence():
+def check_is_sequence_of_strings(obj, /, *, name: str = 'Sequence'):
     """Check that a sequence's elements are all strings."""
-    pass
+    check_is_sequence(obj, name=name)
+    [check_is_string(s, name=f"Element of {name}") for s in obj]
 
 
-def check_string_in_list():
-    """Check that string is in a list of strings."""
+def check_string_is_in_list():
+    """Check that a string is in a list of strings."""
     pass
 
 
@@ -461,10 +462,10 @@ def check_length(
         Array to check.
 
     min_length : int, optional
-        Minimum length allowed.
+        Check that array has this length or larger.
 
     max_length : int, optional
-        Maximum length allowed.
+        Check that array has this length or smaller.
 
     must_be_1D : bool, False
         If ``True``, the array is also checked if it is one-dimensional.
