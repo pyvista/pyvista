@@ -84,7 +84,7 @@ the `Anaconda Distribution <https://www.anaconda.com/>`_.
       :ref:`install` page.
 
 
-Start first step
+Start First Step
 ================
 We've provided a variety of resources for you to get used to PyVista's API
 through a range of examples and tutorials.
