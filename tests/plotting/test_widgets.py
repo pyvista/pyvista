@@ -592,5 +592,5 @@ def test_logo_widget(verify_image_cache):
 
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
-    pl.add_logo_widget(position=(0.075, 0.05), size=(0.2, 0.1))
+    pl.add_logo_widget(position=(0.01, 0.01), size=(0.8, 0.8))
     pl.show()
