@@ -190,8 +190,8 @@ Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
     grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
 
-Translate documentation
-***********************
+Translating
+***********
 The recommended way for new contributors to translate PyVista's
 documentation is to join the translation team on Transifex.
 
