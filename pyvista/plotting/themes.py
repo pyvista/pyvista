@@ -2920,14 +2920,7 @@ class Theme(_ThemeConfig):
 
     @property
     def logo_file(self) -> Optional[pathlib.Path]:  # numpydoc ignore=RT01
-        """Return or set the logo file.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pv.global_theme.silhouette.opacity = 1.0
-
-        """
+        """Return or set the logo file."""
         return self._logo_file
 
     @logo_file.setter
