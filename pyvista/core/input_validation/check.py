@@ -434,7 +434,7 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
 
 
 def check_is_iterable_of_some_type(
-    iterable_obj: Iterable, some_type: Union[Any, tuple[Any, ...]], /, *, name: str = 'Iterable'
+    iterable_obj: Iterable, some_type: Union[Any, Tuple[Any, ...]], /, *, name: str = 'Iterable'
 ):
     """Check that an iterable's items all have a specified type."""
     check_is_iterable(iterable_obj, name=name)
