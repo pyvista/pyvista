@@ -261,13 +261,18 @@ def validate_transform_as_array3x3(transformlike, /, *, name="Transform"):
     np.ndarray
         3x3 array.
     """
+    check_is_string(name, name="Name")
+    arr = np.eye(3)  # initialize
     if isinstance(transformlike, vtkMatrix3x3):
-        transformlike = array_from_vtkmatrix(transformlike)
-    elif isinstance(transformlike, np.ndarray) and not transformlike.shape == (3, 3):
-        raise ValueError('Transformation array must be 3x3.')
+        arr[:3, :3] = array_from_vtkmatrix(transformlike)
     else:
-        raise TypeError('Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n')
-    return transformlike
+        try:
+            arr = validate_array(transformlike, shape=(3, 3), name=name)
+        except ValueError:
+            raise TypeError(
+                'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
+            )
+    return arr
 
 
 def validate_shape_value(

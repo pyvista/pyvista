@@ -52,8 +52,8 @@ from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_ar
     [
         np.eye(3),
         np.eye(4),
-        np.array(np.eye(3)),
-        np.array(np.eye(4)),
+        np.eye(3).tolist(),
+        np.eye(4).tolist(),
         vtkmatrix_from_array(np.eye(3)),
         vtkmatrix_from_array(np.eye(4)),
         vtkTransform(),
@@ -70,6 +70,27 @@ def test_validate_transform_as_array4x4_raises():
         validate_transform_as_array4x4(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must be numeric"):
         validate_transform_as_array4x4("abc")
+
+
+@pytest.mark.parametrize(
+    'transform_like',
+    [
+        np.eye(3),
+        np.eye(3).tolist(),
+        vtkmatrix_from_array(np.eye(3)),
+    ],
+)
+def test_validate_transform_as_array3x3(transform_like):
+    result = validate_transform_as_array3x3(transform_like)
+    assert type(result) is np.ndarray
+    assert np.array_equal(result, np.eye(3))
+
+
+def test_validate_transform_as_array3x3_raises():
+    with pytest.raises(TypeError, match=escape("Input transform must be one of")):
+        validate_transform_as_array3x3(np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match="must be numeric"):
+        validate_transform_as_array3x3("abc")
 
 
 def test_check_is_subdtype():
@@ -362,10 +383,12 @@ def test_validate_array_cases(
         as_any=as_any,
         to_list=to_list,
         to_tuple=to_tuple,
+        dtype_vase=np.number,
         dtype_out=dtype_out,
         min_length=1,
         max_length=np.array(valid_array).size,
         shape=np.array(valid_array).shape,
+        check_is_in_range=(np.min(valid_array), np.max(valid_array)),
     )
 
     # Test raises correct error with invalid input
@@ -501,10 +524,6 @@ def test_check_is_string():
 
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
-
-
-def test_coerce_transformlike_as_array3x3():
-    validate_transform_as_array3x3
 
 
 def test_check_iterable_elements_have_type():
