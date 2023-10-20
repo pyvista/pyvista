@@ -274,19 +274,18 @@ def test_validate_arrayN(reshape):
         with pytest.raises(ValueError, match=escape(msg)):
             validate_arrayN(0, reshape=False)
 
-    arr = validate_arrayN((1, 2, 3,4, 5, 6), reshape=reshape)
+    arr = validate_arrayN((1, 2, 3, 4, 5, 6), reshape=reshape)
     assert arr.shape == (6,)
 
     msg = (
         "Parameter 'shape' cannot be set for function `validate_arrayN`.\n"
         "Its value is automatically set to `[(), -1]`."
-
     )
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayN((1, 2, 3), shape=1)
     msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1].'
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_arrayN(((1,2),(3,4)))
+        validate_arrayN(((1, 2), (3, 4)))
     with pytest.raises(ValueError, match="_input"):
         validate_arrayN(((1, 2), (3, 4)), name="_input")
 
