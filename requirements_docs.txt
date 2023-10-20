@@ -30,4 +30,3 @@ trame==3.2.7
 trame-vtk==2.5.9
 trame-vuetify==2.3.1
 trimesh==3.23.5
-vale==2.29.5
