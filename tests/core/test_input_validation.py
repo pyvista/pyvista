@@ -20,6 +20,7 @@ from pyvista.core.input_validation.check import (
     check_is_iterable,
     check_is_less_than,
     check_is_ndarray,
+    check_is_number,
     check_is_real,
     check_is_sequence,
     check_is_sorted,
@@ -28,11 +29,13 @@ from pyvista.core.input_validation.check import (
     check_is_subdtype,
     check_is_type,
     check_iterable_elements_have_type,
-    check_string_is_in_list,
+    check_length,
+    check_string_in_list,
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
     validate_array,
+    validate_arrayN,
     validate_arrayNx3,
     validate_data_range,
     validate_dtype,
@@ -126,7 +129,10 @@ def test_validate_number():
     assert type(num) is np.ndarray
     assert num.dtype.type is np.float64
 
-    msg = "Parameter 'shape' cannot be set for Number. " "Its value is automatically set to `()`."
+    msg = (
+        "Parameter 'shape' cannot be set for function `validate_number`.\n"
+        "Its value is automatically set to `()`."
+    )
     with pytest.raises(ValueError, match=escape(msg)):
         validate_number(1, shape=2)
 
@@ -141,12 +147,13 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, shape=2)
     assert type(rng) is np.ndarray
 
-    msg = "Data Range must be sorted."
-    with pytest.raises(ValueError, match=msg):
+    msg = "Data Range [1 0] must be sorted."
+    with pytest.raises(ValueError, match=escape(msg)):
         validate_data_range((1, 0))
 
     msg = (
-        "Parameter 'shape' cannot be set for Data Range. Its value is " "automatically set to `2`."
+        "Parameter 'shape' cannot be set for function `validate_data_range`.\n"
+        "Its value is automatically set to `2`."
     )
     with pytest.raises(ValueError, match=msg):
         validate_data_range((0, 1), shape=3)
@@ -170,7 +177,10 @@ def test_set_default_kwarg_mandatory():
     # Test parameter set to non-default
     kwargs = dict()
     kwargs[default_key] = default_value * 2
-    msg = "Parameter 'k' cannot be set for Array. Its value is " "automatically set to `1`."
+    msg = (
+        "Parameter 'k' cannot be set for function `test_set_default_kwarg_mandatory`.\n"
+        "Its value is automatically set to `1`."
+    )
     with pytest.raises(ValueError, match=msg):
         _set_default_kwarg_mandatory(kwargs, default_key, default_value)
 
@@ -241,17 +251,44 @@ def test_validate_arrayNx3(reshape):
     assert arr.shape == (2, 3)
 
     msg = (
-        "Parameter 'shape' cannot be set for Array. Its value is "
-        "automatically set to `[3, (-1, 3)]`."
+        "Parameter 'shape' cannot be set for function `validate_arrayNx3`.\n"
+        "Its value is automatically set to `[3, (-1, 3)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayNx3((1, 2, 3), shape=1)
     msg = "Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)]."
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayNx3(0)
-    msg = "Array has shape (4,)"
+    with pytest.raises(ValueError, match="_input"):
+        validate_arrayNx3([1, 2, 3, 4], name="_input")
+
+
+@pytest.mark.parametrize('reshape', [True, False])
+def test_validate_arrayN(reshape):
+    arr = validate_arrayN(0)
+    assert arr.shape == (1,)
+    assert np.array_equal(arr, [0])
+
+    if not reshape:
+        msg = 'Array has shape () which is not allowed. Shape must be -1.'
+        with pytest.raises(ValueError, match=escape(msg)):
+            validate_arrayN(0, reshape=False)
+
+    arr = validate_arrayN((1, 2, 3,4, 5, 6), reshape=reshape)
+    assert arr.shape == (6,)
+
+    msg = (
+        "Parameter 'shape' cannot be set for function `validate_arrayN`.\n"
+        "Its value is automatically set to `[(), -1]`."
+
+    )
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_arrayNx3([1, 2, 3, 4])
+        validate_arrayN((1, 2, 3), shape=1)
+    msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1].'
+    with pytest.raises(ValueError, match=escape(msg)):
+        validate_arrayN(((1,2),(3,4)))
+    with pytest.raises(ValueError, match="_input"):
+        validate_arrayN(((1, 2), (3, 4)), name="_input")
 
 
 def test_check_is_in_range():
@@ -515,6 +552,41 @@ def test_check_is_iterable():
         check_is_iterable(1, name="_input")
 
 
+def test_array_length():
+    check_length((1,))
+    check_length(
+        [
+            1,
+        ]
+    )
+    check_length(np.ndarray((1,)))
+    check_length((1,), min_length=1, max_length=1, must_be_1D=True)
+
+    msg = "_input must have a maximum length of 1. Got length 2 instead."
+    with pytest.raises(ValueError, match=msg):
+        check_length((1, 2), max_length=1, name="_input")
+
+    msg = "_input must have a minimum length of 2. Got length 1 instead."
+    with pytest.raises(ValueError, match=msg):
+        check_length((1,), min_length=2, name="_input")
+
+    msg = "Length Range [4 2] must be sorted."
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_length(
+            (
+                1,
+                2,
+                3,
+            ),
+            min_length=4,
+            max_length=2,
+        )
+
+    msg = "Shape must be -1."
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_length(((1, 2), (3, 4)), must_be_1D=True)
+
+
 def test_check_is_sorted():
     check_is_sorted
 
@@ -523,12 +595,16 @@ def test_check_is_string_sequence():
     check_is_string_sequence
 
 
-def test_check_is_NDArray():
+def test_check_is_ndarray():
     check_is_ndarray
 
 
-def test_check_string_is_in_list():
-    check_string_is_in_list
+def test_check_is_number():
+    check_is_number
+
+
+def test_check_string_in_list():
+    check_string_in_list
 
 
 #     check_is_string("abc")

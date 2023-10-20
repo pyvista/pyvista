@@ -9,6 +9,7 @@ A `validate_` function typically :
 
 """
 from functools import wraps
+import inspect
 from typing import Any, Tuple, Union
 
 import numpy as np
@@ -313,7 +314,7 @@ def validate_number(num, **kwargs):
     """Validate a number."""
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
-    _set_default_kwarg_mandatory(kwargs, 'shape', (), name="Number")
+    _set_default_kwarg_mandatory(kwargs, 'shape', ())
     _set_default_kwarg_mandatory(kwargs, 'must_be_real', True)
     return validate_array(num, **kwargs)
 
@@ -322,8 +323,8 @@ def validate_data_range(rng, **kwargs):
     """Validate a data range."""
     name = 'Data Range'
     kwargs.setdefault('name', name)
-    _set_default_kwarg_mandatory(kwargs, 'shape', 2, name=name)
-    _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True, name=name)
+    _set_default_kwarg_mandatory(kwargs, 'shape', 2)
+    _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True)
     if 'to_list' not in kwargs:
         kwargs.setdefault('to_tuple', True)
     return validate_array(rng, **kwargs)
@@ -355,20 +356,54 @@ def validate_arrayNx3(arr, reshape=True, **kwargs):
     else:
         shape = (-1, 3)
 
-    _set_default_kwarg_mandatory(kwargs, 'shape', shape, name=name)
+    _set_default_kwarg_mandatory(kwargs, 'shape', shape)
     arr = validate_array(arr, **kwargs)
     if reshape:
         return arr.reshape((-1, 3))
     return arr
 
 
-def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any, *, name="Array"):
+def validate_arrayN(arr, /, *, reshape=True, **kwargs):
+    """Validate a numeric 1D array.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to validate.
+
+    reshape : bool, True
+        If ``True``, 0-dimensional scalars are considered valid input
+        and are reshaped to (1,) to ensure the output is one-dimensional.
+
+    Returns
+    -------
+    np.ndarray
+        Validated 1D array.
+
+    """
+    name = 'Array'
+    kwargs.setdefault('name', name)
+
+    if reshape:
+        shape = [(), (-1)]
+    else:
+        shape = -1
+
+    _set_default_kwarg_mandatory(kwargs, 'shape', shape)
+    arr = validate_array(arr, **kwargs)
+    if reshape:
+        return arr.reshape(-1)
+    return arr
+
+
+def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any):
     """Set a kwarg and raise ValueError if not set to its default value."""
     val = kwargs.pop(key, default)
     if val != default:
+        calling_fname = inspect.stack()[1].function
         msg = (
-            f"Parameter '{key}' cannot be set for {name}. Its value is "
-            f"automatically set to `{default}`."
+            f"Parameter '{key}' cannot be set for function `{calling_fname}`.\n"
+            f"Its value is automatically set to `{default}`."
         )
         raise ValueError(msg)
     kwargs[key] = default

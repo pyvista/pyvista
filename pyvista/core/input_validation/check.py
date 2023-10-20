@@ -161,7 +161,11 @@ def check_is_sorted(arr, /, *, name="Array"):
     """
     arr = cast_to_ndarray(arr)
     if not np.array_equal(np.sort(arr), arr):
-        raise ValueError(f"{name} must be sorted.")
+        if arr.size <= 4:
+            msg_body = f"{arr}"
+        else:
+            msg_body = f"with {arr.size} elements"
+        raise ValueError(f"{name} {msg_body} must be sorted.")
 
 
 def check_is_finite(arr, /, *, as_warning=False, name="Array"):
@@ -436,6 +440,63 @@ def check_is_string_sequence():
     pass
 
 
-def check_string_is_in_list():
+def check_string_in_list():
     """Check that string is in a list of strings."""
     pass
+
+
+def check_length(arr, /, min_length=None, max_length=None, *, must_be_1D=False, name="Array"):
+    """Check the length of an array is within a specified range.
+
+    Notes
+    -----
+    By default, this function operates on multidimensional arrays,
+    where ``len(arr)`` may differ from the number of elements in the
+    array. For one-dimensional cases (where ``len(arr) == arr.size``),
+    use ``must_be_1D=True``.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to check.
+
+    min_length : int, optional
+        Minimum length allowed.
+
+    max_length : int, optional
+        Maximum length allowed.
+
+    must_be_1D : bool, False
+        If ``True``, the array is also checked if it is one-dimensional.
+
+    Raises
+    ------
+    ValueError
+        If the array's length is outside the specified range.
+
+    """
+    check_is_instance(arr, (Sequence, np.ndarray), name=name)
+    if must_be_1D:
+        check_has_shape(arr, shape=-1)
+
+    # Validate min/max length
+    if min_length is not None and max_length is not None:
+        from .validate import validate_data_range  # Avoid circular import
+
+        validate_data_range((min_length, max_length), name="Length Range")
+    else:
+        check_is_number(min_length) if min_length else None
+        check_is_number(max_length) if max_length else None
+
+    if min_length is not None:
+        if len(arr) < min_length:
+            raise ValueError(
+                f"{name} must have a minimum length of {min_length}. "
+                f"Got length {len(arr)} instead."
+            )
+    if max_length is not None:
+        if len(arr) > max_length:
+            raise ValueError(
+                f"{name} must have a maximum length of {max_length}. "
+                f"Got length {len(arr)} instead."
+            )
