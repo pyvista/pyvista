@@ -599,7 +599,14 @@ def test_check_is_arraylike():
 
 
 def test_check_is_less_than():
-    check_is_less_than
+    check_is_less_than([0], 1)
+    check_is_less_than(np.eye(3), 1, strict=False)
+    msg = "Array values must all be less than 0."
+    with pytest.raises(ValueError, match=msg):
+        check_is_less_than(0, 0, strict=True)
+    msg = "_input values must all be less than or equal to 0."
+    with pytest.raises(ValueError, match=msg):
+        check_is_less_than(1, 0, strict=False, name="_input")
 
 
 def test_check_is_greater_than():
@@ -618,11 +625,21 @@ def test_check_is_real():
 
 
 def test_check_is_finite():
-    check_is_finite
+    check_is_finite(0)
+    msg = '_input must have finite values.'
+    with pytest.raises(ValueError, match=msg):
+        check_is_finite(np.nan, name="_input")
 
 
-def test_check_is_integer():
-    check_is_integerlike
+def test_check_is_integerlike():
+    check_is_integerlike(1)
+    check_is_integerlike([2, 3.0])
+    msg = "Input has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'numpy.integer'>."
+    with pytest.raises(TypeError, match=msg):
+        check_is_integerlike([2, 3.0], strict=True, name="_input")
+    msg = "_input must have integer-like values."
+    with pytest.raises(ValueError, match=msg):
+        check_is_integerlike([2, 3.4], strict=False, name="_input")
 
 
 def test_check_is_sequence():
@@ -716,7 +733,10 @@ def test_check_is_iterable_of_some_type():
 
 
 def test_check_is_ndarray():
-    check_is_ndarray
+    check_is_ndarray(np.array([1, 2, 3]))
+    msg = "_input must be an instance of <class 'numpy.ndarray'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=msg):
+        check_is_ndarray(0, name='_input')
 
 
 def test_check_is_number():
@@ -728,19 +748,6 @@ def test_check_string_is_in_iterable():
     msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
         check_string_is_in_iterable("foo", ["cat", "bar"])
-
-
-#     check_is_string("abc")
-#     check_is_string("abc", name='123')
-#     msg = "Value must be a string, got <class 'int'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         check_is_string(0, name='Value')
-#     msg = "Input must be a string, got <class 'int'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         check_is_string(0)
-#     msg = "Name must be a string, got <class 'float'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         check_is_string("abc", name=0.0)
 
 
 def test_all_check_functions_return_None():
