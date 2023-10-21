@@ -12,6 +12,7 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-20.04
+    if: contains(github.event.pull_request.labels.*.name, 'PreviewDocumentation-accepted')
     env:
       PYVISTA_OFF_SCREEN: 'True'
       ALLOW_PLOTTING: true
