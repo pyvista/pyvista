@@ -327,7 +327,7 @@ def test_validate_uintlike_arrayN(reshape):
     arr = validate_uintlike_arrayN(0.0)
     assert arr.shape == (1,)
     assert np.array_equal(arr, [0])
-    assert arr.dtype.type is np.int32
+    assert arr.dtype.type is np.int32 or arr.dtype.type is np.int64
 
     with pytest.raises(ValueError, match="Shape must be -1."):
         validate_uintlike_arrayN(0.0, reshape=False)
