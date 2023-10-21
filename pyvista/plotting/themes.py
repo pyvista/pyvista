@@ -140,7 +140,7 @@ class _ForceSlots(type):
     @classmethod
     def __prepare__(metaclass, name, bases, **kwargs):
         super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
-        super_prepared['__slots__'] = ()
+        super_prepared['__slots__'] = tuple()
         return super_prepared
 
 
@@ -2834,7 +2834,7 @@ class Theme(_ThemeConfig):
                 '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
             )
 
-        for attr_name in theme.__slots__:
+        for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
 
     def save(self, filename):
