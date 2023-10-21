@@ -50,17 +50,18 @@ def check_iterable_elements_have_type(
     _ = (check_is_instance(element, check_type, allow_subclass=allow_subclass) for element in obj)
 
 
-def check_is_subdtype(arr, /, dtypelike, *, name='Input'):
-    """Check if an array's data type is a subtype a specified dtype(s).
+def check_is_subdtype(arg1, arg2, /, *, name='Input'):
+    """Check that a dtype is a subtype of another dtype(s).
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    arg1 : dtype_like | array_like
+        ``dtype`` or object coercible to one. If array_like, the dtype
+        is of the array is used.
 
-    dtypelike : dtype-like | List[dtype-like]
-        Data type which the array's data must be a subtype of. If
-        iterable, the array's data must be a subtupe of at least one of
+    arg2 : dtype_like | Iterable[dtype_like]
+        dtype-like object or objects, or list of dtype-like objects.
+        If a list, ``arg1`` must be a subtupe of at least one of the
         specified dtypes.
 
     name : str, optional
@@ -77,21 +78,25 @@ def check_is_subdtype(arr, /, dtypelike, *, name='Input'):
         Returns ``True`` if the array data is a subtupe of ``dtype``.
 
     """
-    arr = cast_to_ndarray(arr)
-    if not isinstance(dtypelike, (list, tuple)):
-        dtypelike = [dtypelike]
+    try:
+        arg1 = cast_to_ndarray(arg1).dtype
+    except ValueError:
+        check_is_dtypelike(arg1)
+
+    if not isinstance(arg2, (list, tuple)):
+        arg2 = [arg2]
     valid = False
-    for d in dtypelike:
+    for d in arg2:
         check_is_dtypelike(d)
-        if np.issubdtype(arr.dtype, d):
+        if np.issubdtype(arg1, d):
             valid = True
             break
     if not valid:
-        msg = f"{name} has incorrect dtype of '{arr.dtype}'. "
-        if len(dtypelike) == 1:
-            msg += f"The dtype must be a subtype of {dtypelike[0]}."
+        msg = f"{name} has incorrect dtype of '{arg1}'. "
+        if len(arg2) == 1:
+            msg += f"The dtype must be a subtype of {arg2[0]}."
         else:
-            msg += f"The dtype must be a subtype of at least one of \n{dtypelike}."
+            msg += f"The dtype must be a subtype of at least one of \n{arg2}."
         raise TypeError(msg)
     return
 
@@ -101,7 +106,7 @@ def check_is_dtypelike(dtypelike, /, *, name="Data type"):
 
     Parameters
     ----------
-    dtypelike : dtype-like
+    dtypelike : dtype_like
         DType-like value to check.
 
     """
@@ -206,6 +211,20 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
         raise ValueError(f"{name} must have integer-like values.")
 
 
+def check_is_nonnegative(arr, /, *, name="Array"):
+    """Check array elements are all nonnegative.
+
+    Raise ValueError if the check fails.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to check.
+
+    """
+    check_is_greater_than(arr, 0, strict=False, name=name)
+
+
 def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
     """Check array elements are all greater than some value.
 
@@ -226,6 +245,10 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
 
     """
     arr = cast_to_ndarray(arr)
+    value = cast_to_ndarray(value)
+    check_has_shape(value, ())
+    check_is_real(value)
+    check_is_finite(value)
     if strict and not np.all(arr > value):
         raise ValueError(f"{name} values must all be greater than {value}.")
     elif not np.all(arr >= value):

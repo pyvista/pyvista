@@ -8,7 +8,7 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.input_validation.check import (  # check_is_iterable_of_some_type,
+from pyvista.core.input_validation.check import (
     check_has_shape,
     check_is_arraylike,
     check_is_dtypelike,
@@ -18,9 +18,11 @@ from pyvista.core.input_validation.check import (  # check_is_iterable_of_some_t
     check_is_instance,
     check_is_integerlike,
     check_is_iterable,
+    check_is_iterable_of_some_type,
     check_is_iterable_of_strings,
     check_is_less_than,
     check_is_ndarray,
+    check_is_nonnegative,
     check_is_number,
     check_is_real,
     check_is_sequence,
@@ -44,6 +46,7 @@ from pyvista.core.input_validation.validate import (
     validate_shape_value,
     validate_transform_as_array3x3,
     validate_transform_as_array4x4,
+    validate_uintlike_arrayN,
 )
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 
@@ -96,7 +99,7 @@ def test_validate_transform_as_array3x3_raises():
 
 def test_check_is_subdtype():
     check_is_subdtype(np.array([1, 2, 3]), np.integer)
-    check_is_subdtype(np.array([1.0, 2, 3]), dtypelike=float)
+    check_is_subdtype(np.array([1.0, 2, 3]), float)
     check_is_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
     check_is_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
     msg = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
@@ -319,6 +322,22 @@ def test_validate_arrayN(reshape):
 
 
 @pytest.mark.parametrize('reshape', [True, False])
+def test_validate_uintlike_arrayN(reshape):
+    # test 0D input is reshaped to 1D by default
+    arr = validate_uintlike_arrayN(0.0)
+    assert arr.shape == (1,)
+    assert np.array_equal(arr, [0])
+    assert arr.dtype.type is np.int32
+
+    with pytest.raises(ValueError, match="Shape must be -1."):
+        validate_uintlike_arrayN(0.0, reshape=False)
+
+    msg = '_input values must all be greater than or equal to 0.'
+    with pytest.raises(ValueError, match=msg):
+        validate_uintlike_arrayN([-1, 1], name="_input")
+
+
+@pytest.mark.parametrize('reshape', [True, False])
 def test_validate_array3(reshape):
     # test 0D input is reshaped to len-3 1D vector with broadcasting enabled
     arr = validate_array3(0, broadcast=True)
@@ -442,6 +461,7 @@ def test_validate_array(
         reshape=shape,
         broadcast_to=shape,
         must_be_in_range=(np.min(valid_array), np.max(valid_array)),
+        must_be_nonnegative=np.all(np.array(valid_array) > 0),
     )
 
     # Test raises correct error with invalid input
@@ -588,7 +608,14 @@ def test_check_is_less_than():
 
 
 def test_check_is_greater_than():
-    check_is_greater_than
+    check_is_greater_than([1], 0)
+    check_is_greater_than(np.eye(3), 0, strict=False)
+    msg = "Array values must all be greater than 0."
+    with pytest.raises(ValueError, match=msg):
+        check_is_greater_than(0, 0, strict=True)
+    msg = "_input values must all be greater than or equal to 0."
+    with pytest.raises(ValueError, match=msg):
+        check_is_greater_than(-1, 0, strict=False, name="_input")
 
 
 def test_check_is_real():
@@ -666,6 +693,14 @@ def test_array_length():
         check_length(((1, 2), (3, 4)), must_be_1D=True)
 
 
+def test_check_is_nonnegative():
+    check_is_nonnegative(0)
+    check_is_nonnegative(np.eye(3))
+    msg = "Array values must all be greater than or equal to 0."
+    with pytest.raises(ValueError, match=msg):
+        check_is_nonnegative(-1)
+
+
 def test_check_is_sorted():
     check_is_sorted
 
@@ -679,6 +714,10 @@ def test_check_is_iterable_of_strings():
     msg = "String Iterable must be an instance of <class 'collections.abc.Iterable'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
         check_is_iterable_of_strings(0)
+
+
+def test_check_is_iterable_of_some_type():
+    check_is_iterable_of_some_type
 
 
 def test_check_is_ndarray():

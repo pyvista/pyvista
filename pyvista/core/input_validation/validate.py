@@ -22,6 +22,7 @@ from pyvista.core.input_validation.check import (
     check_is_greater_than,
     check_is_in_range,
     check_is_integerlike,
+    check_is_nonnegative,
     check_is_real,
     check_is_sorted,
     check_is_string,
@@ -43,6 +44,7 @@ def validate_array(
     length=None,
     min_length=None,
     max_length=None,
+    must_be_nonnegative=False,
     must_be_finite=False,
     must_be_real=True,
     must_be_integer_like=False,
@@ -87,13 +89,13 @@ def validate_array(
         Broadcast the array to a read-only view with the specified shape.
         Broadcasting is done after reshaping (if ``reshape=True``).
 
-    dtype_base : dtype-like | Iterable[dtype-like], optional
+    dtype_base : dtype_like | List[dtype_like], optional
         Check the array's data-type. Specify a NumPy dtype or dtype-like
         base class which the array's data must be a subtype of. If
         iterable, the array's data must be a subtype of at least one of
         specified dtypes.
 
-    dtype_out : dtype-like, optional
+    dtype_out : dtype_like, optional
         The desired data-type of the returned array.
 
     length : array_like
@@ -113,6 +115,9 @@ def validate_array(
 
     max_length : int, optional
         Check that the array' length is this value or smaller.
+
+    must_be_non_negative : bool, default: False
+        Check that all elements of the array are nonnegative.
 
     must_be_finite : bool, default: False
         Check that all elements of the array are finite, i.e. not
@@ -199,7 +204,7 @@ def validate_array(
     if shape is not None:
         check_has_shape(arr_out, shape, name=name)
 
-    # Reshape _after_ checking shape to prevent unexpected reshaping
+    # Do reshape _after_ checking shape to prevent unexpected reshaping
     if reshape is not None and arr_out.shape != reshape:
         arr_out = arr_out.reshape(reshape)
 
@@ -218,6 +223,8 @@ def validate_array(
         )
 
     # Check data values
+    if must_be_nonnegative:
+        check_is_nonnegative(arr_out, name=name)
     if must_be_finite:
         check_is_finite(arr_out, name=name)
     if must_be_integer_like:
@@ -371,18 +378,28 @@ def validate_dtype(dtype_like, /, *, name="Data type") -> np.dtype:
 
 @wraps(validate_array)
 def validate_number(num, **kwargs):
-    """Validate a number."""
+    """Validate a number.
+
+    By default, the number is checked to ensure it:
+        * is scalar or is an array which can be cast as a scalar
+        * is a real number
+        * is finite
+
+    The returned value is an `int` or `float`.
+
+    """
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
+    kwargs.setdefault('must_be_finite', True)
+    kwargs.setdefault('must_be_real', True)
     _set_default_kwarg_mandatory(kwargs, 'shape', ())
-    _set_default_kwarg_mandatory(kwargs, 'must_be_real', True)
     return validate_array(num, **kwargs)
 
 
 def validate_data_range(rng, **kwargs):
     """Validate a data range."""
-    name = 'Data Range'
-    kwargs.setdefault('name', name)
+    kwargs.setdefault('name', 'Data Range')
+    kwargs.setdefault('must_be_real', True)
     _set_default_kwarg_mandatory(kwargs, 'shape', 2)
     _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True)
     if 'to_list' not in kwargs:
@@ -392,6 +409,13 @@ def validate_data_range(rng, **kwargs):
 
 def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     """Validate an array is numeric and has shape Nx3.
+
+    The array is checked to ensure its input values:
+        * have shape (N,3) or can be reshaped to (N,3)
+        * are numeric
+
+    The returned array is formatted so that its values:
+        * have shape (N,3)
 
     Parameters
     ----------
@@ -405,7 +429,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     Returns
     -------
     np.ndarray
-        Validated array with shape Nx3.
+        Validated array with shape (N,3).
 
     """
     if reshape:
@@ -415,12 +439,18 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         shape = (-1, 3)
     _set_default_kwarg_mandatory(kwargs, 'shape', shape)
 
-    arr = validate_array(arr, **kwargs)
-    return arr
+    return validate_array(arr, **kwargs)
 
 
 def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array.
+
+    The array is checked to ensure its input values:
+        * have shape (N,) or can be reshaped to (N,)
+        * are numeric
+
+    The returned array is formatted so that its values:
+        * have shape (N,)
 
     Parameters
     ----------
@@ -428,9 +458,10 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         Array to validate.
 
     reshape : bool, True
-        If ``True``, 0-dimensional scalars and 2D vectors with shape
-        (1, N) are considered valid input, and are reshaped to (1,)
-        to ensure the output is consistently one-dimensional.
+        If ``True``, 0-dimensional scalars are reshaped to (1,) and 2D
+        vectors with shape (1, N) are reshaped to (N,) to ensure the
+        output is consistently one-dimensional. Otherwise, all scalar and
+        2D inputs are not considered valid.
 
     Returns
     -------
@@ -444,9 +475,47 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     else:
         shape = -1
     _set_default_kwarg_mandatory(kwargs, 'shape', shape)
+    return validate_array(arr, **kwargs)
 
-    arr = validate_array(arr, **kwargs)
-    return arr
+
+def validate_uintlike_arrayN(arr, /, *, reshape=True, **kwargs):
+    """Validate a numeric 1D array of non-negative integers.
+
+    The array is checked to ensure its input values:
+        * have shape (N,) or can be reshaped to (N,)
+        * are integer-like
+        * are non-negative
+
+    The returned array is formatted so that its values:
+        * have shape (N,)
+        * have an integer data type
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to validate.
+
+    reshape : bool, True
+        If ``True``, 0-dimensional scalars are reshaped to (1,) and 2D
+        vectors with shape (1, N) are reshaped to (N,) to ensure the
+        output is consistently one-dimensional. Otherwise, all scalar and
+        2D inputs are not considered valid.
+
+    Returns
+    -------
+    np.ndarray
+        Validated 1D array with non-negative integers.
+
+    """
+    # Set default dtype out but allow overriding as long as the dtype
+    # is also integral
+    kwargs.setdefault('dtype_out', int)
+    check_is_subdtype(kwargs['dtype_out'], np.integer)
+
+    _set_default_kwarg_mandatory(kwargs, 'must_be_integer_like', True)
+    _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)
+
+    return validate_arrayN(arr, reshape=reshape, **kwargs)
 
 
 def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
@@ -483,8 +552,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
         _set_default_kwarg_mandatory(kwargs, 'broadcast_to', (3,))
     _set_default_kwarg_mandatory(kwargs, 'shape', shape)
 
-    arr = validate_array(arr, **kwargs)
-    return arr
+    return validate_array(arr, **kwargs)
 
 
 def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any):
