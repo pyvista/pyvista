@@ -30,7 +30,6 @@ from pyvista.core.input_validation.check import (
     check_is_string,
     check_is_subdtype,
     check_is_type,
-    check_iterable_elements_have_type,
     check_length,
     check_string_is_in_iterable,
 )
@@ -597,10 +596,6 @@ def test_check_is_string():
 
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
-
-
-def test_check_iterable_elements_have_type():
-    check_iterable_elements_have_type
 
 
 def test_check_is_less_than():

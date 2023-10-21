@@ -385,7 +385,7 @@ def validate_dtype(dtype_like, /, *, name="Data type") -> np.dtype:
 
 
 @wraps(validate_array)
-def validate_number(num, **kwargs):
+def validate_number(num, /, **kwargs):
     """Validate a number.
 
     By default, the number is checked to ensure it:
@@ -404,7 +404,7 @@ def validate_number(num, **kwargs):
     return validate_array(num, **kwargs)
 
 
-def validate_data_range(rng, **kwargs):
+def validate_data_range(rng, /, **kwargs):
     """Validate a data range."""
     kwargs.setdefault('name', 'Data Range')
     kwargs.setdefault('must_be_real', True)

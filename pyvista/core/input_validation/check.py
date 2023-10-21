@@ -8,7 +8,7 @@ A `check_` function typically:
 """
 from collections.abc import Iterable, Sequence
 from numbers import Number
-from typing import Any, Tuple, Union, get_args, get_origin
+from typing import Tuple, Union, get_args, get_origin
 from warnings import warn
 
 import numpy as np
@@ -16,38 +16,6 @@ import numpy as np
 from pyvista.core.utilities.arrays import cast_to_ndarray
 
 ShapeLike = Union[int, Tuple[int, ...], Tuple[None]]
-
-
-def check_iterable_elements_have_type(
-    obj: Iterable,
-    /,
-    check_type: Union[type, Tuple[type, ...]],
-    *,
-    allow_subclass=True,
-    name='Object',
-):
-    """Check the type of all items in an iterable.
-
-    Parameters
-    ----------
-    obj : Iterable
-        Iterable to check.
-
-    check_type : type | Tuple[type, ...]
-        Class type(s) to check for. Each element of the sequence must
-        have the type or one of the types specified.
-
-    name : str, optional
-        Variable name to use in the error messages if any are raised.
-
-    Raises
-    ------
-    TypeError
-        If the input is not a Sequence with elements of the specified type(s).
-
-    """
-    check_is_iterable(obj, name=name)
-    _ = (check_is_instance(element, check_type, allow_subclass=allow_subclass) for element in obj)
 
 
 def check_is_subdtype(arg1, arg2, /, *, name='Input'):
@@ -457,11 +425,35 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
 
 
 def check_is_iterable_of_some_type(
-    iterable_obj: Iterable, some_type: Union[Any, Tuple[Any, ...]], /, *, name: str = 'Iterable'
+    iterable_obj: Iterable,
+    some_type: Union[type, Tuple[type, ...]],
+    /,
+    *,
+    allow_subclass=True,
+    name: str = 'Iterable',
 ):
-    """Check that an iterable's items all have a specified type."""
+    """Check that an iterable's items all have a specified type.
+
+    Parameters
+    ----------
+    obj : Iterable
+        Iterable to check.
+
+    some_type : type | Tuple[type, ...]
+        Class type(s) to check for. Each element of the sequence must
+        have the type or one of the types specified.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
+    """
     check_is_iterable(iterable_obj, name=name)
-    [check_is_instance(item, some_type, name=f"All items of {name}") for item in iterable_obj]
+    [
+        check_is_instance(
+            item, some_type, allow_subclass=allow_subclass, name=f"All items of {name}"
+        )
+        for item in iterable_obj
+    ]
 
 
 def check_is_iterable_of_strings(iterable_obj: Iterable, /, *, name: str = 'String Iterable'):
