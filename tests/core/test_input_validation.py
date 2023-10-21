@@ -9,6 +9,7 @@ from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
 from pyvista.core.input_validation.check import (
+    _validate_shape_value,
     check_has_shape,
     check_is_arraylike,
     check_is_dtypelike,
@@ -21,7 +22,6 @@ from pyvista.core.input_validation.check import (
     check_is_iterable_of_some_type,
     check_is_iterable_of_strings,
     check_is_less_than,
-    check_is_ndarray,
     check_is_nonnegative,
     check_is_number,
     check_is_real,
@@ -42,7 +42,6 @@ from pyvista.core.input_validation.validate import (
     validate_data_range,
     validate_dtype,
     validate_number,
-    validate_shape_value,
     validate_transform_as_array3x3,
     validate_transform_as_array4x4,
     validate_uintlike_arrayN,
@@ -223,20 +222,20 @@ def test_check_has_shape():
 def test_validate_shape_value():
     msg = "`None` is not a valid shape. Use `()` instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        validate_shape_value(None)
-    shape = validate_shape_value(())
+        _validate_shape_value(None)
+    shape = _validate_shape_value(())
     assert shape == ()
-    shape = validate_shape_value(1)
+    shape = _validate_shape_value(1)
     assert shape == (1,)
-    shape = validate_shape_value(-1)
+    shape = _validate_shape_value(-1)
     assert shape == (-1,)
-    shape = validate_shape_value((1, 2, 3))
+    shape = _validate_shape_value((1, 2, 3))
     assert shape == (
         1,
         2,
         3,
     )
-    shape = validate_shape_value((-1, 2, -1))
+    shape = _validate_shape_value((-1, 2, -1))
     assert shape == (-1, 2, -1)
 
     msg = (
@@ -244,15 +243,15 @@ def test_validate_shape_value():
         "The dtype must be a subtype of <class 'numpy.integer'>."
     )
     with pytest.raises(TypeError, match=escape(msg)):
-        validate_shape_value(1.0)
+        _validate_shape_value(1.0)
 
     msg = "Shape values must all be greater than or equal to -1."
     with pytest.raises(ValueError, match=msg):
-        validate_shape_value(-2)
+        _validate_shape_value(-2)
 
     msg = "Shape must be scalar or 1-dimensional."
     with pytest.raises(ValueError, match=msg):
-        validate_shape_value(((1, 2), (3, 4)))
+        _validate_shape_value(((1, 2), (3, 4)))
 
 
 @pytest.mark.parametrize('reshape', [True, False])
@@ -667,7 +666,7 @@ def test_array_length():
         ]
     )
     check_length(np.ndarray((1,)))
-    check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1D=True)
+    check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
     check_length((1,), exact_length=[1, 2.0])
 
     with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
@@ -702,7 +701,7 @@ def test_array_length():
 
     msg = "Shape must be -1."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_length(((1, 2), (3, 4)), must_be_1D=True)
+        check_length(((1, 2), (3, 4)), must_be_1d=True)
 
 
 def test_check_is_nonnegative():
@@ -732,15 +731,11 @@ def test_check_is_iterable_of_some_type():
     check_is_iterable_of_some_type
 
 
-def test_check_is_ndarray():
-    check_is_ndarray(np.array([1, 2, 3]))
-    msg = "_input must be an instance of <class 'numpy.ndarray'>. Got <class 'int'> instead."
-    with pytest.raises(TypeError, match=msg):
-        check_is_ndarray(0, name='_input')
-
-
 def test_check_is_number():
-    check_is_number
+    check_is_number(1)
+    msg = "_input must be an instance of <class 'numbers.Number'>. Got <class 'numpy.ndarray'> instead."
+    with pytest.raises(TypeError, match=msg):
+        check_is_number(np.ndarray(0), name='_input')
 
 
 def test_check_string_is_in_iterable():

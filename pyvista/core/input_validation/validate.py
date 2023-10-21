@@ -10,7 +10,7 @@ A `validate_` function typically :
 """
 from functools import wraps
 import inspect
-from typing import Any, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -19,7 +19,6 @@ from pyvista.core.input_validation.check import (
     check_has_shape,
     check_is_dtypelike,
     check_is_finite,
-    check_is_greater_than,
     check_is_in_range,
     check_is_integerlike,
     check_is_nonnegative,
@@ -330,32 +329,7 @@ def validate_transform_as_array3x3(transformlike, /, *, name="Transform"):
     return arr
 
 
-def validate_shape_value(
-    shape: Union[int, Tuple[int, ...], Tuple[None]], /, *, name="Shape"
-) -> Union[Tuple[None], Tuple[int, ...]]:
-    """Validate shape-like input and return its tuple representation."""
-    if shape is None:
-        # `None` is used to mean 'any shape is allowed` by the array
-        #  validation methods, so raise an error here.
-        #  Also, setting `None` as a shape is deprecated by NumPy.
-        raise TypeError("`None` is not a valid shape. Use `()` instead.")
-    if shape == ():
-        return ()
-
-    # Make sure shape is scalar or 1-dimensional
-    # Values must be non-zero integers, and -1 is accepted
-    shape_arr = cast_to_ndarray(shape)
-    if shape_arr.ndim > 1:
-        raise ValueError("Shape must be scalar or 1-dimensional.")
-    check_is_subdtype(shape_arr, np.integer, name="Shape")
-    check_is_greater_than(shape_arr, -1, name="Shape", strict=False)
-
-    if shape_arr.ndim == 0:
-        return (int(shape_arr),)
-    return tuple(shape_arr)
-
-
-def validate_dtype(dtype_like, /, *, name="Data type") -> np.dtype:
+def validate_dtype(dtype_like) -> np.dtype:
     """Validate dtype-like input and return it as a dtype object.
 
     .. warning::
