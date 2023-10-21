@@ -2644,7 +2644,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        logo : pyvista.ImageData or pathlib.Path
+        logo : pyvista.ImageData or pathlib.Path, optional
             The logo to display. If a pathlike is passed, it is assumed to be a
             file path to an image.
 
