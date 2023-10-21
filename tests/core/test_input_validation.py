@@ -144,17 +144,17 @@ def test_validate_number():
     assert num == 1
     assert type(num) is int
 
-    num = validate_number(2.0, to_list=False, shape=())
+    num = validate_number(2.0, to_list=False, must_have_shape=())
     assert num == 2.0
     assert type(num) is np.ndarray
     assert num.dtype.type is np.float64
 
     msg = (
-        "Parameter 'shape' cannot be set for function `validate_number`.\n"
+        "Parameter 'must_have_shape' cannot be set for function `validate_number`.\n"
         "Its value is automatically set to `()`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_number(1, shape=2)
+        validate_number(1, must_have_shape=2)
 
 
 def test_validate_data_range():
@@ -164,7 +164,7 @@ def test_validate_data_range():
     rng = validate_data_range((0, 2.5), to_list=True)
     assert rng == [0.0, 2.5]
 
-    rng = validate_data_range((-10, -10), to_tuple=False, shape=2)
+    rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
     msg = "Data Range [1 0] must be sorted."
@@ -172,11 +172,11 @@ def test_validate_data_range():
         validate_data_range((1, 0))
 
     msg = (
-        "Parameter 'shape' cannot be set for function `validate_data_range`.\n"
+        "Parameter 'must_have_shape' cannot be set for function `validate_data_range`.\n"
         "Its value is automatically set to `2`."
     )
     with pytest.raises(ValueError, match=msg):
-        validate_data_range((0, 1), shape=3)
+        validate_data_range((0, 1), must_have_shape=3)
 
 
 def test_set_default_kwarg_mandatory():
@@ -271,11 +271,11 @@ def test_validate_arrayNx3(reshape):
     assert arr.shape == (2, 3)
 
     msg = (
-        "Parameter 'shape' cannot be set for function `validate_arrayNx3`.\n"
+        "Parameter 'must_have_shape' cannot be set for function `validate_arrayNx3`.\n"
         "Its value is automatically set to `[3, (-1, 3)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_arrayNx3((1, 2, 3), shape=1)
+        validate_arrayNx3((1, 2, 3), must_have_shape=1)
     msg = "Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)]."
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayNx3(0)
@@ -308,11 +308,11 @@ def test_validate_arrayN(reshape):
     assert arr.shape == (6,)
 
     msg = (
-        "Parameter 'shape' cannot be set for function `validate_arrayN`.\n"
+        "Parameter 'must_have_shape' cannot be set for function `validate_arrayN`.\n"
         "Its value is automatically set to `[(), -1, (1, -1)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_arrayN((1, 2, 3), shape=1)
+        validate_arrayN((1, 2, 3), must_have_shape=1)
 
     msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1)].'
     with pytest.raises(ValueError, match=escape(msg)):
@@ -367,11 +367,11 @@ def test_validate_array3(reshape):
 
     # test shape cannot be overridden
     msg = (
-        "Parameter 'shape' cannot be set for function `validate_array3`.\n"
+        "Parameter 'must_have_shape' cannot be set for function `validate_array3`.\n"
         "Its value is automatically set to `[(3,), (1, 3)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_array3((1, 2, 3), shape=3)
+        validate_array3((1, 2, 3), must_have_shape=3)
 
 
 def test_check_is_in_range():
@@ -452,12 +452,12 @@ def test_validate_array(
         as_any=as_any,
         to_list=to_list,
         to_tuple=to_tuple,
-        dtype_base=np.number,
+        must_have_dtype=np.number,
         dtype_out=dtype_out,
-        length=range(np.array(valid_array).size + 1),
-        min_length=1,
-        max_length=np.array(valid_array).size,
-        shape=shape,
+        must_have_length=range(np.array(valid_array).size + 1),
+        must_have_min_length=1,
+        must_have_max_length=np.array(valid_array).size,
+        must_have_shape=shape,
         reshape=shape,
         broadcast_to=shape,
         must_be_in_range=(np.min(valid_array), np.max(valid_array)),
