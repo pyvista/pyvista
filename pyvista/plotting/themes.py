@@ -1555,6 +1555,7 @@ class Theme(_ThemeConfig):
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
     ]
 
     def __init__(self):
