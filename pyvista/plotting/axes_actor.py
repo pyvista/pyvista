@@ -8,7 +8,7 @@ import numpy as np
 import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array, _coerce_transformlike_arg
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
@@ -1072,17 +1072,7 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
 
     @user_matrix.setter
     def user_matrix(self, value):  # numpydoc ignore=GL08
-        self._update_UserMatrix() if self._enable_orientation_workaround else None
-        if isinstance(value, np.ndarray):
-            if value.shape != (4, 4):
-                raise ValueError('User matrix array must be 4x4.')
-        elif isinstance(value, vtkMatrix4x4):
-            value = array_from_vtkmatrix(value)
-        else:
-            raise TypeError(
-                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
-            )
-
+        value = _coerce_transformlike_arg(value)
         self._user_matrix = value
         self._update_UserMatrix()
 
