@@ -114,7 +114,7 @@ def validate_array(
         infinity and not Not a Number (NaN).
 
     must_be_real : bool, default: True
-        Check that the array's has real numbers, i.e. its data type is
+        Check that the arrays has real numbers, i.e. its data type is
         integer or floating.
 
     must_be_integer_like : bool, default: False
