@@ -945,6 +945,13 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.show()
 
 
+@pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
+def test_add_point_labels_shape(shape, verify_image_cache):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
+    plotter.show()
+
+
 def test_set_background():
     plotter = pv.Plotter()
     plotter.set_background('k')

@@ -394,6 +394,34 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_multi_block_color_cycler():
+    """Test passing a custom color cycler"""
+    plotter = pv.Plotter()
+    data = {
+        "sphere1": pv.Sphere(center=(1, 0, 0)),
+        "sphere2": pv.Sphere(center=(2, 0, 0)),
+        "sphere3": pv.Sphere(center=(3, 0, 0)),
+        "sphere4": pv.Sphere(center=(4, 0, 0)),
+    }
+    spheres = pv.MultiBlock(data)
+    actor, mapper = plotter.add_composite(spheres)
+
+    # pass custom cycler
+    mapper.set_unique_colors(['red', 'green', 'blue'])
+
+    assert mapper.block_attr[0].color.name == 'red'
+    assert mapper.block_attr[1].color.name == 'green'
+    assert mapper.block_attr[2].color.name == 'blue'
+    assert mapper.block_attr[3].color.name == 'red'
+
+    # test wrong args
+    with pytest.raises(ValueError):
+        mapper.set_unique_colors('foo')
+
+    with pytest.raises(TypeError):
+        mapper.set_unique_colors(5)
+
+
 @pytest.mark.parametrize(
     'face, normal',
     [

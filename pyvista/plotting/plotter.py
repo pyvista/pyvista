@@ -2437,8 +2437,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene. Defaults to ``True`` unless ``rgba=True``.
 
-        multi_colors : bool, default: False
-            Color each block by a solid color using matplotlib's color cycler.
+        multi_colors : bool | str | cycler.Cycler | sequence[ColorLike], default: False
+            Color each block by a solid color using a custom cycler.
+
+            If ``True``, the default 'matplotlib' color cycler is used.
+
+            See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
+            custom color cyclers.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
@@ -2719,7 +2724,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if color is not None:
             self.mapper.scalar_visibility = False
         elif multi_colors:
-            self.mapper.set_unique_colors()
+            self.mapper.set_unique_colors(multi_colors)
         else:
             if scalars is None:
                 point_name, cell_name = dataset._get_consistent_active_scalars()
@@ -2984,9 +2989,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``False``, a scalar bar will not be added to the
             scene.
 
-        multi_colors : bool, default: False
+        multi_colors : bool | str | cycler.Cycler | sequence[ColorLike], default: False
             If a :class:`pyvista.MultiBlock` dataset is given this will color
-            each block by a solid color using matplotlib's color cycler.
+            each block by a solid color using a custom cycler.
+
+            If ``True``, the default 'matplotlib' color cycler is used.
+
+            See :func:`set_color_cycler<Plotter.set_color_cycler>` for usage of
+            custom color cycles.
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
@@ -4901,7 +4911,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Open a MP4 movie and set the quality to maximum.
 
         >>> import pyvista as pv
-        >>> pl = pv.Plotter
+        >>> pl = pv.Plotter()
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
 
         """
@@ -5408,23 +5418,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
             hier.SetInputConnection(vis_points.GetOutputPort())
 
         # create label mapper
-        labelMapper = _vtk.vtkLabelPlacementMapper()
-        labelMapper.SetInputConnection(hier.GetOutputPort())
+        label_mapper = _vtk.vtkLabelPlacementMapper()
+        label_mapper.SetInputConnection(hier.GetOutputPort())
         if not isinstance(shape, str):
-            labelMapper.SetShapeToNone()
+            label_mapper.SetShapeToNone()
         elif shape.lower() in 'rect':
-            labelMapper.SetShapeToRect()
+            label_mapper.SetShapeToRect()
         elif shape.lower() in 'rounded_rect':
-            labelMapper.SetShapeToRoundedRect()
+            label_mapper.SetShapeToRoundedRect()
         else:
             raise ValueError(f'Shape ({shape}) not understood')
         if fill_shape:
-            labelMapper.SetStyleToFilled()
+            label_mapper.SetStyleToFilled()
         else:
-            labelMapper.SetStyleToOutline()
-        labelMapper.SetBackgroundColor(Color(shape_color).float_rgb)
-        labelMapper.SetBackgroundOpacity(shape_opacity)
-        labelMapper.SetMargin(margin)
+            label_mapper.SetStyleToOutline()
+        label_mapper.SetBackgroundColor(Color(shape_color).float_rgb)
+        label_mapper.SetBackgroundOpacity(shape_opacity)
+        label_mapper.SetMargin(margin)
 
         textprop = hier.GetTextProperty()
         textprop.SetItalic(italic)
@@ -5451,7 +5461,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
 
         label_actor = _vtk.vtkActor2D()
-        label_actor.SetMapper(labelMapper)
+        label_actor.SetMapper(label_mapper)
         self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)
         return label_actor
 
