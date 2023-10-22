@@ -393,15 +393,14 @@ def test_theme_slots(default_theme):
     with pytest.raises(AttributeError, match='has no attribute'):
         default_theme.lighting_params.new_attr = 1
 
-    # Repeat with a subclass
+    # subclasses should also prevent arbitrary attributes
     theme = DarkTheme()
     with pytest.raises(AttributeError, match='has no attribute'):
         theme.new_attr = 1
 
-    # verify we can't create an arbitrary attribute on an attribute
-    assert default_theme.lighting_params
+    assert theme.lighting_params
     with pytest.raises(AttributeError, match='has no attribute'):
-        default_theme.lighting_params.new_attr = 1
+        theme.lighting_params.new_attr = 1
 
 
 def test_theme_eq():
