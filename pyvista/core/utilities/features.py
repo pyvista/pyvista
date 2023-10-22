@@ -147,46 +147,45 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     Examples
     --------
 
-    Create a StructuredGrid voxel volume from input mesh.
+    Create a ``StructuredGrid`` voxel volume from input mesh.
 
     >>> import pyvista as pv
     >>> import numpy as np
     
-    Load file from PyVista examples
+    Load file from PyVista examples.
     
     >>> from pyvista import examples
     >>> mesh = examples.download_cow()
     
-    Create a voxel volume from object
+    Create a voxel volume from object with equal density dimensions.
     
     >>> vox = pv.voxelize_volume(mesh, density=0.15)
     >>> vox.plot(scalars='MeshCells', show_edges=True)
     
-    Slice the voxel volume to view ``MeshCells``
+    Slice the voxel volume to view ``MeshCells``.
     
     >>> slice = vox.slice_orthogonal()
-    >>> slices.plot(scalars='MeshCells', show_edges=True)
+    >>> slice.plot(scalars='MeshCells', show_edges=True)
     
-    Create a RectilinearGrid voxel volume from input mesh.
+    Create a ``RectilinearGrid`` voxel volume from input mesh.
 
     >>> import pyvista as pv
     >>> import numpy as np
     
-    Load file from PyVista examples
+    Load file from PyVista examples.
     
     >>> from pyvista import examples
     >>> mesh = examples.download_cow()
     
-    Create a voxel volume from object.
-    N.B. The unequal density dimensions.
+    Create a voxel volume from object with unequal density dimensions.
     
     >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.25)
     >>> vox.plot(scalars='MeshCells', show_edges=True)
     
-    Slice the voxel volume to view ``MeshCells``
+    Slice the voxel volume to view ``MeshCells``.
     
     >>> slice = vox.slice_orthogonal()
-    >>> slices.plot(scalars='MeshCells', show_edges=True)
+    >>> slice.plot(scalars='MeshCells', show_edges=True)
 
     """
 
