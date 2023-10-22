@@ -31,6 +31,7 @@ pyvista.
 """
 
 from enum import Enum
+from itertools import chain
 import json
 import os
 from typing import Callable, List, Optional, Union
@@ -172,7 +173,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
         """
         # remove the first underscore in each entry
         dict_ = {}
-        for key in self.__slots__:
+        for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
@@ -185,7 +186,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other.__slots__:
+        for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -210,6 +211,12 @@ class _ThemeConfig(metaclass=_ForceSlots):
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+    @classmethod
+    def _all__slots__(cls):
+        """Get all slots including parent classes."""
+        mro = cls.mro()
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
