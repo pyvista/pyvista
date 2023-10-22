@@ -190,7 +190,7 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     arr : array_like
         Array to check.
 
-    strict : bool, False
+    strict : bool, default: False
         If ``True``, the array's data must be a subtype of ``np.integer``
         (i.e. float types are not allowed).
 
@@ -251,7 +251,7 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
     value : Number
         Value which the array's elements must be greater than.
 
-    strict : bool, True
+    strict : bool, default: True
         If ``True``, the array's value must be strictly greater than
         ``value``. Otherwise, values must be greater than or equal to
         ``value``.
@@ -287,10 +287,10 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
     arr : array_like
         Array to check.
 
-    value : Number
+    value : scalar
         Value which the array's elements must be less than.
 
-    strict : bool, True
+    strict : bool, default: True
         If ``True``, the array's value must be strictly less than
         ``value``. Otherwise, values must be less than or equal to
         ``value``.
@@ -756,10 +756,10 @@ def check_length(
     max_length : int, optional
         Check that array has this length or smaller.
 
-    must_be_1d : bool, False
+    must_be_1d : bool, default: False
         If ``True``, the array is also checked that it is one-dimensional.
 
-    allow_scalars : bool, False
+    allow_scalars : bool, default: False
         If ``True``, a scalar input will be reshaped to have a length of
         1. Otherwise, the check will fail since a scalar does not
         have a length.

@@ -132,12 +132,12 @@ def validate_array(
         and <= maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
         to further restrict the allowable range.
 
-    strict_lower_bound : bool, False
+    strict_lower_bound : bool, default: False
         Enforce a strict lower bound for the range specified by
         ``must_be_in_range``, i.e. array values must be strictly greater
         than the specified minimum.
 
-    strict_upper_bound : bool, False
+    strict_upper_bound : bool, default: False
         Enforce a strict upper bound for the range specified by
         ``must_be_in_range``, i.e. array values must be strictly less
         than the specified maximum.
@@ -168,12 +168,12 @@ def validate_array(
 
         A copy may also be made to satisfy ``dtype_out`` requirements.
 
-    to_list : bool, False
+    to_list : bool, default: False
         Return the validated array as a list or nested list. Scalar
         values are always returned as a number. Has no effect if
         ``to_tuple=True``.
 
-    to_tuple : bool, False
+    to_tuple : bool, default: False
         Return the validated array as a tuple or nested tuple. Scalar
         values are always returned as a number.
 
@@ -392,6 +392,23 @@ def validate_number(num, /, reshape=True, **kwargs):
     int | float
         Validated number.
 
+    Examples
+    --------
+    Validate a number.
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_number(1)
+    1
+
+    1D arrays are automatically reshaped.
+    >>> valid.validate_number([42.0])
+    42.0
+
+    Additional checks can be added as needed.
+    >>> valid.validate_number(
+    ...     10, must_be_in_range=[0, 10], must_be_integer_like=True
+    ... )
+    10
+
     """
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
@@ -430,6 +447,18 @@ def validate_data_range(rng, /, **kwargs):
     tuple
         Validated range as ``(lower_bound, upper_bound)``.
 
+    Examples
+    --------
+    Validate a data range.
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_data_range([-5, 5])
+    (-5, 5)
+
+    Add additional constraints if needed.
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_data_range([0, 1.0], must_be_nonnegative=True)
+    (0.0, 1.0)
+
     """
     kwargs.setdefault('name', 'Data Range')
     kwargs.setdefault('must_be_real', True)
@@ -455,7 +484,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     arr : array_like
         Array to validate.
 
-    reshape : bool, True
+    reshape : bool, default: True
         If ``True``, 1D arrays with 3 elements are considered valid input
         and are reshaped to (1,3) to ensure the output is two-dimensional.
 
@@ -467,6 +496,25 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     -------
     np.ndarray
         Validated array with shape (N,3).
+
+    Examples
+    --------
+    Validate an Nx3 array.
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
+    array([[1, 2, 3],
+           [4, 5, 6]])
+
+    1D 3-element arrays are automatically reshaped to be 2D.
+    >>> valid.validate_arrayNx3([1, 2, 3])
+    array([[1, 2, 3]])
+
+    Add additional constraints.
+    >>> valid.validate_arrayNx3(
+    ...     ((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10]
+    ... )
+    array([[1, 2, 3],
+           [4, 5, 6]])
 
     """
     if reshape:
@@ -494,7 +542,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     arr : array_like
         Array to validate.
 
-    reshape : bool, True
+    reshape : bool, default: True
         If ``True``, 0-dimensional scalars are reshaped to (1,) and 2D
         vectors with shape (1, N) are reshaped to (N,) to ensure the
         output is consistently one-dimensional. Otherwise, all scalar and
@@ -508,6 +556,26 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     -------
     np.ndarray
         Validated 1D array.
+
+    Examples
+    --------
+    Validate a 1D array with four elements.
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_arrayN((1, 2, 3, 4))
+    array([1, 2, 3, 4])
+
+    Scalar 0-dimensional values are automatically reshaped to be 1D.
+    >>> valid.validate_arrayN(42.0)
+    array([42.0])
+
+    2D arrays where the first dimension is unity are automatically
+    reshaped to be 1D.
+    >>> valid.validate_arrayN([[1, 2]])
+    array([1, 2])
+
+    Add additional constraints if needed.
+    >>> valid.validate_arrayN((1, 2, 3), must_be_nonnegative=True)
+    array([1, 2, 3])
 
     """
     if reshape:
@@ -536,7 +604,7 @@ def validate_uintlike_arrayN(arr, /, *, reshape=True, **kwargs):
     arr : array_like
         Array to validate.
 
-    reshape : bool, True
+    reshape : bool, default: True
         If ``True``, 0-dimensional scalars are reshaped to (1,) and 2D
         vectors with shape (1, N) are reshaped to (N,) to ensure the
         output is consistently one-dimensional. Otherwise, all scalar and
@@ -550,6 +618,31 @@ def validate_uintlike_arrayN(arr, /, *, reshape=True, **kwargs):
     -------
     np.ndarray
         Validated 1D array with non-negative integers.
+
+    Examples
+    --------
+    Validate a 1D array with four non-negative integer-like elements.
+    >>> import pyvista.core.input_validation as valid
+    >>> arr = valid.validate_uintlike_arrayN((1.0, 2, 3, 4))
+    >>> arr
+    array([1, 2, 3, 4])
+
+    Check the output data type is integral.
+    >>> np.issubdtype(arr.dtype, int)
+    True
+
+    Scalar 0-dimensional values are automatically reshaped to be 1D.
+    >>> valid.validate_arrayN(42)
+    array([42])
+
+    2D arrays where the first dimension is unity are automatically
+    reshaped to be 1D.
+    >>> valid.validate_arrayN([[1, 2]])
+    array([1, 2])
+
+    Add additional constraints if needed.
+    >>> valid.validate_arrayN((1, 2, 3), must_be_in_range=[1, 3])
+    array([1, 2, 3])
 
     """
     # Set default dtype out but allow overriding as long as the dtype
@@ -571,12 +664,12 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     arr : array_like
         Array to validate.
 
-    reshape : bool, True
+    reshape : bool, default: True
         If ``True``, 2D vectors with shape (1, 3) are considered valid
         input, and are reshaped to (3,) to ensure the output is
         consistently one-dimensional.
 
-    broadcast : bool, False
+    broadcast : bool, default: False
         If ``True``, scalar values or 1D arrays with a single element
         are considered valid input and the single value is broadcast to
         a length 3 array.
@@ -589,6 +682,26 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     -------
     np.ndarray
         Validated 1D array with 3 elements.
+
+    Examples
+    --------
+    Validate a 1D array with three elements.
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_array3((1, 2, 3))
+    array([1, 2, 3])
+
+    2D 3-element arrays are automatically reshaped to be 1D.
+    >>> valid.validate_array3([[1, 2, 3]])
+    array([1, 2, 3])
+
+    Scalar 0-dimensional values can be automatically broadcast as
+    a 3-element 1D array.
+    >>> valid.validate_array3(42.0, broadcast=True)
+    array([42.0, 42.0, 42.0])
+
+    Add additional constraints if needed.
+    >>> valid.validate_array3((1, 2, 3), must_be_nonnegative=True)
+    array([1, 2, 3])
 
     """
     shape = [(3,)]
