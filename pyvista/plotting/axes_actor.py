@@ -8,11 +8,15 @@ import numpy as np
 import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array, _coerce_transformlike_arg
+from pyvista.core.utilities.arrays import (
+    _coerce_transformlike_arg,
+    array_from_vtkmatrix,
+    vtkmatrix_from_array,
+)
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-from ._vtk import vtkAxesActor, vtkMatrix4x4, vtkTransform
+from ._vtk import vtkAxesActor, vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -1071,7 +1075,9 @@ class AxesActor(Prop3D, vtkAxesActor):  # numpydoc ignore=PR01
         return self._user_matrix
 
     @user_matrix.setter
-    def user_matrix(self, value):  # numpydoc ignore=GL08
+    def user_matrix(
+        self, value: Union[vtkMatrix3x3, vtkMatrix4x4, vtkTransform, np.ndarray]
+    ):  # numpydoc ignore=GL08
         value = _coerce_transformlike_arg(value)
         self._user_matrix = value
         self._update_UserMatrix()
