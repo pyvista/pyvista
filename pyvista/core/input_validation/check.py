@@ -100,7 +100,7 @@ def check_is_arraylike(arr):
     try:
         cast_to_ndarray(arr)
     except ValueError as e:
-        raise ValueError from e
+        raise ValueError(*e.args) from e
 
 
 def check_is_real(arr, /, *, name="Array"):

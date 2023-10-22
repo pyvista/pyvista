@@ -135,7 +135,7 @@ def test_check_is_subdtype_changes_type():
 def test_check_is_dtypelike():
     check_is_dtypelike(np.number)
     with pytest.raises(TypeError):
-        validate_dtype('cat')
+        check_is_dtypelike('cat')
 
 
 def test_validate_number():
@@ -597,6 +597,9 @@ def test_check_is_string():
 
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
+    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(ValueError, match=msg):
+        check_is_arraylike([[1, 2], 3])
 
 
 def test_check_is_less_than():
