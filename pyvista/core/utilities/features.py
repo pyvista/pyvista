@@ -33,7 +33,7 @@ def voxelize(mesh, density=None, check_surface=True, progress_bar=True):
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
-        
+
     progress_bar : bool, default: True
         Display a progress bar to indicate progress.
 
@@ -91,7 +91,6 @@ def voxelize(mesh, density=None, check_surface=True, progress_bar=True):
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
-
 
     # Create unstructured grid from the structured grid
     grid = pyvista.StructuredGrid(x, y, z)
@@ -151,39 +150,39 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     >>> import pyvista as pv
     >>> import numpy as np
-    
+
     Load file from PyVista examples.
-    
+
     >>> from pyvista import examples
     >>> mesh = examples.download_cow()
-    
+
     Create a voxel volume from object with equal density dimensions.
-    
+
     >>> vox = pv.voxelize_volume(mesh, density=0.15)
     >>> vox.plot(scalars='MeshCells', show_edges=True)
-    
+
     Slice the voxel volume to view ``MeshCells``.
-    
+
     >>> slice = vox.slice_orthogonal()
     >>> slice.plot(scalars='MeshCells', show_edges=True)
-    
+
     Create a ``RectilinearGrid`` voxel volume from input mesh.
 
     >>> import pyvista as pv
     >>> import numpy as np
-    
+
     Load file from PyVista examples.
-    
+
     >>> from pyvista import examples
     >>> mesh = examples.download_cow()
-    
+
     Create a voxel volume from object with unequal density dimensions.
-    
+
     >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.25)
     >>> vox.plot(scalars='MeshCells', show_edges=True)
-    
+
     Slice the voxel volume to view ``MeshCells``.
-    
+
     >>> slice = vox.slice_orthogonal()
     >>> slice.plot(scalars='MeshCells', show_edges=True)
 
@@ -215,12 +214,11 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     z = np.arange(z_min, z_max, density_z)
 
     if density_x == density_y == density_z:
-
         x, y, z = np.meshgrid(x, y, z, indexing='ij')
         # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
         # see https://github.com/pyvista/pyvista/pull/4365
-        
-        voi = pyvista.StructuredGrid(x,y,z)
+
+        voi = pyvista.StructuredGrid(x, y, z)
 
         # get part of the mesh within the mesh's bounding surface.
         selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
@@ -240,8 +238,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         voi['BackgroundCells'][0] = 0
 
     else:
-
-        voi = pyvista.RectilinearGrid(x,y,z)
+        voi = pyvista.RectilinearGrid(x, y, z)
 
         # get part of the mesh within the mesh's bounding surface.
         selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
