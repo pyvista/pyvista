@@ -25,6 +25,7 @@ from pyvista.core.input_validation.check import (
     check_is_nonnegative,
     check_is_number,
     check_is_real,
+    check_is_scalar,
     check_is_sequence,
     check_is_sorted,
     check_is_string,
@@ -138,11 +139,12 @@ def test_check_is_dtypelike():
 
 
 def test_validate_number():
+    validate_number([2.0])
     num = validate_number(1)
     assert num == 1
     assert type(num) is int
 
-    num = validate_number(2.0, to_list=False, must_have_shape=())
+    num = validate_number(2.0, to_list=False, must_have_shape=(), reshape=False)
     assert num == 2.0
     assert type(num) is np.ndarray
     assert num.dtype.type is np.float64
@@ -152,7 +154,7 @@ def test_validate_number():
         "Its value is automatically set to `()`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_number(1, must_have_shape=2)
+        validate_number(1, must_have_shape=2, reshape=False)
 
 
 def test_validate_data_range():
@@ -687,7 +689,7 @@ def test_array_length():
     with pytest.raises(ValueError, match=msg):
         check_length((1,), min_length=2, name="_input")
 
-    msg = "Length Range [4 2] must be sorted."
+    msg = "Range [4 2] must be sorted."
     with pytest.raises(ValueError, match=escape(msg)):
         check_length(
             (
@@ -735,7 +737,24 @@ def test_check_is_number():
     check_is_number(1)
     msg = "_input must be an instance of <class 'numbers.Number'>. Got <class 'numpy.ndarray'> instead."
     with pytest.raises(TypeError, match=msg):
-        check_is_number(np.ndarray(0), name='_input')
+        check_is_number(np.array(0), name='_input')
+
+
+def test_check_is_scalar():
+    check_is_scalar(1)
+    check_is_scalar(np.array(0))
+
+    msg = "Got <class 'complex'> instead."
+    with pytest.raises(TypeError, match=msg):
+        check_is_scalar(1 + 2j)
+
+    msg = "Got <class 'list'> instead."
+    with pytest.raises(TypeError, match=msg):
+        check_is_scalar([1, 2])
+
+    msg = "Scalar must be a 0-dimensional array, got `ndim=1` instead."
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_is_scalar(np.array([1, 2]))
 
 
 def test_check_string_is_in_iterable():

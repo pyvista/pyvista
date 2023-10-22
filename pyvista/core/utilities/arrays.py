@@ -839,6 +839,20 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
     arr : array_like
         Array to cast.
 
+    as_any : bool, default: True
+        Allow subclasses of ``np.ndarray`` to pass through without
+        making a copy.
+
+    dtype : dtype_like
+        The data-type of the returned array.
+
+    copy : bool, default: False
+        If ``True``, a copy of the array is returned. A copy is always
+        returned if the array:
+
+            * is a nested sequence
+            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
+
     Raises
     ------
     ValueError

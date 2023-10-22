@@ -27,8 +27,8 @@ def check_is_subdtype(arg1, arg2, /, *, name='Input'):
         of the array is used.
 
     arg2 : dtype_like | List[dtype_like]
-        dtype-like object or a list of dtype-like objects.
-        If a list, ``arg1`` must be a subtupe of at least one of the
+        ``dtype``-like object or a list of ``dtype``-like objects.
+        If a list, ``arg1`` must be a subtype of at least one of the
         specified dtypes.
 
     name : str, optional
@@ -86,6 +86,8 @@ def check_is_dtypelike(dtype):
 def check_is_arraylike(arr):
     """Check if an input can be cast as a NumPy ndarray.
 
+    Parameters
+    ----------
     arr : array_like
         Array to check.
 
@@ -188,12 +190,13 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
-        Variable name to use in the error messages if any are raised.
-
     strict : bool, False
         If ``True``, the array's data must be a subtype of ``np.integer``
         (i.e. float types are not allowed).
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
 
     Raises
     ------
@@ -245,9 +248,6 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
-        Variable name to use in the error messages if any are raised.
-
     value : Number
         Value which the array's elements must be greater than.
 
@@ -255,6 +255,11 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
         If ``True``, the array's value must be strictly greater than
         ``value``. Otherwise, values must be greater than or equal to
         ``value``.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
+
 
     Raises
     ------
@@ -282,9 +287,6 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
-        Variable name to use in the error messages if any are raised.
-
     value : Number
         Value which the array's elements must be less than.
 
@@ -292,6 +294,9 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
         If ``True``, the array's value must be strictly less than
         ``value``. Otherwise, values must be less than or equal to
         ``value``.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
 
     Raises
     ------
@@ -323,11 +328,11 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
         to further restrict the allowable range. Use ``np.inf`` or
         ``-np.inf`` to specify open intervals, e.g. ``[0, np.inf]``.
 
-    strict_lower : bool, False
+    strict_lower : bool, default: False
         Enforce a strict lower bound for the range, i.e. array values
         must be strictly greater than the minimum.
 
-    strict_upper : bool, False
+    strict_upper : bool, default: False
         Enforce a strict upper bound for the range, i.e. array values
         must be strictly less than the maximum.
 
@@ -340,10 +345,12 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
         If any array value is outside the specified range.
 
     """
-    from .validate import validate_data_range  # Avoid circular import
+    rng = cast_to_ndarray(rng)
+    check_has_shape(rng, 2, name="Range")
+    check_is_real(rng, name="Range")
+    check_is_sorted(rng, name="Range")
 
     arr = cast_to_ndarray(arr)
-    rng = validate_data_range(rng)
     try:
         check_is_greater_than(arr, rng[0], strict=strict_lower, name=name)
         check_is_less_than(arr, rng[1], strict=strict_upper, name=name)
@@ -413,30 +420,136 @@ def check_has_shape(
         raise ValueError(msg)
 
 
-def check_is_number(num, /, *, allow_subclass=True, name='Number'):
-    """Check that object is a number."""
-    check_is_instance(num, Number, allow_subclass=allow_subclass, name=name)
+def check_is_number(num, /, *, name='Object'):
+    """Check if an object is a number.
+
+    A number is any instance of ``numbers.Number``, e.g.  ``int``,
+    ``float``, and ``complex``.
+
+    Notes
+    -----
+    A NumPy ndarray is not an instance of ``Number``.
+
+    Parameters
+    ----------
+    num : Number
+        Number to check.
+
+    name : str, default: "Object"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not an instance of ``Number``.
+
+    """
+    try:
+        check_is_instance(num, Number, allow_subclass=True, name=name)
+    except TypeError as e:
+        raise TypeError(*e.args) from e
 
 
 def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
-    """Check that object is a string."""
-    check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
+    """Check if an object is a string.
+
+    Parameters
+    ----------
+    obj : str
+        Object to check.
+
+    allow_subclass : bool, default: True
+        If ``True``, the object's type must be ``str`` or a subclass of
+        ``str``. Otherwise, subclasses are not allowed.
+
+    name : str, default: "Object"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not an instance of ``str``.
+
+    """
+    try:
+        check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
+    except TypeError as e:
+        raise TypeError(*e.args) from e
 
 
-def check_is_sequence(obj: Sequence, /, *, allow_subclass=True, name: str = 'Object'):
-    """Check that object is a sequence."""
-    check_is_instance(obj, Sequence, allow_subclass=allow_subclass, name=name)
+def check_is_sequence(obj: Sequence, /, *, name: str = 'Object'):
+    """Check if an object is an instance of ``Sequence``.
+
+    Parameters
+    ----------
+    obj : Sequence
+        Object to check.
+
+    name : str, default: "Object"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not an instance of ``Sequence``.
+
+    """
+    try:
+        check_is_instance(obj, Sequence, allow_subclass=True, name=name)
+    except TypeError as e:
+        raise TypeError(*e.args) from e
 
 
-def check_is_iterable(obj: Iterable, /, *, allow_subclass=True, name: str = 'Object'):
-    """Check that object is iterable."""
-    check_is_instance(obj, Iterable, allow_subclass=allow_subclass, name=name)
+def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
+    """Check if an object is an instance of ``Iterable``.
+
+    Parameters
+    ----------
+    obj : Iterable
+        Iterable object to check.
+
+    name : str, default: "Object"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not an instance of ``Iterable``.
+
+    """
+    try:
+        check_is_instance(obj, Iterable, allow_subclass=True, name=name)
+    except TypeError as e:
+        raise TypeError(*e.args) from e
 
 
 def check_is_instance(
     obj, /, classinfo: Union[type, Tuple[type, ...]], *, allow_subclass=True, name: str = 'Object'
 ):
-    """Check that an object is an instance of the given types."""
+    """Check that an object is an instance of the given types.
+
+    Parameters
+    ----------
+    obj : Any
+        Object to check.
+
+    classinfo : type | Tuple[type, ...]
+        ``type`` or tuple of types. Object must be an instance of one of
+        the types.
+
+    allow_subclass : bool, default: True
+        If ``True``, the object's type must be specified by ``classinfo``
+         or any of its subclasses. Otherwise, subclasses are not allowed.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If object is not an instance of any of the given types.
+
+    """
     if not isinstance(name, str):
         raise TypeError(f"Name must be a string, got {type(name)} instead.")
 
@@ -478,8 +591,29 @@ def check_is_instance(
 
 
 def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
-    """Check that object is one of the given types."""
-    check_is_instance(obj, classinfo, allow_subclass=False, name=name)
+    """Check that object is one of the given types.
+
+    Parameters
+    ----------
+    obj : Any
+        Object to check.
+
+    classinfo : type | Tuple[type, ...]
+        ``type`` or tuple of types. Object must be one of the types.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If object is not any of the given types..
+
+    """
+    try:
+        check_is_instance(obj, classinfo, allow_subclass=False, name=name)
+    except TypeError as e:
+        raise TypeError(*e.args) from e
 
 
 def check_is_iterable_of_some_type(
@@ -500,6 +634,11 @@ def check_is_iterable_of_some_type(
     some_type : type | Tuple[type, ...]
         Class type(s) to check for. Each element of the sequence must
         have the type or one of the types specified.
+
+    allow_subclass : bool, default: True
+        If ``True``, the type of the iterable's items must be any of the
+        given types or a subclass thereof. Otherwise, subclasses are not
+        allowed.
 
     name : str, optional
         Variable name to use in the error messages if any are raised.
@@ -522,13 +661,56 @@ def check_is_iterable_of_some_type(
         raise TypeError(*e.args) from e
 
 
-def check_is_iterable_of_strings(iterable_obj: Iterable, /, *, name: str = 'String Iterable'):
-    """Check that an iterable's items are all strings."""
-    check_is_iterable_of_some_type(iterable_obj, str, name=name)
+def check_is_iterable_of_strings(
+    iterable_obj: Iterable, /, *, allow_subclass=True, name: str = 'String Iterable'
+):
+    """Check that an iterable's items are all strings.
+
+    Parameters
+    ----------
+    iterable_obj : Iterable
+        Iterable to check.
+
+    allow_subclass : bool, default: True
+        If ``True``, the type of the iterable's items must be any of the
+        given types or a subclass thereof. Otherwise, subclasses are not
+        allowed.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If any of the elements have an incorrect type.
+
+    """
+    try:
+        check_is_iterable_of_some_type(iterable_obj, str, allow_subclass=allow_subclass, name=name)
+    except TypeError as e:
+        raise TypeError(*e.args) from e
 
 
 def check_string_is_in_iterable(string_in, string_iterable, /, *, name: str = 'String'):
-    """Check that a string is in an iterable of strings."""
+    """Check that a string is in an iterable of strings.
+
+    Parameters
+    ----------
+    string_in : str
+        String to check.
+
+    string_iterable : Iterable[str, ...]
+        Iterable containing only strings.
+
+    name : str, default: "String"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    ValueError
+        If the string is not in the iterable.
+
+    """
     check_is_string(string_in, name=name)
     check_is_iterable_of_strings(string_iterable)
     if string_in not in string_iterable:
@@ -612,13 +794,16 @@ def check_length(
             )
 
     # Validate min/max length
+    if min_length is not None:
+        min_length = cast_to_ndarray(min_length)
+        check_is_scalar(min_length, name="Min length")
+        check_is_real(min_length, name="Min length")
+    if max_length is not None:
+        max_length = cast_to_ndarray(max_length)
+        check_is_scalar(max_length, name="Max length")
+        check_is_real(max_length, name="Max length")
     if min_length is not None and max_length is not None:
-        from .validate import validate_data_range  # Avoid circular import
-
-        validate_data_range((min_length, max_length), name="Length Range")
-    else:
-        check_is_number(min_length) if min_length else None
-        check_is_number(max_length) if max_length else None
+        check_is_sorted((min_length, max_length), name="Range")
 
     if min_length is not None:
         if len(arr) < min_length:
@@ -657,3 +842,29 @@ def _validate_shape_value(
     if shape_arr.ndim == 0:
         return (int(shape_arr),)
     return tuple(shape_arr)
+
+
+def check_is_scalar(scalar, /, *, name="Scalar"):
+    """Check if an object is a real-valued scalar.
+
+    Parameters
+    ----------
+    scalar : int | float | np.ndarray
+        Real number as an int, float, or 0-dimensional array.
+
+    name : str, optional
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not an instance of ``Number``.
+
+    """
+    check_is_instance(scalar, (int, float, np.ndarray), name=name)
+    if isinstance(scalar, np.ndarray):
+        check_is_real(scalar, name=name)
+        if scalar.ndim > 0:
+            raise ValueError(
+                f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
+            )

@@ -155,7 +155,7 @@ def validate_array(
     dtype_out : dtype_like, optional
         The desired data-type of the returned array.
 
-    as_any :
+    as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
         making a copy.
 
@@ -268,6 +268,9 @@ def validate_transform_as_array4x4(transformlike, /, *, name="Transform") -> np.
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
 
+    name : str, default: "Transform"
+        Variable name to use in the error messages if any are raised.
+
     Returns
     -------
     np.ndarray
@@ -310,10 +313,14 @@ def validate_transform_as_array3x3(transformlike, /, *, name="Transform"):
     transformlike : array_like | vtkMatrix3x3
         Transformation matrix as a 3x3 array or vtkMatrix3x3.
 
+    name : str, default: "Transform"
+        Variable name to use in the error messages if any are raised.
+
     Returns
     -------
     np.ndarray
         3x3 array.
+
     """
     check_is_string(name, name="Name")
     arr = np.eye(3)  # initialize
@@ -359,27 +366,71 @@ def validate_dtype(dtype_like) -> np.dtype:
 
 
 @wraps(validate_array)
-def validate_number(num, /, **kwargs):
-    """Validate a number.
+def validate_number(num, /, reshape=True, **kwargs):
+    """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
-        * is scalar or is an array which can be cast as a scalar
+        * is scalar or is an array which can be reshaped as a scalar
         * is a real number
         * is finite
 
-    The returned value is an `int` or `float`.
+    Parameters
+    ----------
+    num : int | float | array_like
+        Number to validate.
+
+    reshape : bool, default: True
+        If ``True``, 1D arrays with 1 element are considered valid input
+        and are reshaped to be 0-dimensional.
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed to
+        :func:`~pyvista.core.input_validation.validate.validate_array`.
+
+    Returns
+    -------
+    int | float
+        Validated number.
 
     """
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
     kwargs.setdefault('must_be_finite', True)
     kwargs.setdefault('must_be_real', True)
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', ())
+
+    if reshape:
+        shape = [(), (1,)]
+        _set_default_kwarg_mandatory(kwargs, 'reshape', ())
+    else:
+        shape = ()
+    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+
     return validate_array(num, **kwargs)
 
 
 def validate_data_range(rng, /, **kwargs):
-    """Validate a data range."""
+    """Validate a data range.
+
+    By default, the data range is checked to ensure:
+        * it has two values
+        * it has real numbers
+        * the lower bound is not more than the upper bound
+
+    Parameters
+    ----------
+    rng : array_like
+         Range to validate in the form ``(lower_bound, upper_bound)``.
+
+    **kwargs : dict, optional
+         Additional keyword arguments passed to
+         :func:`~pyvista.core.input_validation.validate.validate_array`.
+
+    Returns
+    -------
+    tuple
+        Validated range as ``(lower_bound, upper_bound)``.
+
+    """
     kwargs.setdefault('name', 'Data Range')
     kwargs.setdefault('must_be_real', True)
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', 2)
@@ -407,6 +458,10 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     reshape : bool, True
         If ``True``, 1D arrays with 3 elements are considered valid input
         and are reshaped to (1,3) to ensure the output is two-dimensional.
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed to
+        :func:`~pyvista.core.input_validation.validate.validate_array`.
 
     Returns
     -------
@@ -444,6 +499,10 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         vectors with shape (1, N) are reshaped to (N,) to ensure the
         output is consistently one-dimensional. Otherwise, all scalar and
         2D inputs are not considered valid.
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed to
+        :func:`~pyvista.core.input_validation.validate.validate_array`.
 
     Returns
     -------
@@ -483,6 +542,10 @@ def validate_uintlike_arrayN(arr, /, *, reshape=True, **kwargs):
         output is consistently one-dimensional. Otherwise, all scalar and
         2D inputs are not considered valid.
 
+    **kwargs : dict, optional
+        Additional keyword arguments passed to
+        :func:`~pyvista.core.input_validation.validate.validate_array`.
+
     Returns
     -------
     np.ndarray
@@ -517,6 +580,10 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
         If ``True``, scalar values or 1D arrays with a single element
         are considered valid input and the single value is broadcast to
         a length 3 array.
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed to
+        :func:`~pyvista.core.input_validation.validate.validate_array`.
 
     Returns
     -------
