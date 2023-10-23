@@ -2,12 +2,12 @@
 
 A ``validate_`` function typically:
 
-* Uses :py:mod:`~pyvista.core.input_validation.check` functions to
-check the type and/or value of input arguments.
-* Applies (optional) constraints, e.g. input or output must have a
-specific length, shape, type, data-type, etc.
-* Accepts many different input types or values and standardizes the
-output as a single representation with known properties.
+    * Uses :py:mod:`~pyvista.core.input_validation.check` functions to
+    check the type and/or value of input arguments.
+    * Applies (optional) constraints, e.g. input or output must have a
+    specific length, shape, type, data-type, etc.
+    * Accepts many different input types or values and standardizes the
+    output as a single representation with known properties.
 
 """
 from functools import wraps
@@ -478,8 +478,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         * have shape (N,3) or can be reshaped to (N,3)
         * are numeric
 
-    The returned array is formatted so that its values:
-        * have shape (N,3)
+    The returned array is formatted so that its values have shape (N,3).
 
     Parameters
     ----------
@@ -491,8 +490,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         and are reshaped to (1,3) to ensure the output is two-dimensional.
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to
-        :func:`~pyvista.core.input_validation.validate.validate_array`.
+        Additional keyword arguments passed to :func:`~pyvista.core.input_validation.validate.validate_array`.
 
     Returns
     -------
@@ -590,7 +588,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
 
 
 def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
-    """Validate a numeric 1D array of non-negative integers.
+    """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
         * have shape (N,) or can be reshaped to (N,)

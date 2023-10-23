@@ -2,9 +2,9 @@
 
 A ``check_`` function typically:
 
-* Performs a simple validation on a single input variable.
-* Raises an error if the check fails due to invalid input.
-* Does not modify input or return anything.
+    * Performs a simple validation on a single input variable.
+    * Raises an error if the check fails due to invalid input.
+    * Does not modify input or return anything.
 
 """
 from collections.abc import Iterable, Sequence
@@ -253,14 +253,11 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
         Value which the array's elements must be greater than.
 
     strict : bool, default: True
-        If ``True``, the array's value must be strictly greater than
-        ``value``. Otherwise, values must be greater than or equal to
-        ``value``.
+        If ``True``, the array's value must be strictly greater than ``value``.
+        Otherwise, values must be greater than or equal to ``value``.
 
     name : str, optional
         Variable name to use in the error messages if any are raised.
-
-
 
     Raises
     ------
