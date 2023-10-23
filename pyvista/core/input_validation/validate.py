@@ -1,11 +1,13 @@
 """Functions that validate input and return a standard representation.
 
-A `validate_` function typically :
-    * uses `check_` functions to validate input args/kwargs
-    * accepts multiple input types with similar representations
-        and standardizes the output as a single representation
-    * applies (optional) constraints, e.g. input or output must have a
-        specific length, shape, type, data-type, etc.
+A ``validate_`` function typically:
+
+    * Uses :py:mod:`~pyvista.core.input_validation.check` functions to
+    check the type and/or value of input arguments.
+    * Applies (optional) constraints, e.g. input or output must have a
+    specific length, shape, type, data-type, etc.
+    * Accepts many different input types or values and standardizes the
+    output as a single representation with known properties.
 
 """
 from functools import wraps

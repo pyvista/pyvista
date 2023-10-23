@@ -1,9 +1,10 @@
 """Functions that check the type and/or value of inputs.
 
-A `check_` function typically:
-    * performs a simple validation on a single input variable
-    * raises an error if the check fails due to invalid input
-    * does not modify input or return anything
+A ``check_`` function typically:
+
+    * Performs a simple validation on a single input variable.
+    * Raises an error if the check fails due to invalid input.
+    * Does not modify input or return anything.
 
 """
 from collections.abc import Iterable, Sequence
