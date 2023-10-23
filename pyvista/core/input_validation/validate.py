@@ -305,7 +305,7 @@ def validate_transform_as_array4x4(transformlike, /, *, name="Transform") -> np.
     return arr
 
 
-def validate_transform_as_array3x3(transformlike, /, *, name="Transform"):
+def validate_transform3x3(transformlike, /, *, name="Transform"):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters

@@ -32,7 +32,7 @@ from .validate import (  # noqa: 401
     validate_data_range,
     validate_dtype,
     validate_number,
-    validate_transform_as_array3x3,
+    validate_transform3x3,
     validate_transform_as_array4x4,
     validate_uintlike_arrayN,
 )

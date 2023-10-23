@@ -43,7 +43,7 @@ from pyvista.core.input_validation.validate import (
     validate_data_range,
     validate_dtype,
     validate_number,
-    validate_transform_as_array3x3,
+    validate_transform3x3,
     validate_transform_as_array4x4,
     validate_uintlike_arrayN,
 )
@@ -84,16 +84,16 @@ def test_validate_transform_as_array4x4_raises():
     ],
 )
 def test_validate_transform_as_array3x3(transform_like):
-    result = validate_transform_as_array3x3(transform_like)
+    result = validate_transform3x3(transform_like)
     assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(3))
 
 
 def test_validate_transform_as_array3x3_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
-        validate_transform_as_array3x3(np.array([1, 2, 3]))
+        validate_transform3x3(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must be numeric"):
-        validate_transform_as_array3x3("abc")
+        validate_transform3x3("abc")
 
 
 def test_check_is_subdtype():
