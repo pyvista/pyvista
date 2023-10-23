@@ -259,12 +259,12 @@ def validate_array(
     return arr_out
 
 
-def validate_transform4x4(transformlike, /, *, name="Transform") -> np.ndarray:
+def validate_transform4x4(transform, /, *, name="Transform") -> np.ndarray:
     """Validate transform-like input as a 4x4 ndarray.
 
     Parameters
     ----------
-    transformlike : array_like | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
+    transform : array_like | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
 
@@ -279,15 +279,15 @@ def validate_transform4x4(transformlike, /, *, name="Transform") -> np.ndarray:
     """
     check_is_string(name, name="Name")
     arr = np.eye(4)  # initialize
-    if isinstance(transformlike, vtkMatrix4x4):
-        arr = array_from_vtkmatrix(transformlike)
-    elif isinstance(transformlike, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transformlike)
-    elif isinstance(transformlike, vtkTransform):
-        arr = array_from_vtkmatrix(transformlike.GetMatrix())
+    if isinstance(transform, vtkMatrix4x4):
+        arr = array_from_vtkmatrix(transform)
+    elif isinstance(transform, vtkMatrix3x3):
+        arr[:3, :3] = array_from_vtkmatrix(transform)
+    elif isinstance(transform, vtkTransform):
+        arr = array_from_vtkmatrix(transform.GetMatrix())
     else:
         try:
-            valid_arr = validate_array(transformlike, must_have_shape=[(3, 3), (4, 4)], name=name)
+            valid_arr = validate_array(transform, must_have_shape=[(3, 3), (4, 4)], name=name)
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
             else:
@@ -305,12 +305,12 @@ def validate_transform4x4(transformlike, /, *, name="Transform") -> np.ndarray:
     return arr
 
 
-def validate_transform3x3(transformlike, /, *, name="Transform"):
+def validate_transform3x3(transform, /, *, name="Transform"):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
     ----------
-    transformlike : array_like | vtkMatrix3x3
+    transform : array_like | vtkMatrix3x3
         Transformation matrix as a 3x3 array or vtkMatrix3x3.
 
     name : str, default: "Transform"
@@ -324,11 +324,11 @@ def validate_transform3x3(transformlike, /, *, name="Transform"):
     """
     check_is_string(name, name="Name")
     arr = np.eye(3)  # initialize
-    if isinstance(transformlike, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transformlike)
+    if isinstance(transform, vtkMatrix3x3):
+        arr[:3, :3] = array_from_vtkmatrix(transform)
     else:
         try:
-            arr = validate_array(transformlike, must_have_shape=(3, 3), name=name)
+            arr = validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
             raise TypeError(
                 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
