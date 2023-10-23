@@ -720,7 +720,7 @@ def check_string_is_in_iterable(string_in, string_iterable, /, *, name: str = 'S
         )
 
 
-def check_length(
+def check_has_length(
     arr,
     /,
     *,

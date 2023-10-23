@@ -26,7 +26,7 @@ from pyvista.core.input_validation.check import (
     check_is_sorted,
     check_is_string,
     check_is_subdtype,
-    check_length,
+    check_has_length,
 )
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 
@@ -220,7 +220,7 @@ def validate_array(
         or must_have_min_length is not None
         or must_have_max_length is not None
     ):
-        check_length(
+        check_has_length(
             arr,
             exact_length=must_have_length,
             min_length=must_have_min_length,

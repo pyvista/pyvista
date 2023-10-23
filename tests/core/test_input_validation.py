@@ -31,7 +31,7 @@ from pyvista.core.input_validation.check import (
     check_is_string,
     check_is_subdtype,
     check_is_type,
-    check_length,
+    check_has_length,
     check_string_is_in_iterable,
 )
 from pyvista.core.input_validation.validate import (
@@ -664,37 +664,37 @@ def test_check_is_iterable():
 
 
 def test_array_length():
-    check_length((1,))
-    check_length(
+    check_has_length((1,))
+    check_has_length(
         [
             1,
         ]
     )
-    check_length(np.ndarray((1,)))
-    check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
-    check_length((1,), exact_length=[1, 2.0])
+    check_has_length(np.ndarray((1,)))
+    check_has_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
+    check_has_length((1,), exact_length=[1, 2.0])
 
     with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
-        check_length((1,), exact_length=(1, 2.4), name="_input")
+        check_has_length((1,), exact_length=(1, 2.4), name="_input")
 
     msg = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=msg):
-        check_length((1, 2), exact_length=1, name="_input")
+        check_has_length((1, 2), exact_length=1, name="_input")
     msg = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(msg)):
-        check_length((1, 2), exact_length=[3, 4], name="_input")
+        check_has_length((1, 2), exact_length=[3, 4], name="_input")
 
     msg = "_input must have a maximum length of 1. Got length 2 instead."
     with pytest.raises(ValueError, match=msg):
-        check_length((1, 2), max_length=1, name="_input")
+        check_has_length((1, 2), max_length=1, name="_input")
 
     msg = "_input must have a minimum length of 2. Got length 1 instead."
     with pytest.raises(ValueError, match=msg):
-        check_length((1,), min_length=2, name="_input")
+        check_has_length((1,), min_length=2, name="_input")
 
     msg = "Range [4 2] must be sorted."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_length(
+        check_has_length(
             (
                 1,
                 2,
@@ -706,7 +706,7 @@ def test_array_length():
 
     msg = "Shape must be -1."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_length(((1, 2), (3, 4)), must_be_1d=True)
+        check_has_length(((1, 2), (3, 4)), must_be_1d=True)
 
 
 def test_check_is_nonnegative():
