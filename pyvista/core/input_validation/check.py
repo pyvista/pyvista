@@ -2,9 +2,9 @@
 
 A ``check_`` function typically:
 
-    * Performs a simple validation on a single input variable.
-    * Raises an error if the check fails due to invalid input.
-    * Does not modify input or return anything.
+* Performs a simple validation on a single input variable.
+* Raises an error if the check fails due to invalid input.
+* Does not modify input or return anything.
 
 """
 from collections.abc import Iterable, Sequence
@@ -205,7 +205,7 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
         If any element's value differs from its floor.
 
     TypeError
-        If ``strict=True` and the array's dtype is not integral.
+        If ``strict=True`` and the array's dtype is not integral.
 
     """
     arr = cast_to_ndarray(arr)

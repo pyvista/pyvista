@@ -2,12 +2,12 @@
 
 A ``validate_`` function typically:
 
-    * Uses :py:mod:`~pyvista.core.input_validation.check` functions to
-    check the type and/or value of input arguments.
-    * Applies (optional) constraints, e.g. input or output must have a
-    specific length, shape, type, data-type, etc.
-    * Accepts many different input types or values and standardizes the
-    output as a single representation with known properties.
+* Uses :py:mod:`~pyvista.core.input_validation.check` functions to
+check the type and/or value of input arguments.
+* Applies (optional) constraints, e.g. input or output must have a
+specific length, shape, type, data-type, etc.
+* Accepts many different input types or values and standardizes the
+output as a single representation with known properties.
 
 """
 from functools import wraps
@@ -624,12 +624,13 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
     Examples
     --------
     Validate a 1D array with four non-negative integer-like elements.
+    >>> import numpy as np
     >>> import pyvista.core.input_validation as valid
-    >>> arr = valid.validate_arrayN_uintlike((1.0, 2, 3, 4))
+    >>> arr = valid.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
     >>> arr
     array([1, 2, 3, 4])
 
-    Check the output data type is integral.
+    Verify that the output data type is integral.
     >>> np.issubdtype(arr.dtype, int)
     True
 
