@@ -691,7 +691,7 @@ def check_is_iterable_of_strings(
         raise TypeError(*e.args) from e
 
 
-def check_string_is_in_iterable(string_in, string_iterable, /, *, name: str = 'String'):
+def check_is_string_in_iterable(string_in, string_iterable, /, *, name: str = 'String'):
     """Check if a given string is in an iterable of strings.
 
     Parameters

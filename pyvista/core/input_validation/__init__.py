@@ -20,9 +20,9 @@ from .check import (  # noqa: 401
     check_is_sequence,
     check_is_sorted,
     check_is_string,
+    check_is_string_in_iterable,
     check_is_subdtype,
     check_is_type,
-    check_string_is_in_iterable,
 )
 from .validate import (  # noqa: 401
     validate_array,

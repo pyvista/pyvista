@@ -30,9 +30,9 @@ from pyvista.core.input_validation.check import (
     check_is_sequence,
     check_is_sorted,
     check_is_string,
+    check_is_string_in_iterable,
     check_is_subdtype,
     check_is_type,
-    check_string_is_in_iterable,
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
@@ -761,10 +761,10 @@ def test_check_is_scalar():
 
 
 def test_check_string_is_in_iterable():
-    check_string_is_in_iterable("foo", ["foo", "bar"])
+    check_is_string_in_iterable("foo", ["foo", "bar"])
     msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
-        check_string_is_in_iterable("foo", ["cat", "bar"])
+        check_is_string_in_iterable("foo", ["cat", "bar"])
 
 
 def test_all_check_functions_return_None():
