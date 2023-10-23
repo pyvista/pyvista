@@ -259,7 +259,7 @@ def validate_array(
     return arr_out
 
 
-def validate_transform_as_array4x4(transformlike, /, *, name="Transform") -> np.ndarray:
+def validate_transform4x4(transformlike, /, *, name="Transform") -> np.ndarray:
     """Validate transform-like input as a 4x4 ndarray.
 
     Parameters

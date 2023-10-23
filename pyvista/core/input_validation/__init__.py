@@ -33,6 +33,6 @@ from .validate import (  # noqa: 401
     validate_dtype,
     validate_number,
     validate_transform3x3,
-    validate_transform_as_array4x4,
+    validate_transform4x4,
     validate_uintlike_arrayN,
 )

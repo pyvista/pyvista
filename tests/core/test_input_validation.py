@@ -44,7 +44,7 @@ from pyvista.core.input_validation.validate import (
     validate_dtype,
     validate_number,
     validate_transform3x3,
-    validate_transform_as_array4x4,
+    validate_transform4x4,
     validate_uintlike_arrayN,
 )
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
@@ -63,16 +63,16 @@ from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_ar
     ],
 )
 def test_validate_transform_as_array4x4(transform_like):
-    result = validate_transform_as_array4x4(transform_like)
+    result = validate_transform4x4(transform_like)
     assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(4))
 
 
 def test_validate_transform_as_array4x4_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
-        validate_transform_as_array4x4(np.array([1, 2, 3]))
+        validate_transform4x4(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must be numeric"):
-        validate_transform_as_array4x4("abc")
+        validate_transform4x4("abc")
 
 
 @pytest.mark.parametrize(
