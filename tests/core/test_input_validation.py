@@ -39,13 +39,13 @@ from pyvista.core.input_validation.validate import (
     validate_array,
     validate_array3,
     validate_arrayN,
+    validate_arrayN_uintlike,
     validate_arrayNx3,
     validate_data_range,
     validate_dtype,
     validate_number,
     validate_transform3x3,
     validate_transform4x4,
-    validate_uintlike_arrayN,
 )
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 
@@ -324,17 +324,17 @@ def test_validate_arrayN(reshape):
 @pytest.mark.parametrize('reshape', [True, False])
 def test_validate_uintlike_arrayN(reshape):
     # test 0D input is reshaped to 1D by default
-    arr = validate_uintlike_arrayN(0.0)
+    arr = validate_arrayN_uintlike(0.0)
     assert arr.shape == (1,)
     assert np.array_equal(arr, [0])
     assert arr.dtype.type is np.int32 or arr.dtype.type is np.int64
 
     with pytest.raises(ValueError, match="Shape must be -1."):
-        validate_uintlike_arrayN(0.0, reshape=False)
+        validate_arrayN_uintlike(0.0, reshape=False)
 
     msg = '_input values must all be greater than or equal to 0.'
     with pytest.raises(ValueError, match=msg):
-        validate_uintlike_arrayN([-1, 1], name="_input")
+        validate_arrayN_uintlike([-1, 1], name="_input")
 
 
 @pytest.mark.parametrize('reshape', [True, False])

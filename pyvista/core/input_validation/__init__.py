@@ -28,11 +28,11 @@ from .validate import (  # noqa: 401
     validate_array,
     validate_array3,
     validate_arrayN,
+    validate_arrayN_uintlike,
     validate_arrayNx3,
     validate_data_range,
     validate_dtype,
     validate_number,
     validate_transform3x3,
     validate_transform4x4,
-    validate_uintlike_arrayN,
 )
