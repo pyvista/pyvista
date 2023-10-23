@@ -889,7 +889,7 @@ def fit_plane_to_points(
 
     To control the sign of the normal, specify the approximate normal
     direction when fitting the plane
-    >>> plane, center, normal = pyvista.fit_plane_to_points(
+    >>> plane, center, normal = pv.fit_plane_to_points(
     ...     cloud, return_meta=True, normal_direction='z'
     ... )
     >>> normal
@@ -905,7 +905,7 @@ def fit_plane_to_points(
     >>>
     >>> # Fit plane. Set the plane resolution to one only extract
     >>> # the plane's corner points
-    >>> plane = pyvista.fit_plane_to_points(
+    >>> plane = pv.fit_plane_to_points(
     ...     mesh.points, i_resolution=1, j_resolution=1
     ... )
     >>> plane.points
