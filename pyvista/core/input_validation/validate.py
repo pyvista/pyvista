@@ -366,7 +366,7 @@ def validate_dtype(dtype_like) -> np.dtype:
 
 
 @wraps(validate_array)
-def validate_number(num, /, reshape=True, **kwargs):
+def validate_number(num, /, *, reshape=True, **kwargs):
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:

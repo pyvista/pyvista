@@ -618,8 +618,8 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
 
 def check_is_iterable_of_some_type(
     iterable_obj: Iterable,
-    some_type: Union[type, Tuple[type, ...]],
     /,
+    some_type: Union[type, Tuple[type, ...]],
     *,
     allow_subclass=True,
     name: str = 'Iterable',
@@ -691,7 +691,7 @@ def check_is_iterable_of_strings(
         raise TypeError(*e.args) from e
 
 
-def check_is_string_in_iterable(string_in, string_iterable, /, *, name: str = 'String'):
+def check_is_string_in_iterable(string_in, /, string_iterable, *, name: str = 'String'):
     """Check if a given string is in an iterable of strings.
 
     Parameters
