@@ -11,7 +11,7 @@ Some common use cases for input validation are:
     Use :func:`~validate_arrayNx3`
 * Validate a single 3-element vector:
     Use :func:`~validate_array3`
-* Validate a data range, e.g. ``[lower_bound, upper_bound]``:
+* Validate a data range ``[lower_bound, upper_bound]``:
     Use :func:`~validate_data_range`:
 * Validate point or cell IDs (or other unsigned integer IDs):
     Use :func:`~validate_arrayN_uintlike`
