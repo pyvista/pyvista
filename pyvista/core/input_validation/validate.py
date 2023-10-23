@@ -16,6 +16,7 @@ import numpy as np
 
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.input_validation.check import (
+    check_has_length,
     check_has_shape,
     check_is_dtypelike,
     check_is_finite,
@@ -26,7 +27,6 @@ from pyvista.core.input_validation.check import (
     check_is_sorted,
     check_is_string,
     check_is_subdtype,
-    check_has_length,
 )
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 
@@ -74,21 +74,21 @@ def validate_array(
         tuples of tuples, tuples of lists and ndarrays.
 
     must_have_shape : int | Tuple[int,...] | List[int, Tuple[int,...]], optional
-        Check the array has a specific shape. Specify a single shape or
-        a list of any allowable shapes. If an integer, the array must
+        Check if the array has a specific shape. Specify a single shape
+        or a list of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of -1 for any
         dimension where its size is allowed to vary. Use ``()`` to allow
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
 
     must_have_dtype : dtype_like | List[dtype_like], optional
-        Check the array's data-type. Specify a NumPy dtype or dtype-like
-        base class which the array's data must be a subtype of. If
-        iterable, the array's data must be a subtype of at least one of
-        specified dtypes.
+        Check if the array's data-type has the given dtype. Specify a
+        NumPy ``dtype`` object or dtype-like base class which the array's
+        data must be a subtype of. If a list, the array's data must be a
+        subtype of at least one of the specified dtypes.
 
     must_have_length : array_like
-        Check that the array has the given length. If multiple
+        Check if the array has the given length. If multiple
         values are given, the array's length must match one of the
         values.
 
@@ -101,31 +101,31 @@ def validate_array(
             consideration if applicable.
 
     must_have_min_length : int, optional
-        Check that the array's length is this value or larger.
+        Check if the array's length is this value or greater.
 
     must_have_max_length : int, optional
-        Check that the array' length is this value or smaller.
+        Check if the array' length is this value or less.
 
     must_be_nonnegative : bool, default: False
-        Check that all elements of the array are nonnegative.
+        Check if all elements of the array are nonnegative.
 
     must_be_finite : bool, default: False
-        Check that all elements of the array are finite, i.e. not
+        Check if all elements of the array are finite, i.e. not
         infinity and not Not a Number (NaN).
 
     must_be_real : bool, default: True
-        Check that the arrays has real numbers, i.e. its data type is
+        Check if the array has real numbers, i.e. its data type is
         integer or floating.
 
     must_be_integer_like : bool, default: False
-        Check that the array's values are integer-like (i.e. that
+        Check if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
     must_be_sorted : bool, default: False
-        Check that the array's values are sorted in ascending order.
+        Check if the array's values are sorted in ascending order.
 
     must_be_in_range : array_like, optional
-        Check that the array's values are all within a specific range.
+        Check if the array's values are all within a specific range.
         Range must be array-like with two elements specifying the minimum
         and maximum data values allowed, respectively. By default, the
         range endpoints are inclusive, i.e. values must be >= minimum
@@ -344,7 +344,7 @@ def validate_dtype(dtype_like) -> np.dtype:
         Validating a type can result in a dtype object whose type
         differs from the specified input. E.g., the type ``np.number``
         is validated as a dtype object with type ``np.float64``, not
-        ``np.number``. To only check that an input is dtype-like
+        ``np.number``. To only check if an input is dtype-like
         without converting it to a dtype object, use :func:`~check_is_dtypelike`
         instead.
 

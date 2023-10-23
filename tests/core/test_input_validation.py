@@ -10,6 +10,7 @@ from vtk import vtkTransform
 from pyvista.core import pyvista_ndarray
 from pyvista.core.input_validation.check import (
     _validate_shape_value,
+    check_has_length,
     check_has_shape,
     check_is_arraylike,
     check_is_dtypelike,
@@ -31,7 +32,6 @@ from pyvista.core.input_validation.check import (
     check_is_string,
     check_is_subdtype,
     check_is_type,
-    check_has_length,
     check_string_is_in_iterable,
 )
 from pyvista.core.input_validation.validate import (

@@ -104,7 +104,7 @@ def check_is_arraylike(arr):
 
 
 def check_is_real(arr, /, *, name="Array"):
-    """Check if an array has real numbers (float or integer type).
+    """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
     -----
@@ -161,7 +161,7 @@ def check_is_sorted(arr, /, *, name="Array"):
 
 
 def check_is_finite(arr, /, *, name="Array"):
-    """Check if an array has finite values (i.e. no NaN or Inf values).
+    """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
     ----------
@@ -421,7 +421,7 @@ def check_has_shape(
 
 
 def check_is_number(num, /, *, name='Object'):
-    """Check if an object is a number.
+    """Check if an object is an instance of ``Number``.
 
     A number is any instance of ``numbers.Number``, e.g.  ``int``,
     ``float``, and ``complex``.
@@ -451,7 +451,7 @@ def check_is_number(num, /, *, name='Object'):
 
 
 def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
-    """Check if an object is a string.
+    """Check if an object is an instance of  ``str``.
 
     Parameters
     ----------
@@ -526,7 +526,7 @@ def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
 def check_is_instance(
     obj, /, classinfo: Union[type, Tuple[type, ...]], *, allow_subclass=True, name: str = 'Object'
 ):
-    """Check that an object is an instance of the given types.
+    """Check if an object is an instance of the given type or types.
 
     Parameters
     ----------
@@ -591,7 +591,7 @@ def check_is_instance(
 
 
 def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
-    """Check that object is one of the given types.
+    """Check if an object is one of the given type or types.
 
     Parameters
     ----------
@@ -624,7 +624,7 @@ def check_is_iterable_of_some_type(
     allow_subclass=True,
     name: str = 'Iterable',
 ):
-    """Check that an iterable's items all have a specified type.
+    """Check if an iterable's items all have a specified type.
 
     Parameters
     ----------
@@ -664,7 +664,7 @@ def check_is_iterable_of_some_type(
 def check_is_iterable_of_strings(
     iterable_obj: Iterable, /, *, allow_subclass=True, name: str = 'String Iterable'
 ):
-    """Check that an iterable's items are all strings.
+    """Check if an iterable's items are all strings.
 
     Parameters
     ----------
@@ -692,7 +692,7 @@ def check_is_iterable_of_strings(
 
 
 def check_string_is_in_iterable(string_in, string_iterable, /, *, name: str = 'String'):
-    """Check that a string is in an iterable of strings.
+    """Check if a given string is in an iterable of strings.
 
     Parameters
     ----------
@@ -731,7 +731,7 @@ def check_has_length(
     allow_scalars=False,
     name="Array",
 ):
-    """Check the length of an array meets specific requirements.
+    """Check if the length of an array meets specific requirements.
 
     Notes
     -----
@@ -746,18 +746,19 @@ def check_has_length(
         Array to check.
 
     exact_length : array_like
-        Check that the array has the given length. If multiple
+        Check if the array has the given length. If multiple
         numbers are given, the array's length must match one of the
         numbers.
 
     min_length : int, optional
-        Check that array has this length or larger.
+        Check if the array has this length or greater.
 
     max_length : int, optional
-        Check that array has this length or smaller.
+        Check if the array has this length or less.
 
     must_be_1d : bool, default: False
-        If ``True``, the array is also checked that it is one-dimensional.
+        If ``True``, check if the shape of the array is one-dimensional,
+        i.e. that the array's shape is ``(1,)``.
 
     allow_scalars : bool, default: False
         If ``True``, a scalar input will be reshaped to have a length of

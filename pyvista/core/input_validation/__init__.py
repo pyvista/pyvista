@@ -1,5 +1,6 @@
 """Input validation functions."""
 from .check import (  # noqa: 401
+    check_has_length,
     check_has_shape,
     check_is_arraylike,
     check_is_dtypelike,
@@ -21,7 +22,6 @@ from .check import (  # noqa: 401
     check_is_string,
     check_is_subdtype,
     check_is_type,
-    check_has_length,
     check_string_is_in_iterable,
 )
 from .validate import (  # noqa: 401
