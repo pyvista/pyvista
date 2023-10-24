@@ -765,7 +765,3 @@ def test_check_string_is_in_iterable():
     msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
         check_is_string_in_iterable("foo", ["cat", "bar"])
-
-
-def test_all_check_functions_return_None():
-    pass
