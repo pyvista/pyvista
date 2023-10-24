@@ -864,6 +864,8 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
         NumPy ndarray.
 
     """
+    if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
+        return arr
     try:
         if as_any:
             out = np.asanyarray(arr, dtype=dtype)
