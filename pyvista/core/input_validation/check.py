@@ -373,10 +373,10 @@ def check_has_shape(
     shape : int, Tuple[int,...] | List[int, Tuple[int,...]], optional
         A single shape or a list of any allowable shapes. If an integer,
         ``i``, the shape is interpreted as ``(i,)``. Use a value of
-         -1 for any dimension where its size is allowed to vary, e.g.
-         ``(-1,3)`` if any Nx3 array is allowed. Use ``()`` for the
-          shape of scalar values (i.e. 0-dimensional). If a list, the
-          array must have at least one of the specified shapes.
+        -1 for any dimension where its size is allowed to vary, e.g.
+        ``(-1,3)`` if any Nx3 array is allowed. Use ``()`` for the
+        shape of scalar values (i.e. 0-dimensional). If a list, the
+        array must have at least one of the specified shapes.
 
     name : str, optional
         Variable name to use in the error messages if any are raised.
@@ -751,7 +751,7 @@ def check_has_length(
     min_length : int, optional
         Check if the array has this length or greater.
 
-    max_length : int, optional
+    max_length : int, optionalde
         Check if the array has this length or less.
 
     must_be_1d : bool, default: False
