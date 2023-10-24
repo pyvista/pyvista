@@ -389,7 +389,7 @@ def validate_number(num, /, *, reshape=True, **kwargs):
 
     **kwargs : dict, optional
         Additional keyword arguments passed to
-        :func:`~pyvista.core.input_validation.validate.validate_array`.
+        :func:`~validate_array`.
 
     Returns
     -------
@@ -440,11 +440,10 @@ def validate_data_range(rng, /, **kwargs):
     Parameters
     ----------
     rng : array_like
-         Range to validate in the form ``(lower_bound, upper_bound)``.
+        Range to validate in the form ``(lower_bound, upper_bound)``.
 
     **kwargs : dict, optional
-         Additional keyword arguments passed to
-         :func:`~pyvista.core.input_validation.validate.validate_array`.
+        Additional keyword arguments passed to :func:`~validate_array`.
 
     Returns
     -------
@@ -459,7 +458,6 @@ def validate_data_range(rng, /, **kwargs):
     (-5, 5)
 
     Add additional constraints if needed.
-    >>> import pyvista.core.input_validation as valid
     >>> valid.validate_data_range([0, 1.0], must_be_nonnegative=True)
     (0.0, 1.0)
 
@@ -494,7 +492,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         two-dimensional.
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~pyvista.core.input_validation.validate.validate_array`.
+        Additional keyword arguments passed to :func:`~validate_array`.
 
     Returns
     -------
@@ -509,7 +507,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     array([[1, 2, 3],
            [4, 5, 6]])
 
-    1D 3-element arrays are automatically reshaped to be 2D.
+    One-dimensional 3-element arrays are automatically reshaped to 2D.
     >>> valid.validate_arrayNx3([1, 2, 3])
     array([[1, 2, 3]])
 
@@ -553,8 +551,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         2D inputs are not considered valid.
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to
-        :func:`~pyvista.core.input_validation.validate.validate_array`.
+        Additional keyword arguments passed to :func:`~validate_array`.
 
     Returns
     -------
@@ -578,7 +575,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     array([1, 2])
 
     Add additional constraints if needed.
-    >>> valid.validate_arrayN((1, 2, 3), must_be_nonnegative=True)
+    >>> valid.validate_arrayN((1, 2, 3), must_have_length=3)
     array([1, 2, 3])
 
     """
@@ -615,8 +612,7 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
         2D inputs are not considered valid.
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to
-        :func:`~pyvista.core.input_validation.validate.validate_array`.
+        Additional keyword arguments passed to :func:`~validate_array`.
 
     Returns
     -------
@@ -680,8 +676,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
         a length 3 array.
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to
-        :func:`~pyvista.core.input_validation.validate.validate_array`.
+        Additional keyword arguments passed to :func:`~validate_array`.
 
     Returns
     -------
