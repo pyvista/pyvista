@@ -241,8 +241,8 @@ def test_validate_shape_value():
     assert shape == (-1, 2, -1)
 
     msg = (
-        "Shape has incorrect dtype of 'float64'. "
-        "The dtype must be a subtype of <class 'numpy.integer'>."
+        "Shape must be an instance of any type (<class 'int'>, <class 'tuple'>). "
+        "Got <class 'float'> instead."
     )
     with pytest.raises(TypeError, match=escape(msg)):
         _validate_shape_value(1.0)
@@ -251,8 +251,8 @@ def test_validate_shape_value():
     with pytest.raises(ValueError, match=msg):
         _validate_shape_value(-2)
 
-    msg = "Shape must be scalar or 1-dimensional."
-    with pytest.raises(ValueError, match=msg):
+    msg = "All items of Shape must be an instance of <class 'int'>. " "Got <class 'tuple'> instead."
+    with pytest.raises(TypeError, match=msg):
         _validate_shape_value(((1, 2), (3, 4)))
 
 

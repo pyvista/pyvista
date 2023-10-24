@@ -818,29 +818,35 @@ def check_has_length(
             )
 
 
-def _validate_shape_value(
-    shape: Union[int, Tuple[int, ...], Tuple[None]]
-) -> Union[Tuple[None], Tuple[int, ...]]:
+def _validate_shape_value(shape: Union[int, Tuple[int, ...], Tuple[None]]):
     """Validate shape-like input and return its tuple representation."""
     if shape is None:
         # `None` is used to mean `any shape is allowed` by the array
         #  validation methods, so raise an error here.
         #  Also, setting `None` as a shape is deprecated by NumPy.
         raise TypeError("`None` is not a valid shape. Use `()` instead.")
-    if shape == ():
-        return ()
 
-    # Make sure shape is scalar or 1-dimensional
-    # Values must be non-zero integers, and -1 is accepted
-    shape_arr = cast_to_ndarray(shape)
-    if shape_arr.ndim > 1:
-        raise ValueError("Shape must be scalar or 1-dimensional.")
-    check_is_subdtype(shape_arr, np.integer, name="Shape")
-    check_is_greater_than(shape_arr, -1, name="Shape", strict=False)
+    # Return early for common inputs
+    if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
+        return shape
 
-    if shape_arr.ndim == 0:
-        return (int(shape_arr),)
-    return tuple(shape_arr)
+    def _is_valid_dim(d):
+        return isinstance(d, int) and d >= -1
+
+    if _is_valid_dim(shape):
+        return (shape,)
+    if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
+        return shape
+
+    # Input is not valid at this point. Use checks to raise an
+    # appropriate error
+    check_is_instance(shape, (int, tuple), name='Shape')
+    if isinstance(shape, int):
+        shape = (shape,)
+    else:
+        check_is_iterable_of_some_type(shape, int, name='Shape')
+    check_is_greater_than(shape, -1, name="Shape", strict=False)
+    return shape
 
 
 def check_is_scalar(scalar, /, *, name="Scalar"):
