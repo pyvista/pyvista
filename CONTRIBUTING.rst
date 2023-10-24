@@ -413,11 +413,11 @@ encouraged to use the ``.. versionadded`` sphinx directive. For example:
 
 Input Validation
 ^^^^^^^^^^^^^^^^
-Validating user input is an essential part software development to ensure
+Validating user input is an essential part of software development to ensure
 algorithms perform as expected. This is especially the case in Python when
 working with multiple array-like object types (e.g. ``Sequence`` and
 ``numpy.ndarray``) which may lack support for explicit typing and type
-hints for cases where arrays with a certain shape, dimensionality and/or
+hints for cases where arrays with a certain shape, dimensionality, and/or
 data type (e.g. ``float``, ``int``) may be required. Therefore it is imperative
 to validate all user input and raise any errors as appropriate.
 
