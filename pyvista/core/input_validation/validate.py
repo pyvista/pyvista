@@ -152,7 +152,7 @@ def validate_array(
 
     broadcast_to : int, Tuple[int,...}, optional
         Broadcast the array to a read-only view with the specified shape.
-        Broadcasting is done after reshaping (if ``reshape=True``).
+        Broadcasting is done after reshaping (if ``reshape`` is not ``None``).
 
     dtype_out : dtype_like, optional
         The desired data-type of the returned array.
@@ -252,7 +252,7 @@ def validate_array(
         check_is_sorted(arr_out, name=name)
 
     # Process output
-    if dtype_out:
+    if dtype_out is not None:
         check_is_dtypelike(dtype_out)
         # Copy was done earlier, so don't do it again here
         arr_out = arr_out.astype(dtype_out, copy=False)
@@ -477,6 +477,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
+
         * have shape (N,3) or can be reshaped to (N,3)
         * are numeric
 
@@ -488,8 +489,9 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         Array to validate.
 
     reshape : bool, default: True
-        If ``True``, 1D arrays with 3 elements are considered valid input
-        and are reshaped to (1,3) to ensure the output is two-dimensional.
+        If ``True``, 1D arrays with 3 elements are considered valid
+        input and are reshaped to (1,3) to ensure the output is
+        two-dimensional.
 
     **kwargs : dict, optional
         Additional keyword arguments passed to :func:`~pyvista.core.input_validation.validate.validate_array`.
