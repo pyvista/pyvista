@@ -128,7 +128,12 @@ def check_is_real(arr, /, *, name="Array"):
         If the array does not have real numbers.
 
     """
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+
+    # Return early for common cases
+    if arr.dtype.type in [np.int32, np.int64, np.float32, np.float64]:
+        return
+
     # Do not use np.isreal as it will fail in some cases (e.g. scalars).
     # Check dtype directly instead
     try:
