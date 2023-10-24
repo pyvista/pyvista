@@ -425,12 +425,12 @@ However, manually writing input validation routines and associated test cases
 can be time consuming and error prone. Therefore, it is recommended to make
 use of existing validation methods in ``pyvista.core.input_validation``.
 
-For example, a typical validation routine may look like:
+For example, a typical validation routine for some function may look like:
 
 .. code:: python
 
     def some_function(points_array, method):
-        """ Apply a method to an Nx3 points array.
+        """Apply a method to an Nx3 points array.
 
         Parameters
         ----------
@@ -453,11 +453,19 @@ For example, a typical validation routine may look like:
         # Validate input method. An error is automatically
         # raised if the method is not valid.
         possible_methods = ["method_a", "method_b"]
-        check_is_string_in_list(method, possible_methods)
+        check_is_string_in_iterable(method, possible_methods)
+
+        # Start of implementation code...
 
 When using the array validation methods, consider setting the input
 type in the docstring to ``array_like`` (if appropriate), as the validation
 methods are very general and can operate on any array-like input.
+
+Note: ``array_like`` is a `NumPy glossary term <https://numpy.org/doc/stable/glossary.html#term-array_like>`_,
+not an actual type. Nevertheless, it's use is common in NumPy and
+PyVista documentation. A formal ``ArrayLike`` type was `introduced
+in NumPy 1.20 <https://numpy.org/devdocs/reference/typing.html#numpy.typing.ArrayLike>`_,
+but its use is not currently supported in PyVista.
 
 
 Branch Naming Conventions
