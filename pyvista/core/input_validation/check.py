@@ -41,27 +41,25 @@ def check_is_subdtype(arg1, arg2, /, *, name='Input'):
         If ``arg1`` is not a subtype of ``arg2``.
 
     """
-    try:
-        arg1 = cast_to_ndarray(arg1).dtype
-    except ValueError:
-        check_is_dtypelike(arg1)
+    if isinstance(arg1, np.dtype):
+        pass
+    elif isinstance(arg1, np.ndarray):
+        arg1 = arg1.dtype
+    else:
+        arg1 = np.dtype(arg1)
 
     if not isinstance(arg2, (list, tuple)):
         arg2 = [arg2]
-    valid = False
     for d in arg2:
         check_is_dtypelike(d)
         if np.issubdtype(arg1, d):
-            valid = True
-            break
-    if not valid:
-        msg = f"{name} has incorrect dtype of '{arg1}'. "
-        if len(arg2) == 1:
-            msg += f"The dtype must be a subtype of {arg2[0]}."
-        else:
-            msg += f"The dtype must be a subtype of at least one of \n{arg2}."
-        raise TypeError(msg)
-    return
+            return
+    msg = f"{name} has incorrect dtype of '{arg1}'. "
+    if len(arg2) == 1:
+        msg += f"The dtype must be a subtype of {arg2[0]}."
+    else:
+        msg += f"The dtype must be a subtype of at least one of \n{arg2}."
+    raise TypeError(msg)
 
 
 def check_is_dtypelike(dtype):
@@ -78,10 +76,14 @@ def check_is_dtypelike(dtype):
         If input is not coercible to a dtype object.
 
     """
-    try:
-        np.dtype(dtype)
-    except TypeError as e:
-        raise TypeError(f"'{dtype}' is not a valid NumPy data type.") from e
+    # Return early for common dtype cases
+    if dtype not in [np.integer, np.floating, np.number, int, float] and not isinstance(
+        dtype, np.dtype
+    ):
+        try:
+            np.dtype(dtype)
+        except TypeError as e:
+            raise TypeError(f"'{dtype}' is not a valid NumPy data type.") from e
 
 
 def check_is_arraylike(arr):
