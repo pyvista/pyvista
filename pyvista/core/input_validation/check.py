@@ -387,35 +387,32 @@ def check_has_shape(
         If the array does not have any of the specified shape(s).
 
     """
+
+    def _shape_is_allowed(a, b):
+        # a: array's actual shape
+        # b: allowed shape (may have -1)
+        if len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)):
+            return True
+        else:
+            return False
+
     arr = cast_to_ndarray(arr)
-    is_error = True
 
     if not isinstance(shape, list):
         shape = [shape]
 
-    for allowable_shape in shape:
-        allowable_shape = _validate_shape_value(allowable_shape)
-        # Compare actual shape dims to allowable shape dims
-        if len(arr.shape) != len(allowable_shape):
-            is_matching = False
-        else:
-            is_matching = True
-            for i, dim in enumerate(allowable_shape):
-                if dim == -1:
-                    continue
-                elif dim != arr.shape[i]:
-                    is_matching = False
-                    break
-        if is_matching:
-            is_error = False
-            break
-    if is_error:
-        msg = f"{name} has shape {arr.shape} which is not allowed. "
-        if len(shape) == 1:
-            msg += f"Shape must be {shape[0]}."
-        else:
-            msg += f"Shape must be one of {shape}."
-        raise ValueError(msg)
+    array_shape = arr.shape
+    for shp in shape:
+        shp = _validate_shape_value(shp)
+        if _shape_is_allowed(array_shape, shp):
+            return
+
+    msg = f"{name} has shape {arr.shape} which is not allowed. "
+    if len(shape) == 1:
+        msg += f"Shape must be {shape[0]}."
+    else:
+        msg += f"Shape must be one of {shape}."
+    raise ValueError(msg)
 
 
 def check_is_number(num, /, *, name='Object'):
