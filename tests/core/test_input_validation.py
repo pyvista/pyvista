@@ -71,7 +71,7 @@ def test_validate_transform_as_array4x4(transform_like):
 def test_validate_transform_as_array4x4_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
         validate_transform4x4(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must be numeric"):
+    with pytest.raises(TypeError, match="must have real numbers"):
         validate_transform4x4("abc")
 
 
@@ -92,7 +92,7 @@ def test_validate_transform_as_array3x3(transform_like):
 def test_validate_transform_as_array3x3_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
         validate_transform3x3(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must be numeric"):
+    with pytest.raises(TypeError, match="must have real numbers."):
         validate_transform3x3("abc")
 
 

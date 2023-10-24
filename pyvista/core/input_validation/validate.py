@@ -196,12 +196,14 @@ def validate_array(
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
 
     # Check type
-    try:
-        check_is_subdtype(arr_out, np.number, name=name)
-    except TypeError as e:
-        raise TypeError(f"{name} must be numeric.") from e
     if must_be_real:
         check_is_real(arr_out, name=name)
+    else:
+        try:
+            check_is_subdtype(arr_out, np.number, name=name)
+        except TypeError as e:
+            raise TypeError(f"{name} must be numeric.") from e
+
     if must_have_dtype is not None:
         check_is_subdtype(arr_out, must_have_dtype, name=name)
 
