@@ -97,6 +97,8 @@ def test_validate_transform_as_array3x3_raises():
 
 
 def test_check_is_subdtype():
+    check_is_subdtype(int, np.integer)
+    check_is_subdtype(np.dtype(int), np.integer)
     check_is_subdtype(np.array([1, 2, 3]), np.integer)
     check_is_subdtype(np.array([1.0, 2, 3]), float)
     check_is_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
@@ -398,7 +400,13 @@ def test_check_is_in_range():
 def numeric_array_test_cases():
     Case = namedtuple("Case", ["kwarg", "valid_array", "invalid_array", "error_type", "error_msg"])
     return (
-        Case(dict(must_be_finite=True), 0, np.inf, ValueError, 'must have finite values'),
+        Case(
+            dict(must_be_finite=True, must_be_real=False),
+            0,
+            np.inf,
+            ValueError,
+            'must have finite values',
+        ),
         Case(dict(must_be_real=True), 0, 1 + 1j, TypeError, 'must have real numbers'),
         Case(
             dict(must_be_integer_like=True), 0.0, 0.1, ValueError, 'must have integer-like values'
@@ -625,7 +633,15 @@ def test_check_is_greater_than():
 
 
 def test_check_is_real():
-    check_is_real
+    check_is_real(1)
+    check_is_real(-2.0)
+    check_is_real(np.array(-2.0, dtype="uint8"))
+    msg = 'Array must have real numbers.'
+    with pytest.raises(TypeError, match=msg):
+        check_is_real(1 + 1j)
+    msg = '_input must have real numbers.'
+    with pytest.raises(TypeError, match=msg):
+        check_is_real(1 + 1j, name="_input")
 
 
 def test_check_is_finite():
@@ -663,7 +679,7 @@ def test_check_is_iterable():
         check_is_iterable(1, name="_input")
 
 
-def test_array_length():
+def test_check_has_length():
     check_has_length((1,))
     check_has_length(
         [
@@ -718,7 +734,16 @@ def test_check_is_nonnegative():
 
 
 def test_check_is_sorted():
-    check_is_sorted
+    check_is_sorted([1, 2])
+    check_is_sorted([-10, -10])
+    check_is_sorted([[1, 2], [3, 4]])
+    check_is_sorted(1)
+    msg = "Array [2 1] must be sorted."
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_is_sorted([2, 1])
+    msg = "_input [1 3 2] must be sorted."
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_is_sorted([1, 3, 2], name="_input")
 
 
 def test_check_is_iterable_of_strings():
@@ -733,14 +758,26 @@ def test_check_is_iterable_of_strings():
 
 
 def test_check_is_iterable_of_some_type():
-    check_is_iterable_of_some_type
+    check_is_iterable_of_some_type([1, 2, 3], int)
+    check_is_iterable_of_some_type(("a", "b", "c"), str)
+    check_is_iterable_of_some_type("abc", str)
+    check_is_iterable_of_some_type(range(10), int)
+    msg = "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=escape(msg)):
+        check_is_iterable_of_some_type(["abc", 1], str)
+    with pytest.raises(TypeError, match="All items of _input"):
+        check_is_iterable_of_some_type(["abc", 1], str, name="_input")
 
 
 def test_check_is_number():
     check_is_number(1)
+    check_is_number(1 + 1j)
     msg = "_input must be an instance of <class 'numbers.Number'>. Got <class 'numpy.ndarray'> instead."
     with pytest.raises(TypeError, match=msg):
         check_is_number(np.array(0), name='_input')
+    msg = "Object must be"
+    with pytest.raises(TypeError, match=msg):
+        check_is_number(np.array(0))
 
 
 def test_check_is_scalar():
@@ -760,8 +797,11 @@ def test_check_is_scalar():
         check_is_scalar(np.array([1, 2]))
 
 
-def test_check_string_is_in_iterable():
+def test_check_is_string_in_iterable():
     check_is_string_in_iterable("foo", ["foo", "bar"])
     msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
         check_is_string_in_iterable("foo", ["cat", "bar"])
+    msg = "_input must be an instance of <class 'str'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=escape(msg)):
+        check_is_string_in_iterable(1, 2, name="_input")

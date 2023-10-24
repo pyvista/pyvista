@@ -160,8 +160,12 @@ def check_is_sorted(arr, /, *, name="Array"):
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    if arr.ndim == 0:
+        # Calls to np.sort will fail for scalars, so return early
+        return
     if not np.array_equal(np.sort(arr), arr):
         if arr.size <= 4:
+            # Show the array's elements in error msg if array is small
             msg_body = f"{arr}"
         else:
             msg_body = f"with {arr.size} elements"
@@ -850,7 +854,7 @@ def _validate_shape_value(shape: Union[int, Tuple[int, ...], Tuple[None]]):
     else:
         check_is_iterable_of_some_type(shape, int, name='Shape')
     check_is_greater_than(shape, -1, name="Shape", strict=False)
-    return shape
+    raise RuntimeError("This line should not be reachable.")  # pragma: no cover
 
 
 def check_is_scalar(scalar, /, *, name="Scalar"):
