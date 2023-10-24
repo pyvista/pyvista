@@ -2,12 +2,12 @@
 
 A ``validate_`` function typically:
 
-    * Uses :py:mod:`~pyvista.core.input_validation.check` functions to
-      check the type and/or value of input arguments.
-    * Applies (optional) constraints, e.g. input or output must have a
-      specific length, shape, type, data-type, etc.
-    * Accepts many different input types or values and standardizes the
-      output as a single representation with known properties.
+* Uses :py:mod:`~pyvista.core.input_validation.check` functions to
+  check the type and/or value of input arguments.
+* Applies (optional) constraints, e.g. input or output must have a
+  specific length, shape, type, data-type, etc.
+* Accepts many different input types or values and standardizes the
+  output as a single representation with known properties.
 
 """
 from functools import wraps
@@ -165,8 +165,8 @@ def validate_array(
         If ``True``, a copy of the array is returned. A copy is always
         returned if the array:
 
-            * is a nested sequence
-            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
+        * is a nested sequence
+        * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
 
         A copy may also be made to satisfy ``dtype_out`` requirements.
 
@@ -187,10 +187,11 @@ def validate_array(
     -------
     array_like
         Validated array. Returned object is:
-            * an instance of ``np.ndarray`` (default), or
-            * a nested list (if ``to_list=True``), or
-            * a nested tuple (if ``to_tuple=True``), or
-            * a number (scalar) if the input is a number.
+
+        * an instance of ``np.ndarray`` (default), or
+        * a nested list (if ``to_list=True``), or
+        * a nested tuple (if ``to_tuple=True``), or
+        * a number (scalar) if the input is a number.
 
     """
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
@@ -374,9 +375,10 @@ def validate_number(num, /, *, reshape=True, **kwargs):
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
-        * is scalar or is an array which can be reshaped as a scalar
-        * is a real number
-        * is finite
+
+    * is scalar or is an array which can be reshaped as a scalar
+    * is a real number
+    * is finite
 
     Parameters
     ----------
@@ -433,9 +435,10 @@ def validate_data_range(rng, /, **kwargs):
     """Validate a data range.
 
     By default, the data range is checked to ensure:
-        * it has two values
-        * it has real numbers
-        * the lower bound is not more than the upper bound
+
+    * it has two values
+    * it has real numbers
+    * the lower bound is not more than the upper bound
 
     Parameters
     ----------
@@ -476,10 +479,12 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
 
     The array is checked to ensure its input values:
 
-        * have shape (N,3) or can be reshaped to (N,3)
-        * are numeric
+    * have shape (N,3) or can be reshaped to (N,3)
+    * are numeric
 
-    The returned array is formatted so that its values have shape (N,3).
+    The returned array is formatted so that its values:
+
+    * have shape (N,3).
 
     Parameters
     ----------
@@ -502,19 +507,25 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     Examples
     --------
     Validate an Nx3 array.
+
     >>> import pyvista.core.input_validation as valid
     >>> valid.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
+
     array([[1, 2, 3],
            [4, 5, 6]])
 
     One-dimensional 3-element arrays are automatically reshaped to 2D.
+
     >>> valid.validate_arrayNx3([1, 2, 3])
+
     array([[1, 2, 3]])
 
     Add additional constraints.
+
     >>> valid.validate_arrayNx3(
     ...     ((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10]
     ... )
+
     array([[1, 2, 3],
            [4, 5, 6]])
 
@@ -533,11 +544,13 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
-        * have shape (N,) or can be reshaped to (N,)
-        * are numeric
+
+    * have shape (N,) or can be reshaped to (N,)
+    * are numeric
 
     The returned array is formatted so that its values:
-        * have shape (N,)
+
+    * have shape (N,)
 
     Parameters
     ----------
@@ -592,13 +605,15 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
-        * have shape (N,) or can be reshaped to (N,)
-        * are integer-like
-        * are non-negative
+
+    * have shape (N,) or can be reshaped to (N,)
+    * are integer-like
+    * are non-negative
 
     The returned array is formatted so that its values:
-        * have shape (N,)
-        * have an integer data type
+
+    * have shape (N,)
+    * have an integer data type
 
     Parameters
     ----------
