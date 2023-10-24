@@ -35,12 +35,7 @@ from .render_window_interactor import RenderWindowInteractor, Timer
 from .renderer import CameraPosition, Renderer, scale_point
 from .text import CornerAnnotation, Text, TextProperty
 from .texture import Texture, image_to_texture, numpy_to_texture
-from .themes import (
-    DocumentTheme as _GlobalTheme,
-    _set_plot_theme_from_env,
-    load_theme,
-    set_plot_theme,
-)
+from .themes import Theme as _Theme, _set_plot_theme_from_env, load_theme, set_plot_theme
 from .tools import (
     FONTS,
     check_math_text_support,
@@ -90,7 +85,7 @@ class QtInteractor:  # numpydoc ignore=PR01
         raise QtDeprecationError('QtInteractor')
 
 
-global_theme = _GlobalTheme()
+global_theme = _Theme.document_theme()
 
 # Set preferred plot theme
 _set_plot_theme_from_env()

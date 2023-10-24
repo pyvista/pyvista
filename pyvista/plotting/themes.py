@@ -12,15 +12,15 @@ Apply a built-in theme
 
 Load a theme into pyvista
 
->>> from pyvista.plotting.themes import DocumentTheme
->>> theme = DocumentTheme()
+>>> from pyvista.plotting.themes import Theme
+>>> theme = Theme.document_theme()
 >>> theme.save('my_theme.json')  # doctest:+SKIP
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
 pyvista.
 
->>> my_theme = DocumentTheme()
+>>> my_theme = Theme.document_theme()
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
@@ -39,6 +39,7 @@ import warnings
 
 import pyvista
 from pyvista.core._typing_core import Number
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
 
 from ._typing import ColorLike
@@ -77,8 +78,8 @@ def load_theme(filename):
     Examples
     --------
     >>> import pyvista as pv
-    >>> from pyvista.plotting.themes import DocumentTheme
-    >>> theme = DocumentTheme()
+    >>> from pyvista.plotting.themes import Theme
+    >>> theme = Theme.document_theme()
     >>> theme.save('my_theme.json')  # doctest:+SKIP
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
@@ -94,8 +95,8 @@ def set_plot_theme(theme):
     Parameters
     ----------
     theme : str
-        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
-        or ``'paraview'``.
+        Theme name.  Either ``'default'``, ``'document'``, ``'document_pro'``,
+        ``'dark'``, ``'paraview'``, ``'vtk'``, or ``'testing'``.
 
     Examples
     --------
@@ -125,7 +126,7 @@ def set_plot_theme(theme):
             new_theme_type = _NATIVE_THEMES[theme].value
         except KeyError:
             raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
-        pyvista.global_theme.load_theme(new_theme_type())
+        pyvista.global_theme.load_theme(new_theme_type)
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -184,6 +185,9 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
     def __eq__(self, other):
         if not isinstance(other, _ThemeConfig):
+            return False
+
+        if not set(self._all__slots__()) == set(other._all__slots__()):
             return False
 
         for attr_name in other._all__slots__():
@@ -1501,8 +1505,8 @@ class Theme(_ThemeConfig):
 
     Create a new theme from the default theme and apply it globally.
 
-    >>> from pyvista.plotting.themes import DocumentTheme
-    >>> my_theme = DocumentTheme()
+    >>> from pyvista.plotting.themes import Theme
+    >>> my_theme = Theme.document_theme()
     >>> my_theme.color = 'red'
     >>> my_theme.background = 'white'
     >>> pv.global_theme.load_theme(my_theme)
@@ -1645,6 +1649,221 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+
+    @classmethod
+    def dark_theme(cls):
+        """Dark mode theme.
+
+        Black background, "viridis" colormap, tan meshes, white (hidden) edges.
+
+        Returns
+        -------
+        Theme
+            Dark theme.
+
+        Examples
+        --------
+        Make the dark theme the global default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import themes
+        >>> pv.set_plot_theme(themes.Theme.dark_theme())
+
+        Alternatively, set via a string.
+
+        >>> pv.set_plot_theme('dark')
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'dark',
+                'background': 'black',
+                'cmap': 'viridis',
+                'font': {'color': 'white'},
+                'show_edges': False,
+                'color': 'lightblue',
+                'outline_color': 'white',
+                'edge_color': 'white',
+                'axes': {
+                    'x_color': 'tomato',
+                    'y_color': 'seagreen',
+                    'z_color': 'blue',
+                },
+            }
+        )
+
+    @classmethod
+    def paraview_theme(cls):
+        """ParaView-like theme.
+
+        Returns
+        -------
+        Theme
+            ParaView-like theme.
+
+        Examples
+        --------
+        Make the paraview-like theme the global default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import themes
+        >>> pv.set_plot_theme(themes.Theme.paraview_theme())
+
+        Alternatively, set via a string.
+
+        >>> pv.set_plot_theme('paraview')
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'paraview',
+                'background': 'paraview',
+                'cmap': 'coolwarm',
+                'font': {
+                    'family': 'arial',
+                    'label_size': 16,
+                    'color': 'white',
+                },
+                'show_edges': False,
+                'color': 'white',
+                'outline_color': 'white',
+                'edge_color': 'black',
+                'axes': {
+                    'x_color': 'tomato',
+                    'y_color': 'gold',
+                    'z_color': 'green',
+                },
+            }
+        )
+
+    @classmethod
+    def document_theme(cls):
+        """Document theme well suited for papers and presentations.
+
+        This theme uses:
+
+        * A white background
+        * Black fonts
+        * The "viridis" colormap
+        * disables edges for surface plots
+        * Hidden edge removal
+
+        Best used for presentations, papers, etc.
+
+        Returns
+        -------
+        Theme
+            Document theme.
+
+        Examples
+        --------
+        Make the document theme the global default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import themes
+        >>> pv.set_plot_theme(themes.Theme.document_theme())
+
+        Alternatively, set via a string.
+
+        >>> pv.set_plot_theme('document')
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'document',
+                'background': 'white',
+                'cmap': 'viridis',
+                'font': {
+                    'size': 18,
+                    'title_size': 18,
+                    'label_size': 18,
+                    'color': 'black',
+                },
+                'show_edges': False,
+                'color': 'lightblue',
+                'outline_color': 'black',
+                'edge_color': 'black',
+                'axes': {
+                    'x_color': 'tomato',
+                    'y_color': 'seagreen',
+                    'z_color': 'blue',
+                },
+            }
+        )
+
+    @classmethod
+    def document_pro_theme(cls):
+        """More professional document theme.
+
+        This theme extends :func:`Theme.document_theme` with:
+
+        * Default color cycling
+        * Rendering points as spheres
+        * MSAA anti aliassing
+        * Depth peeling
+
+        Returns
+        -------
+        Theme
+            Document pro theme.
+
+        """
+        dict = cls.document_theme().to_dict()
+        dict.update(
+            {
+                'anti_aliasing': 'ssaa',
+                'color_cycler': get_cycler('default'),
+                'render_points_as_spheres': True,
+                'multi_samples': 8,
+                'depth_peeling': {
+                    'number_of_peels': 4,
+                    'occlusion_ratio': 0.0,
+                    'enabled': True,
+                },
+            }
+        )
+        return cls.from_dict(dict)
+
+    @classmethod
+    def testing_theme(cls):
+        """Low resolution testing theme, e.g. for ``pytest``.
+
+        Necessary for image regression.  Xvfb doesn't support
+        multi-sampling, it's disabled for consistency between desktops and
+        remote testing.
+
+        Also disables ``return_cpos`` to make it easier for us to write
+        examples without returning camera positions.
+
+        Returns
+        -------
+        Theme
+            Testing theme.
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'testing',
+                'multi_samples': 1,
+                'window_size': [400, 400],
+                'axes': {'show': False},
+                'return_cpos': False,
+            }
+        )
+
+    @classmethod
+    def vtk_theme(cls):
+        """Theme with :class:`Theme` defaults similar to VTK.
+
+        Same as ``Theme()``.
+
+        Returns
+        -------
+        Theme
+            VTK theme.
+
+        """
+        return cls()
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2813,8 +3032,8 @@ class Theme(_ThemeConfig):
         the global theme of pyvista.
 
         >>> import pyvista as pv
-        >>> from pyvista.plotting.themes import DocumentTheme
-        >>> my_theme = DocumentTheme()
+        >>> from pyvista.plotting.themes import Theme
+        >>> my_theme = Theme.document_theme()
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
@@ -2825,8 +3044,7 @@ class Theme(_ThemeConfig):
         Create a custom theme from the dark theme and load it into
         pyvista.
 
-        >>> from pyvista.plotting.themes import DarkTheme
-        >>> my_theme = DarkTheme()
+        >>> my_theme = Theme.dark_theme()
         >>> my_theme.show_edges = True
         >>> pv.global_theme.load_theme(my_theme)
         >>> pv.global_theme.show_edges
@@ -2934,6 +3152,12 @@ class Theme(_ThemeConfig):
         self._lighting_params = config
 
 
+def _deprecated_subtheme_msg(class_name, obj_name):
+    return f"""{class_name} is deprecated.
+    Use Theme.{obj_name} instead of {class_name}()
+    """
+
+
 class DarkTheme(Theme):
     """Dark mode theme.
 
@@ -2956,6 +3180,9 @@ class DarkTheme(Theme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg("DarkTheme", "dark_theme"), PyVistaDeprecationWarning
+        )
         self.name = 'dark'
         self.background = 'black'
         self.cmap = 'viridis'
@@ -2989,6 +3216,9 @@ class ParaViewTheme(Theme):
     def __init__(self):
         """Initialize theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg("ParaViewTheme", "paraview_theme"), PyVistaDeprecationWarning
+        )
         self.name = 'paraview'
         self.background = 'paraview'
         self.cmap = 'coolwarm'
@@ -3034,6 +3264,9 @@ class DocumentTheme(Theme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg("DocumentTheme", "document_theme"), PyVistaDeprecationWarning
+        )
         self.name = 'document'
         self.background = 'white'
         self.cmap = 'viridis'
@@ -3065,6 +3298,10 @@ class DocumentProTheme(DocumentTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg("DocumentProTheme", "document_pro_theme"),
+            PyVistaDeprecationWarning,
+        )
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
@@ -3088,6 +3325,9 @@ class _TestingTheme(Theme):
 
     def __init__(self):
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg("_TestingTheme", "testing_theme"), PyVistaDeprecationWarning
+        )
         self.name = 'testing'
         self.multi_samples = 1
         self.window_size = [400, 400]
@@ -3098,10 +3338,10 @@ class _TestingTheme(Theme):
 class _NATIVE_THEMES(Enum):
     """Global built-in themes available to PyVista."""
 
-    paraview = ParaViewTheme
-    document = DocumentTheme
-    document_pro = DocumentProTheme
-    dark = DarkTheme
-    default = DocumentTheme
-    testing = _TestingTheme
-    vtk = Theme
+    paraview = Theme.paraview_theme()
+    document = Theme.document_theme()
+    document_pro = Theme.document_pro_theme()
+    dark = Theme.dark_theme()
+    default = Theme.document_theme()
+    testing = Theme.testing_theme()
+    vtk = Theme.vtk_theme()

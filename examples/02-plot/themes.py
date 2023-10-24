@@ -7,6 +7,8 @@ Control Global and Local Plotting Themes
 PyVista allows you to set global and local plotting themes to easily
 set default plotting parameters.
 
+See also :ref:`userguide_themes` and :ref:`theme_api`.
+
 """
 import pyvista as pv
 from pyvista import examples
@@ -33,6 +35,7 @@ def plot_example():
 #
 # Here's an example of our default plotting theme - this is what you
 # would see by default after running any of our examples locally.
+# This example uses :func:`~pyvista.set_plot_theme`.
 
 pv.set_plot_theme('default')
 plot_example()
@@ -120,11 +123,12 @@ cpos = pv.Sphere().plot()
 # themes and then loading it into the global plotting defaults.
 #
 # Here, we create a dark theme that plots meshes red by default while
-# showing edges.
+# showing edges.  The :class:`~pyvista.plotting.themes.Theme` class
+# is the main API for using themes and customization.
 
-from pyvista import themes
+from pyvista.plotting.themes import Theme
 
-my_theme = themes.DarkTheme()
+my_theme = Theme.dark_theme()
 my_theme.color = 'red'
 my_theme.lighting = False
 my_theme.show_edges = True
@@ -140,14 +144,12 @@ cpos = pv.Sphere().plot()
 # In this example, we create a custom theme from the base "default"
 # theme and then apply it to a single plotter.  Note that this does
 # not change the behavior of the global "defaults", which are still
-# set to the modified ``DarkTheme``.
+# set to the modified ``dark_theme``.
 #
 # This approach carries the advantage that you can maintain several
 # themes and apply them to one or more plotters.
 
-from pyvista import themes
-
-my_theme = themes.DocumentTheme()
+my_theme = Theme.document_theme()
 my_theme.color = 'black'
 my_theme.lighting = True
 my_theme.show_edges = True

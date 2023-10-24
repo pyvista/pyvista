@@ -29,7 +29,7 @@ image = examples.download_moonlanding_image()
 print(image.point_data)
 
 # Create a theme that we can reuse when plotting the image
-grey_theme = pv.themes.DocumentTheme()
+grey_theme = pv.themes.Theme.document_theme()
 grey_theme.cmap = 'gray'
 grey_theme.show_scalar_bar = False
 grey_theme.axes.show = False

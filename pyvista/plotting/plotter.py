@@ -393,7 +393,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import themes
         >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()
+        >>> pl.theme = themes.Theme.dark_theme()
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
