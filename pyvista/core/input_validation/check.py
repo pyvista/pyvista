@@ -751,7 +751,7 @@ def check_has_length(
     min_length : int, optional
         Check if the array has this length or greater.
 
-    max_length : int, optionalde
+    max_length : int, optional
         Check if the array has this length or less.
 
     must_be_1d : bool, default: False
