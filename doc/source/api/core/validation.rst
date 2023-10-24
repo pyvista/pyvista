@@ -20,7 +20,7 @@ Some common use cases for input validation are:
 
 
 Input Validation API Reference
-----------------------
+------------------------------
 .. currentmodule:: pyvista.core.input_validation
 .. autosummary::
    :toctree: _autosummary
