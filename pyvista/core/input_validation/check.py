@@ -101,7 +101,7 @@ def check_is_arraylike(arr):
 
     """
     try:
-        cast_to_ndarray(arr)
+        cast_to_ndarray(arr) if not isinstance(arr, np.ndarray) else None
     except ValueError as e:
         raise ValueError(*e.args) from e
 
@@ -154,7 +154,7 @@ def check_is_sorted(arr, /, *, name="Array"):
         If array is not sorted in ascending order.
 
     """
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if not np.array_equal(np.sort(arr), arr):
         if arr.size <= 4:
             msg_body = f"{arr}"
@@ -180,7 +180,7 @@ def check_is_finite(arr, /, *, name="Array"):
         If the array has any Inf or NaN values.
 
     """
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if not np.all(np.isfinite(arr)):
         raise ValueError(f"{name} must have finite values.")
 
@@ -210,7 +210,7 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
         If ``strict=True`` and the array's dtype is not integral.
 
     """
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if strict:
         try:
             check_is_subdtype(arr, np.integer)
@@ -268,7 +268,7 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
         ``strict=True``) the specified value.
 
     """
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     value = cast_to_ndarray(value)
     check_has_shape(value, ())
     check_is_real(value)
@@ -305,7 +305,7 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
         ``strict=True``) the specified value.
 
     """
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if strict and not np.all(arr < value):
         raise ValueError(f"{name} values must all be less than {value}.")
     elif not np.all(arr <= value):
@@ -350,7 +350,7 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     check_is_real(rng, name="Range")
     check_is_sorted(rng, name="Range")
 
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     try:
         check_is_greater_than(arr, rng[0], strict=strict_lower, name=name)
         check_is_less_than(arr, rng[1], strict=strict_upper, name=name)
@@ -398,7 +398,7 @@ def check_has_shape(
         else:
             return False
 
-    arr = cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
 
     if not isinstance(shape, list):
         shape = [shape]
