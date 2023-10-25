@@ -2642,6 +2642,8 @@ class WidgetHelper:
     ):
         """Add a logo widget to the top of the viewport.
 
+        If no logo is passed, the PyVista logo will be used.
+
         Parameters
         ----------
         logo : pyvista.ImageData or pathlib.Path, optional
