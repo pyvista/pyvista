@@ -2727,6 +2727,7 @@ class Theme(_ThemeConfig):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.PolyData())
         >>> pl.show()  # doctest: +SKIP
+
         """
         return self._allow_empty_mesh
 
