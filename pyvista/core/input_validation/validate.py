@@ -1,5 +1,7 @@
 """Functions that validate input and return a standard representation.
 
+.. versionadded:: 0.43.0
+
 A ``validate`` function typically:
 
 * Uses :py:mod:`~pyvista.core.input_validation.check` functions to
@@ -56,7 +58,7 @@ def validate_array(
     to_list=False,
     to_tuple=False,
     name="Array",
-) -> Any:
+):
     """Check and validate a numeric array meets specific requirements.
 
     Validate an array to ensure it is numeric, has a specific shape,
@@ -87,67 +89,86 @@ def validate_array(
     ----------
     arr : array_like
         Array to be validated, in any form that can be converted to
-        a NumPy ndarray. This includes lists, lists of tuples, tuples,
+        a :class:`numpy.ndarray`. This includes lists, lists of tuples, tuples,
         tuples of tuples, tuples of lists and ndarrays.
 
-    must_have_shape : int | Tuple[int,...] | List[int, Tuple[int,...]], optional
-        Check if the array has a specific shape. Specify a single shape
-        or a list of any allowable shapes. If an integer, the array must
+    must_have_shape : int | tuple[int, ...] | list[int, tuple[int, ...]], optional
+        :func:`pyvista.core.input_validation.check.check_has_shape <Check>`
+        if the array has a specific shape. Specify a single shape
+        or a ``list`` of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of -1 for any
         dimension where its size is allowed to vary. Use ``()`` to allow
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
 
-    must_have_dtype : dtype_like | List[dtype_like, ...], optional
-        Check if the array's data-type has the given dtype. Specify a
-        NumPy ``dtype`` object or dtype-like base class which the array's
-        data must be a subtype of. If a list, the array's data must be a
-        subtype of at least one of the specified dtypes.
+    must_have_dtype : dtype_like | list[dtype_like, ...], optional
+        :func:`pyvista.core.input_validation.check.check_is_subdtype <Check>`
+        if the array's data-type has the given dtype. Specify a
+        :class:`numpy.dtype` object or dtype-like base class which the
+        array's data must be a subtype of. If a ``list``, the array's data
+        must be a subtype of at least one of the specified dtypes.
 
     must_have_length : int | array_like[int, ...], optional
-        Check if the array has the given length. If multiple
-        values are given, the array's length must match one of the
-        values.
+        :func:`pyvista.core.input_validation.check.check_has_length <Check>`
+        if the array has the given length. If multiple values are given,
+        the array's length must match one of the values.
 
         .. note ::
 
             The array's length is determined after reshaping the array
             (if ``reshape`` is not ``None``) and after broadcasting (if
-            ``broadcast`` is not ``None``). Therefore, the values of
+            ``broadcast_to`` is not ``None``). Therefore, the values of
             `length`` should take the array's new shape into
             consideration if applicable.
 
     must_have_min_length : int, optional
-        Check if the array's length is this value or greater.
+        :func:`pyvista.core.input_validation.check.check_has_length <Check>`
+        if the array's length is this value or greater.
 
     must_have_max_length : int, optional
-        Check if the array' length is this value or less.
+        :func:`pyvista.core.input_validation.check.check_has_length <Check>`
+        if the array' length is this value or less.
 
     must_be_nonnegative : bool, default: False
-        Check if all elements of the array are nonnegative.
+        :func:`pyvista.core.input_validation.check.check_is_nonnegative <Check>`
+        if all elements of the array are nonnegative.
 
     must_be_finite : bool, default: False
-        Check if all elements of the array are finite, i.e. not
-        infinity and not Not a Number (NaN).
+        :func:`pyvista.core.input_validation.check.check_is_finite <Check>`
+        if all elements of the array are finite, i.e. not ``infinity``
+        and not Not a Number (``NaN``).
 
     must_be_real : bool, default: True
-        Check if the array has real numbers, i.e. its data type is
-        integer or floating.
+        :func:`pyvista.core.input_validation.check.check_is_real <Check>`
+        if the array has real numbers, i.e. its data type is integer or
+        floating.
 
     must_be_integer_like : bool, default: False
-        Check if the array's values are integer-like (i.e. that
+        :func:`pyvista.core.input_validation.check.check_is_integerlike <Check>`
+        if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
     must_be_sorted : bool, default: False
-        Check if the array's values are sorted in ascending order.
+        :func:`pyvista.core.input_validation.check.check_is_sorted <Check>`
+        if the array's values are sorted in ascending order.
 
     must_be_in_range : array_like[float, float], optional
-        Check if the array's values are all within a specific range.
-        Range must be array-like with two elements specifying the minimum
-        and maximum data values allowed, respectively. By default, the
-        range endpoints are inclusive, i.e. values must be >= minimum
-        and <= maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
+        :func:`pyvista.core.input_validation.check.check_is_in_range <Check>`
+        if the array's values are all within a specific range. Range
+        must be array-like with two elements specifying the minimum and
+        maximum data values allowed, respectively. By default, the range
+        endpoints are inclusive, i.e. values must be >= minimum and <=
+        maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
         to further restrict the allowable range.
+
+        ..note ::
+
+            Use ``np.inf`` to check for open intervals, e.g.:
+
+            * ``[-np.inf, upper_bound]`` to check if values are less
+              than (or equal to)  ``upper_bound``
+            * ``[lower_bound, np.inf]`` to check if values are greater
+              than (or equal to) ``lower_bound``
 
     strict_lower_bound : bool, default: False
         Enforce a strict lower bound for the range specified by
@@ -159,19 +180,20 @@ def validate_array(
         ``must_be_in_range``, i.e. array values must be strictly less
         than the specified maximum.
 
-    reshape : int, Tuple[int,...], optional
+    reshape : int | tuple[int, ...], optional
         Reshape the output array with :func:`numpy.reshape`. The shape
         should be compatible with the original shape. If an integer,
         then the result will be a 1-D array of that length. One shape
         dimension can be -1.
 
-    broadcast_to : int, Tuple[int,...}, optional
+    broadcast_to : int | tuple[int, ...], optional
         Broadcast the array with :func:`numpy.broadcast_to` to a
         read-only view with the specified shape. Broadcasting is done
         after reshaping (if ``reshape`` is not ``None``).
 
     dtype_out : dtype_like, optional
-        The desired data-type of the returned array.
+        Set the data-type of the returned array. By default, the
+        dtype is inferred from the input data.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
@@ -187,13 +209,13 @@ def validate_array(
         A copy may also be made to satisfy ``dtype_out`` requirements.
 
     to_list : bool, default: False
-        Return the validated array as a list or nested list. Scalar
-        values are always returned as a number. Has no effect if
-        ``to_tuple=True``.
+        Return the validated array as a ``list`` or nested ``list``. Scalar
+        values are always returned as a ``Number``  (i.e. ``int`` or ``float``).
+        Has no effect if ``to_tuple=True``.
 
     to_tuple : bool, default: False
-        Return the validated array as a tuple or nested tuple. Scalar
-        values are always returned as a number.
+        Return the validated array as a ``tuple`` or nested ``tuple``. Scalar
+        values are always returned as a ``Number``  (i.e. ``int`` or ``float``).
 
     name : str, optional
         Variable name to use in the error messages if any of the
@@ -205,14 +227,14 @@ def validate_array(
         Validated array. Returned object is:
 
         * an instance of ``np.ndarray`` (default), or
-        * a nested list (if ``to_list=True``), or
-        * a nested tuple (if ``to_tuple=True``), or
-        * a number (scalar) if the input is a number.
+        * a nested ``list`` (if ``to_list=True``), or
+        * a nested ``tuple`` (if ``to_tuple=True``), or
+        * a ``Number`` (i.e. ``int`` or ``float``) if the input is a scalar.
 
     Examples
     --------
-    Validate a 1-dimensional array has at least length two, is
-    monotonically increasing, and is within some range.
+    Validate a one-dimensional array has at least length two, is
+    monotonically increasing (i.e. is sorted), and is within some range.
 
     >>> import pyvista.core.input_validation as valid
     >>> array_in = (1, 1, 2, 3, 5)
@@ -296,7 +318,7 @@ def validate_array(
     return arr_out
 
 
-def validate_transform4x4(transform, /, *, name="Transform") -> np.ndarray:
+def validate_transform4x4(transform, /, *, name="Transform"):
     """Validate transform-like input as a 4x4 ndarray.
 
     Parameters
@@ -389,7 +411,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     return arr
 
 
-def validate_dtype(dtype_like) -> np.dtype:
+def validate_dtype(dtype_like):
     """Validate dtype-like input and return it as a dtype object.
 
     .. warning::
@@ -476,7 +498,6 @@ def validate_number(num, /, *, reshape=True, **kwargs):
     kwargs.setdefault('name', 'Number')
     kwargs.setdefault('to_list', True)
     kwargs.setdefault('must_be_finite', True)
-    kwargs.setdefault('must_be_real', True)
 
     if reshape:
         shape = [(), (1,)]
@@ -528,7 +549,6 @@ def validate_data_range(rng, /, **kwargs):
 
     """
     kwargs.setdefault('name', 'Data Range')
-    kwargs.setdefault('must_be_real', True)
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', 2)
     _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True)
     if 'to_list' not in kwargs:

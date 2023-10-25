@@ -1,5 +1,7 @@
 """Functions that check the type and/or value of inputs.
 
+.. versionadded:: 0.43.0
+
 A ``check`` function typically:
 
 * Performs a simple validation on a single input variable.
@@ -17,15 +19,15 @@ from pyvista.core.utilities.arrays import cast_to_ndarray
 
 
 def check_is_subdtype(arg1, arg2, /, *, name='Input'):
-    """Check if a dtype is a subtype of another dtype(s).
+    """Check if a data-type is a subtype of another data-type(s).
 
     Parameters
     ----------
     arg1 : dtype_like | array_like
-        ``dtype`` or object coercible to one. If array_like, the dtype
+        ``dtype`` or object coercible to one. If ``array_like``, the dtype
         of the array is used.
 
-    arg2 : dtype_like | List[dtype_like]
+    arg2 : dtype_like | list[dtype_like]
         ``dtype``-like object or a list of ``dtype``-like objects.
         If a list, ``arg1`` must be a subtype of at least one of the
         specified dtypes.
@@ -128,8 +130,9 @@ def check_is_real(arr, /, *, name="Array"):
 
     Notes
     -----
-    Arrays with NaN values are considered real and will not raise
-    an error.
+    Arrays with ``infinity`` or ``NaN`` values are considered real and
+    will not raise an error. Use :func:`check_is_finite` to check for
+    finite values.
 
     Parameters
     ----------
@@ -177,7 +180,7 @@ def check_is_sorted(arr, /, *, name="Array"):
     Raises
     ------
     ValueError
-        If array is not sorted in ascending order.
+        If the array is not sorted in ascending order.
 
     See Also
     --------
@@ -211,7 +214,7 @@ def check_is_finite(arr, /, *, name="Array"):
     Raises
     ------
     ValueError
-        If the array has any Inf or NaN values.
+        If the array has any ``Inf`` or ``NaN`` values.
 
     See Also
     --------
@@ -249,10 +252,7 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     See Also
     --------
     check_is_nonnegative
-    check_is_number
-    check_is_scalar
-
-
+    check_is_subdtype
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -294,7 +294,7 @@ def check_is_nonnegative(arr, /, *, name="Array"):
 
 
 def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
-    """Check if array elements are all greater than some value.
+    """Check if an array's elements are all greater than some value.
 
     Parameters
     ----------
@@ -336,14 +336,14 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
 
 
 def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
-    """Check array elements are all less than some value.
+    """Check if an array's elements are all less than some value.
 
     Parameters
     ----------
     arr : array_like
         Array to check.
 
-    value : scalar
+    value : Number
         Value which the array's elements must be less than.
 
     strict : bool, default: True
@@ -382,7 +382,7 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     arr : array_like
         Array to check.
 
-    rng : array_like, optional
+    rng : array_like[float, float], optional
         Array-like with two elements ``[min, max]`` specifying the minimum
         and maximum data values allowed, respectively. By default, the
         range endpoints are inclusive, i.e. values must be >= min
@@ -439,7 +439,7 @@ def check_has_shape(
     arr : array_like
         Array to check.
 
-    shape : int, Tuple[int,...] | List[int, Tuple[int,...]], optional
+    shape : int, tuple[int, ...] | list[int, tuple[int, ...]], optional
         A single shape or a list of any allowable shapes. If an integer,
         ``i``, the shape is interpreted as ``(i,)``. Use a value of
         -1 for any dimension where its size is allowed to vary, e.g.
@@ -522,8 +522,8 @@ def check_is_number(num, /, *, name='Object'):
         raise TypeError(*e.args) from e
 
 
-def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
-    """Check if an object is an instance of  ``str``.
+def check_is_string(obj, /, *, allow_subclass=True, name='Object'):
+    """Check if an object is an instance of ``str``.
 
     Parameters
     ----------
@@ -556,7 +556,7 @@ def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
         raise TypeError(*e.args) from e
 
 
-def check_is_sequence(obj: Sequence, /, *, name: str = 'Object'):
+def check_is_sequence(obj, /, *, name='Object'):
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -584,7 +584,7 @@ def check_is_sequence(obj: Sequence, /, *, name: str = 'Object'):
         raise TypeError(*e.args) from e
 
 
-def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
+def check_is_iterable(obj, /, *, name='Object'):
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -613,9 +613,7 @@ def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
         raise TypeError(*e.args) from e
 
 
-def check_is_instance(
-    obj, /, classinfo: Union[type, Tuple[type, ...]], *, allow_subclass=True, name: str = 'Object'
-):
+def check_is_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
     """Check if an object is an instance of the given type or types.
 
     Parameters
@@ -623,7 +621,7 @@ def check_is_instance(
     obj : Any
         Object to check.
 
-    classinfo : type | Tuple[type, ...]
+    classinfo : type | tuple[type, ...]
         ``type`` or tuple of types. Object must be an instance of one of
         the types.
 
@@ -688,7 +686,7 @@ def check_is_instance(
         raise TypeError(msg)
 
 
-def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
+def check_is_type(obj, /, classinfo, *, name='Object'):
     """Check if an object is one of the given type or types.
 
     Parameters
@@ -696,7 +694,7 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
     obj : Any
         Object to check.
 
-    classinfo : type | Tuple[type, ...]
+    classinfo : type | tuple[type, ...]
         ``type`` or tuple of types. Object must be one of the types.
 
     name : str, optional
@@ -719,12 +717,12 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
 
 
 def check_is_iterable_of_some_type(
-    iterable_obj: Iterable,
+    iterable_obj,
     /,
-    some_type: Union[type, Tuple[type, ...]],
+    some_type,
     *,
     allow_subclass=True,
-    name: str = 'Iterable',
+    name='Iterable',
 ):
     """Check if an iterable's items all have a specified type.
 
@@ -733,7 +731,7 @@ def check_is_iterable_of_some_type(
     iterable_obj : Iterable
         Iterable to check.
 
-    some_type : type | Tuple[type, ...]
+    some_type : type | tuple[type, ...]
         Class type(s) to check for. Each element of the sequence must
         have the type or one of the types specified.
 
@@ -748,7 +746,7 @@ def check_is_iterable_of_some_type(
     Raises
     ------
     TypeError
-        If any of the elements have an incorrect type.
+        If any of the items in the iterable have an incorrect type.
 
     See Also
     --------
@@ -769,9 +767,7 @@ def check_is_iterable_of_some_type(
         raise TypeError(*e.args) from e
 
 
-def check_is_iterable_of_strings(
-    iterable_obj: Iterable, /, *, allow_subclass=True, name: str = 'String Iterable'
-):
+def check_is_iterable_of_strings(iterable_obj, /, *, allow_subclass=True, name='String Iterable'):
     """Check if an iterable's items are all strings.
 
     Parameters
@@ -805,7 +801,7 @@ def check_is_iterable_of_strings(
         raise TypeError(*e.args) from e
 
 
-def check_is_string_in_iterable(string_in, /, string_iterable, *, name: str = 'String'):
+def check_is_string_in_iterable(string_in, /, string_iterable, *, name='String'):
     """Check if a given string is in an iterable of strings.
 
     Parameters
@@ -865,7 +861,7 @@ def check_has_length(
     arr : array_like
         Array to check.
 
-    exact_length : array_like
+    exact_length : int | array_like[int, ...]
         Check if the array has the given length. If multiple
         numbers are given, the array's length must match one of the
         numbers.
@@ -976,12 +972,12 @@ def _validate_shape_value(shape: Union[int, Tuple[int, ...], Tuple[None]]):
 
 
 def check_is_scalar(scalar, /, *, name="Scalar"):
-    """Check if an object is a real-valued scalar.
+    """Check if an object is a real-valued scalar number.
 
     Parameters
     ----------
-    scalar : int | float | np.ndarray
-        Real number as an int, float, or 0-dimensional array.
+    scalar : int | float | array_like[int] | array_like[float]
+        Real number as an ``int``, ``float``, or 0-dimensional array.
 
     name : str, optional
         Variable name to use in the error messages if any are raised.
@@ -989,11 +985,12 @@ def check_is_scalar(scalar, /, *, name="Scalar"):
     Raises
     ------
     TypeError
-        If input is not an instance of ``Number``.
+        If input is not an instance of ``Number`` of a 0-dimensional array.
 
     See Also
     --------
     check_is_number
+    check_is_real
 
     """
     check_is_instance(scalar, (int, float, np.ndarray), name=name)
