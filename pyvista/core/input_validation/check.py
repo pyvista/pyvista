@@ -32,7 +32,7 @@ def check_is_subdtype(arg1, arg2, /, *, name='Input'):
         If a list, ``arg1`` must be a subtype of at least one of the
         specified dtypes.
 
-    name : str, optional
+    name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -44,6 +44,23 @@ def check_is_subdtype(arg1, arg2, /, *, name='Input'):
     --------
     check_is_real
     check_is_number
+
+    Examples
+    --------
+    Check if ``int`` is a subtype of ``np.integer``.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_subdtype(float, np.floating)
+
+    Check from multiple allowable dtypes.
+
+    >>> valid.check_is_subdtype(int, [np.integer, np.floating])
+
+    Check an array's dtype.
+
+    >>> arr = np.array([1, 2, 3], dtype='uint8')
+    >>> valid.check_is_subdtype(arr, np.integer)
 
     """
     if isinstance(arg1, np.dtype):
@@ -84,6 +101,16 @@ def check_is_dtypelike(dtype):
     --------
     check_is_arraylike
 
+    Examples
+    --------
+    Check if an input is dtype-like.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_dtypelike(float)
+    >>> valid.check_is_dtypelike(np.dtype(np.integer))
+    >>> valid.check_is_dtypelike('uint8')
+
     """
     # Return early for common dtype cases
     if dtype not in [np.integer, np.floating, np.number, int, float] and not isinstance(
@@ -118,6 +145,13 @@ def check_is_arraylike(arr):
     --------
     check_is_dtypelike
 
+    Examples
+    --------
+    Check if an input is array-like.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_arraylike([1, 2, 3])
+
     """
     try:
         cast_to_ndarray(arr) if not isinstance(arr, np.ndarray) else None
@@ -139,7 +173,7 @@ def check_is_real(arr, /, *, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -150,6 +184,13 @@ def check_is_real(arr, /, *, name="Array"):
     See Also
     --------
     check_is_finite
+
+    Examples
+    --------
+    Check if an array has real numbers.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_real([1, 2, 3])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -174,7 +215,7 @@ def check_is_sorted(arr, /, *, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -185,6 +226,13 @@ def check_is_sorted(arr, /, *, name="Array"):
     See Also
     --------
     check_is_in_range
+
+    Examples
+    --------
+    Check if an array's values are sorted,
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_sorted([1, 2, 3])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -208,7 +256,7 @@ def check_is_finite(arr, /, *, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -219,6 +267,13 @@ def check_is_finite(arr, /, *, name="Array"):
     See Also
     --------
     check_is_real
+
+    Examples
+    --------
+    Check if an array's values are finite.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_finite([1, 2, 3])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -238,7 +293,7 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
         If ``True``, the array's data must be a subtype of ``np.integer``
         (i.e. float types are not allowed).
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -253,6 +308,13 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     --------
     check_is_nonnegative
     check_is_subdtype
+
+    Examples
+    --------
+    Check if an array has integer-like values.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_integerlike([1.0, 2.0])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -273,7 +335,7 @@ def check_is_nonnegative(arr, /, *, name="Array"):
     arr : array_like
         Array to check.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -285,6 +347,13 @@ def check_is_nonnegative(arr, /, *, name="Array"):
     --------
     check_is_greater_than
     check_is_less_than
+
+    Examples
+    --------
+    Check if an array's values are non-negative.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_nonnegative([1, 2, 3])
 
     """
     try:
@@ -308,7 +377,7 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
         If ``True``, the array's value must be strictly greater than ``value``.
         Otherwise, values must be greater than or equal to ``value``.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -322,6 +391,13 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
     check_is_less_than
     check_is_in_range
     check_is_nonnegative
+
+    Examples
+    --------
+    Check if an array's values are greater than 0.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_greater_than([1, 2, 3], value=0)
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -351,7 +427,7 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
         ``value``. Otherwise, values must be less than or equal to
         ``value``.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -365,6 +441,13 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
     check_is_greater_than
     check_is_in_range
     check_is_nonnegative
+
+    Examples
+    --------
+    Check if an array's values are less than 0.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_less_than([-1, -2, -3], value=0)
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -398,7 +481,7 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
         Enforce a strict upper bound for the range, i.e. array values
         must be strictly less than the maximum.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -410,6 +493,13 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     --------
     check_is_less_than
     check_is_greater_than
+
+    Examples
+    --------
+    Check if `an array's values are in the range ``[0, 1]``.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_in_range([0, 0.5, 1], rng=[0, 1])
 
     """
     rng = cast_to_ndarray(rng)
@@ -447,7 +537,7 @@ def check_has_shape(
         shape of scalar values (i.e. 0-dimensional). If a list, the
         array must have at least one of the specified shapes.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -458,6 +548,22 @@ def check_has_shape(
     See Also
     --------
     check_has_length
+
+    Examples
+    --------
+    Check if an array is one-dimensional.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_has_shape([1, 2, 3], shape=(-1))
+
+    Check if an array is one-dimensional or a scalar.
+
+    >>> valid.check_has_shape(1, shape=[(), (-1)])
+
+    Check if an array is 3x3 or 4x4.
+
+    >>> valid.check_has_shape(np.eye(3), shape=[(3, 3), (4, 4)])
 
     """
 
@@ -515,6 +621,13 @@ def check_is_number(num, /, *, name='Object'):
     --------
     check_is_scalar
 
+    Examples
+    --------
+    Check if a complex number is an instance of ``Number``.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_number(1 + 2j)
+
     """
     try:
         check_is_instance(num, Number, allow_subclass=True, name=name)
@@ -549,6 +662,13 @@ def check_is_string(obj, /, *, allow_subclass=True, name='Object'):
     check_is_sequence
     check_is_instance
 
+    Examples
+    --------
+    Check if an object is a string.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_string("eggs")
+
     """
     try:
         check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
@@ -576,6 +696,15 @@ def check_is_sequence(obj, /, *, name='Object'):
     --------
     check_is_iterable
     check_is_instance
+
+    Examples
+    --------
+    Check if an object is a sequence.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_sequence([1, 2, 3])
+    >>> valid.check_is_sequence("A")
 
     """
     try:
@@ -606,6 +735,15 @@ def check_is_iterable(obj, /, *, name='Object'):
     check_is_instance
     check_is_iterable_of_some_type
 
+    Examples
+    --------
+    Check if an object is iterable.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_iterable([1, 2, 3])
+    >>> valid.check_is_iterable(np.array((4, 5, 6)))
+
     """
     try:
         check_is_instance(obj, Iterable, allow_subclass=True, name=name)
@@ -629,7 +767,7 @@ def check_is_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
         If ``True``, the object's type must be specified by ``classinfo``
          or any of its subclasses. Otherwise, subclasses are not allowed.
 
-    name : str, optional
+    name : str, default: "Object"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -644,6 +782,17 @@ def check_is_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
     check_is_string
     check_is_iterable
     check_is_sequence
+
+    Examples
+    --------
+    Check if an object is an instance of ``complex``.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_instance(1 + 2j, complex)
+
+    Check if an object is an instance of one of several types.
+
+    >>> valid.check_is_instance("eggs", (int, str))
 
     """
     if not isinstance(name, str):
@@ -689,6 +838,12 @@ def check_is_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
 def check_is_type(obj, /, classinfo, *, name='Object'):
     """Check if an object is one of the given type or types.
 
+    Notes
+    -----
+    The use of :func:`check_is_instance` is generally preferred as it
+    allows subclasses. Use :func:`check_is_type` only for cases where
+    exact types are necessary.
+
     Parameters
     ----------
     obj : Any
@@ -697,7 +852,7 @@ def check_is_type(obj, /, classinfo, *, name='Object'):
     classinfo : type | tuple[type, ...]
         ``type`` or tuple of types. Object must be one of the types.
 
-    name : str, optional
+    name : str, default: "Object"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -708,6 +863,13 @@ def check_is_type(obj, /, classinfo, *, name='Object'):
     See Also
     --------
     check_is_instance
+
+    Examples
+    --------
+    Check if an object is type ``dict`` or ``set``.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_type({'spam': "eggs"}, (dict, set))
 
     """
     try:
@@ -740,7 +902,7 @@ def check_is_iterable_of_some_type(
         given types or a subclass thereof. Otherwise, subclasses are not
         allowed.
 
-    name : str, optional
+    name : str, default: "Iterable"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -753,6 +915,18 @@ def check_is_iterable_of_some_type(
     check_is_instance
     check_is_iterable
     check_is_iterable_of_strings
+
+    Examples
+    --------
+    Check if a ``tuple`` only has ``int`` or ``float`` elements.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_iterable_of_some_type((1, 2, 3.0), (int, float))
+
+    Check if a ``list`` only has ``list`` elements.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_iterable_of_some_type([[1], [2], [3]], list)
 
     """
     check_is_iterable(iterable_obj, name=name)
@@ -780,7 +954,7 @@ def check_is_iterable_of_strings(iterable_obj, /, *, allow_subclass=True, name='
         given types or a subclass thereof. Otherwise, subclasses are not
         allowed.
 
-    name : str, optional
+    name : str, default: "String Iterable"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -793,6 +967,13 @@ def check_is_iterable_of_strings(iterable_obj, /, *, allow_subclass=True, name='
     check_is_iterable
     check_is_string
     check_is_string_in_iterable
+
+    Examples
+    --------
+    Check if a ``tuple`` only has ``str`` elements.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_iterable_of_strings(("cat", "dog"))
 
     """
     try:
@@ -825,6 +1006,13 @@ def check_is_string_in_iterable(string_in, /, string_iterable, *, name='String')
     check_is_iterable
     check_is_string
     check_is_iterable_of_strings
+
+    Examples
+    --------
+    Check if ``"A"`` is in a list of strings.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_string_in_iterable("A", ["A", "B", "C"])
 
     """
     check_is_string(string_in, name=name)
@@ -881,7 +1069,7 @@ def check_has_length(
         1. Otherwise, the check will fail since a scalar does not
         have a length.
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -892,6 +1080,21 @@ def check_has_length(
     See Also
     --------
     check_has_shape
+
+    Examples
+    --------
+    Check if an array has a length of 2 or 3.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_has_length([1, 2], exact_length=[2, 3])
+
+    Check if an array has a minimum length of 3.
+
+    >>> valid.check_has_length((1, 2, 3), min_length=3)
+
+    Check if a multidimensional array has a maximum length of 2.
+
+    >>> valid.check_has_length([[1, 2, 3], [4, 5, 6]], max_length=2)
 
     """
     if allow_scalars:
@@ -979,7 +1182,7 @@ def check_is_scalar(scalar, /, *, name="Scalar"):
     scalar : int | float | array_like[int] | array_like[float]
         Real number as an ``int``, ``float``, or 0-dimensional array.
 
-    name : str, optional
+    name : str, default: "Scalar"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -991,6 +1194,15 @@ def check_is_scalar(scalar, /, *, name="Scalar"):
     --------
     check_is_number
     check_is_real
+
+    Examples
+    --------
+    Check if an object is scalar.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_scalar(0.0)
+    >>> valid.check_is_scalar(np.array(1))
 
     """
     check_is_instance(scalar, (int, float, np.ndarray), name=name)
