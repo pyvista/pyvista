@@ -1,10 +1,10 @@
 """Functions that check the type and/or value of inputs.
 
-A ``check_`` function typically:
+A ``check`` function typically:
 
-    * Performs a simple validation on a single input variable.
-    * Raises an error if the check fails due to invalid input.
-    * Does not modify input or return anything.
+* Performs a simple validation on a single input variable.
+* Raises an error if the check fails due to invalid input.
+* Does not modify input or return anything.
 
 """
 from collections.abc import Iterable, Sequence
@@ -14,8 +14,6 @@ from typing import Tuple, Union, get_args, get_origin
 import numpy as np
 
 from pyvista.core.utilities.arrays import cast_to_ndarray
-
-ShapeLike = Union[int, Tuple[int, ...], Tuple[None]]
 
 
 def check_is_subdtype(arg1, arg2, /, *, name='Input'):
@@ -39,6 +37,11 @@ def check_is_subdtype(arg1, arg2, /, *, name='Input'):
     ------
     TypeError
         If ``arg1`` is not a subtype of ``arg2``.
+
+    See Also
+    --------
+    check_is_real
+    check_is_number
 
     """
     if isinstance(arg1, np.dtype):
@@ -75,6 +78,10 @@ def check_is_dtypelike(dtype):
     TypeError
         If input is not coercible to a dtype object.
 
+    See Also
+    --------
+    check_is_arraylike
+
     """
     # Return early for common dtype cases
     if dtype not in [np.integer, np.floating, np.number, int, float] and not isinstance(
@@ -89,6 +96,12 @@ def check_is_dtypelike(dtype):
 def check_is_arraylike(arr):
     """Check if an input can be cast as a NumPy ndarray.
 
+    Notes
+    -----
+    This check is done by calling :func:`~pyvista.core.utilities.arrays.cast_to_ndarray`
+    internally. Use that function directly if the cast array is needed
+    for further processing.
+
     Parameters
     ----------
     arr : array_like
@@ -98,6 +111,10 @@ def check_is_arraylike(arr):
     ------
     ValueError
         If input cannot be cast as a NumPy ndarray.
+
+    See Also
+    --------
+    check_is_dtypelike
 
     """
     try:
@@ -126,6 +143,10 @@ def check_is_real(arr, /, *, name="Array"):
     ------
     TypeError
         If the array does not have real numbers.
+
+    See Also
+    --------
+    check_is_finite
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -158,6 +179,10 @@ def check_is_sorted(arr, /, *, name="Array"):
     ValueError
         If array is not sorted in ascending order.
 
+    See Also
+    --------
+    check_is_in_range
+
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if arr.ndim == 0:
@@ -188,6 +213,10 @@ def check_is_finite(arr, /, *, name="Array"):
     ValueError
         If the array has any Inf or NaN values.
 
+    See Also
+    --------
+    check_is_real
+
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if not np.all(np.isfinite(arr)):
@@ -209,7 +238,6 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     name : str, optional
         Variable name to use in the error messages if any are raised.
 
-
     Raises
     ------
     ValueError
@@ -217,6 +245,14 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
 
     TypeError
         If ``strict=True`` and the array's dtype is not integral.
+
+    See Also
+    --------
+    check_is_nonnegative
+    check_is_number
+    check_is_scalar
+
+
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -244,6 +280,11 @@ def check_is_nonnegative(arr, /, *, name="Array"):
     ------
     ValueError
         If the array has any negative values.
+
+    See Also
+    --------
+    check_is_greater_than
+    check_is_less_than
 
     """
     try:
@@ -275,6 +316,12 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
     ValueError
         If not all array elements are greater than (or equal to if
         ``strict=True``) the specified value.
+
+    See Also
+    --------
+    check_is_less_than
+    check_is_in_range
+    check_is_nonnegative
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -312,6 +359,12 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
     ValueError
         If not all array elements are less than (or equal to if
         ``strict=True``) the specified value.
+
+    See Also
+    --------
+    check_is_greater_than
+    check_is_in_range
+    check_is_nonnegative
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -352,6 +405,11 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     ------
     ValueError
         If any array value is outside the specified range.
+
+    See Also
+    --------
+    check_is_less_than
+    check_is_greater_than
 
     """
     rng = cast_to_ndarray(rng)
@@ -396,6 +454,10 @@ def check_has_shape(
     ------
     ValueError
         If the array does not have any of the specified shape(s).
+
+    See Also
+    --------
+    check_has_length
 
     """
 
@@ -449,6 +511,10 @@ def check_is_number(num, /, *, name='Object'):
     TypeError
         If input is not an instance of ``Number``.
 
+    See Also
+    --------
+    check_is_scalar
+
     """
     try:
         check_is_instance(num, Number, allow_subclass=True, name=name)
@@ -476,6 +542,13 @@ def check_is_string(obj: str, /, *, allow_subclass=True, name: str = 'Object'):
     TypeError
         If input is not an instance of ``str``.
 
+    See Also
+    --------
+    check_is_string_in_iterable
+    check_is_iterable_of_strings
+    check_is_sequence
+    check_is_instance
+
     """
     try:
         check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
@@ -499,6 +572,11 @@ def check_is_sequence(obj: Sequence, /, *, name: str = 'Object'):
     TypeError
         If input is not an instance of ``Sequence``.
 
+    See Also
+    --------
+    check_is_iterable
+    check_is_instance
+
     """
     try:
         check_is_instance(obj, Sequence, allow_subclass=True, name=name)
@@ -521,6 +599,12 @@ def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
     ------
     TypeError
         If input is not an instance of ``Iterable``.
+
+    See Also
+    --------
+    check_is_sequence
+    check_is_instance
+    check_is_iterable_of_some_type
 
     """
     try:
@@ -554,6 +638,14 @@ def check_is_instance(
     ------
     TypeError
         If object is not an instance of any of the given types.
+
+    See Also
+    --------
+    check_is_type
+    check_is_number
+    check_is_string
+    check_is_iterable
+    check_is_sequence
 
     """
     if not isinstance(name, str):
@@ -613,7 +705,11 @@ def check_is_type(obj, /, classinfo, *, name: str = 'Object'):
     Raises
     ------
     TypeError
-        If object is not any of the given types..
+        If object is not any of the given types.
+
+    See Also
+    --------
+    check_is_instance
 
     """
     try:
@@ -654,6 +750,12 @@ def check_is_iterable_of_some_type(
     TypeError
         If any of the elements have an incorrect type.
 
+    See Also
+    --------
+    check_is_instance
+    check_is_iterable
+    check_is_iterable_of_strings
+
     """
     check_is_iterable(iterable_obj, name=name)
     try:
@@ -690,6 +792,12 @@ def check_is_iterable_of_strings(
     TypeError
         If any of the elements have an incorrect type.
 
+    See Also
+    --------
+    check_is_iterable
+    check_is_string
+    check_is_string_in_iterable
+
     """
     try:
         check_is_iterable_of_some_type(iterable_obj, str, allow_subclass=allow_subclass, name=name)
@@ -715,6 +823,12 @@ def check_is_string_in_iterable(string_in, /, string_iterable, *, name: str = 'S
     ------
     ValueError
         If the string is not in the iterable.
+
+    See Also
+    --------
+    check_is_iterable
+    check_is_string
+    check_is_iterable_of_strings
 
     """
     check_is_string(string_in, name=name)
@@ -778,6 +892,10 @@ def check_has_length(
     ------
     ValueError
         If the array's length is outside the specified range.
+
+    See Also
+    --------
+    check_has_shape
 
     """
     if allow_scalars:
@@ -872,6 +990,10 @@ def check_is_scalar(scalar, /, *, name="Scalar"):
     ------
     TypeError
         If input is not an instance of ``Number``.
+
+    See Also
+    --------
+    check_is_number
 
     """
     check_is_instance(scalar, (int, float, np.ndarray), name=name)

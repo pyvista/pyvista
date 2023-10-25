@@ -1,6 +1,6 @@
 """Functions that validate input and return a standard representation.
 
-A ``validate_`` function typically:
+A ``validate`` function typically:
 
 * Uses :py:mod:`~pyvista.core.input_validation.check` functions to
   check the type and/or value of input arguments.
@@ -10,7 +10,6 @@ A ``validate_`` function typically:
   output as a single representation with known properties.
 
 """
-from functools import wraps
 import inspect
 from typing import Any
 
@@ -20,7 +19,6 @@ from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.input_validation.check import (
     check_has_length,
     check_has_shape,
-    check_is_dtypelike,
     check_is_finite,
     check_is_in_range,
     check_is_integerlike,
@@ -68,6 +66,23 @@ def validate_array(
     The array's output can also be reshaped or broadcast, cast as a
     nested tuple or list array, or cast to a specific data type.
 
+    See Also
+    --------
+    validate_number
+        Specialized function for single numbers.
+
+    validate_array3
+        Specialized function for 3-element arrays.
+
+    validate_arrayN
+        Specialized function for one-dimensional arrays.
+
+    validate_arrayNx3
+        Specialized function for Nx3 dimensional arrays.
+
+    validate_arrayN
+        Specialized function for data ranges.
+
     Parameters
     ----------
     arr : array_like
@@ -83,13 +98,13 @@ def validate_array(
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
 
-    must_have_dtype : dtype_like | List[dtype_like], optional
+    must_have_dtype : dtype_like | List[dtype_like, ...], optional
         Check if the array's data-type has the given dtype. Specify a
         NumPy ``dtype`` object or dtype-like base class which the array's
         data must be a subtype of. If a list, the array's data must be a
         subtype of at least one of the specified dtypes.
 
-    must_have_length : array_like
+    must_have_length : int | array_like[int, ...], optional
         Check if the array has the given length. If multiple
         values are given, the array's length must match one of the
         values.
@@ -126,7 +141,7 @@ def validate_array(
     must_be_sorted : bool, default: False
         Check if the array's values are sorted in ascending order.
 
-    must_be_in_range : array_like, optional
+    must_be_in_range : array_like[float, float], optional
         Check if the array's values are all within a specific range.
         Range must be array-like with two elements specifying the minimum
         and maximum data values allowed, respectively. By default, the
@@ -151,8 +166,9 @@ def validate_array(
         dimension can be -1.
 
     broadcast_to : int, Tuple[int,...}, optional
-        Broadcast the array to a read-only view with the specified shape.
-        Broadcasting is done after reshaping (if ``reshape`` is not ``None``).
+        Broadcast the array with :func:`numpy.broadcast_to` to a
+        read-only view with the specified shape. Broadcasting is done
+        after reshaping (if ``reshape`` is not ``None``).
 
     dtype_out : dtype_like, optional
         The desired data-type of the returned array.
@@ -192,6 +208,22 @@ def validate_array(
         * a nested list (if ``to_list=True``), or
         * a nested tuple (if ``to_tuple=True``), or
         * a number (scalar) if the input is a number.
+
+    Examples
+    --------
+    Validate a 1-dimensional array has at least length two, is
+    monotonically increasing, and is within some range.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> array_in = (1, 1, 2, 3, 5)
+    >>> rng = (0, 10)
+    >>> valid.validate_array(
+    ...     array_in,
+    ...     must_be_sorted=True,
+    ...     must_be_in_range=rng,
+    ...     must_have_min_length=2,
+    ... )
+    array([1, 1, 2, 3, 5])
 
     """
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
@@ -254,7 +286,7 @@ def validate_array(
 
     # Process output
     if dtype_out is not None:
-        check_is_dtypelike(dtype_out)
+        dtype_out = validate_dtype(dtype_out)
         # Copy was done earlier, so don't do it again here
         arr_out = arr_out.astype(dtype_out, copy=False)
     if to_tuple:
@@ -280,6 +312,14 @@ def validate_transform4x4(transform, /, *, name="Transform") -> np.ndarray:
     -------
     np.ndarray
         Validated 4x4 transformation matrix.
+
+    See Also
+    --------
+    validate_transform3x3
+        Similar function for 3x3 transforms.
+
+    validate_array
+        Generic array validation function.
 
     """
     check_is_string(name, name="Name")
@@ -324,7 +364,15 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     Returns
     -------
     np.ndarray
-        3x3 array.
+        Validated 3x3 transformation matrix.
+
+    See Also
+    --------
+    validate_transform4x4
+        Similar function for 4x4 transforms.
+
+    validate_array
+        Generic array validation function.
 
     """
     check_is_string(name, name="Name")
@@ -363,6 +411,11 @@ def validate_dtype(dtype_like) -> np.dtype:
     np.dtype
         Data type object.
 
+    See Also
+    --------
+    validate_array
+        Generic array validation function.
+
     """
     try:
         return np.dtype(dtype_like)
@@ -370,7 +423,6 @@ def validate_dtype(dtype_like) -> np.dtype:
         raise TypeError(f"'{dtype_like}' is not a valid NumPy data type.") from e
 
 
-@wraps(validate_array)
 def validate_number(num, /, *, reshape=True, **kwargs):
     """Validate a real, finite number.
 
@@ -397,6 +449,11 @@ def validate_number(num, /, *, reshape=True, **kwargs):
     -------
     int | float
         Validated number.
+
+    See Also
+    --------
+    validate_array
+        Generic array validation function.
 
     Examples
     --------
@@ -453,6 +510,11 @@ def validate_data_range(rng, /, **kwargs):
     tuple
         Validated range as ``(lower_bound, upper_bound)``.
 
+    See Also
+    --------
+    validate_array
+        Generic array validation function.
+
     Examples
     --------
     Validate a data range.
@@ -503,6 +565,14 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     -------
     np.ndarray
         Validated array with shape (N,3).
+
+    See Also
+    --------
+    validate_arrayN
+        Similar function for one-dimensional arrays.
+
+    validate_array
+        Generic array validation function.
 
     Examples
     --------
@@ -568,6 +638,14 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     np.ndarray
         Validated 1D array.
 
+    See Also
+    --------
+    validate_arrayN
+        Similar function for non-negative integer arrays.
+
+    validate_array
+        Generic array validation function.
+
     Examples
     --------
     Validate a 1D array with four elements.
@@ -630,6 +708,14 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
     -------
     np.ndarray
         Validated 1D array with non-negative integers.
+
+    See Also
+    --------
+    validate_arrayN
+        Similar function for numeric one-dimensional arrays.
+
+    validate_array
+        Generic array validation function.
 
     Examples
     --------
@@ -694,6 +780,17 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     -------
     np.ndarray
         Validated 1D array with 3 elements.
+
+    See Also
+    --------
+    validate_number
+        Similar function for a single number.
+
+    validate_arrayN
+        Similar function for one-dimensional arrays.
+
+    validate_array
+        Generic array validation function.
 
     Examples
     --------
