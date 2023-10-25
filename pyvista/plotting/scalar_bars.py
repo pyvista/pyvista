@@ -12,7 +12,14 @@ from .tools import parse_font_family
 
 
 class ScalarBars:
-    """Plotter Scalar Bars."""
+    """Plotter Scalar Bars.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter that the scalar bars are associated with.
+
+    """
 
     def __init__(self, plotter):
         """Initialize ScalarBars."""
@@ -39,7 +46,9 @@ class ScalarBars:
             lines.append(f'{title:20} {str(interactive):5}')
         return '\n'.join(lines)
 
-    def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):
+    def _remove_mapper_from_plotter(
+        self, actor, reset_camera=False, render=False
+    ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
         This ensures that when actors are removed, their corresponding

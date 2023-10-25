@@ -112,8 +112,6 @@ def plot(
 
         * ``'none'`` : Do not display in the notebook.
         * ``'static'`` : Display a static figure.
-        * ``'ipygany'`` : Show a ``ipygany`` widget
-        * ``'panel'`` : Show a ``panel`` widget.
         * ``'trame'`` : Display using ``trame``.
 
         This can also be set globally with
@@ -139,8 +137,10 @@ def plot(
         :func:`Plotter.enable_hidden_line_removal
         <Plotter.enable_hidden_line_removal>`.
 
-    anti_aliasing : bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
-        Enable or disable anti-aliasing.
+    anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+        Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
+        disables anti_aliasing. If a string, should be either ``"fxaa"`` or
+        ``"ssaa"``.
 
     zoom : float, str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
@@ -235,8 +235,14 @@ def plot(
         show_axes = pl.theme.axes.show
     if show_axes:
         pl.add_axes()
+
     if anti_aliasing:
-        pl.enable_anti_aliasing()
+        if anti_aliasing is True:
+            pl.enable_anti_aliasing('msaa', multi_samples=pyvista.global_theme.multi_samples)
+        else:
+            pl.enable_anti_aliasing(anti_aliasing)
+    elif anti_aliasing is False:
+        pl.disable_anti_aliasing()
 
     pl.set_background(background)
 

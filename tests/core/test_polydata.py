@@ -5,7 +5,7 @@ import pathlib
 import numpy as np
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError, PyVistaFutureWarning
 
@@ -15,22 +15,22 @@ radius = 0.5
 @pytest.fixture
 def sphere():
     # this shadows the main sphere fixture from conftest!
-    return pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
+    return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 
 @pytest.fixture
 def sphere_shifted():
-    return pyvista.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    return pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
 
 
 @pytest.fixture
 def sphere_dense():
-    return pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
+    return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 
 @pytest.fixture
 def cube_dense():
-    return pyvista.Cube()
+    return pv.Cube()
 
 
 test_path = os.path.dirname(os.path.abspath(__file__))
@@ -45,13 +45,13 @@ def is_binary(filename):
 
 
 def test_init():
-    mesh = pyvista.PolyData()
+    mesh = pv.PolyData()
     assert not mesh.n_points
     assert not mesh.n_cells
 
 
 def test_init_from_pdata(sphere):
-    mesh = pyvista.PolyData(sphere, deep=True)
+    mesh = pv.PolyData(sphere, deep=True)
     assert mesh.n_points
     assert mesh.n_cells
     mesh.points[0] += 1
@@ -64,17 +64,17 @@ def test_init_from_arrays():
     # mesh faces
     faces = np.hstack([[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]).astype(np.int8)
 
-    mesh = pyvista.PolyData(vertices, faces)
+    mesh = pv.PolyData(vertices, faces)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
-    mesh = pyvista.PolyData(vertices, faces, deep=True)
+    mesh = pv.PolyData(vertices, faces, deep=True)
     vertices[0] += 1
     assert not np.allclose(vertices[0], mesh.points[0])
 
     # ensure that polydata raises a warning when inputting non-float dtype
     with pytest.warns(Warning):
-        mesh = pyvista.PolyData(vertices.astype(np.int32), faces)
+        mesh = pv.PolyData(vertices.astype(np.int32), faces)
 
     # array must be immutable
     with pytest.raises(ValueError):
@@ -94,7 +94,7 @@ def test_init_from_arrays_with_vert():
         [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
 
-    mesh = pyvista.PolyData(vertices, faces)
+    mesh = pv.PolyData(vertices, faces)
     assert mesh.n_points == 6
     assert mesh.n_cells == 4
 
@@ -105,11 +105,11 @@ def test_init_from_arrays_triangular():
     # mesh faces
     faces = np.vstack([[3, 0, 1, 2], [3, 0, 1, 4], [3, 1, 2, 4]])
 
-    mesh = pyvista.PolyData(vertices, faces)
+    mesh = pv.PolyData(vertices, faces)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
-    mesh = pyvista.PolyData(vertices, faces, deep=True)
+    mesh = pv.PolyData(vertices, faces, deep=True)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
@@ -117,22 +117,22 @@ def test_init_from_arrays_triangular():
 def test_init_as_points():
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
-    mesh = pyvista.PolyData(vertices)
+    mesh = pv.PolyData(vertices)
     assert mesh.n_points == vertices.shape[0]
     assert mesh.n_cells == vertices.shape[0]
     assert len(mesh.verts) == vertices.shape[0] * 2
 
     vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
     cells = np.array([1, 0, 1, 1, 1, 2], np.int16)
-    to_check = pyvista.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
     assert np.allclose(to_check, cells)
 
     # from list
     mesh.verts = [[1, 0], [1, 1], [1, 2]]
-    to_check = pyvista.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
     assert np.allclose(to_check, cells)
 
-    mesh = pyvista.PolyData()
+    mesh = pv.PolyData()
     mesh.points = vertices
     mesh.verts = cells
     assert mesh.n_points == vertices.shape[0]
@@ -142,48 +142,48 @@ def test_init_as_points():
 
 def test_init_as_points_from_list():
     points = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
-    mesh = pyvista.PolyData(points)
+    mesh = pv.PolyData(points)
     assert np.allclose(mesh.points, points)
 
 
 def test_invalid_init():
     with pytest.raises(ValueError):
-        pyvista.PolyData(np.array([1.0]))
+        pv.PolyData(np.array([1.0]))
 
     with pytest.raises(TypeError):
-        pyvista.PolyData([1.0, 2.0, 3.0], 'woa')
+        pv.PolyData([1.0, 2.0, 3.0], 'woa')
 
     with pytest.raises(ValueError):
-        pyvista.PolyData('woa', 'woa')
+        pv.PolyData('woa', 'woa')
 
-    poly = pyvista.PolyData()
+    poly = pv.PolyData()
     with pytest.raises(ValueError):
-        pyvista.PolyData(poly, 'woa')
+        pv.PolyData(poly, 'woa')
 
     with pytest.raises(TypeError):
-        pyvista.PolyData({'woa'})
+        pv.PolyData({'woa'})
 
 
 def test_invalid_file():
     with pytest.raises(FileNotFoundError):
-        pyvista.PolyData('file.bad')
+        pv.PolyData('file.bad')
 
     with pytest.raises(IOError):
         filename = os.path.join(test_path, 'test_polydata.py')
-        pyvista.PolyData(filename)
+        pv.PolyData(filename)
 
 
 def test_lines_on_init():
     lines = [2, 0, 1, 3, 2, 3, 4]
     points = np.random.random((5, 3))
-    pd = pyvista.PolyData(points, lines=lines)
+    pd = pv.PolyData(points, lines=lines)
     assert not pd.faces.size
     assert np.array_equal(pd.lines, lines)
     assert np.array_equal(pd.points, points)
 
 
 def test_polydata_repr_str():
-    pd = pyvista.PolyData()
+    pd = pv.PolyData()
     assert repr(pd) == str(pd)
     assert 'N Cells' in str(pd)
     assert 'N Points' in str(pd)
@@ -194,7 +194,7 @@ def test_polydata_repr_str():
 def test_geodesic(sphere):
     start, end = 0, sphere.n_points - 1
     geodesic = sphere.geodesic(start, end)
-    assert isinstance(geodesic, pyvista.PolyData)
+    assert isinstance(geodesic, pv.PolyData)
     assert "vtkOriginalPointIds" in geodesic.array_names
     ids = geodesic.point_data["vtkOriginalPointIds"]
     assert np.allclose(geodesic.points, sphere.points[ids])
@@ -250,7 +250,7 @@ def test_multi_ray_trace(sphere):
     assert np.any(ind_t)
 
     # check non-triangulated
-    mesh = pyvista.Cylinder()
+    mesh = pv.Cylinder()
     with pytest.raises(NotAllTrianglesError):
         mesh.multi_ray_trace(origins, directions)
 
@@ -280,9 +280,9 @@ def test_boolean_difference(sphere, sphere_shifted):
     assert np.isclose(difference.volume, expected_volume, atol=1e-3)
 
 
-def test_boolean_difference_fail(plane):
+def test_boolean_difference_fail(plane, sphere):
     with pytest.raises(NotAllTrianglesError):
-        plane - plane
+        plane - sphere
 
 
 def test_subtract(sphere, sphere_shifted):
@@ -291,14 +291,14 @@ def test_subtract(sphere, sphere_shifted):
 
 
 def test_append(
-    sphere: pyvista.PolyData,
-    sphere_shifted: pyvista.PolyData,
-    sphere_dense: pyvista.PolyData,
+    sphere: pv.PolyData,
+    sphere_shifted: pv.PolyData,
+    sphere_dense: pv.PolyData,
 ):
     # 1/ Single argument
     merged = sphere.append_polydata(sphere_shifted)
     assert merged.n_points == (sphere.n_points + sphere_shifted.n_points)
-    assert isinstance(merged, pyvista.PolyData)
+    assert isinstance(merged, pv.PolyData)
     # test point order is kept
     np.testing.assert_array_equal(merged.points[: sphere.n_points], sphere.points)
     np.testing.assert_array_equal(merged.points[sphere.n_points :], sphere_shifted.points)
@@ -306,7 +306,7 @@ def test_append(
     # 2/ Multiple arguments
     merged = sphere.append_polydata(sphere_shifted, sphere_dense)
     assert merged.n_points == (sphere.n_points + sphere_shifted.n_points + sphere_dense.n_points)
-    assert isinstance(merged, pyvista.PolyData)
+    assert isinstance(merged, pv.PolyData)
     # test point order is kept
     np.testing.assert_array_equal(merged.points[: sphere.n_points], sphere.points)
     mid = sphere.n_points + sphere_shifted.n_points
@@ -319,59 +319,114 @@ def test_append(
     assert merged is mesh
 
 
-def test_append_raises(sphere: pyvista.PolyData):
+def test_append_raises(sphere: pv.PolyData):
     with pytest.raises(TypeError, match="All meshes need to be of PolyData type"):
         sphere.append_polydata(sphere.cast_to_unstructured_grid())
 
 
 def test_merge(sphere, sphere_shifted, hexbeam):
-    merged = sphere.merge(hexbeam, progress_bar=True)
+    merged = sphere.merge(hexbeam, merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
-    assert isinstance(merged, pyvista.UnstructuredGrid)
+    assert isinstance(merged, pv.UnstructuredGrid)
+    assert merged.active_scalars_name is None
 
     # list with unstructuredgrid case
     merged = sphere.merge([hexbeam, hexbeam], merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points * 2)
-    assert isinstance(merged, pyvista.UnstructuredGrid)
+    assert isinstance(merged, pv.UnstructuredGrid)
+    assert merged.active_scalars_name is None
 
     # with polydata
     merged = sphere.merge(sphere_shifted, progress_bar=True)
-    assert isinstance(merged, pyvista.PolyData)
+    assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.active_scalars_name is None
 
     # with polydata list (no merge)
     merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False, progress_bar=True)
-    assert isinstance(merged, pyvista.PolyData)
+    assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points * 2
+    assert merged.active_scalars_name is None
 
     # with polydata list (merge)
     merged = sphere.merge([sphere_shifted, sphere_shifted], progress_bar=True)
-    assert isinstance(merged, pyvista.PolyData)
+    assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.active_scalars_name is None
 
     # test in-place merge
     mesh = sphere.copy()
     merged = mesh.merge(sphere_shifted, inplace=True)
     assert merged is mesh
+    assert merged.active_scalars_name is None
 
     # test merge with lines
-    arc_1 = pyvista.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
-    arc_2 = pyvista.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
+    arc_1 = pv.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
+    arc_2 = pv.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
     merged = arc_1 + arc_2
     assert merged.n_lines == 2
+    assert merged.active_scalars_name == 'Distance'
 
     # test merge with lines as iterable
     merged = arc_1.merge((arc_2, arc_2))
     assert merged.n_lines == 3
+    assert merged.active_scalars_name == 'Distance'
 
-    # test main_has_priority
-    mesh = sphere.copy()
+
+@pytest.mark.parametrize('input', [examples.load_hexbeam(), pv.Sphere()])
+def test_merge_active_scalars(input):
+    mesh1 = input.copy()
+    mesh1['foo'] = np.arange(mesh1.n_points)
+    mesh2 = mesh1.copy()
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = None
+    b.active_scalars_name = None
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = 'foo'
+    b.active_scalars_name = None
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = None
+    b.active_scalars_name = 'foo'
+    merged = a.merge(b)
+    assert merged.active_scalars_name is None
+    merged = b.merge(a)
+    assert merged.active_scalars_name is None
+
+    a = mesh1.copy()
+    b = mesh2.copy()
+    a.active_scalars_name = 'foo'
+    b.active_scalars_name = 'foo'
+    merged = a.merge(b)
+    assert merged.active_scalars_name == 'foo'
+    merged = b.merge(a)
+    assert merged.active_scalars_name == 'foo'
+
+
+@pytest.mark.parametrize('input', [examples.load_hexbeam(), pv.Sphere()])
+def test_merge_main_has_priority(input):
+    mesh = input.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
+    mesh.set_active_scalars('present_in_both')
+
     other = mesh.copy()
     data_other = -data_main
     other.point_data['present_in_both'] = data_other
-    merged = mesh.merge(other, main_has_priority=True)
+    other.set_active_scalars('present_in_both')
 
     # note: order of points can change after point merging
     def matching_point_data(this, that, scalars_name):
@@ -382,14 +437,18 @@ def test_merge(sphere, sphere_shifted, hexbeam):
             for j in (this.points == point).all(-1).nonzero()
         )
 
+    merged = mesh.merge(other, main_has_priority=True)
     assert matching_point_data(merged, mesh, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
+
     merged = mesh.merge(other, main_has_priority=False)
     assert matching_point_data(merged, other, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
 
 
 def test_add(sphere, sphere_shifted):
     merged = sphere + sphere_shifted
-    assert isinstance(merged, pyvista.PolyData)
+    assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
     assert merged.n_faces == sphere.n_cells + sphere_shifted.n_cells
 
@@ -424,14 +483,15 @@ def test_invalid_curvature(sphere):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
+@pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
 
     if binary:
         if extension == '.vtp':
-            assert 'binary' in open(filename).read(1000)
+            with open(filename) as f:
+                assert 'binary' in f.read(1000)
         else:
             is_binary(filename)
     else:
@@ -439,7 +499,7 @@ def test_save(sphere, extension, binary, tmpdir):
             fst = f.read(100).lower()
             assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
 
-    mesh = pyvista.PolyData(filename)
+    mesh = pv.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
 
@@ -449,12 +509,12 @@ def test_pathlib_read_write(tmpdir, sphere):
     sphere.save(path)
     assert path.is_file()
 
-    mesh = pyvista.PolyData(path)
+    mesh = pv.PolyData(path)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
 
-    mesh = pyvista.read(path)
-    assert isinstance(mesh, pyvista.PolyData)
+    mesh = pv.read(path)
+    assert isinstance(mesh, pv.PolyData)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
 
@@ -469,7 +529,7 @@ def test_triangulate_filter(plane):
     plane.triangulate(inplace=True)
     assert plane.is_all_triangles
     # Make a point cloud and assert false
-    assert not pyvista.PolyData(plane.points).is_all_triangles
+    assert not pv.PolyData(plane.points).is_all_triangles
     # Extract lines and make sure false
     assert not plane.extract_all_edges().is_all_triangles
 
@@ -491,7 +551,7 @@ def test_invalid_subdivision(sphere):
         sphere.subdivide(1, 'not valid')
 
     # check non-triangulated
-    mesh = pyvista.Cylinder()
+    mesh = pv.Cylinder()
     with pytest.raises(NotAllTrianglesError):
         mesh.subdivide(1)
 
@@ -501,16 +561,16 @@ def test_extract_feature_edges(sphere):
     edges = sphere.extract_feature_edges(90)
     assert not edges.n_points
 
-    mesh = pyvista.Cube()  # use a mesh that actually has strongly defined edges
+    mesh = pv.Cube()  # use a mesh that actually has strongly defined edges
     more_edges = mesh.extract_feature_edges(10)
     assert more_edges.n_points
 
 
 def test_extract_feature_edges_no_data():
-    mesh = pyvista.Wavelet()
+    mesh = pv.Wavelet()
     edges = mesh.extract_feature_edges(90, clear_data=True)
     assert edges is not None
-    assert isinstance(edges, pyvista.PolyData)
+    assert isinstance(edges, pv.PolyData)
     assert edges.n_arrays == 0
 
 
@@ -524,7 +584,7 @@ def test_decimate(sphere):
     assert mesh.n_faces < sphere.n_faces
 
     # check non-triangulated
-    mesh = pyvista.Cylinder()
+    mesh = pv.Cylinder()
     with pytest.raises(NotAllTrianglesError):
         mesh.decimate(0.5)
 
@@ -539,7 +599,7 @@ def test_decimate_pro(sphere):
     assert mesh.n_faces < sphere.n_faces
 
     # check non-triangulated
-    mesh = pyvista.Cylinder()
+    mesh = pv.Cylinder()
     with pytest.raises(NotAllTrianglesError):
         mesh.decimate_pro(0.5)
 
@@ -628,7 +688,7 @@ def test_clip_plane(sphere):
 
 
 def test_extract_largest(sphere):
-    mesh = sphere + pyvista.Sphere(0.1, theta_resolution=5, phi_resolution=5)
+    mesh = sphere + pv.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces == sphere.n_faces
 
@@ -647,6 +707,12 @@ def test_clean(sphere):
 
     cleaned = mesh.clean(point_merging=False)
     assert cleaned.n_points == mesh.n_points
+
+    # test with points but no cells
+    mesh = pv.PolyData()
+    mesh.points = (0, 0, 0)
+    cleaned = mesh.clean()
+    assert cleaned.n_points == 0
 
 
 def test_area(sphere_dense, cube_dense):
@@ -695,18 +761,18 @@ def test_remove_points_fail(sphere, plane):
 
 
 def test_vertice_cells_on_read(tmpdir):
-    point_cloud = pyvista.PolyData(np.random.rand(100, 3))
+    point_cloud = pv.PolyData(np.random.rand(100, 3))
     filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
     point_cloud.save(filename)
-    recovered = pyvista.read(filename)
+    recovered = pv.read(filename)
     assert recovered.n_cells == 100
-    recovered = pyvista.PolyData(filename)
+    recovered = pv.PolyData(filename)
     assert recovered.n_cells == 100
 
 
 def test_center_of_mass(sphere):
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
-    cloud = pyvista.PolyData(np.random.rand(100, 3))
+    cloud = pv.PolyData(np.random.rand(100, 3))
     assert len(cloud.center_of_mass()) == 3
     cloud['weights'] = np.random.rand(cloud.n_points)
     center = cloud.center_of_mass(True)
@@ -721,7 +787,7 @@ def test_project_points_to_plane():
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
-    poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
+    poly = pv.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
@@ -744,7 +810,7 @@ def test_project_points_to_plane():
 
 def test_tube(spline):
     # Simple
-    line = pyvista.Line()
+    line = pv.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
     assert tube.n_points and tube.n_cells
 
@@ -779,7 +845,7 @@ def test_delaunay_2d():
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     # Get the points as a 2D NumPy array (N by 3)
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
-    pdata = pyvista.PolyData(points)
+    pdata = pv.PolyData(points)
     surf = pdata.delaunay_2d(progress_bar=True)
     # Make sure we have an all triangle mesh now
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
@@ -797,7 +863,7 @@ def test_lines():
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
     # Create line segments
-    poly = pyvista.PolyData()
+    poly = pv.PolyData()
     poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
@@ -806,7 +872,7 @@ def test_lines():
     assert poly.n_points == len(points)
     assert poly.n_cells == len(points) - 1
     # Create a poly line
-    poly = pyvista.PolyData()
+    poly = pv.PolyData()
     poly.points = points
     the_cell = np.arange(0, len(points), dtype=np.int_)
     the_cell = np.insert(the_cell, 0, len(points))
@@ -819,18 +885,18 @@ def test_strips():
     # init with strips test
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
     strips = np.array([4, 0, 1, 3, 2])
-    strips_init = pyvista.PolyData(vertices, strips=strips)
+    strips_init = pv.PolyData(vertices, strips=strips)
     assert len(strips_init.strips) == len(strips)
 
     # add strips using the setter
-    strips_setter = pyvista.PolyData(vertices)
+    strips_setter = pv.PolyData(vertices)
     strips_setter.strips = strips
     assert len(strips_setter.strips) == len(strips)
 
     # test n_strips function
     strips = np.array([[4, 0, 1, 3, 2], [4, 1, 2, 3, 0]])
     strips_stack = np.hstack(strips)
-    n_strips_test = pyvista.PolyData(vertices, strips=strips_stack)
+    n_strips_test = pv.PolyData(vertices, strips=strips_stack)
     assert n_strips_test.n_strips == len(strips)
 
 
@@ -851,14 +917,14 @@ def test_is_all_triangles():
     # mesh faces
     faces = np.hstack([[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]])  # [square, triangle, triangle]
 
-    mesh = pyvista.PolyData(vertices, faces)
+    mesh = pv.PolyData(vertices, faces)
     assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
 
 
 def test_extrude():
-    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
@@ -870,7 +936,7 @@ def test_extrude():
 
 
 def test_extrude_capping_warnings():
-    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude([0, 0, 1])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
@@ -891,12 +957,12 @@ def test_flip_normals(sphere, plane):
 
 
 def test_n_verts():
-    mesh = pyvista.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     assert mesh.n_verts == 2
 
 
 def test_n_lines():
-    mesh = pyvista.Line()
+    mesh = pv.Line()
     assert mesh.n_lines == 1
 
 
@@ -912,3 +978,38 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
 
     with pytest.raises(ValueError, match=match):
         combined.geodesic_distance(start_vertex, end_vertex)
+
+
+def test_tetrahedron_regular_faces():
+    tetra = pv.Tetrahedron()
+    assert np.array_equal(tetra.faces.reshape(-1, 4)[:, 1:], tetra.regular_faces)
+
+
+@pytest.mark.parametrize('deep', [False, True])
+def test_regular_faces(deep):
+    points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
+    faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
+    mesh = pv.PolyData.from_regular_faces(points, faces, deep=deep)
+    expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
+    assert np.array_equal(mesh.faces, expected_faces)
+    assert np.array_equal(mesh.regular_faces, faces)
+
+
+def test_set_regular_faces():
+    mesh = pv.Tetrahedron()
+    flipped_faces = mesh.regular_faces[:, ::-1]
+    mesh.regular_faces = flipped_faces
+    assert np.array_equal(mesh.regular_faces, flipped_faces)
+
+
+def test_empty_regular_faces():
+    mesh = pv.PolyData()
+    assert np.array_equal(mesh.regular_faces, np.array([], dtype=pv.ID_TYPE))
+
+
+def test_regular_faces_mutable():
+    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    faces = [[0, 1, 2]]
+    mesh = pv.PolyData.from_regular_faces(points, faces)
+    mesh.regular_faces[0, 2] = 3
+    assert np.array_equal(mesh.faces, [3, 0, 1, 3])

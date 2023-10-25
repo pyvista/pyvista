@@ -177,99 +177,6 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
-# see https://github.com/pyvista/pyvista/pull/1612
-numpydoc_validate = True
-numpydoc_validation_checks = {
-    "all",  # all but the following:
-    "GL01",  # Contradicts numpydoc examples
-    "GL02",  # Permit a blank line after the end of our docstring
-    "GL03",  # Considering enforcing
-    "SA01",  # Not all docstrings need a see also
-    "SA04",  # See also section does not need descriptions
-    "SS05",  # Appears to be broken.
-    "ES01",  # Not all docstrings need an extend summary.
-    "EX01",  # Examples: Will eventually enforce
-    "YD01",  # Yields: No plan to enforce
-}
-numpydoc_validation_exclude = {  # set of regex
-    r'\.BasePlotter$',  # Issue with class parameter documentation
-    r'\.Plotter$',  # Issue with class parameter documentation
-    r'\.WidgetHelper$',
-    r'\.PickingHelper$',
-    r'\.from_dict$',
-    r'\.to_dict$',
-    r'\.__init__$',
-    r'\.__new__$',
-    # parm of abstract classes
-    r'\._BaseMapper$',
-    r'\.CompositeFilters$',
-    r'\.DataObject$',
-    r'\.DataSet$',
-    r'\.DataSetFilters$',
-    r'\.ExplicitStructuredGrid$',
-    r'\.Grid$',
-    r'\.MultiBlock$',
-    r'\.PointGrid$',
-    r'\.PointSet$',
-    r'\.PolyDataFilters$',
-    r'\.RectilinearGrid$',
-    r'\.StructuredGrid$',
-    r'\.Table$',
-    r'\.Table\.save$',
-    r'\.ImageData$',
-    r'\.ImageDataFilters$',
-    r'\.UnstructuredGrid$',
-    r'\.UnstructuredGridFilters$',
-    # classes inherit from BaseReader
-    r'.*Reader(\.|$)',
-    # internal
-    r'\.Renderer$',
-    # deprecated
-    r'\.boolean_add$',
-    r'\.boolean_cut$',
-    r'\.add_field_array$',
-    r'\.DataSetAttributes\.append$',
-    # methods we probably should make private
-    r'\.store_click_position$',
-    r'\.store_mouse_position$',
-    r'\.fly_to_mouse_position$',
-    r'\.key_press_event$',
-    r'\.left_button_down$',
-    # MISC
-    r'\.ActiveArrayInfo$',
-    r'\.CellType$',
-    r'\.DataObject\.copy_meta_from$',
-    r'\.FieldAssociation$',
-    r'\.InterpolationType$',
-    r'\.RepresentationType$',
-    r'\.ElementType$',
-    r'\.MultiBlock\.copy_meta_from$',
-    # wraps
-    r'\.Plotter\.enable_depth_peeling$',
-    r'\.add_scalar_bar$',
-    # called from inherited
-    r'\.Table\.copy_meta_from$',
-    # Type alias
-    r'\.ColorLike$',
-    r'\.Chart$',
-    # PointSet *args and **kwargs for wrapped parameters
-    r'\.PointSet(\.|$)',
-    # Mixin methods from collections.abc
-    r'\.MultiBlock\.clear$',
-    r'\.MultiBlock\.count$',
-    r'\.MultiBlock\.index$',
-    r'\.MultiBlock\.remove$',
-    # Enumerations
-    r'\.Plot3DFunctionEnum$',
-    # VTK methods
-    r'\.override$',
-    # trame
-    r'\.PyVistaRemoteView(\.|$)',
-    r'\.PyVistaLocalView(\.|$)',
-    r'\.PyVistaRemoteLocalView(\.|$)',
-    r'\.Texture(\.|$)',  # awaiting Texture refactor
-}
-
 # linkcheck ignore entries
 nitpick_ignore_regex = [
     (r'py:.*', '.*ColorLike'),
@@ -299,7 +206,10 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', (None, '../intersphinx/python-objects.inv')),
+    'python': (
+        'https://docs.python.org/3.11',
+        (None, '../intersphinx/python-objects.inv'),
+    ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, '../intersphinx/scipy-objects.inv'),
@@ -346,7 +256,7 @@ autosummary_context = {
 source_suffix = ".rst"
 
 # The main toctree document.
-master_doc = "index"
+root_doc = "index"
 
 
 # General information about the project.
@@ -609,7 +519,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
+    (root_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
 ]
 
 # -- Options for gettext output -------------------------------------------
@@ -621,7 +531,7 @@ gettext_additional_targets = ["raw"]
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
+man_pages = [(root_doc, "pyvista", "pyvista Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -631,7 +541,7 @@ man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        root_doc,
         "pyvista",
         "pyvista Documentation",
         author,

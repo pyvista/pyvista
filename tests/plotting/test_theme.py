@@ -3,7 +3,7 @@ import os
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista import colors
 from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -11,7 +11,7 @@ from pyvista.plotting.utilities.gl_checks import uses_egl
 
 @pytest.fixture
 def default_theme():
-    return pyvista.plotting.themes.Theme()
+    return pv.plotting.themes.Theme()
 
 
 @pytest.mark.parametrize(
@@ -25,7 +25,7 @@ def test_depth_peeling_config(default_theme, parm):
 
 
 def test_depth_peeling_eq(default_theme):
-    my_theme = pyvista.plotting.themes.Theme()
+    my_theme = pv.plotting.themes.Theme()
     my_theme.depth_peeling.enabled = not my_theme.depth_peeling.enabled
     assert my_theme.depth_peeling != default_theme.depth_peeling
     assert my_theme.depth_peeling != 1
@@ -49,14 +49,14 @@ def test_silhouette_config(default_theme, parm):
 
 
 def test_depth_silhouette_eq(default_theme):
-    my_theme = pyvista.plotting.themes.Theme()
+    my_theme = pv.plotting.themes.Theme()
     my_theme.silhouette.opacity = 0.11111
     assert my_theme.silhouette != default_theme.silhouette
     assert my_theme.silhouette != 1
 
 
 def test_depth_silhouette_opacity_outside_clamp(default_theme):
-    my_theme = pyvista.plotting.themes.Theme()
+    my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):
         my_theme.silhouette.opacity = 10
     with pytest.raises(ValueError):
@@ -92,7 +92,7 @@ def test_slider_style_config_eq(default_theme):
 
 
 def test_slider_style_eq(default_theme):
-    my_theme = pyvista.plotting.themes.Theme()
+    my_theme = pv.plotting.themes.Theme()
     my_theme.slider_styles.modern.slider_length *= 2
     assert default_theme.slider_styles != my_theme.slider_styles
 
@@ -114,17 +114,17 @@ def test_color_str():
 
 
 def test_font():
-    font = pyvista.parse_font_family('times')
+    font = pv.parse_font_family('times')
     assert font == vtk.VTK_TIMES
     with pytest.raises(ValueError):
-        pyvista.parse_font_family('not a font')
+        pv.parse_font_family('not a font')
 
 
 def test_font_eq(default_theme):
-    defa_theme = pyvista.plotting.themes.Theme()
+    defa_theme = pv.plotting.themes.Theme()
     assert defa_theme.font == default_theme.font
 
-    paraview_theme = pyvista.plotting.themes.ParaViewTheme()
+    paraview_theme = pv.plotting.themes.ParaViewTheme()
     assert paraview_theme.font != default_theme.font
     assert paraview_theme.font != 1
 
@@ -155,9 +155,9 @@ def test_font_fmt(default_theme):
 
 
 def test_axes_eq(default_theme):
-    assert default_theme.axes == pyvista.plotting.themes.Theme().axes
+    assert default_theme.axes == pv.plotting.themes.Theme().axes
 
-    theme = pyvista.plotting.themes.Theme()
+    theme = pv.plotting.themes.Theme()
     theme.axes.box = True
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
@@ -197,7 +197,7 @@ def test_axes_show(default_theme):
 
 
 def test_colorbar_eq(default_theme):
-    theme = pyvista.plotting.themes.Theme()
+    theme = pv.plotting.themes.Theme()
     assert default_theme.colorbar_horizontal == theme.colorbar_horizontal
 
     assert default_theme.colorbar_horizontal != 1
@@ -228,34 +228,34 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme', pyvista.plotting.themes._NATIVE_THEMES)
+@pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
 def test_themes(theme):
     try:
-        pyvista.set_plot_theme(theme.name)
-        assert pyvista.global_theme == theme.value()
+        pv.set_plot_theme(theme.name)
+        assert pv.global_theme == theme.value()
     finally:
         # always return to testing theme
-        pyvista.set_plot_theme('testing')
+        pv.set_plot_theme('testing')
 
 
 def test_invalid_theme():
     with pytest.raises(ValueError):
-        pyvista.set_plot_theme('this is not a valid theme')
+        pv.set_plot_theme('this is not a valid theme')
 
 
 def test_invalid_theme_type_error():
     with pytest.raises(TypeError):
-        pyvista.set_plot_theme(1)
+        pv.set_plot_theme(1)
 
 
 def test_set_theme():
-    theme = pyvista.plotting.themes.DarkTheme()
+    theme = pv.plotting.themes.DarkTheme()
     try:
-        pyvista.set_plot_theme(theme)
-        assert pyvista.global_theme == theme
+        pv.set_plot_theme(theme)
+        assert pv.global_theme == theme
     finally:
         # always return to testing theme
-        pyvista.set_plot_theme('testing')
+        pv.set_plot_theme('testing')
 
 
 def test_invalid_load_theme(default_theme):
@@ -390,10 +390,10 @@ def test_theme_slots(default_theme):
 
 
 def test_theme_eq():
-    defa_theme0 = pyvista.plotting.themes.Theme()
-    defa_theme1 = pyvista.plotting.themes.Theme()
+    defa_theme0 = pv.plotting.themes.Theme()
+    defa_theme1 = pv.plotting.themes.Theme()
     assert defa_theme0 == defa_theme1
-    dark_theme = pyvista.plotting.themes.DarkTheme()
+    dark_theme = pv.plotting.themes.DarkTheme()
     assert defa_theme0 != dark_theme
 
     # for coverage
@@ -402,46 +402,46 @@ def test_theme_eq():
 
 def test_plotter_set_theme():
     # test that the plotter theme is set to the new theme
-    my_theme = pyvista.plotting.themes.Theme()
+    my_theme = pv.plotting.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
-    pl = pyvista.Plotter(theme=my_theme)
+    pl = pv.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
-    assert pyvista.global_theme.color != pl.theme.color
+    assert pv.global_theme.color != pl.theme.color
 
-    pl = pyvista.Plotter()
-    assert pl.theme == pyvista.global_theme
+    pl = pv.Plotter()
+    assert pl.theme == pv.global_theme
     pl.theme = my_theme
-    assert pl.theme != pyvista.global_theme
+    assert pl.theme != pv.global_theme
     assert pl.theme == my_theme
 
 
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
-    pyvista.plotting.themes.DarkTheme().save(filename)
-    loaded_theme = pyvista.load_theme(filename)
-    assert loaded_theme == pyvista.plotting.themes.DarkTheme()
+    pv.plotting.themes.DarkTheme().save(filename)
+    loaded_theme = pv.load_theme(filename)
+    assert loaded_theme == pv.plotting.themes.DarkTheme()
 
     default_theme.load_theme(filename)
-    assert default_theme == pyvista.plotting.themes.DarkTheme()
+    assert default_theme == pv.plotting.themes.DarkTheme()
 
 
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
-    dark_theme = pyvista.plotting.themes.DarkTheme()
+    dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
         pass
 
     dark_theme.before_close_callback = fun
-    assert dark_theme != pyvista.plotting.themes.DarkTheme()
+    assert dark_theme != pv.plotting.themes.DarkTheme()
     dark_theme.save(filename)
 
     # fun is stripped from the theme
-    loaded_theme = pyvista.load_theme(filename)
-    assert loaded_theme == pyvista.plotting.themes.DarkTheme()
+    loaded_theme = pv.load_theme(filename)
+    assert loaded_theme == pv.plotting.themes.DarkTheme()
 
     default_theme.load_theme(filename)
-    assert default_theme == pyvista.plotting.themes.DarkTheme()
+    assert default_theme == pv.plotting.themes.DarkTheme()
 
 
 def test_anti_aliasing(default_theme):
@@ -456,42 +456,42 @@ def test_anti_aliasing(default_theme):
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'
-    pl = pyvista.Plotter(theme=default_theme)
+    pl = pv.Plotter(theme=default_theme)
     assert pl.renderer.GetUseFXAA()
 
 
 def test_anti_aliasing_ssaa(default_theme):
     # default should is not enabled
     if default_theme.anti_aliasing != 'ssaa':
-        pl = pyvista.Plotter(theme=default_theme)
+        pl = pv.Plotter(theme=default_theme)
         assert 'vtkSSAAPass' not in pl.renderer._render_passes._passes
 
     default_theme.anti_aliasing = 'ssaa'
     assert default_theme.anti_aliasing == 'ssaa'
-    pl = pyvista.Plotter(theme=default_theme)
+    pl = pv.Plotter(theme=default_theme)
     assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
 
 
 def test_anti_aliasing_msaa(default_theme):
     if default_theme.anti_aliasing != 'msaa':
-        pl = pyvista.Plotter(theme=default_theme)
+        pl = pv.Plotter(theme=default_theme)
         assert pl.render_window.GetMultiSamples() == 0
 
     default_theme.anti_aliasing = 'msaa'
     default_theme.multi_samples = 4
     assert default_theme.anti_aliasing == 'msaa'
-    pl = pyvista.Plotter(theme=default_theme)
+    pl = pv.Plotter(theme=default_theme)
     assert pl.render_window.GetMultiSamples() == default_theme.multi_samples
 
 
 def test_above_range_color(default_theme):
     default_theme.above_range_color = 'r'
-    assert isinstance(default_theme.above_range_color, pyvista.Color)
+    assert isinstance(default_theme.above_range_color, pv.Color)
 
 
 def test_below_range_color(default_theme):
     default_theme.below_range_color = 'b'
-    assert isinstance(default_theme.below_range_color, pyvista.Color)
+    assert isinstance(default_theme.below_range_color, pv.Color)
 
 
 def test_user_theme():
@@ -515,13 +515,13 @@ def test_user_theme():
             self.point_size = 9
 
     theme = MyTheme()
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     lines = sphere.extract_all_edges()
-    points = pyvista.PolyData(sphere.points)
+    points = pv.PolyData(sphere.points)
     try:
-        pyvista.set_plot_theme(theme)
+        pv.set_plot_theme(theme)
 
-        pl = pyvista.Plotter()
+        pl = pv.Plotter()
         assert pl.background_color == theme.background
         sactor = pl.add_mesh(sphere)
         assert sactor.prop.color == theme.color
@@ -537,14 +537,14 @@ def test_user_theme():
         pactor = pl.add_mesh(points)
         assert pactor.prop.point_size == theme.point_size
 
-        pl = pyvista.Plotter()
+        pl = pv.Plotter()
         sactor = pl.add_mesh(sphere, pbr=True)
         assert sactor.prop.roughness == theme.lighting_params.roughness
         assert sactor.prop.metallic == theme.lighting_params.metallic
 
     finally:
         # always return to testing theme
-        pyvista.set_plot_theme('testing')
+        pv.set_plot_theme('testing')
 
 
 def test_set_plot_theme_from_env():

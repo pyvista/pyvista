@@ -33,10 +33,10 @@ def vtk_points(points, deep=True, force_float=False):
 
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>> points = np.random.random((10, 3))
-    >>> vpoints = pyvista.vtk_points(points)
+    >>> vpoints = pv.vtk_points(points)
     >>> vpoints  # doctest:+SKIP
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
 
@@ -116,10 +116,10 @@ def line_segments_from_points(points):
     --------
     This example plots two line segments at right angles to each other.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = pyvista.line_segments_from_points(points)
+    >>> lines = pv.line_segments_from_points(points)
     >>> lines.plot()
 
     """
@@ -162,9 +162,9 @@ def lines_from_points(points, close=False):
     Examples
     --------
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> poly = pyvista.lines_from_points(points)
+    >>> poly = pv.lines_from_points(points)
     >>> poly.plot(line_width=5)
 
     """
@@ -182,14 +182,17 @@ def lines_from_points(points, close=False):
 def fit_plane_to_points(points, return_meta=False):
     """Fit a plane to a set of points using the SVD algorithm.
 
+    The plane is automatically sized and oriented to fit the extents of
+    the points.
+
     Parameters
     ----------
     points : array_like[float]
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool, default: False
-        If ``True``, also returns the center and normal used to
-        generate the plane.
+        If ``True``, also returns the center and normal of the
+        generated plane.
 
     Returns
     -------
@@ -206,17 +209,20 @@ def fit_plane_to_points(points, return_meta=False):
     --------
     Fit a plane to a random point cloud.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
+    >>>
+    >>> # Create point cloud
     >>> cloud = np.random.random((10, 3))
     >>> cloud[:, 2] *= 0.1
-    >>> plane, center, normal = pyvista.fit_plane_to_points(
+    >>>
+    >>> # Fit plane
+    >>> plane, center, normal = pv.fit_plane_to_points(
     ...     cloud, return_meta=True
     ... )
-
-    Plot the fitted plane.
-
-    >>> pl = pyvista.Plotter()
+    >>>
+    >>> # Plot the fitted plane
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     plane, color='lightblue', style='wireframe', line_width=4
     ... )
@@ -228,12 +234,65 @@ def fit_plane_to_points(points, return_meta=False):
     ... )
     >>> pl.show()
 
+    Fit a plane to a mesh.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>>
+    >>> # Create mesh
+    >>> mesh = examples.download_shark()
+    >>>
+    >>> # Fit plane
+    >>> plane = pv.fit_plane_to_points(mesh.points)
+    >>>
+    >>> # Plot the fitted plane
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     plane, show_edges=True, color='lightblue', opacity=0.25
+    ... )
+    >>> _ = pl.add_mesh(mesh, color='gray')
+    >>> pl.camera_position = [
+    ...     (-117, 76, 235),
+    ...     (1.69, -1.38, 0),
+    ...     (0.189, 0.957, -0.22),
+    ... ]
+    >>> pl.show()
+
     """
+    # Apply SVD to get orthogonal basis vectors to define the plane
     data = np.array(points)
-    center = data.mean(axis=0)
-    result = np.linalg.svd(data - center)
-    normal = np.cross(result[2][0], result[2][1])
-    plane = pyvista.Plane(center=center, direction=normal)
+    data_center = data.mean(axis=0)
+    _, _, Vh = np.linalg.svd(data - data_center)
+    i_vector = Vh[0]
+    j_vector = Vh[1]
+    normal = np.cross(i_vector, j_vector)
+
+    # Create rotation matrix from basis vectors
+    rotate_transform = np.eye(4)
+    rotate_transform[:3, :3] = np.vstack((i_vector, j_vector, normal))
+    rotate_transform_inv = rotate_transform.T
+
+    # Project and transform points to align and center data to the XY plane
+    poly = pyvista.PolyData(points)
+    projected = poly.project_points_to_plane(origin=data_center, normal=normal)
+    projected.points -= data_center
+    projected.transform(rotate_transform)
+
+    # Compute size of the plane
+    i_size = projected.bounds[1] - projected.bounds[0]
+    j_size = projected.bounds[3] - projected.bounds[2]
+
+    # The center of the input data does not necessarily coincide with
+    # the center of the plane. The true center of the plane is the
+    # middle of the bounding box of the projected + transformed data
+    # relative to the input data's center
+    center = rotate_transform_inv[:3, :3] @ projected.center + data_center
+
+    # Initialize plane then move to final position
+    plane = pyvista.Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=i_size, j_size=j_size)
+    plane.transform(rotate_transform_inv)
+    plane.points += center
+
     if return_meta:
         return plane, center, normal
     return plane
@@ -268,7 +327,7 @@ def make_tri_mesh(points, faces):
     nine vertices and eight faces.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> points = np.array(
     ...     [
     ...         [0, 0, 0],
@@ -294,7 +353,7 @@ def make_tri_mesh(points, faces):
     ...         [4, 8, 7],
     ...     ]
     ... )
-    >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
+    >>> tri_mesh = pv.make_tri_mesh(points, faces)
     >>> tri_mesh.plot(show_edges=True, line_width=5)
 
     """
@@ -331,7 +390,7 @@ def vector_poly_data(orig, vec):
     Create basic vector field.  This is a point cloud where each point
     has a vector and magnitude attached to it.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import numpy as np
     >>> x, y = np.meshgrid(np.linspace(-5, 5, 10), np.linspace(-5, 5, 10))
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
@@ -340,7 +399,7 @@ def vector_poly_data(orig, vec):
     >>> vectors = np.vstack(
     ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
     ... ).T
-    >>> pdata = pyvista.vector_poly_data(points, vectors)
+    >>> pdata = pv.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
 

@@ -4,7 +4,7 @@ import trimesh
 import vtk
 from vtk.util import numpy_support
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _vtk_core
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -13,12 +13,12 @@ from pyvista.core.utilities.points import make_tri_mesh
 
 def test_wrap_none():
     # check against the "None" edge case
-    assert pyvista.wrap(None) is None
+    assert pv.wrap(None) is None
 
 
 def test_wrap_pyvista_ndarray(sphere):
-    pd = pyvista.wrap(sphere.points)
-    assert isinstance(pd, pyvista.PolyData)
+    pd = pv.wrap(sphere.points)
+    assert isinstance(pd, pv.PolyData)
 
 
 # NOTE: It's not necessary to test all data types here, several of the
@@ -36,7 +36,7 @@ def test_wrap_pyvista_ndarray(sphere):
 )
 def test_wrap_pyvista_ndarray_vtk(dtypes):
     np_dtype, vtk_class = dtypes
-    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]], dtype=np_dtype)
+    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]]).astype(np_dtype)
 
     vtk_array = vtk_class()
     vtk_array.SetNumberOfComponents(3)
@@ -44,7 +44,7 @@ def test_wrap_pyvista_ndarray_vtk(dtypes):
     for i in range(9):
         vtk_array.SetValue(i, np_array.flat[i])
 
-    wrapped = pyvista.wrap(vtk_array)
+    wrapped = pv.wrap(vtk_array)
     assert np.allclose(wrapped, np_array)
     assert wrapped.dtype == np_array.dtype
 
@@ -53,20 +53,20 @@ def test_wrap_trimesh():
     points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
     faces = [[0, 1, 2]]
     tmesh = trimesh.Trimesh(points, faces=faces, process=False)
-    mesh = pyvista.wrap(tmesh)
-    assert isinstance(mesh, pyvista.PolyData)
+    mesh = pv.wrap(tmesh)
+    assert isinstance(mesh, pv.PolyData)
 
     assert np.allclose(tmesh.vertices, mesh.points)
     assert np.allclose(tmesh.faces, mesh.faces[1:])
 
-    assert mesh.active_t_coords is None
+    assert mesh.active_texture_coordinates is None
 
     uvs = [[0, 0], [0, 1], [1, 0]]
     tmesh.visual = trimesh.visual.TextureVisuals(uv=uvs)
-    mesh_with_uv = pyvista.wrap(tmesh)
+    mesh_with_uv = pv.wrap(tmesh)
 
-    assert mesh_with_uv.active_t_coords is not None
-    assert np.allclose(mesh_with_uv.active_t_coords, uvs)
+    assert mesh_with_uv.active_texture_coordinates is not None
+    assert np.allclose(mesh_with_uv.active_texture_coordinates, uvs)
 
 
 def test_make_tri_mesh(sphere):
@@ -85,27 +85,27 @@ def test_make_tri_mesh(sphere):
 
 def test_wrappers():
     vtk_data = vtk.vtkPolyData()
-    pv_data = pyvista.wrap(vtk_data)
-    assert isinstance(pv_data, pyvista.PolyData)
+    pv_data = pv.wrap(vtk_data)
+    assert isinstance(pv_data, pv.PolyData)
 
-    class Foo(pyvista.PolyData):
-        """A user defined subclass of pyvista.PolyData."""
+    class Foo(pv.PolyData):
+        """A user defined subclass of pv.PolyData."""
 
         pass
 
-    default_wrappers = pyvista._wrappers.copy()
+    default_wrappers = pv._wrappers.copy()
     # Use try...finally to set and reset _wrappers
     try:
-        pyvista._wrappers['vtkPolyData'] = Foo
+        pv._wrappers['vtkPolyData'] = Foo
 
-        pv_data = pyvista.wrap(vtk_data)
+        pv_data = pv.wrap(vtk_data)
         assert isinstance(pv_data, Foo)
 
         tri_data = pv_data.delaunay_2d()
 
         assert isinstance(tri_data, Foo)
 
-        image = pyvista.ImageData()
+        image = pv.ImageData()
         surface = image.extract_surface()
 
         assert isinstance(surface, Foo)
@@ -113,50 +113,50 @@ def test_wrappers():
         surface.delaunay_2d(inplace=True)
         assert isinstance(surface, Foo)
 
-        sphere = pyvista.Sphere()
+        sphere = pv.Sphere()
         assert isinstance(sphere, Foo)
 
-        circle = pyvista.Circle()
+        circle = pv.Circle()
         assert isinstance(circle, Foo)
 
     finally:
-        pyvista._wrappers = default_wrappers  # always reset back to default
+        pv._wrappers = default_wrappers  # always reset back to default
 
 
 def test_wrap_no_copy():
     # makes sure that wrapping an already wrapped object returns source
-    mesh = pyvista.Wavelet()
-    wrapped = pyvista.wrap(mesh)
+    mesh = pv.Wavelet()
+    wrapped = pv.wrap(mesh)
     assert mesh == wrapped
     assert wrapped is mesh
 
     mesh = vtk.vtkPolyData()
-    wrapped = pyvista.wrap(mesh)
-    assert wrapped == pyvista.wrap(wrapped)
-    assert wrapped is pyvista.wrap(wrapped)
+    wrapped = pv.wrap(mesh)
+    assert wrapped == pv.wrap(wrapped)
+    assert wrapped is pv.wrap(wrapped)
 
 
 def test_inheritance_no_wrappers():
-    class Foo(pyvista.PolyData):
+    class Foo(pv.PolyData):
         pass
 
     # inplace operations do not change type
-    mesh = Foo(pyvista.Sphere())
+    mesh = Foo(pv.Sphere())
     mesh.decimate(0.5, inplace=True)
     assert isinstance(mesh, Foo)
 
     # without using _wrappers, we need to explicitly handle inheritance
-    mesh = Foo(pyvista.Sphere())
+    mesh = Foo(pv.Sphere())
     new_mesh = mesh.decimate(0.5)
-    assert isinstance(new_mesh, pyvista.PolyData)
+    assert isinstance(new_mesh, pv.PolyData)
     foo_new_mesh = Foo(new_mesh)
     assert isinstance(foo_new_mesh, Foo)
 
 
 def test_array_association():
     # TODO: cover vtkTable/ROW association case
-    mesh = pyvista.PolyData()
-    FieldAssociation = pyvista.FieldAssociation
+    mesh = pv.PolyData()
+    FieldAssociation = pv.FieldAssociation
 
     # single match cases
     mesh.point_data['p'] = []
@@ -190,7 +190,7 @@ def test_array_association():
     mesh.clear_data()
     with pytest.raises(KeyError, match='not present in this dataset.'):
         assoc = mesh.get_array_association('missing')
-    assoc = pyvista.get_array_association(mesh, 'missing', err=False)
+    assoc = pv.get_array_association(mesh, 'missing', err=False)
     assert assoc == FieldAssociation.NONE
 
     with pytest.raises(ValueError, match='not supported.'):
@@ -198,32 +198,32 @@ def test_array_association():
 
 
 def test_set_default_active_vectors():
-    mesh = pyvista.Sphere()
+    mesh = pv.Sphere()
     mesh.clear_data()  # make sure we have a clean mesh with no arrays to start
 
     assert mesh.active_vectors_name is None
 
     # Point data vectors
     mesh["vec_point"] = np.ones((mesh.n_points, 3))
-    pyvista.set_default_active_vectors(mesh)
+    pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name == "vec_point"
     mesh.clear_data()
 
     # Cell data vectors
     mesh["vec_cell"] = np.ones((mesh.n_cells, 3))
-    pyvista.set_default_active_vectors(mesh)
+    pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name == "vec_cell"
     mesh.clear_data()
 
     # Raises if no data is present
     with pytest.raises(MissingDataError):
-        pyvista.set_default_active_vectors(mesh)
+        pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
 
     # Raises if no vector-like data is present
     mesh["scalar_data"] = np.ones((mesh.n_points, 1))
     with pytest.raises(MissingDataError):
-        pyvista.set_default_active_vectors(mesh)
+        pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
     mesh.clear_data()
 
@@ -231,7 +231,7 @@ def test_set_default_active_vectors():
     mesh["vec_data1"] = np.ones((mesh.n_points, 3))
     mesh["vec_data2"] = np.ones((mesh.n_points, 3))
     with pytest.raises(AmbiguousDataError):
-        pyvista.set_default_active_vectors(mesh)
+        pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
     mesh.clear_data()
 
@@ -239,19 +239,19 @@ def test_set_default_active_vectors():
     mesh["vec_data1"] = np.ones((mesh.n_points, 3))
     mesh["vec_data2"] = np.ones((mesh.n_cells, 3))
     with pytest.raises(AmbiguousDataError):
-        pyvista.set_default_active_vectors(mesh)
+        pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
 
     # Raises if multiple vector-like data with same name
     mesh["vec_data"] = np.ones((mesh.n_points, 3))
     mesh["vec_data"] = np.ones((mesh.n_cells, 3))
     with pytest.raises(AmbiguousDataError):
-        pyvista.set_default_active_vectors(mesh)
+        pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
 
 
 def test_set_default_active_scalarrs():
-    mesh = pyvista.Sphere()
+    mesh = pv.Sphere()
     mesh.clear_data()  # make sure we have a clean mesh with no arrays to start
 
     assert mesh.active_scalars_name is None
@@ -317,7 +317,7 @@ def test_set_default_active_scalarrs():
 
 def test_vtk_points_deep_shallow():
     points = np.array([[0.0, 0.0, 0.0]])
-    vtk_points = pyvista.vtk_points(points, deep=False)
+    vtk_points = pv.vtk_points(points, deep=False)
 
     assert vtk_points.GetNumberOfPoints() == 1
     assert np.array_equal(vtk_points.GetPoint(0), points[0])
@@ -331,7 +331,7 @@ def test_vtk_points_deep_shallow():
     # test deep copy
 
     points = np.array([[0.0, 0.0, 0.0]])
-    vtk_points = pyvista.vtk_points(points, deep=True)
+    vtk_points = pv.vtk_points(points, deep=True)
 
     vtk_points.SetPoint(0, [1.0, 1.0, 1.0])
 
@@ -344,9 +344,9 @@ def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
     if force_float:
         with pytest.warns(UserWarning, match='Points is not a float type'):
-            vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+            vtk_points = pv.vtk_points(np_points, force_float=force_float)
     else:
-        vtk_points = pyvista.vtk_points(np_points, force_float=force_float)
+        vtk_points = pv.vtk_points(np_points, force_float=force_float)
     as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
 
     assert as_numpy.dtype == expected_data_type

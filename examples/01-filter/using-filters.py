@@ -14,7 +14,7 @@ from pyvista import examples
 ###############################################################################
 # PyVista wrapped data objects have a suite of common filters ready for immediate
 # use directly on the object. These filters include the following
-# (see :ref:`filters_ref` for a complete list):
+# (see :ref:`filters` for a complete list):
 #
 # * ``slice``: creates a single slice through the input dataset on a user defined plane
 # * ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal slices

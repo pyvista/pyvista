@@ -704,14 +704,14 @@ class Color:
     Create a transparent green color using a color name, float RGBA sequence,
     integer RGBA sequence and RGBA hexadecimal string.
 
-    >>> import pyvista
-    >>> pyvista.Color("green", opacity=0.5)
+    >>> import pyvista as pv
+    >>> pv.Color("green", opacity=0.5)
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
+    >>> pv.Color([0.0, 0.5, 0.0, 0.5])
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pyvista.Color([0, 128, 0, 128])
+    >>> pv.Color([0, 128, 0, 128])
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pyvista.Color("#00800080")
+    >>> pv.Color("#00800080")
     Color(name='green', hex='#00800080', opacity=128)
 
     """
@@ -895,15 +895,15 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:
+    def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA integer tuple.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=128)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
@@ -911,7 +911,7 @@ class Color:
 
         Create a transparent red color using an integer RGBA sequence.
 
-        >>> c = pyvista.Color([255, 0, 0, 64])
+        >>> c = pv.Color([255, 0, 0, 64])
         >>> c
         Color(name='red', hex='#ff000040', opacity=64)
         >>> c.int_rgba
@@ -921,15 +921,15 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:
+    def int_rgb(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGB integer tuple.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=128)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
@@ -937,7 +937,7 @@ class Color:
 
         Create a red color using an integer RGB sequence.
 
-        >>> c = pyvista.Color([255, 0, 0])
+        >>> c = pv.Color([255, 0, 0])
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.int_rgb
@@ -947,15 +947,15 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:
+    def float_rgba(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA float tuple.
 
         Examples
         --------
         Create a blue color with custom opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=0.6)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
@@ -963,7 +963,7 @@ class Color:
 
         Create a transparent red color using a float RGBA sequence.
 
-        >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
+        >>> c = pv.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
         Color(name='red', hex='#ff000033', opacity=51)
         >>> c.float_rgba
@@ -973,15 +973,15 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:
+    def float_rgb(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGB float tuple.
 
         Examples
         --------
         Create a blue color with custom opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.6)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
@@ -989,7 +989,7 @@ class Color:
 
         Create a red color using a float RGB sequence.
 
-        >>> c = pyvista.Color([1.0, 0.0, 0.0])
+        >>> c = pv.Color([1.0, 0.0, 0.0])
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.float_rgb
@@ -999,15 +999,15 @@ class Color:
         return self.float_rgba[:3]
 
     @property
-    def hex_rgba(self) -> str:
+    def hex_rgba(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGBA hexadecimal value.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity="#80")
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
@@ -1015,7 +1015,7 @@ class Color:
 
         Create a transparent red color using an RGBA hexadecimal value.
 
-        >>> c = pyvista.Color("0xff000040")
+        >>> c = pv.Color("0xff000040")
         >>> c
         Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
@@ -1027,15 +1027,15 @@ class Color:
         )
 
     @property
-    def hex_rgb(self) -> str:
+    def hex_rgb(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGB hexadecimal value.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity="#80")
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
@@ -1043,7 +1043,7 @@ class Color:
 
         Create a red color using an RGB hexadecimal value.
 
-        >>> c = pyvista.Color("0xff0000")
+        >>> c = pv.Color("0xff0000")
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
@@ -1053,7 +1053,7 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Get the color name.
 
         Returns
@@ -1071,8 +1071,8 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.5)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
 
@@ -1080,15 +1080,15 @@ class Color:
         return self._name
 
     @property
-    def vtk_c3ub(self) -> _vtk.vtkColor3ub:
+    def vtk_c3ub(self) -> _vtk.vtkColor3ub:  # numpydoc ignore=RT01
         """Get the color value as a VTK Color3ub instance.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.5)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub
@@ -1137,7 +1137,7 @@ class Color:
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
     @property
-    def opacity(self):
+    def opacity(self):  # numpydoc ignore=RT01
         """Return the opacity of this color in the range of ``(0-255)``.
 
         Examples
@@ -1192,7 +1192,28 @@ PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap):
-    """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
+    """
+    Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+
+    Parameters
+    ----------
+    cmap : str or list of str
+        Name of the colormap to fetch. If the input is a list of strings,
+        it will create a ``ListedColormap`` with the input list.
+
+    Returns
+    -------
+    matplotlib.colors.Colormap
+        The requested colormap if available.
+
+    Raises
+    ------
+    ValueError
+        If the input colormap name is not valid.
+    TypeError
+        If the input is a list of items that are not strings.
+
+    """
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
@@ -1239,7 +1260,14 @@ def get_cmap_safe(cmap):
 
 
 def get_default_cycler():
-    """Return the default color cycler (matches matplotlib's default)."""
+    """Return the default color cycler (matches matplotlib's default).
+
+    Returns
+    -------
+    cycler.Cycler
+        A cycler object for color that matches matplotlib's default colors.
+
+    """
     return cycler('color', matplotlib_default_colors)
 
 
@@ -1247,17 +1275,51 @@ def get_hexcolors_cycler():
     """Return a color cycler for all of the available hexcolors.
 
     See ``pyvista.plotting.colors.hexcolors``.
+
+    Returns
+    -------
+    cycler.Cycler
+        A cycler object for color using all the available hexcolors from
+        ``pyvista.plotting.colors.hexcolors``.
+
     """
     return cycler('color', hexcolors.keys())
 
 
 def get_matplotlib_theme_cycler():
-    """Return matplotlib's current theme's color cycler."""
+    """
+    Return the color cycler of the current matplotlib theme.
+
+    Returns
+    -------
+    cycler.Cycler
+        Color cycler of the current matplotlib theme.
+
+    """
     return plt.rcParams['axes.prop_cycle']
 
 
 def color_scheme_to_cycler(scheme):
-    """Convert a color scheme to a Cycler."""
+    """Convert a color scheme to a Cycler.
+
+    Parameters
+    ----------
+    scheme : str, int, or _vtk.vtkColorSeries
+        Color scheme to be converted. If a string, it should correspond to a
+        valid color scheme name (e.g., 'viridis'). If an integer, it should
+        correspond to a valid color scheme ID. If an instance of
+        `_vtk.vtkColorSeries`, it should be a valid color series.
+
+    Returns
+    -------
+    cycler.Cycler
+        A Cycler object with the color scheme.
+
+    Raises
+    ------
+    ValueError
+        If the provided `scheme` is not a valid color scheme.
+    """
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
@@ -1275,15 +1337,29 @@ def color_scheme_to_cycler(scheme):
 def get_cycler(color_cycler):
     """Return a color cycler based on the input value.
 
-    The value must be either a list of color-like objects,
-    or a cycler of color-like objects. If the value passed is a single
-    string, it must be one of:
+    Parameters
+    ----------
+    color_cycler : str, list, tuple, or Cycler
+        Specifies the desired color cycler. The value must be one of the following:
+        - A list or tuple of color-like objects
+        - A Cycler object with color-like objects
+        - One of the following string values:
+            - ``'default'``: Use the default color cycler (matches matplotlib's default)
+            - ``'matplotlib'``: Dynamically get matplotlib's current theme's color cycler.
+            - ``'all'``: Cycle through all available colors in ``pyvista.plotting.colors.hexcolors``
+        - A named color scheme from ``pyvista.plotting.colors.COLOR_SCHEMES``
 
-    * ``'default'`` - Use the default color cycler (matches matplotlib's default)
-    * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-    * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+    Returns
+    -------
+    Cycler
+        The color cycler corresponding to the input value.
 
-    A named color scheme is also supported. See ``pyvista.plotting.colors.COLOR_SCHEMES``
+    Raises
+    ------
+    ValueError
+        Raised if the input is a string not found in named color schemes.
+    TypeError
+        Raised if the input is of an unsupported type.
 
     """
     if color_cycler is None:

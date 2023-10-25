@@ -2,11 +2,11 @@
 # See https://pre-commit.ci/
 ci:
     autofix_prs: false
-    autoupdate_schedule: weekly
+    autoupdate_schedule: monthly
 
 repos:
 - repo: https://github.com/psf/black
-  rev: 23.7.0
+  rev: 23.9.1
   hooks:
   - id: black
 
@@ -23,7 +23,7 @@ repos:
   - id: isort
 
 - repo: https://github.com/PyCQA/flake8
-  rev: 6.0.0
+  rev: 6.1.0
   hooks:
   - id: flake8
     additional_dependencies: [
@@ -33,7 +33,7 @@ repos:
     ]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.5
+  rev: v2.2.6
   hooks:
   - id: codespell
     args: [
@@ -62,8 +62,14 @@ repos:
         "--no-capitalize-first-letter",
       ]
 
+- repo: https://github.com/numpy/numpydoc
+  rev: v1.6.0
+  hooks:
+  - id: numpydoc-validation
+    files: ^pyvista/
+
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.4.1
+  rev: v1.5.1
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
@@ -73,7 +79,7 @@ repos:
   ]
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.9.0
+  rev: v3.14.0
   hooks:
   - id: pyupgrade
     args: [--py38-plus, --keep-runtime-typing]
@@ -88,9 +94,13 @@ repos:
   - id: requirements-txt-fixer
   - id: trailing-whitespace
     exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
+  - id: check-docstring-first
+  - id: end-of-file-fixer
+    exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
+  - id: mixed-line-ending
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.23.3
+  rev: 0.27.0
   hooks:
     - id: check-github-workflows

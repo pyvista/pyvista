@@ -9,6 +9,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
 
 from . import _vtk
+from .affine_widget import AffineWidget3D
 from .colors import Color
 from .opts import PickerType
 from .utilities.algorithms import (
@@ -154,15 +155,33 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows an interactive clip box.
+        Shows an interactive box that is used to resize and relocate a sphere.
 
         >>> import pyvista as pv
-        >>> mesh = pv.ParametricConicSpiral()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
-        >>> pl.show()
-
-        For a full example see :ref:`box_widget_example`.
+        >>> import numpy as np
+        >>> plotter = pv.Plotter()
+        >>> def simulate(widget):
+        ...     bounds = widget.bounds
+        ...     new_center = np.array(
+        ...         [
+        ...             (bounds[0] + bounds[1]) / 2,
+        ...             (bounds[2] + bounds[3]) / 2,
+        ...             (bounds[4] + bounds[5]) / 2,
+        ...         ]
+        ...     )
+        ...     new_radius = (
+        ...         min(
+        ...             (bounds[1] - bounds[0]) / 2,
+        ...             (bounds[3] - bounds[2]) / 2,
+        ...             (bounds[5] - bounds[4]) / 2,
+        ...         )
+        ...         - 0.3
+        ...     )
+        ...     sphere = pv.Sphere(new_radius, new_center)
+        ...     _ = plotter.add_mesh(sphere, name="Sphere")
+        ...
+        >>> _ = plotter.add_box_widget(callback=simulate)
+        >>> plotter.show()
 
         """
         interaction_event = _parse_interaction_event(interaction_event)
@@ -278,6 +297,18 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive clip box.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`.
+
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -309,7 +340,7 @@ class WidgetHelper:
 
         self.box_clipped_meshes.append(box_clipped_mesh)
 
-        def callback(planes):
+        def callback(planes):  # numpydoc ignore=GL08
             bounds = []
             for i in range(planes.GetNumberOfPlanes()):
                 plane = planes.GetPlane(i)
@@ -435,6 +466,33 @@ class WidgetHelper:
         -------
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
             Plane widget.
+
+        Examples
+        --------
+        Shows an interactive plane moving along the x-axis in the random-hill example, which is used to mark the max altitude
+        at a particular distance x.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_random_hills()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> def callback(normal, origin):
+        ...     slc = mesh.slice(normal=normal, origin=origin)
+        ...     origin = list(origin)
+        ...     origin[2] = slc.bounds[5]
+        ...     peak_plane = pv.Plane(
+        ...         center=origin,
+        ...         direction=[0, 0, 1],
+        ...         i_size=20,
+        ...         j_size=20,
+        ...     )
+        ...     _ = pl.add_mesh(
+        ...         peak_plane, name="Peak", color='red', opacity=0.4
+        ...     )
+        ...
+        >>> _ = pl.add_plane_widget(callback, normal_rotation=False)
+        >>> pl.show()
 
         """
         interaction_event = _parse_interaction_event(interaction_event)
@@ -652,6 +710,20 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used to clip the mesh and store it.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> vol = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
+        >>> pl.show(cpos=[-2.1, 0.6, 1.5])
+        >>> pl.plane_clipped_meshes  # doctest:+SKIP
+
+        For a full example see :ref:`plane_widget_example`.
+
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -686,7 +758,7 @@ class WidgetHelper:
             plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, loc):
+        def callback(normal, loc):  # numpydoc ignore=GL08
             function = generate_plane(normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
@@ -814,7 +886,7 @@ class WidgetHelper:
 
         plane = _vtk.vtkPlane()
 
-        def callback(normal, origin):
+        def callback(normal, origin):  # numpydoc ignore=PR01
             """Update the plane used to clip the volume."""
             plane.SetNormal(normal)
             plane.SetOrigin(origin)
@@ -923,6 +995,20 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used specifically for slicing.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_channels()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
+        >>> pl.show()
+
+        For a full example see :ref:`plane_widget_example`.
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -943,7 +1029,7 @@ class WidgetHelper:
         plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
-        def callback(normal, origin):
+        def callback(normal, origin):  # numpydoc ignore=GL08
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
@@ -1017,6 +1103,17 @@ class WidgetHelper:
         -------
         list
             List of vtk.vtkActor(s).
+
+        Examples
+        --------
+        Shows an interactive plane sliced along each cartesian axis of the mesh.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Wavelet()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice_orthogonal(mesh)
+        >>> pl.show()
 
         """
         actors = []
@@ -1095,6 +1192,26 @@ class WidgetHelper:
         vtk.vtkLineWidget
             Created line widget.
 
+        Examples
+        --------
+        Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> model = examples.load_channels()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(model, opacity=0.4)
+        >>> def move_center(pointa, pointb):
+        ...     center = (np.array(pointa) + np.array(pointb)) / 2
+        ...     normal = np.array(pointa) - np.array(pointb)
+        ...     single_slc = model.slice(normal=normal, origin=center)
+        ...
+        ...     _ = pl.add_mesh(single_slc, name="slc")
+        ...
+        >>> _ = pl.add_line_widget(callback=move_center, use_vertices=True)
+        >>> pl.show()
+
         """
         if bounds is None:
             bounds = self.bounds
@@ -1143,7 +1260,6 @@ class WidgetHelper:
         color=None,
         interaction_event='end',
         style=None,
-        **kwargs,
     ):
         """Add a text slider bar widget.
 
@@ -1190,12 +1306,6 @@ class WidgetHelper:
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
 
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
@@ -1237,7 +1347,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, event):
+        def title_callback(widget, event):  # numpydoc ignore=GL08
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1267,7 +1377,6 @@ class WidgetHelper:
         fmt=None,
         slider_width=None,
         tube_width=None,
-        **kwargs,
     ):
         """Add a slider bar widget.
 
@@ -1345,13 +1454,6 @@ class WidgetHelper:
         tube_width : float, optional
             Normalized width of the tube. Defaults to the theme's tube width.
 
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
-
         Returns
         -------
         vtk.vtkSliderWidget
@@ -1391,7 +1493,7 @@ class WidgetHelper:
         if fmt is None:
             fmt = pyvista.global_theme.font.fmt
 
-        def normalize(point, viewport):
+        def normalize(point, viewport):  # numpydoc ignore=GL08
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())
@@ -1599,7 +1701,7 @@ class WidgetHelper:
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
-        def callback(value):
+        def callback(value):  # numpydoc ignore=GL08
             _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
@@ -1707,6 +1809,18 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive slider controlling the altitude of the contours.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_random_hills()
+        >>> _ = pl.add_mesh(mesh, opacity=0.4)
+        >>> _ = pl.add_mesh_isovalue(mesh)
+        >>> pl.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.PointSet):
@@ -1746,7 +1860,7 @@ class WidgetHelper:
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
-        def callback(value):
+        def callback(value):  # numpydoc ignore=GL08
             alg.SetValue(0, value)
             alg.Update()
             isovalue_mesh.shallow_copy(alg.GetOutput())
@@ -1997,7 +2111,7 @@ class WidgetHelper:
         spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline):
+        def callback(spline):  # numpydoc ignore=GL08
             polyline = spline.GetCell(0)
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
@@ -2076,7 +2190,7 @@ class WidgetHelper:
 
         self.iren.picker = PickerType.POINT
 
-        def place_point(*_):
+        def place_point(*_):  # numpydoc ignore=GL08
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
             representation.GetPoint1DisplayPosition(p1)
@@ -2255,6 +2369,98 @@ class WidgetHelper:
         """Remove all of the sphere widgets."""
         self.sphere_widgets.clear()
 
+    def add_affine_transform_widget(
+        self,
+        actor,
+        origin=None,
+        start=True,
+        scale=0.15,
+        line_radius=0.02,
+        always_visible=True,
+        axes_colors=None,
+        axes=None,
+        release_callback=None,
+        interact_callback=None,
+    ):
+        """Add a 3D affine transform widget.
+
+        This widget allows interactive transformations including translation and
+        rotation using the left mouse button.
+
+        Parameters
+        ----------
+        actor : pyvista.Actor
+            The actor to which the widget is attached to.
+        origin : sequence[float], optional
+            Origin of the widget. Default is the origin of the main actor.
+        start : bool, default: True
+            If True, start the widget immediately.
+        scale : float, default: 0.15
+            Scale factor for the widget relative to the length of the actor.
+        line_radius : float, default: 0.02
+            Relative radius of the lines composing the widget.
+        always_visible : bool, default: True
+            Make the widget always visible. Setting this to ``False`` will cause
+            the widget geometry to be hidden by other actors in the plotter.
+        axes_colors : tuple[ColorLike], optional
+            Uses the theme by default. Configure the individual axis colors by
+            modifying either the theme with ``pyvista.global_theme.axes.x_color =
+            <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
+        axes : numpy.ndarray, optional
+            ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default
+            this matches the default coordinate system.
+        release_callback : callable, optional
+            Call this method when releasing the left mouse button. It is passed
+            the ``user_matrix`` of the actor.
+        interact_callback : callable, optional
+            Call this method when moving the mouse with the left mouse button
+            pressed down and a valid movement actor selected. It is passed the
+            ``user_matrix`` of the actor.
+
+        Returns
+        -------
+        pyvista.widgets.AffineWidget3D
+            The affine widget.
+
+        Notes
+        -----
+        After interacting with the actor, the transform will be stored within
+        :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+        dataset. Use this matrix in conjunction with
+        :func:`pyvista.DataSetFilters.transform` to transform the dataset.
+
+        Examples
+        --------
+        Add the 3d affine widget.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> widget = pl.add_affine_transform_widget(actor)
+        >>> pl.show()
+
+        Access the transform from the actor.
+
+        >>> actor.user_matrix
+        array([[1., 0., 0., 0.],
+               [0., 1., 0., 0.],
+               [0., 0., 1., 0.],
+               [0., 0., 0., 1.]])
+        """
+        return AffineWidget3D(
+            self,
+            actor,
+            origin,
+            start,
+            scale,
+            line_radius,
+            always_visible,
+            axes_colors,
+            axes,
+            release_callback,
+            interact_callback,
+        )
+
     def add_checkbox_button_widget(
         self,
         callback,
@@ -2324,7 +2530,7 @@ class WidgetHelper:
         if self.iren is None:  # pragma: no cover
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
-        def create_button(color1, color2, color3, dims=(size, size, 1)):
+        def create_button(color1, color2, color3, dims=(size, size, 1)):  # numpydoc ignore=GL08
             color1 = np.array(Color(color1).int_rgb)
             color2 = np.array(Color(color2).int_rgb)
             color3 = np.array(Color(color3).int_rgb)
@@ -2390,9 +2596,9 @@ class WidgetHelper:
         --------
         Add a camera orientation widget to the scene.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     mesh, scalars=range(6), show_scalar_bar=False
         ... )

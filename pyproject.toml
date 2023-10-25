@@ -36,7 +36,7 @@ dependencies = [
 dynamic = ['version']
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter,trame]']
+all = ['pyvista[colormaps,io,jupyter]']
 colormaps = [
     'cmocean',
     'colorcet',
@@ -46,22 +46,14 @@ io = [
     'meshio>=5.2'
 ]
 jupyter = [
-    'ipyvtklink',
     'ipywidgets',
     'jupyter-server-proxy',
     'nest_asyncio',
-    'panel',
-    'pythreejs',
     'trame>=2.5.2',
     'trame-client>=2.10.0',
     'trame-server>=2.11.7',
-    'trame-vtk>=2.5.7',
-]
-trame = [
-    'trame>=2.5.2',
-    'trame-client>=2.10.0',
-    'trame-server>=2.11.7',
-    'trame-vtk>=2.5.7',
+    'trame-vtk>=2.5.8',
+    'trame-vuetify>=2.3.1',
 ]
 
 [project.urls]
@@ -165,3 +157,114 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[tool.numpydoc_validation]
+checks = [
+    "all",  # all but the following:
+    "GL01",  # Contradicts numpydoc examples
+    "GL02",  # Permit a blank line after the end of our docstring
+    "GL03",  # Considering enforcing
+    "GL09",  # Deprecation warning should precede extended summary (check broken)
+    "SA01",  # Not all docstrings need a see also
+    "SA04",  # See also section does not need descriptions
+    "SS05",  # Appears to be broken.
+    "ES01",  # Not all docstrings need an extend summary.
+    "EX01",  # Examples: Will eventually enforce
+    "YD01",  # Yields: No plan to enforce
+]
+
+exclude = [  # don't report on objects that match any of these regex
+    '\.BasePlotter$',  # Issue with class parameter documentation
+    '\.Plotter$',  # Issue with class parameter documentation
+    '\.WidgetHelper$',
+    '\.PickingHelper$',
+    '\.from_dict$',
+    '\.to_dict$',
+    '\.__init__$',
+    '\.__new__$',
+    '\.__getattr__$',
+    '\.keys$',
+    '\.values$',
+    '\.items$',
+    '\._.*$',  # Ignore anything that's private (e.g., starts with _)
+    # parm of abstract classes
+    '\._BaseMapper$',
+    '\.CompositeFilters$',
+    '\.DataObject$',
+    '\.DataSet$',
+    '\.DataSetFilters$',
+    '\.ExplicitStructuredGrid$',
+    '\.Grid$',
+    '\.MultiBlock$',
+    '\.PointGrid$',
+    '\.PointSet$',
+    '\.PolyDataFilters$',
+    '\.RectilinearGrid$',
+    '\.StructuredGrid$',
+    '\.Table$',
+    '\.Table\.save$',
+    '\.ImageData$',
+    '\.ImageDataFilters$',
+    '\.UnstructuredGrid$',
+    '\.UnstructuredGridFilters$',
+    # classes inherit from BaseReader
+    '\.*Reader(\.|$)',
+    # internal
+    '\.Renderer$',
+    # deprecated
+    '\.boolean_add$',
+    '\.boolean_cut$',
+    '\.add_field_array$',
+    '\.DataSetAttributes\.append$',
+    # will be removed or refactored
+    '^pv_pythreejs\..*$',
+    '^pv_ipygany\..*$',
+    '^notebook\..*$',
+    # Documentation extensions or utilities
+    '^viewer_directive\..*$',
+    '^plot_directive\..*$',
+    '^coverage\..*$',
+    '\.pv_html_page_context$',
+    # Internal
+    '^observers\..*$',
+    # methods we probably should make private
+    '\.store_click_position$',
+    '\.store_mouse_position$',
+    '\.fly_to_mouse_position$',
+    '\.key_press_event$',
+    '\.left_button_down$',
+    # MISC
+    '\.ActiveArrayInfo$',
+    '\.CellType$',
+    '\.DataObject\.copy_meta_from$',
+    '\.FieldAssociation$',
+    '\.InterpolationType$',
+    '\.RepresentationType$',
+    '\.ElementType$',
+    '\.MultiBlock\.copy_meta_from$',
+    # wraps
+    '\.Plotter\.enable_depth_peeling$',
+    '\.add_scalar_bar$',
+    # called from inherited
+    '\.Table\.copy_meta_from$',
+    # Type alias
+    '\.ColorLike$',
+    '\.Chart$',
+    # PointSet *args and **kwargs for wrapped parameters
+    '\.PointSet(\.|$)',
+    # Mixin methods from collections.abc
+    '\.MultiBlock\.clear$',
+    '\.MultiBlock\.count$',
+    '\.MultiBlock\.index$',
+    '\.MultiBlock\.remove$',
+    # Enumerations
+    '\.Plot3DFunctionEnum$',
+    # VTK methods
+    '\.override$',
+    # trame
+    '\.Viewer(\.|$)',
+    '\.PyVistaRemoteView(\.|$)',
+    '\.PyVistaLocalView(\.|$)',
+    '\.PyVistaRemoteLocalView(\.|$)',
+    '\.Texture(\.|$)',  # awaiting Texture refactor
+]

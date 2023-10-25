@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista import CellType, examples
 from pyvista.core.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
 
@@ -18,7 +18,7 @@ STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
 pointsetmark = pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
 
 
@@ -27,24 +27,24 @@ def test_volume(hexbeam):
 
 
 def test_init_from_polydata(sphere):
-    unstruct_grid = pyvista.UnstructuredGrid(sphere)
+    unstruct_grid = pv.UnstructuredGrid(sphere)
     assert unstruct_grid.n_points == sphere.n_points
     assert unstruct_grid.n_cells == sphere.n_cells
     assert np.all(unstruct_grid.celltypes == 5)
 
 
 def test_init_from_structured(struct_grid):
-    unstruct_grid = pyvista.UnstructuredGrid(struct_grid)
+    unstruct_grid = pv.UnstructuredGrid(struct_grid)
     assert unstruct_grid.points.shape[0] == struct_grid.x.size
     assert np.all(unstruct_grid.celltypes == 12)
 
 
 def test_init_from_unstructured(hexbeam):
-    grid = pyvista.UnstructuredGrid(hexbeam, deep=True)
+    grid = pv.UnstructuredGrid(hexbeam, deep=True)
     grid.points += 1
     assert not np.any(grid.points == hexbeam.points)
 
-    grid = pyvista.UnstructuredGrid(hexbeam)
+    grid = pv.UnstructuredGrid(hexbeam)
     grid.points += 1
     assert np.array_equal(grid.points, hexbeam.points)
 
@@ -82,7 +82,7 @@ def test_init_from_numpy_arrays():
     )
 
     points = np.vstack((cell1, cell2))
-    grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    grid = pv.UnstructuredGrid(cells, cell_type, points)
 
     assert grid.number_of_points == 16
     assert grid.number_of_cells == 2
@@ -90,13 +90,13 @@ def test_init_from_numpy_arrays():
 
 def test_init_bad_input():
     with pytest.raises(TypeError, match="Cannot work with input type"):
-        pyvista.UnstructuredGrid(np.array(1))
+        pv.UnstructuredGrid(np.array(1))
 
     with pytest.raises(TypeError, match="must be a numeric type"):
-        pyvista.UnstructuredGrid(np.array(1), np.array(1), 'woa')
+        pv.UnstructuredGrid(np.array(1), np.array(1), 'woa')
 
     with pytest.raises(TypeError, match="requires the following arrays"):
-        pyvista.UnstructuredGrid(*range(5))
+        pv.UnstructuredGrid(*range(5))
 
 
 def create_hex_example():
@@ -119,7 +119,7 @@ def create_hex_example():
 
 def test_init_from_arrays():
     cells, cell_type, points = create_hex_example()
-    grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
+    grid = pv.UnstructuredGrid(cells, cell_type, points, deep=False)
 
     assert grid.n_cells == 2
     assert np.allclose(cells, grid.cells)
@@ -160,7 +160,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     if flat_cells:
         input_cells_dict = {k: v.reshape([-1]) for k, v in input_cells_dict.items()}
 
-    grid = pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+    grid = pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
     assert np.all(grid.offset == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
@@ -188,7 +188,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     input_cells_dict[CellType.HEXAHEDRON] -= 1
 
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+        pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
     # Restore
     input_cells_dict[CellType.HEXAHEDRON] += 1
@@ -197,33 +197,31 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     input_cells_dict[CellType.HEXAHEDRON].flat[0] = points.shape[0]
 
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+        pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
     input_cells_dict[CellType.HEXAHEDRON] -= 1
 
     # Incorrect size
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid(
-            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False
-        )
+        pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False)
 
     # Unknown cell type
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid({255: cells_hex}, points, deep=False)
+        pv.UnstructuredGrid({255: cells_hex}, points, deep=False)
 
     # Dynamic sizes cell type
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid({CellType.POLYGON: cells_hex.reshape([-1])}, points, deep=False)
+        pv.UnstructuredGrid({CellType.POLYGON: cells_hex.reshape([-1])}, points, deep=False)
 
     # Non-integer arrays
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid(
+        pv.UnstructuredGrid(
             {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points
         )
 
     # Invalid point dimensions
     with pytest.raises(ValueError):
-        pyvista.UnstructuredGrid(input_cells_dict, points[..., :-1])
+        pv.UnstructuredGrid(input_cells_dict, points[..., :-1])
 
 
 def test_init_polyhedron():
@@ -243,15 +241,15 @@ def test_init_polyhedron():
 
     polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
     cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
-    cell_type = np.array([pyvista.CellType.POLYHEDRON])
-    grid = pyvista.UnstructuredGrid(cells, cell_type, nodes)
+    cell_type = np.array([pv.CellType.POLYHEDRON])
+    grid = pv.UnstructuredGrid(cells, cell_type, nodes)
 
     assert grid.n_cells == len(cell_type)
-    assert grid.get_cell(0).type == pyvista.CellType.POLYHEDRON
+    assert grid.get_cell(0).type == pv.CellType.POLYHEDRON
 
 
 def test_cells_dict_hexbeam_file():
-    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
     cells = np.delete(grid.cells, np.arange(0, grid.cells.size, 9)).reshape([-1, 8])
 
     assert np.all(grid.cells_dict[CellType.HEXAHEDRON] == cells)
@@ -261,7 +259,7 @@ def test_cells_dict_variable_length():
     cells_poly = np.concatenate([[5], np.arange(5)])
     cells_types = np.array([CellType.POLYGON])
     points = np.random.normal(size=(5, 3))
-    grid = pyvista.UnstructuredGrid(cells_poly, cells_types, points)
+    grid = pv.UnstructuredGrid(cells_poly, cells_types, points)
 
     # Dynamic sizes cell types are currently unsupported
     with pytest.raises(ValueError):
@@ -274,7 +272,7 @@ def test_cells_dict_variable_length():
 
 
 def test_cells_dict_empty_grid():
-    grid = pyvista.UnstructuredGrid()
+    grid = pv.UnstructuredGrid()
     assert grid.cells_dict is None
 
 
@@ -282,7 +280,7 @@ def test_cells_dict_alternating_cells():
     cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])
     cells_types = np.array([CellType.QUAD, CellType.TRIANGLE, CellType.QUAD])
     points = np.random.normal(size=(3 + 2 * 2, 3))
-    grid = pyvista.UnstructuredGrid(cells, cells_types, points)
+    grid = pv.UnstructuredGrid(cells, cells_types, points)
 
     cells_dict = grid.cells_dict
 
@@ -318,19 +316,19 @@ def test_triangulate_inplace(hexbeam):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.UnstructuredGrid._WRITERS)
+@pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
 
-    grid = pyvista.UnstructuredGrid(filename)
+    grid = pv.UnstructuredGrid(filename)
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
 
-    grid = pyvista.read(filename)
+    grid = pv.read(filename)
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
-    assert isinstance(grid, pyvista.UnstructuredGrid)
+    assert isinstance(grid, pv.UnstructuredGrid)
 
 
 def test_pathlib_read_write(tmpdir, hexbeam):
@@ -339,28 +337,28 @@ def test_pathlib_read_write(tmpdir, hexbeam):
     hexbeam.save(path)
     assert path.is_file()
 
-    grid = pyvista.UnstructuredGrid(path)
+    grid = pv.UnstructuredGrid(path)
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
 
-    grid = pyvista.read(path)
+    grid = pv.read(path)
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
-    assert isinstance(grid, pyvista.UnstructuredGrid)
+    assert isinstance(grid, pv.UnstructuredGrid)
 
 
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
     with pytest.raises(IOError):
-        pyvista.UnstructuredGrid(filename)
+        pv.UnstructuredGrid(filename)
 
     with pytest.raises(FileNotFoundError):
-        pyvista.UnstructuredGrid('not a file')
+        pv.UnstructuredGrid('not a file')
 
 
 def test_save_bad_extension():
     with pytest.raises(FileNotFoundError):
-        pyvista.UnstructuredGrid('file.abc')
+        pv.UnstructuredGrid('file.abc')
 
 
 def test_linear_copy(hexbeam):
@@ -394,13 +392,13 @@ def test_linear_copy_surf_elem():
     ]
 
     points = np.vstack((cell0, cell1))
-    grid = pyvista.UnstructuredGrid(cells, celltypes, points, deep=False)
+    grid = pv.UnstructuredGrid(cells, celltypes, points, deep=False)
     lgrid = grid.linear_copy()
 
     qfilter = vtk.vtkMeshQuality()
     qfilter.SetInputData(lgrid)
     qfilter.Update()
-    qual = pyvista.wrap(qfilter.GetOutput())['Quality']
+    qual = pv.wrap(qfilter.GetOutput())['Quality']
     assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
@@ -463,9 +461,9 @@ def test_merge_invalid(hexbeam, sphere):
 
 def test_init_structured_raise():
     with pytest.raises(TypeError, match="Invalid parameters"):
-        pyvista.StructuredGrid(['a', 'b', 'c'])
+        pv.StructuredGrid(['a', 'b', 'c'])
     with pytest.raises(ValueError, match="Too many args"):
-        pyvista.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
+        pv.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 
 def test_init_structured(struct_grid):
@@ -473,16 +471,16 @@ def test_init_structured(struct_grid):
     yrng = np.arange(-10, 10, 2, dtype=np.float32)
     zrng = np.arange(-10, 10, 2, dtype=np.float32)
     x, y, z = np.meshgrid(xrng, yrng, zrng)
-    grid = pyvista.StructuredGrid(x, y, z)
+    grid = pv.StructuredGrid(x, y, z)
     assert np.allclose(struct_grid.x, x)
     assert np.allclose(struct_grid.y, y)
     assert np.allclose(struct_grid.z, z)
 
-    grid_a = pyvista.StructuredGrid(grid, deep=True)
+    grid_a = pv.StructuredGrid(grid, deep=True)
     grid_a.points += 1
     assert not np.any(grid_a.points == grid.points)
 
-    grid_a = pyvista.StructuredGrid(grid)
+    grid_a = pv.StructuredGrid(grid)
     grid_a.points += 1
     assert np.array_equal(grid_a.points, grid.points)
 
@@ -503,7 +501,7 @@ def structured_points():
 
 def test_no_copy_polydata_init():
     source = np.random.rand(100, 3)
-    mesh = pyvista.PolyData(source)
+    mesh = pv.PolyData(source)
     pts = mesh.points
     pts /= 2
     assert np.array_equal(mesh.points, pts)
@@ -514,7 +512,7 @@ def test_no_copy_polydata_init():
 
 def test_no_copy_polydata_points_setter():
     source = np.random.rand(100, 3)
-    mesh = pyvista.PolyData()
+    mesh = pv.PolyData()
     mesh.points = source
     pts = mesh.points
     pts /= 2
@@ -526,7 +524,7 @@ def test_no_copy_polydata_points_setter():
 
 def test_no_copy_structured_mesh_init(structured_points):
     source, dims = structured_points
-    mesh = pyvista.StructuredGrid(source)
+    mesh = pv.StructuredGrid(source)
     mesh.dimensions = dims
     pts = mesh.points
     pts /= 2
@@ -538,7 +536,7 @@ def test_no_copy_structured_mesh_init(structured_points):
 
 def test_no_copy_structured_mesh_points_setter(structured_points):
     source, dims = structured_points
-    mesh = pyvista.StructuredGrid()
+    mesh = pv.StructuredGrid()
     mesh.points = source
     mesh.dimensions = dims
     pts = mesh.points
@@ -552,7 +550,7 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
 @pointsetmark
 def test_no_copy_pointset_init():
     source = np.random.rand(100, 3)
-    mesh = pyvista.PointSet(source)
+    mesh = pv.PointSet(source)
     pts = mesh.points
     pts /= 2
     assert np.array_equal(mesh.points, pts)
@@ -564,7 +562,7 @@ def test_no_copy_pointset_init():
 @pointsetmark
 def test_no_copy_pointset_points_setter():
     source = np.random.rand(100, 3)
-    mesh = pyvista.PointSet()
+    mesh = pv.PointSet()
     mesh.points = source
     pts = mesh.points
     pts /= 2
@@ -576,7 +574,7 @@ def test_no_copy_pointset_points_setter():
 
 def test_no_copy_unstructured_grid_points_setter():
     source = np.random.rand(100, 3)
-    mesh = pyvista.UnstructuredGrid()
+    mesh = pv.UnstructuredGrid()
     mesh.points = source
     pts = mesh.points
     pts /= 2
@@ -590,7 +588,7 @@ def test_no_copy_rectilinear_grid():
     xrng = np.arange(-10, 10, 2, dtype=float)
     yrng = np.arange(-10, 10, 5, dtype=float)
     zrng = np.arange(-10, 10, 1, dtype=float)
-    mesh = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    mesh = pv.RectilinearGrid(xrng, yrng, zrng)
     x = mesh.x
     x /= 2
     assert np.array_equal(mesh.x, x)
@@ -646,34 +644,34 @@ def test_invalid_init_structured():
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     z = z[:, :, :2]
     with pytest.raises(ValueError):
-        pyvista.StructuredGrid(x, y, z)
+        pv.StructuredGrid(x, y, z)
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.StructuredGrid._WRITERS)
+@pytest.mark.parametrize('extension', pv.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)
 
-    grid = pyvista.StructuredGrid(filename)
+    grid = pv.StructuredGrid(filename)
     assert grid.x.shape == struct_grid.y.shape
     assert grid.n_cells
     assert grid.points.shape == struct_grid.points.shape
 
-    grid = pyvista.read(filename)
+    grid = pv.read(filename)
     assert grid.x.shape == struct_grid.y.shape
     assert grid.n_cells
     assert grid.points.shape == struct_grid.points.shape
-    assert isinstance(grid, pyvista.StructuredGrid)
+    assert isinstance(grid, pv.StructuredGrid)
 
 
 def test_load_structured_bad_filename():
     with pytest.raises(FileNotFoundError):
-        pyvista.StructuredGrid('not a file')
+        pv.StructuredGrid('not a file')
 
     filename = os.path.join(test_path, 'test_grid.py')
     with pytest.raises(IOError):
-        pyvista.StructuredGrid(filename)
+        pv.StructuredGrid(filename)
 
 
 def test_instantiate_by_filename():
@@ -681,19 +679,19 @@ def test_instantiate_by_filename():
 
     # actual mapping of example file to datatype
     fname_to_right_type = {
-        ex.antfile: pyvista.PolyData,
-        ex.planefile: pyvista.PolyData,
-        ex.hexbeamfile: pyvista.UnstructuredGrid,
-        ex.spherefile: pyvista.PolyData,
-        ex.uniformfile: pyvista.ImageData,
-        ex.rectfile: pyvista.RectilinearGrid,
+        ex.antfile: pv.PolyData,
+        ex.planefile: pv.PolyData,
+        ex.hexbeamfile: pv.UnstructuredGrid,
+        ex.spherefile: pv.PolyData,
+        ex.uniformfile: pv.ImageData,
+        ex.rectfile: pv.RectilinearGrid,
     }
 
     # a few combinations of wrong type
     fname_to_wrong_type = {
-        ex.antfile: pyvista.UnstructuredGrid,  # actual data is PolyData
-        ex.planefile: pyvista.StructuredGrid,  # actual data is PolyData
-        ex.rectfile: pyvista.UnstructuredGrid,  # actual data is StructuredGrid
+        ex.antfile: pv.UnstructuredGrid,  # actual data is PolyData
+        ex.planefile: pv.StructuredGrid,  # actual data is PolyData
+        ex.rectfile: pv.UnstructuredGrid,  # actual data is StructuredGrid
     }
 
     # load the files into the right types
@@ -712,13 +710,13 @@ def test_create_rectilinear_grid_from_specs():
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 5)
     zrng = np.arange(-10, 10, 1)
-    grid = pyvista.RectilinearGrid(xrng)
+    grid = pv.RectilinearGrid(xrng)
     assert grid.n_cells == 9
     assert grid.n_points == 10
-    grid = pyvista.RectilinearGrid(xrng, yrng)
+    grid = pv.RectilinearGrid(xrng, yrng)
     assert grid.n_cells == 9 * 3
     assert grid.n_points == 10 * 4
-    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    grid = pv.RectilinearGrid(xrng, yrng, zrng)
     assert grid.n_cells == 9 * 3 * 19
     assert grid.n_points == 10 * 4 * 20
     assert grid.bounds == (-10.0, 8.0, -10.0, 5.0, -10.0, 9.0)
@@ -727,13 +725,13 @@ def test_create_rectilinear_grid_from_specs():
     xrng = [0, 1]
     yrng = [0, 1, 2]
     zrng = [0, 1, 2, 3]
-    grid = pyvista.RectilinearGrid(xrng)
+    grid = pv.RectilinearGrid(xrng)
     assert grid.n_cells == 1
     assert grid.n_points == 2
-    grid = pyvista.RectilinearGrid(xrng, yrng)
+    grid = pv.RectilinearGrid(xrng, yrng)
     assert grid.n_cells == 2
     assert grid.n_points == 6
-    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    grid = pv.RectilinearGrid(xrng, yrng, zrng)
     assert grid.n_cells == 6
     assert grid.n_points == 24
 
@@ -741,7 +739,7 @@ def test_create_rectilinear_grid_from_specs():
     cell_spacings = np.array([1.0, 1.0, 2.0, 2.0, 5.0, 10.0])
     x_coordinates = np.cumsum(cell_spacings)
     y_coordinates = np.cumsum(cell_spacings)
-    grid = pyvista.RectilinearGrid(x_coordinates, y_coordinates)
+    grid = pv.RectilinearGrid(x_coordinates, y_coordinates)
     assert grid.n_cells == 5 * 5
     assert grid.n_points == 6 * 6
     assert grid.bounds == (1.0, 21.0, 1.0, 21.0, 0.0, 0.0)
@@ -751,7 +749,7 @@ def test_create_rectilinear_after_init():
     x = np.array([0, 1, 2])
     y = np.array([0, 5, 8])
     z = np.array([3, 2, 1])
-    grid = pyvista.RectilinearGrid()
+    grid = pv.RectilinearGrid()
     grid.x = x
     assert grid.dimensions == (3, 1, 1)
     grid.y = y
@@ -772,7 +770,7 @@ def test_create_rectilinear_grid_from_file():
 
 
 def test_read_rectilinear_grid_from_file():
-    grid = pyvista.read(examples.rectfile)
+    grid = pv.read(examples.rectfile)
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
@@ -780,7 +778,7 @@ def test_read_rectilinear_grid_from_file():
 
 
 def test_read_rectilinear_grid_from_pathlib():
-    grid = pyvista.RectilinearGrid(pathlib.Path(examples.rectfile))
+    grid = pv.RectilinearGrid(pathlib.Path(examples.rectfile))
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
@@ -791,17 +789,17 @@ def test_raise_rectilinear_grid_non_unique():
     rng_uniq = np.arange(4.0)
     rng_dupe = np.array([0, 1, 2, 2], dtype=float)
     with pytest.raises(ValueError, match="Array contains duplicate values"):
-        pyvista.RectilinearGrid(rng_dupe, check_duplicates=True)
+        pv.RectilinearGrid(rng_dupe, check_duplicates=True)
     with pytest.raises(ValueError, match="Array contains duplicate values"):
-        pyvista.RectilinearGrid(rng_uniq, rng_dupe, check_duplicates=True)
+        pv.RectilinearGrid(rng_uniq, rng_dupe, check_duplicates=True)
     with pytest.raises(ValueError, match="Array contains duplicate values"):
-        pyvista.RectilinearGrid(rng_uniq, rng_uniq, rng_dupe, check_duplicates=True)
+        pv.RectilinearGrid(rng_uniq, rng_uniq, rng_dupe, check_duplicates=True)
 
 
 def test_cast_rectilinear_grid():
-    grid = pyvista.read(examples.rectfile)
+    grid = pv.read(examples.rectfile)
     structured = grid.cast_to_structured_grid()
-    assert isinstance(structured, pyvista.StructuredGrid)
+    assert isinstance(structured, pv.StructuredGrid)
     assert structured.n_points == grid.n_points
     assert structured.n_cells == grid.n_cells
     assert np.allclose(structured.points, grid.points)
@@ -813,11 +811,11 @@ def test_cast_rectilinear_grid():
 
 def test_create_image_data_from_specs():
     # empty
-    grid = pyvista.ImageData()
+    grid = pv.ImageData()
 
     # create ImageData
     dims = (10, 10, 10)
-    grid = pyvista.ImageData(dimensions=dims)  # Using default spacing and origin
+    grid = pv.ImageData(dimensions=dims)  # Using default spacing and origin
     assert grid.dimensions == dims
     assert grid.extent == (0, 9, 0, 9, 0, 9)
     assert grid.origin == (0.0, 0.0, 0.0)
@@ -825,27 +823,27 @@ def test_create_image_data_from_specs():
 
     # Using default origin
     spacing = (2, 1, 5)
-    grid = pyvista.ImageData(dimensions=dims, spacing=spacing)
+    grid = pv.ImageData(dimensions=dims, spacing=spacing)
     assert grid.dimensions == dims
     assert grid.origin == (0.0, 0.0, 0.0)
     assert grid.spacing == spacing
     origin = (10, 35, 50)
 
     # Everything is specified
-    grid = pyvista.ImageData(dimensions=dims, spacing=spacing, origin=origin)
+    grid = pv.ImageData(dimensions=dims, spacing=spacing, origin=origin)
     assert grid.dimensions == dims
     assert grid.origin == origin
     assert grid.spacing == spacing
 
     # ensure negative spacing is not allowed
     with pytest.raises(ValueError, match="Spacing must be non-negative"):
-        grid = pyvista.ImageData(dimensions=dims, spacing=(-1, 1, 1))
+        grid = pv.ImageData(dimensions=dims, spacing=(-1, 1, 1))
 
     # all args (deprecated)
     with pytest.warns(
         PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
     ):
-        grid = pyvista.ImageData(dims, origin, spacing)
+        grid = pv.ImageData(dims, origin, spacing)
         assert grid.dimensions == dims
         assert grid.origin == origin
         assert grid.spacing == spacing
@@ -854,62 +852,20 @@ def test_create_image_data_from_specs():
     with pytest.warns(
         PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
     ):
-        grid = pyvista.ImageData(dims)
+        grid = pv.ImageData(dims)
         assert grid.dimensions == dims
 
     with pytest.warns(
         PyVistaDeprecationWarning,
         match='`dims` argument is deprecated. Please use `dimensions`.',
     ):
-        grid = pyvista.ImageData(dims=dims)
+        grid = pv.ImageData(dims=dims)
     with pytest.raises(TypeError):
-        grid = pyvista.ImageData(dimensions=dims, dims=dims)
+        grid = pv.ImageData(dimensions=dims, dims=dims)
 
     # uniform grid from a uniform grid
-    grid = pyvista.ImageData(dimensions=dims, spacing=spacing, origin=origin)
-    grid_from_grid = pyvista.ImageData(grid)
-    assert grid == grid_from_grid
-
-    # and is a copy
-    grid.origin = (0, 0, 0)
-    assert grid != grid_from_grid
-
-
-def test_create_uniform_grid_from_specs():
-    # empty
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pyvista.UniformGrid()
-
-    # create ImageData
-    dims = (10, 10, 10)
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pyvista.UniformGrid(dimensions=dims)  # Using default spacing and origin
-    assert grid.dimensions == dims
-    assert grid.extent == (0, 9, 0, 9, 0, 9)
-    assert grid.origin == (0.0, 0.0, 0.0)
-    assert grid.spacing == (1.0, 1.0, 1.0)
-
-    # Using default origin
-    spacing = (2, 1, 5)
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing)
-    assert grid.dimensions == dims
-    assert grid.origin == (0.0, 0.0, 0.0)
-    assert grid.spacing == spacing
-    origin = (10, 35, 50)
-
-    # Everything is specified
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
-    assert grid.dimensions == dims
-    assert grid.origin == origin
-    assert grid.spacing == spacing
-
-    # uniform grid from a uniform grid
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid = pyvista.UniformGrid(dimensions=dims, spacing=spacing, origin=origin)
-    with pytest.warns(PyVistaDeprecationWarning):
-        grid_from_grid = pyvista.UniformGrid(grid)
+    grid = pv.ImageData(dimensions=dims, spacing=spacing, origin=origin)
+    grid_from_grid = pv.ImageData(grid)
     assert grid == grid_from_grid
 
     # and is a copy
@@ -921,14 +877,14 @@ def test_image_data_invald_args():
     with pytest.warns(
         PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
     ):
-        pyvista.ImageData((1, 1, 1))
+        pv.ImageData((1, 1, 1))
 
     with pytest.raises(TypeError):
-        pyvista.ImageData(1)
+        pv.ImageData(1)
 
 
 def test_uniform_setters():
-    grid = pyvista.ImageData()
+    grid = pv.ImageData()
     grid.dimensions = (10, 10, 10)
     assert grid.GetDimensions() == (10, 10, 10)
     assert grid.dimensions == (10, 10, 10)
@@ -950,7 +906,7 @@ def test_create_image_data_from_file():
 
 
 def test_read_image_data_from_file():
-    grid = pyvista.read(examples.uniformfile)
+    grid = pv.read(examples.uniformfile)
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
@@ -959,7 +915,7 @@ def test_read_image_data_from_file():
 
 
 def test_read_image_data_from_pathlib():
-    grid = pyvista.ImageData(pathlib.Path(examples.uniformfile))
+    grid = pv.ImageData(pathlib.Path(examples.uniformfile))
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
@@ -984,13 +940,13 @@ def test_cast_uniform_to_rectilinear():
 
 
 def test_image_data_to_tetrahedra():
-    grid = pyvista.ImageData(dimensions=(2, 2, 2))
+    grid = pv.ImageData(dimensions=(2, 2, 2))
     ugrid = grid.to_tetrahedra()
     assert ugrid.n_cells == 5
 
 
 def test_fft_and_rfft(noise_2d):
-    grid = pyvista.ImageData(dimensions=(10, 10, 1))
+    grid = pv.ImageData(dimensions=(10, 10, 1))
     with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
@@ -1060,14 +1016,14 @@ def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
-    grid = pyvista.RectilinearGrid(filename)
+    grid = pv.RectilinearGrid(filename)
     assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
     assert np.allclose(grid.y, ogrid.y)
     assert np.allclose(grid.z, ogrid.z)
     assert grid.dimensions == ogrid.dimensions
-    grid = pyvista.read(filename)
-    assert isinstance(grid, pyvista.RectilinearGrid)
+    grid = pv.read(filename)
+    assert isinstance(grid, pv.RectilinearGrid)
     assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
     assert np.allclose(grid.y, ogrid.y)
@@ -1081,13 +1037,13 @@ def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
-    grid = pyvista.ImageData(filename)
+    grid = pv.ImageData(filename)
     assert grid.n_cells == ogrid.n_cells
     assert grid.origin == ogrid.origin
     assert grid.spacing == ogrid.spacing
     assert grid.dimensions == ogrid.dimensions
-    grid = pyvista.read(filename)
-    assert isinstance(grid, pyvista.ImageData)
+    grid = pv.read(filename)
+    assert isinstance(grid, pv.ImageData)
     assert grid.n_cells == ogrid.n_cells
     assert grid.origin == ogrid.origin
     assert grid.spacing == ogrid.spacing
@@ -1101,7 +1057,7 @@ def test_grid_points():
     z = [0]
     xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
     points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
-    grid = pyvista.ImageData()
+    grid = pv.ImageData()
     with pytest.raises(AttributeError):
         grid.points = points
     grid.origin = (0.0, 0.0, 0.0)
@@ -1114,7 +1070,7 @@ def test_grid_points():
     points = np.array(
         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]
     )
-    grid = pyvista.ImageData()
+    grid = pv.ImageData()
     grid.dimensions = [2, 2, 2]
     grid.spacing = [1, 1, 1]
     grid.origin = [0.0, 0.0, 0.0]
@@ -1123,7 +1079,7 @@ def test_grid_points():
     assert np.allclose(np.unique(opts, axis=0), np.unique(points, axis=0))
 
     # Now test rectilinear grid
-    grid = pyvista.RectilinearGrid()
+    grid = pv.RectilinearGrid()
     with pytest.raises(AttributeError):
         grid.points = points
     x, y, z = np.array([0, 1, 3]), np.array([0, 2.5, 5]), np.array([0, 1])
@@ -1139,7 +1095,7 @@ def test_grid_points():
 
 
 def test_grid_extract_selection_points(struct_grid):
-    grid = pyvista.UnstructuredGrid(struct_grid)
+    grid = pv.UnstructuredGrid(struct_grid)
     sub_grid = grid.extract_points([0])
     assert sub_grid.n_cells == 1
 
@@ -1207,7 +1163,7 @@ def test_hide_points(ind, struct_grid):
 
 
 def test_set_extent():
-    uni_grid = pyvista.ImageData(dimensions=[10, 10, 10])
+    uni_grid = pv.ImageData(dimensions=[10, 10, 10])
     with pytest.raises(ValueError):
         uni_grid.extent = [0, 1]
 
@@ -1233,7 +1189,7 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
 
 def test_ExplicitStructuredGrid_init():
     grid = examples.load_explicit_structured()
-    assert isinstance(grid, pyvista.ExplicitStructuredGrid)
+    assert isinstance(grid, pv.ExplicitStructuredGrid)
     assert grid.n_cells == 120
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
@@ -1279,7 +1235,7 @@ def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
 
     grid = examples.load_explicit_structured()
     grid = grid.cast_to_unstructured_grid()
-    assert isinstance(grid, pyvista.UnstructuredGrid)
+    assert isinstance(grid, pv.UnstructuredGrid)
     assert 'BLOCK_I' in grid.cell_data
     assert 'BLOCK_J' in grid.cell_data
     assert 'BLOCK_K' in grid.cell_data
@@ -1292,7 +1248,7 @@ def test_ExplicitStructuredGrid_save():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
     grid.save('grid.vtu')
-    grid = pyvista.ExplicitStructuredGrid('grid.vtu')
+    grid = pv.ExplicitStructuredGrid('grid.vtu')
     assert grid.n_cells == 120
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
@@ -1315,7 +1271,7 @@ def test_ExplicitStructuredGrid_hide_cells():
     grid = examples.load_explicit_structured()
 
     copy = grid.hide_cells(range(80, 120))
-    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert isinstance(copy, pv.ExplicitStructuredGrid)
     assert 'vtkGhostType' in copy.cell_data
     assert 'vtkGhostType' not in grid.cell_data
     assert np.array_equal(copy.cell_data['vtkGhostType'], ghost)
@@ -1331,7 +1287,7 @@ def test_ExplicitStructuredGrid_show_cells():
     grid.hide_cells(range(80, 120), inplace=True)
 
     copy = grid.show_cells()
-    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert isinstance(copy, pv.ExplicitStructuredGrid)
     assert 'vtkGhostType' in copy.cell_data
     assert np.count_nonzero(copy.cell_data['vtkGhostType']) == 0
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
@@ -1420,7 +1376,7 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     assert 'ConnectivityFlags' not in grid.cell_data
 
     copy = grid.compute_connectivity()
-    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert isinstance(copy, pv.ExplicitStructuredGrid)
     assert 'ConnectivityFlags' in copy.cell_data
     assert 'ConnectivityFlags' not in grid.cell_data
     assert np.array_equal(copy.cell_data['ConnectivityFlags'], connectivity)
@@ -1446,7 +1402,7 @@ def test_ExplicitStructuredGrid_compute_connections():
     assert 'number_of_connections' not in grid.cell_data
 
     copy = grid.compute_connections()
-    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert isinstance(copy, pv.ExplicitStructuredGrid)
     assert 'number_of_connections' in copy.cell_data
     assert 'number_of_connections' not in grid.cell_data
     assert np.array_equal(copy.cell_data['number_of_connections'], connections)
@@ -1458,7 +1414,7 @@ def test_ExplicitStructuredGrid_compute_connections():
 
 def test_ExplicitStructuredGrid_raise_init():
     with pytest.raises(ValueError, match="Too many args"):
-        pyvista.ExplicitStructuredGrid(1, 2, True)
+        pv.ExplicitStructuredGrid(1, 2, True)
 
 
 def test_copy_no_copy_wrap_object(datasets):
@@ -1481,7 +1437,7 @@ def test_copy_no_copy_wrap_object(datasets):
 
 def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
     for dataset in datasets_vtk9:
-        # different dataset tyoes have different copy behavior for points
+        # different dataset types have different copy behavior for points
         # use point data which is common
         dataset["data"] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset)
@@ -1489,7 +1445,7 @@ def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
         assert np.array_equal(new_dataset["data"], dataset["data"])
 
     for dataset in datasets_vtk9:
-        # different dataset tyoes have different copy behavior for points
+        # different dataset types have different copy behavior for points
         # use point data which is common
         dataset["data"] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset, deep=True)

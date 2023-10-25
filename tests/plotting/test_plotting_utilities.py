@@ -4,7 +4,7 @@ from PIL import Image, ImageSequence
 import numpy as np
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
@@ -33,7 +33,7 @@ def test_gpuinfo():
 
 @pytest.mark.skip_plotting
 def test_ray_trace_plot():
-    sphere = pyvista.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
         [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
     )
@@ -43,7 +43,7 @@ def test_ray_trace_plot():
 
 @pytest.mark.skip_plotting
 def test_plot_curvature(skip_check_gc):
-    sphere = pyvista.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
@@ -56,20 +56,20 @@ def test_plot_curvature_pointset(skip_check_gc):
 @pytest.mark.skip_plotting
 def test_plot_boundaries():
     # make sure to plot an object that has boundaries
-    pyvista.Cube().plot_boundaries(off_screen=True)
+    pv.Cube().plot_boundaries(off_screen=True)
 
 
 @pytest.mark.skip_plotting
 @pytest.mark.parametrize('flip', [True, False])
 @pytest.mark.parametrize('faces', [True, False])
 def test_plot_normals(flip, faces):
-    sphere = pyvista.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
 
 
 def test_get_sg_image_scraper():
-    scraper = pyvista._get_sg_image_scraper()
-    assert isinstance(scraper, pyvista.Scraper)
+    scraper = pv._get_sg_image_scraper()
+    assert isinstance(scraper, pv.Scraper)
     assert callable(scraper)
 
 
@@ -83,17 +83,17 @@ def test_skybox(tmpdir):
         image.save(filename)
         filenames.append(filename)
 
-    skybox = pyvista.cubemap(path)
-    assert isinstance(skybox, pyvista.Texture)
+    skybox = pv.cubemap(path)
+    assert isinstance(skybox, pv.Texture)
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
-        pyvista.cubemap('')
+        pv.cubemap('')
 
-    skybox = pyvista.cubemap_from_filenames(filenames)
-    assert isinstance(skybox, pyvista.Texture)
+    skybox = pv.cubemap_from_filenames(filenames)
+    assert isinstance(skybox, pv.Texture)
 
     with pytest.raises(ValueError, match='must contain 6 paths'):
-        pyvista.cubemap_from_filenames(image_paths=['/path'])
+        pv.cubemap_from_filenames(image_paths=['/path'])
 
 
 def test_view_vectors():
@@ -114,10 +114,10 @@ def test_view_vectors():
 def gif_file(tmpdir):
     filename = str(tmpdir.join('sample.gif'))
 
-    pl = pyvista.Plotter(window_size=(300, 200))
+    pl = pv.Plotter(window_size=(300, 200))
     pl.open_gif(filename, palettesize=16, fps=1)
 
-    mesh = pyvista.Sphere()
+    mesh = pv.Sphere()
     opacity = mesh.points[:, 0]
     opacity -= opacity.min()
     opacity /= opacity.max()
@@ -134,8 +134,8 @@ def gif_file(tmpdir):
 
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_gif_reader(gif_file):
-    reader = pyvista.get_reader(gif_file)
-    assert isinstance(reader, pyvista.GIFReader)
+    reader = pv.get_reader(gif_file)
+    assert isinstance(reader, pv.GIFReader)
     assert reader.path == gif_file
     reader.show_progress()
 
@@ -143,7 +143,7 @@ def test_gif_reader(gif_file):
     assert grid.n_arrays == 3
 
     img = Image.open(gif_file)
-    new_grid = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
+    new_grid = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):

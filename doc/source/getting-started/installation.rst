@@ -1,4 +1,4 @@
-.. _install_ref:
+.. _install:
 
 Installation
 ============
@@ -33,7 +33,6 @@ PyVista includes several optional dependencies for visualization and reading a v
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
 * `trame <https://github.com/Kitware/trame>`_ - Used for client and server-side rendering in Jupyter.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
-* `pythreejs <https://pythreejs.readthedocs.io/en/stable/>`_ - Jupyter widgets based notebook extension that allows Jupyter to leverage the WebGL capabilities of modern browsers.
 
 
 PyPI
@@ -215,7 +214,7 @@ time your Docker container is launched:
 
 All you have to do next is include PyVista in your Python requirements and you
 can get to visualizing your data. If you need more help than this on setting up
-PyVista for these types of services, hop on Slack and chat with the developers
+PyVista for these types of services, hop on Discussions page and chat with the developers
 or take a look at `this repository`_ that is currently using PyVista on
 MyBinder.
 
@@ -319,34 +318,6 @@ should be displayed in JupyterLab.
 .. code-block:: python
 
     import pyvista
-    pl = pyvista.Plotter(shape=(1, 2))
-    actor = pl.add_mesh(pyvista.Cube())
-    pl.subplot(0, 1)
-    actor = pl.add_mesh(pyvista.Sphere())
-    pl.set_background('orange', all_renderers=False)
-    pl.show()
-
-Your visualizations should now be showing directly in the Jupyter frontend.
-
-PyThreeJS Rendering in Jupyter
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The second option is to change the ``PyVista`` backend to use
-``pythreejs``.
-
-To do this, first launch the Jupyter server:
-
-.. code-block:: bash
-
-    jupyter lab --NotebookApp.token='' --no-browser --port=8888
-
-Visit ``localhost:8888`` in the web browser.
-
-Finally change the PyVista backend to a web visualization library: ``pythreejs``.
-
-.. code-block:: python
-
-    import pyvista
-    pyvista.global_theme.jupyter_backend='pythreejs'
     pl = pyvista.Plotter(shape=(1, 2))
     actor = pl.add_mesh(pyvista.Cube())
     pl.subplot(0, 1)

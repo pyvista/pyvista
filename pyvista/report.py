@@ -10,7 +10,14 @@ from vtkmodules.vtkCommonCore import vtkVersion
 
 
 def VTKVersionInfo():
-    """Return the vtk version as a namedtuple."""
+    """Return the vtk version as a namedtuple.
+
+    Returns
+    -------
+    collections.namedtuple
+        Version information as a named tuple.
+
+    """
     version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
 
     try:
@@ -39,7 +46,7 @@ plotter.close()\
 """
 
 
-def get_gpu_info():
+def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
     proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
@@ -55,7 +62,7 @@ class GPUInfo:
         self._gpu_info = get_gpu_info()
 
     @property
-    def renderer(self):
+    def renderer(self):  # numpydoc ignore=RT01
         """GPU renderer name."""
         regex = re.compile("OpenGL renderer string:(.+)\n")
         try:
@@ -65,7 +72,7 @@ class GPUInfo:
         return renderer.strip()
 
     @property
-    def version(self):
+    def version(self):  # numpydoc ignore=RT01
         """GPU renderer version."""
         regex = re.compile("OpenGL version string:(.+)\n")
         try:
@@ -75,7 +82,7 @@ class GPUInfo:
         return version.strip()
 
     @property
-    def vendor(self):
+    def vendor(self):  # numpydoc ignore=RT01
         """GPU renderer vendor."""
         regex = re.compile("OpenGL vendor string:(.+)\n")
         try:
@@ -85,7 +92,14 @@ class GPUInfo:
         return vendor.strip()
 
     def get_info(self):
-        """All GPU information as tuple pairs."""
+        """All GPU information as tuple pairs.
+
+        Returns
+        -------
+        tuple
+            Tuples of ``(key, info)``.
+
+        """
         return [
             ("GPU Vendor", self.vendor),
             ("GPU Renderer", self.renderer),
@@ -162,12 +176,10 @@ class Report(scooby.Report):
                IPython : 7.31.0
               colorcet : 3.0.1
                cmocean : 2.0
-            ipyvtklink : 0.2.3
                  scipy : 1.9.1
                   tqdm : 4.64.1
                 meshio : 5.3.4
             jupyterlab : 3.4.7
-             pythreejs : Version unknown
 
     """
 
@@ -176,7 +188,7 @@ class Report(scooby.Report):
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch']
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
         # Optional packages.
         optional = [
@@ -186,18 +198,17 @@ class Report(scooby.Report):
             'IPython',
             'colorcet',
             'cmocean',
-            'ipyvtklink',
             'ipywidgets',
             'scipy',
             'tqdm',
             'meshio',
             'jupyterlab',
-            'pythreejs',
             'pytest_pyvista',
             'trame',
             'trame_client',
             'trame_server',
             'trame_vtk',
+            'trame_vuetify',
             'jupyter_server_proxy',
             'nest_asyncio',
         ]

@@ -7,10 +7,12 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
 import numpy as np
+import pytest
 from pytest import fixture, mark, raises
 
-import pyvista
-from pyvista.core.utilities.arrays import FieldAssociation
+import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.arrays import FieldAssociation, convert_array
 
 skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = mark.skipif(
@@ -54,7 +56,7 @@ def insert_string_array(hexbeam_point_attributes):
 
 
 def test_init(hexbeam):
-    attributes = pyvista.DataSetAttributes(
+    attributes = pv.DataSetAttributes(
         hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT
     )
     assert attributes.VTKObject == hexbeam.GetPointData()
@@ -148,7 +150,7 @@ def test_set_scalars(sphere):
 
 
 def test_eq(sphere):
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
     sphere.clear_data()
 
     # check wrong type
@@ -178,6 +180,22 @@ def test_add_matrix(hexbeam):
     hexbeam.point_data.set_array(mat, 'mat')
     matout = hexbeam.point_data['mat'].reshape(mat_shape)
     assert np.allclose(mat, matout)
+
+
+def test_set_fails_with_wrong_shape(hexbeam):
+    with raises(ValueError):
+        hexbeam['foo'] = [1, 2, 3]
+    with raises(ValueError):
+        hexbeam.point_data['foo'] = [1, 2, 3]
+    with raises(ValueError):
+        hexbeam.cell_data['foo'] = [1, 2, 3]
+
+    # Use vtk methods directly to add bad data. This can simulate
+    # cases where buggy vtk methods may set arrays with incorrect shape
+    bad_data = convert_array([1, 2, 3], 'foo')
+    hexbeam.cell_data.VTKObject.AddArray(bad_data)
+    with raises(ValueError):
+        hexbeam.cell_data['foo'] = hexbeam.cell_data['foo']
 
 
 def test_set_active_scalars_fail(hexbeam):
@@ -212,15 +230,15 @@ def test_set_invalid_vectors(hexbeam):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
 
 
-def test_set_tcoords_name():
-    mesh = pyvista.Cube()
-    old_name = mesh.point_data.active_t_coords_name
-    assert mesh.point_data.active_t_coords_name is not None
-    mesh.point_data.active_t_coords_name = None
-    assert mesh.point_data.active_t_coords_name is None
+def test_set_texture_coordinates_name():
+    mesh = pv.Cube()
+    old_name = mesh.point_data.active_texture_coordinates_name
+    assert mesh.point_data.active_texture_coordinates_name is not None
+    mesh.point_data.active_texture_coordinates_name = None
+    assert mesh.point_data.active_texture_coordinates_name is None
 
-    mesh.point_data.active_t_coords_name = old_name
-    assert mesh.point_data.active_t_coords_name == old_name
+    mesh.point_data.active_texture_coordinates_name = old_name
+    assert mesh.point_data.active_texture_coordinates_name == old_name
 
 
 def test_set_bitarray(hexbeam):
@@ -436,7 +454,7 @@ def test_length_should_be_0_on_clear(insert_arange_narray):
 def test_keys_should_be_strings(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for name in dsa.keys():
-        assert type(name) == str
+        assert type(name) is str
 
 
 def test_key_should_exist(insert_arange_narray):
@@ -447,7 +465,7 @@ def test_key_should_exist(insert_arange_narray):
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for arr in dsa.values():
-        assert type(arr) == pyvista.pyvista_ndarray
+        assert type(arr) is pv.pyvista_ndarray
 
 
 def test_value_should_exist(insert_arange_narray):
@@ -507,7 +525,7 @@ def test_normals_get(plane):
 
 
 def test_normals_set():
-    plane = pyvista.Plane(i_resolution=1, j_resolution=1)
+    plane = pv.Plane(i_resolution=1, j_resolution=1)
     plane.point_data.normals = plane.point_normals
     assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
 
@@ -536,7 +554,7 @@ def test_normals_raise_field(plane):
 
 def test_add_two_vectors():
     """Ensure we can add two vectors"""
-    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
     mesh.point_data.set_array(range(5, 9), 'my-other-scalars')
     vectors0 = np.random.random((4, 3))
@@ -549,7 +567,7 @@ def test_add_two_vectors():
 
 
 def test_active_vectors_name_setter():
-    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
     vectors0 = np.random.random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
@@ -568,7 +586,7 @@ def test_active_vectors_name_setter():
 
 
 def test_active_vectors_eq():
-    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
     vectors0 = np.random.random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
     vectors1 = np.random.random((4, 3))
@@ -581,12 +599,12 @@ def test_active_vectors_eq():
     assert mesh != other_mesh
 
 
-def test_active_t_coords_name(plane):
-    plane.point_data['arr'] = plane.point_data.active_t_coords
-    plane.point_data.active_t_coords_name = 'arr'
+def test_active_texture_coordinates_name(plane):
+    plane.point_data['arr'] = plane.point_data.active_texture_coordinates
+    plane.point_data.active_texture_coordinates_name = 'arr'
 
     with raises(AttributeError):
-        plane.field_data.active_t_coords_name = 'arr'
+        plane.field_data.active_texture_coordinates_name = 'arr'
 
 
 @skip_windows  # windows doesn't support np.complex256
@@ -619,3 +637,27 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
+
+
+def test_active_t_coords_deprecated():
+    mesh = pv.Cube()
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        t_coords = mesh.point_data.active_t_coords
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated property')
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        mesh.point_data.active_t_coords = t_coords
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated property')
+
+
+def test_active_t_coords_name_deprecated():
+    mesh = pv.Cube()
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        name = mesh.point_data.active_t_coords_name
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated property')
+    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
+        mesh.point_data.active_t_coords_name = name
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated property')

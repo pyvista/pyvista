@@ -8,7 +8,7 @@ from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation, convert_array
 
 
-class pyvista_ndarray(np.ndarray):
+class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
@@ -73,7 +73,7 @@ class pyvista_ndarray(np.ndarray):
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
         #
-        # the VTKArray class uses attributes called `DataSet` and `Assocation`
+        # the VTKArray class uses attributes called `DataSet` and `Association`
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class

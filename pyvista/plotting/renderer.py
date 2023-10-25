@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS
+from pyvista import MAX_N_COLOR_BARS, vtk_version_info
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -41,7 +41,25 @@ ACTOR_LOC_MAP = [
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
 
-    Attempt to place 2d actor in a sensible position.
+    Parameters
+    ----------
+    loc : str
+        Location of the actor. Can be a string with values such as 'right',
+        'left', 'upper', or 'lower'.
+    size : Sequence of length 2
+        Size of the actor. It must be a list of length 2.
+    border : float, default: 0.05
+        Size of the border around the actor.
+
+    Returns
+    -------
+    tuple
+        The VTK position and position2 coordinates. Tuple of the form (x, y, size).
+
+    Raises
+    ------
+    ValueError
+        If the ``size`` parameter is not a list of length 2.
 
     """
     if not isinstance(size, Sequence) or len(size) != 2:
@@ -65,7 +83,26 @@ def map_loc_to_pos(loc, size, border=0.05):
 
 
 def make_legend_face(face):
-    """Create the legend face."""
+    """
+    Create the legend face based on the given face.
+
+    Parameters
+    ----------
+    face : str | None | pyvista.PolyData
+        The shape of the legend face. Valid strings are:
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
+        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        The legend face as a PolyData object.
+
+    Raises
+    ------
+    ValueError
+        If the provided face value is invalid.
+    """
     if face is None:
         legendface = pyvista.PolyData([0.0, 0.0, 0.0])
     elif face in ["-", "line"]:
@@ -155,8 +192,8 @@ class CameraPosition:
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.camera_position.to_list()
         [(0.0, 0.0, 1.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
@@ -178,30 +215,30 @@ class CameraPosition:
         return self.to_list() == other
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""
         return self._position
 
     @position.setter
-    def position(self, value):
+    def position(self, value):  # numpydoc ignore=GL08
         self._position = value
 
     @property
-    def focal_point(self):
+    def focal_point(self):  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates."""
         return self._focal_point
 
     @focal_point.setter
-    def focal_point(self, value):
+    def focal_point(self, value):  # numpydoc ignore=GL08
         self._focal_point = value
 
     @property
-    def viewup(self):
+    def viewup(self):  # numpydoc ignore=RT01
         """Viewup vector of the camera."""
         return self._viewup
 
     @viewup.setter
-    def viewup(self, value):
+    def viewup(self, value):  # numpydoc ignore=GL08
         self._viewup = value
 
 
@@ -219,7 +256,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color='w', border_width=2.0):
+    def __init__(
+        self, parent, border=True, border_color='w', border_width=2.0
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
@@ -255,14 +294,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.set_color_cycler(self._theme.color_cycler)
 
     @property
-    def camera_set(self) -> bool:
+    def camera_set(self) -> bool:  # numpydoc ignore=RT01
         """Get or set whether this camera has been configured."""
         if self.camera is None:  # pragma: no cover
             return False
         return self.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set: bool):
+    def camera_set(self, is_set: bool):  # numpydoc ignore=GL08
         self.camera.is_set = is_set
 
     def set_color_cycler(self, color_cycler):
@@ -309,7 +348,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._color_cycle = None
 
     @property
-    def next_color(self):
+    def next_color(self):  # numpydoc ignore=RT01
         """Return next color from this renderer's color cycler."""
         if self._color_cycle is None:
             return self._theme.color
@@ -325,8 +364,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.__charts
 
     @property
-    def camera_position(self):
-        """Return camera position of active render window.
+    def camera_position(self):  # numpydoc ignore=RT01
+        """Return or set the camera position of active render window.
 
         Returns
         -------
@@ -341,8 +380,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
     @camera_position.setter
-    def camera_position(self, camera_location):
-        """Set camera position of all active render windows."""
+    def camera_position(self, camera_location):  # numpydoc ignore=GL08
         if camera_location is None:
             return
         elif isinstance(camera_location, str):
@@ -386,13 +424,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.ResetCameraClippingRange()
 
     @property
-    def camera(self):
+    def camera(self):  # numpydoc ignore=RT01
         """Return the active camera for the rendering scene."""
         return self._camera
 
     @camera.setter
-    def camera(self, source):
-        """Set the active camera for the rendering scene."""
+    def camera(self, source):  # numpydoc ignore=GL08
         self._camera = source
         self.SetActiveCamera(self._camera)
         self.camera_position = CameraPosition(
@@ -404,7 +441,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -436,7 +473,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def length(self):
+    def length(self):  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box of the scene.
 
         Returns
@@ -447,7 +484,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):
+    def center(self):  # numpydoc ignore=RT01
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
@@ -463,13 +500,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return [x, y, z]
 
     @property
-    def background_color(self):
+    def background_color(self):  # numpydoc ignore=RT01
         """Return the background color of this renderer."""
         return Color(self.GetBackground())
 
     @background_color.setter
-    def background_color(self, color):
-        """Set the background color of this renderer."""
+    def background_color(self, color):  # numpydoc ignore=GL08
         self.set_background(color)
         self.Modified()
 
@@ -611,19 +647,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return actor
 
     @property
-    def has_border(self):
+    def has_border(self):  # numpydoc ignore=RT01
         """Return if the renderer has a border."""
         return self._border_actor is not None
 
     @property
-    def border_width(self):
+    def border_width(self):  # numpydoc ignore=RT01
         """Return the border width."""
         if self.has_border:
             return self._border_actor.GetProperty().GetLineWidth()
         return 0
 
     @property
-    def border_color(self):
+    def border_color(self):  # numpydoc ignore=RT01
         """Return the border color."""
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())
@@ -642,10 +678,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> chart = pyvista.Chart2D()
+        >>> import pyvista as pv
+        >>> chart = pv.Chart2D()
         >>> _ = chart.plot(range(10), range(10))
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> pl.add_chart(chart)
         >>> pl.show()
 
@@ -659,12 +695,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._charts.add_chart(chart, *charts)
 
     @property
-    def has_charts(self):
+    def has_charts(self):  # numpydoc ignore=RT01
         """Return whether this renderer has charts."""
         return self.__charts is not None
 
     @wraps(Charts.set_interaction)
-    def set_chart_interaction(self, interactive, toggle=False):
+    def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
         # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
@@ -687,14 +723,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         First define a function to add two charts to a renderer.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> def plotter_with_charts():
-        ...     pl = pyvista.Plotter()
+        ...     pl = pv.Plotter()
         ...     pl.background_color = 'w'
-        ...     chart_left = pyvista.Chart2D(size=(0.5, 1))
+        ...     chart_left = pv.Chart2D(size=(0.5, 1))
         ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
         ...     pl.add_chart(chart_left)
-        ...     chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+        ...     chart_right = pv.Chart2D(size=(0.5, 1), loc=(0.5, 0))
         ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
         ...     pl.add_chart(chart_right)
         ...     return pl, chart_left, chart_right
@@ -720,7 +756,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._charts.remove_chart(chart_or_index)
 
     @property
-    def actors(self):
+    def actors(self):  # numpydoc ignore=RT01
         """Return a dictionary of actors assigned to this renderer."""
         return self._actors
 
@@ -882,11 +918,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pyvista.Sphere(center=(2, 0, 0)), color='r')
-        >>> _ = pl.add_mesh(pyvista.Sphere(center=(0, 2, 0)), color='g')
-        >>> _ = pl.add_mesh(pyvista.Sphere(center=(0, 0, 2)), color='b')
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(center=(2, 0, 0)), color='r')
+        >>> _ = pl.add_mesh(pv.Sphere(center=(0, 2, 0)), color='g')
+        >>> _ = pl.add_mesh(pv.Sphere(center=(0, 0, 2)), color='b')
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
 
@@ -944,10 +980,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Use an Arrow as the orientation widget.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
-        >>> actor = pl.add_orientation_widget(pyvista.Arrow(), color='r')
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Cube(), show_edges=True)
+        >>> actor = pl.add_orientation_widget(pv.Arrow(), color='r')
         >>> pl.show()
 
         """
@@ -994,7 +1030,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         box=None,
         box_args=None,
         viewport=(0, 0, 0.2, 0.2),
-        marker_args=None,
         **kwargs,
     ):
         """Add an interactive axes widget in the bottom left corner.
@@ -1043,14 +1078,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
-        marker_args : dict, optional
-            Marker arguments.
-
-            .. deprecated:: 0.37.0
-               Use ``**kwargs`` for passing parameters for the orientation
-               marker widget. See the parameters of
-               :func:`pyvista.create_axes_marker`.
-
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
             widget. See the parameters of :func:`pyvista.create_axes_marker`.
@@ -1064,24 +1091,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Show axes without labels and with thick lines.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Box(), show_edges=True)
         >>> _ = pl.add_axes(line_width=5, labels_off=True)
         >>> pl.show()
 
         Use the axes orientation widget instead of the default arrows.
 
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> _ = pl.add_axes(box=True)
         >>> pl.show()
 
         Specify more parameters for the axes marker.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Box(), show_edges=True)
         >>> _ = pl.add_axes(
         ...     line_width=5,
         ...     cone_radius=0.6,
@@ -1093,14 +1120,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        if marker_args is not None:  # pragma: no cover
-            warnings.warn(
-                "Use of `marker_args` is deprecated. Use `**kwargs` instead.",
-                PyVistaDeprecationWarning,
-            )
-            kwargs.update(marker_args)
-
         if interactive is None:
             interactive = self._theme.interactive
         if hasattr(self, 'axes_widget'):
@@ -1162,8 +1181,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.show_axes()
 
         """
@@ -1175,13 +1194,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def axes_enabled(self):
+    def axes_enabled(self):  # numpydoc ignore=RT01
         """Return ``True`` when axes are enabled.
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.hide_axes()
         >>> pl.renderer.axes_enabled
         False
@@ -1658,8 +1677,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_bounding_box()
         >>> pl.remove_bounding_box()
 
@@ -1735,9 +1754,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> _ = pl.add_bounding_box(line_width=5, color='black')
         >>> pl.show()
 
@@ -1867,9 +1886,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Add a floor below a sphere and plot it.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> actor = pl.add_floor()
         >>> pl.show()
 
@@ -1912,7 +1931,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             i_size = ranges[2]
             j_size = ranges[1]
         else:
-            raise NotImplementedError(f'Face ({face}) not implementd')
+            raise NotImplementedError(f'Face ({face}) not implemented')
         self._floor = pyvista.Plane(
             center=center,
             direction=normal,
@@ -1968,9 +1987,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Add a floor below a sphere, remove it, and then plot it.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> actor = pl.add_floor()
         >>> pl.remove_floors()
         >>> pl.show()
@@ -1990,13 +2009,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> pl.subplot(0, 1)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
@@ -2031,7 +2050,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         light.add_renderer(self)
 
     @property
-    def lights(self):
+    def lights(self):  # numpydoc ignore=RT01
         """Return a list of all lights in the renderer.
 
         Returns
@@ -2041,8 +2060,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.renderer.lights  # doctest:+SKIP
         [<Light (Headlight) at ...>,
          <Light (Camera Light) at 0x7f1dd8155760>,
@@ -2090,9 +2109,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
         >>> _ = pl.add_point_labels([mesh.points[1]], ["Focus"])
         >>> _ = pl.camera  # this initializes the camera
@@ -2127,9 +2146,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Move the camera far away to ``[7, 7, 7]``.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
         >>> pl.set_position([7, 7, 7])
         >>> pl.show()
@@ -2190,9 +2209,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import demos
-        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl = pv.demos.orientation_plotter()
         >>> pl.enable_parallel_projection()
         >>> pl.show()
 
@@ -2210,9 +2229,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import demos
-        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl = pv.demos.orientation_plotter()
         >>> pl.disable_parallel_projection()
         >>> pl.show()
 
@@ -2233,13 +2252,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def parallel_projection(self):
+    def parallel_projection(self):  # numpydoc ignore=RT01
         """Return parallel projection state of active render window.
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.parallel_projection = False
         >>> pl.parallel_projection
         False
@@ -2247,26 +2266,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):
-        """Set parallel projection state of all active render windows."""
+    def parallel_projection(self, state):  # numpydoc ignore=GL08
         self.camera.parallel_projection = state
         self.Modified()
 
     @property
-    def parallel_scale(self):
+    def parallel_scale(self):  # numpydoc ignore=RT01
         """Return parallel scale of active render window.
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.parallel_scale = 2
         """
         return self.camera.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value):
-        """Set parallel scale of all active render windows."""
+    def parallel_scale(self, value):  # numpydoc ignore=GL08
         self.camera.parallel_scale = value
         self.Modified()
 
@@ -2299,11 +2316,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Add two meshes to a plotter and then remove the sphere actor.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> pl = pyvista.Plotter()
-        >>> cube_actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
-        >>> sphere_actor = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> cube_actor = pl.add_mesh(pv.Cube(), show_edges=True)
+        >>> sphere_actor = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> _ = pl.remove_actor(cube_actor)
         >>> pl.show()
 
@@ -2317,7 +2334,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if k.startswith(f'{name}-'):
                     names.append(k)
             if len(names) > 0:
-                self.remove_actor(names, reset_camera=reset_camera)
+                self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
                 actor = self._actors[name]
             except KeyError:
@@ -2326,7 +2343,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, collections.abc.Iterable):
             success = False
             for a in actor:
-                rv = self.remove_actor(a, reset_camera=reset_camera)
+                rv = self.remove_actor(a, reset_camera=reset_camera, render=render)
                 if rv or success:
                     success = True
             return success
@@ -2397,10 +2414,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Set the scale in the z direction to be 2 times that of
         nominal.  Leave the other axes unscaled.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.set_scale(zscale=2)
-        >>> _ = pl.add_mesh(pyvista.Sphere())  # perfect sphere
+        >>> _ = pl.add_mesh(pv.Sphere())  # perfect sphere
         >>> pl.show()
 
         """
@@ -2496,9 +2513,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Add a mesh and place the camera position too close to the
         mesh.  Then reset the camera and show the mesh.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> pl.set_position((0, 0.1, 0.1))
         >>> pl.reset_camera()
         >>> pl.show()
@@ -2856,8 +2873,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> _ = pl.enable_eye_dome_lighting()
 
         """
@@ -2868,8 +2885,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.disable_eye_dome_lighting()
 
         """
@@ -2882,26 +2899,26 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         First, plot without shadows enabled (default)
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> pl = pyvista.Plotter(lighting='none', window_size=(1000, 1000))
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter(lighting='none', window_size=(1000, 1000))
+        >>> light = pv.Light()
         >>> light.set_direction_angle(20, -20)
         >>> pl.add_light(light)
         >>> _ = pl.add_mesh(mesh, color='white', smooth_shading=True)
-        >>> _ = pl.add_mesh(pyvista.Box((-1.2, -1, -1, 1, -1, 1)))
+        >>> _ = pl.add_mesh(pv.Box((-1.2, -1, -1, 1, -1, 1)))
         >>> pl.show()
 
         Now, enable shadows.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> pl = pyvista.Plotter(lighting='none', window_size=(1000, 1000))
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter(lighting='none', window_size=(1000, 1000))
+        >>> light = pv.Light()
         >>> light.set_direction_angle(20, -20)
         >>> pl.add_light(light)
         >>> _ = pl.add_mesh(mesh, color='white', smooth_shading=True)
-        >>> _ = pl.add_mesh(pyvista.Box((-1.2, -1, -1, 1, -1, 1)))
+        >>> _ = pl.add_mesh(pv.Box((-1.2, -1, -1, 1, -1, 1)))
         >>> pl.enable_shadows()
         >>> pl.show()
 
@@ -2913,8 +2930,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
         >>> pl.disable_shadows()
 
         """
@@ -2986,7 +3003,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
-    def set_background(self, color, top=None):
+    def set_background(self, color, top=None, right=None, side=None, corner=None):
         """Set the background color of this renderer.
 
         Parameters
@@ -3005,26 +3022,67 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.
 
+        right : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the left and the color given in
+            ``right`` will be the color at the right of the renderer.
+
+        side : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in
+            ``side`` will be the color at the side of the renderer.
+
+        corner : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in
+            ``corner`` will be the color at the corner of the renderer.
+
         Examples
         --------
         Set the background color to black with a gradient to white at
         the top of the plot.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Cone())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Cone())
         >>> pl.set_background('black', top='white')
         >>> pl.show()
 
         """
-        use_gradient = False
-        if top is not None:
-            use_gradient = True
-
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if use_gradient:
+        if not (right is side is corner is None) and vtk_version_info < (9, 3):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+            )
+        if not (
+            (top is right is side is corner is None)
+            or (top is not None and right is side is corner is None)
+            or (right is not None and top is side is corner is None)
+            or (side is not None and top is right is corner is None)
+            or (corner is not None and top is right is side is None)
+        ):  # pragma: no cover
+            raise ValueError("You can only set one argument in top, right, side, corner.")
+        if top is not None:
             self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
+        elif right is not None:  # pragma: no cover
+            self.SetGradientBackground(True)
+            self.SetGradientMode(_vtk.vtkViewport.GradientModes.VTK_GRADIENT_HORIZONTAL)
+            self.SetBackground2(Color(right).float_rgb)
+        elif side is not None:  # pragma: no cover
+            self.SetGradientBackground(True)
+            self.SetGradientMode(
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE
+            )
+            self.SetBackground2(Color(side).float_rgb)
+        elif corner is not None:  # pragma: no cover
+            self.SetGradientBackground(True)
+            self.SetGradientMode(
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER
+            )
+            self.SetBackground2(Color(corner).float_rgb)
         else:
             self.SetGradientBackground(False)
         self.Modified()
@@ -3170,16 +3228,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.UseHiddenLineRemovalOff()
 
     @property
-    def layer(self):
+    def layer(self):  # numpydoc ignore=RT01
         """Return or set the current layer of this renderer."""
         return self.GetLayer()
 
     @layer.setter
-    def layer(self, layer):
+    def layer(self, layer):  # numpydoc ignore=GL08
         self.SetLayer(layer)
 
     @property
-    def viewport(self):
+    def viewport(self):  # numpydoc ignore=RT01
         """Viewport of the renderer.
 
         Viewport describes the ``(xstart, ystart, xend, yend)`` square
@@ -3200,8 +3258,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Show the viewport of a renderer taking up half the render
         window.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.renderers[0].viewport
         (0.0, 0.0, 0.5, 1.0)
 
@@ -3209,13 +3267,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.GetViewport()
 
     @property
-    def width(self):
+    def width(self):  # numpydoc ignore=RT01
         """Width of the renderer."""
         xmin, _, xmax, _ = self.viewport
         return self.parent.window_size[0] * (xmax - xmin)
 
     @property
-    def height(self):
+    def height(self):  # numpydoc ignore=RT01
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1] * (ymax - ymin)
@@ -3305,11 +3363,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         Create a legend by labeling the meshes when using ``add_mesh``
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> sphere = pyvista.Sphere(center=(0, 0, 1))
-        >>> cube = pyvista.Cube()
-        >>> plotter = pyvista.Plotter()
+        >>> sphere = pv.Sphere(center=(0, 0, 1))
+        >>> cube = pv.Cube()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     sphere, 'grey', smooth_shading=True, label='Sphere'
         ... )
@@ -3319,7 +3377,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Alternatively provide labels in the plotter.
 
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
         >>> _ = plotter.add_mesh(cube, 'r')
         >>> legend_entries = []
@@ -3388,9 +3446,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> pl = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, label='sphere')
         >>> _ = pl.add_legend()
         >>> pl.remove_legend()
@@ -3401,7 +3459,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend = None
 
     @property
-    def legend(self):
+    def legend(self):  # numpydoc ignore=RT01
         """Legend actor."""
         return self._legend
 

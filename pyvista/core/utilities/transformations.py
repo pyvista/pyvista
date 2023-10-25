@@ -55,6 +55,11 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
         Whether the angle is specified in degrees. ``False`` implies
         radians.
 
+    Returns
+    -------
+    numpy.ndarray
+        The ``(4, 4)`` rotation matrix.
+
     Examples
     --------
     Generate a transformation matrix for rotation around a cube's body
@@ -108,6 +113,13 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     K[[2, 0, 1], [1, 2, 0]] = axis
     K += -K.T
     R = np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
+
+    # the cos and sin functions can introduce some numerical error
+    # round the elements to exact values for special cases where we know
+    # sin/cos should evaluate exactly to 0 or 1
+    if angle % (np.pi / 2) == 0:
+        R = np.round(R)
+
     augmented = np.eye(4)
     augmented[:-1, :-1] = R
 
@@ -158,6 +170,12 @@ def reflection(normal, point=None):
         The origin of the reflection (a reference point through which
         the reflection plane passes). By default the reflection plane
         contains the origin.
+
+    Returns
+    -------
+    ndarray
+        A ``(4, 4)`` transformation matrix for reflecting points across the
+        plane defined by the given normal and point.
 
     Examples
     --------
@@ -242,14 +260,14 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     Scale a set of points in-place.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> points = examples.load_airplane().points
     >>> points_orig = points.copy()
     >>> scale_factor = 2
     >>> tf = scale_factor * np.eye(4)
     >>> tf[3, 3] = 1
-    >>> pyvista.core.utilities.transformations.apply_transformation_to_points(
+    >>> pv.core.utilities.transformations.apply_transformation_to_points(
     ...     tf, points, inplace=True
     ... )
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))

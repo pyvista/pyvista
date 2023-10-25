@@ -4,16 +4,15 @@ import sys
 from typing import Optional
 import weakref
 
-import matplotlib
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import convert_array, convert_string_array
 from pyvista.core.utilities.misc import _check_range
 from pyvista.report import vtk_version_info
 
 from . import _vtk
-from .colors import Color
+from .colors import Color, get_cycler
 from .mapper import _BaseMapper
 
 
@@ -100,7 +99,7 @@ class BlockAttributes:
         return self._attr.HasBlockPickability(self._block)
 
     @property
-    def color(self):
+    def color(self):  # numpydoc ignore=RT01
         """Get or set the color of a block.
 
         Examples
@@ -126,7 +125,7 @@ class BlockAttributes:
         return Color(tuple(self._attr.GetBlockColor(self._block)))
 
     @color.setter
-    def color(self, new_color):
+    def color(self, new_color):  # numpydoc ignore=GL08
         if new_color is None:
             self._attr.RemoveBlockColor(self._block)
             self._attr.Modified()
@@ -134,7 +133,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:
+    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -159,7 +158,7 @@ class BlockAttributes:
         return self._attr.GetBlockVisibility(self._block)
 
     @visible.setter
-    def visible(self, new_visible: bool):
+    def visible(self, new_visible: bool):  # numpydoc ignore=GL08
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
             self._attr.Modified()
@@ -167,7 +166,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:
+    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -199,8 +198,7 @@ class BlockAttributes:
         return self._attr.GetBlockOpacity(self._block)
 
     @opacity.setter
-    def opacity(self, new_opacity: float):
-        """Get or set the visibility of a block."""
+    def opacity(self, new_opacity: float):  # numpydoc ignore=GL08
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
             self._attr.Modified()
@@ -210,7 +208,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:
+    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples
@@ -239,7 +237,7 @@ class BlockAttributes:
         return self._attr.GetBlockPickability(self._block)
 
     @pickable.setter
-    def pickable(self, new_pickable: bool):
+    def pickable(self, new_pickable: bool):  # numpydoc ignore=GL08
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
             self._attr.Modified()
@@ -522,7 +520,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
 
     Parameters
     ----------
-    dataset : pyvista.MultiBlock
+    dataset : pyvista.MultiBlock, optional
         Multiblock dataset.
 
     theme : pyvista.plotting.themes.Theme, optional
@@ -542,16 +540,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
     """
 
     def __init__(
-        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
+        self, dataset=None, theme=None, color_missing_with_nan=None, interpolate_before_map=None
     ):
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
-        self.SetInputDataObject(dataset)
-
         # this must be added to set the color, opacity, and visibility of
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
-        self._dataset = dataset
+        self.dataset = dataset
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
@@ -559,7 +555,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':
+    def dataset(self) -> 'pyvista.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -580,8 +576,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
         """
         return self._dataset
 
+    @dataset.setter
+    def dataset(self, obj: 'pyvista.MultiBlock'):  # numpydoc ignore=GL08
+        self.SetInputDataObject(obj)
+        self._dataset = obj
+        self._attr._dataset = obj
+
     @property
-    def block_attr(self) -> CompositeAttributes:
+    def block_attr(self) -> CompositeAttributes:  # numpydoc ignore=RT01
         """Return the block attributes.
 
         Notes
@@ -625,7 +627,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
         return self._attr
 
     @property
-    def color_missing_with_nan(self) -> bool:
+    def color_missing_with_nan(self) -> bool:  # numpydoc ignore=RT01
         """Color missing arrays with the NaN color.
 
         Examples
@@ -649,13 +651,23 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
         return self.GetColorMissingArraysWithNanColor()
 
     @color_missing_with_nan.setter
-    def color_missing_with_nan(self, value: bool):
+    def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
-    def set_unique_colors(self):
+    def set_unique_colors(self, color_cycler=True):
         """Set each block of the dataset to a unique color.
 
-        This uses ``matplotlib``'s color cycler.
+        This uses ``matplotlib``'s color cycler by default.
+
+        When a custom color cycler, or a sequence of
+        color-like objects, is passed it sets the blocks
+        to the corresponding colors.
+
+        Parameters
+        ----------
+        color_cycler : bool | str | cycler.Cycler | sequence[ColorLike]
+            The sequence of colors to cycle through,
+            if ``True``, uses matplotlib cycler.
 
         Examples
         --------
@@ -674,7 +686,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
-        colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+
+        if isinstance(color_cycler, bool):
+            colors = cycle(get_cycler("matplotlib"))
+        else:
+            colors = cycle(get_cycler(color_cycler))
+
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
@@ -806,7 +823,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
-        if isinstance(cmap, pv.LookupTable):
+        if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
         else:
             if dtype == np.bool_:
@@ -834,7 +851,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper, _BaseMapper):
 
             if cmap is None:
                 if self._theme is None:
-                    cmap = pv.global_theme.cmap
+                    cmap = pyvista.global_theme.cmap
                 else:
                     cmap = self._theme.cmap
 

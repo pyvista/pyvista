@@ -2,14 +2,38 @@
 import io
 import weakref
 
+from trame.app import get_server as trame_get_server
 from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
 
 
+def get_server(*args, **kwargs):  # numpydoc ignore=RT01
+    """Override trame's get_server.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to the server instance.
+
+    **kwargs :
+        Any extra keyword args are passed as option to the server instance.
+
+    Returns
+    -------
+    trame_server.core.Server
+        Trame server.
+    """
+    server = trame_get_server(*args, **kwargs)
+    if 'client_type' in kwargs:
+        server.client_type = kwargs['client_type']
+    return server
+
+
 class _BasePyVistaView:
     def __init__(self, plotter):
+        """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
         self._plotter_render_callback = lambda *args: self.update()
@@ -41,10 +65,14 @@ class _BasePyVistaView:
         content = io.StringIO()
         if isinstance(self, PyVistaLocalView):
             data = self.export(format="zip")
+            if data is None:
+                raise ValueError('No data to write.')
             write_html(data, content)
             content.seek(0)
         elif isinstance(self, PyVistaRemoteLocalView):
             data = self.export_geometry(format="zip")
+            if data is None:
+                raise ValueError('No data to write.')
             write_html(data, content)
             content.seek(0)
         else:
@@ -91,7 +119,9 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(
+        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
@@ -200,7 +230,9 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
 
     """
 
-    def __init__(self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs):
+    def __init__(
+        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:

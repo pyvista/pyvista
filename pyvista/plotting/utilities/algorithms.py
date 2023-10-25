@@ -84,7 +84,17 @@ def set_algorithm_input(alg, inp, port=0):
 
 
 class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
-    """Base algorithm to preserve type."""
+    """Base algorithm to preserve type.
+
+    Parameters
+    ----------
+    nInputPorts : int, default: 1
+        Number of input ports for the algorithm.
+
+    nOutputPorts : int, default: 1
+        Number of output ports for the algorithm.
+
+    """
 
     def __init__(self, nInputPorts=1, nOutputPorts=1):
         """Initialize algorithm."""
@@ -95,9 +105,26 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         )
 
     def GetInputData(self, inInfo, port, idx):
-        """Get input data object.
+        """
+        Get input data object.
 
         This will convert ``vtkPointSet`` to ``vtkPolyData``.
+
+        Parameters
+        ----------
+        inInfo : _vtk.vtkInformation
+            The information object associated with the input port.
+
+        port : int
+            The index of the input port.
+
+        idx : int
+            The index of the data object within the input port.
+
+        Returns
+        -------
+        _vtk.vtkDataObject
+            The input data object.
         """
         inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
         if isinstance(inp, pyvista.PointSet):
@@ -106,7 +133,24 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
 
     # THIS IS CRUCIAL to preserve data type through filter
     def RequestDataObject(self, request, inInfo, outInfo):
-        """Preserve data type."""
+        """Preserve data type.
+
+        Parameters
+        ----------
+        request : _vtk.vtkInformation
+            The request object for the filter.
+
+        inInfo : _vtk.vtkInformationVector
+            The input information vector for the filter.
+
+        outInfo : _vtk.vtkInformationVector
+            The output information vector for the filter.
+
+        Returns
+        -------
+        int
+            Returns 1 if successful.
+        """
         class_name = self.GetInputData(inInfo, 0, 0).GetClassName()
         if class_name == 'vtkPointSet':
             # See https://gitlab.kitware.com/vtk/vtk/-/issues/18771
@@ -146,7 +190,23 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         self.preference = preference
 
     def RequestData(self, request, inInfo, outInfo):
-        """Perform algorithm execution."""
+        """Perform algorithm execution.
+
+        Parameters
+        ----------
+        request : vtk.vtkInformation
+            The request object.
+        inInfo : vtk.vtkInformationVector
+            Information about the input data.
+        outInfo : vtk.vtkInformationVector
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            1 on success.
+
+        """
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
@@ -164,6 +224,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
     """Algorithm to cast PointSet to PolyData.
 
     This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
+
     """
 
     def __init__(self):
@@ -177,7 +238,23 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
         )
 
     def RequestData(self, request, inInfo, outInfo):
-        """Perform algorithm execution."""
+        """
+        Perform algorithm execution.
+
+        Parameters
+        ----------
+        request : vtkInformation
+            Information associated with the request.
+        inInfo : vtkInformationVector
+            Information about the input data.
+        outInfo : vtkInformationVector
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            1 when successful.
+        """
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
@@ -194,6 +271,19 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
     Output of this filter is a shallow copy of the input with
     point and/or cell ID arrays added.
+
+    Parameters
+    ----------
+    point_ids : bool, default: True
+        Whether to add point IDs.
+
+    cell_ids : bool, default: True
+        Whether to add cell IDs.
+
+    Raises
+    ------
+    ValueError
+        If neither point IDs nor cell IDs are set.
     """
 
     def __init__(self, point_ids=True, cell_ids=True):
@@ -205,7 +295,30 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         self.cell_ids = cell_ids
 
     def RequestData(self, request, inInfo, outInfo):
-        """Perform algorithm execution."""
+        """
+        Perform algorithm execution.
+
+        Parameters
+        ----------
+        request : RequestType
+            The request to be processed.
+
+        inInfo : InInfoType
+            Information about the input data.
+
+        outInfo : OutInfoType
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            Returns 1 if the algorithm was successful.
+
+        Raises
+        ------
+        Exception
+            If the algorithm fails to execute properly.
+        """
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
@@ -234,7 +347,23 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
         )
 
     def RequestData(self, request, inInfo, outInfo):
-        """Perform algorithm execution."""
+        """Perform algorithm execution based on the input data and produce the output.
+
+        Parameters
+        ----------
+        request : vtkInformation
+            The request information associated with the algorithm.
+        inInfo : vtkInformationVector
+            Information vector describing the input data.
+        outInfo : vtkInformationVector
+            Information vector where the output data should be placed.
+
+        Returns
+        -------
+        int
+            Status of the execution. Returns 1 on successful completion.
+
+        """
         try:
             clipped = wrap(self.GetInputData(inInfo, 0, 0))
             source = wrap(self.GetInputData(inInfo, 1, 0))
@@ -248,7 +377,20 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
 
 
 def outline_algorithm(inp, generate_faces=False):
-    """Add vtkOutlineFilter to pipeline."""
+    """Add vtkOutlineFilter to pipeline.
+
+    Parameters
+    ----------
+    inp : pyvista.Common
+        Input data to be filtered.
+    generate_faces : bool, default: False
+        Whether to generate faces for the outline.
+
+    Returns
+    -------
+    vtk.vtkOutlineFilter
+        Outline filter applied to the input data.
+    """
     alg = _vtk.vtkOutlineFilter()
     set_algorithm_input(alg, inp)
     alg.SetGenerateFaces(generate_faces)
@@ -256,7 +398,24 @@ def outline_algorithm(inp, generate_faces=False):
 
 
 def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlinear_subdivision=1):
-    """Add vtkDataSetSurfaceFilter to pipeline."""
+    """Add vtkDataSetSurfaceFilter to pipeline.
+
+    Parameters
+    ----------
+    inp : pyvista.Common
+        Input data to be filtered.
+    pass_pointid : bool, default: False
+        If ``True``, pass point IDs to the output.
+    pass_cellid : bool, default: False
+        If ``True``, pass cell IDs to the output.
+    nonlinear_subdivision : int, default: 1
+        Level of nonlinear subdivision.
+
+    Returns
+    -------
+    vtk.vtkDataSetSurfaceFilter
+        Surface filter applied to the input data.
+    """
     surf_filter = _vtk.vtkDataSetSurfaceFilter()
     surf_filter.SetPassThroughPointIds(pass_pointid)
     surf_filter.SetPassThroughCellIds(pass_cellid)
@@ -267,7 +426,22 @@ def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlin
 
 
 def active_scalars_algorithm(inp, name, preference='point'):
-    """Add a filter that sets the active scalars."""
+    """Add a filter that sets the active scalars.
+
+    Parameters
+    ----------
+    inp : pyvista.Common
+        Input data to be filtered.
+    name : str
+        Name of the scalars to set as active.
+    preference : str, default: 'point'
+        Preference for the scalars to be set as active. Options are 'point', 'cell', or 'field'.
+
+    Returns
+    -------
+    vtk.vtkAlgorithm
+        Active scalars filter applied to the input data.
+    """
     alg = ActiveScalarsAlgorithm(
         name=name,
         preference=preference,
@@ -277,21 +451,61 @@ def active_scalars_algorithm(inp, name, preference='point'):
 
 
 def pointset_to_polydata_algorithm(inp):
-    """Add a filter that casts PointSet to PolyData."""
+    """Add a filter that casts PointSet to PolyData.
+
+    Parameters
+    ----------
+    inp : pyvista.PointSet
+        Input point set to be cast to PolyData.
+
+    Returns
+    -------
+    vtk.vtkAlgorithm
+        Filter that casts the input PointSet to PolyData.
+    """
     alg = PointSetToPolyDataAlgorithm()
     set_algorithm_input(alg, inp)
     return alg
 
 
 def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
-    """Add a filter that adds point and/or cell IDs."""
+    """Add a filter that adds point and/or cell IDs.
+
+    Parameters
+    ----------
+    inp : pyvista.DataSet
+        The input data to which the IDs will be added.
+    point_ids : bool, default: True
+        If ``True``, point IDs will be added to the input data.
+    cell_ids : bool, default: True
+        If ``True``, cell IDs will be added to the input data.
+
+    Returns
+    -------
+    AddIDsAlgorithm
+        AddIDsAlgorithm filter.
+    """
     alg = AddIDsAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
     set_algorithm_input(alg, inp)
     return alg
 
 
 def crinkle_algorithm(clip, source):
-    """Add a filter that crinkles a clip."""
+    """Add a filter that crinkles a clip.
+
+    Parameters
+    ----------
+    clip : pyvista.DataSet
+        The input data to be crinkled.
+    source : pyvista.DataSet
+        The source of the crinkle.
+
+    Returns
+    -------
+    CrinkleAlgorithm
+        CrinkleAlgorithm filter.
+
+    """
     alg = CrinkleAlgorithm()
     set_algorithm_input(alg, clip, 0)
     set_algorithm_input(alg, source, 1)
@@ -299,7 +513,20 @@ def crinkle_algorithm(clip, source):
 
 
 def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
-    """Add a filter that converts cell data to point data."""
+    """Add a filter that converts cell data to point data.
+
+    Parameters
+    ----------
+    inp : pyvista.DataSet
+        The input data whose cell data will be converted to point data.
+    pass_cell_data : bool, default: False
+        If ``True``, the original cell data will be passed to the output.
+
+    Returns
+    -------
+    vtk.vtkCellDataToPointData
+        The vtkCellDataToPointData filter.
+    """
     alg = _vtk.vtkCellDataToPointData()
     alg.SetPassCellData(pass_cell_data)
     set_algorithm_input(alg, inp)
@@ -307,7 +534,20 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
 
 
 def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
-    """Add a filter that converts point data to cell data."""
+    """Add a filter that converts point data to cell data.
+
+    Parameters
+    ----------
+    inp : pyvista.DataSet
+        The input data whose point data will be converted to cell data.
+    pass_point_data : bool, default: False
+        If ``True``, the original point data will be passed to the output.
+
+    Returns
+    -------
+    vtk.vtkPointDataToCellData
+        ``vtkPointDataToCellData`` algorithm.
+    """
     alg = _vtk.vtkPointDataToCellData()
     alg.SetPassPointData(pass_point_data)
     set_algorithm_input(alg, inp)
@@ -315,7 +555,19 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
 
 
 def triangulate_algorithm(inp):
-    """Triangulate input."""
+    """
+    Triangulate the input data.
+
+    Parameters
+    ----------
+    inp : vtk.vtkDataObject
+        The input data to be triangulated.
+
+    Returns
+    -------
+    vtk.vtkTriangleFilter
+        The triangle filter that has been applied to the input data.
+    """
     trifilter = _vtk.vtkTriangleFilter()
     trifilter.PassVertsOff()
     trifilter.PassLinesOff()
@@ -324,7 +576,21 @@ def triangulate_algorithm(inp):
 
 
 def decimation_algorithm(inp, target_reduction):
-    """Decimate input to target reduction."""
+    """
+    Decimate the input data to the target reduction.
+
+    Parameters
+    ----------
+    inp : vtk.vtkDataObject
+        The input data to be decimated.
+    target_reduction : float
+        The target reduction amount, as a fraction of the original data.
+
+    Returns
+    -------
+    vtk.vtkQuadricDecimation
+        The decimation algorithm that has been applied to the input data.
+    """
     alg = _vtk.vtkQuadricDecimation()
     alg.SetTargetReduction(target_reduction)
     set_algorithm_input(alg, inp)
