@@ -2725,7 +2725,7 @@ class Theme(_ThemeConfig):
         Now add an empty mesh to a plotter
 
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(pv.PolyData())
+        >>> _ = pl.add_mesh(pv.PolyData())
         >>> pl.show()  # doctest: +SKIP
         """
         return self._allow_empty_mesh
