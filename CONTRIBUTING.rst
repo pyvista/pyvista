@@ -401,9 +401,9 @@ Here's an example of adding error test codes that raise deprecation warning mess
     with pytest.warns(PyVistaDeprecationWarning):
         addition(a, b)
         if pv._version.version_info >= (0, 40):
-            raise RuntimeError('Convert error this function')
+            raise RuntimeError("Convert error this function")
         if pv._version.version_info >= (0, 41):
-            raise RuntimeError('Remove this function')
+            raise RuntimeError("Remove this function")
 
 In the above code example, the old test code raises an error in v0.40 and v0.41.
 This will prevent us from forgetting to remove deprecations on version upgrades.
