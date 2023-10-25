@@ -33,6 +33,19 @@ running:
    cd pyvista
    python -m pip install -e .
 
+Quick Start Development with Codespaces
+---------------------------------------
+A dev container is provided to quickly get started. The default container
+comes with the repository code checked out on a branch of your choice
+and all pyvista dependencies including test dependencies pre-installed.
+In addition, it uses the
+`desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
+to provide live interaction windows.  Follow directions
+`here <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+to use the live interaction.
+
+Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+
 Questions
 ---------
 
@@ -450,21 +463,6 @@ dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 Then, if you have everything installed, you can run the various test
 suites.
-
-Using Gitpod Workspace
-~~~~~~~~~~~~~~~~~~~~~~
-
-A gitpod workspace is available for a quick start development
-environment. To start a workspace from the main branch of pyvista, go
-to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
-`Gitpod Getting Started
-<https://www.gitpod.io/docs/getting-started>`_ for more details.
-
-The workspace has vnc capability through the browser for
-interactive plotting. The workspace also has the ability to view the
-documentation with a live-viewer. Hit the ``Go Live`` button
-and browse to ``doc/_build/html``. The workspace also preloads
-pre-commit environments and installs requirements.
 
 Unit Testing
 ~~~~~~~~~~~~
