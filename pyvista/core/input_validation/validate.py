@@ -80,7 +80,7 @@ def validate_array(
     validate_arrayNx3
         Specialized function for Nx3 dimensional arrays.
 
-    validate_arrayN
+    validate_data_range
         Specialized function for data ranges.
 
     Parameters
@@ -480,7 +480,7 @@ def validate_number(num, /, *, reshape=True, **kwargs):
 
     if reshape:
         shape = [(), (1,)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape', ())
+        kwargs['reshape'] = ()
     else:
         shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
@@ -499,7 +499,7 @@ def validate_data_range(rng, /, **kwargs):
 
     Parameters
     ----------
-    rng : array_like
+    rng : array_like[float, float]
         Range to validate in the form ``(lower_bound, upper_bound)``.
 
     **kwargs : dict, optional
@@ -599,7 +599,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     """
     if reshape:
         shape = [3, (-1, 3)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape', (-1, 3))
+        kwargs['reshape'] = (-1, 3)
     else:
         shape = (-1, 3)
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
@@ -621,7 +621,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : array_like
+    arr : array_like[float, ...]
         Array to validate.
 
     reshape : bool, default: True
@@ -669,7 +669,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     """
     if reshape:
         shape = [(), (-1), (1, -1)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape', (-1))
+        kwargs['reshape'] = -1
     else:
         shape = -1
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
@@ -692,7 +692,7 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : array_like
+    arr : array_like[float, ...] | array_like[int, ...]
         Array to validate.
 
     reshape : bool, default: True
@@ -760,7 +760,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
 
     Parameters
     ----------
-    arr : array_like
+    arr : array_like[float, float, float]
         Array to validate.
 
     reshape : bool, default: True
@@ -816,7 +816,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     shape = [(3,)]
     if reshape:
         shape.append((1, 3))
-        _set_default_kwarg_mandatory(kwargs, 'reshape', (-1))
+        kwargs['reshape'] = -1
     if broadcast:
         shape.append(())  # allow 0D scalars
         shape.append((1,))  # 1D 1-element vectors
