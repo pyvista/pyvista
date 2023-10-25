@@ -1,6 +1,21 @@
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista)
+   :alt: Open in GitHub Codespaces
+
+|Contributor Covenant|
+|codetriage|
+|Open in GitHub Codespaces|
+
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
 important to note that the PyVista software package is maintained on a
