@@ -27,3 +27,19 @@ considered "The PyVista Developers":
 - Darik Gamble, (`@darikg <https://github.com/darikg>`_)
 - Bram De Cooman, (`@dcbr <https://github.com/dcbr>`_)
 - `@user27182 <https://github.com/user27182>`_
+
+
+.. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/graphs/contributors
+   :alt: contrib.rocks
+
+Please take a look at the `contributors page`_ and the active `list of authors`_
+to learn more about the developers of PyVista.
+
+|contrib.rocks|
+
+Made with `contrib rocks`_.
+
+.. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
+.. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
+.. _contrib rocks: https://contrib.rocks
