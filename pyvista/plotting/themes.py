@@ -2927,6 +2927,22 @@ class Theme(_ThemeConfig):
             :func:`pyvista.Plotter.add_logo_widget` will default to
             PyVista's logo if this is unset.
 
+        Example
+        -------
+        Set the logo file to a custom logo.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> logo_file = examples.download_file('vtk.png')
+        >>> pv.global_theme.logo_file = logo_file
+
+        Now the logo will be used by default for :func:`pyvista.Plotter.add_logo_widget`.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
         """
         return self._logo_file
 
@@ -2937,7 +2953,8 @@ class Theme(_ThemeConfig):
         else:
             if not pathlib.Path(logo_file).exists():
                 raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
-        self._logo_file = str(path)
+            path = str(logo_file)
+        self._logo_file = path
 
 
 class DarkTheme(Theme):
