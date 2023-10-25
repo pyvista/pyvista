@@ -424,6 +424,7 @@ encouraged to use the ``.. versionadded`` sphinx directive. For example:
             .. versionadded:: 0.33.0
         """
 
+
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
