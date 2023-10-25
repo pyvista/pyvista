@@ -227,7 +227,7 @@ Contributing
    :alt: Code Triage
 
 .. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
-   :target: https://codespaces.new/pyvista/pyvista)
+   :target: https://codespaces.new/pyvista/pyvista
    :alt: Open in GitHub Codespaces
 
 |Contributor Covenant|
