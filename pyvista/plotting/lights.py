@@ -208,46 +208,6 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):
-        """Print a repr specifying the id of the light and its light type."""
-        return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
-
-    def __eq__(self, other):
-        """Compare whether the relevant attributes of two lights are equal."""
-        # attributes which are native python types and thus implement __eq__
-        native_attrs = [
-            'light_type',
-            'position',
-            'focal_point',
-            'ambient_color',
-            'diffuse_color',
-            'specular_color',
-            'intensity',
-            'on',
-            'positional',
-            'exponent',
-            'cone_angle',
-            'attenuation_values',
-            'shadow_attenuation',
-        ]
-        for attr in native_attrs:
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-
-        # check transformation matrix element by element (if it exists)
-        this_trans = self.transform_matrix
-        that_trans = other.transform_matrix
-        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
-        if trans_count == 1:
-            # either but not both are None
-            return False
-        if trans_count == 2:
-            for i in range(4):
-                for j in range(4):
-                    if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
-                        return False
-        return True
-
     def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
@@ -569,13 +529,6 @@ class Light(vtkLight):
         """
         return bool(self.GetPositional())
 
-    @positional.setter
-    def positional(self, state):  # numpydoc ignore=GL08
-        if not state:
-            self.hide_actor()
-        self.SetPositional(state)
-        self._check_actor()
-
     def _check_actor(self):
         """Check if the light actor should be added or removed from attached renderers.
 
@@ -598,6 +551,13 @@ class Light(vtkLight):
             else:
                 if actor_name in renderer.actors:
                     renderer.remove_actor(self.actor, render=False)
+
+    @positional.setter
+    def positional(self, state):  # numpydoc ignore=GL08
+        if not state:
+            self.hide_actor()
+        self.SetPositional(state)
+        self._check_actor()
 
     @property
     def exponent(self):  # numpydoc ignore=RT01
@@ -1231,3 +1191,43 @@ class Light(vtkLight):
 
         # verify that the renderer has the light actor if applicable
         self._check_actor()
+
+    def __eq__(self, other):
+        """Compare whether the relevant attributes of two lights are equal."""
+        # attributes which are native python types and thus implement __eq__
+        native_attrs = [
+            'light_type',
+            'position',
+            'focal_point',
+            'ambient_color',
+            'diffuse_color',
+            'specular_color',
+            'intensity',
+            'on',
+            'positional',
+            'exponent',
+            'cone_angle',
+            'attenuation_values',
+            'shadow_attenuation',
+        ]
+        for attr in native_attrs:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        # check transformation matrix element by element (if it exists)
+        this_trans = self.transform_matrix
+        that_trans = other.transform_matrix
+        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
+        if trans_count == 1:
+            # either but not both are None
+            return False
+        if trans_count == 2:
+            for i in range(4):
+                for j in range(4):
+                    if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
+                        return False
+        return True
+
+    def __repr__(self):
+        """Print a repr specifying the id of the light and its light type."""
+        return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'

@@ -406,25 +406,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
-    def as_rgba(self):  # numpydoc ignore=GL08
-        """Convert the active scalars to RGBA.
-
-        This method is used to convert the active scalars to a fixed RGBA array
-        and is used for certain mappers that do not support the "map" color
-        mode.
-
-        """
-        if self.color_mode == 'direct':
-            return
-
-        self.dataset.point_data.pop('__rgba__', None)
-        self._configure_scalars_mode(
-            self.lookup_table(self.dataset.active_scalars),
-            '__rgba__',
-            self.scalar_map_mode,
-            True,
-        )
-
     def _configure_scalars_mode(
         self,
         scalars,
@@ -480,6 +461,25 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             raise_not_matching(scalars, self.dataset)
 
         self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
+
+    def as_rgba(self):  # numpydoc ignore=GL08
+        """Convert the active scalars to RGBA.
+
+        This method is used to convert the active scalars to a fixed RGBA array
+        and is used for certain mappers that do not support the "map" color
+        mode.
+
+        """
+        if self.color_mode == 'direct':
+            return
+
+        self.dataset.point_data.pop('__rgba__', None)
+        self._configure_scalars_mode(
+            self.lookup_table(self.dataset.active_scalars),
+            '__rgba__',
+            self.scalar_map_mode,
+            True,
+        )
 
     def set_scalars(
         self,
@@ -918,6 +918,9 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = LookupTable()
         self._scalar_range = (0.0, 256.0)
 
+    def __del__(self):
+        self._lut = None
+
     @property
     def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
@@ -1015,9 +1018,6 @@ class _BaseVolumeMapper(_BaseMapper):
                 )
         else:
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
-
-    def __del__(self):
-        self._lut = None
 
 
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):

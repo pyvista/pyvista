@@ -87,6 +87,20 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
+    def __array_wrap__(self, out_arr, context=None):
+        """Return a numpy scalar if array is 0d.
+
+        See https://github.com/numpy/numpy/issues/5819
+
+        """
+        if out_arr.ndim:
+            return np.ndarray.__array_wrap__(self, out_arr, context)
+
+        # Match numpy's behavior and return a numpy dtype scalar
+        return out_arr[()]
+
+    __getattr__ = _vtk.VTKArray.__getattr__
+
     def __setitem__(self, key: Union[int, np.ndarray], value):
         """Implement [] set operator.
 
@@ -102,17 +116,3 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
         dataset = self.dataset
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
-
-    def __array_wrap__(self, out_arr, context=None):
-        """Return a numpy scalar if array is 0d.
-
-        See https://github.com/numpy/numpy/issues/5819
-
-        """
-        if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
-
-        # Match numpy's behavior and return a numpy dtype scalar
-        return out_arr[()]
-
-    __getattr__ = _vtk.VTKArray.__getattr__

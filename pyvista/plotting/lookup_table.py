@@ -48,6 +48,20 @@ class lookup_table_ndarray(np.ndarray):
             self.table = None
             self.VTKObject = None
 
+    def __array_wrap__(self, out_arr, context=None):
+        """Return a numpy scalar if array is 0d.
+
+        See https://github.com/numpy/numpy/issues/5819
+
+        """
+        if out_arr.ndim:
+            return np.ndarray.__array_wrap__(self, out_arr, context)
+
+        # Match numpy's behavior and return a numpy dtype scalar
+        return out_arr[()]
+
+    __getattr__ = _vtk.VTKArray.__getattr__
+
     def __setitem__(self, key, value):
         """Implement [] set operator.
 
@@ -64,20 +78,6 @@ class lookup_table_ndarray(np.ndarray):
             # this creates a new shallow copy and is necessary to update the
             # internal VTK array
             self.table.Get().values = self
-
-    def __array_wrap__(self, out_arr, context=None):
-        """Return a numpy scalar if array is 0d.
-
-        See https://github.com/numpy/numpy/issues/5819
-
-        """
-        if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
-
-        # Match numpy's behavior and return a numpy dtype scalar
-        return out_arr[()]
-
-    __getattr__ = _vtk.VTKArray.__getattr__
 
 
 @no_new_attr
@@ -367,26 +367,6 @@ class LookupTable(_vtk.vtkLookupTable):
     @log_scale.setter
     def log_scale(self, value: bool):  # numpydoc ignore=GL08
         self.SetScale(value)
-
-    def __repr__(self):
-        """Return the representation."""
-        lines = [f'{type(self).__name__} ({hex(id(self))})']
-        lines.append(f'  Table Range:                {self.scalar_range}')
-        lines.append(f'  N Values:                   {self.n_values}')
-        lines.append(f'  Above Range Color:          {self.above_range_color}')
-        lines.append(f'  Below Range Color:          {self.below_range_color}')
-        lines.append(f'  NAN Color:                  {self.nan_color}')
-        lines.append(f'  Log Scale:                  {self.log_scale}')
-
-        lines.append(f'  Color Map:                  "{self._lookup_type}"')
-        if not (self.cmap or self._values_manual):
-            lines.append(f'    Alpha Range:              {self.alpha_range}')
-            lines.append(f'    Hue Range:                {self.hue_range}')
-            lines.append(f'    Saturation Range          {self.saturation_range}')
-            lines.append(f'    Value Range               {self.value_range}')
-            lines.append(f'    Ramp                      {self.ramp}')
-
-        return '\n'.join(lines)
 
     @property
     def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
@@ -1101,3 +1081,23 @@ class LookupTable(_vtk.vtkLookupTable):
                 return np.array([self.map_value(item) for item in value])
             except:
                 raise TypeError('LookupTable __call__ expects a single value or an iterable.')
+
+    def __repr__(self):
+        """Return the representation."""
+        lines = [f'{type(self).__name__} ({hex(id(self))})']
+        lines.append(f'  Table Range:                {self.scalar_range}')
+        lines.append(f'  N Values:                   {self.n_values}')
+        lines.append(f'  Above Range Color:          {self.above_range_color}')
+        lines.append(f'  Below Range Color:          {self.below_range_color}')
+        lines.append(f'  NAN Color:                  {self.nan_color}')
+        lines.append(f'  Log Scale:                  {self.log_scale}')
+
+        lines.append(f'  Color Map:                  "{self._lookup_type}"')
+        if not (self.cmap or self._values_manual):
+            lines.append(f'    Alpha Range:              {self.alpha_range}')
+            lines.append(f'    Hue Range:                {self.hue_range}')
+            lines.append(f'    Saturation Range          {self.saturation_range}')
+            lines.append(f'    Value Range               {self.value_range}')
+            lines.append(f'    Ramp                      {self.ramp}')
+
+        return '\n'.join(lines)

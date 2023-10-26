@@ -53,6 +53,65 @@ class Timer:
             iren.DestroyTimer(self.id)
 
 
+def _style_factory(klass):
+    """Create a subclass with capturing ability, return it."""
+    # We have to use a custom subclass for this because the default ones
+    # swallow the release events
+    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
+
+    def _make_class(klass):
+        """Make the class."""
+        try:
+            from vtkmodules import vtkInteractionStyle
+        except ImportError:  # pragma: no cover
+            import vtk as vtkInteractionStyle
+
+        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
+            def __init__(self, parent):
+                super().__init__()
+                self._parent = weakref.ref(parent)
+
+                self._observers = []
+                self._observers.append(
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                )
+                self._observers.append(
+                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                )
+
+            def _press(self, obj, event):
+                # Figure out which renderer has the event and disable the
+                # others
+                super().OnLeftButtonDown()
+                parent = self._parent()
+                if len(parent._plotter.renderers) > 1:
+                    click_pos = parent.get_event_position()
+                    for renderer in parent._plotter.renderers:
+                        interact = renderer.IsInViewport(*click_pos)
+                        renderer.SetInteractive(interact)
+
+            def _release(self, obj, event):
+                super().OnLeftButtonUp()
+                parent = self._parent()
+                if len(parent._plotter.renderers) > 1:
+                    for renderer in parent._plotter.renderers:
+                        renderer.SetInteractive(True)
+
+            def add_observer(self, event, callback):
+                self._observers.append(self.AddObserver(event, callback))
+
+            def remove_observers(self):
+                for obs in self._observers:
+                    self.RemoveObserver(obs)
+
+        return CustomStyle
+
+    # cache classes
+    if klass not in _CLASSES:
+        _CLASSES[klass] = _make_class(klass)
+    return _CLASSES[klass]
+
+
 class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
 
@@ -76,6 +135,84 @@ class RenderWindowInteractor:
         The render window interactor. If set to ``None``, a new
         vtkRenderWindowInteractor instance will be created.
     """
+
+    @property
+    def _plotter(self):
+        """Return the plotter."""
+        return self.__plotter()
+
+    def _set_context_style(self, scene):
+        """
+        Set the context style interactor or switch back to previous interactor style.
+
+        Parameters
+        ----------
+        scene : vtkContextScene, optional
+            The scene to interact with or ``None`` to stop interaction with any scene.
+
+        """
+        # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        if vtk_version_info < (9, 3, 0):  # pragma: no cover
+            if scene is not None and len(self._plotter.renderers) > 1:
+                warnings.warn(
+                    "Interaction with charts is not possible when using multiple subplots."
+                    "Upgrade to VTK 9.3 or newer to enable this feature."
+                )
+                scene = None
+        self._context_style.SetScene(scene)
+        if scene is None and self._style == "Context":
+            # Switch back to previous interactor style
+            self._style = self._prev_style
+            self._style_class = self._prev_style_class
+            self._prev_style = None
+            self._prev_style_class = None
+        elif scene is not None and self._style != "Context":
+            # Enable context interactor style
+            self._prev_style = self._style
+            self._prev_style_class = self._style_class
+            self._style = "Context"
+            self._style_class = self._context_style
+        self.update_style()
+
+    def _toggle_chart_interaction(self, mouse_pos):
+        """Toggle interaction with indicated charts.
+
+        Parameters
+        ----------
+        mouse_pos : tuple of float
+            Tuple containing the mouse position.
+
+        """
+        # Loop over all renderers to see whether any charts need to be made interactive
+        interactive_scene = None
+        for renderer in self._plotter.renderers:
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+                # No interactive charts yet and mouse is within this renderer's viewport,
+                # so collect all charts indicated by the mouse (typically only one, except
+                # when there are overlapping charts).
+                origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
+                charts = renderer._get_charts_by_pos(
+                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
+                )
+                if charts:
+                    # Toggle interaction for indicated charts and determine whether
+                    # there are any remaining interactive charts.
+                    interactive_charts = renderer.set_chart_interaction(charts, toggle=True)
+                    if interactive_charts:
+                        # Save a reference to this renderer's scene if there are
+                        # remaining interactive charts.
+                        interactive_scene = renderer._charts._scene
+                else:
+                    # No indicated charts, so disable interaction with all charts
+                    # for this renderer.
+                    renderer.set_chart_interaction(False)
+            else:
+                # Not in viewport or interactive charts were already found in another
+                # renderer, so disable interaction with all charts for this renderer.
+                renderer.set_chart_interaction(False)
+        # Manually set context_style based on found interactive scene (or stop interaction
+        # with any scene if there are no interactive charts).
+        self._set_context_style(interactive_scene)
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
@@ -112,11 +249,6 @@ class RenderWindowInteractor:
 
         self.reset_picker()
         self.picker = PickerType.POINT
-
-    @property
-    def _plotter(self):
-        """Return the plotter."""
-        return self.__plotter()
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -416,79 +548,6 @@ class RenderWindowInteractor:
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
-
-    def _toggle_chart_interaction(self, mouse_pos):
-        """Toggle interaction with indicated charts.
-
-        Parameters
-        ----------
-        mouse_pos : tuple of float
-            Tuple containing the mouse position.
-
-        """
-        # Loop over all renderers to see whether any charts need to be made interactive
-        interactive_scene = None
-        for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
-                # No interactive charts yet and mouse is within this renderer's viewport,
-                # so collect all charts indicated by the mouse (typically only one, except
-                # when there are overlapping charts).
-                origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
-                charts = renderer._get_charts_by_pos(
-                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
-                )
-                if charts:
-                    # Toggle interaction for indicated charts and determine whether
-                    # there are any remaining interactive charts.
-                    interactive_charts = renderer.set_chart_interaction(charts, toggle=True)
-                    if interactive_charts:
-                        # Save a reference to this renderer's scene if there are
-                        # remaining interactive charts.
-                        interactive_scene = renderer._charts._scene
-                else:
-                    # No indicated charts, so disable interaction with all charts
-                    # for this renderer.
-                    renderer.set_chart_interaction(False)
-            else:
-                # Not in viewport or interactive charts were already found in another
-                # renderer, so disable interaction with all charts for this renderer.
-                renderer.set_chart_interaction(False)
-        # Manually set context_style based on found interactive scene (or stop interaction
-        # with any scene if there are no interactive charts).
-        self._set_context_style(interactive_scene)
-
-    def _set_context_style(self, scene):
-        """
-        Set the context style interactor or switch back to previous interactor style.
-
-        Parameters
-        ----------
-        scene : vtkContextScene, optional
-            The scene to interact with or ``None`` to stop interaction with any scene.
-
-        """
-        # Set scene to interact with or reset it to stop interaction (otherwise crash)
-        if vtk_version_info < (9, 3, 0):  # pragma: no cover
-            if scene is not None and len(self._plotter.renderers) > 1:
-                warnings.warn(
-                    "Interaction with charts is not possible when using multiple subplots."
-                    "Upgrade to VTK 9.3 or newer to enable this feature."
-                )
-                scene = None
-        self._context_style.SetScene(scene)
-        if scene is None and self._style == "Context":
-            # Switch back to previous interactor style
-            self._style = self._prev_style
-            self._style_class = self._prev_style_class
-            self._prev_style = None
-            self._prev_style_class = None
-        elif scene is not None and self._style != "Context":
-            # Enable context interactor style
-            self._prev_style = self._style
-            self._prev_style_class = self._style_class
-            self._style = "Context"
-            self._style_class = self._context_style
-        self.update_style()
 
     def enable_trackball_style(self):
         """Set the interactive style to Trackball Camera.
@@ -859,6 +918,11 @@ class RenderWindowInteractor:
         self.interactor.SetKeyCode(key)
         self.interactor.CharEvent()
 
+    def _mouse_move(self, x, y):  # pragma:
+        """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
+        self.interactor.SetEventInformation(x, y)
+        self.interactor.MouseMoveEvent()
+
     def _mouse_left_button_press(
         self, x=None, y=None
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
@@ -910,11 +974,6 @@ class RenderWindowInteractor:
         for _ in range(count):
             self._mouse_right_button_press(x, y)
             self._mouse_right_button_release()
-
-    def _mouse_move(self, x, y):  # pragma:
-        """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
-        self.interactor.SetEventInformation(x, y)
-        self.interactor.MouseMoveEvent()
 
     def get_event_position(self):
         """Get the event position.
@@ -1209,62 +1268,3 @@ class RenderWindowInteractor:
         self.interactor = None
         self._click_event_callbacks = None
         self._timer_event = None
-
-
-def _style_factory(klass):
-    """Create a subclass with capturing ability, return it."""
-    # We have to use a custom subclass for this because the default ones
-    # swallow the release events
-    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
-
-    def _make_class(klass):
-        """Make the class."""
-        try:
-            from vtkmodules import vtkInteractionStyle
-        except ImportError:  # pragma: no cover
-            import vtk as vtkInteractionStyle
-
-        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-            def __init__(self, parent):
-                super().__init__()
-                self._parent = weakref.ref(parent)
-
-                self._observers = []
-                self._observers.append(
-                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
-                )
-                self._observers.append(
-                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
-                )
-
-            def _press(self, obj, event):
-                # Figure out which renderer has the event and disable the
-                # others
-                super().OnLeftButtonDown()
-                parent = self._parent()
-                if len(parent._plotter.renderers) > 1:
-                    click_pos = parent.get_event_position()
-                    for renderer in parent._plotter.renderers:
-                        interact = renderer.IsInViewport(*click_pos)
-                        renderer.SetInteractive(interact)
-
-            def _release(self, obj, event):
-                super().OnLeftButtonUp()
-                parent = self._parent()
-                if len(parent._plotter.renderers) > 1:
-                    for renderer in parent._plotter.renderers:
-                        renderer.SetInteractive(True)
-
-            def add_observer(self, event, callback):
-                self._observers.append(self.AddObserver(event, callback))
-
-            def remove_observers(self):
-                for obs in self._observers:
-                    self.RemoveObserver(obs)
-
-        return CustomStyle
-
-    # cache classes
-    if klass not in _CLASSES:
-        _CLASSES[klass] = _make_class(klass)
-    return _CLASSES[klass]

@@ -94,65 +94,32 @@ if KILL_DISPLAY:  # pragma: no cover
         KILL_DISPLAY = False
 
 
-def close_all():
-    """Close all open/active plotters and clean up memory.
-
-    Returns
-    -------
-    bool
-        ``True`` when all plotters have been closed.
-
-    """
-    for pl in list(_ALL_PLOTTERS.values()):
-        if not pl._closed:
-            pl.close()
-    _ALL_PLOTTERS.clear()
-    return True
-
-
 log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
-log.addHandler(logging.StreamHandler())
 
 
-def _warn_xserver():  # pragma: no cover
-    """Check if plotting is supported and persist this state.
+def _kill_display(disp_id):  # pragma: no cover
+    """Forcibly close the display on Linux.
 
-    Check once and cache this value between calls.  Warn the user if
-    plotting is not supported.  Configured to check on Linux and Mac
-    OS since the Windows check is not quick.
+    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
+
+    And more details into why...
+    https://stackoverflow.com/questions/64811503
+
+    Notes
+    -----
+    This is to be used experimentally and is known to cause issues
+    on `pyvistaqt`
 
     """
-    # disable windows check until we can get a fast way of verifying
-    # if windows has a windows manager (which it generally does)
-    if os.name == 'nt':
-        return
+    if platform.system() != 'Linux':
+        raise OSError('This method only works on Linux')
 
-    if not hasattr(_warn_xserver, 'has_support'):
-        _warn_xserver.has_support = pyvista.system_supports_plotting()
+    if disp_id:
+        cdisp_id = int(disp_id[1:].split('_')[0], 16)
 
-    if not _warn_xserver.has_support:
-        # check if a display has been set
-        if 'DISPLAY' in os.environ:
-            return
-
-        # finally, check if using a backend that doesn't require an xserver
-        if pyvista.global_theme.jupyter_backend in [
-            'client',
-        ]:
-            return
-
-        # Check if VTK has EGL support
-        if uses_egl():
-            return
-
-        warnings.warn(
-            '\n'
-            'This system does not appear to be running an xserver.\n'
-            'PyVista will likely segfault when rendering.\n\n'
-            'Try starting a virtual frame buffer with xvfb, or using\n '
-            ' ``pyvista.start_xvfb()``\n'
-        )
+        # this is unsafe as events might be queued, but sometimes the
+        # window fails to close if we don't just close it
+        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()
 
 
 @abstract_class
@@ -341,6 +308,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+
+    def __del__(self):
+        """Delete the plotter."""
+        # We have to check here if the plotter was only partially initialized
+        if self._initialized:
+            if not self._closed:
+                self.close()
+        self.deep_clean()
+        if self._initialized:
+            del self.renderers
 
     @property
     def suppress_rendering(self):  # numpydoc ignore=RT01
@@ -2273,6 +2250,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if force_redraw:
             self.render()
 
+    def _add_legend_label(self, actor, label, scalars, color):
+        """Add a legend label based on an actor and its scalars."""
+        if not isinstance(label, str):
+            raise TypeError('Label must be a string')
+        geom = pyvista.Triangle()
+        if scalars is not None:
+            geom = pyvista.Box()
+            color = Color('black')
+        geom.points -= geom.center
+        addr = actor.GetAddressAsString("")
+        self.renderer._labels[addr] = [geom, label, color]
+
     def add_composite(
         self,
         dataset,
@@ -3647,18 +3636,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color):
-        """Add a legend label based on an actor and its scalars."""
-        if not isinstance(label, str):
-            raise TypeError('Label must be a string')
-        geom = pyvista.Triangle()
-        if scalars is not None:
-            geom = pyvista.Box()
-            color = Color('black')
-        geom.points -= geom.center
-        addr = actor.GetAddressAsString("")
-        self.renderer._labels[addr] = [geom, label, color]
-
     def add_volume(
         self,
         volume,
@@ -5006,6 +4983,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.mwriter = get_writer(filename, **kwargs)
 
+    def _on_first_render_request(self):
+        """Once an image or render is officially requested, run this routine.
+
+        For example on the show call or any screenshot producing code.
+        """
+        # reset unless camera for the first render unless camera is set
+        if self._first_time:
+            for renderer in self.renderers:
+                if not renderer.camera.is_set:
+                    renderer.camera_position = renderer.get_default_cam_pos()
+                    renderer.ResetCamera()
+            self._first_time = False
+
     def write_frame(self):
         """Write a single frame to the movie file.
 
@@ -6054,16 +6044,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return datasets
 
-    def __del__(self):
-        """Delete the plotter."""
-        # We have to check here if the plotter was only partially initialized
-        if self._initialized:
-            if not self._closed:
-                self.close()
-        self.deep_clean()
-        if self._initialized:
-            del self.renderers
-
     def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):
         """Add a background image to a plot.
 
@@ -6122,19 +6102,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # return the active renderer to the top, otherwise flat background
         # will not be rendered
         self.renderer.layer = 0
-
-    def _on_first_render_request(self):
-        """Once an image or render is officially requested, run this routine.
-
-        For example on the show call or any screenshot producing code.
-        """
-        # reset unless camera for the first render unless camera is set
-        if self._first_time:
-            for renderer in self.renderers:
-                if not renderer.camera.is_set:
-                    renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
-            self._first_time = False
 
     def reset_camera_clipping_range(self):
         """Reset camera clipping planes."""
@@ -6238,6 +6205,72 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if name in self.renderers[index]._actors:
                 places.append(tuple(self.renderers.index_to_loc(index)))
         return places
+
+
+# Tracks created plotters.  This is the end of the module as we need to
+# define ``BasePlotter`` before including it in the type definition.
+#
+# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
+# when True, BasePlotter.
+_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+
+
+def close_all():
+    """Close all open/active plotters and clean up memory.
+
+    Returns
+    -------
+    bool
+        ``True`` when all plotters have been closed.
+
+    """
+    for pl in list(_ALL_PLOTTERS.values()):
+        if not pl._closed:
+            pl.close()
+    _ALL_PLOTTERS.clear()
+    return True
+log.setLevel('CRITICAL')
+log.addHandler(logging.StreamHandler())
+
+
+def _warn_xserver():  # pragma: no cover
+    """Check if plotting is supported and persist this state.
+
+    Check once and cache this value between calls.  Warn the user if
+    plotting is not supported.  Configured to check on Linux and Mac
+    OS since the Windows check is not quick.
+
+    """
+    # disable windows check until we can get a fast way of verifying
+    # if windows has a windows manager (which it generally does)
+    if os.name == 'nt':
+        return
+
+    if not hasattr(_warn_xserver, 'has_support'):
+        _warn_xserver.has_support = pyvista.system_supports_plotting()
+
+    if not _warn_xserver.has_support:
+        # check if a display has been set
+        if 'DISPLAY' in os.environ:
+            return
+
+        # finally, check if using a backend that doesn't require an xserver
+        if pyvista.global_theme.jupyter_backend in [
+            'client',
+        ]:
+            return
+
+        # Check if VTK has EGL support
+        if uses_egl():
+            return
+
+        warnings.warn(
+            '\n'
+            'This system does not appear to be running an xserver.\n'
+            'PyVista will likely segfault when rendering.\n\n'
+            'Try starting a virtual frame buffer with xvfb, or using\n '
+            ' ``pyvista.start_xvfb()``\n'
+        )
 
 
 class Plotter(BasePlotter):
@@ -6897,36 +6930,3 @@ class Plotter(BasePlotter):
                 meshes.append(actor.mapper.dataset)
 
         return meshes
-
-
-# Tracks created plotters.  This is the end of the module as we need to
-# define ``BasePlotter`` before including it in the type definition.
-#
-# When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
-# when True, BasePlotter.
-_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
-
-
-def _kill_display(disp_id):  # pragma: no cover
-    """Forcibly close the display on Linux.
-
-    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
-
-    And more details into why...
-    https://stackoverflow.com/questions/64811503
-
-    Notes
-    -----
-    This is to be used experimentally and is known to cause issues
-    on `pyvistaqt`
-
-    """
-    if platform.system() != 'Linux':
-        raise OSError('This method only works on Linux')
-
-    if disp_id:
-        cdisp_id = int(disp_id[1:].split('_')[0], 16)
-
-        # this is unsafe as events might be queued, but sometimes the
-        # window fails to close if we don't just close it
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()

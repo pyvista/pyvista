@@ -36,16 +36,6 @@ class ScalarBars:
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
-    def __repr__(self):
-        """Nice representation of this class."""
-        lines = []
-        lines.append('Scalar Bar Title     Interactive')
-        for title in self._scalar_bar_actors:
-            interactive = title in self._scalar_bar_widgets
-            title = f'"{title}"'
-            lines.append(f'{title:20} {str(interactive):5}')
-        return '\n'.join(lines)
-
     def _remove_mapper_from_plotter(
         self, actor, reset_camera=False, render=False
     ):  # numpydoc ignore=PR01,RT01
@@ -129,14 +119,6 @@ class ScalarBars:
         if widget is not None:
             widget.SetEnabled(0)
 
-    def __len__(self):
-        """Return the number of scalar bar actors."""
-        return len(self._scalar_bar_actors)
-
-    def __getitem__(self, index):
-        """Return a scalar bar actor."""
-        return self._scalar_bar_actors[index]
-
     def keys(self):
         """Scalar bar keys."""
         return self._scalar_bar_actors.keys()
@@ -148,10 +130,6 @@ class ScalarBars:
     def items(self):
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
-
-    def __contains__(self, key):
-        """Check if a title is a valid actors."""
-        return key in self._scalar_bar_actors
 
     def add_scalar_bar(
         self,
@@ -556,3 +534,25 @@ class ScalarBars:
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
 
         return scalar_bar
+
+    def __getitem__(self, index):
+        """Return a scalar bar actor."""
+        return self._scalar_bar_actors[index]
+
+    def __contains__(self, key):
+        """Check if a title is a valid actors."""
+        return key in self._scalar_bar_actors
+
+    def __len__(self):
+        """Return the number of scalar bar actors."""
+        return len(self._scalar_bar_actors)
+
+    def __repr__(self):
+        """Nice representation of this class."""
+        lines = []
+        lines.append('Scalar Bar Title     Interactive')
+        for title in self._scalar_bar_actors:
+            interactive = title in self._scalar_bar_widgets
+            title = f'"{title}"'
+            lines.append(f'{title:20} {str(interactive):5}')
+        return '\n'.join(lines)

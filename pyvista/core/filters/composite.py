@@ -14,6 +14,34 @@ from pyvista.core.utilities.misc import abstract_class
 class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
+    clip = DataSetFilters.clip
+
+    clip_box = DataSetFilters.clip_box
+
+    slice = DataSetFilters.slice
+
+    slice_orthogonal = DataSetFilters.slice_orthogonal
+
+    slice_along_axis = DataSetFilters.slice_along_axis
+
+    slice_along_line = DataSetFilters.slice_along_line
+
+    extract_all_edges = DataSetFilters.extract_all_edges
+
+    elevation = DataSetFilters.elevation
+
+    compute_cell_sizes = DataSetFilters.compute_cell_sizes
+
+    cell_centers = DataSetFilters.cell_centers
+
+    cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
+
+    point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
+
+    sample = DataSetFilters.sample
+
+    triangulate = DataSetFilters.triangulate
+
     def extract_geometry(self):
         """Extract the surface the geometry of all blocks.
 
@@ -82,34 +110,6 @@ class CompositeFilters:
         alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
-
-    clip = DataSetFilters.clip
-
-    clip_box = DataSetFilters.clip_box
-
-    slice = DataSetFilters.slice
-
-    slice_orthogonal = DataSetFilters.slice_orthogonal
-
-    slice_along_axis = DataSetFilters.slice_along_axis
-
-    slice_along_line = DataSetFilters.slice_along_line
-
-    extract_all_edges = DataSetFilters.extract_all_edges
-
-    elevation = DataSetFilters.elevation
-
-    compute_cell_sizes = DataSetFilters.compute_cell_sizes
-
-    cell_centers = DataSetFilters.cell_centers
-
-    cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
-
-    point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
-
-    sample = DataSetFilters.sample
-
-    triangulate = DataSetFilters.triangulate
 
     def outline(self, generate_faces=False, nested=False, progress_bar=False):
         """Produce an outline of the full extent for the all blocks in this composite dataset.

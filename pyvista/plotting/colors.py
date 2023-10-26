@@ -724,6 +724,57 @@ class Color:
         {'alpha', 'a', 'opacity'},  # 3
     )
 
+    def _from_rgba(self, rgba):
+        """Construct color from an RGB(A) sequence."""
+        arg = rgba
+        if len(rgba) == 3:
+            # Keep using current opacity if it is not provided.
+            rgba = [*rgba, self._opacity]
+        try:
+            if len(rgba) != 4:
+                raise ValueError("Invalid length for RGBA sequence.")
+            self._red, self._green, self._blue, self._opacity = (
+                self.convert_color_channel(c) for c in rgba
+            )
+        except ValueError:
+            raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
+
+    def _from_dict(self, dct):
+        """Construct color from an RGB(A) dictionary."""
+        # Get any of the keys associated with each color channel (or None).
+        rgba = [
+            next((dct[key] for key in cnames if key in dct), None) for cnames in self.CHANNEL_NAMES
+        ]
+        self._from_rgba(rgba)
+
+    def _from_hex(self, h):
+        """Construct color from a hex string."""
+        arg = h
+        h = self.strip_hex_prefix(h)
+        try:
+            self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
+        except ValueError:
+            raise ValueError(f"Invalid hex string: {arg}") from None
+
+    def _from_str(self, n: str):
+        """Construct color from a name or hex string."""
+        arg = n
+        n = n.lower()
+        if n in color_synonyms:
+            # Synonym of registered color name
+            # Convert from synonym to full hex
+            n = color_synonyms[n]
+            self._from_hex(hexcolors[n])
+        elif n in hexcolors:
+            # Color name
+            self._from_hex(hexcolors[n])
+        else:
+            # Otherwise, try conversion to hex
+            try:
+                self._from_hex(n)
+            except ValueError:
+                raise ValueError(f"Invalid color name or hex string: {arg}") from None
+
     def __init__(
         self,
         color: Optional[ColorLike] = None,
@@ -842,57 +893,6 @@ class Color:
             return int(val)
         else:
             raise ValueError(f"Unsupported color channel value provided: {val}")
-
-    def _from_rgba(self, rgba):
-        """Construct color from an RGB(A) sequence."""
-        arg = rgba
-        if len(rgba) == 3:
-            # Keep using current opacity if it is not provided.
-            rgba = [*rgba, self._opacity]
-        try:
-            if len(rgba) != 4:
-                raise ValueError("Invalid length for RGBA sequence.")
-            self._red, self._green, self._blue, self._opacity = (
-                self.convert_color_channel(c) for c in rgba
-            )
-        except ValueError:
-            raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
-
-    def _from_dict(self, dct):
-        """Construct color from an RGB(A) dictionary."""
-        # Get any of the keys associated with each color channel (or None).
-        rgba = [
-            next((dct[key] for key in cnames if key in dct), None) for cnames in self.CHANNEL_NAMES
-        ]
-        self._from_rgba(rgba)
-
-    def _from_hex(self, h):
-        """Construct color from a hex string."""
-        arg = h
-        h = self.strip_hex_prefix(h)
-        try:
-            self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
-        except ValueError:
-            raise ValueError(f"Invalid hex string: {arg}") from None
-
-    def _from_str(self, n: str):
-        """Construct color from a name or hex string."""
-        arg = n
-        n = n.lower()
-        if n in color_synonyms:
-            # Synonym of registered color name
-            # Convert from synonym to full hex
-            n = color_synonyms[n]
-            self._from_hex(hexcolors[n])
-        elif n in hexcolors:
-            # Color name
-            self._from_hex(hexcolors[n])
-        else:
-            # Otherwise, try conversion to hex
-            try:
-                self._from_hex(n)
-            except ValueError:
-                raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
     def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
@@ -1152,17 +1152,6 @@ class Color:
         """
         return self._opacity
 
-    def __eq__(self, other):
-        """Equality comparison."""
-        try:
-            return self.int_rgba == Color(other).int_rgba
-        except ValueError:  # pragma: no cover
-            return NotImplemented
-
-    def __hash__(self):  # pragma: no cover
-        """Hash calculation."""
-        return hash((self._red, self._green, self._blue, self._opacity))
-
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
         if not isinstance(item, (str, slice, int, np.integer)):
@@ -1179,6 +1168,17 @@ class Color:
     def __iter__(self):
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
+
+    def __eq__(self, other):
+        """Equality comparison."""
+        try:
+            return self.int_rgba == Color(other).int_rgba
+        except ValueError:  # pragma: no cover
+            return NotImplemented
+
+    def __hash__(self):  # pragma: no cover
+        """Hash calculation."""
+        return hash((self._red, self._green, self._blue, self._opacity))
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""

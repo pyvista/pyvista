@@ -209,6 +209,48 @@ def initialize(
     return viewer
 
 
+def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
+    """Elegantly launch the Trame server without await.
+
+    This provides a mechanism to launch the Trame Jupyter backend in
+    a way that does not require users to await the call.
+
+    This is a thin wrapper of
+    :func:`launch_server() <pyvista.trame.jupyter.launch_server>`.
+
+    Returns
+    -------
+    trame_server.core.Server
+        The launched trame server.
+
+    Warnings
+    --------
+    This uses `nest_asyncio <https://github.com/erdewit/nest_asyncio>`_ which
+    patches the standard lib `asyncio` package and may have unintended
+    consequences for some uses cases. We advise strongly to make sure PyVista's
+    Jupyter backend is not set to use Trame when not in a Jupyter environment.
+
+    """
+    try:
+        import nest_asyncio
+    except ImportError:
+        raise ImportError(
+            """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
+
+    from pyvista.trame.jupyter import launch_server
+    await launch_server().ready
+"""
+        )
+
+    async def launch_it():  # numpydoc ignore=GL08
+        await launch_server(*args, **kwargs).ready
+
+    # Basically monkey patches asyncio to support this
+    nest_asyncio.apply()
+
+    return asyncio.run(launch_it())
+
+
 def show_trame(
     plotter,
     mode=None,
@@ -347,45 +389,3 @@ def show_trame(
     if callable(handler):
         return handler(viewer, src, **kwargs)
     return Widget(viewer, src, **kwargs)
-
-
-def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
-    """Elegantly launch the Trame server without await.
-
-    This provides a mechanism to launch the Trame Jupyter backend in
-    a way that does not require users to await the call.
-
-    This is a thin wrapper of
-    :func:`launch_server() <pyvista.trame.jupyter.launch_server>`.
-
-    Returns
-    -------
-    trame_server.core.Server
-        The launched trame server.
-
-    Warnings
-    --------
-    This uses `nest_asyncio <https://github.com/erdewit/nest_asyncio>`_ which
-    patches the standard lib `asyncio` package and may have unintended
-    consequences for some uses cases. We advise strongly to make sure PyVista's
-    Jupyter backend is not set to use Trame when not in a Jupyter environment.
-
-    """
-    try:
-        import nest_asyncio
-    except ImportError:
-        raise ImportError(
-            """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
-
-    from pyvista.trame.jupyter import launch_server
-    await launch_server().ready
-"""
-        )
-
-    async def launch_it():  # numpydoc ignore=GL08
-        await launch_server(*args, **kwargs).ready
-
-    # Basically monkey patches asyncio to support this
-    nest_asyncio.apply()
-
-    return asyncio.run(launch_it())

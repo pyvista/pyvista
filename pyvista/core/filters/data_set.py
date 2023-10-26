@@ -29,6 +29,60 @@ from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
+def _set_threshold_limit(alg, value, method, invert):
+    """Set vtkThreshold limits and function.
+
+    Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
+
+    * https://github.com/pyvista/pyvista/issues/2850
+    * https://github.com/pyvista/pyvista/issues/3610
+    * https://discourse.vtk.org/t/unnecessary-vtk-api-change/9929
+
+    """
+    # Check value
+    if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+        if len(value) != 2:
+            raise ValueError(
+                f'Value range must be length one for a float value or two for min/max; not ({value}).'
+            )
+        # Check range
+        if value[0] > value[1]:
+            raise ValueError(
+                'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
+            )
+    elif isinstance(value, collections.abc.Iterable):
+        raise TypeError('Value must either be a single scalar or a sequence.')
+    alg.SetInvert(invert)
+    # Set values and function
+    if pyvista.vtk_version_info >= (9, 1):
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
+            alg.SetLowerThreshold(value[0])
+            alg.SetUpperThreshold(value[1])
+        else:
+            # Single value
+            if method.lower() == 'lower':
+                alg.SetLowerThreshold(value)
+                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
+            elif method.lower() == 'upper':
+                alg.SetUpperThreshold(value)
+                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
+            else:
+                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+    else:  # pragma: no cover
+        # ThresholdByLower, ThresholdByUpper, ThresholdBetween
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+            alg.ThresholdBetween(value[0], value[1])
+        else:
+            # Single value
+            if method.lower() == 'lower':
+                alg.ThresholdByLower(value)
+            elif method.lower() == 'upper':
+                alg.ThresholdByUpper(value)
+            else:
+                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+
+
 @abstract_class
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
@@ -5339,28 +5393,6 @@ class DataSetFilters:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
         return merged
 
-    def __add__(self, dataset):
-        """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
-        return DataSetFilters.merge(self, dataset)
-
-    def __iadd__(self, dataset):
-        """Merge another mesh into this one if possible.
-
-        "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
-        Otherwise we have to return a new object, and the attempted in-place
-        merge will raise.
-
-        """
-        try:
-            merged = DataSetFilters.merge(self, dataset, inplace=True)
-        except TypeError:
-            raise TypeError(
-                'In-place merge only possible if the target mesh '
-                'is an UnstructuredGrid.\nPlease use `mesh + other_mesh` '
-                'instead, which returns a new UnstructuredGrid.'
-            ) from None
-        return merged
-
     def compute_cell_quality(
         self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False
     ):
@@ -6239,56 +6271,24 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 
+    def __add__(self, dataset):
+        """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
+        return DataSetFilters.merge(self, dataset)
 
-def _set_threshold_limit(alg, value, method, invert):
-    """Set vtkThreshold limits and function.
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
 
-    Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
+        "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
+        Otherwise we have to return a new object, and the attempted in-place
+        merge will raise.
 
-    * https://github.com/pyvista/pyvista/issues/2850
-    * https://github.com/pyvista/pyvista/issues/3610
-    * https://discourse.vtk.org/t/unnecessary-vtk-api-change/9929
-
-    """
-    # Check value
-    if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-        if len(value) != 2:
-            raise ValueError(
-                f'Value range must be length one for a float value or two for min/max; not ({value}).'
-            )
-        # Check range
-        if value[0] > value[1]:
-            raise ValueError(
-                'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
-            )
-    elif isinstance(value, collections.abc.Iterable):
-        raise TypeError('Value must either be a single scalar or a sequence.')
-    alg.SetInvert(invert)
-    # Set values and function
-    if pyvista.vtk_version_info >= (9, 1):
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
-            alg.SetLowerThreshold(value[0])
-            alg.SetUpperThreshold(value[1])
-        else:
-            # Single value
-            if method.lower() == 'lower':
-                alg.SetLowerThreshold(value)
-                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-            elif method.lower() == 'upper':
-                alg.SetUpperThreshold(value)
-                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
-            else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
-    else:  # pragma: no cover
-        # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-            alg.ThresholdBetween(value[0], value[1])
-        else:
-            # Single value
-            if method.lower() == 'lower':
-                alg.ThresholdByLower(value)
-            elif method.lower() == 'upper':
-                alg.ThresholdByUpper(value)
-            else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+        """
+        try:
+            merged = DataSetFilters.merge(self, dataset, inplace=True)
+        except TypeError:
+            raise TypeError(
+                'In-place merge only possible if the target mesh '
+                'is an UnstructuredGrid.\nPlease use `mesh + other_mesh` '
+                'instead, which returns a new UnstructuredGrid.'
+            ) from None
+        return merged

@@ -489,14 +489,6 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         return attrs
 
-    def __repr__(self) -> str:
-        """Return the object representation."""
-        return self.head(display=False, html=False)
-
-    def __str__(self) -> str:
-        """Return the object string representation."""
-        return self.head(display=False, html=False)
-
     def copy(self, deep=True) -> Cell:
         """Return a copy of the cell.
 
@@ -534,6 +526,41 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """
         return type(self)(self, deep=deep)
 
+    def __repr__(self) -> str:
+        """Return the object representation."""
+        return self.head(display=False, html=False)
+
+    def __str__(self) -> str:
+        """Return the object string representation."""
+        return self.head(display=False, html=False)
+
+
+# The following methods would be much nicer bound to CellArray,
+# but then they wouldn't be available on bare vtkCellArrays. In the future,
+# consider using vtkCellArray.override decorator, so they're all automatically
+# returned as CellArrays
+
+
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
+    """Return the array with the point ids that define the cells' connectivity."""
+    return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
+
+
+def _get_offset_array(cellarr: _vtk.vtkCellArray):
+    """Return the array used to store cell offsets."""
+    return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
+
+
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
+    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
+    cells = _get_connectivity_array(cellarr)
+    if len(cells) == 0:
+        return cells
+
+    offsets = _get_offset_array(cellarr)
+    cell_size = offsets[1] - offsets[0]
+    return cells.reshape(-1, cell_size)
+
 
 class CellArray(_vtk.vtkCellArray):
     """PyVista wrapping of vtkCellArray.
@@ -570,13 +597,6 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):
-        """Initialize a vtkCellArray."""
-        self.__offsets = None
-        self.__connectivity = None
-        if cells is not None:
-            self._set_cells(cells, n_cells, deep)
-
     def _set_cells(self, cells, n_cells, deep):
         """Set a vtkCellArray."""
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
@@ -592,6 +612,13 @@ class CellArray(_vtk.vtkCellArray):
 
         self.SetCells(n_cells, vtk_idarr)
         self.__offsets = self.__connectivity = None
+
+    def __init__(self, cells=None, n_cells=None, deep=False):
+        """Initialize a vtkCellArray."""
+        self.__offsets = None
+        self.__connectivity = None
+        if cells is not None:
+            self._set_cells(cells, n_cells, deep)
 
     @property
     def cells(self):  # numpydoc ignore=RT01
@@ -713,30 +740,3 @@ class CellArray(_vtk.vtkCellArray):
         cellarr = cls()
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
-
-
-# The following methods would be much nicer bound to CellArray,
-# but then they wouldn't be available on bare vtkCellArrays. In the future,
-# consider using vtkCellArray.override decorator, so they're all automatically
-# returned as CellArrays
-
-
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
-    """Return the array with the point ids that define the cells' connectivity."""
-    return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
-
-
-def _get_offset_array(cellarr: _vtk.vtkCellArray):
-    """Return the array used to store cell offsets."""
-    return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
-
-
-def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> np.ndarray:
-    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
-    cells = _get_connectivity_array(cellarr)
-    if len(cells) == 0:
-        return cells
-
-    offsets = _get_offset_array(cellarr)
-    cell_size = offsets[1] - offsets[0]
-    return cells.reshape(-1, cell_size)

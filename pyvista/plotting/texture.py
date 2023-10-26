@@ -108,6 +108,45 @@ class Texture(_vtk.vtkTexture, DataObject):
         MIRRORED_REPEAT = (2, 'Mirrored repeat')
         CLAMP_TO_BORDER = (3, 'Clamp to border')
 
+    def _from_image_data(self, image):
+        if not isinstance(image, pyvista.ImageData):
+            image = pyvista.ImageData(image)
+        self.SetInputDataObject(image)
+        self.Update()
+
+    def _from_array(self, image):
+        """Create a texture from a np.ndarray."""
+        if image.ndim not in [2, 3]:
+            # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
+            raise ValueError('Input image must be nn by nm by RGB[A]')
+
+        if image.ndim == 3:
+            if image.shape[2] not in [1, 3, 4]:
+                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+            n_components = image.shape[2]
+        elif image.ndim == 2:
+            n_components = 1
+
+        grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
+        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
+            (-1, n_components), order='F'
+        )
+        grid.set_active_scalars('Image')
+        self._from_image_data(grid)
+
+    def _from_file(self, filename, **kwargs):
+        try:
+            image = pyvista.read(filename, **kwargs)
+            if image.n_points < 2:
+                raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
+            self._from_image_data(image)
+        except (KeyError, ValueError, OSError):
+            self._from_array(_try_imageio_imread(filename))  # pragma: no cover
+
+    def _from_texture(self, texture):
+        image = texture.GetInput()
+        self._from_image_data(image)
+
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
         super().__init__(uinput, **kwargs)
@@ -139,19 +178,6 @@ class Texture(_vtk.vtkTexture, DataObject):
             pass
         else:
             raise TypeError(f'Cannot create a pyvista.Texture from ({type(uinput)})')
-
-    def _from_file(self, filename, **kwargs):
-        try:
-            image = pyvista.read(filename, **kwargs)
-            if image.n_points < 2:
-                raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
-            self._from_image_data(image)
-        except (KeyError, ValueError, OSError):
-            self._from_array(_try_imageio_imread(filename))  # pragma: no cover
-
-    def _from_texture(self, texture):
-        image = texture.GetInput()
-        self._from_image_data(image)
 
     @property
     def interpolate(self) -> bool:  # numpydoc ignore=RT01
@@ -187,32 +213,6 @@ class Texture(_vtk.vtkTexture, DataObject):
     @mipmap.setter
     def mipmap(self, value: bool):  # numpydoc ignore=GL08
         self.SetMipmap(value)
-
-    def _from_image_data(self, image):
-        if not isinstance(image, pyvista.ImageData):
-            image = pyvista.ImageData(image)
-        self.SetInputDataObject(image)
-        self.Update()
-
-    def _from_array(self, image):
-        """Create a texture from a np.ndarray."""
-        if image.ndim not in [2, 3]:
-            # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
-            raise ValueError('Input image must be nn by nm by RGB[A]')
-
-        if image.ndim == 3:
-            if image.shape[2] not in [1, 3, 4]:
-                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
-            n_components = image.shape[2]
-        elif image.ndim == 2:
-            n_components = 1
-
-        grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
-        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
-            (-1, n_components), order='F'
-        )
-        grid.set_active_scalars('Image')
-        self._from_image_data(grid)
 
     @property
     def repeat(self) -> bool:  # numpydoc ignore=RT01
@@ -406,10 +406,6 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox.SetTexture(self)
             return skybox
 
-    def __repr__(self):
-        """Return the object representation."""
-        return pyvista.DataSet.__repr__(self)
-
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
@@ -457,6 +453,22 @@ class Texture(_vtk.vtkTexture, DataObject):
             return (0, 0)
         return input_data.GetDimensions()[:2]
 
+    def _plot_skybox(self, **kwargs):
+        """Plot this texture as a skybox."""
+        cpos = kwargs.pop('cpos', 'xy')
+        zoom = kwargs.pop('zoom', 0.5)
+        show_axes = kwargs.pop('show_axes', True)
+        lighting = kwargs.pop('lighting', None)
+        pl = pyvista.Plotter(lighting=lighting)
+        pl.add_actor(self.to_skybox())
+        pl.set_environment_texture(self, True)
+        pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
+        pl.camera_position = cpos
+        pl.camera.zoom(zoom)
+        if show_axes:
+            pl.show_axes()
+        pl.show(**kwargs)
+
     def plot(self, **kwargs):
         """Plot the texture as an image.
 
@@ -495,22 +507,6 @@ class Texture(_vtk.vtkTexture, DataObject):
         kwargs.setdefault('show_scalar_bar', False)
         mesh = pyvista.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
         return mesh.plot(texture=self, **kwargs)
-
-    def _plot_skybox(self, **kwargs):
-        """Plot this texture as a skybox."""
-        cpos = kwargs.pop('cpos', 'xy')
-        zoom = kwargs.pop('zoom', 0.5)
-        show_axes = kwargs.pop('show_axes', True)
-        lighting = kwargs.pop('lighting', None)
-        pl = pyvista.Plotter(lighting=lighting)
-        pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, True)
-        pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
-        pl.camera_position = cpos
-        pl.camera.zoom(zoom)
-        if show_axes:
-            pl.show_axes()
-        pl.show(**kwargs)
 
     @property
     def wrap(self) -> 'Texture.WrapType':  # numpydoc ignore=RT01
@@ -628,6 +624,10 @@ class Texture(_vtk.vtkTexture, DataObject):
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         data = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
         return Texture(data)
+
+    def __repr__(self):
+        """Return the object representation."""
+        return pyvista.DataSet.__repr__(self)
 
 
 def image_to_texture(image):

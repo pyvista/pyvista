@@ -77,18 +77,6 @@ class RenderPasses:
             self._init_passes()
         return self.__seq_pass
 
-    @property
-    def _camera_pass(self):
-        """Initialize (when necessary) the camera pass and return it.
-
-        This lets us lazily generate the camera pass only when we need it
-        rather than at initialization of the class.
-
-        """
-        if self.__camera_pass is None:
-            self._init_passes()
-        return self.__camera_pass
-
     def _init_passes(self):
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
@@ -101,6 +89,18 @@ class RenderPasses:
         # Make the sequence the delegate of a camera pass.
         self.__camera_pass = _vtk.vtkCameraPass()
         self.__camera_pass.SetDelegatePass(self._seq_pass)
+
+    @property
+    def _camera_pass(self):
+        """Initialize (when necessary) the camera pass and return it.
+
+        This lets us lazily generate the camera pass only when we need it
+        rather than at initialization of the class.
+
+        """
+        if self.__camera_pass is None:
+            self._init_passes()
+        return self.__camera_pass
 
     @property
     def _renderer(self):
@@ -126,6 +126,38 @@ class RenderPasses:
         self._ssao_pass = None
         self._blur_passes = []
 
+    def _update_passes(self):
+        """Reassemble pass delegation."""
+        if self._renderer is None:  # pragma: no cover
+            raise RuntimeError('The renderer has been closed.')
+
+        current_pass = self._camera_pass
+        for class_name in PRE_PASS + POST_PASS:
+            if class_name in self._passes:
+                for render_pass in self._passes[class_name]:
+                    render_pass.SetDelegatePass(current_pass)
+                    current_pass = render_pass
+
+        # reset to the default rendering if no special passes have been added
+        if current_pass is self._camera_pass and self._shadow_map_pass is None:
+            self._renderer.SetPass(None)
+        else:
+            self._renderer.SetPass(current_pass)
+
+    def _add_pass(self, render_pass):
+        """Add a render pass."""
+        class_name = render_pass.GetClassName()
+
+        if class_name in PRE_PASS and render_pass in self._passes:
+            return
+
+        if class_name not in self._passes:
+            self._passes[class_name] = [render_pass]
+        else:
+            self._passes[class_name].append(render_pass)
+
+        self._update_passes()
+
     def enable_edl_pass(self):
         """Enable the EDL pass.
 
@@ -140,6 +172,23 @@ class RenderPasses:
         self._edl_pass = _vtk.vtkEDLShading()
         self._add_pass(self._edl_pass)
         return self._edl_pass
+
+    def _remove_pass(self, render_pass):
+        """Remove a pass.
+
+        Remove a pass and reassemble the pass ordering.
+
+        """
+        class_name = render_pass.GetClassName()
+
+        if class_name not in self._passes:  # pragma: no cover
+            return
+        else:
+            self._passes[class_name].remove(render_pass)
+            if not self._passes[class_name]:
+                self._passes.pop(class_name)
+
+        self._update_passes()
 
     def disable_edl_pass(self):
         """Disable the EDL pass."""
@@ -290,52 +339,3 @@ class RenderPasses:
             return
         self._remove_pass(self._ssaa_pass)
         self._ssaa_pass = None
-
-    def _update_passes(self):
-        """Reassemble pass delegation."""
-        if self._renderer is None:  # pragma: no cover
-            raise RuntimeError('The renderer has been closed.')
-
-        current_pass = self._camera_pass
-        for class_name in PRE_PASS + POST_PASS:
-            if class_name in self._passes:
-                for render_pass in self._passes[class_name]:
-                    render_pass.SetDelegatePass(current_pass)
-                    current_pass = render_pass
-
-        # reset to the default rendering if no special passes have been added
-        if current_pass is self._camera_pass and self._shadow_map_pass is None:
-            self._renderer.SetPass(None)
-        else:
-            self._renderer.SetPass(current_pass)
-
-    def _add_pass(self, render_pass):
-        """Add a render pass."""
-        class_name = render_pass.GetClassName()
-
-        if class_name in PRE_PASS and render_pass in self._passes:
-            return
-
-        if class_name not in self._passes:
-            self._passes[class_name] = [render_pass]
-        else:
-            self._passes[class_name].append(render_pass)
-
-        self._update_passes()
-
-    def _remove_pass(self, render_pass):
-        """Remove a pass.
-
-        Remove a pass and reassemble the pass ordering.
-
-        """
-        class_name = render_pass.GetClassName()
-
-        if class_name not in self._passes:  # pragma: no cover
-            return
-        else:
-            self._passes[class_name].remove(render_pass)
-            if not self._passes[class_name]:
-                self._passes.pop(class_name)
-
-        self._update_passes()

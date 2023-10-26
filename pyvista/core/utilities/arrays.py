@@ -179,6 +179,71 @@ def raise_has_duplicates(arr):
         raise ValueError("Array contains duplicate values.")
 
 
+def vtk_bit_array_to_char(vtkarr_bint):
+    """Cast vtk bit array to a char array.
+
+    Parameters
+    ----------
+    vtkarr_bint : vtk.vtkBitArray
+        VTK binary array.
+
+    Returns
+    -------
+    vtk.vtkCharArray
+        VTK char array.
+
+    Notes
+    -----
+    This performs a copy.
+
+    """
+    vtkarr = _vtk.vtkCharArray()
+    vtkarr.DeepCopy(vtkarr_bint)
+    return vtkarr
+
+
+def convert_string_array(arr, name=None):
+    """Convert a numpy array of strings to a vtkStringArray or vice versa.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        Numpy string array to convert.
+
+    name : str, optional
+        Name to set the vtkStringArray to.
+
+    Returns
+    -------
+    vtkStringArray
+        VTK string array.
+
+    Notes
+    -----
+    Note that this is terribly inefficient. If you have ideas on how
+    to make this faster, please consider opening a pull request.
+
+    """
+    if isinstance(arr, np.ndarray):
+        # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
+        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+            raise ValueError(
+                'String array contains non-ASCII characters that are not supported by VTK.'
+            )
+        vtkarr = _vtk.vtkStringArray()
+        ########### OPTIMIZE ###########
+        for val in arr:
+            vtkarr.InsertNextValue(val)
+        ################################
+        if isinstance(name, str):
+            vtkarr.SetName(name)
+        return vtkarr
+    # Otherwise it is a vtk array and needs to be converted back to numpy
+    ############### OPTIMIZE ###############
+    nvalues = arr.GetNumberOfValues()
+    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+
+
 def convert_array(arr, name=None, deep=False, array_type=None):
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
@@ -230,6 +295,108 @@ def convert_array(arr, name=None, deep=False, array_type=None):
         return convert_string_array(arr)
     # Convert from vtkDataArry to NumPy
     return _vtk.vtk_to_numpy(arr)
+
+
+def _assoc_array(obj, name, association='point'):
+    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+
+    If the array or index doesn't exist, return nothing. This matches VTK's
+    behavior when using ``GetAbstractArray`` with an invalid key or index.
+
+    """
+    vtk_attr = f'Get{association.title()}Data'
+    python_attr = f'{association.lower()}_data'
+
+    if isinstance(obj, pyvista.DataSet):
+        try:
+            return getattr(obj, python_attr).get_array(name)
+        except KeyError:  # pragma: no cover
+            return None
+    abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
+    if abstract_array is not None:
+        return pyvista.pyvista_ndarray(abstract_array)
+    return None
+
+
+def point_array(obj, name):
+    """Return point array of a pyvista or vtk object.
+
+    Parameters
+    ----------
+    obj : pyvista.DataSet | vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str | int
+        Name or index of the array.
+
+    Returns
+    -------
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
+
+    """
+    return _assoc_array(obj, name, 'point')
+
+
+def field_array(obj, name):
+    """Return field data of a pyvista or vtk object.
+
+    Parameters
+    ----------
+    obj : pyvista.DataSet or vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str | int
+        Name or index of the array.
+
+    Returns
+    -------
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
+
+    """
+    return _assoc_array(obj, name, 'field')
+
+
+def cell_array(obj, name):
+    """Return cell array of a pyvista or vtk object.
+
+    Parameters
+    ----------
+    obj : pyvista.DataSet or vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str | int
+        Name or index of the array.
+
+    Returns
+    -------
+    pyvista.pyvista_ndarray or None
+        Wrapped array if the index or name is valid. Otherwise, ``None``.
+
+    """
+    return _assoc_array(obj, name, 'cell')
+
+
+def row_array(obj, name):
+    """Return row array of a vtk object.
+
+    Parameters
+    ----------
+    obj : vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str
+        Name of the array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Wrapped array.
+
+    """
+    vtkarr = obj.GetRowData().GetAbstractArray(name)
+    return convert_array(vtkarr)
 
 
 def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
@@ -378,108 +545,6 @@ def raise_not_matching(scalars, dataset):
     )
 
 
-def _assoc_array(obj, name, association='point'):
-    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
-
-    If the array or index doesn't exist, return nothing. This matches VTK's
-    behavior when using ``GetAbstractArray`` with an invalid key or index.
-
-    """
-    vtk_attr = f'Get{association.title()}Data'
-    python_attr = f'{association.lower()}_data'
-
-    if isinstance(obj, pyvista.DataSet):
-        try:
-            return getattr(obj, python_attr).get_array(name)
-        except KeyError:  # pragma: no cover
-            return None
-    abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
-    if abstract_array is not None:
-        return pyvista.pyvista_ndarray(abstract_array)
-    return None
-
-
-def point_array(obj, name):
-    """Return point array of a pyvista or vtk object.
-
-    Parameters
-    ----------
-    obj : pyvista.DataSet | vtk.vtkDataSet
-        PyVista or VTK dataset.
-
-    name : str | int
-        Name or index of the array.
-
-    Returns
-    -------
-    pyvista.pyvista_ndarray or None
-        Wrapped array if the index or name is valid. Otherwise, ``None``.
-
-    """
-    return _assoc_array(obj, name, 'point')
-
-
-def field_array(obj, name):
-    """Return field data of a pyvista or vtk object.
-
-    Parameters
-    ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
-        PyVista or VTK dataset.
-
-    name : str | int
-        Name or index of the array.
-
-    Returns
-    -------
-    pyvista.pyvista_ndarray or None
-        Wrapped array if the index or name is valid. Otherwise, ``None``.
-
-    """
-    return _assoc_array(obj, name, 'field')
-
-
-def cell_array(obj, name):
-    """Return cell array of a pyvista or vtk object.
-
-    Parameters
-    ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
-        PyVista or VTK dataset.
-
-    name : str | int
-        Name or index of the array.
-
-    Returns
-    -------
-    pyvista.pyvista_ndarray or None
-        Wrapped array if the index or name is valid. Otherwise, ``None``.
-
-    """
-    return _assoc_array(obj, name, 'cell')
-
-
-def row_array(obj, name):
-    """Return row array of a vtk object.
-
-    Parameters
-    ----------
-    obj : vtk.vtkDataSet
-        PyVista or VTK dataset.
-
-    name : str
-        Name of the array.
-
-    Returns
-    -------
-    numpy.ndarray
-        Wrapped array.
-
-    """
-    vtkarr = obj.GetRowData().GetAbstractArray(name)
-    return convert_array(vtkarr)
-
-
 def get_vtk_type(typ):
     """Look up the VTK type for a given numpy data type.
 
@@ -503,29 +568,6 @@ def get_vtk_type(typ):
     return typ
 
 
-def vtk_bit_array_to_char(vtkarr_bint):
-    """Cast vtk bit array to a char array.
-
-    Parameters
-    ----------
-    vtkarr_bint : vtk.vtkBitArray
-        VTK binary array.
-
-    Returns
-    -------
-    vtk.vtkCharArray
-        VTK char array.
-
-    Notes
-    -----
-    This performs a copy.
-
-    """
-    vtkarr = _vtk.vtkCharArray()
-    vtkarr.DeepCopy(vtkarr_bint)
-    return vtkarr
-
-
 def vtk_id_list_to_array(vtk_id_list):
     """Convert a vtkIdList to a NumPy array.
 
@@ -541,48 +583,6 @@ def vtk_id_list_to_array(vtk_id_list):
 
     """
     return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
-
-
-def convert_string_array(arr, name=None):
-    """Convert a numpy array of strings to a vtkStringArray or vice versa.
-
-    Parameters
-    ----------
-    arr : numpy.ndarray
-        Numpy string array to convert.
-
-    name : str, optional
-        Name to set the vtkStringArray to.
-
-    Returns
-    -------
-    vtkStringArray
-        VTK string array.
-
-    Notes
-    -----
-    Note that this is terribly inefficient. If you have ideas on how
-    to make this faster, please consider opening a pull request.
-
-    """
-    if isinstance(arr, np.ndarray):
-        # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
-            raise ValueError(
-                'String array contains non-ASCII characters that are not supported by VTK.'
-            )
-        vtkarr = _vtk.vtkStringArray()
-        ########### OPTIMIZE ###########
-        for val in arr:
-            vtkarr.InsertNextValue(val)
-        ################################
-        if isinstance(name, str):
-            vtkarr.SetName(name)
-        return vtkarr
-    # Otherwise it is a vtk array and needs to be converted back to numpy
-    ############### OPTIMIZE ###############
-    nvalues = arr.GetNumberOfValues()
-    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
     ########################################
 
 

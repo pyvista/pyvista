@@ -46,10 +46,6 @@ class DataObject:
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: DefaultDict = collections.defaultdict(set)
 
-    def __getattr__(self, item: str) -> Any:
-        """Get attribute from base class if not found."""
-        return super().__getattribute__(item)
-
     def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
         """Shallow copy the given mesh to this mesh.
 
@@ -72,6 +68,10 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
+    def _post_file_load_processing(self):
+        """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
+        pass
+
     def _from_file(self, filename: Union[str, Path], **kwargs):
         """Read data objects from file."""
         data = read(filename, **kwargs)
@@ -83,9 +83,16 @@ class DataObject:
         self.shallow_copy(data)
         self._post_file_load_processing()
 
-    def _post_file_load_processing(self):
-        """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
-        pass
+    def _store_metadata(self):
+        """Store metadata as field data."""
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                array_names = assoc_data.get(assoc_type)
+                if array_names:
+                    key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                    fdata[key] = list(array_names)
 
     def save(self, filename: str, binary=True, texture=None):
         """Save this vtk object to file.
@@ -155,17 +162,6 @@ class DataObject:
             if self[array_name].shape[-1] == 4:  # type: ignore
                 writer.SetEnableAlpha(True)
         writer.Write()
-
-    def _store_metadata(self):
-        """Store metadata as field data."""
-        fdata = self.field_data
-        for assoc_name in ('bitarray', 'complex'):
-            for assoc_type in ('POINT', 'CELL'):
-                assoc_data = getattr(self, f'_association_{assoc_name}_names')
-                array_names = assoc_data.get(assoc_type)
-                if array_names:
-                    key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
-                    fdata[key] = list(array_names)
 
     def _restore_metadata(self):
         """Restore PyVista metadata from field data.
@@ -317,37 +313,6 @@ class DataObject:
             newobject.shallow_copy(self)
         newobject.copy_meta_from(self, deep)
         return newobject
-
-    def __eq__(self, other):
-        """Test equivalency between data objects."""
-        if not isinstance(self, type(other)):
-            return False
-
-        if self is other:
-            return True
-
-        # these attrs use numpy.array_equal
-        equal_attrs = [
-            'verts',  # DataObject
-            'points',  # DataObject
-            'lines',  # DataObject
-            'faces',  # DataObject
-            'cells',  # UnstructuredGrid
-            'celltypes',
-        ]  # UnstructuredGrid
-        for attr in equal_attrs:
-            if hasattr(self, attr):
-                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
-                    return False
-
-        # these attrs can be directly compared
-        attrs = ['field_data', 'point_data', 'cell_data']
-        for attr in attrs:
-            if hasattr(self, attr):
-                if getattr(self, attr) != getattr(other, attr):
-                    return False
-
-        return True
 
     def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
@@ -531,6 +496,41 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
+
+    def __getattr__(self, item: str) -> Any:
+        """Get attribute from base class if not found."""
+        return super().__getattribute__(item)
+
+    def __eq__(self, other):
+        """Test equivalency between data objects."""
+        if not isinstance(self, type(other)):
+            return False
+
+        if self is other:
+            return True
+
+        # these attrs use numpy.array_equal
+        equal_attrs = [
+            'verts',  # DataObject
+            'points',  # DataObject
+            'lines',  # DataObject
+            'faces',  # DataObject
+            'cells',  # UnstructuredGrid
+            'celltypes',
+        ]  # UnstructuredGrid
+        for attr in equal_attrs:
+            if hasattr(self, attr):
+                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
+                    return False
+
+        # these attrs can be directly compared
+        attrs = ['field_data', 'point_data', 'cell_data']
+        for attr in attrs:
+            if hasattr(self, attr):
+                if getattr(self, attr) != getattr(other, attr):
+                    return False
+
+        return True
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.

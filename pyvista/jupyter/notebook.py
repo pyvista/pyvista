@@ -11,6 +11,17 @@ Includes:
 import warnings
 
 
+def show_static_image(plotter, screenshot):
+    """Display a static image to be displayed within a jupyter notebook."""
+    import PIL.Image
+
+    if plotter.last_image is None:
+        # Must render here, otherwise plotter will segfault.
+        plotter.render()
+        plotter.last_image = plotter.screenshot(screenshot, return_img=True)
+    return PIL.Image.fromarray(plotter.last_image)
+
+
 def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
     """Show the ``pyvista`` plot in a jupyter environment.
 
@@ -35,14 +46,3 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
         )
 
     return show_static_image(plotter, screenshot)
-
-
-def show_static_image(plotter, screenshot):
-    """Display a static image to be displayed within a jupyter notebook."""
-    import PIL.Image
-
-    if plotter.last_image is None:
-        # Must render here, otherwise plotter will segfault.
-        plotter.render()
-        plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    return PIL.Image.fromarray(plotter.last_image)

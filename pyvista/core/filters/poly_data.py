@@ -330,21 +330,6 @@ class PolyDataFilters(DataSetFilters):
         """
         return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def __add__(self, dataset):
-        """Merge these two meshes."""
-        return self.merge(dataset)
-
-    def __iadd__(self, dataset):
-        """Merge another mesh into this one if possible.
-
-        "If possible" means that ``dataset`` is also a :class:`PolyData`.
-        Otherwise we have to return a :class:`pyvista.UnstructuredGrid`,
-        so the in-place merge attempt will raise.
-
-        """
-        merged = self.merge(dataset, inplace=True)
-        return merged
-
     def append_polydata(
         self,
         *meshes,
@@ -3719,3 +3704,18 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(mc, progress_bar, 'Reconstructing surface')
         surf = wrap(mc.GetOutput())
         return surf
+
+    def __add__(self, dataset):
+        """Merge these two meshes."""
+        return self.merge(dataset)
+
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
+
+        "If possible" means that ``dataset`` is also a :class:`PolyData`.
+        Otherwise we have to return a :class:`pyvista.UnstructuredGrid`,
+        so the in-place merge attempt will raise.
+
+        """
+        merged = self.merge(dataset, inplace=True)
+        return merged

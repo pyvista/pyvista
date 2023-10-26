@@ -133,39 +133,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.dataset = dataset
         self.association = association
 
-    def __repr__(self) -> str:
-        """Printable representation of DataSetAttributes."""
-        info = ['pyvista DataSetAttributes']
-        array_info = ' None'
-        if self:
-            lines = []
-            for i, (name, array) in enumerate(self.items()):
-                if len(name) > 23:
-                    name = f'{name[:20]}...'
-                try:
-                    arr_type = attr_type[self.IsArrayAnAttribute(i)]
-                except (IndexError, TypeError, AttributeError):  # pragma: no cover
-                    arr_type = ''
-
-                # special treatment for vector data
-                if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
-                    if name == self.active_vectors_name:
-                        arr_type = 'VECTORS'
-
-                line = f'{name[:23]:<24}{str(array.dtype):<11}{str(array.shape):<20} {arr_type}'.strip()
-                lines.append(line)
-            array_info = '\n    ' + '\n    '.join(lines)
-
-        info.append(f'Association     : {self.association.name}')
-        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
-            info.append(f'Active Scalars  : {self.active_scalars_name}')
-            info.append(f'Active Vectors  : {self.active_vectors_name}')
-            info.append(f'Active Texture  : {self.active_texture_coordinates_name}')
-            info.append(f'Active Normals  : {self.active_normals_name}')
-
-        info.append(f'Contains arrays :{array_info}')
-        return '\n'.join(info)
-
     def get(self, key: str, value: Optional[Any] = None) -> Optional[pyvista_ndarray]:
         """Return the value of the item with the specified key.
 
@@ -199,63 +166,25 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self[key]
         return value
 
-    def __bool__(self) -> bool:
-        """Return ``True`` when there are arrays present."""
-        return bool(self.GetNumberOfArrays())
+    def _patch_type(self, narray):
+        """Check if array needs to be represented as a different type."""
+        name = narray.VTKObject.GetName()
+        if name in self.dataset._association_bitarray_names[self.association.name]:
+            narray = narray.view(np.bool_)  # type: ignore
+        elif name in self.dataset._association_complex_names[self.association.name]:
+            if narray.dtype == np.float32:
+                narray = narray.view(np.complex64)  # type: ignore
+            if narray.dtype == np.float64:
+                narray = narray.view(np.complex128)  # type: ignore
+            # remove singleton dimensions to match the behavior of the rest of 1D
+            # VTK arrays
+            narray = narray.squeeze()
+        return narray
 
-    def __getitem__(self, key: str) -> pyvista_ndarray:
-        """Implement ``[]`` operator.
-
-        Accepts an array name.
-        """
-        if not isinstance(key, str):
-            raise TypeError('Only strings are valid keys for DataSetAttributes.')
-        return self.get_array(key)
-
-    def __setitem__(
-        self, key: str, value: Union[np.ndarray, Sequence, float]
-    ):  # numpydoc ignore=PR01,RT01
-        """Implement setting with the ``[]`` operator."""
-        if not isinstance(key, str):
-            raise TypeError('Only strings are valid keys for DataSetAttributes.')
-
-        has_arr = key in self
-        self.set_array(value, name=key)
-
-        # do not make array active if it already exists.  This covers
-        # an inplace update like self.point_data[key] += 1
-        if has_arr:
-            return
-
-        # make active if not field data and there isn't already an active scalar
-        if (
-            self.association
-            in [
-                FieldAssociation.POINT,
-                FieldAssociation.CELL,
-            ]
-            and self.active_scalars_name is None
-        ):
-            self.active_scalars_name = key
-
-    def __delitem__(self, key: str):
-        """Implement del with array name or index."""
-        if not isinstance(key, str):
-            raise TypeError('Only strings are valid keys for DataSetAttributes.')
-
-        self.remove(key)
-
-    def __contains__(self, name: str) -> bool:
-        """Implement the ``in`` operator."""
-        return name in self.keys()
-
-    def __iter__(self) -> Iterator[str]:
-        """Implement for loop iteration."""
-        yield from self.keys()
-
-    def __len__(self) -> int:
-        """Return the number of arrays."""
-        return self.VTKObject.GetNumberOfArrays()
+    def _raise_field_data_no_scalars_vectors(self):
+        """Raise a TypeError if FieldData."""
+        if self.association == FieldAssociation.NONE:
+            raise TypeError('FieldData does not have active scalars or vectors.')
 
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
@@ -442,6 +371,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         )
         self.active_texture_coordinates_name = name
 
+    def _raise_index_out_of_bounds(self, index: Any):
+        """Raise a KeyError if array index is out of bounds."""
+        if isinstance(index, int):
+            max_index = self.VTKObject.GetNumberOfArrays()
+            if not 0 <= index < max_index:
+                raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
+
     def get_array(self, key: Union[str, int]) -> pyvista_ndarray:
         """Get an array in this object.
 
@@ -498,20 +434,120 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         return self._patch_type(narray)
 
-    def _patch_type(self, narray):
-        """Check if array needs to be represented as a different type."""
-        name = narray.VTKObject.GetName()
+    def _prepare_array(
+        self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy: bool
+    ) -> _vtk.vtkDataSet:  # numpydoc ignore=PR01,RT01
+        """Prepare an array to be added to this dataset.
+
+        Notes
+        -----
+        This method also adds metadata necessary for VTK to support non-VTK
+        compatible datatypes like ``numpy.complex128`` or ``numpy.bool_`` to
+        the underlying dataset.
+
+        """
+        if data is None:
+            raise TypeError('``data`` cannot be None.')
+
+        # convert to numpy type if necessary
+        data = np.asanyarray(data)
+
+        if self.association == FieldAssociation.POINT:
+            array_len = self.dataset.GetNumberOfPoints()
+        elif self.association == FieldAssociation.CELL:
+            array_len = self.dataset.GetNumberOfCells()
+        else:
+            array_len = 1 if data.ndim == 0 else data.shape[0]
+
+        # Fixup input array length for scalar input
+        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
+            tmparray = np.empty(array_len)
+            tmparray.fill(data)
+            data = tmparray
+        if data.shape[0] != array_len:
+            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+
+        # attempt to reuse the existing pointer to underlying VTK data
+        if isinstance(data, pyvista_ndarray):
+            # pyvista_ndarray already contains the reference to the vtk object
+            # pyvista needs to use the copy of this object rather than wrapping
+            # the array (which leaves a C++ pointer uncollected.
+            if data.VTKObject is not None:
+                # VTK doesn't support strides, therefore we can't directly
+                # point to the underlying object
+                if data.flags.c_contiguous:
+                    # no reason to return a shallow copy if the array and name
+                    # are identical, just return the underlying array name
+                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
+                        return data.VTKObject
+
+                    vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
+                    if isinstance(name, str):
+                        vtk_arr.SetName(name)
+                    return vtk_arr
+
+        # reset data association
         if name in self.dataset._association_bitarray_names[self.association.name]:
-            narray = narray.view(np.bool_)  # type: ignore
-        elif name in self.dataset._association_complex_names[self.association.name]:
-            if narray.dtype == np.float32:
-                narray = narray.view(np.complex64)  # type: ignore
-            if narray.dtype == np.float64:
-                narray = narray.view(np.complex128)  # type: ignore
-            # remove singleton dimensions to match the behavior of the rest of 1D
-            # VTK arrays
-            narray = narray.squeeze()
-        return narray
+            self.dataset._association_bitarray_names[self.association.name].remove(name)
+        if name in self.dataset._association_complex_names[self.association.name]:
+            self.dataset._association_complex_names[self.association.name].remove(name)
+
+        if data.dtype == np.bool_:
+            self.dataset._association_bitarray_names[self.association.name].add(name)
+            data = data.view(np.uint8)
+        elif np.issubdtype(data.dtype, np.complexfloating):
+            if data.dtype not in (np.complex64, np.complex128):
+                raise ValueError(
+                    'Only numpy.complex64 or numpy.complex128 is supported when '
+                    'setting dataset attributes'
+                )
+
+            if data.ndim != 1:
+                if data.shape[1] != 1:
+                    raise ValueError('Complex data must be single dimensional.')
+            self.dataset._association_complex_names[self.association.name].add(name)
+
+            # complex data is stored internally as a contiguous 2 component
+            # float arrays
+            if data.dtype == np.complex64:
+                data = data.view(np.float32).reshape(-1, 2)
+            else:
+                data = data.view(np.float64).reshape(-1, 2)
+
+        shape = data.shape
+        if data.ndim == 3:
+            # Array of matrices. We need to make sure the order in
+            # memory is right.  If row major (C/C++),
+            # transpose. VTK wants column major (Fortran order). The deep
+            # copy later will make sure that the array is contiguous.
+            # If column order but not contiguous, transpose so that the
+            # deep copy below does not happen.
+            size = data.dtype.itemsize
+            if (data.strides[1] / size == 3 and data.strides[2] / size == 1) or (
+                data.strides[1] / size == 1
+                and data.strides[2] / size == 3
+                and not data.flags.contiguous
+            ):
+                data = data.transpose(0, 2, 1)
+
+        # If array is not contiguous, make a deep copy that is contiguous
+        if not data.flags.contiguous:
+            data = np.ascontiguousarray(data)
+
+        # Flatten array of matrices to array of vectors
+        if len(shape) == 3:
+            data = data.reshape(shape[0], shape[1] * shape[2])
+
+        # Swap bytes from big to little endian.
+        if data.dtype.byteorder == '>':
+            data = data.byteswap(inplace=True)
+
+        # this handles the case when an input array is directly added to the
+        # output. We want to make sure that the array added to the output is not
+        # referring to the input dataset.
+        copy = pyvista_ndarray(data)
+
+        return convert_array(copy, name, deep=deep_copy)
 
     def set_array(
         self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy=False
@@ -711,121 +747,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.VTKObject.AddArray(current_vectors)
 
         self.VTKObject.Modified()
-
-    def _prepare_array(
-        self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy: bool
-    ) -> _vtk.vtkDataSet:  # numpydoc ignore=PR01,RT01
-        """Prepare an array to be added to this dataset.
-
-        Notes
-        -----
-        This method also adds metadata necessary for VTK to support non-VTK
-        compatible datatypes like ``numpy.complex128`` or ``numpy.bool_`` to
-        the underlying dataset.
-
-        """
-        if data is None:
-            raise TypeError('``data`` cannot be None.')
-
-        # convert to numpy type if necessary
-        data = np.asanyarray(data)
-
-        if self.association == FieldAssociation.POINT:
-            array_len = self.dataset.GetNumberOfPoints()
-        elif self.association == FieldAssociation.CELL:
-            array_len = self.dataset.GetNumberOfCells()
-        else:
-            array_len = 1 if data.ndim == 0 else data.shape[0]
-
-        # Fixup input array length for scalar input
-        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
-            tmparray = np.empty(array_len)
-            tmparray.fill(data)
-            data = tmparray
-        if data.shape[0] != array_len:
-            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
-
-        # attempt to reuse the existing pointer to underlying VTK data
-        if isinstance(data, pyvista_ndarray):
-            # pyvista_ndarray already contains the reference to the vtk object
-            # pyvista needs to use the copy of this object rather than wrapping
-            # the array (which leaves a C++ pointer uncollected.
-            if data.VTKObject is not None:
-                # VTK doesn't support strides, therefore we can't directly
-                # point to the underlying object
-                if data.flags.c_contiguous:
-                    # no reason to return a shallow copy if the array and name
-                    # are identical, just return the underlying array name
-                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
-                        return data.VTKObject
-
-                    vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
-                    if isinstance(name, str):
-                        vtk_arr.SetName(name)
-                    return vtk_arr
-
-        # reset data association
-        if name in self.dataset._association_bitarray_names[self.association.name]:
-            self.dataset._association_bitarray_names[self.association.name].remove(name)
-        if name in self.dataset._association_complex_names[self.association.name]:
-            self.dataset._association_complex_names[self.association.name].remove(name)
-
-        if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)
-            data = data.view(np.uint8)
-        elif np.issubdtype(data.dtype, np.complexfloating):
-            if data.dtype not in (np.complex64, np.complex128):
-                raise ValueError(
-                    'Only numpy.complex64 or numpy.complex128 is supported when '
-                    'setting dataset attributes'
-                )
-
-            if data.ndim != 1:
-                if data.shape[1] != 1:
-                    raise ValueError('Complex data must be single dimensional.')
-            self.dataset._association_complex_names[self.association.name].add(name)
-
-            # complex data is stored internally as a contiguous 2 component
-            # float arrays
-            if data.dtype == np.complex64:
-                data = data.view(np.float32).reshape(-1, 2)
-            else:
-                data = data.view(np.float64).reshape(-1, 2)
-
-        shape = data.shape
-        if data.ndim == 3:
-            # Array of matrices. We need to make sure the order in
-            # memory is right.  If row major (C/C++),
-            # transpose. VTK wants column major (Fortran order). The deep
-            # copy later will make sure that the array is contiguous.
-            # If column order but not contiguous, transpose so that the
-            # deep copy below does not happen.
-            size = data.dtype.itemsize
-            if (data.strides[1] / size == 3 and data.strides[2] / size == 1) or (
-                data.strides[1] / size == 1
-                and data.strides[2] / size == 3
-                and not data.flags.contiguous
-            ):
-                data = data.transpose(0, 2, 1)
-
-        # If array is not contiguous, make a deep copy that is contiguous
-        if not data.flags.contiguous:
-            data = np.ascontiguousarray(data)
-
-        # Flatten array of matrices to array of vectors
-        if len(shape) == 3:
-            data = data.reshape(shape[0], shape[1] * shape[2])
-
-        # Swap bytes from big to little endian.
-        if data.dtype.byteorder == '>':
-            data = data.byteswap(inplace=True)
-
-        # this handles the case when an input array is directly added to the
-        # output. We want to make sure that the array added to the output is not
-        # referring to the input dataset.
-        copy = pyvista_ndarray(data)
-
-        return convert_array(copy, name, deep=deep_copy)
 
     def remove(self, key: str) -> None:
         """Remove an array.
@@ -1050,18 +971,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for name, array in array_dict.items():
             self[name] = array.copy()
 
-    def _raise_index_out_of_bounds(self, index: Any):
-        """Raise a KeyError if array index is out of bounds."""
-        if isinstance(index, int):
-            max_index = self.VTKObject.GetNumberOfArrays()
-            if not 0 <= index < max_index:
-                raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
-
-    def _raise_field_data_no_scalars_vectors(self):
-        """Raise a TypeError if FieldData."""
-        if self.association == FieldAssociation.NONE:
-            raise TypeError('FieldData does not have active scalars or vectors.')
-
     @property
     def active_scalars_name(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Return name of the active scalars.
@@ -1167,28 +1076,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise ValueError(f'{name} needs 3 components, has ({n_comp})')
         self.SetActiveVectors(name)
 
-    def __eq__(self, other: Any) -> bool:
-        """Test dict-like equivalency."""
-        # here we check if other is the same class or a subclass of self.
-        if not isinstance(other, type(self)):
-            return False
-
-        if set(self.keys()) != set(other.keys()):
-            return False
-
-        # verify the value of the arrays
-        for key, value in other.items():
-            if not np.array_equal(value, self[key]):
-                return False
-
-        # check the name of the active attributes
-        if self.association != FieldAssociation.NONE:
-            for name in ['scalars', 'vectors', 'texture_coordinates', 'normals']:
-                attr = f'active_{name}_name'
-                if getattr(other, attr) != getattr(self, attr):
-                    return False
-
-        return True
+    def _raise_no_normals(self):
+        """Raise AttributeError when attempting access normals for field data."""
+        if self.association == FieldAssociation.NONE:
+            raise AttributeError('FieldData does not have active normals.')
 
     @property
     def active_normals(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
@@ -1316,11 +1207,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_no_normals()
         self.SetActiveNormals(name)
 
-    def _raise_no_normals(self):
-        """Raise AttributeError when attempting access normals for field data."""
-        if self.association == FieldAssociation.NONE:
-            raise AttributeError('FieldData does not have active normals.')
-
     def _raise_no_texture_coordinates(self):
         """Raise AttributeError when attempting access texture_coordinates for field data."""
         if self.association == FieldAssociation.NONE:
@@ -1427,3 +1313,117 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # only vtkDataArray subclasses can be set as active attributes
         if np.issubdtype(dtype, np.number) or dtype == bool:
             self.SetActiveTCoords(name)
+
+    def __getitem__(self, key: str) -> pyvista_ndarray:
+        """Implement ``[]`` operator.
+
+        Accepts an array name.
+        """
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+        return self.get_array(key)
+
+    def __setitem__(
+        self, key: str, value: Union[np.ndarray, Sequence, float]
+    ):  # numpydoc ignore=PR01,RT01
+        """Implement setting with the ``[]`` operator."""
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+
+        has_arr = key in self
+        self.set_array(value, name=key)
+
+        # do not make array active if it already exists.  This covers
+        # an inplace update like self.point_data[key] += 1
+        if has_arr:
+            return
+
+        # make active if not field data and there isn't already an active scalar
+        if (
+            self.association
+            in [
+                FieldAssociation.POINT,
+                FieldAssociation.CELL,
+            ]
+            and self.active_scalars_name is None
+        ):
+            self.active_scalars_name = key
+
+    def __delitem__(self, key: str):
+        """Implement del with array name or index."""
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+
+        self.remove(key)
+
+    def __iter__(self) -> Iterator[str]:
+        """Implement for loop iteration."""
+        yield from self.keys()
+
+    def __contains__(self, name: str) -> bool:
+        """Implement the ``in`` operator."""
+        return name in self.keys()
+
+    def __len__(self) -> int:
+        """Return the number of arrays."""
+        return self.VTKObject.GetNumberOfArrays()
+
+    def __eq__(self, other: Any) -> bool:
+        """Test dict-like equivalency."""
+        # here we check if other is the same class or a subclass of self.
+        if not isinstance(other, type(self)):
+            return False
+
+        if set(self.keys()) != set(other.keys()):
+            return False
+
+        # verify the value of the arrays
+        for key, value in other.items():
+            if not np.array_equal(value, self[key]):
+                return False
+
+        # check the name of the active attributes
+        if self.association != FieldAssociation.NONE:
+            for name in ['scalars', 'vectors', 'texture_coordinates', 'normals']:
+                attr = f'active_{name}_name'
+                if getattr(other, attr) != getattr(self, attr):
+                    return False
+
+        return True
+
+    def __bool__(self) -> bool:
+        """Return ``True`` when there are arrays present."""
+        return bool(self.GetNumberOfArrays())
+
+    def __repr__(self) -> str:
+        """Printable representation of DataSetAttributes."""
+        info = ['pyvista DataSetAttributes']
+        array_info = ' None'
+        if self:
+            lines = []
+            for i, (name, array) in enumerate(self.items()):
+                if len(name) > 23:
+                    name = f'{name[:20]}...'
+                try:
+                    arr_type = attr_type[self.IsArrayAnAttribute(i)]
+                except (IndexError, TypeError, AttributeError):  # pragma: no cover
+                    arr_type = ''
+
+                # special treatment for vector data
+                if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+                    if name == self.active_vectors_name:
+                        arr_type = 'VECTORS'
+
+                line = f'{name[:23]:<24}{str(array.dtype):<11}{str(array.shape):<20} {arr_type}'.strip()
+                lines.append(line)
+            array_info = '\n    ' + '\n    '.join(lines)
+
+        info.append(f'Association     : {self.association.name}')
+        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+            info.append(f'Active Scalars  : {self.active_scalars_name}')
+            info.append(f'Active Vectors  : {self.active_vectors_name}')
+            info.append(f'Active Texture  : {self.active_texture_coordinates_name}')
+            info.append(f'Active Normals  : {self.active_normals_name}')
+
+        info.append(f'Contains arrays :{array_info}')
+        return '\n'.join(info)

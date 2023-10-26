@@ -42,16 +42,16 @@ class GetOutput:
     def __init__(self):
         self._mock = Mock()
 
-    def __call__(self, algorithm, *args, **kwargs):
-        self._mock(algorithm, *args, **kwargs)
-        return pv.core.filters._get_output(algorithm)
-
     def reset(self, *args, **kwargs):
         self._mock.reset_mock(*args, **kwargs)
 
     @property
     def latest_algorithm(self):
         return self._mock.call_args_list[-1][0][0]
+
+    def __call__(self, algorithm, *args, **kwargs):
+        self._mock(algorithm, *args, **kwargs)
+        return pv.core.filters._get_output(algorithm)
 
 
 @pytest.fixture

@@ -55,41 +55,6 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
-    def __repr__(self):
-        """Print a repr specifying the id of the camera and its camera type."""
-        return f'<{self.__class__.__name__} at {hex(id(self))}>'
-
-    def __eq__(self, other):
-        """Compare whether the relevant attributes of two cameras are equal."""
-        # attributes which are native python types and thus implement __eq__
-
-        native_attrs = [
-            'position',
-            'focal_point',
-            'parallel_projection',
-            'distance',
-            'thickness',
-            'parallel_scale',
-            'clipping_range',
-            'view_angle',
-            'roll',
-        ]
-        for attr in native_attrs:
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-
-        this_trans = self.model_transform_matrix
-        that_trans = other.model_transform_matrix
-        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
-        if trans_count == 1:
-            # either but not both are None
-            return False
-        if trans_count == 2:
-            if not np.array_equal(this_trans, that_trans):
-                return False
-
-        return True
-
     def __del__(self):
         """Delete the camera."""
         self.RemoveAllObservers()
@@ -881,3 +846,38 @@ class Camera(_vtk.vtkCamera):
             self.tight(padding=padding, adjust_render_window=False, view=view, negative=negative)
 
         self.is_set = True
+
+    def __eq__(self, other):
+        """Compare whether the relevant attributes of two cameras are equal."""
+        # attributes which are native python types and thus implement __eq__
+
+        native_attrs = [
+            'position',
+            'focal_point',
+            'parallel_projection',
+            'distance',
+            'thickness',
+            'parallel_scale',
+            'clipping_range',
+            'view_angle',
+            'roll',
+        ]
+        for attr in native_attrs:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        this_trans = self.model_transform_matrix
+        that_trans = other.model_transform_matrix
+        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
+        if trans_count == 1:
+            # either but not both are None
+            return False
+        if trans_count == 2:
+            if not np.array_equal(this_trans, that_trans):
+                return False
+
+        return True
+
+    def __repr__(self):
+        """Print a repr specifying the id of the camera and its camera type."""
+        return f'<{self.__class__.__name__} at {hex(id(self))}>'

@@ -239,6 +239,54 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         """Return or set the bounding box."""
         return self.GetBounds()
 
+    def _update_x_labels(self):
+        """Regenerate X axis labels."""
+        if self.x_axis_visibility:
+            self.SetXTitle(self._x_title)
+            if self._x_label_visibility:
+                self.SetAxisLabels(
+                    0, make_axis_labels(*self.bounds[0:2], self.n_xlabels, self.x_label_format)
+                )
+            else:
+                self.SetAxisLabels(0, self._empty_str)
+        else:
+            self.SetXTitle('')
+            self.SetAxisLabels(0, self._empty_str)
+
+    def _update_y_labels(self):
+        """Regenerate Y axis labels."""
+        if self.y_axis_visibility:
+            self.SetYTitle(self._y_title)
+            if self._y_label_visibility:
+                self.SetAxisLabels(
+                    1, make_axis_labels(*self.bounds[2:4], self.n_ylabels, self.y_label_format)
+                )
+            else:
+                self.SetAxisLabels(1, self._empty_str)
+        else:
+            self.SetYTitle('')
+            self.SetAxisLabels(1, self._empty_str)
+
+    def _update_z_labels(self):
+        """Regenerate Z axis labels."""
+        if self.z_axis_visibility:
+            self.SetZTitle(self._z_title)
+            if self._z_label_visibility:
+                self.SetAxisLabels(
+                    2, make_axis_labels(*self.bounds[4:6], self.n_zlabels, self.z_label_format)
+                )
+            else:
+                self.SetAxisLabels(2, self._empty_str)
+        else:
+            self.SetZTitle('')
+            self.SetAxisLabels(2, self._empty_str)
+
+    def _update_labels(self):
+        """Update all labels."""
+        self._update_x_labels()
+        self._update_y_labels()
+        self._update_z_labels()
+
     @bounds.setter
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         self.SetBounds(bounds)
@@ -486,54 +534,6 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     def n_zlabels(self, value: int):  # numpydoc ignore=GL08
         self._n_zlabels = value
         self._update_z_labels()
-
-    def _update_labels(self):
-        """Update all labels."""
-        self._update_x_labels()
-        self._update_y_labels()
-        self._update_z_labels()
-
-    def _update_x_labels(self):
-        """Regenerate X axis labels."""
-        if self.x_axis_visibility:
-            self.SetXTitle(self._x_title)
-            if self._x_label_visibility:
-                self.SetAxisLabels(
-                    0, make_axis_labels(*self.bounds[0:2], self.n_xlabels, self.x_label_format)
-                )
-            else:
-                self.SetAxisLabels(0, self._empty_str)
-        else:
-            self.SetXTitle('')
-            self.SetAxisLabels(0, self._empty_str)
-
-    def _update_y_labels(self):
-        """Regenerate Y axis labels."""
-        if self.y_axis_visibility:
-            self.SetYTitle(self._y_title)
-            if self._y_label_visibility:
-                self.SetAxisLabels(
-                    1, make_axis_labels(*self.bounds[2:4], self.n_ylabels, self.y_label_format)
-                )
-            else:
-                self.SetAxisLabels(1, self._empty_str)
-        else:
-            self.SetYTitle('')
-            self.SetAxisLabels(1, self._empty_str)
-
-    def _update_z_labels(self):
-        """Regenerate Z axis labels."""
-        if self.z_axis_visibility:
-            self.SetZTitle(self._z_title)
-            if self._z_label_visibility:
-                self.SetAxisLabels(
-                    2, make_axis_labels(*self.bounds[4:6], self.n_zlabels, self.z_label_format)
-                )
-            else:
-                self.SetAxisLabels(2, self._empty_str)
-        else:
-            self.SetZTitle('')
-            self.SetAxisLabels(2, self._empty_str)
 
     @property
     def x_labels(self) -> List[str]:  # numpydoc ignore=RT01

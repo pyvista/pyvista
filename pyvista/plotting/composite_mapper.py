@@ -495,6 +495,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         """Return a block attribute by its flat index."""
         return BlockAttributes(self.get_block(index), self)
 
+    def __iter__(self):
+        """Return an iterator of all the block attributes."""
+        for ii in range(len(self)):
+            yield self[ii]
+
     def __len__(self):
         """Return the number of blocks in this dataset."""
         from pyvista import MultiBlock  # avoid circular
@@ -508,11 +513,6 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             else:
                 cc += 1
         return cc
-
-    def __iter__(self):
-        """Return an iterator of all the block attributes."""
-        for ii in range(len(self)):
-            yield self[ii]
 
 
 class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):

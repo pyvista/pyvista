@@ -128,55 +128,6 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(
-        self, *args, check_duplicates=False, deep=False, **kwargs
-    ):  # numpydoc ignore=PR01,RT01
-        """Initialize the rectilinear grid."""
-        super().__init__()
-
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkRectilinearGrid):
-                if deep:
-                    self.deep_copy(args[0])
-                else:
-                    self.shallow_copy(args[0])
-            elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0], **kwargs)
-            elif isinstance(args[0], (np.ndarray, Sequence)):
-                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
-            else:
-                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
-
-        elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
-            arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
-            if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
-            else:
-                arg2_is_arr = False
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    np.asanyarray(args[2]),
-                    check_duplicates,
-                )
-            elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(
-                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
-                )
-            else:
-                raise TypeError("Arguments not understood by `RectilinearGrid`.")
-
-    def __repr__(self):
-        """Return the default representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the str representation."""
-        return DataSet.__str__(self)
-
     def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
@@ -228,6 +179,47 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             self.SetZCoordinates(convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
+
+    def __init__(
+        self, *args, check_duplicates=False, deep=False, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
+        """Initialize the rectilinear grid."""
+        super().__init__()
+
+        if len(args) == 1:
+            if isinstance(args[0], _vtk.vtkRectilinearGrid):
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    self.shallow_copy(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0], **kwargs)
+            elif isinstance(args[0], (np.ndarray, Sequence)):
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
+            else:
+                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
+
+        elif len(args) == 3 or len(args) == 2:
+            arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
+            if len(args) == 3:
+                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
+            else:
+                arg2_is_arr = False
+
+            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
+                self._from_arrays(
+                    np.asanyarray(args[0]),
+                    np.asanyarray(args[1]),
+                    np.asanyarray(args[2]),
+                    check_duplicates,
+                )
+            elif all([arg0_is_arr, arg1_is_arr]):
+                self._from_arrays(
+                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
+                )
+            else:
+                raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
     @property
     def meshgrid(self) -> list:  # numpydoc ignore=RT01
@@ -435,6 +427,14 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         alg.Update()
         return _get_output(alg)
 
+    def __repr__(self):
+        """Return the default representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the str representation."""
+        return DataSet.__str__(self)
+
 
 class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     """Models datasets with uniform spacing in the three coordinate directions.
@@ -519,6 +519,34 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
+    def _from_specs(
+        self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
+    ):  # numpydoc ignore=PR01,RT01
+        """Create VTK image data directly from numpy arrays.
+
+        A uniform grid is defined by the point spacings for each axis
+        (uniform along each individual axis) and the number of points on each axis.
+        These are relative to a specified origin (default is ``(0.0, 0.0, 0.0)``).
+
+        Parameters
+        ----------
+        dims : tuple(int)
+            Length 3 tuple of ints specifying how many points along each axis.
+
+        spacing : sequence[float], default: (1.0, 1.0, 1.0)
+            Length 3 tuple of floats/ints specifying the point spacings
+            for each axis. Must be positive.
+
+        origin : sequence[float], default: (0.0, 0.0, 0.0)
+            Length 3 tuple of floats/ints specifying minimum value for each axis.
+
+        """
+        xn, yn, zn = dims[0], dims[1], dims[2]
+        xo, yo, zo = origin[0], origin[1], origin[2]
+        self.SetDimensions(xn, yn, zn)
+        self.SetOrigin(xo, yo, zo)
+        self.spacing = (spacing[0], spacing[1], spacing[2])
+
     def __init__(
         self,
         uinput=None,
@@ -594,42 +622,6 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
                 )
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
-
-    def __repr__(self):
-        """Return the default representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the default str representation."""
-        return DataSet.__str__(self)
-
-    def _from_specs(
-        self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
-    ):  # numpydoc ignore=PR01,RT01
-        """Create VTK image data directly from numpy arrays.
-
-        A uniform grid is defined by the point spacings for each axis
-        (uniform along each individual axis) and the number of points on each axis.
-        These are relative to a specified origin (default is ``(0.0, 0.0, 0.0)``).
-
-        Parameters
-        ----------
-        dims : tuple(int)
-            Length 3 tuple of ints specifying how many points along each axis.
-
-        spacing : sequence[float], default: (1.0, 1.0, 1.0)
-            Length 3 tuple of floats/ints specifying the point spacings
-            for each axis. Must be positive.
-
-        origin : sequence[float], default: (0.0, 0.0, 0.0)
-            Length 3 tuple of floats/ints specifying minimum value for each axis.
-
-        """
-        xn, yn, zn = dims[0], dims[1], dims[2]
-        xo, yo, zo = origin[0], origin[1], origin[2]
-        self.SetDimensions(xn, yn, zn)
-        self.SetOrigin(xo, yo, zo)
-        self.spacing = (spacing[0], spacing[1], spacing[2])
 
     @property  # type: ignore
     def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
@@ -891,3 +883,11 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
+
+    def __repr__(self):
+        """Return the default representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the default str representation."""
+        return DataSet.__str__(self)

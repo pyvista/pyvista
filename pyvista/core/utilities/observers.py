@@ -35,6 +35,103 @@ def set_error_output_file(filename):
     return fileOutputWindow, outputWindow
 
 
+class Observer:
+    """A standard class for observing VTK objects."""
+
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
+        """Initialize observer."""
+        self.__event_occurred = False
+        self.__message = None
+        self.__message_etc = None
+        self.CallDataType = 'string0'
+        self.__observing = False
+        self.event_type = event_type
+        self.__log = log
+
+        self.store_history = store_history
+        self.event_history = []
+
+    @staticmethod
+    def parse_message(message):
+        """Parse the given message."""
+        # Message format
+        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
+        try:
+            kind, path, address, alert = regex.findall(message)[0]
+            return kind, path, address, alert
+        except:  # noqa: E722
+            return '', '', '', message
+
+    def log_message(self, kind, alert):
+        """Parse different event types and passes them to logging."""
+        if kind == 'ERROR':
+            logging.error(alert)
+        else:
+            logging.warning(alert)
+
+    def has_event_occurred(self):
+        """Ask self if an error has occurred since last queried.
+
+        This resets the observer's status.
+
+        """
+        occ = self.__event_occurred
+        self.__event_occurred = False
+        return occ
+
+    def get_message(self, etc=False):
+        """Get the last set error message.
+
+        Returns
+        -------
+            str: the last set error message
+
+        """
+        if etc:
+            return self.__message_etc
+        return self.__message
+
+    def observe(self, algorithm):
+        """Make this an observer of an algorithm."""
+        if self.__observing:
+            raise RuntimeError('This error observer is already observing an algorithm.')
+        if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
+            algorithm.GetExecutive().AddObserver(self.event_type, self)
+        algorithm.AddObserver(self.event_type, self)
+        self.__observing = True
+        return
+
+    def __call__(self, obj, event, message):
+        """Declare standard call function for the observer.
+
+        On an event occurrence, this function executes.
+
+        """
+        try:
+            self.__event_occurred = True
+            self.__message_etc = message
+            kind, path, address, alert = self.parse_message(message)
+            self.__message = alert
+            if self.store_history:
+                VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
+                self.event_history.append(VtkEvent(kind, path, address, alert))
+            if self.__log:
+                self.log_message(kind, alert)
+        except Exception:  # pragma: no cover
+            try:
+                if len(message) > 120:
+                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
+                else:
+                    message = repr(message)
+                print(
+                    f'PyVista error in handling VTK error message:\n{message}',
+                    file=sys.__stdout__,
+                )
+                traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
+            except Exception:
+                pass
+
+
 class VtkErrorCatcher:
     """Context manager to temporarily catch VTK errors.
 
@@ -80,103 +177,6 @@ class VtkErrorCatcher:
         if self.raise_errors and self.events:
             errors = [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
             raise RuntimeError(errors)
-
-
-class Observer:
-    """A standard class for observing VTK objects."""
-
-    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
-        """Initialize observer."""
-        self.__event_occurred = False
-        self.__message = None
-        self.__message_etc = None
-        self.CallDataType = 'string0'
-        self.__observing = False
-        self.event_type = event_type
-        self.__log = log
-
-        self.store_history = store_history
-        self.event_history = []
-
-    @staticmethod
-    def parse_message(message):
-        """Parse the given message."""
-        # Message format
-        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
-        try:
-            kind, path, address, alert = regex.findall(message)[0]
-            return kind, path, address, alert
-        except:  # noqa: E722
-            return '', '', '', message
-
-    def log_message(self, kind, alert):
-        """Parse different event types and passes them to logging."""
-        if kind == 'ERROR':
-            logging.error(alert)
-        else:
-            logging.warning(alert)
-
-    def __call__(self, obj, event, message):
-        """Declare standard call function for the observer.
-
-        On an event occurrence, this function executes.
-
-        """
-        try:
-            self.__event_occurred = True
-            self.__message_etc = message
-            kind, path, address, alert = self.parse_message(message)
-            self.__message = alert
-            if self.store_history:
-                VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
-                self.event_history.append(VtkEvent(kind, path, address, alert))
-            if self.__log:
-                self.log_message(kind, alert)
-        except Exception:  # pragma: no cover
-            try:
-                if len(message) > 120:
-                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
-                else:
-                    message = repr(message)
-                print(
-                    f'PyVista error in handling VTK error message:\n{message}',
-                    file=sys.__stdout__,
-                )
-                traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
-            except Exception:
-                pass
-
-    def has_event_occurred(self):
-        """Ask self if an error has occurred since last queried.
-
-        This resets the observer's status.
-
-        """
-        occ = self.__event_occurred
-        self.__event_occurred = False
-        return occ
-
-    def get_message(self, etc=False):
-        """Get the last set error message.
-
-        Returns
-        -------
-            str: the last set error message
-
-        """
-        if etc:
-            return self.__message_etc
-        return self.__message
-
-    def observe(self, algorithm):
-        """Make this an observer of an algorithm."""
-        if self.__observing:
-            raise RuntimeError('This error observer is already observing an algorithm.')
-        if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
-            algorithm.GetExecutive().AddObserver(self.event_type, self)
-        algorithm.AddObserver(self.event_type, self)
-        self.__observing = True
-        return
 
 
 def send_errors_to_logging():

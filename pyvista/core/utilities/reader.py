@@ -255,6 +255,14 @@ class BaseReader:
     _vtk_module_name: str = ''
     _vtk_class_name: str = ''
 
+    def _set_defaults(self):
+        """Set defaults on reader, if needed."""
+        pass
+
+    def _set_defaults_post(self):
+        """Set defaults on reader post setting file, if needed."""
+        pass
+
     def __init__(self, path):
         """Initialize Reader by setting path."""
         if self._vtk_class_name:
@@ -269,10 +277,6 @@ class BaseReader:
         self._set_defaults()
         self.path = path
         self._set_defaults_post()
-
-    def __repr__(self):
-        """Representation of a Reader object."""
-        return f"{self.__class__.__name__}('{self.path}')"
 
     def show_progress(self, msg=None):
         """Show a progress bar when loading the file.
@@ -342,14 +346,8 @@ class BaseReader:
             return self._filename
         return self.__directory
 
-    @path.setter
-    def path(self, path: str):  # numpydoc ignore=GL08
-        if os.path.isdir(path):
-            self._set_directory(path)
-        elif os.path.isfile(path):
-            self._set_filename(path)
-        else:
-            raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
+    def _update_information(self):
+        self.reader.UpdateInformation()
 
     def _set_directory(self, directory):
         """Set directory and update reader."""
@@ -366,6 +364,15 @@ class BaseReader:
         self._filename = filename
         self.reader.SetFileName(filename)
         self._update_information()
+
+    @path.setter
+    def path(self, path: str):  # numpydoc ignore=GL08
+        if os.path.isdir(path):
+            self._set_directory(path)
+        elif os.path.isfile(path):
+            self._set_filename(path)
+        else:
+            raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
 
     def read(self):
         """Read data in file.
@@ -387,16 +394,9 @@ class BaseReader:
         data._restore_metadata()
         return data
 
-    def _update_information(self):
-        self.reader.UpdateInformation()
-
-    def _set_defaults(self):
-        """Set defaults on reader, if needed."""
-        pass
-
-    def _set_defaults_post(self):
-        """Set defaults on reader post setting file, if needed."""
-        pass
+    def __repr__(self):
+        """Representation of a Reader object."""
+        return f"{self.__class__.__name__}('{self.path}')"
 
 
 class PointCellDataSelection:
@@ -1894,6 +1894,14 @@ class _PVDReader(BaseVTKReader):
         self._filename = filename
         self._directory = os.path.join(os.path.dirname(filename))
 
+    def _SetActiveTime(self, time_value):
+        """Set active time."""
+        self._active_datasets = self._time_mapping[time_value]
+        self._active_readers = [
+            get_reader(os.path.join(self._directory, dataset.path))
+            for dataset in self._active_datasets
+        ]
+
     def UpdateInformation(self):
         """Parse PVD file."""
         if self._filename is None:
@@ -1922,14 +1930,6 @@ class _PVDReader(BaseVTKReader):
     def Update(self):
         """Read data and store it."""
         self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
-
-    def _SetActiveTime(self, time_value):
-        """Set active time."""
-        self._active_datasets = self._time_mapping[time_value]
-        self._active_readers = [
-            get_reader(os.path.join(self._directory, dataset.path))
-            for dataset in self._active_datasets
-        ]
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader

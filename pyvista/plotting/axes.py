@@ -46,6 +46,12 @@ class Axes(_vtk.vtkAxes):
         self.actor.scale = actor_scale
         self.actor.prop.line_width = line_width
 
+    def __del__(self):
+        """Clean the attributes of the class."""
+        self.axes_actor = None
+        self.actor = None
+        self.mapper = None
+
     @property
     def origin(self):  # numpydoc ignore=RT01
         """Return or set th origin of the axes in world coordinates.
@@ -113,9 +119,3 @@ class Axes(_vtk.vtkAxes):
         >>> axes.hide_symmetric()
         """
         self.SymmetricOff()
-
-    def __del__(self):
-        """Clean the attributes of the class."""
-        self.axes_actor = None
-        self.actor = None
-        self.mapper = None

@@ -226,6 +226,10 @@ class Renderers:
         self._shadow_renderer.SetViewport(0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
+    def __del__(self):
+        """Destructor."""
+        self._shadow_renderer = None
+
     def loc_to_group(self, loc):
         """Return index of the render window given a location index.
 
@@ -279,18 +283,6 @@ class Renderers:
             return self._render_idxs[index_row, index_column]
         else:
             raise TypeError('"loc" must be an integer or a sequence.')
-
-    def __getitem__(self, index):
-        """Return a renderer based on an index."""
-        return self._renderers[index]
-
-    def __len__(self):
-        """Return number of renderers."""
-        return len(self._renderers)
-
-    def __iter__(self):
-        """Return a iterable of renderers."""
-        yield from self._renderers
 
     @property
     def active_index(self):  # numpydoc ignore=RT01
@@ -664,6 +656,14 @@ class Renderers:
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 
-    def __del__(self):
-        """Destructor."""
-        self._shadow_renderer = None
+    def __getitem__(self, index):
+        """Return a renderer based on an index."""
+        return self._renderers[index]
+
+    def __iter__(self):
+        """Return a iterable of renderers."""
+        yield from self._renderers
+
+    def __len__(self):
+        """Return number of renderers."""
+        return len(self._renderers)

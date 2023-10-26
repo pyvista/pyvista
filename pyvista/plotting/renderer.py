@@ -82,6 +82,25 @@ def map_loc_to_pos(loc, size, border=0.05):
     return x, y, size
 
 
+def _line_for_legend():
+    """Create a simple line-like rectangle for the legend."""
+    points = [
+        [0, 0, 0],
+        [0.4, 0, 0],
+        [0.4, 0.07, 0],
+        [0, 0.07, 0],
+        [
+            0.5,
+            0,
+            0,
+        ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
+    ]
+    legendface = pyvista.PolyData()
+    legendface.points = np.array(points)
+    legendface.faces = [4, 0, 1, 2, 3]
+    return legendface
+
+
 def make_legend_face(face):
     """
     Create the legend face based on the given face.
@@ -200,20 +219,6 @@ class CameraPosition:
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self):
-        """List representation method."""
-        return "[{},\n {},\n {}]".format(*self.to_list())
-
-    def __getitem__(self, index):
-        """Fetch a component by index location like a list."""
-        return self.to_list()[index]
-
-    def __eq__(self, other):
-        """Comparison operator to act on list version of CameraPosition object."""
-        if isinstance(other, CameraPosition):
-            return self.to_list() == other.to_list()
-        return self.to_list() == other
-
     @property
     def position(self):  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""
@@ -240,6 +245,20 @@ class CameraPosition:
     @viewup.setter
     def viewup(self, value):  # numpydoc ignore=GL08
         self._viewup = value
+
+    def __getitem__(self, index):
+        """Fetch a component by index location like a list."""
+        return self.to_list()[index]
+
+    def __eq__(self, other):
+        """Comparison operator to act on list version of CameraPosition object."""
+        if isinstance(other, CameraPosition):
+            return self.to_list() == other.to_list()
+        return self.to_list() == other
+
+    def __repr__(self):
+        """List representation method."""
+        return "[{},\n {},\n {}]".format(*self.to_list())
 
 
 class Renderer(_vtk.vtkOpenGLRenderer):
@@ -292,6 +311,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.add_border(border_color, border_width)
 
         self.set_color_cycler(self._theme.color_cycler)
+
+    def __del__(self):
+        """Delete the renderer."""
+        self.deep_clean()
 
     @property
     def camera_set(self) -> bool:  # numpydoc ignore=RT01
@@ -556,6 +579,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
+    def _enable_fxaa(self):
+        """Enable FXAA anti-aliasing."""
+        self.SetUseFXAA(True)
+        self.Modified()
+
     def enable_anti_aliasing(self, aa_type='ssaa'):
         """Enable anti-aliasing.
 
@@ -591,11 +619,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Disable all anti-aliasing."""
         self._render_passes.disable_ssaa_pass()
         self.SetUseFXAA(False)
-        self.Modified()
-
-    def _enable_fxaa(self):
-        """Enable FXAA anti-aliasing."""
-        self.SetUseFXAA(True)
         self.Modified()
 
     def _disable_fxaa(self):
@@ -3215,10 +3238,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # remove reference to parent last
         self.parent = None
 
-    def __del__(self):
-        """Delete the renderer."""
-        self.deep_clean()
-
     def enable_hidden_line_removal(self):
         """Enable hidden line removal."""
         self.UseHiddenLineRemovalOn()
@@ -3803,22 +3822,3 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             pickable=False,
             render=render,
         )
-
-
-def _line_for_legend():
-    """Create a simple line-like rectangle for the legend."""
-    points = [
-        [0, 0, 0],
-        [0.4, 0, 0],
-        [0.4, 0.07, 0],
-        [0, 0.07, 0],
-        [
-            0.5,
-            0,
-            0,
-        ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
-    ]
-    legendface = pyvista.PolyData()
-    legendface.points = np.array(points)
-    legendface.faces = [4, 0, 1, 2, 3]
-    return legendface

@@ -78,6 +78,32 @@ class ActiveArrayInfo:
         """
         return ActiveArrayInfo(self.association, self.name)
 
+    @property
+    def _namedtuple(self):
+        """Build a namedtuple on the fly to provide legacy support."""
+        return ActiveArrayInfoTuple(self.association, self.name)
+
+    def __getattr__(self, item):
+        """Provide namedtuple-like __getattr__."""
+        self._namedtuple.__getattr__(item)
+
+    def __getitem__(self, item):
+        """Provide namedtuple-like __getitem__."""
+        return self._namedtuple.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        """Provide namedtuple-like __setitem__."""
+        self._namedtuple.__setitem__(key, value)
+
+    def __iter__(self):
+        """Provide namedtuple-like __iter__."""
+        return self._namedtuple.__iter__()
+
+    def __eq__(self, other):
+        """Check equivalence (useful for serialize/deserialize tests)."""
+        same_association = int(self.association.value) == int(other.association.value)
+        return self.name == other.name and same_association
+
     def __getstate__(self):
         """Support pickling."""
         state = self.__dict__.copy()
@@ -89,35 +115,9 @@ class ActiveArrayInfo:
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
 
-    @property
-    def _namedtuple(self):
-        """Build a namedtuple on the fly to provide legacy support."""
-        return ActiveArrayInfoTuple(self.association, self.name)
-
-    def __iter__(self):
-        """Provide namedtuple-like __iter__."""
-        return self._namedtuple.__iter__()
-
     def __repr__(self):
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
-
-    def __getitem__(self, item):
-        """Provide namedtuple-like __getitem__."""
-        return self._namedtuple.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        """Provide namedtuple-like __setitem__."""
-        self._namedtuple.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        """Provide namedtuple-like __getattr__."""
-        self._namedtuple.__getattr__(item)
-
-    def __eq__(self, other):
-        """Check equivalence (useful for serialize/deserialize tests)."""
-        same_association = int(self.association.value) == int(other.association.value)
-        return self.name == other.name and same_association
 
 
 @abstract_class
@@ -143,10 +143,6 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-
-    def __getattr__(self, item) -> Any:
-        """Get attribute from base class if not found."""
-        return super().__getattribute__(item)
 
     @property
     def active_scalars_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
@@ -1894,54 +1890,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
-        """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
-            name, preference = tuple(index)
-        elif isinstance(index, str):
-            name = index
-            preference = 'cell'
-        else:
-            raise KeyError(
-                f'Index ({index}) not understood.'
-                ' Index must be a string name or a tuple of string name and string preference.'
-            )
-        return self.get_array(name, preference=preference)
-
     def _ipython_key_completions_(self) -> List[str]:
         """Tab completion of IPython."""
         return self.array_names
-
-    def __setitem__(
-        self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence, float]
-    ):  # numpydoc ignore=PR01,RT01
-        """Add/set an array in the point_data, or cell_data accordingly.
-
-        It depends on the array's length, or specified mode.
-
-        """
-        # First check points - think of case with vertex cells
-        #   there would be the same number of cells as points but we'd want
-        #   the data to be on the nodes.
-        if scalars is None:
-            raise TypeError('Empty array unable to be added.')
-        else:
-            scalars = np.asanyarray(scalars)
-
-        # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
-        if scalars.ndim == 0:
-            scalars = scalars.reshape((1,))
-
-        # Now check array size to determine which field to place array
-        if scalars.shape[0] == self.n_points:
-            self.point_data[name] = scalars
-        elif scalars.shape[0] == self.n_cells:
-            self.cell_data[name] = scalars
-        else:
-            # Field data must be set explicitly as it could be a point of
-            # confusion for new users
-            raise_not_matching(scalars, self)
-        return
 
     @property
     def n_arrays(self) -> int:  # numpydoc ignore=RT01
@@ -2054,14 +2005,6 @@ class DataSet(DataSetFilters, DataObject):
             fmt += "\n"
             fmt += "</td></tr> </table>"
         return fmt
-
-    def __repr__(self) -> str:
-        """Return the object representation."""
-        return self.head(display=False, html=False)
-
-    def __str__(self) -> str:
-        """Return the object string representation."""
-        return self.head(display=False, html=False)
 
     def copy_from(self, mesh: _vtk.vtkDataSet, deep: bool = True):
         """Overwrite this dataset inplace with the new dataset's geometries and data.
@@ -2943,6 +2886,29 @@ class DataSet(DataSetFilters, DataObject):
             out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
         return list(set(out))
 
+    def _get_levels_neihgbors(
+        self, ind: int, n_levels: int, method: Callable
+    ) -> Generator[List[int], None, None]:  # numpydoc ignore=PR01,RT01
+        """Provide helper method that yields neighbors ids."""
+        neighbors = set(method(ind))
+        yield list(neighbors)
+
+        # Keep track of visited points or cells
+        all_visited = neighbors.copy()
+        all_visited.add(ind)
+
+        for _ in range(n_levels - 1):
+            # Get the neighbors for the next level.
+            new_visited = set()
+            for n in neighbors:
+                new_neighbors = method(n)
+                new_visited.update(new_neighbors)
+            neighbors = new_visited
+
+            # Only return the ones that have not been visited yet
+            yield list(neighbors.difference(all_visited))
+            all_visited.update(neighbors)
+
     def point_neighbors_levels(
         self, ind: int, n_levels: int = 1
     ) -> Generator[List[int], None, None]:
@@ -3118,29 +3084,6 @@ class DataSet(DataSetFilters, DataObject):
         method = partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
 
-    def _get_levels_neihgbors(
-        self, ind: int, n_levels: int, method: Callable
-    ) -> Generator[List[int], None, None]:  # numpydoc ignore=PR01,RT01
-        """Provide helper method that yields neighbors ids."""
-        neighbors = set(method(ind))
-        yield list(neighbors)
-
-        # Keep track of visited points or cells
-        all_visited = neighbors.copy()
-        all_visited.add(ind)
-
-        for _ in range(n_levels - 1):
-            # Get the neighbors for the next level.
-            new_visited = set()
-            for n in neighbors:
-                new_neighbors = method(n)
-                new_visited.update(new_neighbors)
-            neighbors = new_visited
-
-            # Only return the ones that have not been visited yet
-            yield list(neighbors.difference(all_visited))
-            all_visited.update(neighbors)
-
     def point_cell_ids(self, ind: int) -> List[int]:
         """Get the cell IDs that use the ind-th point.
 
@@ -3307,3 +3250,60 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
         """
         self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore
+
+    def __getattr__(self, item) -> Any:
+        """Get attribute from base class if not found."""
+        return super().__getattribute__(item)
+
+    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
+        """Search both point, cell, and field data for an array."""
+        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
+            name, preference = tuple(index)
+        elif isinstance(index, str):
+            name = index
+            preference = 'cell'
+        else:
+            raise KeyError(
+                f'Index ({index}) not understood.'
+                ' Index must be a string name or a tuple of string name and string preference.'
+            )
+        return self.get_array(name, preference=preference)
+
+    def __setitem__(
+        self, name: str, scalars: Union[np.ndarray, collections.abc.Sequence, float]
+    ):  # numpydoc ignore=PR01,RT01
+        """Add/set an array in the point_data, or cell_data accordingly.
+
+        It depends on the array's length, or specified mode.
+
+        """
+        # First check points - think of case with vertex cells
+        #   there would be the same number of cells as points but we'd want
+        #   the data to be on the nodes.
+        if scalars is None:
+            raise TypeError('Empty array unable to be added.')
+        else:
+            scalars = np.asanyarray(scalars)
+
+        # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
+        if scalars.ndim == 0:
+            scalars = scalars.reshape((1,))
+
+        # Now check array size to determine which field to place array
+        if scalars.shape[0] == self.n_points:
+            self.point_data[name] = scalars
+        elif scalars.shape[0] == self.n_cells:
+            self.cell_data[name] = scalars
+        else:
+            # Field data must be set explicitly as it could be a point of
+            # confusion for new users
+            raise_not_matching(scalars, self)
+        return
+
+    def __repr__(self) -> str:
+        """Return the object representation."""
+        return self.head(display=False, html=False)
+
+    def __str__(self) -> str:
+        """Return the object string representation."""
+        return self.head(display=False, html=False)

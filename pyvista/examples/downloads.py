@@ -140,6 +140,15 @@ def _file_copier(input_file, output_file, pooch):
     shutil.copy(input_file, output_file)
 
 
+def _download_file(filename):
+    """Download a file using pooch."""
+    return FETCHER.fetch(
+        filename,
+        processor=Unzip() if filename.endswith('.zip') else None,
+        downloader=_file_copier if _FILE_CACHE else None,
+    )
+
+
 def download_file(filename):
     """Download a single file from the PyVista vtk-data repository.
 
@@ -172,15 +181,6 @@ def download_file(filename):
     except ValueError:  # otherwise simply add the file to the registry
         FETCHER.registry[filename] = None
         return _download_file(filename)
-
-
-def _download_file(filename):
-    """Download a file using pooch."""
-    return FETCHER.fetch(
-        filename,
-        processor=Unzip() if filename.endswith('.zip') else None,
-        downloader=_file_copier if _FILE_CACHE else None,
-    )
 
 
 def _download_archive(filename, target_file=None):  # pragma: no cover

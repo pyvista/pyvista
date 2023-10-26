@@ -14,6 +14,60 @@ from .helpers import wrap
 from .misc import check_valid_vector
 
 
+def surface_from_para(
+    parametric_function, u_res=100, v_res=100, w_res=100, clean=False, texture_coordinates=False
+):
+    """Construct a mesh from a parametric function.
+
+    Parameters
+    ----------
+    parametric_function : vtk.vtkParametricFunction
+        Parametric function to generate mesh from.
+
+    u_res : int, default: 100
+        Resolution in the u direction.
+
+    v_res : int, default: 100
+        Resolution in the v direction.
+
+    w_res : int, default: 100
+        Resolution in the w direction.
+
+    clean : bool, default: False
+        Clean and merge duplicate points to avoid "creases" when
+        plotting with smooth shading.
+
+    texture_coordinates : bool, default: False
+        The generation of texture coordinates.
+        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
+        Note that texturing may fail in some cases.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Surface from the parametric function.
+
+    """
+    # convert to a mesh
+    para_source = _vtk.vtkParametricFunctionSource()
+    para_source.SetParametricFunction(parametric_function)
+    para_source.SetUResolution(u_res)
+    para_source.SetVResolution(v_res)
+    para_source.SetWResolution(w_res)
+    para_source.SetGenerateTextureCoordinates(texture_coordinates)
+    para_source.Update()
+    surf = wrap(para_source.GetOutput())
+    if clean:
+        surf = surf.clean(
+            tolerance=1e-7,  # determined experimentally
+            absolute=False,
+            lines_to_points=False,
+            polys_to_lines=False,
+            strips_to_polys=False,
+        )
+    return surf
+
+
 def Spline(points, n_points=None):
     """Create a spline from points.
 
@@ -471,6 +525,69 @@ def ParametricDini(a=None, b=None, **kwargs):
     translate(surf, center, direction)
 
     return surf
+
+
+def parametric_keywords(
+    parametric_function,
+    min_u=0,
+    max_u=2 * pi,
+    min_v=0.0,
+    max_v=2 * pi,
+    join_u=False,
+    join_v=False,
+    twist_u=False,
+    twist_v=False,
+    clockwise=True,
+):
+    """Apply keyword arguments to a parametric function.
+
+    Parameters
+    ----------
+    parametric_function : vtk.vtkParametricFunction
+        Parametric function to generate mesh from.
+
+    min_u : float, optional
+        The minimum u-value.
+
+    max_u : float, optional
+        The maximum u-value.
+
+    min_v : float, optional
+        The minimum v-value.
+
+    max_v : float, optional
+        The maximum v-value.
+
+    join_u : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the u direction.
+
+    join_v : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the v direction.
+
+    twist_u : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the u direction.
+
+    twist_v : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the v direction.
+
+    clockwise : bool, optional
+        Determines the ordering of the vertices forming the triangle
+        strips.
+
+    """
+    parametric_function.SetMinimumU(min_u)
+    parametric_function.SetMaximumU(max_u)
+    parametric_function.SetMinimumV(min_v)
+    parametric_function.SetMaximumV(max_v)
+    parametric_function.SetJoinU(join_u)
+    parametric_function.SetJoinV(join_v)
+    parametric_function.SetTwistU(twist_u)
+    parametric_function.SetTwistV(twist_v)
+    parametric_function.SetClockwiseOrdering(clockwise)
 
 
 def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
@@ -1321,121 +1438,4 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
     translate(surf, center, direction)
-    return surf
-
-
-def parametric_keywords(
-    parametric_function,
-    min_u=0,
-    max_u=2 * pi,
-    min_v=0.0,
-    max_v=2 * pi,
-    join_u=False,
-    join_v=False,
-    twist_u=False,
-    twist_v=False,
-    clockwise=True,
-):
-    """Apply keyword arguments to a parametric function.
-
-    Parameters
-    ----------
-    parametric_function : vtk.vtkParametricFunction
-        Parametric function to generate mesh from.
-
-    min_u : float, optional
-        The minimum u-value.
-
-    max_u : float, optional
-        The maximum u-value.
-
-    min_v : float, optional
-        The minimum v-value.
-
-    max_v : float, optional
-        The maximum v-value.
-
-    join_u : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the u direction.
-
-    join_v : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the v direction.
-
-    twist_u : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the u direction.
-
-    twist_v : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the v direction.
-
-    clockwise : bool, optional
-        Determines the ordering of the vertices forming the triangle
-        strips.
-
-    """
-    parametric_function.SetMinimumU(min_u)
-    parametric_function.SetMaximumU(max_u)
-    parametric_function.SetMinimumV(min_v)
-    parametric_function.SetMaximumV(max_v)
-    parametric_function.SetJoinU(join_u)
-    parametric_function.SetJoinV(join_v)
-    parametric_function.SetTwistU(twist_u)
-    parametric_function.SetTwistV(twist_v)
-    parametric_function.SetClockwiseOrdering(clockwise)
-
-
-def surface_from_para(
-    parametric_function, u_res=100, v_res=100, w_res=100, clean=False, texture_coordinates=False
-):
-    """Construct a mesh from a parametric function.
-
-    Parameters
-    ----------
-    parametric_function : vtk.vtkParametricFunction
-        Parametric function to generate mesh from.
-
-    u_res : int, default: 100
-        Resolution in the u direction.
-
-    v_res : int, default: 100
-        Resolution in the v direction.
-
-    w_res : int, default: 100
-        Resolution in the w direction.
-
-    clean : bool, default: False
-        Clean and merge duplicate points to avoid "creases" when
-        plotting with smooth shading.
-
-    texture_coordinates : bool, default: False
-        The generation of texture coordinates.
-        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
-        Note that texturing may fail in some cases.
-
-    Returns
-    -------
-    pyvista.PolyData
-        Surface from the parametric function.
-
-    """
-    # convert to a mesh
-    para_source = _vtk.vtkParametricFunctionSource()
-    para_source.SetParametricFunction(parametric_function)
-    para_source.SetUResolution(u_res)
-    para_source.SetVResolution(v_res)
-    para_source.SetWResolution(w_res)
-    para_source.SetGenerateTextureCoordinates(texture_coordinates)
-    para_source.Update()
-    surf = wrap(para_source.GetOutput())
-    if clean:
-        surf = surf.clean(
-            tolerance=1e-7,  # determined experimentally
-            absolute=False,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
-        )
     return surf

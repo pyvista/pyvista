@@ -420,6 +420,16 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         return _get_output(alg)
 
+    def _change_fft_output_scalars(self, dataset, orig_name, out_name):
+        """Modify the name and dtype of the output scalars for an FFT filter."""
+        name = orig_name if out_name is None else out_name
+        pdata = dataset.point_data
+        if pdata.active_scalars_name != name:
+            pdata[name] = pdata.pop(pdata.active_scalars_name)
+
+        # always view the datatype of the point_data as complex128
+        dataset._association_complex_names['POINT'].add(name)
+
     def fft(self, output_scalars_name=None, progress_bar=False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
@@ -498,6 +508,32 @@ class ImageDataFilters(DataSetFilters):
             output, self.point_data.active_scalars_name, output_scalars_name
         )
         return output
+
+    def _check_fft_scalars(self):
+        """Check for complex active scalars.
+
+        This is necessary for rfft, low_pass, and high_pass filters.
+
+        """
+        # check for complex active point scalars, otherwise the risk of segfault
+        if self.point_data.active_scalars_name is None:
+            possible_scalars = self.point_data.keys()
+            if len(possible_scalars) == 1:
+                self.set_active_scalars(possible_scalars[0], preference='point')
+            elif len(possible_scalars) > 1:
+                raise AmbiguousDataError(
+                    'There are multiple point scalars available. Set one to be '
+                    'active with `point_data.active_scalars_name = `'
+                )
+            else:
+                raise MissingDataError('FFT filters require point scalars.')
+
+        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
+            raise ValueError(
+                'Active scalars must be complex data for this filter, represented '
+                'as an array with a datatype of `numpy.complex64` or '
+                '`numpy.complex128`.'
+            )
 
     def rfft(self, output_scalars_name=None, progress_bar=False):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
@@ -724,42 +760,6 @@ class ImageDataFilters(DataSetFilters):
             output, self.point_data.active_scalars_name, output_scalars_name
         )
         return output
-
-    def _change_fft_output_scalars(self, dataset, orig_name, out_name):
-        """Modify the name and dtype of the output scalars for an FFT filter."""
-        name = orig_name if out_name is None else out_name
-        pdata = dataset.point_data
-        if pdata.active_scalars_name != name:
-            pdata[name] = pdata.pop(pdata.active_scalars_name)
-
-        # always view the datatype of the point_data as complex128
-        dataset._association_complex_names['POINT'].add(name)
-
-    def _check_fft_scalars(self):
-        """Check for complex active scalars.
-
-        This is necessary for rfft, low_pass, and high_pass filters.
-
-        """
-        # check for complex active point scalars, otherwise the risk of segfault
-        if self.point_data.active_scalars_name is None:
-            possible_scalars = self.point_data.keys()
-            if len(possible_scalars) == 1:
-                self.set_active_scalars(possible_scalars[0], preference='point')
-            elif len(possible_scalars) > 1:
-                raise AmbiguousDataError(
-                    'There are multiple point scalars available. Set one to be '
-                    'active with `point_data.active_scalars_name = `'
-                )
-            else:
-                raise MissingDataError('FFT filters require point scalars.')
-
-        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
-            raise ValueError(
-                'Active scalars must be complex data for this filter, represented '
-                'as an array with a datatype of `numpy.complex64` or '
-                '`numpy.complex128`.'
-            )
 
     def _flip_uniform(self, axis) -> 'pyvista.ImageData':
         """Flip the uniform grid along a specified axis and return a uniform grid.

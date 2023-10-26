@@ -73,6 +73,22 @@ class DocSubs:
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ":DOC_SUBS:"
 
+    @staticmethod
+    def _wrap_member(member):
+        if callable(member):
+
+            @wraps(member)
+            def mem_sub(*args, **kwargs):
+                return member(*args, **kwargs)
+
+        elif isinstance(member, property):
+            mem_sub = property(member.fget, member.fset, member.fdel)
+        else:
+            raise NotImplementedError(
+                "Members other than methods and properties are currently not supported."
+            )
+        return mem_sub
+
     def __init_subclass__(cls, **kwargs):
         """Initialize subclasses."""
         # First substitute all members for this class (marked in a super class)
@@ -103,22 +119,6 @@ class DocSubs:
                 cls._DOC_STORE[member_name] = (member, member.__doc__[len(cls._DOC_TAG) :])
                 # Overwrite original docstring to prevent doctest issues
                 member.__doc__ = """Docstring to be specialized in subclasses."""
-
-    @staticmethod
-    def _wrap_member(member):
-        if callable(member):
-
-            @wraps(member)
-            def mem_sub(*args, **kwargs):
-                return member(*args, **kwargs)
-
-        elif isinstance(member, property):
-            mem_sub = property(member.fget, member.fset, member.fdel)
-        else:
-            raise NotImplementedError(
-                "Members other than methods and properties are currently not supported."
-            )
-        return mem_sub
 
 
 def doc_subs(member):  # numpydoc ignore=PR01,RT01
@@ -361,6 +361,11 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         """
         return self._interpolate
 
+    def _update_textureprops(self):
+        # Interpolation: NEAREST = 0x01, LINEAR = 0x02
+        # Stretch/repeat: STRETCH = 0x04, REPEAT = 0x08
+        self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
+
     @texture_interpolate.setter
     def texture_interpolate(self, val):  # numpydoc ignore=GL08
         self._interpolate = bool(val)
@@ -398,11 +403,6 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     def texture_repeat(self, val):  # numpydoc ignore=GL08
         self._repeat = bool(val)
         self._update_textureprops()
-
-    def _update_textureprops(self):
-        # Interpolation: NEAREST = 0x01, LINEAR = 0x02
-        # Stretch/repeat: STRETCH = 0x04, REPEAT = 0x08
-        self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
 
 
 class Axis(_vtkWrapper, _vtk.vtkAxis):
@@ -780,6 +780,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         positions = self.GetTickPositions()
         return tuple(positions.GetValue(i) for i in range(positions.GetNumberOfValues()))
 
+    def _update_ticks(self):
+        locs = None if self._tick_locs.GetNumberOfValues() == 0 else self._tick_locs
+        labels = None if self._tick_labels.GetNumberOfValues() == 0 else self._tick_labels
+        self.SetCustomTickPositions(locs, labels)
+
     @tick_locations.setter
     def tick_locations(self, val):  # numpydoc ignore=GL08
         self._tick_locs.Reset()
@@ -962,11 +967,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     def ticks_visible(self, val):  # numpydoc ignore=GL08
         self.SetTicksVisible(bool(val))
 
-    def _update_ticks(self):
-        locs = None if self._tick_locs.GetNumberOfValues() == 0 else self._tick_locs
-        labels = None if self._tick_labels.GetNumberOfValues() == 0 else self._tick_labels
-        self.SetCustomTickPositions(locs, labels)
-
 
 class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
@@ -1045,11 +1045,15 @@ class _Chart(DocSubs):
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
-        """Update the chart right before it will be rendered."""
-        # Only resize on real VTK render events (plotter.render calls will afterwards invoke a proper render event)
-        if not plotter_render:
-            self._resize()
+    @property
+    def _geometry(self):
+        """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
+        return tuple(self.GetSize())
+
+    @_geometry.setter
+    def _geometry(self, val):
+        """Set the chart geometry."""
+        self.SetSize(_vtk.vtkRectf(*val))
 
     def _resize(self):
         """Resize this chart.
@@ -1079,15 +1083,11 @@ class _Chart(DocSubs):
             self._geometry = (int(self._loc[0] * r_w), int(self._loc[1] * r_h), t_w, t_h)
         return resize
 
-    @property
-    def _geometry(self):
-        """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
-        return tuple(self.GetSize())
-
-    @_geometry.setter
-    def _geometry(self, val):
-        """Set the chart geometry."""
-        self.SetSize(_vtk.vtkRectf(*val))
+    def _render_event(self, *args, plotter_render=False, **kwargs):
+        """Update the chart right before it will be rendered."""
+        # Only resize on real VTK render events (plotter.render calls will afterwards invoke a proper render event)
+        if not plotter_render:
+            self._resize()
 
     @property
     def _interactive(self):
@@ -4172,6 +4172,21 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
+    def _redraw(self, event=None):
+        """Redraw the chart."""
+        if event is None:
+            # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
+            self._canvas.draw()
+        else:
+            # Called from draw_event callback
+            img = np.frombuffer(
+                self._canvas.buffer_rgba(), dtype=np.uint8
+            )  # Store figure data in numpy array
+            w, h = self._canvas.get_width_height()
+            img_arr = img.reshape([h, w, 4])
+            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
+            self.SetImage(img_data)
+
     def __init__(
         self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True
     ):  # numpydoc ignore=PR01,RT01
@@ -4255,21 +4270,6 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._fig.set_size_inches(f_w, f_h)
             self.position = (int(self._loc[0] * r_w), int(self._loc[1] * r_h))
         return resize
-
-    def _redraw(self, event=None):
-        """Redraw the chart."""
-        if event is None:
-            # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
-            self._canvas.draw()
-        else:
-            # Called from draw_event callback
-            img = np.frombuffer(
-                self._canvas.buffer_rgba(), dtype=np.uint8
-            )  # Store figure data in numpy array
-            w, h = self._canvas.get_width_height()
-            img_arr = img.reshape([h, w, 4])
-            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
-            self.SetImage(img_data)
 
     def _render_event(self, *args, plotter_render=False, **kwargs):
         # Redraw figure when geometry has changed (self._resize call
@@ -4403,6 +4403,10 @@ class Charts:
         # nicely with SetRenderer, so instead we'll use a weak reference
         # plus a property to call it
         self.__renderer = weakref.ref(renderer)
+
+    def __del__(self):
+        """Clean up before being destroyed."""
+        self.deep_clean()
 
     @property
     def _renderer(self):
@@ -4544,14 +4548,10 @@ class Charts:
         """Return a chart based on an index."""
         return self._charts[index]
 
-    def __len__(self):
-        """Return number of charts."""
-        return len(self._charts)
-
     def __iter__(self):
         """Return an iterable of charts."""
         yield from self._charts
 
-    def __del__(self):
-        """Clean up before being destroyed."""
-        self.deep_clean()
+    def __len__(self):
+        """Return number of charts."""
+        return len(self._charts)

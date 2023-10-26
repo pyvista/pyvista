@@ -394,167 +394,6 @@ def Sphere(
     return surf
 
 
-def SolidSphere(
-    outer_radius=0.5,
-    inner_radius=0.0,
-    radius_resolution=5,
-    start_theta=0.0,
-    end_theta=None,
-    theta_resolution=30,
-    start_phi=0.0,
-    end_phi=None,
-    phi_resolution=30,
-    center=(0.0, 0.0, 0.0),
-    direction=(0.0, 0.0, 1.0),
-    radians=False,
-    tol_radius=1.0e-8,
-    tol_angle=None,
-):
-    """Create a solid sphere.
-
-    A solid sphere fills space in 3D in comparison to
-    :func:`pyvista.Sphere`, which is a 2D surface.
-
-    This function uses a linear sampling of each spherical
-    coordinate, whereas :func:`pyvista.SolidSphereGeneric`
-    allows for nonuniform sampling. Angles are by default
-    specified in degrees.
-
-    PyVista uses a convention where ``theta`` represents the azimuthal
-    angle (similar to degrees longitude on the globe) and ``phi``
-    represents the polar angle (similar to degrees latitude on the
-    globe). In contrast to latitude on the globe, here
-    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
-    Pole. ``phi=0`` is on the positive z-axis by default.
-    ``theta=0`` is on the positive x-axis by default.
-
-    While values for theta can be any value with a maximum span of
-    360 degrees, large magnitudes may result in problems with endpoint
-    overlap detection.
-
-    Parameters
-    ----------
-    outer_radius : float, default: 0.5
-        Outer radius of sphere.  Must be non-negative.
-
-    inner_radius : float, default: 0.0
-        Inner radius of sphere.  Must be non-negative
-        and smaller than ``outer_radius``.
-
-    radius_resolution : int, default: 5
-        Number of points in radial direction.
-
-    start_theta : float, default: 0.0
-        Starting azimuthal angle.
-
-    end_theta : float, default: 360.0
-        Ending azimuthal angle.
-        ``end_theta`` must be greater than ``start_theta``.
-
-    theta_resolution : int, default: 30
-        Number of points in ``theta`` direction.
-
-    start_phi : float, default: 0.0
-        Starting polar angle.
-        ``phi`` must lie between 0 and 180 in degrees.
-
-    end_phi : float, default: 180.0
-        Ending polar angle.
-        ``phi`` must lie between 0 and 180 in degrees.
-        ``end_phi`` must be greater than ``start_phi``.
-
-    phi_resolution : int, default: 30
-        Number of points in ``phi`` direction,
-        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
-        in degrees, if applicable.
-
-    center : sequence[float], default: (0.0, 0.0, 0.0)
-        Center coordinate vector in ``[x, y, z]``.
-
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
-
-    radians : bool, default: False
-        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
-
-    tol_radius : float, default: 1.0e-8
-        Absolute tolerance for endpoint detection for ``radius``.
-
-    tol_angle : float, optional
-        Absolute tolerance for endpoint detection
-        for ``phi`` and ``theta``. Unit is determined by choice
-        of ``radians`` parameter.  Default is 1.0e-8 degrees or
-        1.0e-8 degrees converted to radians.
-
-    Returns
-    -------
-    pyvista.UnstructuredGrid
-        Solid sphere mesh.
-
-    See Also
-    --------
-    pyvista.Sphere: Sphere that describes outer 2D surface.
-    pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
-
-    Examples
-    --------
-    Create a solid sphere.
-
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> solid_sphere = pv.SolidSphere()
-    >>> solid_sphere.plot(show_edges=True)
-
-    A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
-    Generate a solid hemisphere to see the internal structure.
-
-    >>> isinstance(solid_sphere, pv.UnstructuredGrid)
-    True
-    >>> partial_solid_sphere = pv.SolidSphere(
-    ...     start_theta=180, end_theta=360
-    ... )
-    >>> partial_solid_sphere.plot(show_edges=True)
-
-    To see the cell structure inside the solid sphere,
-    only 1/4 of the sphere is generated. The cells are exploded
-    and colored by radial position.
-
-    >>> partial_solid_sphere = pv.SolidSphere(
-    ...     start_theta=180,
-    ...     end_theta=360,
-    ...     start_phi=0,
-    ...     end_phi=90,
-    ...     radius_resolution=5,
-    ...     theta_resolution=8,
-    ...     phi_resolution=8,
-    ... )
-    >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
-    ...     partial_solid_sphere.cell_centers().points, axis=-1
-    ... )
-    >>> partial_solid_sphere.explode(1).plot()
-
-    """
-    if end_theta is None:
-        end_theta = 2 * np.pi if radians else 360.0
-    if end_phi is None:
-        end_phi = np.pi if radians else 180.0
-
-    radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    theta = np.linspace(start_theta, end_theta, theta_resolution)
-    phi = np.linspace(start_phi, end_phi, phi_resolution)
-    return SolidSphereGeneric(
-        radius,
-        theta,
-        phi,
-        center,
-        direction,
-        radians=radians,
-        tol_radius=tol_radius,
-        tol_angle=tol_angle,
-    )
-
-
 def SolidSphereGeneric(
     radius=None,
     theta=None,
@@ -910,6 +749,167 @@ def SolidSphereGeneric(
     mesh.rotate_y(90, inplace=True)
     translate(mesh, center, direction)
     return mesh
+
+
+def SolidSphere(
+    outer_radius=0.5,
+    inner_radius=0.0,
+    radius_resolution=5,
+    start_theta=0.0,
+    end_theta=None,
+    theta_resolution=30,
+    start_phi=0.0,
+    end_phi=None,
+    phi_resolution=30,
+    center=(0.0, 0.0, 0.0),
+    direction=(0.0, 0.0, 1.0),
+    radians=False,
+    tol_radius=1.0e-8,
+    tol_angle=None,
+):
+    """Create a solid sphere.
+
+    A solid sphere fills space in 3D in comparison to
+    :func:`pyvista.Sphere`, which is a 2D surface.
+
+    This function uses a linear sampling of each spherical
+    coordinate, whereas :func:`pyvista.SolidSphereGeneric`
+    allows for nonuniform sampling. Angles are by default
+    specified in degrees.
+
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
+
+    While values for theta can be any value with a maximum span of
+    360 degrees, large magnitudes may result in problems with endpoint
+    overlap detection.
+
+    Parameters
+    ----------
+    outer_radius : float, default: 0.5
+        Outer radius of sphere.  Must be non-negative.
+
+    inner_radius : float, default: 0.0
+        Inner radius of sphere.  Must be non-negative
+        and smaller than ``outer_radius``.
+
+    radius_resolution : int, default: 5
+        Number of points in radial direction.
+
+    start_theta : float, default: 0.0
+        Starting azimuthal angle.
+
+    end_theta : float, default: 360.0
+        Ending azimuthal angle.
+        ``end_theta`` must be greater than ``start_theta``.
+
+    theta_resolution : int, default: 30
+        Number of points in ``theta`` direction.
+
+    start_phi : float, default: 0.0
+        Starting polar angle.
+        ``phi`` must lie between 0 and 180 in degrees.
+
+    end_phi : float, default: 180.0
+        Ending polar angle.
+        ``phi`` must lie between 0 and 180 in degrees.
+        ``end_phi`` must be greater than ``start_phi``.
+
+    phi_resolution : int, default: 30
+        Number of points in ``phi`` direction,
+        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
+        in degrees, if applicable.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center coordinate vector in ``[x, y, z]``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
+    radians : bool, default: False
+        Whether to use radians for ``theta`` and ``phi``. Default is degrees.
+
+    tol_radius : float, default: 1.0e-8
+        Absolute tolerance for endpoint detection for ``radius``.
+
+    tol_angle : float, optional
+        Absolute tolerance for endpoint detection
+        for ``phi`` and ``theta``. Unit is determined by choice
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
+        1.0e-8 degrees converted to radians.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Solid sphere mesh.
+
+    See Also
+    --------
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+    pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
+
+    Examples
+    --------
+    Create a solid sphere.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> solid_sphere = pv.SolidSphere()
+    >>> solid_sphere.plot(show_edges=True)
+
+    A solid sphere is 3D in comparison to the 2d :func:`pyvista.Sphere`.
+    Generate a solid hemisphere to see the internal structure.
+
+    >>> isinstance(solid_sphere, pv.UnstructuredGrid)
+    True
+    >>> partial_solid_sphere = pv.SolidSphere(
+    ...     start_theta=180, end_theta=360
+    ... )
+    >>> partial_solid_sphere.plot(show_edges=True)
+
+    To see the cell structure inside the solid sphere,
+    only 1/4 of the sphere is generated. The cells are exploded
+    and colored by radial position.
+
+    >>> partial_solid_sphere = pv.SolidSphere(
+    ...     start_theta=180,
+    ...     end_theta=360,
+    ...     start_phi=0,
+    ...     end_phi=90,
+    ...     radius_resolution=5,
+    ...     theta_resolution=8,
+    ...     phi_resolution=8,
+    ... )
+    >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
+    ...     partial_solid_sphere.cell_centers().points, axis=-1
+    ... )
+    >>> partial_solid_sphere.explode(1).plot()
+
+    """
+    if end_theta is None:
+        end_theta = 2 * np.pi if radians else 360.0
+    if end_phi is None:
+        end_phi = np.pi if radians else 180.0
+
+    radius = np.linspace(inner_radius, outer_radius, radius_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    phi = np.linspace(start_phi, end_phi, phi_resolution)
+    return SolidSphereGeneric(
+        radius,
+        theta,
+        phi,
+        center,
+        direction,
+        radians=radians,
+        tol_radius=tol_radius,
+        tol_angle=tol_angle,
+    )
 
 
 def Plane(

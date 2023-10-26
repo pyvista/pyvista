@@ -207,243 +207,6 @@ class _PointSet(DataSet):
         )
 
 
-class PointSet(_vtk.vtkPointSet, _PointSet):
-    """Concrete class for storing a set of points.
-
-    This is a concrete class representing a set of points that specifies the
-    interface for datasets that explicitly use "point" arrays to represent
-    geometry. This class is useful for improving the performance of filters on
-    point clouds, but not plotting.
-
-    For further details see `VTK: vtkPointSet Details
-    <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_.
-
-    Parameters
-    ----------
-    var_inp : vtk.vtkPointSet, Sequence, optional
-        Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
-        this PointSet object will be copied if ``deep=True`` and will
-        be a shallow copy if ``deep=False``.
-
-        List, numpy array, or sequence containing point locations. Must be an
-        ``(N, 3)`` array of points.
-
-    deep : bool, default: False
-        Whether to copy the input ``points``, or to create a PointSet from them
-        without copying them.  Setting ``deep=True`` ensures that the original
-        arrays can be modified outside the mesh without affecting the
-        mesh.
-
-    force_float : bool, default: True
-        Casts the datatype to ``float32`` if points datatype is non-float.  Set
-        this to ``False`` to allow non-float types, though this may lead to
-        truncation of intermediate floats when transforming datasets.
-
-    Notes
-    -----
-    This class requires ``vtk>=9.1.0``. This is an abstract class in
-    ``vtk<9.1.0`` and cannot be instantiated.
-
-    Examples
-    --------
-    Create a simple point cloud of 10 points from a numpy array.
-
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> rng = np.random.default_rng()
-    >>> points = rng.random((10, 3))
-    >>> pset = pv.PointSet(points)
-
-    Plot the pointset. Note: this casts to a :class:`pyvista.PolyData`
-    internally when plotting.
-
-    >>> pset.plot(point_size=10)
-
-    """
-
-    def __new__(cls, *args, **kwargs):
-        """Construct a new PointSet object.
-
-        Wrapping this is necessary for us to show an informative error
-        message when the VTK version is too old, causing PointSet to be
-        an abstract class. Since we inherit the ``__new__()`` method of
-        ``vtk.vtkPointSet``, we would otherwise see a generic error about
-        the class being abstract.
-
-        """
-        if pyvista.vtk_version_info < (9, 1, 0):
-            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
-        return super().__new__(cls, *args, **kwargs)
-
-    def __init__(self, var_inp=None, deep=False, force_float=True):
-        """Initialize the pointset."""
-        super().__init__()
-
-        if var_inp is None:
-            return
-        elif isinstance(var_inp, _vtk.vtkPointSet):
-            if deep:
-                self.deep_copy(var_inp)
-            else:
-                self.shallow_copy(var_inp)
-        else:
-            self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
-
-    def __repr__(self):
-        """Return the standard representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the standard str representation."""
-        return DataSet.__str__(self)
-
-    def cast_to_polydata(self, deep=True):
-        """Cast this dataset to polydata.
-
-        Parameters
-        ----------
-        deep : bool, deep: True
-            Whether to copy the pointset points, or to create a PolyData
-            without copying them.  Setting ``deep=True`` ensures that the
-            original arrays can be modified outside the PolyData without
-            affecting the PolyData.
-
-        Returns
-        -------
-        pyvista.PolyData
-            PointSet cast to a ``pyvista.PolyData``.
-
-        """
-        pdata = PolyData(self.points, deep=deep)
-        if deep:
-            pdata.point_data.update(self.point_data)  # update performs deep copy
-        else:
-            for key, value in self.point_data.items():
-                pdata.point_data[key] = value
-        return pdata
-
-    @wraps(DataSet.plot)  # type: ignore
-    def plot(self, *args, **kwargs):
-        """Cast to PolyData and plot."""
-        pdata = self.cast_to_polydata(deep=False)
-        kwargs.setdefault('style', 'points')
-        return pdata.plot(*args, **kwargs)
-
-    @wraps(PolyDataFilters.threshold)
-    def threshold(self, *args, **kwargs):
-        """Cast to PolyData and threshold.
-
-        Need this because cell-wise operations fail for PointSets.
-        """
-        return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
-
-    @wraps(PolyDataFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs):
-        """Cast to PolyData and threshold.
-
-        Need this because cell-wise operations fail for PointSets.
-        """
-        return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
-
-    @wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):
-        """Cast to PolyData and explode.
-
-        The explode filter relies on cells.
-
-        """
-        return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
-
-    @wraps(PolyDataFilters.delaunay_3d)
-    def delaunay_3d(self, *args, **kwargs):
-        """Cast to PolyData and run delaunay_3d."""
-        return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
-
-    @property
-    def area(self) -> float:  # numpydoc ignore=RT01
-        """Return 0.0 since a PointSet has no area."""
-        return 0.0
-
-    @property
-    def volume(self) -> float:  # numpydoc ignore=RT01
-        """Return 0.0 since a PointSet has no volume."""
-        return 0.0
-
-    def contour(self, *args, **kwargs):
-        """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Contour and other dimension reducing filters are not supported on PointSets'
-        )
-
-    def cell_data_to_point_data(self, *args, **kwargs):
-        """Raise PointSets do not have cells."""
-        raise PointSetNotSupported('PointSets contain no cells or cell data.')
-
-    def point_data_to_cell_data(self, *args, **kwargs):
-        """Raise PointSets do not have cells."""
-        raise PointSetNotSupported('PointSets contain no cells or cell data.')
-
-    def triangulate(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def decimate_boundary(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def find_cells_along_line(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def tessellate(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def slice(self, *args, **kwargs):
-        """Raise dimension reducing operations are not supported."""
-        raise PointSetDimensionReductionError
-
-    def slice_along_axis(self, *args, **kwargs):
-        """Raise dimension reducing operations are not supported."""
-        raise PointSetDimensionReductionError
-
-    def slice_along_line(self, *args, **kwargs):
-        """Raise dimension reducing operations are not supported."""
-        raise PointSetDimensionReductionError
-
-    def slice_implicit(self, *args, **kwargs):
-        """Raise dimension reducing operations are not supported."""
-        raise PointSetDimensionReductionError
-
-    def slice_orthogonal(self, *args, **kwargs):
-        """Raise dimension reducing operations are not supported."""
-        raise PointSetDimensionReductionError
-
-    def shrink(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def separate_cells(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def remove_cells(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def point_is_inside_cell(self, *args, **kwargs):
-        """Raise cell operations are not supported."""
-        raise PointSetCellOperationError
-
-    def extract_surface(self, *args, **kwargs):
-        """Raise extract surface are not supported."""
-        raise PointSetCellOperationError
-
-    def extract_geometry(self, *args, **kwargs):
-        """Raise extract geometry are not supported."""
-        raise PointSetCellOperationError
-
-
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
@@ -586,6 +349,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         '.vtk': _vtk.vtkPolyDataWriter,
     }
 
+    @staticmethod
+    def _make_vertex_cells(npoints):
+        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
+        cells[:, 0] = 1
+        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
+        return cells
+
     def __init__(
         self,
         var_inp=None,
@@ -666,6 +436,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             # here we use CellArray since we must specify deep and n_lines
             self.lines = CellArray(lines, n_lines, deep)
 
+    def __del__(self):
+        """Delete the object."""
+        if hasattr(self, '_obbTree'):
+            del self._obbTree
+
     def _post_file_load_processing(self):
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and
@@ -673,21 +448,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if self.n_points > 0 and self.n_cells == 0:
             verts = self._make_vertex_cells(self.n_points)
             self.verts = CellArray(verts, self.n_points, deep=False)
-
-    def __repr__(self):
-        """Return the standard representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the standard str representation."""
-        return DataSet.__str__(self)
-
-    @staticmethod
-    def _make_vertex_cells(npoints):
-        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
-        cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
-        return cells
 
     @property
     def verts(self) -> np.ndarray:  # numpydoc ignore=RT01
@@ -936,6 +696,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetStrips(CellArray(strips))
 
     @property
+    def _offset_array(self):
+        """Return the array used to store cell offsets."""
+        return _get_offset_array(self.GetPolys())
+
+    @property
+    def _connectivity_array(self):
+        """Return the array with the point ids that define the cells' connectivity."""
+        return _get_connectivity_array(self.GetPolys())
+
+    @property
     def is_all_triangles(self):  # numpydoc ignore=RT01
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
@@ -973,20 +743,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # next, check if there are three points per face
         return (np.diff(self._offset_array) == 3).all()
-
-    def __sub__(self, cutting_mesh):
-        """Compute boolean difference of two meshes."""
-        return self.boolean_difference(cutting_mesh)
-
-    @property
-    def _offset_array(self):
-        """Return the array used to store cell offsets."""
-        return _get_offset_array(self.GetPolys())
-
-    @property
-    def _connectivity_array(self):
-        """Return the array with the point ids that define the cells' connectivity."""
-        return _get_connectivity_array(self.GetPolys())
 
     @property
     def n_lines(self) -> int:  # numpydoc ignore=RT01
@@ -1364,10 +1120,254 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """
         return self.n_open_edges == 0
 
-    def __del__(self):
-        """Delete the object."""
-        if hasattr(self, '_obbTree'):
-            del self._obbTree
+    def __sub__(self, cutting_mesh):
+        """Compute boolean difference of two meshes."""
+        return self.boolean_difference(cutting_mesh)
+
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard str representation."""
+        return DataSet.__str__(self)
+
+
+class PointSet(_vtk.vtkPointSet, _PointSet):
+    """Concrete class for storing a set of points.
+
+    This is a concrete class representing a set of points that specifies the
+    interface for datasets that explicitly use "point" arrays to represent
+    geometry. This class is useful for improving the performance of filters on
+    point clouds, but not plotting.
+
+    For further details see `VTK: vtkPointSet Details
+    <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_.
+
+    Parameters
+    ----------
+    var_inp : vtk.vtkPointSet, Sequence, optional
+        Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
+        this PointSet object will be copied if ``deep=True`` and will
+        be a shallow copy if ``deep=False``.
+
+        List, numpy array, or sequence containing point locations. Must be an
+        ``(N, 3)`` array of points.
+
+    deep : bool, default: False
+        Whether to copy the input ``points``, or to create a PointSet from them
+        without copying them.  Setting ``deep=True`` ensures that the original
+        arrays can be modified outside the mesh without affecting the
+        mesh.
+
+    force_float : bool, default: True
+        Casts the datatype to ``float32`` if points datatype is non-float.  Set
+        this to ``False`` to allow non-float types, though this may lead to
+        truncation of intermediate floats when transforming datasets.
+
+    Notes
+    -----
+    This class requires ``vtk>=9.1.0``. This is an abstract class in
+    ``vtk<9.1.0`` and cannot be instantiated.
+
+    Examples
+    --------
+    Create a simple point cloud of 10 points from a numpy array.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> rng = np.random.default_rng()
+    >>> points = rng.random((10, 3))
+    >>> pset = pv.PointSet(points)
+
+    Plot the pointset. Note: this casts to a :class:`pyvista.PolyData`
+    internally when plotting.
+
+    >>> pset.plot(point_size=10)
+
+    """
+
+    def __new__(cls, *args, **kwargs):
+        """Construct a new PointSet object.
+
+        Wrapping this is necessary for us to show an informative error
+        message when the VTK version is too old, causing PointSet to be
+        an abstract class. Since we inherit the ``__new__()`` method of
+        ``vtk.vtkPointSet``, we would otherwise see a generic error about
+        the class being abstract.
+
+        """
+        if pyvista.vtk_version_info < (9, 1, 0):
+            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
+        return super().__new__(cls, *args, **kwargs)
+
+    def __init__(self, var_inp=None, deep=False, force_float=True):
+        """Initialize the pointset."""
+        super().__init__()
+
+        if var_inp is None:
+            return
+        elif isinstance(var_inp, _vtk.vtkPointSet):
+            if deep:
+                self.deep_copy(var_inp)
+            else:
+                self.shallow_copy(var_inp)
+        else:
+            self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
+
+    def cast_to_polydata(self, deep=True):
+        """Cast this dataset to polydata.
+
+        Parameters
+        ----------
+        deep : bool, deep: True
+            Whether to copy the pointset points, or to create a PolyData
+            without copying them.  Setting ``deep=True`` ensures that the
+            original arrays can be modified outside the PolyData without
+            affecting the PolyData.
+
+        Returns
+        -------
+        pyvista.PolyData
+            PointSet cast to a ``pyvista.PolyData``.
+
+        """
+        pdata = PolyData(self.points, deep=deep)
+        if deep:
+            pdata.point_data.update(self.point_data)  # update performs deep copy
+        else:
+            for key, value in self.point_data.items():
+                pdata.point_data[key] = value
+        return pdata
+
+    @wraps(DataSet.plot)  # type: ignore
+    def plot(self, *args, **kwargs):
+        """Cast to PolyData and plot."""
+        pdata = self.cast_to_polydata(deep=False)
+        kwargs.setdefault('style', 'points')
+        return pdata.plot(*args, **kwargs)
+
+    @wraps(PolyDataFilters.threshold)
+    def threshold(self, *args, **kwargs):
+        """Cast to PolyData and threshold.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.threshold_percent)
+    def threshold_percent(self, *args, **kwargs):
+        """Cast to PolyData and threshold.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.explode)
+    def explode(self, *args, **kwargs):
+        """Cast to PolyData and explode.
+
+        The explode filter relies on cells.
+
+        """
+        return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
+
+    @wraps(PolyDataFilters.delaunay_3d)
+    def delaunay_3d(self, *args, **kwargs):
+        """Cast to PolyData and run delaunay_3d."""
+        return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
+
+    @property
+    def area(self) -> float:  # numpydoc ignore=RT01
+        """Return 0.0 since a PointSet has no area."""
+        return 0.0
+
+    @property
+    def volume(self) -> float:  # numpydoc ignore=RT01
+        """Return 0.0 since a PointSet has no volume."""
+        return 0.0
+
+    def contour(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetNotSupported(
+            'Contour and other dimension reducing filters are not supported on PointSets'
+        )
+
+    def cell_data_to_point_data(self, *args, **kwargs):
+        """Raise PointSets do not have cells."""
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+
+    def point_data_to_cell_data(self, *args, **kwargs):
+        """Raise PointSets do not have cells."""
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+
+    def triangulate(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def decimate_boundary(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def find_cells_along_line(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def tessellate(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def slice(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_along_axis(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_along_line(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_implicit(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def slice_orthogonal(self, *args, **kwargs):
+        """Raise dimension reducing operations are not supported."""
+        raise PointSetDimensionReductionError
+
+    def shrink(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def separate_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def remove_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def point_is_inside_cell(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def extract_surface(self, *args, **kwargs):
+        """Raise extract surface are not supported."""
+        raise PointSetCellOperationError
+
+    def extract_geometry(self, *args, **kwargs):
+        """Raise extract geometry are not supported."""
+        raise PointSetCellOperationError
+
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard str representation."""
+        return DataSet.__str__(self)
 
 
 @abstract_class
@@ -1461,69 +1461,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     """
 
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
-
-    def __init__(self, *args, deep=False, **kwargs) -> None:
-        """Initialize the unstructured grid."""
-        super().__init__()
-
-        if not len(args):
-            return
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkUnstructuredGrid):
-                if deep:
-                    self.deep_copy(args[0])
-                else:
-                    self.shallow_copy(args[0])
-
-            elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0], **kwargs)
-
-            elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
-                vtkappend = _vtk.vtkAppendFilter()
-                vtkappend.AddInputData(args[0])
-                vtkappend.Update()
-                self.shallow_copy(vtkappend.GetOutput())
-
-            else:
-                itype = type(args[0])
-                raise TypeError(f'Cannot work with input type {itype}')
-
-        # Cell dictionary creation
-        elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
-            self._from_cells_dict(args[0], args[1], deep)
-            self._check_for_consistency()
-
-        elif len(args) == 3:
-            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
-            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
-            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
-
-            if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
-                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
-                self._check_for_consistency()
-            else:
-                raise TypeError('All input types must be sequences.')
-        else:
-            raise TypeError(
-                'Invalid parameters.  Initialization with arrays requires the '
-                'following arrays:\n`cells`, `cell_type`, `points`'
-            )
-
-    def __repr__(self):
-        """Return the standard representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the standard str representation."""
-        return DataSet.__str__(self)
-
-    def _from_cells_dict(self, cells_dict, points, deep=True):
-        if points.ndim != 2 or points.shape[-1] != 3:
-            raise ValueError("Points array must be a [M, 3] array")
-
-        nr_points = points.shape[0]
-        cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-        self._from_arrays(cells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
@@ -1620,6 +1557,14 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         self.SetCells(cell_type, vtkcells)
 
+    def _from_cells_dict(self, cells_dict, points, deep=True):
+        if points.ndim != 2 or points.shape[-1] != 3:
+            raise ValueError("Points array must be a [M, 3] array")
+
+        nr_points = points.shape[0]
+        cell_types, cells = create_mixed_cells(cells_dict, nr_points)
+        self._from_arrays(cells, cell_types, points, deep=deep)
+
     def _check_for_consistency(self):
         """Check if size of offsets and celltypes match the number of cells.
 
@@ -1637,6 +1582,53 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             raise ValueError(
                 f'Size of the offset ({self.offset.size}) '
                 f'must be one greater than the number of cells ({self.n_cells})'
+            )
+
+    def __init__(self, *args, deep=False, **kwargs) -> None:
+        """Initialize the unstructured grid."""
+        super().__init__()
+
+        if not len(args):
+            return
+        if len(args) == 1:
+            if isinstance(args[0], _vtk.vtkUnstructuredGrid):
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    self.shallow_copy(args[0])
+
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0], **kwargs)
+
+            elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
+                vtkappend = _vtk.vtkAppendFilter()
+                vtkappend.AddInputData(args[0])
+                vtkappend.Update()
+                self.shallow_copy(vtkappend.GetOutput())
+
+            else:
+                itype = type(args[0])
+                raise TypeError(f'Cannot work with input type {itype}')
+
+        # Cell dictionary creation
+        elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
+            self._from_cells_dict(args[0], args[1], deep)
+            self._check_for_consistency()
+
+        elif len(args) == 3:
+            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
+
+            if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
+                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
+                self._check_for_consistency()
+            else:
+                raise TypeError('All input types must be sequences.')
+        else:
+            raise TypeError(
+                'Invalid parameters.  Initialization with arrays requires the '
+                'following arrays:\n`cells`, `cell_type`, `points`'
             )
 
     @property
@@ -1988,6 +1980,14 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         grid.cell_data.remove('ConnectivityFlags')  # unrequired
         return grid
 
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard str representation."""
+        return DataSet.__str__(self)
+
 
 class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Dataset used for topologically regular arrays of data.
@@ -2069,49 +2069,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
-    def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
-        """Initialize the structured grid."""
-        super().__init__()
-
-        if args:
-            raise ValueError("Too many args to create StructuredGrid.")
-
-        if isinstance(uinput, _vtk.vtkStructuredGrid):
-            if deep:
-                self.deep_copy(uinput)
-            else:
-                self.shallow_copy(uinput)
-        elif isinstance(uinput, (str, pathlib.Path)):
-            self._from_file(uinput, **kwargs)
-        elif (
-            isinstance(uinput, np.ndarray)
-            and isinstance(y, np.ndarray)
-            and isinstance(z, np.ndarray)
-        ):
-            self._from_arrays(uinput, y, z, **kwargs)
-        elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput  # type: ignore
-        elif uinput is None:
-            # do nothing, initialize as empty structured grid
-            pass
-        else:
-            raise TypeError(
-                "Invalid parameters. Expecting one of the following:\n"
-                " - No arguments\n"
-                " - Filename as the only argument\n"
-                " - StructuredGrid as the only argument\n"
-                " - Single `numpy.ndarray` as the only argument"
-                " - Three `numpy.ndarray` as the first three arguments"
-            )
-
-    def __repr__(self):
-        """Return the standard representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the standard str representation."""
-        return DataSet.__str__(self)
-
     def _from_arrays(self, x, y, z, force_float=True):
         """Create VTK structured grid directly from numpy arrays.
 
@@ -2151,6 +2108,41 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         self.SetDimensions(dim)
         self.SetPoints(vtk_points(points, force_float=force_float))
 
+    def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
+        """Initialize the structured grid."""
+        super().__init__()
+
+        if args:
+            raise ValueError("Too many args to create StructuredGrid.")
+
+        if isinstance(uinput, _vtk.vtkStructuredGrid):
+            if deep:
+                self.deep_copy(uinput)
+            else:
+                self.shallow_copy(uinput)
+        elif isinstance(uinput, (str, pathlib.Path)):
+            self._from_file(uinput, **kwargs)
+        elif (
+            isinstance(uinput, np.ndarray)
+            and isinstance(y, np.ndarray)
+            and isinstance(z, np.ndarray)
+        ):
+            self._from_arrays(uinput, y, z, **kwargs)
+        elif isinstance(uinput, np.ndarray) and y is None and z is None:
+            self.points = uinput  # type: ignore
+        elif uinput is None:
+            # do nothing, initialize as empty structured grid
+            pass
+        else:
+            raise TypeError(
+                "Invalid parameters. Expecting one of the following:\n"
+                " - No arguments\n"
+                " - Filename as the only argument\n"
+                " - StructuredGrid as the only argument\n"
+                " - Single `numpy.ndarray` as the only argument"
+                " - Three `numpy.ndarray` as the first three arguments"
+            )
+
     @property
     def dimensions(self):  # numpydoc ignore=RT01
         """Return a length 3 tuple of the grid's dimensions.
@@ -2180,6 +2172,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
+
+    def _reshape_point_array(self, array):
+        """Reshape point data to a 3-D matrix."""
+        return array.reshape(self.dimensions, order='F')
 
     @property
     def x(self):  # numpydoc ignore=RT01
@@ -2225,32 +2221,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         attrs = PointGrid._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
-
-    def __getitem__(self, key):
-        """Slice subsets of the StructuredGrid, or extract an array field."""
-        # legacy behavior which looks for a point or cell array
-        if not isinstance(key, tuple):
-            return super().__getitem__(key)
-
-        # convert slice to VOI specification - only "basic indexing" is supported
-        voi = []
-        rate = []
-        if len(key) != 3:
-            raise RuntimeError('Slices must have exactly 3 dimensions.')
-        for i, k in enumerate(key):
-            if isinstance(k, collections.abc.Iterable):
-                raise RuntimeError('Fancy indexing is not supported.')
-            if isinstance(k, numbers.Integral):
-                start = stop = k
-                step = 1
-            elif isinstance(k, slice):
-                start = k.start if k.start is not None else 0
-                stop = k.stop - 1 if k.stop is not None else self.dimensions[i]
-                step = k.step if k.step is not None else 1
-            voi.extend((start, stop))
-            rate.append(step)
-
-        return self.extract_subset(voi, rate, boundary=False)
 
     def hide_cells(self, ind, inplace=False):
         """Hide cells without deleting them.
@@ -2348,15 +2318,45 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())
 
-    def _reshape_point_array(self, array):
-        """Reshape point data to a 3-D matrix."""
-        return array.reshape(self.dimensions, order='F')
-
     def _reshape_cell_array(self, array):
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
         return array.reshape(cell_dims, order='F')
+
+    def __getitem__(self, key):
+        """Slice subsets of the StructuredGrid, or extract an array field."""
+        # legacy behavior which looks for a point or cell array
+        if not isinstance(key, tuple):
+            return super().__getitem__(key)
+
+        # convert slice to VOI specification - only "basic indexing" is supported
+        voi = []
+        rate = []
+        if len(key) != 3:
+            raise RuntimeError('Slices must have exactly 3 dimensions.')
+        for i, k in enumerate(key):
+            if isinstance(k, collections.abc.Iterable):
+                raise RuntimeError('Fancy indexing is not supported.')
+            if isinstance(k, numbers.Integral):
+                start = stop = k
+                step = 1
+            elif isinstance(k, slice):
+                start = k.start if k.start is not None else 0
+                stop = k.stop - 1 if k.stop is not None else self.dimensions[i]
+                step = k.step if k.step is not None else 1
+            voi.extend((start, stop))
+            rate.append(step)
+
+        return self.extract_subset(voi, rate, boundary=False)
+
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard str representation."""
+        return DataSet.__str__(self)
 
 
 class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
@@ -2412,45 +2412,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
-    def __init__(self, *args, deep=False, **kwargs):
-        """Initialize the explicit structured grid."""
-        super().__init__()
-        n = len(args)
-        if n > 2:
-            raise ValueError("Too many args to create ExplicitStructuredGrid.")
-        if n == 1:
-            arg0 = args[0]
-            if isinstance(arg0, _vtk.vtkExplicitStructuredGrid):
-                if deep:
-                    self.deep_copy(arg0)
-                else:
-                    self.shallow_copy(arg0)
-            elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
-                grid = arg0.cast_to_explicit_structured_grid()
-                self.shallow_copy(grid)
-            elif isinstance(arg0, (str, pathlib.Path)):
-                grid = UnstructuredGrid(arg0)
-                grid = grid.cast_to_explicit_structured_grid()
-                self.shallow_copy(grid)
-        elif n == 2:
-            arg0, arg1 = args
-            if isinstance(arg0, tuple):
-                arg0 = np.asarray(arg0)
-            if isinstance(arg1, list):
-                arg1 = np.asarray(arg1)
-            arg0_is_arr = isinstance(arg0, np.ndarray)
-            arg1_is_arr = isinstance(arg1, np.ndarray)
-            if all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(arg0, arg1)
-
-    def __repr__(self):
-        """Return the standard representation."""
-        return DataSet.__repr__(self)
-
-    def __str__(self):
-        """Return the standard ``str`` representation."""
-        return DataSet.__str__(self)
-
     def _from_arrays(self, dims: Sequence, corners: Sequence) -> None:
         """Create a VTK explicit structured grid from NumPy arrays.
 
@@ -2484,6 +2445,37 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         self.SetDimensions(dims)
         self.SetPoints(points)
         self.SetCells(cells)
+
+    def __init__(self, *args, deep=False, **kwargs):
+        """Initialize the explicit structured grid."""
+        super().__init__()
+        n = len(args)
+        if n > 2:
+            raise ValueError("Too many args to create ExplicitStructuredGrid.")
+        if n == 1:
+            arg0 = args[0]
+            if isinstance(arg0, _vtk.vtkExplicitStructuredGrid):
+                if deep:
+                    self.deep_copy(arg0)
+                else:
+                    self.shallow_copy(arg0)
+            elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
+                grid = arg0.cast_to_explicit_structured_grid()
+                self.shallow_copy(grid)
+            elif isinstance(arg0, (str, pathlib.Path)):
+                grid = UnstructuredGrid(arg0)
+                grid = grid.cast_to_explicit_structured_grid()
+                self.shallow_copy(grid)
+        elif n == 2:
+            arg0, arg1 = args
+            if isinstance(arg0, tuple):
+                arg0 = np.asarray(arg0)
+            if isinstance(arg1, list):
+                arg1 = np.asarray(arg1)
+            arg0_is_arr = isinstance(arg0, np.ndarray)
+            arg1_is_arr = isinstance(arg1, np.ndarray)
+            if all([arg0_is_arr, arg1_is_arr]):
+                self._from_arrays(arg0, arg1)
 
     def cast_to_unstructured_grid(self) -> 'UnstructuredGrid':
         """Cast to an unstructured grid.
@@ -3033,3 +3025,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return self
         else:
             return self.copy().compute_connections(inplace=True)
+
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard ``str`` representation."""
+        return DataSet.__str__(self)

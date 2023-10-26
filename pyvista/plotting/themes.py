@@ -46,20 +46,6 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 
-def _set_plot_theme_from_env():
-    """Set plot theme from an environment variable."""
-    if 'PYVISTA_PLOT_THEME' in os.environ:
-        try:
-            theme = os.environ['PYVISTA_PLOT_THEME']
-            set_plot_theme(theme.lower())
-        except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
-            warnings.warn(
-                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}'
-            )
-
-
 def load_theme(filename):
     """Load a theme from a file.
 
@@ -85,52 +71,6 @@ def load_theme(filename):
     with open(filename) as f:
         theme_dict = json.load(f)
     return Theme.from_dict(theme_dict)
-
-
-def set_plot_theme(theme):
-    """Set the plotting parameters to a predefined theme using a string.
-
-    Parameters
-    ----------
-    theme : str
-        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
-        or ``'paraview'``.
-
-    Examples
-    --------
-    Set to the default theme.
-
-    >>> import pyvista as pv
-    >>> pv.set_plot_theme('default')
-
-    Set to the document theme.
-
-    >>> pv.set_plot_theme('document')
-
-    Set to the dark theme.
-
-    >>> pv.set_plot_theme('dark')
-
-    Set to the ParaView theme.
-
-    >>> pv.set_plot_theme('paraview')
-
-    """
-    import pyvista
-
-    if isinstance(theme, str):
-        theme = theme.lower()
-        try:
-            new_theme_type = _NATIVE_THEMES[theme].value
-        except KeyError:
-            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
-        pyvista.global_theme.load_theme(new_theme_type())
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
 
 
 class _ThemeConfig:
@@ -170,6 +110,20 @@ class _ThemeConfig:
                 dict_[key] = value
         return dict_
 
+    def __getitem__(self, key):
+        """Get a value via a key.
+
+        Implemented here for backwards compatibility.
+        """
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        """Set a value via a key.
+
+        Implemented here for backwards compatibility.
+        """
+        setattr(self, key, value)
+
     def __eq__(self, other):
         if not isinstance(other, _ThemeConfig):
             return False
@@ -185,20 +139,6 @@ class _ThemeConfig:
                     return False
 
         return True
-
-    def __getitem__(self, key):
-        """Get a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        """Set a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        setattr(self, key, value)
 
 
 class _LightingConfig(_ThemeConfig):
@@ -787,21 +727,6 @@ class _AxesConfig(_ThemeConfig):
         self._box = False
         self._show = True
 
-    def __repr__(self):
-        txt = ['Axes configuration']
-        parm = {
-            'X Color': 'x_color',
-            'Y Color': 'y_color',
-            'Z Color': 'z_color',
-            'Use Box': 'box',
-            'Show': 'show',
-        }
-        for name, attr in parm.items():
-            setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-
-        return '\n'.join(txt)
-
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set x axis color.
@@ -881,6 +806,21 @@ class _AxesConfig(_ThemeConfig):
     def show(self, show: bool):  # numpydoc ignore=GL08
         self._show = bool(show)
 
+    def __repr__(self):
+        txt = ['Axes configuration']
+        parm = {
+            'X Color': 'x_color',
+            'Y Color': 'y_color',
+            'Z Color': 'z_color',
+            'Use Box': 'box',
+            'Show': 'show',
+        }
+        for name, attr in parm.items():
+            setting = getattr(self, attr)
+            txt.append(f'    {name:<21}: {setting}')
+
+        return '\n'.join(txt)
+
 
 class _Font(_ThemeConfig):
     """PyVista plotter font configuration.
@@ -924,22 +864,6 @@ class _Font(_ThemeConfig):
         self._label_size = None
         self._color = Color('white')
         self._fmt = None
-
-    def __repr__(self):
-        txt = ['']
-        parm = {
-            'Family': 'family',
-            'Size': 'size',
-            'Title size': 'title_size',
-            'Label size': 'label_size',
-            'Color': 'color',
-            'Float format': 'fmt',
-        }
-        for name, attr in parm.items():
-            setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-
-        return '\n'.join(txt)
 
     @property
     def family(self) -> str:  # numpydoc ignore=RT01
@@ -1054,6 +978,22 @@ class _Font(_ThemeConfig):
     @fmt.setter
     def fmt(self, fmt: str):  # numpydoc ignore=GL08
         self._fmt = fmt
+
+    def __repr__(self):
+        txt = ['']
+        parm = {
+            'Family': 'family',
+            'Size': 'size',
+            'Title size': 'title_size',
+            'Label size': 'label_size',
+            'Color': 'color',
+            'Float format': 'fmt',
+        }
+        for name, attr in parm.items():
+            setting = getattr(self, attr)
+            txt.append(f'    {name:<21}: {setting}')
+
+        return '\n'.join(txt)
 
 
 class _SliderStyleConfig(_ThemeConfig):
@@ -1317,6 +1257,10 @@ class _SliderConfig(_ThemeConfig):
             raise TypeError('Configuration type must be `_SliderStyleConfig`')
         self._modern = config
 
+    def __iter__(self):
+        for style in [self._classic, self._modern]:
+            yield style.name
+
     def __repr__(self):
         txt = ['']
         parm = {
@@ -1327,10 +1271,6 @@ class _SliderConfig(_ThemeConfig):
             setting = getattr(self, attr)
             txt.append(f'    {name:<21}: {setting}')
         return '\n'.join(txt)
-
-    def __iter__(self):
-        for style in [self._classic, self._modern]:
-            yield style.name
 
 
 class _TrameConfig(_ThemeConfig):
@@ -2720,57 +2660,6 @@ class Theme(_ThemeConfig):
         """
         self.__init__()
 
-    def __repr__(self):
-        """User friendly representation of the current theme."""
-        txt = [f'{self.name.capitalize()} Theme']
-        txt.append('-' * len(txt[0]))
-        parm = {
-            'Background': 'background',
-            'Jupyter backend': 'jupyter_backend',
-            'Full screen': 'full_screen',
-            'Window size': 'window_size',
-            'Camera': 'camera',
-            'Notebook': 'notebook',
-            'Font': 'font',
-            'Auto close': 'auto_close',
-            'Colormap': 'cmap',
-            'Color': 'color',
-            'Color Cycler': 'color_cycler',
-            'NaN color': 'nan_color',
-            'Edge color': 'edge_color',
-            'Outline color': 'outline_color',
-            'Floor color': 'floor_color',
-            'Colorbar orientation': 'colorbar_orientation',
-            'Colorbar - horizontal': 'colorbar_horizontal',
-            'Colorbar - vertical': 'colorbar_vertical',
-            'Show scalar bar': 'show_scalar_bar',
-            'Show edges': 'show_edges',
-            'Lighting': 'lighting',
-            'Interactive': 'interactive',
-            'Render points as spheres': 'render_points_as_spheres',
-            'Transparent Background': 'transparent_background',
-            'Title': 'title',
-            'Axes': 'axes',
-            'Multi-samples': 'multi_samples',
-            'Multi-renderer Split Pos': 'multi_rendering_splitting_position',
-            'Volume mapper': 'volume_mapper',
-            'Smooth shading': 'smooth_shading',
-            'Depth peeling': 'depth_peeling',
-            'Silhouette': 'silhouette',
-            'Slider Styles': 'slider_styles',
-            'Return Camera Position': 'return_cpos',
-            'Hidden Line Removal': 'hidden_line_removal',
-            'Anti-Aliasing': '_anti_aliasing',
-            'Split sharp edges': '_split_sharp_edges',
-            'Sharp edges feat. angle': '_sharp_edges_feature_angle',
-            'Before close callback': '_before_close_callback',
-        }
-        for name, attr in parm.items():
-            setting = getattr(self, attr)
-            txt.append(f'{name:<25}: {setting}')
-
-        return '\n'.join(txt)
-
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Return or set the name of the theme."""
@@ -2913,6 +2802,57 @@ class Theme(_ThemeConfig):
         if not isinstance(config, _LightingConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
+
+    def __repr__(self):
+        """User friendly representation of the current theme."""
+        txt = [f'{self.name.capitalize()} Theme']
+        txt.append('-' * len(txt[0]))
+        parm = {
+            'Background': 'background',
+            'Jupyter backend': 'jupyter_backend',
+            'Full screen': 'full_screen',
+            'Window size': 'window_size',
+            'Camera': 'camera',
+            'Notebook': 'notebook',
+            'Font': 'font',
+            'Auto close': 'auto_close',
+            'Colormap': 'cmap',
+            'Color': 'color',
+            'Color Cycler': 'color_cycler',
+            'NaN color': 'nan_color',
+            'Edge color': 'edge_color',
+            'Outline color': 'outline_color',
+            'Floor color': 'floor_color',
+            'Colorbar orientation': 'colorbar_orientation',
+            'Colorbar - horizontal': 'colorbar_horizontal',
+            'Colorbar - vertical': 'colorbar_vertical',
+            'Show scalar bar': 'show_scalar_bar',
+            'Show edges': 'show_edges',
+            'Lighting': 'lighting',
+            'Interactive': 'interactive',
+            'Render points as spheres': 'render_points_as_spheres',
+            'Transparent Background': 'transparent_background',
+            'Title': 'title',
+            'Axes': 'axes',
+            'Multi-samples': 'multi_samples',
+            'Multi-renderer Split Pos': 'multi_rendering_splitting_position',
+            'Volume mapper': 'volume_mapper',
+            'Smooth shading': 'smooth_shading',
+            'Depth peeling': 'depth_peeling',
+            'Silhouette': 'silhouette',
+            'Slider Styles': 'slider_styles',
+            'Return Camera Position': 'return_cpos',
+            'Hidden Line Removal': 'hidden_line_removal',
+            'Anti-Aliasing': '_anti_aliasing',
+            'Split sharp edges': '_split_sharp_edges',
+            'Sharp edges feat. angle': '_sharp_edges_feature_angle',
+            'Before close callback': '_before_close_callback',
+        }
+        for name, attr in parm.items():
+            setting = getattr(self, attr)
+            txt.append(f'{name:<25}: {setting}')
+
+        return '\n'.join(txt)
 
 
 class DarkTheme(Theme):
@@ -3086,3 +3026,63 @@ class _NATIVE_THEMES(Enum):
     default = DocumentTheme
     testing = _TestingTheme
     vtk = Theme
+
+
+def set_plot_theme(theme):
+    """Set the plotting parameters to a predefined theme using a string.
+
+    Parameters
+    ----------
+    theme : str
+        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
+        or ``'paraview'``.
+
+    Examples
+    --------
+    Set to the default theme.
+
+    >>> import pyvista as pv
+    >>> pv.set_plot_theme('default')
+
+    Set to the document theme.
+
+    >>> pv.set_plot_theme('document')
+
+    Set to the dark theme.
+
+    >>> pv.set_plot_theme('dark')
+
+    Set to the ParaView theme.
+
+    >>> pv.set_plot_theme('paraview')
+
+    """
+    import pyvista
+
+    if isinstance(theme, str):
+        theme = theme.lower()
+        try:
+            new_theme_type = _NATIVE_THEMES[theme].value
+        except KeyError:
+            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
+        pyvista.global_theme.load_theme(new_theme_type())
+    elif isinstance(theme, Theme):
+        pyvista.global_theme.load_theme(theme)
+    else:
+        raise TypeError(
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        )
+
+
+def _set_plot_theme_from_env():
+    """Set plot theme from an environment variable."""
+    if 'PYVISTA_PLOT_THEME' in os.environ:
+        try:
+            theme = os.environ['PYVISTA_PLOT_THEME']
+            set_plot_theme(theme.lower())
+        except ValueError:
+            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            warnings.warn(
+                f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
+                f'Should be one of the following: {allowed}'
+            )

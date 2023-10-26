@@ -46,13 +46,13 @@ class PlotterChanged:
     """Helper class to check whether the plotter's rendered content has changed
     since the last call."""
 
-    def __init__(self, plotter):
-        self._plotter = plotter
-        self._prev = self._capture()
-
     def _capture(self):
         self._plotter.show(auto_close=False)
         return self._plotter.screenshot()
+
+    def __init__(self, plotter):
+        self._plotter = plotter
+        self._prev = self._capture()
 
     def __call__(self):
         cur = self._capture()

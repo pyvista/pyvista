@@ -163,6 +163,51 @@ class AffineWidget3D:
 
     """
 
+    def _init_actors(self, scale, always_visible):
+        """Initialize the widget's actors."""
+        for ii, color in enumerate(self._axes_colors):
+            arrow = pyvista.Arrow(
+                (0, 0, 0),
+                direction=GLOBAL_AXES[ii],
+                scale=self._actor_length * scale * 1.15,
+                tip_radius=0.05,
+                shaft_radius=self._line_radius,
+            )
+            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
+            axis_circ = self._circ.copy()
+            if ii == 0:
+                axis_circ = axis_circ.rotate_y(-90)
+            elif ii == 1:
+                axis_circ = axis_circ.rotate_x(90)
+            axis_circ.points *= self._main_actor.GetLength() * (scale * 1.6)
+            # axis_circ.points += self._origin
+            axis_circ = axis_circ.tube(
+                radius=self._line_radius * self._actor_length * scale,
+                absolute=True,
+                radius_factor=1.0,
+            )
+
+            self._circles.append(
+                self._pl.add_mesh(
+                    axis_circ,
+                    color=color,
+                    lighting=False,
+                    render_lines_as_tubes=True,
+                    render=False,
+                )
+            )
+
+        # update origin and assign a default user_matrix
+        for actor in self._arrows + self._circles:
+            matrix = np.eye(4)
+            matrix[:3, -1] = self._origin
+            actor.user_matrix = matrix
+
+        if always_visible:
+            for actor in self._arrows + self._circles:
+                actor.mapper.SetResolveCoincidentTopologyToPolygonOffset()
+                actor.mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
+
     def __init__(
         self,
         plotter,
@@ -228,51 +273,6 @@ class AffineWidget3D:
 
         if start:
             self.enable()
-
-    def _init_actors(self, scale, always_visible):
-        """Initialize the widget's actors."""
-        for ii, color in enumerate(self._axes_colors):
-            arrow = pyvista.Arrow(
-                (0, 0, 0),
-                direction=GLOBAL_AXES[ii],
-                scale=self._actor_length * scale * 1.15,
-                tip_radius=0.05,
-                shaft_radius=self._line_radius,
-            )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
-            axis_circ = self._circ.copy()
-            if ii == 0:
-                axis_circ = axis_circ.rotate_y(-90)
-            elif ii == 1:
-                axis_circ = axis_circ.rotate_x(90)
-            axis_circ.points *= self._main_actor.GetLength() * (scale * 1.6)
-            # axis_circ.points += self._origin
-            axis_circ = axis_circ.tube(
-                radius=self._line_radius * self._actor_length * scale,
-                absolute=True,
-                radius_factor=1.0,
-            )
-
-            self._circles.append(
-                self._pl.add_mesh(
-                    axis_circ,
-                    color=color,
-                    lighting=False,
-                    render_lines_as_tubes=True,
-                    render=False,
-                )
-            )
-
-        # update origin and assign a default user_matrix
-        for actor in self._arrows + self._circles:
-            matrix = np.eye(4)
-            matrix[:3, -1] = self._origin
-            actor.user_matrix = matrix
-
-        if always_visible:
-            for actor in self._arrows + self._circles:
-                actor.mapper.SetResolveCoincidentTopologyToPolygonOffset()
-                actor.mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
 
     def _get_world_coord_rot(self, interactor):
         """Get the world coordinates given an interactor.

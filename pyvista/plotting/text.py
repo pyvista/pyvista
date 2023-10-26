@@ -16,211 +16,6 @@ from .tools import FONTS
 
 
 @no_new_attr
-class CornerAnnotation(_vtk.vtkCornerAnnotation):
-    """Text annotation in four corners.
-
-    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
-
-    Parameters
-    ----------
-    position : str | bool
-        Position of the text.
-
-    text : str
-        Text input.
-
-    prop : pyvista.TextProperty, optional
-        Text property.
-
-    linear_font_scale_factor : float, optional
-        Linear font scale factor.
-
-    Examples
-    --------
-    Create text annotation in four corners.
-
-    >>> from pyvista import CornerAnnotation
-    >>> text = CornerAnnotation(0, 'text')
-    >>> prop = text.prop
-    """
-
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
-        """Initialize a new text annotation descriptor."""
-        super().__init__()
-        self.set_text(position, text)
-        if prop is None:
-            self.prop = TextProperty()
-        if linear_font_scale_factor is not None:
-            self.linear_font_scale_factor = linear_font_scale_factor
-
-    def get_text(self, position):
-        """Get the text to be displayed for each corner.
-
-        Parameters
-        ----------
-        position : str | bool
-            Position of the text.
-
-        Returns
-        -------
-        str
-            Text to be displayed for each corner.
-        """
-        return self.GetText(position)
-
-    def set_text(self, position, text):
-        """Set the text to be displayed for each corner.
-
-        Parameters
-        ----------
-        position : str | bool
-            Position of the text.
-
-        text : str
-            Text to be displayed for each corner.
-        """
-        corner_mappings = {
-            'lower_left': self.LowerLeft,
-            'lower_right': self.LowerRight,
-            'upper_left': self.UpperLeft,
-            'upper_right': self.UpperRight,
-            'lower_edge': self.LowerEdge,
-            'upper_edge': self.UpperEdge,
-            'left_edge': self.LeftEdge,
-            'right_edge': self.RightEdge,
-        }
-        corner_mappings['ll'] = corner_mappings['lower_left']
-        corner_mappings['lr'] = corner_mappings['lower_right']
-        corner_mappings['ul'] = corner_mappings['upper_left']
-        corner_mappings['ur'] = corner_mappings['upper_right']
-        corner_mappings['top'] = corner_mappings['upper_edge']
-        corner_mappings['bottom'] = corner_mappings['lower_edge']
-        corner_mappings['right'] = corner_mappings['right_edge']
-        corner_mappings['r'] = corner_mappings['right_edge']
-        corner_mappings['left'] = corner_mappings['left_edge']
-        corner_mappings['l'] = corner_mappings['left_edge']
-        if isinstance(position, str):
-            position = corner_mappings[position]
-        elif position is True:
-            position = corner_mappings['upper_left']
-        self.SetText(position, text)
-
-    @property
-    def prop(self) -> TextProperty:
-        """Property of this actor.
-
-        Returns
-        -------
-        pyvista.TextProperty
-            Property of this actor.
-        """
-        return self.GetTextProperty()
-
-    @prop.setter
-    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
-        self.SetTextProperty(prop)
-
-    @property
-    def linear_font_scale_factor(self) -> float:
-        """Font scaling factors.
-
-        Returns
-        -------
-        float
-            Font scaling factors.
-        """
-        return self.GetLinearFontScaleFactor()
-
-    @linear_font_scale_factor.setter
-    def linear_font_scale_factor(self, factor: float):  # numpydoc ignore=GL08
-        self.SetLinearFontScaleFactor(factor)
-
-
-@no_new_attr
-class Text(_vtk.vtkTextActor):
-    r"""Define text by default theme.
-
-    Parameters
-    ----------
-    text : str, optional
-        Text string to be displayed.
-        "\n" is recognized as a carriage return/linefeed (line separator).
-        The characters must be in the UTF-8 encoding.
-
-    position : Sequence[float], optional
-        The position coordinate.
-
-    prop : pyvista.TextProperty, optional
-        The property of this actor.
-
-    Examples
-    --------
-    Create a text with text's property.
-
-    >>> from pyvista import Text
-    >>> text = Text()
-    >>> prop = text.prop
-    """
-
-    def __init__(self, text=None, position=None, prop=None):
-        """Initialize a new text descriptor."""
-        super().__init__()
-        if text is not None:
-            self.input = text
-        if position is not None:
-            self.position = position
-        if prop is None:
-            self.prop = TextProperty()
-
-    @property
-    def input(self):
-        r"""Text string to be displayed.
-
-        Returns
-        -------
-        str
-            Text string to be displayed.
-            "\n" is recognized as a carriage return/linefeed (line separator).
-            The characters must be in the UTF-8 encoding.
-        """
-        return self.GetInput()
-
-    @input.setter
-    def input(self, text: str):  # numpydoc ignore=GL08
-        self.SetInput(text)
-
-    @property
-    def prop(self):
-        """Property of this actor.
-
-        Returns
-        -------
-        pyvista.TextProperty
-            Property of this actor.
-        """
-        return self.GetTextProperty()
-
-    @prop.setter
-    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
-        self.SetTextProperty(prop)
-
-    @property
-    def position(self):
-        """Position coordinate.
-
-        Returns
-        -------
-        Sequence[float]
-            Position coordinate.
-        """
-        return self.GetPosition()
-
-    @position.setter
-    def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
-        self.SetPosition(position[0], position[1])
-
-
-@no_new_attr
 class TextProperty(_vtk.vtkTextProperty):
     """Define text's property.
 
@@ -558,3 +353,208 @@ class TextProperty(_vtk.vtkTextProperty):
                 f'Invalid {justification} for justification_vertical. '
                 'Should be either "bottom", "center" or "top".'
             )
+
+
+@no_new_attr
+class CornerAnnotation(_vtk.vtkCornerAnnotation):
+    """Text annotation in four corners.
+
+    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+
+    Parameters
+    ----------
+    position : str | bool
+        Position of the text.
+
+    text : str
+        Text input.
+
+    prop : pyvista.TextProperty, optional
+        Text property.
+
+    linear_font_scale_factor : float, optional
+        Linear font scale factor.
+
+    Examples
+    --------
+    Create text annotation in four corners.
+
+    >>> from pyvista import CornerAnnotation
+    >>> text = CornerAnnotation(0, 'text')
+    >>> prop = text.prop
+    """
+
+    def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
+        """Initialize a new text annotation descriptor."""
+        super().__init__()
+        self.set_text(position, text)
+        if prop is None:
+            self.prop = TextProperty()
+        if linear_font_scale_factor is not None:
+            self.linear_font_scale_factor = linear_font_scale_factor
+
+    def get_text(self, position):
+        """Get the text to be displayed for each corner.
+
+        Parameters
+        ----------
+        position : str | bool
+            Position of the text.
+
+        Returns
+        -------
+        str
+            Text to be displayed for each corner.
+        """
+        return self.GetText(position)
+
+    def set_text(self, position, text):
+        """Set the text to be displayed for each corner.
+
+        Parameters
+        ----------
+        position : str | bool
+            Position of the text.
+
+        text : str
+            Text to be displayed for each corner.
+        """
+        corner_mappings = {
+            'lower_left': self.LowerLeft,
+            'lower_right': self.LowerRight,
+            'upper_left': self.UpperLeft,
+            'upper_right': self.UpperRight,
+            'lower_edge': self.LowerEdge,
+            'upper_edge': self.UpperEdge,
+            'left_edge': self.LeftEdge,
+            'right_edge': self.RightEdge,
+        }
+        corner_mappings['ll'] = corner_mappings['lower_left']
+        corner_mappings['lr'] = corner_mappings['lower_right']
+        corner_mappings['ul'] = corner_mappings['upper_left']
+        corner_mappings['ur'] = corner_mappings['upper_right']
+        corner_mappings['top'] = corner_mappings['upper_edge']
+        corner_mappings['bottom'] = corner_mappings['lower_edge']
+        corner_mappings['right'] = corner_mappings['right_edge']
+        corner_mappings['r'] = corner_mappings['right_edge']
+        corner_mappings['left'] = corner_mappings['left_edge']
+        corner_mappings['l'] = corner_mappings['left_edge']
+        if isinstance(position, str):
+            position = corner_mappings[position]
+        elif position is True:
+            position = corner_mappings['upper_left']
+        self.SetText(position, text)
+
+    @property
+    def prop(self) -> TextProperty:
+        """Property of this actor.
+
+        Returns
+        -------
+        pyvista.TextProperty
+            Property of this actor.
+        """
+        return self.GetTextProperty()
+
+    @prop.setter
+    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
+        self.SetTextProperty(prop)
+
+    @property
+    def linear_font_scale_factor(self) -> float:
+        """Font scaling factors.
+
+        Returns
+        -------
+        float
+            Font scaling factors.
+        """
+        return self.GetLinearFontScaleFactor()
+
+    @linear_font_scale_factor.setter
+    def linear_font_scale_factor(self, factor: float):  # numpydoc ignore=GL08
+        self.SetLinearFontScaleFactor(factor)
+
+
+@no_new_attr
+class Text(_vtk.vtkTextActor):
+    r"""Define text by default theme.
+
+    Parameters
+    ----------
+    text : str, optional
+        Text string to be displayed.
+        "\n" is recognized as a carriage return/linefeed (line separator).
+        The characters must be in the UTF-8 encoding.
+
+    position : Sequence[float], optional
+        The position coordinate.
+
+    prop : pyvista.TextProperty, optional
+        The property of this actor.
+
+    Examples
+    --------
+    Create a text with text's property.
+
+    >>> from pyvista import Text
+    >>> text = Text()
+    >>> prop = text.prop
+    """
+
+    def __init__(self, text=None, position=None, prop=None):
+        """Initialize a new text descriptor."""
+        super().__init__()
+        if text is not None:
+            self.input = text
+        if position is not None:
+            self.position = position
+        if prop is None:
+            self.prop = TextProperty()
+
+    @property
+    def input(self):
+        r"""Text string to be displayed.
+
+        Returns
+        -------
+        str
+            Text string to be displayed.
+            "\n" is recognized as a carriage return/linefeed (line separator).
+            The characters must be in the UTF-8 encoding.
+        """
+        return self.GetInput()
+
+    @input.setter
+    def input(self, text: str):  # numpydoc ignore=GL08
+        self.SetInput(text)
+
+    @property
+    def prop(self):
+        """Property of this actor.
+
+        Returns
+        -------
+        pyvista.TextProperty
+            Property of this actor.
+        """
+        return self.GetTextProperty()
+
+    @prop.setter
+    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
+        self.SetTextProperty(prop)
+
+    @property
+    def position(self):
+        """Position coordinate.
+
+        Returns
+        -------
+        Sequence[float]
+            Position coordinate.
+        """
+        return self.GetPosition()
+
+    @position.setter
+    def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
+        self.SetPosition(position[0], position[1])

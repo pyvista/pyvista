@@ -5,6 +5,34 @@ import pyvista
 from pyvista.plotting import _vtk
 
 
+def _cubemap_from_paths(image_paths):
+    """Construct a cubemap from image paths."""
+    for image_path in image_paths:
+        if not os.path.isfile(image_path):
+            file_str = '\n'.join(image_paths)
+            raise FileNotFoundError(
+                f'Unable to locate {image_path}\n'
+                'Expected to find the following files:\n'
+                f'{file_str}'
+            )
+
+    texture = pyvista.Texture()
+    texture.SetMipmap(True)
+    texture.SetInterpolate(True)
+    texture.cube_map = True  # Must be set prior to setting images
+
+    # add each image to the cubemap
+    for i, fn in enumerate(image_paths):
+        image = pyvista.read(fn)
+        flip = _vtk.vtkImageFlip()
+        flip.SetInputDataObject(image)
+        flip.SetFilteredAxis(1)  # flip y axis
+        flip.Update()
+        texture.SetInputDataObject(i, flip.GetOutput())
+
+    return texture
+
+
 def cubemap(path='', prefix='', ext='.jpg'):
     """Construct a cubemap from 6 images from a directory.
 
@@ -105,31 +133,3 @@ def cubemap_from_filenames(image_paths):
         raise ValueError("image_paths must contain 6 paths")
 
     return _cubemap_from_paths(image_paths)
-
-
-def _cubemap_from_paths(image_paths):
-    """Construct a cubemap from image paths."""
-    for image_path in image_paths:
-        if not os.path.isfile(image_path):
-            file_str = '\n'.join(image_paths)
-            raise FileNotFoundError(
-                f'Unable to locate {image_path}\n'
-                'Expected to find the following files:\n'
-                f'{file_str}'
-            )
-
-    texture = pyvista.Texture()
-    texture.SetMipmap(True)
-    texture.SetInterpolate(True)
-    texture.cube_map = True  # Must be set prior to setting images
-
-    # add each image to the cubemap
-    for i, fn in enumerate(image_paths):
-        image = pyvista.read(fn)
-        flip = _vtk.vtkImageFlip()
-        flip.SetInputDataObject(image)
-        flip.SetFilteredAxis(1)  # flip y axis
-        flip.Update()
-        texture.SetInputDataObject(i, flip.GetOutput())
-
-    return texture

@@ -28,25 +28,6 @@ class Table(_vtk.vtkTable, DataObject):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the table."""
-        super().__init__(*args, **kwargs)
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkTable):
-                deep = kwargs.get('deep', True)
-                if deep:
-                    self.deep_copy(args[0])
-                else:
-                    self.shallow_copy(args[0])
-            elif isinstance(args[0], (np.ndarray, list)):
-                self._from_arrays(args[0])
-            elif isinstance(args[0], dict):
-                self._from_dict(args[0])
-            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
-                self._from_pandas(args[0])
-            else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
-
     @staticmethod
     def _prepare_arrays(arrays):
         arrays = np.asarray(arrays)
@@ -72,6 +53,25 @@ class Table(_vtk.vtkTable, DataObject):
     def _from_pandas(self, data_frame):
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name].values
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the table."""
+        super().__init__(*args, **kwargs)
+        if len(args) == 1:
+            if isinstance(args[0], _vtk.vtkTable):
+                deep = kwargs.get('deep', True)
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    self.shallow_copy(args[0])
+            elif isinstance(args[0], (np.ndarray, list)):
+                self._from_arrays(args[0])
+            elif isinstance(args[0], dict):
+                self._from_dict(args[0])
+            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
+                self._from_pandas(args[0])
+            else:
+                raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     @property
     def n_rows(self):  # numpydoc ignore=RT01
@@ -218,10 +218,6 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self.row_arrays.pop(name)
 
-    def __getitem__(self, index):
-        """Search row data for an array."""
-        return self._row_array(name=index)
-
     def _ipython_key_completions_(self):
         return self.keys()
 
@@ -240,22 +236,9 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self[index]
 
-    def __setitem__(self, name, scalars):
-        """Add/set an array in the row_arrays."""
-        self.row_arrays[name] = scalars
-
     def _remove_array(self, field, key):
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
-
-    def __delitem__(self, name):
-        """Remove an array by the specified name."""
-        del self.row_arrays[name]
-
-    def __iter__(self):
-        """Return the iterator across all arrays."""
-        for array_name in self.row_arrays:
-            yield self.row_arrays[array_name]
 
     def _get_attrs(self):
         """Return the representation methods."""
@@ -306,14 +289,6 @@ class Table(_vtk.vtkTable, DataObject):
             fmt += "\n"
             fmt += "</td></tr> </table>"
         return fmt
-
-    def __repr__(self):
-        """Return the object representation."""
-        return self.head(display=False, html=False)
-
-    def __str__(self):
-        """Return the object string representation."""
-        return self.head(display=False, html=False)
 
     def to_pandas(self):
         """Create a Pandas DataFrame from this Table.
@@ -369,3 +344,28 @@ class Table(_vtk.vtkTable, DataObject):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
+
+    def __getitem__(self, index):
+        """Search row data for an array."""
+        return self._row_array(name=index)
+
+    def __setitem__(self, name, scalars):
+        """Add/set an array in the row_arrays."""
+        self.row_arrays[name] = scalars
+
+    def __delitem__(self, name):
+        """Remove an array by the specified name."""
+        del self.row_arrays[name]
+
+    def __iter__(self):
+        """Return the iterator across all arrays."""
+        for array_name in self.row_arrays:
+            yield self.row_arrays[array_name]
+
+    def __repr__(self):
+        """Return the object representation."""
+        return self.head(display=False, html=False)
+
+    def __str__(self):
+        """Return the object string representation."""
+        return self.head(display=False, html=False)

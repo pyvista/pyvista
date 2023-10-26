@@ -315,30 +315,6 @@ class Actor(Prop3D, _vtk.vtkActor):
             new_actor.ShallowCopy(self)
         return new_actor
 
-    def __repr__(self):
-        """Representation of the actor."""
-        mat_info = 'Unset' if self.user_matrix is None else 'Set'
-        bnd = self.bounds
-        attr = [
-            f'{type(self).__name__} ({hex(id(self))})',
-            f'  Center:                     {self.center}',
-            f'  Pickable:                   {self.pickable}',
-            f'  Position:                   {self.position}',
-            f'  Scale:                      {self.scale}',
-            f'  Visible:                    {self.visibility}',
-            f'  X Bounds                    {bnd[0]:.3E}, {bnd[1]:.3E}',
-            f'  Y Bounds                    {bnd[2]:.3E}, {bnd[3]:.3E}',
-            f'  Z Bounds                    {bnd[4]:.3E}, {bnd[5]:.3E}',
-            f'  User matrix:                {mat_info}',
-            f'  Has mapper:                 {self.mapper is not None}',
-            '',
-            repr(self.prop),
-        ]
-        if self.mapper is not None:
-            attr.append('')
-            attr.append(repr(self.mapper))
-        return '\n'.join(attr)
-
     @property
     def backface_prop(self) -> Optional['pyvista.Property']:  # numpydoc ignore=RT01
         """Return or set the backface property.
@@ -383,3 +359,27 @@ class Actor(Prop3D, _vtk.vtkActor):
     @backface_prop.setter
     def backface_prop(self, value: 'pyvista.Property'):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)
+
+    def __repr__(self):
+        """Representation of the actor."""
+        mat_info = 'Unset' if self.user_matrix is None else 'Set'
+        bnd = self.bounds
+        attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Center:                     {self.center}',
+            f'  Pickable:                   {self.pickable}',
+            f'  Position:                   {self.position}',
+            f'  Scale:                      {self.scale}',
+            f'  Visible:                    {self.visibility}',
+            f'  X Bounds                    {bnd[0]:.3E}, {bnd[1]:.3E}',
+            f'  Y Bounds                    {bnd[2]:.3E}, {bnd[3]:.3E}',
+            f'  Z Bounds                    {bnd[4]:.3E}, {bnd[5]:.3E}',
+            f'  User matrix:                {mat_info}',
+            f'  Has mapper:                 {self.mapper is not None}',
+            '',
+            repr(self.prop),
+        ]
+        if self.mapper is not None:
+            attr.append('')
+            attr.append(repr(self.mapper))
+        return '\n'.join(attr)

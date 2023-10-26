@@ -367,42 +367,6 @@ class MultiBlock(
                 return i
         raise KeyError(f'Block name ({name}) not found')
 
-    @overload
-    def __getitem__(
-        self, index: Union[int, str]
-    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
-        ...  # pragma: no cover
-
-    @overload
-    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
-        ...  # pragma: no cover
-
-    def __getitem__(self, index):
-        """Get a block by its index or name.
-
-        If the name is non-unique then returns the first occurrence.
-
-        """
-        if isinstance(index, slice):
-            multi = MultiBlock()
-            for i in range(self.n_blocks)[index]:
-                multi.append(self[i], self.get_block_name(i))
-            return multi
-        elif isinstance(index, str):
-            index = self.get_index_by_name(index)
-        ############################
-        if index < -self.n_blocks or index >= self.n_blocks:
-            raise IndexError(f'index ({index}) out of range for this dataset.')
-        if index < 0:
-            index = self.n_blocks + index
-
-        data = self.GetBlock(index)
-        if data is None:
-            return data
-        if data is not None and not is_pyvista_dataset(data):
-            data = wrap(data)
-        return data
-
     def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
         """Add a data set to the next block index.
 
@@ -638,131 +602,11 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    @overload
-    def __setitem__(
-        self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
-    ):  # noqa: D105  # numpydoc ignore=GL08
-        ...  # pragma: no cover
-
-    @overload
-    def __setitem__(
-        self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
-    ):  # noqa: D105  # numpydoc ignore=GL08
-        ...  # pragma: no cover
-
-    def __setitem__(
-        self,
-        index,
-        data,
-    ):
-        """Set a block with a VTK data object.
-
-        To set the name simultaneously, pass a string name as the 2nd index.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> multi = pv.MultiBlock()
-        >>> multi.append(pv.PolyData())
-        >>> multi[0] = pv.UnstructuredGrid()
-        >>> multi.append(pv.PolyData(), 'poly')
-        >>> multi.keys()
-        ['Block-00', 'poly']
-        >>> multi['bar'] = pv.PolyData()
-        >>> multi.n_blocks
-        3
-
-        """
-        i: int = 0
-        name: Optional[str] = None
-        if isinstance(index, str):
-            try:
-                i = self.get_index_by_name(index)
-            except KeyError:
-                self.append(data, index)
-                return
-            name = index
-        elif isinstance(index, slice):
-            index_iter = range(self.n_blocks)[index]
-            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
-                if idx is None:
-                    self.insert(
-                        index_iter[-1] + 1 + (i - len(index_iter)), d
-                    )  # insert after last entry, increasing
-                elif d is None:
-                    del self[index_iter[-1] + 1]  # delete next entry
-                else:
-                    self[idx] = d  #
-            return
-        else:
-            i = index
-
-        # data, i, and name are a single value now
-        if data is not None and not is_pyvista_dataset(data):
-            data = wrap(data)
-        data = cast(pyvista.DataSet, data)
-
-        i = range(self.n_blocks)[i]
-
-        # this is the only spot in the class where we actually add
-        # data to the MultiBlock
-
-        # check if we are overwriting a block
-        existing_dataset = self.GetBlock(i)
-        if existing_dataset is not None:
-            self._remove_ref(i)
-        self.SetBlock(i, data)
-        if data is not None:
-            self._refs[data.memory_address] = data
-
-        if name is None:
-            name = f'Block-{i:02}'
-        self.set_block_name(i, name)  # Note that this calls self.Modified()
-
-    def __delitem__(self, index: Union[int, str, slice]) -> None:
-        """Remove a block at the specified index."""
-        if isinstance(index, slice):
-            if index.indices(self.n_blocks)[2] > 0:
-                for i in reversed(range(*index.indices(self.n_blocks))):
-                    self.__delitem__(i)
-            else:
-                for i in range(*index.indices(self.n_blocks)):
-                    self.__delitem__(i)
-            return
-        if isinstance(index, str):
-            index = self.get_index_by_name(index)
-        self._remove_ref(index)
-        self.RemoveBlock(index)
-
     def _remove_ref(self, index: int):
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore
-
-    def __iter__(self) -> 'MultiBlock':
-        """Return the iterator across all blocks."""
-        self._iter_n = 0
-        return self
-
-    def __eq__(self, other):
-        """Equality comparison."""
-        if not isinstance(other, MultiBlock):
-            return False
-
-        if self is other:
-            return True
-
-        if len(self) != len(other):
-            return False
-
-        if not self.keys() == other.keys():
-            return False
-
-        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
-            return False
-
-        return True
 
     def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
         """Get the next block from the iterator."""
@@ -957,28 +801,6 @@ class MultiBlock(
         fmt += "\n"
         fmt += "</td></tr> </table>"
         return fmt
-
-    def __repr__(self) -> str:
-        """Define an adequate representation."""
-        # return a string that is Python console friendly
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
-        # now make a call on the object to get its attributes as a list of len 2 tuples
-        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
-        row = "  {:%ds}{}\n" % max_len
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
-        return fmt.strip()
-
-    def __str__(self) -> str:
-        """Return the str representation of the multi block."""
-        return MultiBlock.__repr__(self)
-
-    def __len__(self) -> int:
-        """Return the number of blocks."""
-        return self.n_blocks
 
     def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
@@ -1182,42 +1004,6 @@ class MultiBlock(
 
         return True
 
-    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
-        """Active a scalars for an instance of :class:`pyvista.Plotter`."""
-        # set the active scalars
-        field, scalars = self.set_active_scalars(
-            scalars_name,
-            preference,
-            allow_missing=True,
-        )
-
-        data_attr = f'{field.name.lower()}_data'
-        dtype = scalars.dtype
-        if rgb:
-            if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
-                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
-        elif np.issubdtype(scalars.dtype, np.complexfloating):
-            # Use only the real component if an array is complex
-            scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
-        elif scalars.dtype in (np.bool_, np.uint8):
-            # bool and uint8 do not display properly, must convert to float
-            self._convert_to_real_scalars(data_attr, scalars_name)
-            if scalars.dtype == np.bool_:
-                dtype = np.bool_
-        elif scalars.ndim > 1:
-            # multi-component
-            if not isinstance(component, (int, type(None))):
-                raise TypeError('`component` must be either None or an integer')
-            if component is not None:
-                if component >= scalars.shape[1] or component < 0:
-                    raise ValueError(
-                        'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
-                    )
-            scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
-
-        return field, scalars_name, dtype
-
     def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
@@ -1260,6 +1046,42 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
+    def _activate_plotting_scalars(self, scalars_name, preference, component, rgb):
+        """Active a scalars for an instance of :class:`pyvista.Plotter`."""
+        # set the active scalars
+        field, scalars = self.set_active_scalars(
+            scalars_name,
+            preference,
+            allow_missing=True,
+        )
+
+        data_attr = f'{field.name.lower()}_data'
+        dtype = scalars.dtype
+        if rgb:
+            if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
+                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+        elif np.issubdtype(scalars.dtype, np.complexfloating):
+            # Use only the real component if an array is complex
+            scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
+        elif scalars.dtype in (np.bool_, np.uint8):
+            # bool and uint8 do not display properly, must convert to float
+            self._convert_to_real_scalars(data_attr, scalars_name)
+            if scalars.dtype == np.bool_:
+                dtype = np.bool_
+        elif scalars.ndim > 1:
+            # multi-component
+            if not isinstance(component, (int, type(None))):
+                raise TypeError('`component` must be either None or an integer')
+            if component is not None:
+                if component >= scalars.shape[1] or component < 0:
+                    raise ValueError(
+                        'Component must be nonnegative and less than the '
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                    )
+            scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
+
+        return field, scalars_name, dtype
+
     def _get_consistent_active_scalars(self):
         """Get if there are any consistent active scalars."""
         point_names = set()
@@ -1276,3 +1098,181 @@ class MultiBlock(
         point_name = point_names.pop() if len(point_names) == 1 else None
         cell_name = cell_names.pop() if len(cell_names) == 1 else None
         return point_name, cell_name
+
+    @overload
+    def __getitem__(
+        self, index: Union[int, str]
+    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
+        ...  # pragma: no cover
+
+    @overload
+    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+        ...  # pragma: no cover
+
+    def __getitem__(self, index):
+        """Get a block by its index or name.
+
+        If the name is non-unique then returns the first occurrence.
+
+        """
+        if isinstance(index, slice):
+            multi = MultiBlock()
+            for i in range(self.n_blocks)[index]:
+                multi.append(self[i], self.get_block_name(i))
+            return multi
+        elif isinstance(index, str):
+            index = self.get_index_by_name(index)
+        ############################
+        if index < -self.n_blocks or index >= self.n_blocks:
+            raise IndexError(f'index ({index}) out of range for this dataset.')
+        if index < 0:
+            index = self.n_blocks + index
+
+        data = self.GetBlock(index)
+        if data is None:
+            return data
+        if data is not None and not is_pyvista_dataset(data):
+            data = wrap(data)
+        return data
+
+    @overload
+    def __setitem__(
+        self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
+    ):  # noqa: D105  # numpydoc ignore=GL08
+        ...  # pragma: no cover
+
+    @overload
+    def __setitem__(
+        self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
+    ):  # noqa: D105  # numpydoc ignore=GL08
+        ...  # pragma: no cover
+
+    def __setitem__(
+        self,
+        index,
+        data,
+    ):
+        """Set a block with a VTK data object.
+
+        To set the name simultaneously, pass a string name as the 2nd index.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock()
+        >>> multi.append(pv.PolyData())
+        >>> multi[0] = pv.UnstructuredGrid()
+        >>> multi.append(pv.PolyData(), 'poly')
+        >>> multi.keys()
+        ['Block-00', 'poly']
+        >>> multi['bar'] = pv.PolyData()
+        >>> multi.n_blocks
+        3
+
+        """
+        i: int = 0
+        name: Optional[str] = None
+        if isinstance(index, str):
+            try:
+                i = self.get_index_by_name(index)
+            except KeyError:
+                self.append(data, index)
+                return
+            name = index
+        elif isinstance(index, slice):
+            index_iter = range(self.n_blocks)[index]
+            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
+                if idx is None:
+                    self.insert(
+                        index_iter[-1] + 1 + (i - len(index_iter)), d
+                    )  # insert after last entry, increasing
+                elif d is None:
+                    del self[index_iter[-1] + 1]  # delete next entry
+                else:
+                    self[idx] = d  #
+            return
+        else:
+            i = index
+
+        # data, i, and name are a single value now
+        if data is not None and not is_pyvista_dataset(data):
+            data = wrap(data)
+        data = cast(pyvista.DataSet, data)
+
+        i = range(self.n_blocks)[i]
+
+        # this is the only spot in the class where we actually add
+        # data to the MultiBlock
+
+        # check if we are overwriting a block
+        existing_dataset = self.GetBlock(i)
+        if existing_dataset is not None:
+            self._remove_ref(i)
+        self.SetBlock(i, data)
+        if data is not None:
+            self._refs[data.memory_address] = data
+
+        if name is None:
+            name = f'Block-{i:02}'
+        self.set_block_name(i, name)  # Note that this calls self.Modified()
+
+    def __delitem__(self, index: Union[int, str, slice]) -> None:
+        """Remove a block at the specified index."""
+        if isinstance(index, slice):
+            if index.indices(self.n_blocks)[2] > 0:
+                for i in reversed(range(*index.indices(self.n_blocks))):
+                    self.__delitem__(i)
+            else:
+                for i in range(*index.indices(self.n_blocks)):
+                    self.__delitem__(i)
+            return
+        if isinstance(index, str):
+            index = self.get_index_by_name(index)
+        self._remove_ref(index)
+        self.RemoveBlock(index)
+
+    def __iter__(self) -> 'MultiBlock':
+        """Return the iterator across all blocks."""
+        self._iter_n = 0
+        return self
+
+    def __len__(self) -> int:
+        """Return the number of blocks."""
+        return self.n_blocks
+
+    def __eq__(self, other):
+        """Equality comparison."""
+        if not isinstance(other, MultiBlock):
+            return False
+
+        if self is other:
+            return True
+
+        if len(self) != len(other):
+            return False
+
+        if not self.keys() == other.keys():
+            return False
+
+        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
+            return False
+
+        return True
+
+    def __repr__(self) -> str:
+        """Define an adequate representation."""
+        # return a string that is Python console friendly
+        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
+        # now make a call on the object to get its attributes as a list of len 2 tuples
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        row = "  {:%ds}{}\n" % max_len
+        for attr in self._get_attrs():
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
+        return fmt.strip()
+
+    def __str__(self) -> str:
+        """Return the str representation of the multi block."""
+        return MultiBlock.__repr__(self)

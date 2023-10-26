@@ -36,13 +36,6 @@ def set_pickle_format(format: str):
     pyvista.PICKLE_FORMAT = format
 
 
-def _get_ext_force(filename, force_ext=None):
-    if force_ext:
-        return str(force_ext).lower()
-    else:
-        return get_ext(filename)
-
-
 def get_ext(filename):
     """Extract the extension of the filename.
 
@@ -67,6 +60,13 @@ def get_ext(filename):
         ext_pre = os.path.splitext(base)[1].lower()
         ext = f"{ext_pre}{ext}"
     return ext
+
+
+def _get_ext_force(filename, force_ext=None):
+    if force_ext:
+        return str(force_ext).lower()
+    else:
+        return get_ext(filename)
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
@@ -101,6 +101,194 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
         else:
             vtk_writer.SetDataModeToAscii()
     return vtk_writer
+
+
+def read_exodus(
+    filename,
+    animate_mode_shapes=True,
+    apply_displacements=True,
+    displacement_magnitude=1.0,
+    read_point_data=True,
+    read_cell_data=True,
+    enabled_sidesets=None,
+):
+    """Read an ExodusII file (``'.e'`` or ``'.exo'``).
+
+    Parameters
+    ----------
+    filename : str
+        The path to the exodus file to read.
+
+    animate_mode_shapes : bool, default: True
+        When ``True`` then this reader will report a continuous time
+        range [0,1] and animate the displacements in a periodic
+        sinusoid.
+
+    apply_displacements : bool, default: True
+        Geometric locations can include displacements. When ``True``,
+        the nodal positions are 'displaced' by the standard exodus
+        displacement vector. If displacements are turned off, the user
+        can explicitly add them by applying a warp filter.
+
+    displacement_magnitude : bool, default: 1.0
+        This is a number between 0 and 1 that is used to scale the
+        ``DisplacementMagnitude`` in a sinusoidal pattern.
+
+    read_point_data : bool, default: True
+        Read in data associated with points.
+
+    read_cell_data : bool, default: True
+        Read in data associated with cells.
+
+    enabled_sidesets : str | int, optional
+        The name of the array that store the mapping from side set
+        cells back to the global id of the elements they bound.
+
+    Returns
+    -------
+    pyvista.DataSet
+        Wrapped PyVista dataset.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
+
+    """
+    from .helpers import wrap
+
+    # lazy import here to avoid loading module on import pyvista
+    try:
+        from vtkmodules.vtkIOExodus import vtkExodusIIReader
+    except ImportError:
+        from vtk import vtkExodusIIReader
+
+    reader = vtkExodusIIReader()
+    reader.SetFileName(filename)
+    reader.UpdateInformation()
+    reader.SetAnimateModeShapes(animate_mode_shapes)
+    reader.SetApplyDisplacements(apply_displacements)
+    reader.SetDisplacementMagnitude(displacement_magnitude)
+
+    if read_point_data:  # read in all point data variables
+        reader.SetAllArrayStatus(vtkExodusIIReader.NODAL, 1)
+
+    if read_cell_data:  # read in all cell data variables
+        reader.SetAllArrayStatus(vtkExodusIIReader.ELEM_BLOCK, 1)
+
+    if enabled_sidesets is None:
+        enabled_sidesets = list(range(reader.GetNumberOfSideSetArrays()))
+
+    for sideset in enabled_sidesets:
+        if isinstance(sideset, int):
+            name = reader.GetSideSetArrayName(sideset)
+        elif isinstance(sideset, str):
+            name = sideset
+        else:
+            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
+
+        reader.SetSideSetArrayStatus(name, 1)
+
+    reader.Update()
+    return wrap(reader.GetOutput())
+
+
+def from_meshio(mesh):
+    """Convert a ``meshio`` mesh instance to a PyVista mesh.
+
+    Parameters
+    ----------
+    mesh : meshio.Mesh
+        A mesh instance from the ``meshio`` library.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        A PyVista unstructured grid representation of the input ``meshio`` mesh.
+
+    Raises
+    ------
+    ImportError
+        If the appropriate version of ``meshio`` library is not found.
+
+    """
+    try:  # meshio<5.0 compatibility
+        from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
+    except ImportError:  # pragma: no cover
+        from meshio._vtk_common import meshio_to_vtk_type
+        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+
+    # Extract cells from meshio.Mesh object
+    cells = []
+    cell_type = []
+    for c in mesh.cells:
+        vtk_type = meshio_to_vtk_type[c.type]
+        numnodes = vtk_type_to_numnodes[vtk_type]
+        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+        cells.append(np.hstack((fill_values, c.data)).ravel())
+        cell_type += [vtk_type] * len(c.data)
+
+    # Extract cell data from meshio.Mesh object
+    cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
+
+    # Create pyvista.UnstructuredGrid object
+    points = mesh.points
+
+    # convert to 3D if points are 2D
+    if points.shape[1] == 2:
+        zero_points = np.zeros((len(points), 1), dtype=points.dtype)
+        points = np.hstack((points, zero_points))
+
+    grid = pyvista.UnstructuredGrid(
+        np.concatenate(cells).astype(np.int64, copy=False),
+        np.array(cell_type),
+        np.array(points, np.float64),
+    )
+
+    # Set point data
+    grid.point_data.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
+
+    # Set cell data
+    grid.cell_data.update(cell_data)
+
+    # Call datatype-specific post-load processing
+    grid._post_file_load_processing()
+
+    return grid
+
+
+def read_meshio(filename, file_format=None):
+    """Read any mesh file using meshio.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to read. It should include the file extension.
+    file_format : str, optional
+        The format of the file to read. If not provided, the file format will
+        be inferred from the file extension.
+
+    Returns
+    -------
+    pyvista.Dataset
+        The mesh read from the file.
+
+    Raises
+    ------
+    ImportError
+        If the meshio package is not installed.
+
+    """
+    try:
+        import meshio
+    except ImportError:  # pragma: no cover
+        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
+
+    # Make sure relative paths will work
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    # Read mesh file
+    mesh = meshio.read(filename, file_format)
+    return from_meshio(mesh)
 
 
 def read(filename, force_ext=None, file_format=None, progress_bar=False):
@@ -234,6 +422,38 @@ def _apply_attrs_to_reader(reader, attrs):
             attr()
 
 
+def _try_imageio_imread(filename):
+    """Attempt to read a file using ``imageio.imread``.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to read using ``imageio``.
+
+    Returns
+    -------
+    imageio.core.util.Array
+        Image read from ``imageio``.
+
+    Raises
+    ------
+    ModuleNotFoundError
+        Raised when ``imageio`` is not installed when attempting to read
+        ``filename``.
+
+    """
+    try:
+        from imageio import imread
+    except ModuleNotFoundError:  # pragma: no cover
+        raise ModuleNotFoundError(
+            'Problem reading the image with VTK. Install imageio to try to read the '
+            'file using imageio with:\n\n'
+            '   pip install imageio'
+        ) from None
+
+    return imread(filename)
+
+
 def read_texture(filename, progress_bar=False):
     """Load a texture from an image file.
 
@@ -282,96 +502,6 @@ def read_texture(filename, progress_bar=False):
     return pyvista.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
-def read_exodus(
-    filename,
-    animate_mode_shapes=True,
-    apply_displacements=True,
-    displacement_magnitude=1.0,
-    read_point_data=True,
-    read_cell_data=True,
-    enabled_sidesets=None,
-):
-    """Read an ExodusII file (``'.e'`` or ``'.exo'``).
-
-    Parameters
-    ----------
-    filename : str
-        The path to the exodus file to read.
-
-    animate_mode_shapes : bool, default: True
-        When ``True`` then this reader will report a continuous time
-        range [0,1] and animate the displacements in a periodic
-        sinusoid.
-
-    apply_displacements : bool, default: True
-        Geometric locations can include displacements. When ``True``,
-        the nodal positions are 'displaced' by the standard exodus
-        displacement vector. If displacements are turned off, the user
-        can explicitly add them by applying a warp filter.
-
-    displacement_magnitude : bool, default: 1.0
-        This is a number between 0 and 1 that is used to scale the
-        ``DisplacementMagnitude`` in a sinusoidal pattern.
-
-    read_point_data : bool, default: True
-        Read in data associated with points.
-
-    read_cell_data : bool, default: True
-        Read in data associated with cells.
-
-    enabled_sidesets : str | int, optional
-        The name of the array that store the mapping from side set
-        cells back to the global id of the elements they bound.
-
-    Returns
-    -------
-    pyvista.DataSet
-        Wrapped PyVista dataset.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
-
-    """
-    from .helpers import wrap
-
-    # lazy import here to avoid loading module on import pyvista
-    try:
-        from vtkmodules.vtkIOExodus import vtkExodusIIReader
-    except ImportError:
-        from vtk import vtkExodusIIReader
-
-    reader = vtkExodusIIReader()
-    reader.SetFileName(filename)
-    reader.UpdateInformation()
-    reader.SetAnimateModeShapes(animate_mode_shapes)
-    reader.SetApplyDisplacements(apply_displacements)
-    reader.SetDisplacementMagnitude(displacement_magnitude)
-
-    if read_point_data:  # read in all point data variables
-        reader.SetAllArrayStatus(vtkExodusIIReader.NODAL, 1)
-
-    if read_cell_data:  # read in all cell data variables
-        reader.SetAllArrayStatus(vtkExodusIIReader.ELEM_BLOCK, 1)
-
-    if enabled_sidesets is None:
-        enabled_sidesets = list(range(reader.GetNumberOfSideSetArrays()))
-
-    for sideset in enabled_sidesets:
-        if isinstance(sideset, int):
-            name = reader.GetSideSetArrayName(sideset)
-        elif isinstance(sideset, str):
-            name = sideset
-        else:
-            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
-
-        reader.SetSideSetArrayStatus(name, 1)
-
-    reader.Update()
-    return wrap(reader.GetOutput())
-
-
 def is_meshio_mesh(obj):
     """Test if passed object is instance of ``meshio.Mesh``.
 
@@ -392,104 +522,6 @@ def is_meshio_mesh(obj):
         return isinstance(obj, meshio.Mesh)
     except ImportError:
         return False
-
-
-def from_meshio(mesh):
-    """Convert a ``meshio`` mesh instance to a PyVista mesh.
-
-    Parameters
-    ----------
-    mesh : meshio.Mesh
-        A mesh instance from the ``meshio`` library.
-
-    Returns
-    -------
-    pyvista.UnstructuredGrid
-        A PyVista unstructured grid representation of the input ``meshio`` mesh.
-
-    Raises
-    ------
-    ImportError
-        If the appropriate version of ``meshio`` library is not found.
-
-    """
-    try:  # meshio<5.0 compatibility
-        from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
-    except ImportError:  # pragma: no cover
-        from meshio._vtk_common import meshio_to_vtk_type
-        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
-
-    # Extract cells from meshio.Mesh object
-    cells = []
-    cell_type = []
-    for c in mesh.cells:
-        vtk_type = meshio_to_vtk_type[c.type]
-        numnodes = vtk_type_to_numnodes[vtk_type]
-        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
-        cells.append(np.hstack((fill_values, c.data)).ravel())
-        cell_type += [vtk_type] * len(c.data)
-
-    # Extract cell data from meshio.Mesh object
-    cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
-
-    # Create pyvista.UnstructuredGrid object
-    points = mesh.points
-
-    # convert to 3D if points are 2D
-    if points.shape[1] == 2:
-        zero_points = np.zeros((len(points), 1), dtype=points.dtype)
-        points = np.hstack((points, zero_points))
-
-    grid = pyvista.UnstructuredGrid(
-        np.concatenate(cells).astype(np.int64, copy=False),
-        np.array(cell_type),
-        np.array(points, np.float64),
-    )
-
-    # Set point data
-    grid.point_data.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
-
-    # Set cell data
-    grid.cell_data.update(cell_data)
-
-    # Call datatype-specific post-load processing
-    grid._post_file_load_processing()
-
-    return grid
-
-
-def read_meshio(filename, file_format=None):
-    """Read any mesh file using meshio.
-
-    Parameters
-    ----------
-    filename : str
-        The name of the file to read. It should include the file extension.
-    file_format : str, optional
-        The format of the file to read. If not provided, the file format will
-        be inferred from the file extension.
-
-    Returns
-    -------
-    pyvista.Dataset
-        The mesh read from the file.
-
-    Raises
-    ------
-    ImportError
-        If the meshio package is not installed.
-
-    """
-    try:
-        import meshio
-    except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
-
-    # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    # Read mesh file
-    mesh = meshio.read(filename, file_format)
-    return from_meshio(mesh)
 
 
 def save_meshio(filename, mesh, file_format=None, **kwargs):
@@ -600,35 +632,3 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
 def _process_filename(filename):
     return os.path.abspath(os.path.expanduser(str(filename)))
-
-
-def _try_imageio_imread(filename):
-    """Attempt to read a file using ``imageio.imread``.
-
-    Parameters
-    ----------
-    filename : str
-        Name of the file to read using ``imageio``.
-
-    Returns
-    -------
-    imageio.core.util.Array
-        Image read from ``imageio``.
-
-    Raises
-    ------
-    ModuleNotFoundError
-        Raised when ``imageio`` is not installed when attempting to read
-        ``filename``.
-
-    """
-    try:
-        from imageio import imread
-    except ModuleNotFoundError:  # pragma: no cover
-        raise ModuleNotFoundError(
-            'Problem reading the image with VTK. Install imageio to try to read the '
-            'file using imageio with:\n\n'
-            '   pip install imageio'
-        ) from None
-
-    return imread(filename)
