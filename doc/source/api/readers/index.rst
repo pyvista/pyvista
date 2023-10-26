@@ -99,4 +99,3 @@ Enumerations are available to simplify inputs to certain readers.
     :maxdepth: 2
 
     enums
-
