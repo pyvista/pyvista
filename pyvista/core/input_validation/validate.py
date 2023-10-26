@@ -50,7 +50,7 @@ def validate_array(
     must_be_in_range=None,
     strict_lower_bound=False,
     strict_upper_bound=False,
-    reshape=None,
+    reshape_to=None,
     broadcast_to=None,
     dtype_out=None,
     as_any=True,
@@ -180,16 +180,16 @@ def validate_array(
         ``must_be_in_range``, i.e. array values must be strictly less
         than the specified maximum.
 
-    reshape : int | tuple[int, ...], optional
-        Reshape the output array with :func:`np.reshape`. The shape
-        should be compatible with the original shape. If an integer,
-        then the result will be a 1-D array of that length. One shape
-        dimension can be -1.
+    reshape_to : int | tuple[int, ...], optional
+        Reshape the output array to a new shape with :func:`np.reshape`.
+        The shape should be compatible with the original shape. If an
+        integer, then the result will be a 1-D array of that length. One
+        shape dimension can be -1.
 
     broadcast_to : int | tuple[int, ...], optional
         Broadcast the array with :func:`np.broadcast_to` to a
         read-only view with the specified shape. Broadcasting is done
-        after reshaping (if ``reshape`` is not ``None``).
+        after reshaping (if ``reshape_to`` is not ``None``).
 
     dtype_out : dtype_like, optional
         Set the data-type of the returned array. By default, the
@@ -268,8 +268,8 @@ def validate_array(
         check_has_shape(arr_out, must_have_shape, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
-    if reshape is not None and arr_out.shape != reshape:
-        arr_out = arr_out.reshape(reshape)
+    if reshape_to is not None and arr_out.shape != reshape_to:
+        arr_out = arr_out.reshape(reshape_to)
 
     if broadcast_to is not None and arr_out.shape != broadcast_to:
         arr_out = np.broadcast_to(arr_out, broadcast_to, subok=True)
@@ -504,7 +504,7 @@ def validate_number(num, /, *, reshape=True, **kwargs):
 
     if reshape:
         shape = [(), (1,)]
-        kwargs['reshape'] = ()
+        _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
     else:
         shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
@@ -624,7 +624,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     """
     if reshape:
         shape = [3, (-1, 3)]
-        kwargs['reshape'] = (-1, 3)
+        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
     else:
         shape = (-1, 3)
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
@@ -698,7 +698,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     """
     if reshape:
         shape = [(), (-1), (1, -1)]
-        kwargs['reshape'] = -1
+        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     else:
         shape = -1
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
@@ -781,7 +781,8 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
     # Set default dtype out but allow overriding as long as the dtype
     # is also integral
     kwargs.setdefault('dtype_out', int)
-    check_is_subdtype(kwargs['dtype_out'], np.integer)
+    if kwargs['dtype_out'] is not int:
+        check_is_subdtype(kwargs['dtype_out'], np.integer)
 
     _set_default_kwarg_mandatory(kwargs, 'must_be_integer_like', True)
     _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)
@@ -854,7 +855,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     shape = [(3,)]
     if reshape:
         shape.append((1, 3))
-        kwargs['reshape'] = -1
+        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     if broadcast:
         shape.append(())  # allow 0D scalars
         shape.append((1,))  # 1D 1-element vectors
