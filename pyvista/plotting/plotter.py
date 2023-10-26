@@ -6229,6 +6229,8 @@ def close_all():
             pl.close()
     _ALL_PLOTTERS.clear()
     return True
+
+
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
