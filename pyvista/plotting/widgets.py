@@ -1,7 +1,7 @@
 """Module dedicated to widgets."""
 
 import pathlib
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -2636,8 +2636,8 @@ class WidgetHelper:
     def add_logo_widget(
         self,
         logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Tuple[float, float] = (0.75, 0.8),
-        size: Tuple[float, float] = (0.2, 0.2),
+        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
