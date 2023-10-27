@@ -155,8 +155,8 @@ def check_is_arraylike(arr):
     """
     try:
         cast_to_ndarray(arr) if not isinstance(arr, np.ndarray) else None
-    except ValueError as e:
-        raise ValueError(*e.args) from e
+    except ValueError:
+        raise
 
 
 def check_is_real(arr, /, *, name="Array"):
@@ -376,8 +376,8 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     if strict:
         try:
             check_is_subdtype(arr, np.integer)
-        except TypeError as e:
-            raise TypeError(*e.args) from e
+        except TypeError:
+            raise
     elif not np.array_equal(arr, np.floor(arr)):
         raise ValueError(f"{name} must have integer-like values.")
 
@@ -413,8 +413,8 @@ def check_is_nonnegative(arr, /, *, name="Array"):
     """
     try:
         check_is_greater_than(arr, 0, strict=False, name=name)
-    except ValueError as e:
-        raise ValueError(*e.args) from e
+    except ValueError:
+        raise
 
 
 def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
@@ -566,8 +566,8 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     try:
         check_is_greater_than(arr, rng[0], strict=strict_lower, name=name)
         check_is_less_than(arr, rng[1], strict=strict_upper, name=name)
-    except ValueError as e:
-        raise ValueError(*e.args) from e
+    except ValueError:
+        raise
 
 
 def check_has_shape(
@@ -686,8 +686,8 @@ def check_is_number(num, /, *, name='Object'):
     """
     try:
         check_is_instance(num, Number, allow_subclass=True, name=name)
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_string(obj, /, *, allow_subclass=True, name='Object'):
@@ -727,8 +727,8 @@ def check_is_string(obj, /, *, allow_subclass=True, name='Object'):
     """
     try:
         check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_sequence(obj, /, *, name='Object'):
@@ -764,8 +764,8 @@ def check_is_sequence(obj, /, *, name='Object'):
     """
     try:
         check_is_instance(obj, Sequence, allow_subclass=True, name=name)
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_iterable(obj, /, *, name='Object'):
@@ -802,8 +802,8 @@ def check_is_iterable(obj, /, *, name='Object'):
     """
     try:
         check_is_instance(obj, Iterable, allow_subclass=True, name=name)
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
@@ -929,8 +929,8 @@ def check_is_type(obj, /, classinfo, *, name='Object'):
     """
     try:
         check_is_instance(obj, classinfo, allow_subclass=False, name=name)
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_iterable_of_some_type(
@@ -992,8 +992,8 @@ def check_is_iterable_of_some_type(
             )
             for item in iterable_obj
         ]
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_iterable_of_strings(iterable_obj, /, *, allow_subclass=True, name='String Iterable'):
@@ -1033,8 +1033,8 @@ def check_is_iterable_of_strings(iterable_obj, /, *, allow_subclass=True, name='
     """
     try:
         check_is_iterable_of_some_type(iterable_obj, str, allow_subclass=allow_subclass, name=name)
-    except TypeError as e:
-        raise TypeError(*e.args) from e
+    except TypeError:
+        raise
 
 
 def check_is_string_in_iterable(string_in, /, string_iterable, *, name='String'):
