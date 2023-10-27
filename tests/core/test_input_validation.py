@@ -324,12 +324,15 @@ def test_validate_arrayN(reshape):
 
 
 @pytest.mark.parametrize('reshape', [True, False])
-def test_validate_uintlike_arrayN(reshape):
+def test_validate_arrayN_uintlike(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_uintlike(0.0)
     assert arr.shape == (1,)
     assert np.array_equal(arr, [0])
     assert arr.dtype.type is np.int32 or arr.dtype.type is np.int64
+
+    arr = validate_arrayN_uintlike(0.0, dtype_out='uint8')
+    assert arr.dtype.type is np.uint8
 
     with pytest.raises(ValueError, match="Shape must be -1."):
         validate_arrayN_uintlike(0.0, reshape=False)
