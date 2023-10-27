@@ -169,7 +169,7 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    msg = "Data Range [1 0] must be sorted."
+    msg = "Data Range [1 0] must be sorted in ascending order."
     with pytest.raises(ValueError, match=escape(msg)):
         validate_data_range((1, 0))
 
@@ -401,7 +401,9 @@ def numeric_array_test_cases():
     Case = namedtuple("Case", ["kwarg", "valid_array", "invalid_array", "error_type", "error_msg"])
     return (
         Case(
-            dict(must_be_finite=True, must_be_real=False),
+            dict(
+                must_be_finite=True, must_be_real=False
+            ),  # must be real is only added for extra coverage
             0,
             np.inf,
             ValueError,
@@ -412,6 +414,13 @@ def numeric_array_test_cases():
             dict(must_be_integer_like=True), 0.0, 0.1, ValueError, 'must have integer-like values'
         ),
         Case(dict(must_be_sorted=True), [0, 1], [1, 0], ValueError, 'must be sorted'),
+        Case(
+            dict(must_be_sorted=dict(ascending=True, strict=False, axis=-1)),
+            [0, 1],
+            [1, 0],
+            ValueError,
+            'must be sorted',
+        ),
     )
 
 
@@ -708,7 +717,7 @@ def test_check_has_length():
     with pytest.raises(ValueError, match=msg):
         check_has_length((1,), min_length=2, name="_input")
 
-    msg = "Range [4 2] must be sorted."
+    msg = "Range [4 2] must be sorted in ascending order."
     with pytest.raises(ValueError, match=escape(msg)):
         check_has_length(
             (
@@ -733,17 +742,68 @@ def test_check_is_nonnegative():
         check_is_nonnegative(-1)
 
 
-def test_check_is_sorted():
-    check_is_sorted([1, 2])
-    check_is_sorted([-10, -10])
-    check_is_sorted([[1, 2], [3, 4]])
-    check_is_sorted(1)
-    msg = "Array [2 1] must be sorted."
-    with pytest.raises(ValueError, match=escape(msg)):
-        check_is_sorted([2, 1])
-    msg = "_input [1 3 2] must be sorted."
-    with pytest.raises(ValueError, match=escape(msg)):
-        check_is_sorted([1, 3, 2], name="_input")
+@pytest.mark.parametrize('shape', [(), (8,), (4, 6), (2, 3, 4)])
+@pytest.mark.parametrize('axis', [None, -1, -2, -3, 0, 1, 2, 3])
+@pytest.mark.parametrize('ascending', [True, False])
+@pytest.mark.parametrize('strict', [True, False])
+def test_check_is_sorted(shape, axis, ascending, strict):
+    def _check_is_sorted_params(arr):
+        check_is_sorted(arr, axis=axis, strict=strict, ascending=ascending)
+
+    if shape == ():
+        # test always succeeds with scalar
+        _check_is_sorted_params(0)
+        return
+
+    # Create ascending array with unique values
+    num_elements = np.prod(shape)
+    arr_strict_ascending = np.arange(num_elements).reshape(shape)
+
+    try:
+        # Create ascending array with duplicate values
+        arr_ascending = np.repeat(arr_strict_ascending, 2, axis=axis)
+        # Create descending arrays
+        arr_descending = np.flip(arr_ascending, axis=axis)
+        arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
+    except np.AxisError:
+        # test ValueError is raised whenever an AxisError would otherwise be raised
+        with pytest.raises(
+            ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'
+        ):
+            _check_is_sorted_params(arr_strict_ascending)
+        return
+
+    if axis is None and arr_ascending.ndim > 1:
+        # test that axis=None will flatten array and cause it not to be sorted for higher dimension arrays
+        with pytest.raises(ValueError):
+            _check_is_sorted_params(arr_ascending)
+        return
+
+    if strict and ascending:
+        _check_is_sorted_params(arr_strict_ascending)
+        for a in [arr_ascending, arr_descending, arr_strict_descending]:
+            with pytest.raises(ValueError, match="must be sorted in strict ascending order"):
+                _check_is_sorted_params(a)
+
+    elif not strict and ascending:
+        _check_is_sorted_params(arr_ascending)
+        _check_is_sorted_params(arr_strict_ascending)
+        for a in [arr_descending, arr_strict_descending]:
+            with pytest.raises(ValueError, match="must be sorted in ascending order"):
+                _check_is_sorted_params(a)
+
+    elif strict and not ascending:
+        _check_is_sorted_params(arr_strict_descending)
+        for a in [arr_ascending, arr_strict_ascending, arr_descending]:
+            with pytest.raises(ValueError, match="must be sorted in strict descending order"):
+                _check_is_sorted_params(a)
+
+    elif not strict and not ascending:
+        _check_is_sorted_params(arr_descending)
+        _check_is_sorted_params(arr_strict_descending)
+        for a in [arr_ascending, arr_strict_ascending]:
+            with pytest.raises(ValueError, match="must be sorted in descending order"):
+                _check_is_sorted_params(a)
 
 
 def test_check_is_iterable_of_strings():

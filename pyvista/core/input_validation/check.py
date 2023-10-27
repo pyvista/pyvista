@@ -207,13 +207,27 @@ def check_is_real(arr, /, *, name="Array"):
         raise TypeError(f"{name} must have real numbers.") from e
 
 
-def check_is_sorted(arr, /, *, name="Array"):
-    """Check if an array's values are sorted in ascending order.
+def check_is_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array"):
+    """Check if an array's values are sorted.
 
     Parameters
     ----------
     arr : array_like
         Array to check.
+
+    ascending : bool, default: True
+        If ``True``, check if the array's elements are in ascending order.
+        If ``False``, check if the array's elements are in descending order.
+
+    strict : bool, default: False
+        If ``True``, the array's elements must be strictly increasing (if
+        ``ascending=True``) or strictly decreasing (if ``ascending=False``).
+        Effectively, this means the array must be sorted *and* its values
+        must be unique.
+
+    axis : int | None, default: -1
+        Axis along which to sort. If ``None``, the array is flattened before
+        sorting. The default is ``-1``, which sorts along the last axis.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -236,16 +250,57 @@ def check_is_sorted(arr, /, *, name="Array"):
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+
     if arr.ndim == 0:
-        # Calls to np.sort will fail for scalars, so return early
+        # Indexing will fail for scalars, so return early
         return
-    if not np.array_equal(np.sort(arr), arr):
+
+    # Validate axis
+    if axis is None:
+        # Emulate np.sort(), which flattens array when axis is None
+        arr = arr.flatten()
+        axis = -1
+    else:
+        if not axis == -1:
+            # Validate axis
+            check_is_number(axis, name="Axis")
+            check_is_integerlike(axis, name="Axis")
+            axis = int(axis)
+            try:
+                check_is_in_range(axis, rng=[-arr.ndim, arr.ndim - 1], name="Axis")
+            except ValueError:
+                raise ValueError(f"Axis {axis} is out of bounds for ndim {arr.ndim}.")
+        if axis < 0:
+            # Convert to positive axis index
+            axis = arr.ndim + axis
+
+    # Create slicers to get a view along an axis
+    # Create two slicers to compare consecutive elements with each other
+    first = [slice(None)] * arr.ndim
+    first[axis] = slice(None, -1)
+    first = tuple(first)
+
+    second = [slice(None)] * arr.ndim
+    second[axis] = slice(1, None)
+    second = tuple(second)
+
+    if ascending and not strict:
+        is_sorted = np.all(arr[first] <= arr[second])
+    elif ascending and strict:
+        is_sorted = np.all(arr[first] < arr[second])
+    elif not ascending and not strict:
+        is_sorted = np.all(arr[first] >= arr[second])
+    else:  # not ascending and strict
+        is_sorted = np.all(arr[first] > arr[second])
+    if not is_sorted:
         if arr.size <= 4:
             # Show the array's elements in error msg if array is small
             msg_body = f"{arr}"
         else:
             msg_body = f"with {arr.size} elements"
-        raise ValueError(f"{name} {msg_body} must be sorted.")
+        order = "ascending" if ascending else "descending"
+        strict = "strict " if strict else ""
+        raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
 def check_is_finite(arr, /, *, name="Array"):

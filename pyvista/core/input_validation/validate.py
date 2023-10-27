@@ -148,9 +148,18 @@ def validate_array(
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
-    must_be_sorted : bool, default: False
+    must_be_sorted : bool | dict, default: False
         :func:`Check <pyvista.core.input_validation.check.check_is_sorted>`
-        if the array's values are sorted in ascending order.
+        if the array's values are sorted. If ``True``, the check is
+        performed with default parameters:
+
+        * ``ascending=True``: the array must be sorted in ascending order
+        * ``strict=False``: sequential elements with the same value are allowed
+        * ``axis=-1``: the sorting is checked along the array's last axis
+
+        To check for descending order, enforce strict ordering, or to check along
+        along a different axis, use a ``dict`` with keyword arguments that
+        will be passed to ``check_is_sorted``.
 
     must_be_in_range : array_like[float, float], optional
         :func:`Check <pyvista.core.input_validation.check.check_is_in_range>`
@@ -234,19 +243,20 @@ def validate_array(
     Examples
     --------
     Validate a one-dimensional array has at least length two, is
-    monotonically increasing (i.e. is sorted), and is within some range.
+    monotonically increasing (i.e. has strict ascending order), and
+    is within some range.
 
     >>> import pyvista.core.input_validation as valid
-    >>> array_in = (1, 1, 2, 3, 5)
-    >>> rng = (0, 10)
+    >>> array_in = (1, 2, 3, 5, 8, 13)
+    >>> rng = (0, 20)
     >>> valid.validate_array(
     ...     array_in,
     ...     must_have_shape=(-1),
     ...     must_have_min_length=2,
-    ...     must_be_sorted=True,
+    ...     must_be_sorted=dict(strict=True),
     ...     must_be_in_range=rng,
     ... )
-    array([1, 1, 2, 3, 5])
+    array([1, 2, 3, 5, 8, 13])
 
     """
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
@@ -305,7 +315,10 @@ def validate_array(
             name=name,
         )
     if must_be_sorted:
-        check_is_sorted(arr_out, name=name)
+        if isinstance(must_be_sorted, dict):
+            check_is_sorted(arr_out, **must_be_sorted, name=name)
+        else:
+            check_is_sorted(arr_out, name=name)
 
     # Process output
     if dtype_out is not None:
