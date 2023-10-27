@@ -256,7 +256,7 @@ def validate_array(
     ...     must_be_sorted=dict(strict=True),
     ...     must_be_in_range=rng,
     ... )
-    array([1, 2, 3, 5, 8, 13])
+    array([ 1,  2,  3,  5,  8, 13])
 
     """
     arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
