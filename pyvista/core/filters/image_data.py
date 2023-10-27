@@ -772,6 +772,3 @@ class ImageDataFilters(DataSetFilters):
         alg.SetFilteredAxes(axis)
         alg.Update()
         return wrap(alg.GetOutput())
-
-
-UniformGridFilters = ImageDataFilters

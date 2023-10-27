@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 templates_path = ['_templates']
 source_suffix = '.rst'
-master_doc = 'index'
+root_doc = 'index'
 project = 'tinypages'
 year = datetime.date.today().year
 copyright = f"2021-{year}, PyVista developers"
