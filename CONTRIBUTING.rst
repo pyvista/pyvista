@@ -41,7 +41,7 @@ and all pyvista dependencies including test dependencies pre-installed.
 In addition, it uses the
 `desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
 to provide live interaction windows.  Follow directions
-`here <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+`Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
 to use the live interaction.
 
 Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
