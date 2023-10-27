@@ -407,6 +407,20 @@ three minor releases and completely remove in the following minor release. For
 significant changes, this can be made longer, and for trivial ones this can be
 kept short.
 
+Here's an example of adding error test codes that raise deprecation warning messages.
+
+.. code:: python
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        addition(a, b)
+        if pv._version.version_info >= (0, 40):
+            raise RuntimeError("Convert error this function")
+        if pv._version.version_info >= (0, 41):
+            raise RuntimeError("Remove this function")
+
+In the above code example, the old test code raises an error in v0.40 and v0.41.
+This will prevent us from forgetting to remove deprecations on version upgrades.
+
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
 

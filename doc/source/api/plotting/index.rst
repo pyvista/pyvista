@@ -36,6 +36,7 @@ all plotting functionality in PyVista.
    DataSetMapper
    LookupTable
    Plotter
+   Prop3D
    Property
    Renderer
    RenderWindowInteractor
