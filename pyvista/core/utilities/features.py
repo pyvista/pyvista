@@ -138,30 +138,30 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     >>> import pyvista as pv
     >>> import numpy as np
-    
+
     Load file from PyVista examples.
-    
+
     >>> from pyvista import examples
     >>> mesh = examples.download_cow()
-    
+
     Create an equal density voxel volume and plot the result.
-    
+
     >>> vox = pv.voxelize_volume(mesh, density=0.15)
     >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
     >>> vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
-    
+
     Slice the voxel volume to view ``MeshCells``.
-    
+
     >>> slices = vox.slice_orthogonal()
     >>> slices.plot(scalars='MeshCells', show_edges=True)
-    
+
     Create a voxel volume from unequal density dimensions and plot result.
-    
+
     >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
     >>> vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
-    
+
     Slice the unequal density voxel volume to view ``MeshCells``.
-    
+
     >>> slices = vox.slice_orthogonal()
     >>> slices.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
 
@@ -191,8 +191,8 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     y = np.arange(y_min, y_max, density_y)
     z = np.arange(z_min, z_max, density_z)
 
-    # Create a RectilinearGrid 
-    voi = pyvista.RectilinearGrid(x,y,z)
+    # Create a RectilinearGrid
+    voi = pyvista.RectilinearGrid(x, y, z)
 
     # get part of the mesh within the mesh's bounding surface.
     selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
