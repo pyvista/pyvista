@@ -501,6 +501,9 @@ def test_user_logo(default_theme, verify_image_cache):
     pl.add_logo_widget()
     pl.show()
 
+    with pytest.raises(FileNotFoundError):
+        default_theme.logo_file = 'not a file'
+
 
 def test_user_theme():
     class MyTheme(Theme):

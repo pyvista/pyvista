@@ -605,3 +605,7 @@ def test_logo_widget(verify_image_cache):
         examples.download_vtk_logo().to_image(), position=(0.0, 0.0), size=(0.8, 0.8)
     )
     pl.show()
+
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
+        pl.add_logo_widget(logo=0)
