@@ -151,4 +151,3 @@ Plot _ forces a static image instead of an interactive scene:
 
    >>> pyvista.Sphere().plot(color='red',
    ...                       cpos='xy')
-
