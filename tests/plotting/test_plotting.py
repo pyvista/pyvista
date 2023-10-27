@@ -3760,3 +3760,16 @@ def test_radial_gradient_background():
     with pytest.raises(ValueError):
         plotter = pv.Plotter()
         plotter.set_background('white', top='black', right='black')
+
+
+def test_voxelize_volume(verify_image_cache):
+    mesh = examples.download_cow()
+    cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+
+    # Create an equal density voxel volume and plot the result.
+    vox = pv.voxelize_volume(mesh, density=0.15)
+    vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
+
+    # Create a voxel volume from unequal density dimensions and plot result.
+    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
