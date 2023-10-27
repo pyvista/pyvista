@@ -202,12 +202,12 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
 
     # Create new element of grid where all cells _within_ mesh boundary are
-    # given new name 'MeshCells' and a discreet value of 1
+    # given new name 'MeshCells' and a discrete value of 1
     voi['MeshCells'] = np.zeros(voi.n_cells)
     voi['MeshCells'][cell_ids] = 1
 
     # Create new element of grid where background cells
-    # given a new name 'BackgroundCells' and a discreet value of 0
+    # given a new name 'BackgroundCells' and a discrete value of 0
     voi['BackgroundCells'] = np.zeros(voi.n_cells)
     voi['BackgroundCells'][0] = 0
 
