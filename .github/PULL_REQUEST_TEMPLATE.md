@@ -11,4 +11,3 @@
 
 - < feature1 or bug1 description >
 - < feature2 or bug2 description >
-
