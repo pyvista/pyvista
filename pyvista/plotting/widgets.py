@@ -1260,7 +1260,6 @@ class WidgetHelper:
         color=None,
         interaction_event='end',
         style=None,
-        **kwargs,
     ):
         """Add a text slider bar widget.
 
@@ -1307,12 +1306,6 @@ class WidgetHelper:
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
 
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
@@ -1384,7 +1377,6 @@ class WidgetHelper:
         fmt=None,
         slider_width=None,
         tube_width=None,
-        **kwargs,
     ):
         """Add a slider bar widget.
 
@@ -1461,13 +1453,6 @@ class WidgetHelper:
 
         tube_width : float, optional
             Normalized width of the tube. Defaults to the theme's tube width.
-
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------

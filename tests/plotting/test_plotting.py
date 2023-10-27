@@ -18,7 +18,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
@@ -707,12 +707,6 @@ def test_plot_silhouette_method(tri_cylinder):
     assert props.line_width == pv.global_theme.silhouette.line_width
     plotter.show()
 
-    params = {'line_width': 5, 'opacity': 0.5}
-    with pytest.warns(PyVistaDeprecationWarning, match='`params` is deprecated'):
-        actor = plotter.add_silhouette(tri_cylinder, params=params)
-    assert actor.prop.line_width == params['line_width']
-    assert actor.prop.opacity == params['opacity']
-
 
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
@@ -947,6 +941,13 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.add_point_labels(
         np.array([[0.0, 0.0, 0.0]]), ['hello world'], always_visible=always_visible
     )
+    plotter.show()
+
+
+@pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
+def test_add_point_labels_shape(shape, verify_image_cache):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
     plotter.show()
 
 
@@ -2779,16 +2780,6 @@ def test_plot_composite_raise(sphere, multiblock_poly):
         pl.add_composite(sphere)
     with pytest.raises(TypeError, match='must be a string for'):
         pl.add_composite(multiblock_poly, scalars=range(10))
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        with pytest.raises(TypeError, match='must be an int'):
-            pl.add_composite(multiblock_poly, categories='abc')
-
-
-def test_plot_composite_categories(multiblock_poly):
-    pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
-    pl.show()
 
 
 def test_plot_composite_lookup_table(multiblock_poly, verify_image_cache):

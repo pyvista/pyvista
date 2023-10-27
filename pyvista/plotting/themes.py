@@ -38,7 +38,6 @@ import warnings
 
 import pyvista
 from pyvista.core._typing_core import Number
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
 
 from ._typing import ColorLike
@@ -2914,23 +2913,6 @@ class Theme(_ThemeConfig):
         if not isinstance(config, _LightingConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
-
-
-class DefaultTheme(Theme):
-    """Deprecated default theme.
-
-    .. deprecated:: 0.40.0
-        Deprecated and renamed to ``Theme``. No longer the default.
-
-    """
-
-    def __init__(self):
-        """Initialize the theme."""
-        super().__init__()
-        warnings.warn(
-            '`DefaultTheme` has been deprecated and renamed `Theme`. Further, `DocumentTheme` is now the PyVista default theme.',
-            PyVistaDeprecationWarning,
-        )
 
 
 class DarkTheme(Theme):

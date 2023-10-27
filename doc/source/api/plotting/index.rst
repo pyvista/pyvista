@@ -31,6 +31,7 @@ all plotting functionality in PyVista.
    Axes
    AxesActor
    CameraPosition
+   CornerAnnotation
    CubeAxesActor
    DataSetMapper
    LookupTable
