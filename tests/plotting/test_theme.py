@@ -494,6 +494,12 @@ def test_below_range_color(default_theme):
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
+def test_allow_empty_mesh(default_theme):
+    default_theme.allow_empty_mesh = True
+    pl = pv.Plotter(theme=default_theme)
+    pl.add_mesh(pv.PolyData())
+
+
 def test_user_theme():
     class MyTheme(Theme):
         def __init__(self):
