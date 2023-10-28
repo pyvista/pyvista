@@ -3475,9 +3475,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
-        if algo is None and not mesh.n_points:
+        if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
-            raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
+            raise ValueError(
+                'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
+            )
 
         # set main values
         self.mesh = mesh
@@ -4906,7 +4908,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Open a MP4 movie and set the quality to maximum.
 
         >>> import pyvista as pv
-        >>> pl = pv.Plotter
+        >>> pl = pv.Plotter()
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
 
         """
@@ -5413,23 +5415,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
             hier.SetInputConnection(vis_points.GetOutputPort())
 
         # create label mapper
-        labelMapper = _vtk.vtkLabelPlacementMapper()
-        labelMapper.SetInputConnection(hier.GetOutputPort())
+        label_mapper = _vtk.vtkLabelPlacementMapper()
+        label_mapper.SetInputConnection(hier.GetOutputPort())
         if not isinstance(shape, str):
-            labelMapper.SetShapeToNone()
+            label_mapper.SetShapeToNone()
         elif shape.lower() in 'rect':
-            labelMapper.SetShapeToRect()
+            label_mapper.SetShapeToRect()
         elif shape.lower() in 'rounded_rect':
-            labelMapper.SetShapeToRoundedRect()
+            label_mapper.SetShapeToRoundedRect()
         else:
             raise ValueError(f'Shape ({shape}) not understood')
         if fill_shape:
-            labelMapper.SetStyleToFilled()
+            label_mapper.SetStyleToFilled()
         else:
-            labelMapper.SetStyleToOutline()
-        labelMapper.SetBackgroundColor(Color(shape_color).float_rgb)
-        labelMapper.SetBackgroundOpacity(shape_opacity)
-        labelMapper.SetMargin(margin)
+            label_mapper.SetStyleToOutline()
+        label_mapper.SetBackgroundColor(Color(shape_color).float_rgb)
+        label_mapper.SetBackgroundOpacity(shape_opacity)
+        label_mapper.SetMargin(margin)
 
         textprop = hier.GetTextProperty()
         textprop.SetItalic(italic)
@@ -5456,7 +5458,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
 
         label_actor = _vtk.vtkActor2D()
-        label_actor.SetMapper(labelMapper)
+        label_actor.SetMapper(label_mapper)
         self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)
         return label_actor
 

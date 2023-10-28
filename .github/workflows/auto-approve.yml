@@ -1,7 +1,7 @@
 name: Approve PRs
 on:
   workflow_dispatch:
-  issue_comment:                                     
+  issue_comment:
     types: [created, edited]
 
 env:
