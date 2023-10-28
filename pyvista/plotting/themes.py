@@ -33,6 +33,7 @@ pyvista.
 from enum import Enum
 import json
 import os
+import pathlib
 from typing import Callable, List, Optional, Union
 import warnings
 
@@ -1545,6 +1546,7 @@ class Theme(_ThemeConfig):
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_logo_file',
     ]
 
     def __init__(self):
@@ -1628,6 +1630,8 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+
+        self._logo_file = None
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2939,6 +2943,44 @@ class Theme(_ThemeConfig):
         if not isinstance(config, _LightingConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
+
+    @property
+    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
+        """Return or set the logo file.
+
+        .. note::
+
+            :func:`pyvista.Plotter.add_logo_widget` will default to
+            PyVista's logo if this is unset.
+
+        Example
+        -------
+        Set the logo file to a custom logo.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> logo_file = examples.download_file('vtk.png')
+        >>> pv.global_theme.logo_file = logo_file
+
+        Now the logo will be used by default for :func:`pyvista.Plotter.add_logo_widget`.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        return self._logo_file
+
+    @logo_file.setter
+    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
+        if logo_file is None:
+            path = None
+        else:
+            if not pathlib.Path(logo_file).exists():
+                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+            path = str(logo_file)
+        self._logo_file = path
 
 
 class DarkTheme(Theme):
