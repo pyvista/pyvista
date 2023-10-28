@@ -3762,6 +3762,12 @@ def test_radial_gradient_background():
         plotter.set_background('white', top='black', right='black')
 
 
+def test_no_empty_meshes():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Empty meshes'):
+        pl.add_mesh(pv.PolyData())
+
+
 def test_voxelize_volume():
     mesh = examples.download_cow()
     cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
