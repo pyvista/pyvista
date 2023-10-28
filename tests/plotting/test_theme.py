@@ -5,6 +5,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import colors
+from pyvista.examples.downloads import download_file
 from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
@@ -492,6 +493,16 @@ def test_above_range_color(default_theme):
 def test_below_range_color(default_theme):
     default_theme.below_range_color = 'b'
     assert isinstance(default_theme.below_range_color, pv.Color)
+
+
+def test_user_logo(default_theme, verify_image_cache):
+    default_theme.logo_file = download_file('vtk.png')
+    pl = pv.Plotter()
+    pl.add_logo_widget()
+    pl.show()
+
+    with pytest.raises(FileNotFoundError):
+        default_theme.logo_file = 'not a file'
 
 
 def test_allow_empty_mesh(default_theme):
