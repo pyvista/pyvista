@@ -33,6 +33,19 @@ running:
    cd pyvista
    python -m pip install -e .
 
+Quick Start Development with Codespaces
+---------------------------------------
+A dev container is provided to quickly get started. The default container
+comes with the repository code checked out on a branch of your choice
+and all pyvista dependencies including test dependencies pre-installed.
+In addition, it uses the
+`desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
+to provide live interaction windows.  Follow directions
+`Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+to use the live interaction.
+
+Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+
 Questions
 ---------
 
@@ -465,21 +478,6 @@ dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 Then, if you have everything installed, you can run the various test
 suites.
 
-Using Gitpod Workspace
-~~~~~~~~~~~~~~~~~~~~~~
-
-A gitpod workspace is available for a quick start development
-environment. To start a workspace from the main branch of pyvista, go
-to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
-`Gitpod Getting Started
-<https://www.gitpod.io/docs/getting-started>`_ for more details.
-
-The workspace has vnc capability through the browser for
-interactive plotting. The workspace also has the ability to view the
-documentation with a live-viewer. Hit the ``Go Live`` button
-and browse to ``doc/_build/html``. The workspace also preloads
-pre-commit environments and installs requirements.
-
 Unit Testing
 ~~~~~~~~~~~~
 Run the primary test suite and generate coverage report:
@@ -765,6 +763,20 @@ delete the PR branch.
 Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
+
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a label is applied to your branch, it automatically triggers
+deploying the Preview Documentation. Please check the documentation that
+is deployed by your Pull Request before merging.
+
+If you push additional commits after applying the label, you will need to
+reapply the label. In this situation, kindly request the maintainer to
+dismiss and apply
+`PreviewDocumentation-accepted <https://github.com/pyvista/pyvista/labels/PreviewDocumentation-accepted>`_
+label again. This process is essential to safeguard the deployment site
+against potentially harmful commits.
 
 Branching Model
 ~~~~~~~~~~~~~~~

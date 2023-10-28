@@ -82,6 +82,7 @@ pyvista = [
     'globe.vtk',
     'hexbeam.vtk',
     'nut.ply',
+    'pyvista_logo.png',
     'rectilinear.vtk',
     'sphere.ply',
     'uniform.vtk',
