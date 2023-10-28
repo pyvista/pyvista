@@ -1542,6 +1542,7 @@ class Theme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_allow_empty_mesh',
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
@@ -1600,6 +1601,7 @@ class Theme(_ThemeConfig):
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
         self._before_close_callback = None
+        self._allow_empty_mesh = False
 
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
@@ -2712,6 +2714,30 @@ class Theme(_ThemeConfig):
         self, value: Callable[['pyvista.Plotter'], None]
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
+
+    @property
+    def allow_empty_mesh(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to allow plotting empty meshes.
+
+        Examples
+        --------
+        Enable plotting of empty meshes.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.allow_empty_mesh = True
+
+        Now add an empty mesh to a plotter
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.PolyData())
+        >>> pl.show()  # doctest: +SKIP
+
+        """
+        return self._allow_empty_mesh
+
+    @allow_empty_mesh.setter
+    def allow_empty_mesh(self, allow_empty_mesh: bool):  # numpydoc ignore=GL08
+        self._allow_empty_mesh = bool(allow_empty_mesh)
 
     def restore_defaults(self):  # numpydoc ignore=GL08
         """Restore the theme defaults.

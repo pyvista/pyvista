@@ -505,6 +505,12 @@ def test_user_logo(default_theme, verify_image_cache):
         default_theme.logo_file = 'not a file'
 
 
+def test_allow_empty_mesh(default_theme):
+    default_theme.allow_empty_mesh = True
+    pl = pv.Plotter(theme=default_theme)
+    pl.add_mesh(pv.PolyData())
+
+
 def test_user_theme():
     class MyTheme(Theme):
         def __init__(self):
