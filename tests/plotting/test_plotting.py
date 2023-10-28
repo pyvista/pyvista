@@ -3891,3 +3891,9 @@ def test_radial_gradient_background():
     with pytest.raises(ValueError):
         plotter = pv.Plotter()
         plotter.set_background('white', top='black', right='black')
+
+
+def test_no_empty_meshes():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Empty meshes'):
+        pl.add_mesh(pv.PolyData())
