@@ -1024,6 +1024,20 @@ class MultiBlock(
         newobject.wrap_nested()
         return newobject
 
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+        """Shallow copy the given multiblock to this multiblock.
+
+        Parameters
+        ----------
+        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+            Data object to perform a shallow copy from.
+
+        """
+        if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+            self.CompositeShallowCopy(to_copy)
+        else:
+            self.ShallowCopy(to_copy)
+
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
     ) -> Tuple[FieldAssociation, np.ndarray]:  # type: ignore

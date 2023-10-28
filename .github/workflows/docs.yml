@@ -97,6 +97,21 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
+      - name: Preview HTML documentation
+        uses: nwtgck/actions-netlify@v2.0
+        with:
+          publish-dir: doc/_build/html/
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 10
+
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v3
