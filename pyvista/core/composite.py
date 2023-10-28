@@ -1033,7 +1033,7 @@ class MultiBlock(
             Data object to perform a shallow copy from.
 
         """
-        if pyvista.vtk_version_info >= (9, 3):
+        if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
             self.CompositeShallowCopy(to_copy)
         else:
             self.ShallowCopy(to_copy)
