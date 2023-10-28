@@ -29,7 +29,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     text : str
         Text input.
 
-    prop : TextProperty, optional
+    prop : pyvista.TextProperty, optional
         Text property.
 
     linear_font_scale_factor : float, optional
@@ -111,7 +111,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
         Returns
         -------
-        TextProperty
+        pyvista.TextProperty
             Property of this actor.
         """
         return self.GetTextProperty()
@@ -150,7 +150,7 @@ class Text(_vtk.vtkTextActor):
     position : Sequence[float], optional
         The position coordinate.
 
-    prop : TextProperty, optional
+    prop : pyvista.TextProperty, optional
         The property of this actor.
 
     Examples
@@ -195,7 +195,7 @@ class Text(_vtk.vtkTextActor):
 
         Returns
         -------
-        str
+        pyvista.TextProperty
             Property of this actor.
         """
         return self.GetTextProperty()
@@ -229,7 +229,7 @@ class TextProperty(_vtk.vtkTextProperty):
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    color : ColorLike, optional
+    color : pyvista.ColorLike, optional
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
@@ -321,7 +321,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Color of text's property.
 
         """
@@ -357,7 +357,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Background color of text's property.
 
         """
@@ -409,7 +409,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Frame color of text property.
         """
         return Color(self.GetFrameColor())

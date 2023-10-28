@@ -944,6 +944,13 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.show()
 
 
+@pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
+def test_add_point_labels_shape(shape, verify_image_cache):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
+    plotter.show()
+
+
 def test_set_background():
     plotter = pv.Plotter()
     plotter.set_background('k')
@@ -3753,3 +3760,9 @@ def test_radial_gradient_background():
     with pytest.raises(ValueError):
         plotter = pv.Plotter()
         plotter.set_background('white', top='black', right='black')
+
+
+def test_no_empty_meshes():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Empty meshes'):
+        pl.add_mesh(pv.PolyData())
