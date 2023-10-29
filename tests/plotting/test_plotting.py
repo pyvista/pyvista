@@ -3781,6 +3781,7 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing fatal exception: access violation")
 def test_voxelize_volume():
     mesh = examples.download_cow()
     cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
