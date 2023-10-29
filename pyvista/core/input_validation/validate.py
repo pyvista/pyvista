@@ -375,25 +375,25 @@ def validate_axes(*axes, normalize=True, must_be_orthogonal=True, must_have_orie
     >>> import numpy as np
     >>> import pyvista.core.input_validation as valid
     >>> valid.validate_axes(np.eye(3))
-    array([[1., 0., 0.],
-           [0., 1., 0.],
-           [0., 0., 1.]])
+    array([[ 1., 0., 0.],
+           [ 0., 1., 0.],
+           [ 0., 0., 1.]])
 
     Validate individual axes vectors as a 3x3 array.
 
     >>> valid.validate_axes([1, 0, 0], [0, 1, 0], [0, 0, 1])
-    array([[1., 0., 0.],
-           [0., 1., 0.],
-           [0., 0., 1.]])
+    array([[ 1., 0., 0.],
+           [ 0., 1., 0.],
+           [ 0., 0., 1.]])
 
     Create a validated left-handed axes array from two vectors.
 
     >>> valid.validate_axes(
     ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
     ... )
-    array([[1., 0., 0.],
-           [0., 1., 0.],
-           [0., 0., -1.]])
+    array([[ 1., 0., 0.],
+           [ 0., 1., 0.],
+           [ 0., 0., -1.]])
 
     """
     # Validate number of args
