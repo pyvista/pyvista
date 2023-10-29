@@ -293,12 +293,12 @@ def test_voxelize_volume_default_density(uniform):
 
 def test_voxelize_volume_invalid_density(rectilinear):
     with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize(rectilinear, {0.5, 0.3})
+        pv.voxelize_volume(rectilinear, {0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):
     with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize(pv.PolyData())
+        pv.voxelize_volume(pv.PolyData())
 
 
 def test_report():
