@@ -11,25 +11,16 @@ import numpy as np
 import pyvista
 from pyvista.plotting.axes_actor import AxesActor
 
-from ._vtk import (
-    VTK_ARIAL,
-    VTK_COURIER,
-    VTK_TIMES,
-    vtkAnnotatedCubeActor,
-    vtkMathTextFreeTypeTextRenderer,
-    vtkPolyDataMapper,
-    vtkPropAssembly,
-    vtkRenderWindow,
-)
+from . import _vtk
 from .colors import Color
 
 
 class FONTS(Enum):
     """Font families available to PyVista."""
 
-    arial = VTK_ARIAL
-    courier = VTK_COURIER
-    times = VTK_TIMES
+    arial = _vtk.VTK_ARIAL
+    courier = _vtk.VTK_COURIER
+    times = _vtk.VTK_TIMES
 
 
 # Track render window support and plotting
@@ -51,7 +42,7 @@ def supports_open_gl():
     """
     global SUPPORTS_OPENGL
     if SUPPORTS_OPENGL is None:
-        ren_win = vtkRenderWindow()
+        ren_win = _vtk.vtkRenderWindow()
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
@@ -223,7 +214,7 @@ def create_axes_orientation_box(
     x_face_color = Color(x_face_color)
     y_face_color = Color(y_face_color)
     z_face_color = Color(z_face_color)
-    axes_actor = vtkAnnotatedCubeActor()
+    axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
         axes_actor.SetXPlusFaceText(f"+{xlabel}")
@@ -273,7 +264,7 @@ def create_axes_orientation_box(
         )
         cube.cell_data['face_colors'] = face_colors
 
-        cube_mapper = vtkPolyDataMapper()
+        cube_mapper = _vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
@@ -282,7 +273,7 @@ def create_axes_orientation_box(
         cube_actor.prop.culling = 'back'
         cube_actor.prop.opacity = opacity
 
-        prop_assembly = vtkPropAssembly()
+        prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
         prop_assembly.AddPart(cube_actor)
         actor = prop_assembly
@@ -541,6 +532,6 @@ def check_math_text_support():
         otherwise.
     """
     return (
-        vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
         and check_matplotlib_vtk_compatibility()
     )
