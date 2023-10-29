@@ -512,5 +512,5 @@ def test_create_axes_marker_deprecated_constructor():
 def test_axes_actor_raises():
     with pytest.raises(TypeError, match="must be a dictionary"):
         pv.AxesActor(properties="not_a_dict")
-    with pytest.raises(TypeError, match="unexpected keyword"):
+    with pytest.raises(TypeError, match="invalid keyword"):
         pv.AxesActor(not_valid_kwarg="some_value")

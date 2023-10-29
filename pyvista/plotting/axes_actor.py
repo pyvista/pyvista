@@ -13,7 +13,7 @@ from pyvista.core.utilities.arrays import (
     array_from_vtkmatrix,
     vtkmatrix_from_array,
 )
-from pyvista.core.utilities.misc import AnnotatedIntEnum
+from pyvista.core.utilities.misc import AnnotatedIntEnum, assert_empty_kwargs
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
 from . import _vtk
@@ -279,10 +279,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
                 setattr(y_tip, name, value)
                 setattr(z_tip, name, value)
 
-        if len(kwargs) > 0:
-            raise TypeError(
-                f"AxesActor() got an unexpected keyword argument '{list(kwargs.keys())[0]}'"
-            )
+        assert_empty_kwargs(**kwargs)
 
         self.visibility = visibility
         self.total_length = total_length
