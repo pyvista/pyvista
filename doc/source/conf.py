@@ -360,7 +360,7 @@ sphinx_gallery_conf = {
     "doc_module": "pyvista",
     "image_scrapers": ("pyvista", "matplotlib"),
     "first_notebook_cell": (
-        "%matplotlib inline\n" "from pyvista import set_plot_theme\n" "set_plot_theme('document')\n"
+        "%matplotlib inline\n"
     ),
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
