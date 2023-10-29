@@ -227,7 +227,7 @@ def validate_array(
         Return the validated array as a ``tuple`` or nested ``tuple``. Scalar
         values are always returned as a ``Number``  (i.e. ``int`` or ``float``).
 
-    name : str, optional
+    name : str, default: "Array"
         Variable name to use in the error messages if any of the
         validation checks fail.
 
@@ -333,7 +333,9 @@ def validate_array(
     return arr_out
 
 
-def validate_axes(*axes, normalize=True, must_be_orthogonal=True, must_have_orientation='right'):
+def validate_axes(
+    *axes, normalize=True, must_be_orthogonal=True, must_have_orientation='right', name="Axes"
+):
     """Validate 3D axes vectors.
 
     By default, the axes are normalized and checked to ensure they are orthogonal and
@@ -362,11 +364,14 @@ def validate_axes(*axes, normalize=True, must_be_orthogonal=True, must_have_orie
         direction. If ``left``, the direction must be negative. If ``None``, the
         orientation is not checked.
 
+    name : str, default: "Axes"
+        Variable name to use in the error messages if any of the
+        validation checks fail.
+
     Returns
     -------
     np.ndarray
         Validated 3x3 axes array of row vectors.
-
 
     Examples
     --------
@@ -375,81 +380,80 @@ def validate_axes(*axes, normalize=True, must_be_orthogonal=True, must_have_orie
     >>> import numpy as np
     >>> import pyvista.core.input_validation as valid
     >>> valid.validate_axes(np.eye(3))
-    array([[ 1., 0., 0.],
-           [ 0., 1., 0.],
-           [ 0., 0., 1.]])
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
 
     Validate individual axes vectors as a 3x3 array.
 
     >>> valid.validate_axes([1, 0, 0], [0, 1, 0], [0, 0, 1])
-    array([[ 1., 0., 0.],
-           [ 0., 1., 0.],
-           [ 0., 0., 1.]])
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
 
     Create a validated left-handed axes array from two vectors.
 
     >>> valid.validate_axes(
     ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
     ... )
-    array([[ 1., 0., 0.],
-           [ 0., 1., 0.],
-           [ 0., 0., -1.]])
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0., -1.]])
 
     """
     # Validate number of args
-    check_has_length(axes, exact_length=[1, 2, 3], name="Axes arguments")
+    check_has_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
         check_is_string_in_iterable(
-            must_have_orientation, ['right', 'left'], name="Axes orientation"
+            must_have_orientation, ['right', 'left'], name=f"{name} orientation"
         )
     elif must_have_orientation is None and len(axes) == 2:
-        raise ValueError("Axes orientation must be specified when only two vectors are given.")
+        raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
 
     # Validate axes array
-    axes_array = np.zeros((3, 3))
     if len(axes) == 1:
-        axes_array = validate_array(axes[0], must_have_shape=(3, 3), name="Axes array")
+        axes_array = validate_array(axes[0], must_have_shape=(3, 3), name=name)
     else:
-        axes_array[0] = validate_array3(axes[0], name="First axis vector")
-        axes_array[1] = validate_array3(axes[1], name="Second axis vector")
+        axes_array = np.zeros((3, 3))
+        axes_array[0] = validate_array3(axes[0], name=f"{name} Vector[0]")
+        axes_array[1] = validate_array3(axes[1], name=f"{name} Vector[1]")
         if len(axes) == 3:
-            axes_array[2] = validate_array3(axes[2], name="Third axis vector")
+            axes_array[2] = validate_array3(axes[2], name=f"{name} Vector[2]")
         else:  # len(axes) == 2
             if must_have_orientation == 'right':
                 axes_array[2] = np.cross(axes_array[0], axes_array[1])
             else:
                 axes_array[2] = np.cross(axes_array[1], axes_array[0])
-    check_is_finite(axes_array, name="Axes array")
+    check_is_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
         np.dot(axes_array[0], axes_array[2]), 1
     ):
-        raise ValueError("Axes cannot be parallel.")
+        raise ValueError(f"{name} cannot be parallel.")
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
-        raise ValueError("Axes cannot be zeros.")
+        raise ValueError(f"{name} cannot be zeros.")
 
-    axes_array_norm = axes_array / np.linalg.norm(axes_array, axis=1).reshape((3, 1))
+    # Check orthogonality and orientation using cross products
+    # Normalize axes first since norm values are needed for cross product calc
+    axes_norm = axes_array / np.linalg.norm(axes_array, axis=1).reshape((3, 1))
+    cross_0_1 = np.cross(axes_norm[0], axes_norm[1])
+    cross_1_2 = np.cross(axes_norm[1], axes_norm[2])
 
-    cross_0_1 = np.cross(axes_array_norm[0], axes_array_norm[1])
-    cross_1_2 = np.cross(axes_array_norm[1], axes_array_norm[2])
     if must_be_orthogonal and not (
-        (np.allclose(cross_0_1, axes_array_norm[2]) or np.allclose(cross_0_1, -axes_array_norm[2]))
-        and (
-            np.allclose(cross_1_2, axes_array_norm[0])
-            or np.allclose(cross_1_2, -axes_array_norm[0])
-        )
+        (np.allclose(cross_0_1, axes_norm[2]) or np.allclose(cross_0_1, -axes_norm[2]))
+        and (np.allclose(cross_1_2, axes_norm[0]) or np.allclose(cross_1_2, -axes_norm[0]))
     ):
-        raise ValueError("Axes are not orthogonal.")
+        raise ValueError(f"{name} are not orthogonal.")
 
     if must_have_orientation:
-        dot = np.dot(cross_0_1, axes_array_norm[2])
+        dot = np.dot(cross_0_1, axes_norm[2])
         if must_have_orientation == 'right' and dot < 0:
-            raise ValueError("Axes do not have a right-handed orientation.")
+            raise ValueError(f"{name} do not have a right-handed orientation.")
         if must_have_orientation == 'left' and dot > 0:
-            raise ValueError("Axes do not have a left-handed orientation.")
+            raise ValueError(f"{name} do not have a left-handed orientation.")
 
     if normalize:
-        return axes_array_norm
+        return axes_norm
     return axes_array
 
 
@@ -463,7 +467,8 @@ def validate_transform4x4(transform, /, *, name="Transform"):
         or as a vtkTransform.
 
     name : str, default: "Transform"
-        Variable name to use in the error messages if any are raised.
+        Variable name to use in the error messages if any of the
+        validation checks fail.
 
     Returns
     -------
@@ -518,7 +523,8 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         Transformation matrix as a 3x3 array or vtkMatrix3x3.
 
     name : str, default: "Transform"
-        Variable name to use in the error messages if any are raised.
+        Variable name to use in the error messages if any of the
+        validation checks fail.
 
     Returns
     -------

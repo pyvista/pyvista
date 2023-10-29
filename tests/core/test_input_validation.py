@@ -875,7 +875,8 @@ def test_check_is_string_in_iterable():
         check_is_string_in_iterable(1, 2, name="_input")
 
 
-def test_validate_axes():
+@pytest.mark.parametrize('name', ['_input', 'Axes'])
+def test_validate_axes(name):
     axes_right = np.eye(3)
     axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
 
@@ -890,12 +891,12 @@ def test_validate_axes():
     assert np.array_equal(axes, axes_right)
 
     # test bad input
-    with pytest.raises(ValueError, match="Axes cannot be parallel."):
-        validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]])
+    with pytest.raises(ValueError, match=f"{name} cannot be parallel."):
+        validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]], name=name)
     with pytest.raises(ValueError, match="Axes cannot be parallel."):
         validate_axes([[0, 1, 0], [1, 0, 0], [0, 1, 0]])
-    with pytest.raises(ValueError, match="Axes cannot be zeros."):
-        validate_axes([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
+    with pytest.raises(ValueError, match=f"{name} cannot be zeros."):
+        validate_axes([[1, 0, 0], [0, 1, 0], [0, 0, 0]], name=name)
     with pytest.raises(ValueError, match="Axes cannot be zeros."):
         validate_axes([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
     with pytest.raises(ValueError, match="Axes cannot be zeros."):
@@ -912,19 +913,19 @@ def test_validate_axes():
     validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation='left')
     validate_axes(axes_left, must_have_orientation=None)
     validate_axes(axes_left, must_have_orientation='left')
-    with pytest.raises(ValueError, match="Axes do not have a right-handed orientation."):
-        validate_axes(axes_left, must_have_orientation='right')
+    with pytest.raises(ValueError, match=f"{name} do not have a right-handed orientation."):
+        validate_axes(axes_left, must_have_orientation='right', name=name)
 
     validate_axes(axes_right, must_have_orientation=None)
     validate_axes(axes_right, must_have_orientation='right')
-    with pytest.raises(ValueError, match="Axes do not have a left-handed orientation."):
-        validate_axes(axes_right, must_have_orientation='left')
+    with pytest.raises(ValueError, match=f"{name} do not have a left-handed orientation."):
+        validate_axes(axes_right, must_have_orientation='left', name=name)
 
     # test specifying two vectors without orientation raises error (3rd cannot be computed)
     with pytest.raises(
-        ValueError, match="Axes orientation must be specified when only two vectors are given."
+        ValueError, match=f"{name} orientation must be specified when only two vectors are given."
     ):
-        validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None)
+        validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None, name=name)
 
 
 @pytest.mark.parametrize('bias_index', [(0, 1), (1, 0), (2, 0)])
