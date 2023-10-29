@@ -10,10 +10,10 @@ from pyvista.core.utilities.arrays import (
     vtkmatrix_from_array,
 )
 
-from ._vtk import vtkMatrix3x3, vtkMatrix4x4, vtkProp3D, vtkTransform
+from . import _vtk
 
 
-class Prop3D(vtkProp3D):
+class Prop3D(_vtk.vtkProp3D):
     """Prop3D wrapper for vtkProp3D.
 
     Used to represent an entity in a rendering scene. It handles functions
@@ -325,7 +325,7 @@ class Prop3D(vtkProp3D):
 
     @user_matrix.setter
     def user_matrix(
-        self, value: Union[vtkMatrix4x4, np.ndarray, vtkMatrix3x3, vtkTransform]
+        self, value: Union[_vtk.vtkMatrix4x4, np.ndarray, _vtk.vtkMatrix3x3, _vtk.vtkTransform]
     ):  # numpydoc ignore=GL08
         array = _coerce_transformlike_arg(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))

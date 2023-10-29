@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from vtk import vtkAxesActor
+import vtk
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -28,7 +28,7 @@ def axes_actor():
 
 @pytest.fixture()
 def vtk_axes_actor():
-    return vtkAxesActor()
+    return vtk.vtkAxesActor()
 
 
 def test_actor_visibility(axes):
