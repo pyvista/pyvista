@@ -82,7 +82,6 @@ with SinglePageLayout(server) as layout:
             fluid=True,
             classes="pa-0 fill-height",
         ):
-
             local_view = vtk_widgets.VtkLocalView(
                 renderWindow,
                 ref="view_local",
