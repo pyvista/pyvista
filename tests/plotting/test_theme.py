@@ -6,7 +6,7 @@ import vtk
 import pyvista as pv
 from pyvista import colors
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
+from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -388,6 +388,20 @@ def test_theme_slots(default_theme):
     # verify we can't create an arbitrary attribute
     with pytest.raises(AttributeError, match='has no attribute'):
         default_theme.new_attr = 1
+
+    # verify we can't create an arbitrary attribute on an attribute
+    assert default_theme.lighting_params
+    with pytest.raises(AttributeError, match='has no attribute'):
+        default_theme.lighting_params.new_attr = 1
+
+    # subclasses should also prevent arbitrary attributes
+    theme = DarkTheme()
+    with pytest.raises(AttributeError, match='has no attribute'):
+        theme.new_attr = 1
+
+    assert theme.lighting_params
+    with pytest.raises(AttributeError, match='has no attribute'):
+        theme.lighting_params.new_attr = 1
 
 
 def test_theme_eq():
