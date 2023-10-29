@@ -166,8 +166,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     >>> slices.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
 
     """
-    if not pyvista.is_pyvista_dataset(mesh):
-        mesh = wrap(mesh)
+    mesh = wrap(mesh)
     if density is None:
         density = mesh.length / 100
     if isinstance(density, (int, float, np.number)):
