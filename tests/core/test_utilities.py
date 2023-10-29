@@ -10,17 +10,18 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista import examples as ex
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
+    _coerce_transformlike_arg,
     copy_vtk_array,
     get_array,
     has_duplicates,
     raise_has_duplicates,
     vtk_id_list_to_array,
+    vtkmatrix_from_array,
 )
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
@@ -31,18 +32,18 @@ from pyvista.core.utilities.points import vector_poly_data
 
 
 def test_version():
-    assert "major" in str(pyvista.vtk_version_info)
+    assert "major" in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
-    assert ver.GetVTKMajorVersion() == pyvista.vtk_version_info.major
-    assert ver.GetVTKMinorVersion() == pyvista.vtk_version_info.minor
-    assert ver.GetVTKBuildVersion() == pyvista.vtk_version_info.micro
+    assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
+    assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
+    assert ver.GetVTKBuildVersion() == pv.vtk_version_info.micro
     ver_tup = (
         ver.GetVTKMajorVersion(),
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
-    assert ver_tup == pyvista.vtk_version_info
-    assert pyvista.vtk_version_info >= (0, 0, 0)
+    assert ver_tup == pv.vtk_version_info
+    assert pv.vtk_version_info >= (0, 0, 0)
 
 
 def test_createvectorpolydata_error():
@@ -87,53 +88,47 @@ def test_read(tmpdir, use_pathlib):
     if use_pathlib:
         fnames = [pathlib.Path(fname) for fname in fnames]
     types = (
-        pyvista.PolyData,
-        pyvista.PolyData,
-        pyvista.UnstructuredGrid,
-        pyvista.PolyData,
-        pyvista.ImageData,
-        pyvista.RectilinearGrid,
+        pv.PolyData,
+        pv.PolyData,
+        pv.UnstructuredGrid,
+        pv.PolyData,
+        pv.ImageData,
+        pv.RectilinearGrid,
     )
     for i, filename in enumerate(fnames):
         obj = fileio.read(filename)
-        assert isinstance(obj, types[i])
-    # Now test the standard_reader_routine
-    for i, filename in enumerate(fnames):
-        # Pass attrs to for the standard_reader_routine to be used
-        with pytest.warns(PyVistaDeprecationWarning):
-            obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
-        _ = pyvista.read(filename)
+        _ = pv.read(filename)
     # read non existing file
     with pytest.raises(IOError):
-        _ = pyvista.read('this_file_totally_does_not_exist.vtk')
+        _ = pv.read('this_file_totally_does_not_exist.vtk')
     # Now test reading lists of files as multi blocks
-    multi = pyvista.read(fnames)
-    assert isinstance(multi, pyvista.MultiBlock)
+    multi = pv.read(fnames)
+    assert isinstance(multi, pv.MultiBlock)
     assert multi.n_blocks == len(fnames)
     nested = [ex.planefile, [ex.hexbeamfile, ex.uniformfile]]
 
-    multi = pyvista.read(nested)
-    assert isinstance(multi, pyvista.MultiBlock)
+    multi = pv.read(nested)
+    assert isinstance(multi, pv.MultiBlock)
     assert multi.n_blocks == 2
-    assert isinstance(multi[1], pyvista.MultiBlock)
+    assert isinstance(multi[1], pv.MultiBlock)
     assert multi[1].n_blocks == 2
 
 
 def test_read_force_ext(tmpdir):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
     types = (
-        pyvista.PolyData,
-        pyvista.PolyData,
-        pyvista.UnstructuredGrid,
-        pyvista.PolyData,
-        pyvista.ImageData,
-        pyvista.RectilinearGrid,
+        pv.PolyData,
+        pv.PolyData,
+        pv.UnstructuredGrid,
+        pv.PolyData,
+        pv.ImageData,
+        pv.RectilinearGrid,
     )
 
     dummy_extension = '.dummy'
@@ -148,24 +143,10 @@ def test_read_force_ext(tmpdir):
 
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
-def test_read_attrs(mock_reader, mock_read):
-    """Test passing attrs in read."""
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read(ex.antfile, attrs={'test': 'test_arg'})
-    mock_reader.test.assert_called_once_with('test_arg')
-
-    mock_reader.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
-    mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
-
-
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
     """Test passing attrs in read."""
-    pyvista.read(ex.antfile, progress_bar=True)
+    pv.read(ex.antfile, progress_bar=True)
     mock_show_progress.assert_called_once()
 
 
@@ -194,37 +175,14 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.core.utilities.fileio.read')
-def test_read_legacy(read_mock):
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read_legacy(ex.globefile, progress_bar=False)
-    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
-
-
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
     # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pyvista.read(ex.globefile, force_ext='.e')
+    pv.read(ex.globefile, force_ext='.e')
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == ex.globefile
-
-
-@pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.core.utilities.reader.BaseReader.read')
-@mock.patch('pyvista.core.utilities.reader.BaseReader.path')
-def test_read_plot3d(path_mock, read_mock, auto_detect):
-    # with grid only
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    read_mock.assert_called_once()
-
-    # with grid and q
-    read_mock.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    read_mock.assert_called_once()
 
 
 def test_get_array_cell(hexbeam):
@@ -301,42 +259,44 @@ def test_is_inside_bounds():
 
 
 def test_voxelize(uniform):
-    vox = pyvista.voxelize(uniform, 0.5)
+    vox = pv.voxelize(uniform, 0.5)
     assert vox.n_cells
 
 
 def test_voxelize_non_uniform_density(uniform):
-    vox = pyvista.voxelize(uniform, [0.5, 0.3, 0.2])
+    vox = pv.voxelize(uniform, [0.5, 0.3, 0.2])
     assert vox.n_cells
-    vox = pyvista.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
+    vox = pv.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
 def test_voxelize_invalid_density(rectilinear):
     # test error when density is not length-3
     with pytest.raises(ValueError, match='not enough values to unpack'):
-        pyvista.voxelize(rectilinear, [0.5, 0.3])
+        pv.voxelize(rectilinear, [0.5, 0.3])
     # test error when density is not an array-like
     with pytest.raises(TypeError, match='expected number or array-like'):
-        pyvista.voxelize(rectilinear, {0.5, 0.3})
+        pv.voxelize(rectilinear, {0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
     with pytest.raises(ValueError, match='must have faces'):
-        mesh = pyvista.PolyData(hexbeam.points)
-        pyvista.voxelize(mesh)
+        mesh = pv.PolyData(hexbeam.points)
+        pv.voxelize(mesh)
 
 
 def test_report():
-    report = pyvista.Report(gpu=True)
+    report = pv.Report(gpu=True)
     assert report is not None
-    report = pyvista.Report(gpu=False)
+    assert "GPU Details : None" not in report.__repr__()
+    report = pv.Report(gpu=False)
     assert report is not None
+    assert "GPU Details : None" in report.__repr__()
 
 
 def test_line_segments_from_points():
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    poly = pyvista.line_segments_from_points(points)
+    poly = pv.line_segments_from_points(points)
     assert poly.n_cells == 2
     assert poly.n_points == 4
     cells = poly.lines
@@ -346,7 +306,7 @@ def test_line_segments_from_points():
 
 def test_lines_from_points():
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-    poly = pyvista.lines_from_points(points)
+    poly = pv.lines_from_points(points)
     assert poly.n_cells == 2
     assert poly.n_points == 3
     cells = poly.lines
@@ -358,7 +318,7 @@ def test_grid_from_sph_coords():
     x = np.arange(0.0, 360.0, 40.0)  # longitude
     y = np.arange(0.0, 181.0, 60.0)  # colatitude
     z = [1]  # elevation (radius)
-    g = pyvista.grid_from_sph_coords(x, y, z)
+    g = pv.grid_from_sph_coords(x, y, z)
     assert g.n_cells == 24
     assert g.n_points == 36
     assert np.allclose(
@@ -374,7 +334,7 @@ def test_grid_from_sph_coords():
     )
     assert np.allclose(g.points[1], [0.8660254037844386, 0.0, 0.5])
     z = np.linspace(10, 30, 3)
-    g = pyvista.grid_from_sph_coords(x, y, z)
+    g = pv.grid_from_sph_coords(x, y, z)
     assert g.n_cells == 48
     assert g.n_points == 108
     assert np.allclose(g.points[0], [0.0, 0.0, 10.0])
@@ -386,7 +346,7 @@ def test_transform_vectors_sph_to_cart():
     lev = [1]  # elevation (radius)
     u, v = np.meshgrid(lon, lat, indexing="ij")
     w = u**2 - v**2
-    uu, vv, ww = pyvista.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
+    uu, vv, ww = pv.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
     assert np.allclose(
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
@@ -396,13 +356,13 @@ def test_transform_vectors_sph_to_cart():
 def test_vtkmatrix_to_from_array():
     rng = np.random.default_rng()
     array3x3 = rng.integers(0, 10, size=(3, 3))
-    matrix = pyvista.vtkmatrix_from_array(array3x3)
+    matrix = pv.vtkmatrix_from_array(array3x3)
     assert isinstance(matrix, vtk.vtkMatrix3x3)
     for i in range(3):
         for j in range(3):
             assert matrix.GetElement(i, j) == array3x3[i, j]
 
-    array = pyvista.array_from_vtkmatrix(matrix)
+    array = pv.array_from_vtkmatrix(matrix)
     assert isinstance(array, np.ndarray)
     assert array.shape == (3, 3)
     for i in range(3):
@@ -410,13 +370,13 @@ def test_vtkmatrix_to_from_array():
             assert array[i, j] == matrix.GetElement(i, j)
 
     array4x4 = rng.integers(0, 10, size=(4, 4))
-    matrix = pyvista.vtkmatrix_from_array(array4x4)
+    matrix = pv.vtkmatrix_from_array(array4x4)
     assert isinstance(matrix, vtk.vtkMatrix4x4)
     for i in range(4):
         for j in range(4):
             assert matrix.GetElement(i, j) == array4x4[i, j]
 
-    array = pyvista.array_from_vtkmatrix(matrix)
+    array = pv.array_from_vtkmatrix(matrix)
     assert isinstance(array, np.ndarray)
     assert array.shape == (4, 4)
     for i in range(4):
@@ -425,10 +385,10 @@ def test_vtkmatrix_to_from_array():
 
     # invalid cases
     with pytest.raises(ValueError):
-        matrix = pyvista.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
+        matrix = pv.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
     with pytest.raises(TypeError):
         invalid = vtk.vtkTransform()
-        array = pyvista.array_from_vtkmatrix(invalid)
+        array = pv.array_from_vtkmatrix(invalid)
 
 
 def test_assert_empty_kwargs():
@@ -453,9 +413,9 @@ def test_convert_id_list():
 
 
 def test_progress_monitor():
-    mesh = pyvista.Sphere()
+    mesh = pv.Sphere()
     ugrid = mesh.delaunay_3d(progress_bar=True)
-    assert isinstance(ugrid, pyvista.UnstructuredGrid)
+    assert isinstance(ugrid, pv.UnstructuredGrid)
 
 
 def test_observer():
@@ -520,12 +480,12 @@ def test_apply_transformation_to_points():
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
     x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
-    mesh = pyvista.StructuredGrid(x, y, z)
+    mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
-    mesh2 = pyvista.StructuredGrid(x2, y2, z2)
+    mesh2 = pv.StructuredGrid(x2, y2, z2)
 
     alg = vtk.vtkStreamTracer()
-    obs = pyvista.Observer()
+    obs = pv.Observer()
     obs.observe(alg)
     alg.SetInputDataObject(mesh)
     alg.SetSourceData(mesh2)
@@ -534,39 +494,33 @@ def _generate_vtk_err():
 
 def test_vtk_error_catcher():
     # raise_errors: False
-    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher()
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
     with error_catcher:
         _generate_vtk_err()
         _generate_vtk_err()
     assert len(error_catcher.events) == 2
 
     # raise_errors: False, no error
-    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher()
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
     with error_catcher:
         pass
 
     # raise_errors: True
-    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
     with pytest.raises(RuntimeError):
         with error_catcher:
             _generate_vtk_err()
     assert len(error_catcher.events) == 1
 
     # raise_errors: True, no error
-    error_catcher = pyvista.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
 
 
 def test_axis_angle_rotation():
-    # rotate cube corners around body diagonal
-    points = np.array(
-        [
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ]
-    )
+    # rotate points around body diagonal
+    points = np.eye(3)
     axis = [1, 1, 1]
 
     # no-op case
@@ -597,6 +551,30 @@ def test_axis_angle_rotation():
         transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):
         transformations.axis_angle_rotation([0, 0, 0], angle)
+
+
+@pytest.mark.parametrize(
+    "axis,angle,times",
+    [
+        ([1, 0, 0], 90, 4),
+        ([1, 0, 0], 180, 2),
+        ([1, 0, 0], 270, 4),
+        ([0, 1, 0], 90, 4),
+        ([0, 1, 0], 180, 2),
+        ([0, 1, 0], 270, 4),
+        ([0, 0, 1], 90, 4),
+        ([0, 0, 1], 180, 2),
+        ([0, 0, 1], 270, 4),
+    ],
+)
+def test_axis_angle_rotation_many_times(axis, angle, times):
+    # yields the exact same input
+    expect = np.eye(3)
+    actual = expect.copy()
+    trans = transformations.axis_angle_rotation(axis, angle)
+    for _ in range(times):
+        actual = transformations.apply_transformation_to_points(trans, actual)
+    assert np.array_equal(actual, expect)
 
 
 def test_reflection():
@@ -635,28 +613,28 @@ def test_reflection():
 
 def test_merge(sphere, cube, datasets):
     with pytest.raises(TypeError, match="Expected a sequence"):
-        pyvista.merge(None)
+        pv.merge(None)
 
     with pytest.raises(ValueError, match="Expected at least one"):
-        pyvista.merge([])
+        pv.merge([])
 
     with pytest.raises(TypeError, match="Expected pyvista.DataSet"):
-        pyvista.merge([None, sphere])
+        pv.merge([None, sphere])
 
     # check polydata
-    merged_poly = pyvista.merge([sphere, cube])
-    assert isinstance(merged_poly, pyvista.PolyData)
+    merged_poly = pv.merge([sphere, cube])
+    assert isinstance(merged_poly, pv.PolyData)
     assert merged_poly.n_points == sphere.n_points + cube.n_points
 
-    merged = pyvista.merge([sphere, sphere], merge_points=True)
+    merged = pv.merge([sphere, sphere], merge_points=True)
     assert merged.n_points == sphere.n_points
 
-    merged = pyvista.merge([sphere, sphere], merge_points=False)
+    merged = pv.merge([sphere, sphere], merge_points=False)
     assert merged.n_points == sphere.n_points * 2
 
     # check unstructured
-    merged_ugrid = pyvista.merge(datasets, merge_points=False)
-    assert isinstance(merged_ugrid, pyvista.UnstructuredGrid)
+    merged_ugrid = pv.merge(datasets, merge_points=False)
+    assert isinstance(merged_ugrid, pv.UnstructuredGrid)
     assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
     # check main has priority
     sphere_a = sphere.copy()
@@ -664,14 +642,14 @@ def test_merge(sphere, cube, datasets):
     sphere_a['data'] = np.zeros(sphere_a.n_points)
     sphere_b['data'] = np.ones(sphere_a.n_points)
 
-    merged = pyvista.merge(
+    merged = pv.merge(
         [sphere_a, sphere_b],
         merge_points=True,
         main_has_priority=False,
     )
     assert np.allclose(merged['data'], 1)
 
-    merged = pyvista.merge(
+    merged = pv.merge(
         [sphere_a, sphere_b],
         merge_points=True,
         main_has_priority=True,
@@ -681,18 +659,18 @@ def test_merge(sphere, cube, datasets):
 
 def test_convert_array():
     arr = np.arange(4).astype('O')
-    arr2 = pyvista.core.utilities.arrays.convert_array(arr, array_type=np.dtype('O'))
+    arr2 = pv.core.utilities.arrays.convert_array(arr, array_type=np.dtype('O'))
     assert arr2.GetNumberOfValues() == 4
 
     # https://github.com/pyvista/pyvista/issues/2370
-    arr3 = pyvista.core.utilities.arrays.convert_array(
+    arr3 = pv.core.utilities.arrays.convert_array(
         pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
     )
     assert arr3.GetNumberOfValues() == 4
 
     # check lists work
     my_list = [1, 2, 3]
-    arr4 = pyvista.core.utilities.arrays.convert_array(my_list)
+    arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
 
@@ -727,26 +705,33 @@ def test_copy_vtk_array():
 
 
 def test_cartesian_to_spherical():
-    def polar2cart(r, theta, phi):
+    def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
+            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi))
         ).T
 
     points = np.random.random((1000, 3))
     x, y, z = points.T
-    r, theta, phi = pyvista.cartesian_to_spherical(x, y, z)
-    assert np.allclose(polar2cart(r, theta, phi), points)
+    r, phi, theta = pv.cartesian_to_spherical(x, y, z)
+    assert np.allclose(polar2cart(r, phi, theta), points)
+
+
+def test_spherical_to_cartesian():
+    points = np.random.random((1000, 3))
+    r, phi, theta = points.T
+    x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+    assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
 
 
 def test_set_pickle_format():
-    pyvista.set_pickle_format('legacy')
-    assert pyvista.PICKLE_FORMAT == 'legacy'
+    pv.set_pickle_format('legacy')
+    assert pv.PICKLE_FORMAT == 'legacy'
 
-    pyvista.set_pickle_format('xml')
-    assert pyvista.PICKLE_FORMAT == 'xml'
+    pv.set_pickle_format('xml')
+    assert pv.PICKLE_FORMAT == 'xml'
 
     with pytest.raises(ValueError):
-        pyvista.set_pickle_format('invalid_format')
+        pv.set_pickle_format('invalid_format')
 
 
 def test_linkcode_resolve():
@@ -890,3 +875,27 @@ def test_fit_plane_to_points():
             157.70724487304688,
         ],
     )
+
+
+@pytest.mark.parametrize(
+    'transform_like',
+    [
+        np.array(np.eye(3)),
+        np.array(np.eye(4)),
+        vtkmatrix_from_array(np.eye(3)),
+        vtkmatrix_from_array(np.eye(4)),
+        vtk.vtkTransform(),
+    ],
+)
+def test_coerce_transformlike_arg(transform_like):
+    result = _coerce_transformlike_arg(transform_like)
+    assert np.array_equal(result, np.eye(4))
+
+
+def test_coerce_transformlike_arg_raises():
+    with pytest.raises(ValueError, match="must be 3x3 or 4x4"):
+        _coerce_transformlike_arg(np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match="must be one of"):
+        _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    with pytest.raises(TypeError, match="must be one of"):
+        _coerce_transformlike_arg("abc")

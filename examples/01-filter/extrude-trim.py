@@ -15,7 +15,7 @@ import pyvista as pv
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Create surface and plane
-mesh = pv.ParametricRandomHills(randomseed=2)
+mesh = pv.ParametricRandomHills(random_seed=2)
 plane = pv.Plane(
     center=(mesh.center[0], mesh.center[1], -5),
     direction=(0, 0, -1),

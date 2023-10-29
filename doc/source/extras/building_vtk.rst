@@ -1,4 +1,4 @@
-.. _ref_building_vtk:
+.. _building_vtk:
 
 Building VTK
 ============

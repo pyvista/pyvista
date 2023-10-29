@@ -18,6 +18,9 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
+    mesh : pyvista.DataSet
+        Mesh to voxelize.
+
     density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
@@ -102,6 +105,27 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     The output grid will have the specified dimensions and is commonly used
     for interpolating the input dataset.
 
+    Parameters
+    ----------
+    dataset : DataSet
+        Input dataset used as a reference for the grid creation.
+    dimensions : tuple of int, default: (101, 101, 101)
+        The dimensions of the grid to be created. Each value in the tuple
+        represents the number of grid points along the corresponding axis.
+
+    Raises
+    ------
+    NotImplementedError
+        If the dimensions parameter is set to None. Currently, the function
+        does not support automatically determining the "optimal" grid size
+        based on the sparsity of the points in the input dataset.
+
+    Returns
+    -------
+    ImageData
+        A uniform grid with the specified dimensions that surrounds the input
+        dataset.
+
     """
     bounds = np.array(dataset.bounds)
     if dimensions is None:
@@ -147,7 +171,7 @@ def grid_from_sph_coords(theta, phi, r):
     return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
 
 
-def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
+def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT02
     """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -155,17 +179,17 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     Parameters
     ----------
     theta : array_like[float]
-        Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
+        Azimuthal angle in degrees ``[0, 360]`` of shape ``(M,)``.
     phi : array_like[float]
-        Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
+        Polar (zenith) angle in degrees ``[0, 180]`` of shape ``(N,)``.
     r : array_like[float]
-        Distance (radius) from the point of origin of shape (P,)
+        Distance (radius) from the point of origin of shape ``(P,)``.
     u : array_like[float]
-        X-component of the vector of shape (P, N, M)
+        X-component of the vector of shape ``(P, N, M)``.
     v : array_like[float]
-        Y-component of the vector of shape (P, N, M)
+        Y-component of the vector of shape ``(P, N, M)``.
     w : array_like[float]
-        Z-component of the vector of shape (P, N, M)
+        Z-component of the vector of shape ``(P, N, M)``.
 
     Returns
     -------
@@ -198,11 +222,11 @@ def cartesian_to_spherical(x, y, z):
     r : numpy.ndarray
         Radial distance.
 
-    theta : numpy.ndarray
+    phi : numpy.ndarray
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    phi : numpy.ndarray
+    theta : numpy.ndarray
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 
@@ -212,15 +236,43 @@ def cartesian_to_spherical(x, y, z):
     >>> import pyvista as pv
     >>> grid = pv.ImageData(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
-    >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
+    >>> r, phi, theta = pv.cartesian_to_spherical(x, y, z)
 
     """
     xy2 = x**2 + y**2
     r = np.sqrt(xy2 + z**2)
-    theta = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
-    phi = np.arctan2(y, x)  # the azimuth angle in radian angles
+    phi = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
+    theta = np.arctan2(y, x)  # the azimuth angle in radian angles
 
-    return r, theta, phi
+    return r, phi, theta
+
+
+def spherical_to_cartesian(r, phi, theta):
+    """Convert Spherical coordinates to 3D Cartesian coordinates.
+
+    Parameters
+    ----------
+    r : numpy.ndarray
+        Radial distance.
+
+    phi : numpy.ndarray
+        Angle (radians) with respect to the polar axis. Also known
+        as polar angle.
+
+    theta : numpy.ndarray
+        Angle (radians) of rotation from the initial meridian plane.
+        Also known as azimuthal angle.
+
+    Returns
+    -------
+    numpy.ndarray, numpy.ndarray, numpy.ndarray
+        Cartesian coordinates.
+    """
+    s = np.sin(phi)
+    x = r * s * np.cos(theta)
+    y = r * s * np.sin(theta)
+    z = r * np.cos(phi)
+    return x, y, z
 
 
 def merge(
@@ -237,16 +289,17 @@ def merge(
        does not attempt to create a manifold mesh and will include
        internal surfaces when two meshes overlap.
 
+    Parameters
+    ----------
     datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`
+        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
 
     main_has_priority : bool, default: True
-        When this parameter is ``True`` and ``merge_points=True``,
-        the arrays of the merging grids will be overwritten
-        by the original main mesh.
+        When this parameter is ``True`` and ``merge_points=True``, the arrays
+        of the merging grids will be overwritten by the original main mesh.
 
     progress_bar : bool, default: False
         Display a progress bar to indicate progress.
@@ -262,10 +315,10 @@ def merge(
     --------
     Merge two polydata datasets.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere(center=(0, 0, 1))
-    >>> cube = pyvista.Cube()
-    >>> mesh = pyvista.merge([cube, sphere])
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere(center=(0, 0, 1))
+    >>> cube = pv.Cube()
+    >>> mesh = pv.merge([cube, sphere])
     >>> mesh.plot()
 
     """
@@ -336,12 +389,12 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     Create a Perlin noise function with an amplitude of 0.1, frequency
     for all axes of 1, and a phase of 0 for all axes.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
 
     Sample Perlin noise over a structured grid and plot it.
 
-    >>> grid = pyvista.sample_function(noise, [0, 5, 0, 5, 0, 5])
+    >>> grid = pv.sample_function(noise, [0, 5, 0, 5, 0, 5])
     >>> grid.plot()
 
     """
@@ -434,9 +487,9 @@ def sample_function(
     --------
     Sample Perlin noise over a structured grid in 3D.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-    >>> grid = pyvista.sample_function(
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
     >>> grid.plot(
@@ -445,8 +498,8 @@ def sample_function(
 
     Sample Perlin noise in 2D and plot it.
 
-    >>> noise = pyvista.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
-    >>> surf = pyvista.sample_function(noise, dim=(200, 200, 1))
+    >>> noise = pv.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
+    >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
     See :ref:`perlin_noise_2d_example` for a full example using this function.

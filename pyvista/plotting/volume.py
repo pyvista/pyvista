@@ -19,7 +19,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         super().__init__()
 
     @property
-    def mapper(self) -> _BaseMapper:
+    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
         """Return or set the mapper of the volume.
 
         Examples
@@ -37,11 +37,11 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetMapper()
 
     @mapper.setter
-    def mapper(self, obj):
+    def mapper(self, obj):  # numpydoc ignore=GL08
         return self.SetMapper(obj)
 
     @property
-    def prop(self):
+    def prop(self):  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -60,5 +60,5 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):
+    def prop(self, obj: Property):  # numpydoc ignore=GL08
         self.SetProperty(obj)

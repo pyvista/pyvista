@@ -26,7 +26,9 @@ def _get_sg_image_scraper():
     return Scraper()
 
 
-def html_rst(figure_list, sources_dir, fig_titles='', srcsetpaths=None):
+def html_rst(
+    figure_list, sources_dir, fig_titles='', srcsetpaths=None
+):  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st
 
@@ -63,6 +65,10 @@ class Scraper:
     Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
 
     """
+
+    def __repr__(self):
+        """Return a stable representation of the class instance."""
+        return f"<{type(self).__name__} object>"
 
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.

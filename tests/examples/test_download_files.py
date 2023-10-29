@@ -14,11 +14,13 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
+skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
 def test_download_single_sphere_animation():
@@ -203,6 +205,7 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
+@skip_9_1_0
 def test_download_can_crushed_hdf():
     path = examples.download_can_crushed_hdf(load=False)
     assert os.path.isfile(path)
@@ -256,6 +259,11 @@ def test_download_cad_model():
 
 def test_download_frog():
     data = examples.download_frog()
+    assert data.n_cells
+
+
+def test_download_frog_tissue():
+    data = examples.download_frog_tissue()
     assert data.n_cells
 
 
@@ -460,7 +468,7 @@ def test_download_lidar():
     assert data.n_cells
 
 
-def test_pine_roots():
+def test_download_pine_roots():
     data = examples.download_pine_roots()
     assert data.n_points
 
@@ -527,7 +535,7 @@ def test_download_electronics_cooling():
     assert isinstance(air, pv.UnstructuredGrid)
 
 
-def test_angular_sector():
+def test_download_angular_sector():
     filename = examples.download_angular_sector(load=False)
     assert os.path.isfile(filename)
 
@@ -535,7 +543,7 @@ def test_angular_sector():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_mount_damavand():
+def test_download_mount_damavand():
     filename = examples.download_mount_damavand(load=False)
     assert os.path.isfile(filename)
 
@@ -553,7 +561,7 @@ def test_download_cubemap_space_16k():
     assert isinstance(dataset, pv.Texture)
 
 
-def test_particles_lethe():
+def test_download_particles_lethe():
     filename = examples.download_particles_lethe(load=False)
     assert os.path.isfile(filename)
 
@@ -561,12 +569,12 @@ def test_particles_lethe():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_cubemap_park():
+def test_download_cubemap_park():
     dataset = examples.download_cubemap_park()
     assert isinstance(dataset, pv.Texture)
 
 
-def test_gif_simple():
+def test_download_gif_simple():
     filename = examples.download_gif_simple(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('gif')
@@ -576,7 +584,7 @@ def test_gif_simple():
     assert 'frame0' in dataset.point_data
 
 
-def test_black_vase():
+def test_download_black_vase():
     filename = examples.download_black_vase(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -586,7 +594,7 @@ def test_black_vase():
     assert dataset.n_points > 1_000_000
 
 
-def test_ivan_angel():
+def test_download_ivan_angel():
     filename = examples.download_ivan_angel(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -596,7 +604,7 @@ def test_ivan_angel():
     assert dataset.n_points > 1_000_000
 
 
-def test_bird_bath():
+def test_download_bird_bath():
     filename = examples.download_bird_bath(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -606,7 +614,7 @@ def test_bird_bath():
     assert dataset.n_points > 1_000_000
 
 
-def test_owl():
+def test_download_owl():
     filename = examples.download_owl(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -616,7 +624,7 @@ def test_owl():
     assert dataset.n_points > 1_000_000
 
 
-def test_plastic_vase():
+def test_download_plastic_vase():
     filename = examples.download_plastic_vase(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -626,7 +634,7 @@ def test_plastic_vase():
     assert dataset.n_points > 1_000_000
 
 
-def test_sea_vase():
+def test_download_sea_vase():
     filename = examples.download_sea_vase(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -694,7 +702,7 @@ def test_download_dolfin():
 
 def test_download_meshio_xdmf():
     dataset = examples.download_meshio_xdmf()
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert isinstance(dataset, pv.MultiBlock)
 
 
 def test_download_damavand_volcano():
@@ -795,13 +803,15 @@ def test_download_action_figure():
 
 
 def test_download_mars_jpg():
-    filename = examples.download_mars_jpg()
-    assert os.path.isfile(filename)
+    with pytest.warns(PyVistaDeprecationWarning):
+        filename = examples.download_mars_jpg()
+        assert os.path.isfile(filename)
 
 
 def test_download_stars_jpg():
-    filename = examples.download_stars_jpg()
-    assert os.path.isfile(filename)
+    with pytest.warns(PyVistaDeprecationWarning):
+        filename = examples.download_stars_jpg()
+        assert os.path.isfile(filename)
 
 
 def test_download_notch_stress():
@@ -851,6 +861,7 @@ def test_download_dual_sphere_animation():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+@skip_9_1_0
 def test_download_cgns_structured():
     filename = examples.download_cgns_structured(load=False)
     assert os.path.isfile(filename)
@@ -867,6 +878,7 @@ def test_download_tecplot_ascii():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+@skip_9_1_0
 def test_download_cgns_multi():
     filename = examples.download_cgns_multi(load=False)
     assert os.path.isfile(filename)
@@ -904,6 +916,10 @@ def test_download_gltf_damaged_helmet():
     pl.import_gltf(filename)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info > (9, 1),
+    reason="Skip until glTF extension KHR_texture_transform is supported.",
+)
 def test_download_gltf_sheen_chair():
     filename = examples.gltf.download_sheen_chair()
     assert os.path.isfile(filename)
@@ -925,6 +941,7 @@ def test_download_gltf_avocado():
     pl.import_gltf(filename)
 
 
+@skip_9_1_0
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
     assert os.path.isfile(filename)
@@ -935,6 +952,7 @@ def test_download_cloud_dark_matter():
     assert dataset.n_points == 32314
 
 
+@skip_9_1_0
 def test_download_cloud_dark_matter_dense():
     filename = examples.download_cloud_dark_matter_dense(load=False)
     assert os.path.isfile(filename)
@@ -955,7 +973,7 @@ def test_download_stars_cloud_hyg():
     assert dataset.n_points == 107857
 
 
-def test_cad_model_case():
+def test_download_cad_model_case():
     filename = examples.download_cad_model_case(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vtp')
@@ -975,7 +993,7 @@ def test_download_aero_bracket():
     assert len(dataset.point_data.keys()) == 3
 
 
-def test_coil_magnetic_field():
+def test_download_coil_magnetic_field():
     filename = examples.download_coil_magnetic_field(load=False)
     assert os.path.isfile(filename)
     assert filename.endswith('vti')

@@ -1,7 +1,6 @@
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import vuetify
-from vtkmodules.vtkFiltersSources import vtkConeSource
 
 import pyvista as pv
 from pyvista.trame.ui import plotter_ui
@@ -23,7 +22,7 @@ ctrl.on_server_ready.add(ctrl.view_update)
 # Plotting
 # -----------------------------------------------------------------------------
 
-source = vtkConeSource()
+source = pv.ConeSource()
 
 pl = pv.Plotter()
 pl.add_mesh(source, color='seagreen')
@@ -36,7 +35,7 @@ pl.add_mesh(source, color='seagreen')
 
 @state.change("resolution")
 def update_contour(resolution, **kwargs):
-    source.SetResolution(int(resolution))
+    source.resolution = int(resolution)
     ctrl.view_update()
 
 

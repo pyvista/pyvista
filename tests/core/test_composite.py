@@ -6,20 +6,10 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
+import pyvista as pv
 from pyvista import ImageData, MultiBlock, PolyData, RectilinearGrid, StructuredGrid, examples as ex
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
-
-
-@pytest.fixture()
-def vtk_multi():
-    return vtk.vtkMultiBlockDataSet()
-
-
-@pytest.fixture()
-def pyvista_multi():
-    return pyvista.MultiBlock
 
 
 def multi_from_datasets(*datasets):
@@ -101,10 +91,10 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
         assert isinstance(multi[i], type(dataset))
     assert multi.bounds is not None
     # Now overwrite a block
-    multi[4] = pyvista.Sphere()
+    multi[4] = pv.Sphere()
     assert isinstance(multi[4], PolyData)
     multi[4] = vtk.vtkUnstructuredGrid()
-    assert isinstance(multi[4], pyvista.UnstructuredGrid)
+    assert isinstance(multi[4], pv.UnstructuredGrid)
 
     with pytest.raises(ValueError, match="Cannot nest a composite dataset in itself."):
         multi.append(multi)
@@ -138,7 +128,7 @@ def test_multi_block_set_get_ers():
     assert isinstance(multi['rect'], RectilinearGrid)
     assert isinstance(multi.get('uni'), ImageData)
     assert multi.get('no key') is None
-    assert multi.get('no key', default=pyvista.Sphere()) == pyvista.Sphere()
+    assert multi.get('no key', default=pv.Sphere()) == pv.Sphere()
     # Test the del operator
     del multi[0]
     assert multi.n_blocks == 5
@@ -155,13 +145,13 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 3
     assert all([k is None for k in multi.keys()])
 
-    multi["new key"] = pyvista.Sphere()
+    multi["new key"] = pv.Sphere()
     assert multi.n_blocks == 4
-    assert multi[3] == pyvista.Sphere()
+    assert multi[3] == pv.Sphere()
 
-    multi["new key"] = pyvista.Cube()
+    multi["new key"] = pv.Cube()
     assert multi.n_blocks == 4
-    assert multi[3] == pyvista.Cube()
+    assert multi[3] == pv.Cube()
 
     with pytest.raises(KeyError):
         _ = multi.get_index_by_name('foo')
@@ -179,16 +169,16 @@ def test_multi_block_set_get_ers():
 
 
 def test_replace():
-    spheres = {f"{i}": pyvista.Sphere(phi_resolution=i + 3) for i in range(10)}
+    spheres = {f"{i}": pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
-    cube = pyvista.Cube()
+    cube = pv.Cube()
     multi.replace(3, cube)
     assert multi.get_block_name(3) == "3"
     assert multi[3] is cube
 
 
 def test_pop():
-    spheres = {f"{i}": pyvista.Sphere(phi_resolution=i + 3) for i in range(10)}
+    spheres = {f"{i}": pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
     assert multi.pop() == spheres["9"]
     assert spheres["9"] not in multi
@@ -211,49 +201,49 @@ def test_del_slice(sphere):
 def test_slicing_multiple_in_setitem(sphere):
     # equal length
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
-    multi[1:3] = [pyvista.Cube(), pyvista.Cube()]
-    assert multi[1] == pyvista.Cube()
-    assert multi[2] == pyvista.Cube()
-    assert multi.count(pyvista.Cube()) == 2
+    multi[1:3] = [pv.Cube(), pv.Cube()]
+    assert multi[1] == pv.Cube()
+    assert multi[2] == pv.Cube()
+    assert multi.count(pv.Cube()) == 2
     assert len(multi) == 10
 
     # len(slice) < len(data)
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
-    multi[1:3] = [pyvista.Cube(), pyvista.Cube(), pyvista.Cube()]
-    assert multi[1] == pyvista.Cube()
-    assert multi[2] == pyvista.Cube()
-    assert multi[3] == pyvista.Cube()
-    assert multi.count(pyvista.Cube()) == 3
+    multi[1:3] = [pv.Cube(), pv.Cube(), pv.Cube()]
+    assert multi[1] == pv.Cube()
+    assert multi[2] == pv.Cube()
+    assert multi[3] == pv.Cube()
+    assert multi.count(pv.Cube()) == 3
     assert len(multi) == 11
 
     # len(slice) > len(data)
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
-    multi[1:3] = [pyvista.Cube()]
-    assert multi[1] == pyvista.Cube()
-    assert multi.count(pyvista.Cube()) == 1
+    multi[1:3] = [pv.Cube()]
+    assert multi[1] == pv.Cube()
+    assert multi.count(pv.Cube()) == 1
     assert len(multi) == 9
 
 
 def test_reverse(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(3)})
-    multi.append(pyvista.Cube(), "cube")
+    multi.append(pv.Cube(), "cube")
     multi.reverse()
-    assert multi[0] == pyvista.Cube()
+    assert multi[0] == pv.Cube()
     assert np.array_equal(multi.keys(), ["cube", "2", "1", "0"])
 
 
 def test_insert(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(3)})
-    cube = pyvista.Cube()
+    cube = pv.Cube()
     multi.insert(0, cube)
     assert len(multi) == 4
     assert multi[0] is cube
 
     # test with negative index and name
-    multi.insert(-1, pyvista.ImageData(), name="uni")
+    multi.insert(-1, pv.ImageData(), name="uni")
     assert len(multi) == 5
     # inserted before last element
-    assert isinstance(multi[-2], pyvista.ImageData)  # inserted before last element
+    assert isinstance(multi[-2], pv.ImageData)  # inserted before last element
     assert multi.get_block_name(-2) == "uni"
 
 
@@ -334,9 +324,9 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
     assert multi is not other
     assert multi == other
 
-    assert pyvista.MultiBlock() == pyvista.MultiBlock()
+    assert pv.MultiBlock() == pv.MultiBlock()
 
-    other[0] = pyvista.Sphere()
+    other[0] = pv.Sphere()
     assert multi != other
 
     other = multi.copy()
@@ -344,12 +334,12 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
     assert multi != other
 
     other = multi.copy()
-    other.append(pyvista.Sphere())
+    other.append(pv.Sphere())
     assert multi != other
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
+@pytest.mark.parametrize('extension', pv.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
     extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, tetbeam
@@ -364,7 +354,7 @@ def test_multi_block_io(
     multi.save(filename, binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
-    foo = pyvista.read(filename)
+    foo = pv.read(filename)
     assert foo.n_blocks == multi.n_blocks
 
 
@@ -386,7 +376,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform,
     assert foo.n_blocks == multi.n_blocks
     for block in foo:
         assert block.array_names == array_names
-    foo = pyvista.read(filename)
+    foo = pv.read(filename)
     assert foo.n_blocks == multi.n_blocks
     for block in foo:
         assert block.array_names == array_names
@@ -394,9 +384,9 @@ def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform,
 
 def test_invalid_arg():
     with pytest.raises(TypeError):
-        pyvista.MultiBlock(np.empty(10))
+        pv.MultiBlock(np.empty(10))
     with pytest.raises(ValueError):
-        pyvista.MultiBlock(np.empty(10), np.empty(10))
+        pv.MultiBlock(np.empty(10), np.empty(10))
 
 
 def test_multi_io_erros(tmpdir):
@@ -435,7 +425,7 @@ def test_combine_filter(ant, sphere, uniform, airplane, tetbeam):
     assert multi.n_blocks == 4
     # Now apply the append filter to combine a plethora of data blocks
     geom = multi.combine()
-    assert isinstance(geom, pyvista.UnstructuredGrid)
+    assert isinstance(geom, pv.UnstructuredGrid)
 
 
 def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):
@@ -446,14 +436,14 @@ def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):
     assert id(multi[0]) != id(multi_copy[0])
     assert id(multi[-1]) != id(multi_copy[-1])
     for i in range(multi_copy.n_blocks):
-        assert pyvista.is_pyvista_dataset(multi_copy.GetBlock(i))
+        assert pv.is_pyvista_dataset(multi_copy.GetBlock(i))
     # Now check shallow
     multi_copy = multi.copy(deep=False)
     assert multi.n_blocks == 5 == multi_copy.n_blocks
     assert id(multi[0]) == id(multi_copy[0])
     assert id(multi[-1]) == id(multi_copy[-1])
     for i in range(multi_copy.n_blocks):
-        assert pyvista.is_pyvista_dataset(multi_copy.GetBlock(i))
+        assert pv.is_pyvista_dataset(multi_copy.GetBlock(i))
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -509,16 +499,16 @@ def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
 
 def test_slice_negatives(ant, sphere, uniform, airplane, tetbeam):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
-    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
+    test_multi = pv.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
     assert multi[::-1] == test_multi
 
-    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-2:]})
+    test_multi = pv.MultiBlock({key: multi[key] for key in multi.keys()[-2:]})
     assert multi[-2:] == test_multi
 
-    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[:-1]})
+    test_multi = pv.MultiBlock({key: multi[key] for key in multi.keys()[:-1]})
     assert multi[:-1] == test_multi
 
-    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-1:-4:-2]})
+    test_multi = pv.MultiBlock({key: multi[key] for key in multi.keys()[-1:-4:-2]})
     assert multi[-1:-4:-2] == test_multi
 
 
@@ -542,8 +532,8 @@ def test_multi_block_save_lines(tmpdir):
     z = radius * np.cos(yr)
     xyz = np.stack((x, y, z), axis=1)
 
-    poly = pyvista.lines_from_points(xyz, close=False)
-    blocks = pyvista.MultiBlock()
+    poly = pv.lines_from_points(xyz, close=False)
+    blocks = pv.MultiBlock()
     for _ in range(2):
         blocks.append(poly)
 
@@ -553,15 +543,15 @@ def test_multi_block_save_lines(tmpdir):
     poly.save(line_filename)
     blocks.save(block_filename)
 
-    poly_load = pyvista.read(line_filename)
+    poly_load = pv.read(line_filename)
     assert np.allclose(poly_load.points, poly.points)
 
-    blocks_load = pyvista.read(block_filename)
+    blocks_load = pv.read(block_filename)
     assert np.allclose(blocks_load[0].points, blocks[0].points)
 
 
 def test_multi_block_data_range():
-    volume = pyvista.Wavelet()
+    volume = pv.Wavelet()
     a = volume.slice_along_axis(5, 'x')
     with pytest.raises(KeyError):
         a.get_data_range('foo')
@@ -570,7 +560,7 @@ def test_multi_block_data_range():
     assert ma is not None
     # Test on a nested MultiBlock
     b = volume.slice_along_axis(5, 'y')
-    slices = pyvista.MultiBlock([a, b])
+    slices = pv.MultiBlock([a, b])
     with pytest.raises(KeyError):
         slices.get_data_range('foo')
     mi, ma = slices.get_data_range(volume.active_scalars_name)
@@ -581,8 +571,8 @@ def test_multi_block_data_range():
 def test_multiblock_ref():
     # can't use fixtures here as we need to remove all references for
     # garbage collection
-    sphere = pyvista.Sphere()
-    cube = pyvista.Cube()
+    sphere = pv.Sphere()
+    cube = pv.Cube()
 
     block = MultiBlock([sphere, cube])
     block[0]["a_new_var"] = np.zeros(block[0].n_points)
@@ -746,18 +736,18 @@ def test_set_active_scalars_mixed(multiblock_poly):
 
 
 def test_to_polydata(multiblock_all):
-    if pyvista.vtk_version_info >= (9, 1, 0):
-        multiblock_all.append(pyvista.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    if pv.vtk_version_info >= (9, 1, 0):
+        multiblock_all.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
     assert not multiblock_all.is_all_polydata
 
     dataset_a = multiblock_all.as_polydata_blocks()
-    if pyvista.vtk_version_info >= (9, 1, 0):
+    if pv.vtk_version_info >= (9, 1, 0):
         assert dataset_a[-1].n_points == 1
     assert not multiblock_all.is_all_polydata
     assert dataset_a.is_all_polydata
 
     # verify nested works
-    nested_mblock = pyvista.MultiBlock([multiblock_all, multiblock_all])
+    nested_mblock = pv.MultiBlock([multiblock_all, multiblock_all])
     assert not nested_mblock.is_all_polydata
     dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
@@ -776,7 +766,7 @@ def test_compute_normals(multiblock_poly):
         assert 'pyvistaOriginalPointIds' in block.point_data
 
     # test non-poly raises
-    multiblock_poly.append(pyvista.UnstructuredGrid())
+    multiblock_poly.append(pv.UnstructuredGrid())
     with pytest.raises(RuntimeError, match='This multiblock contains non-PolyData'):
         multiblock_poly._compute_normals()
 

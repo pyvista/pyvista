@@ -53,11 +53,11 @@ class CompositeFilters:
         --------
         Combine blocks within a multiblock without merging points.
 
-        >>> import pyvista
-        >>> block = pyvista.MultiBlock(
+        >>> import pyvista as pv
+        >>> block = pv.MultiBlock(
         ...     [
-        ...         pyvista.Cube(clean=False),
-        ...         pyvista.Cube(center=(1, 0, 0), clean=False),
+        ...         pv.Cube(clean=False),
+        ...         pv.Cube(center=(1, 0, 0), clean=False),
         ...     ]
         ... )
         >>> merged = block.combine()
@@ -106,6 +106,8 @@ class CompositeFilters:
     cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
 
     point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
+
+    sample = DataSetFilters.sample
 
     triangulate = DataSetFilters.triangulate
 

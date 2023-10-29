@@ -31,14 +31,15 @@ pyvista.
 """
 
 from enum import Enum
+from itertools import chain
 import json
 import os
+import pathlib
 from typing import Callable, List, Optional, Union
 import warnings
 
 import pyvista
 from pyvista.core._typing_core import Number
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
 
 from ._typing import ColorLike
@@ -68,6 +69,11 @@ def load_theme(filename):
     ----------
     filename : str
         Theme file. Must be json.
+
+    Returns
+    -------
+    pyvista.Theme
+        The loaded theme.
 
     Examples
     --------
@@ -129,7 +135,18 @@ def set_plot_theme(theme):
         )
 
 
-class _ThemeConfig:
+# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
+class _ForceSlots(type):
+    """Metaclass to force classes and subclasses to have __slots__."""
+
+    @classmethod
+    def __prepare__(metaclass, name, bases, **kwargs):
+        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
+        super_prepared['__slots__'] = tuple()
+        return super_prepared
+
+
+class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -157,7 +174,7 @@ class _ThemeConfig:
         """
         # remove the first underscore in each entry
         dict_ = {}
-        for key in self.__slots__:
+        for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
@@ -170,7 +187,7 @@ class _ThemeConfig:
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other.__slots__:
+        for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -195,6 +212,12 @@ class _ThemeConfig:
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+    @classmethod
+    def _all__slots__(cls):
+        """Get all slots including parent classes."""
+        mro = cls.mro()
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
@@ -236,7 +259,7 @@ class _LightingConfig(_ThemeConfig):
         self._emissive = False
 
     @property
-    def interpolation(self) -> InterpolationType:
+    def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
         """Return or set the default interpolation type.
 
         See :class:`pyvista.plotting.opts.InterpolationType`.
@@ -262,11 +285,13 @@ class _LightingConfig(_ThemeConfig):
         return InterpolationType.from_any(self._interpolation)
 
     @interpolation.setter
-    def interpolation(self, interpolation: Union[str, int, InterpolationType]):
+    def interpolation(
+        self, interpolation: Union[str, int, InterpolationType]
+    ):  # numpydoc ignore=GL08
         self._interpolation = InterpolationType.from_any(interpolation).value
 
     @property
-    def metallic(self) -> float:
+    def metallic(self) -> float:  # numpydoc ignore=RT01
         """Return or set the metallic value.
 
         This requires that the interpolation be set to ``'Physically based
@@ -286,12 +311,12 @@ class _LightingConfig(_ThemeConfig):
         return self._metallic
 
     @metallic.setter
-    def metallic(self, metallic: float):
+    def metallic(self, metallic: float):  # numpydoc ignore=GL08
         _check_range(metallic, (0, 1), 'metallic')
         self._metallic = metallic
 
     @property
-    def roughness(self) -> float:
+    def roughness(self) -> float:  # numpydoc ignore=RT01
         """Return or set the roughness value.
 
         This value has to be between 0 (glossy) and 1 (rough). A glossy
@@ -312,12 +337,12 @@ class _LightingConfig(_ThemeConfig):
         return self._roughness
 
     @roughness.setter
-    def roughness(self, roughness: float):
+    def roughness(self, roughness: float):  # numpydoc ignore=GL08
         _check_range(roughness, (0, 1), 'roughness')
         self._roughness = roughness
 
     @property
-    def ambient(self) -> float:
+    def ambient(self) -> float:  # numpydoc ignore=RT01
         """Return or set the ambient value.
 
         When lighting is enabled, this is the amount of light in the range of 0
@@ -337,12 +362,12 @@ class _LightingConfig(_ThemeConfig):
         return self._ambient
 
     @ambient.setter
-    def ambient(self, ambient: float):
+    def ambient(self, ambient: float):  # numpydoc ignore=GL08
         _check_range(ambient, (0, 1), 'ambient')
         self._ambient = ambient
 
     @property
-    def diffuse(self) -> float:
+    def diffuse(self) -> float:  # numpydoc ignore=RT01
         """Return or set the diffuse value.
 
         This is the scattering of light by reflection or
@@ -363,12 +388,12 @@ class _LightingConfig(_ThemeConfig):
         return self._diffuse
 
     @diffuse.setter
-    def diffuse(self, diffuse: float):
+    def diffuse(self, diffuse: float):  # numpydoc ignore=GL08
         _check_range(diffuse, (0, 1), 'diffuse')
         self._diffuse = diffuse
 
     @property
-    def specular(self) -> float:
+    def specular(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular value.
 
         Specular lighting simulates the bright spot of a light that appears
@@ -387,12 +412,12 @@ class _LightingConfig(_ThemeConfig):
         return self._specular
 
     @specular.setter
-    def specular(self, specular: float):
+    def specular(self, specular: float):  # numpydoc ignore=GL08
         _check_range(specular, (0, 1), 'specular')
         self._specular = specular
 
     @property
-    def specular_power(self) -> float:
+    def specular_power(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular power value.
 
         Must be between 0.0 and 128.0.
@@ -410,12 +435,12 @@ class _LightingConfig(_ThemeConfig):
         return self._specular_power
 
     @specular_power.setter
-    def specular_power(self, specular_power: float):
+    def specular_power(self, specular_power: float):  # numpydoc ignore=GL08
         _check_range(specular_power, (0, 128), 'specular_power')
         self._specular_power = specular_power
 
     @property
-    def emissive(self) -> bool:
+    def emissive(self) -> bool:  # numpydoc ignore=RT01
         """Return or set if emissive is used with point Gaussian style.
 
         Examples
@@ -431,7 +456,7 @@ class _LightingConfig(_ThemeConfig):
         return self._emissive
 
     @emissive.setter
-    def emissive(self, emissive: bool):
+    def emissive(self, emissive: bool):  # numpydoc ignore=GL08
         self._emissive = bool(emissive)
 
 
@@ -457,7 +482,7 @@ class _DepthPeelingConfig(_ThemeConfig):
         self._enabled = False
 
     @property
-    def number_of_peels(self) -> int:
+    def number_of_peels(self) -> int:  # numpydoc ignore=RT01
         """Return or set the number of peels in depth peeling.
 
         Examples
@@ -469,11 +494,11 @@ class _DepthPeelingConfig(_ThemeConfig):
         return self._number_of_peels
 
     @number_of_peels.setter
-    def number_of_peels(self, number_of_peels: int):
+    def number_of_peels(self, number_of_peels: int):  # numpydoc ignore=GL08
         self._number_of_peels = int(number_of_peels)
 
     @property
-    def occlusion_ratio(self) -> float:
+    def occlusion_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the occlusion ratio in depth peeling.
 
         Examples
@@ -485,11 +510,11 @@ class _DepthPeelingConfig(_ThemeConfig):
         return self._occlusion_ratio
 
     @occlusion_ratio.setter
-    def occlusion_ratio(self, occlusion_ratio: float):
+    def occlusion_ratio(self, occlusion_ratio: float):  # numpydoc ignore=GL08
         self._occlusion_ratio = float(occlusion_ratio)
 
     @property
-    def enabled(self) -> bool:
+    def enabled(self) -> bool:  # numpydoc ignore=RT01
         """Return or set if depth peeling is enabled.
 
         Examples
@@ -501,7 +526,7 @@ class _DepthPeelingConfig(_ThemeConfig):
         return self._enabled
 
     @enabled.setter
-    def enabled(self, enabled: bool):
+    def enabled(self, enabled: bool):  # numpydoc ignore=GL08
         self._enabled = bool(enabled)
 
     def __repr__(self):
@@ -543,16 +568,16 @@ class _SilhouetteConfig(_ThemeConfig):
         self._enabled = False
 
     @property
-    def enabled(self) -> bool:
+    def enabled(self) -> bool:  # numpydoc ignore=RT01
         """Return or set whether silhouette is on or off."""
         return self._enabled
 
     @enabled.setter
-    def enabled(self, enabled: bool):
+    def enabled(self, enabled: bool):  # numpydoc ignore=GL08
         self._enabled = bool(enabled)
 
     @property
-    def color(self) -> Color:
+    def color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the silhouette color.
 
         Examples
@@ -564,11 +589,11 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._color = Color(color)
 
     @property
-    def line_width(self) -> float:
+    def line_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the silhouette line width.
 
         Examples
@@ -580,11 +605,11 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._line_width
 
     @line_width.setter
-    def line_width(self, line_width: float):
+    def line_width(self, line_width: float):  # numpydoc ignore=GL08
         self._line_width = float(line_width)
 
     @property
-    def opacity(self) -> float:
+    def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the silhouette opacity.
 
         Examples
@@ -596,12 +621,12 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._opacity
 
     @opacity.setter
-    def opacity(self, opacity: float):
+    def opacity(self, opacity: float):  # numpydoc ignore=GL08
         _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
 
     @property
-    def feature_angle(self) -> Union[float, None]:
+    def feature_angle(self) -> Union[float, None]:  # numpydoc ignore=RT01
         """Return or set the silhouette feature angle.
 
         Examples
@@ -613,11 +638,11 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._feature_angle
 
     @feature_angle.setter
-    def feature_angle(self, feature_angle: Union[float, None]):
+    def feature_angle(self, feature_angle: Union[float, None]):  # numpydoc ignore=GL08
         self._feature_angle = feature_angle
 
     @property
-    def decimate(self) -> float:
+    def decimate(self) -> float:  # numpydoc ignore=RT01
         """Return or set the amount to decimate the silhouette.
 
         Parameter must be between 0 and 1.
@@ -631,7 +656,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._decimate
 
     @decimate.setter
-    def decimate(self, decimate: float):
+    def decimate(self, decimate: float):  # numpydoc ignore=GL08
         if decimate is None:
             self._decimate = None
         else:
@@ -674,7 +699,7 @@ class _ColorbarConfig(_ThemeConfig):
         self._position_y = None
 
     @property
-    def width(self) -> float:
+    def width(self) -> float:  # numpydoc ignore=RT01
         """Return or set colorbar width.
 
         Examples
@@ -686,11 +711,11 @@ class _ColorbarConfig(_ThemeConfig):
         return self._width
 
     @width.setter
-    def width(self, width: float):
+    def width(self, width: float):  # numpydoc ignore=GL08
         self._width = float(width)
 
     @property
-    def height(self) -> float:
+    def height(self) -> float:  # numpydoc ignore=RT01
         """Return or set colorbar height.
 
         Examples
@@ -702,11 +727,11 @@ class _ColorbarConfig(_ThemeConfig):
         return self._height
 
     @height.setter
-    def height(self, height: float):
+    def height(self, height: float):  # numpydoc ignore=GL08
         self._height = float(height)
 
     @property
-    def position_x(self) -> float:
+    def position_x(self) -> float:  # numpydoc ignore=RT01
         """Return or set colorbar x position.
 
         Examples
@@ -718,11 +743,11 @@ class _ColorbarConfig(_ThemeConfig):
         return self._position_x
 
     @position_x.setter
-    def position_x(self, position_x: float):
+    def position_x(self, position_x: float):  # numpydoc ignore=GL08
         self._position_x = float(position_x)
 
     @property
-    def position_y(self) -> float:
+    def position_y(self) -> float:  # numpydoc ignore=RT01
         """Return or set colorbar y position.
 
         Examples
@@ -734,7 +759,7 @@ class _ColorbarConfig(_ThemeConfig):
         return self._position_y
 
     @position_y.setter
-    def position_y(self, position_y: float):
+    def position_y(self, position_y: float):  # numpydoc ignore=GL08
         self._position_y = float(position_y)
 
     def __repr__(self):
@@ -797,7 +822,7 @@ class _AxesConfig(_ThemeConfig):
         return '\n'.join(txt)
 
     @property
-    def x_color(self) -> Color:
+    def x_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set x axis color.
 
         Examples
@@ -808,11 +833,11 @@ class _AxesConfig(_ThemeConfig):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: ColorLike):
+    def x_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._x_color = Color(color)
 
     @property
-    def y_color(self) -> Color:
+    def y_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set y axis color.
 
         Examples
@@ -823,11 +848,11 @@ class _AxesConfig(_ThemeConfig):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: ColorLike):
+    def y_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._y_color = Color(color)
 
     @property
-    def z_color(self) -> Color:
+    def z_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set z axis color.
 
         Examples
@@ -838,11 +863,11 @@ class _AxesConfig(_ThemeConfig):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: ColorLike):
+    def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._z_color = Color(color)
 
     @property
-    def box(self) -> bool:
+    def box(self) -> bool:  # numpydoc ignore=RT01
         """Use the ``vtk.vtkCubeAxesActor`` instead of the default ``vtk.vtkAxesActor``.
 
         Examples
@@ -854,11 +879,11 @@ class _AxesConfig(_ThemeConfig):
         return self._box
 
     @box.setter
-    def box(self, box: bool):
+    def box(self, box: bool):  # numpydoc ignore=GL08
         self._box = bool(box)
 
     @property
-    def show(self) -> bool:
+    def show(self) -> bool:  # numpydoc ignore=RT01
         """Show or hide the axes actor.
 
         Examples
@@ -872,7 +897,7 @@ class _AxesConfig(_ThemeConfig):
         return self._show
 
     @show.setter
-    def show(self, show: bool):
+    def show(self, show: bool):  # numpydoc ignore=GL08
         self._show = bool(show)
 
 
@@ -936,7 +961,7 @@ class _Font(_ThemeConfig):
         return '\n'.join(txt)
 
     @property
-    def family(self) -> str:
+    def family(self) -> str:  # numpydoc ignore=RT01
         """Return or set the font family.
 
         Must be one of the following:
@@ -956,12 +981,12 @@ class _Font(_ThemeConfig):
         return self._family
 
     @family.setter
-    def family(self, family: str):
+    def family(self, family: str):  # numpydoc ignore=GL08
         parse_font_family(family)  # check valid font
         self._family = family
 
     @property
-    def size(self) -> int:
+    def size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the font size.
 
         Examples
@@ -973,11 +998,11 @@ class _Font(_ThemeConfig):
         return self._size
 
     @size.setter
-    def size(self, size: int):
+    def size(self, size: int):  # numpydoc ignore=GL08
         self._size = int(size)
 
     @property
-    def title_size(self) -> int:
+    def title_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the title size.
 
         If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for titles.
@@ -990,14 +1015,14 @@ class _Font(_ThemeConfig):
         return self._title_size
 
     @title_size.setter
-    def title_size(self, title_size: int):
+    def title_size(self, title_size: int):  # numpydoc ignore=GL08
         if title_size is None:
             self._title_size = None
         else:
             self._title_size = int(title_size)
 
     @property
-    def label_size(self) -> int:
+    def label_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the label size.
 
         If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for labels.
@@ -1010,14 +1035,14 @@ class _Font(_ThemeConfig):
         return self._label_size
 
     @label_size.setter
-    def label_size(self, label_size: int):
+    def label_size(self, label_size: int):  # numpydoc ignore=GL08
         if label_size is None:
             self._label_size = None
         else:
             self._label_size = int(label_size)
 
     @property
-    def color(self) -> Color:
+    def color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the font color.
 
         Examples
@@ -1028,11 +1053,11 @@ class _Font(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._color = Color(color)
 
     @property
-    def fmt(self) -> str:
+    def fmt(self) -> str:  # numpydoc ignore=RT01
         """Return or set the string formatter used to format numerical data.
 
         Examples
@@ -1046,7 +1071,7 @@ class _Font(_ThemeConfig):
         return self._fmt
 
     @fmt.setter
-    def fmt(self, fmt: str):
+    def fmt(self, fmt: str):  # numpydoc ignore=GL08
         self._fmt = fmt
 
 
@@ -1078,16 +1103,16 @@ class _SliderStyleConfig(_ThemeConfig):
         self._cap_width = None
 
     @property
-    def name(self) -> str:
+    def name(self) -> str:  # numpydoc ignore=RT01
         """Return the name of the slider style configuration."""
         return self._name
 
     @name.setter
-    def name(self, name: str):
+    def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
     @property
-    def cap_width(self) -> float:
+    def cap_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cap width.
 
         Examples
@@ -1099,11 +1124,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._cap_width
 
     @cap_width.setter
-    def cap_width(self, cap_width: float):
+    def cap_width(self, cap_width: float):  # numpydoc ignore=GL08
         self._cap_width = float(cap_width)
 
     @property
-    def cap_length(self) -> float:
+    def cap_length(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cap length.
 
         Examples
@@ -1115,11 +1140,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._cap_length
 
     @cap_length.setter
-    def cap_length(self, cap_length: float):
+    def cap_length(self, cap_length: float):  # numpydoc ignore=GL08
         self._cap_length = float(cap_length)
 
     @property
-    def cap_opacity(self) -> float:
+    def cap_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cap opacity.
 
         Examples
@@ -1131,12 +1156,12 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._cap_opacity
 
     @cap_opacity.setter
-    def cap_opacity(self, cap_opacity: float):
+    def cap_opacity(self, cap_opacity: float):  # numpydoc ignore=GL08
         _check_range(cap_opacity, (0, 1), 'cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
-    def tube_color(self) -> Color:
+    def tube_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the tube color.
 
         Examples
@@ -1147,11 +1172,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_color
 
     @tube_color.setter
-    def tube_color(self, tube_color: ColorLike):
+    def tube_color(self, tube_color: ColorLike):  # numpydoc ignore=GL08
         self._tube_color = Color(tube_color)
 
     @property
-    def tube_width(self) -> float:
+    def tube_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the tube_width.
 
         Examples
@@ -1163,11 +1188,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_width
 
     @tube_width.setter
-    def tube_width(self, tube_width: float):
+    def tube_width(self, tube_width: float):  # numpydoc ignore=GL08
         self._tube_width = float(tube_width)
 
     @property
-    def slider_color(self) -> Color:
+    def slider_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the slider color.
 
         Examples
@@ -1179,11 +1204,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_color
 
     @slider_color.setter
-    def slider_color(self, slider_color: ColorLike):
+    def slider_color(self, slider_color: ColorLike):  # numpydoc ignore=GL08
         self._slider_color = Color(slider_color)
 
     @property
-    def slider_width(self) -> float:
+    def slider_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the slider width.
 
         Examples
@@ -1195,11 +1220,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_width
 
     @slider_width.setter
-    def slider_width(self, slider_width: float):
+    def slider_width(self, slider_width: float):  # numpydoc ignore=GL08
         self._slider_width = float(slider_width)
 
     @property
-    def slider_length(self) -> float:
+    def slider_length(self) -> float:  # numpydoc ignore=RT01
         """Return or set the slider_length.
 
         Examples
@@ -1211,7 +1236,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_length
 
     @slider_length.setter
-    def slider_length(self, slider_length: float):
+    def slider_length(self, slider_length: float):  # numpydoc ignore=GL08
         self._slider_length = float(slider_length)
 
     def __repr__(self):
@@ -1290,23 +1315,23 @@ class _SliderConfig(_ThemeConfig):
         self._modern.cap_width = 0.02
 
     @property
-    def classic(self) -> _SliderStyleConfig:
+    def classic(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
         """Return the Classic slider configuration."""
         return self._classic
 
     @classic.setter
-    def classic(self, config: _SliderStyleConfig):
+    def classic(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderStyleConfig):
             raise TypeError('Configuration type must be `_SliderStyleConfig`')
         self._classic = config
 
     @property
-    def modern(self) -> _SliderStyleConfig:
+    def modern(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
         """Return the Modern slider configuration."""
         return self._modern
 
     @modern.setter
-    def modern(self, config: _SliderStyleConfig):
+    def modern(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderStyleConfig):
             raise TypeError('Configuration type must be `_SliderStyleConfig`')
         self._modern = config
@@ -1367,7 +1392,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = 'trame'
 
     @property
-    def interactive_ratio(self) -> Number:
+    def interactive_ratio(self) -> Number:  # numpydoc ignore=RT01
         """Return or set the interactive ratio for PyVista Trame views.
 
         Examples
@@ -1379,11 +1404,11 @@ class _TrameConfig(_ThemeConfig):
         return self._interactive_ratio
 
     @interactive_ratio.setter
-    def interactive_ratio(self, interactive_ratio: Number):
+    def interactive_ratio(self, interactive_ratio: Number):  # numpydoc ignore=GL08
         self._interactive_ratio = interactive_ratio
 
     @property
-    def still_ratio(self) -> Number:
+    def still_ratio(self) -> Number:  # numpydoc ignore=RT01
         """Return or set the still ratio for PyVista Trame views.
 
         Examples
@@ -1395,11 +1420,11 @@ class _TrameConfig(_ThemeConfig):
         return self._still_ratio
 
     @still_ratio.setter
-    def still_ratio(self, still_ratio: Number):
+    def still_ratio(self, still_ratio: Number):  # numpydoc ignore=GL08
         self._still_ratio = still_ratio
 
     @property
-    def jupyter_server_name(self):
+    def jupyter_server_name(self):  # numpydoc ignore=RT01
         """Return or set the trame server name PyVista uses in Jupyter.
 
         This defaults to ``'pyvista-jupyter'``.
@@ -1413,38 +1438,38 @@ class _TrameConfig(_ThemeConfig):
         return self._jupyter_server_name
 
     @jupyter_server_name.setter
-    def jupyter_server_name(self, name: str):
+    def jupyter_server_name(self, name: str):  # numpydoc ignore=GL08
         self._jupyter_server_name = name
 
     @property
-    def jupyter_server_port(self) -> int:
+    def jupyter_server_port(self) -> int:  # numpydoc ignore=RT01
         """Return or set the port for the Trame Jupyter server."""
         return self._jupyter_server_port
 
     @jupyter_server_port.setter
-    def jupyter_server_port(self, port: int):
+    def jupyter_server_port(self, port: int):  # numpydoc ignore=GL08
         self._jupyter_server_port = port
 
     @property
-    def server_proxy_enabled(self) -> bool:
+    def server_proxy_enabled(self) -> bool:  # numpydoc ignore=RT01
         """Return or set if use of relative URLs is enabled for the Jupyter interface."""
         return self._server_proxy_enabled
 
     @server_proxy_enabled.setter
-    def server_proxy_enabled(self, enabled: bool):
+    def server_proxy_enabled(self, enabled: bool):  # numpydoc ignore=GL08
         self._server_proxy_enabled = bool(enabled)
 
     @property
-    def server_proxy_prefix(self):
+    def server_proxy_prefix(self):  # numpydoc ignore=RT01
         """Return or set URL prefix when using relative URLs with the Jupyter interface."""
         return self._server_proxy_prefix
 
     @server_proxy_prefix.setter
-    def server_proxy_prefix(self, prefix: str):
+    def server_proxy_prefix(self, prefix: str):  # numpydoc ignore=GL08
         self._server_proxy_prefix = prefix
 
     @property
-    def default_mode(self):
+    def default_mode(self):  # numpydoc ignore=RT01
         """Return or set the default mode of the Trame backend.
 
         * ``'trame'``: Uses a view that can switch between client and server
@@ -1457,7 +1482,7 @@ class _TrameConfig(_ThemeConfig):
         return self._default_mode
 
     @default_mode.setter
-    def default_mode(self, mode: str):
+    def default_mode(self, mode: str):  # numpydoc ignore=GL08
         self._default_mode = mode
 
 
@@ -1535,9 +1560,12 @@ class Theme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_allow_empty_mesh',
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
+        '_logo_file',
     ]
 
     def __init__(self):
@@ -1592,12 +1620,14 @@ class Theme(_ThemeConfig):
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
         self._before_close_callback = None
+        self._allow_empty_mesh = False
 
         # Grab system flag for anti-aliasing
+        # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 4))
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
         except ValueError:  # pragma: no cover
-            self._multi_samples = 4
+            self._multi_samples = 8
 
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
@@ -1613,15 +1643,17 @@ class Theme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._anti_aliasing = None
+        self._anti_aliasing = 'msaa'
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
 
+        self._logo_file = None
+
     @property
-    def hidden_line_removal(self) -> bool:
+    def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
         """Return or set hidden line removal.
 
         Wireframe geometry will be drawn using hidden line removal if
@@ -1644,11 +1676,11 @@ class Theme(_ThemeConfig):
         return self._hidden_line_removal
 
     @hidden_line_removal.setter
-    def hidden_line_removal(self, value: bool):
+    def hidden_line_removal(self, value: bool):  # numpydoc ignore=GL08
         self._hidden_line_removal = value
 
     @property
-    def interpolate_before_map(self) -> bool:
+    def interpolate_before_map(self) -> bool:  # numpydoc ignore=RT01
         """Return or set whether to interpolate colors before mapping.
 
         If the ``interpolate_before_map`` is turned off, the color
@@ -1702,11 +1734,11 @@ class Theme(_ThemeConfig):
         return self._interpolate_before_map
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):
+    def interpolate_before_map(self, value: bool):  # numpydoc ignore=GL08
         self._interpolate_before_map = value
 
     @property
-    def opacity(self) -> float:
+    def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity.
 
         Examples
@@ -1718,12 +1750,12 @@ class Theme(_ThemeConfig):
         return self._opacity
 
     @opacity.setter
-    def opacity(self, opacity: float):
+    def opacity(self, opacity: float):  # numpydoc ignore=GL08
         _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
 
     @property
-    def above_range_color(self) -> Color:
+    def above_range_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default above range color.
 
         Examples
@@ -1739,11 +1771,11 @@ class Theme(_ThemeConfig):
         return self._above_range_color
 
     @above_range_color.setter
-    def above_range_color(self, value: ColorLike):
+    def above_range_color(self, value: ColorLike):  # numpydoc ignore=GL08
         self._above_range_color = Color(value)
 
     @property
-    def below_range_color(self) -> Color:
+    def below_range_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default below range color.
 
         Examples
@@ -1759,11 +1791,11 @@ class Theme(_ThemeConfig):
         return self._below_range_color
 
     @below_range_color.setter
-    def below_range_color(self, value: ColorLike):
+    def below_range_color(self, value: ColorLike):  # numpydoc ignore=GL08
         self._below_range_color = Color(value)
 
     @property
-    def return_cpos(self) -> bool:
+    def return_cpos(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default behavior of returning the camera position.
 
         Examples
@@ -1776,11 +1808,11 @@ class Theme(_ThemeConfig):
         return self._return_cpos
 
     @return_cpos.setter
-    def return_cpos(self, value: bool):
+    def return_cpos(self, value: bool):  # numpydoc ignore=GL08
         self._return_cpos = value
 
     @property
-    def background(self) -> Color:
+    def background(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default background color of pyvista plots.
 
         Examples
@@ -1793,44 +1825,37 @@ class Theme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: ColorLike):
+    def background(self, new_background: ColorLike):  # numpydoc ignore=GL08
         self._background = Color(new_background)
 
     @property
-    def jupyter_backend(self) -> str:
+    def jupyter_backend(self) -> str:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
         Jupyter backend to use when plotting.  Must be one of the
         following:
 
-        * ``'ipyvtklink'`` : DEPRECATED. Render remotely and stream the
-          resulting VTK images back to the client.  Supports all VTK
-          methods, but suffers from lag due to remote rendering.
-          Requires that a virtual framebuffer be set up when displaying
-          on a headless server.  Must have ``ipyvtklink`` installed.
-
-        * ``'panel'`` : Convert the VTK render window to a vtkjs
-          object and then visualize that within jupyterlab. Supports
-          most VTK objects.  Requires that a virtual framebuffer be
-          set up when displaying on a headless server.  Must have
-          ``panel`` installed.
-
-        * ``'ipygany'`` : Convert all the meshes into ``ipygany``
-          meshes and streams those to be rendered on the client side.
-          Supports VTK meshes, but few others.  Aside from ``none``,
-          this is the only method that does not require a virtual
-          framebuffer.  Must have ``ipygany`` installed.
-
-        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
-          meshes and streams those to be rendered on the client side.
-          Aside from ``ipygany``, this is the only method that does
-          not require a virtual framebuffer.  Must have ``pythreejs``
-          installed.
-
         * ``'static'`` : Display a single static image within the
-          JupyterLab environment.  Still requires that a virtual
+          Jupyterlab environment.  Still requires that a virtual
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
+
+        * ``'client'`` : Export/serialize the scene graph to be rendered
+          with VTK.js client-side through ``trame``. Requires ``trame``
+          and ``jupyter-server-proxy`` to be installed.
+
+        * ``'server'``: Render remotely and stream the resulting VTK
+          images back to the client using ``trame``. This replaces the
+          ``'ipyvtklink'`` backend with better performance.
+          Supports the most VTK features, but suffers from minor lag due
+          to remote rendering. Requires that a virtual framebuffer be set
+          up when displaying on a headless server. Must have at least ``trame``
+          and ``jupyter-server-proxy`` installed for cloud/remote Jupyter
+          instances. This mode is also aliased by ``'trame'``.
+
+        * ``'trame'``: The full Trame-based backend that combines both
+          ``'server'`` and ``'client'`` into one backend. This requires a
+          virtual frame buffer.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
@@ -1839,23 +1864,6 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Enable the pythreejs backend.
-
-        >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
-
-        Enable the ipygany backend.
-
-        >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
-
-        Enable the panel backend.
-
-        >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
-
-        Enable the ipyvtklink backend (DEPRECATED).
-
-        >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
-
         Just show static images.
 
         >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
@@ -1869,24 +1877,24 @@ class Theme(_ThemeConfig):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: 'str'):
+    def jupyter_backend(self, backend: 'str'):  # numpydoc ignore=GL08
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
     @property
-    def trame(self) -> _TrameConfig:
+    def trame(self) -> _TrameConfig:  # numpydoc ignore=RT01
         """Return or set the default trame parameters."""
         return self._trame
 
     @trame.setter
-    def trame(self, config: _TrameConfig):
+    def trame(self, config: _TrameConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _TrameConfig):
             raise TypeError('Configuration type must be `_TrameConfig`.')
         self._trame = config
 
     @property
-    def auto_close(self) -> bool:
+    def auto_close(self) -> bool:  # numpydoc ignore=RT01
         """Automatically close the figures when finished plotting.
 
         .. DANGER::
@@ -1901,11 +1909,11 @@ class Theme(_ThemeConfig):
         return self._auto_close
 
     @auto_close.setter
-    def auto_close(self, value: bool):
+    def auto_close(self, value: bool):  # numpydoc ignore=GL08
         self._auto_close = value
 
     @property
-    def full_screen(self) -> bool:
+    def full_screen(self) -> bool:  # numpydoc ignore=RT01
         """Return if figures are shown in full screen.
 
         Examples
@@ -1918,11 +1926,11 @@ class Theme(_ThemeConfig):
         return self._full_screen
 
     @full_screen.setter
-    def full_screen(self, value: bool):
+    def full_screen(self, value: bool):  # numpydoc ignore=GL08
         self._full_screen = value
 
     @property
-    def enable_camera_orientation_widget(self) -> bool:
+    def enable_camera_orientation_widget(self) -> bool:  # numpydoc ignore=RT01
         """Enable the camera orientation widget in all plotters.
 
         Examples
@@ -1936,11 +1944,11 @@ class Theme(_ThemeConfig):
         return self._enable_camera_orientation_widget
 
     @enable_camera_orientation_widget.setter
-    def enable_camera_orientation_widget(self, value: bool):
+    def enable_camera_orientation_widget(self, value: bool):  # numpydoc ignore=GL08
         self._enable_camera_orientation_widget = value
 
     @property
-    def camera(self):
+    def camera(self):  # numpydoc ignore=RT01
         """Return or set the default camera position.
 
         Examples
@@ -1965,7 +1973,7 @@ class Theme(_ThemeConfig):
         return self._camera
 
     @camera.setter
-    def camera(self, camera):
+    def camera(self, camera):  # numpydoc ignore=GL08
         if not isinstance(camera, dict):
             raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera).__name__}.')
 
@@ -1977,7 +1985,7 @@ class Theme(_ThemeConfig):
         self._camera = camera
 
     @property
-    def notebook(self) -> Union[bool, None]:
+    def notebook(self) -> Union[bool, None]:  # numpydoc ignore=RT01
         """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
@@ -1995,11 +2003,11 @@ class Theme(_ThemeConfig):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value: Union[bool, None]):
+    def notebook(self, value: Union[bool, None]):  # numpydoc ignore=GL08
         self._notebook = value
 
     @property
-    def window_size(self) -> List[int]:
+    def window_size(self) -> List[int]:  # numpydoc ignore=RT01
         """Return or set the default render window size.
 
         Examples
@@ -2013,7 +2021,7 @@ class Theme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: List[int]):
+    def window_size(self, window_size: List[int]):  # numpydoc ignore=GL08
         if len(window_size) != 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``.')
 
@@ -2024,19 +2032,19 @@ class Theme(_ThemeConfig):
         self._window_size = window_size
 
     @property
-    def image_scale(self) -> int:
+    def image_scale(self) -> int:  # numpydoc ignore=RT01
         """Return or set the default image scale factor."""
         return self._image_scale
 
     @image_scale.setter
-    def image_scale(self, value: int):
+    def image_scale(self, value: int):  # numpydoc ignore=GL08
         value = int(value)
         if value < 1:
             raise ValueError('Scale factor must be a positive integer.')
         self._image_scale = int(value)
 
     @property
-    def font(self) -> _Font:
+    def font(self) -> _Font:  # numpydoc ignore=RT01
         """Return or set the default font size, family, and/or color.
 
         Examples
@@ -2071,13 +2079,13 @@ class Theme(_ThemeConfig):
         return self._font
 
     @font.setter
-    def font(self, config: _Font):
+    def font(self, config: _Font):  # numpydoc ignore=GL08
         if not isinstance(config, _Font):
             raise TypeError('Configuration type must be `_Font`.')
         self._font = config
 
     @property
-    def cmap(self):
+    def cmap(self):  # numpydoc ignore=RT01
         """Return or set the default colormap of pyvista.
 
         See available Matplotlib colormaps.  Only applicable for when
@@ -2099,14 +2107,14 @@ class Theme(_ThemeConfig):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, cmap):
+    def cmap(self, cmap):  # numpydoc ignore=GL08
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
             raise ValueError(f'Invalid color map {cmap}')
         self._cmap = cmap
 
     @property
-    def color(self) -> Color:
+    def color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default color of meshes in pyvista.
 
         Used for meshes without ``scalars``.
@@ -2130,11 +2138,11 @@ class Theme(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._color = Color(color)
 
     @property
-    def color_cycler(self):
+    def color_cycler(self):  # numpydoc ignore=RT01
         """Return or set the default color cycler used to color meshes.
 
         This color cycler is iterated over by each renderer to sequentially
@@ -2168,11 +2176,11 @@ class Theme(_ThemeConfig):
         return self._color_cycler
 
     @color_cycler.setter
-    def color_cycler(self, color_cycler):
+    def color_cycler(self, color_cycler):  # numpydoc ignore=GL08
         self._color_cycler = get_cycler(color_cycler)
 
     @property
-    def nan_color(self) -> Color:
+    def nan_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default NaN color.
 
         This color is used to plot all NaN values.
@@ -2186,11 +2194,11 @@ class Theme(_ThemeConfig):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: ColorLike):
+    def nan_color(self, nan_color: ColorLike):  # numpydoc ignore=GL08
         self._nan_color = Color(nan_color)
 
     @property
-    def edge_color(self) -> Color:
+    def edge_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default edge color.
 
         Examples
@@ -2204,11 +2212,11 @@ class Theme(_ThemeConfig):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: ColorLike):
+    def edge_color(self, edge_color: ColorLike):  # numpydoc ignore=GL08
         self._edge_color = Color(edge_color)
 
     @property
-    def line_width(self) -> float:
+    def line_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default line width.
 
         Examples
@@ -2220,11 +2228,11 @@ class Theme(_ThemeConfig):
         return self._line_width
 
     @line_width.setter
-    def line_width(self, line_width: float):
+    def line_width(self, line_width: float):  # numpydoc ignore=GL08
         self._line_width = float(line_width)
 
     @property
-    def point_size(self) -> float:
+    def point_size(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default point size.
 
         Examples
@@ -2236,11 +2244,11 @@ class Theme(_ThemeConfig):
         return self._point_size
 
     @point_size.setter
-    def point_size(self, point_size: float):
+    def point_size(self, point_size: float):  # numpydoc ignore=GL08
         self._point_size = float(point_size)
 
     @property
-    def outline_color(self) -> Color:
+    def outline_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default outline color.
 
         Examples
@@ -2252,11 +2260,11 @@ class Theme(_ThemeConfig):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: ColorLike):
+    def outline_color(self, outline_color: ColorLike):  # numpydoc ignore=GL08
         self._outline_color = Color(outline_color)
 
     @property
-    def floor_color(self) -> Color:
+    def floor_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default floor color.
 
         Examples
@@ -2268,11 +2276,11 @@ class Theme(_ThemeConfig):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: ColorLike):
+    def floor_color(self, floor_color: ColorLike):  # numpydoc ignore=GL08
         self._floor_color = Color(floor_color)
 
     @property
-    def colorbar_orientation(self) -> str:
+    def colorbar_orientation(self) -> str:  # numpydoc ignore=RT01
         """Return or set the default colorbar orientation.
 
         Must be either ``'vertical'`` or ``'horizontal'``.
@@ -2286,13 +2294,13 @@ class Theme(_ThemeConfig):
         return self._colorbar_orientation
 
     @colorbar_orientation.setter
-    def colorbar_orientation(self, colorbar_orientation: str):
+    def colorbar_orientation(self, colorbar_orientation: str):  # numpydoc ignore=GL08
         if colorbar_orientation not in ['vertical', 'horizontal']:
             raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
         self._colorbar_orientation = colorbar_orientation
 
     @property
-    def colorbar_horizontal(self) -> _ColorbarConfig:
+    def colorbar_horizontal(self) -> _ColorbarConfig:  # numpydoc ignore=RT01
         """Return or set the default parameters of a horizontal colorbar.
 
         Examples
@@ -2310,13 +2318,13 @@ class Theme(_ThemeConfig):
         return self._colorbar_horizontal
 
     @colorbar_horizontal.setter
-    def colorbar_horizontal(self, config: _ColorbarConfig):
+    def colorbar_horizontal(self, config: _ColorbarConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _ColorbarConfig):
             raise TypeError('Configuration type must be `_ColorbarConfig`.')
         self._colorbar_horizontal = config
 
     @property
-    def colorbar_vertical(self) -> _ColorbarConfig:
+    def colorbar_vertical(self) -> _ColorbarConfig:  # numpydoc ignore=RT01
         """Return or set the default parameters of a vertical colorbar.
 
         Examples
@@ -2335,13 +2343,13 @@ class Theme(_ThemeConfig):
         return self._colorbar_vertical
 
     @colorbar_vertical.setter
-    def colorbar_vertical(self, config: _ColorbarConfig):
+    def colorbar_vertical(self, config: _ColorbarConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _ColorbarConfig):
             raise TypeError('Configuration type must be `_ColorbarConfig`.')
         self._colorbar_vertical = config
 
     @property
-    def show_scalar_bar(self) -> bool:
+    def show_scalar_bar(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default color bar visibility.
 
         Examples
@@ -2355,11 +2363,11 @@ class Theme(_ThemeConfig):
         return self._show_scalar_bar
 
     @show_scalar_bar.setter
-    def show_scalar_bar(self, show_scalar_bar: bool):
+    def show_scalar_bar(self, show_scalar_bar: bool):  # numpydoc ignore=GL08
         self._show_scalar_bar = bool(show_scalar_bar)
 
     @property
-    def show_edges(self) -> bool:
+    def show_edges(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default edge visibility.
 
         Examples
@@ -2373,11 +2381,11 @@ class Theme(_ThemeConfig):
         return self._show_edges
 
     @show_edges.setter
-    def show_edges(self, show_edges: bool):
+    def show_edges(self, show_edges: bool):  # numpydoc ignore=GL08
         self._show_edges = bool(show_edges)
 
     @property
-    def show_vertices(self) -> bool:
+    def show_vertices(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default vertex visibility.
 
         Examples
@@ -2391,11 +2399,11 @@ class Theme(_ThemeConfig):
         return self._show_vertices
 
     @show_vertices.setter
-    def show_vertices(self, show_vertices: bool):
+    def show_vertices(self, show_vertices: bool):  # numpydoc ignore=GL08
         self._show_vertices = bool(show_vertices)
 
     @property
-    def lighting(self) -> bool:
+    def lighting(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``lighting``.
 
         Examples
@@ -2408,11 +2416,11 @@ class Theme(_ThemeConfig):
         return self._lighting
 
     @lighting.setter
-    def lighting(self, lighting: bool):
+    def lighting(self, lighting: bool):  # numpydoc ignore=GL08
         self._lighting = lighting
 
     @property
-    def interactive(self) -> bool:
+    def interactive(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``interactive`` parameter.
 
         Examples
@@ -2425,11 +2433,11 @@ class Theme(_ThemeConfig):
         return self._interactive
 
     @interactive.setter
-    def interactive(self, interactive: bool):
+    def interactive(self, interactive: bool):  # numpydoc ignore=GL08
         self._interactive = bool(interactive)
 
     @property
-    def render_points_as_spheres(self) -> bool:
+    def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``render_points_as_spheres`` parameter.
 
         Examples
@@ -2442,11 +2450,11 @@ class Theme(_ThemeConfig):
         return self._render_points_as_spheres
 
     @render_points_as_spheres.setter
-    def render_points_as_spheres(self, render_points_as_spheres: bool):
+    def render_points_as_spheres(self, render_points_as_spheres: bool):  # numpydoc ignore=GL08
         self._render_points_as_spheres = bool(render_points_as_spheres)
 
     @property
-    def render_lines_as_tubes(self) -> bool:
+    def render_lines_as_tubes(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``render_lines_as_tubes`` parameter.
 
         Examples
@@ -2459,11 +2467,11 @@ class Theme(_ThemeConfig):
         return self._render_lines_as_tubes
 
     @render_lines_as_tubes.setter
-    def render_lines_as_tubes(self, render_lines_as_tubes: bool):
+    def render_lines_as_tubes(self, render_lines_as_tubes: bool):  # numpydoc ignore=GL08
         self._render_lines_as_tubes = bool(render_lines_as_tubes)
 
     @property
-    def transparent_background(self) -> bool:
+    def transparent_background(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``transparent_background`` parameter.
 
         Examples
@@ -2477,11 +2485,11 @@ class Theme(_ThemeConfig):
         return self._transparent_background
 
     @transparent_background.setter
-    def transparent_background(self, transparent_background: bool):
+    def transparent_background(self, transparent_background: bool):  # numpydoc ignore=GL08
         self._transparent_background = transparent_background
 
     @property
-    def title(self) -> str:
+    def title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the default ``title`` parameter.
 
         This is the VTK render window title.
@@ -2497,11 +2505,11 @@ class Theme(_ThemeConfig):
         return self._title
 
     @title.setter
-    def title(self, title: str):
+    def title(self, title: str):  # numpydoc ignore=GL08
         self._title = title
 
     @property
-    def anti_aliasing(self) -> Optional[str]:
+    def anti_aliasing(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Enable or disable anti-aliasing.
 
         Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
@@ -2527,7 +2535,7 @@ class Theme(_ThemeConfig):
         return self._anti_aliasing
 
     @anti_aliasing.setter
-    def anti_aliasing(self, anti_aliasing: Union[str, None]):
+    def anti_aliasing(self, anti_aliasing: Union[str, None]):  # numpydoc ignore=GL08
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
                 raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
@@ -2537,7 +2545,7 @@ class Theme(_ThemeConfig):
         self._anti_aliasing = anti_aliasing
 
     @property
-    def multi_samples(self) -> int:
+    def multi_samples(self) -> int:  # numpydoc ignore=RT01
         """Return or set the default ``multi_samples`` parameter.
 
         Set the number of multisamples to used with hardware anti_aliasing. This
@@ -2556,11 +2564,11 @@ class Theme(_ThemeConfig):
         return self._multi_samples
 
     @multi_samples.setter
-    def multi_samples(self, multi_samples: int):
+    def multi_samples(self, multi_samples: int):  # numpydoc ignore=GL08
         self._multi_samples = int(multi_samples)
 
     @property
-    def multi_rendering_splitting_position(self) -> float:
+    def multi_rendering_splitting_position(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default ``multi_rendering_splitting_position`` parameter.
 
         Examples
@@ -2575,11 +2583,13 @@ class Theme(_ThemeConfig):
         return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
-    def multi_rendering_splitting_position(self, multi_rendering_splitting_position: float):
+    def multi_rendering_splitting_position(
+        self, multi_rendering_splitting_position: float
+    ):  # numpydoc ignore=GL08
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
     @property
-    def volume_mapper(self) -> str:
+    def volume_mapper(self) -> str:  # numpydoc ignore=RT01
         """Return or set the default ``volume_mapper`` parameter.
 
         Must be one of the following strings, which are mapped to the
@@ -2601,7 +2611,7 @@ class Theme(_ThemeConfig):
         return self._volume_mapper
 
     @volume_mapper.setter
-    def volume_mapper(self, mapper: str):
+    def volume_mapper(self, mapper: str):  # numpydoc ignore=GL08
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
             raise ValueError(
@@ -2612,7 +2622,7 @@ class Theme(_ThemeConfig):
         self._volume_mapper = mapper
 
     @property
-    def smooth_shading(self) -> bool:
+    def smooth_shading(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``smooth_shading`` parameter.
 
         Examples
@@ -2626,11 +2636,11 @@ class Theme(_ThemeConfig):
         return self._smooth_shading
 
     @smooth_shading.setter
-    def smooth_shading(self, smooth_shading: bool):
+    def smooth_shading(self, smooth_shading: bool):  # numpydoc ignore=GL08
         self._smooth_shading = bool(smooth_shading)
 
     @property
-    def depth_peeling(self) -> _DepthPeelingConfig:
+    def depth_peeling(self) -> _DepthPeelingConfig:  # numpydoc ignore=RT01
         """Return or set the default depth peeling parameters.
 
         Examples
@@ -2647,13 +2657,13 @@ class Theme(_ThemeConfig):
         return self._depth_peeling
 
     @depth_peeling.setter
-    def depth_peeling(self, config: _DepthPeelingConfig):
+    def depth_peeling(self, config: _DepthPeelingConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _DepthPeelingConfig):
             raise TypeError('Configuration type must be `_DepthPeelingConfig`.')
         self._depth_peeling = config
 
     @property
-    def silhouette(self) -> _SilhouetteConfig:
+    def silhouette(self) -> _SilhouetteConfig:  # numpydoc ignore=RT01
         """Return or set the default ``silhouette`` configuration.
 
         Examples
@@ -2669,24 +2679,24 @@ class Theme(_ThemeConfig):
         return self._silhouette
 
     @silhouette.setter
-    def silhouette(self, config: _SilhouetteConfig):
+    def silhouette(self, config: _SilhouetteConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SilhouetteConfig):
             raise TypeError('Configuration type must be `_SilhouetteConfig`')
         self._silhouette = config
 
     @property
-    def slider_styles(self) -> _SliderConfig:
+    def slider_styles(self) -> _SliderConfig:  # numpydoc ignore=RT01
         """Return the default slider style configurations."""
         return self._slider_styles
 
     @slider_styles.setter
-    def slider_styles(self, config: _SliderConfig):
+    def slider_styles(self, config: _SliderConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderConfig):
             raise TypeError('Configuration type must be `_SliderConfig`.')
         self._slider_styles = config
 
     @property
-    def axes(self) -> _AxesConfig:
+    def axes(self) -> _AxesConfig:  # numpydoc ignore=RT01
         """Return or set the default ``axes`` configuration.
 
         Examples
@@ -2708,21 +2718,47 @@ class Theme(_ThemeConfig):
         return self._axes
 
     @axes.setter
-    def axes(self, config: _AxesConfig):
+    def axes(self, config: _AxesConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _AxesConfig):
             raise TypeError('Configuration type must be `_AxesConfig`.')
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:
+    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
-    def before_close_callback(self, value: Callable[['pyvista.Plotter'], None]):
+    def before_close_callback(
+        self, value: Callable[['pyvista.Plotter'], None]
+    ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
-    def restore_defaults(self):
+    @property
+    def allow_empty_mesh(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to allow plotting empty meshes.
+
+        Examples
+        --------
+        Enable plotting of empty meshes.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.allow_empty_mesh = True
+
+        Now add an empty mesh to a plotter
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.PolyData())
+        >>> pl.show()  # doctest: +SKIP
+
+        """
+        return self._allow_empty_mesh
+
+    @allow_empty_mesh.setter
+    def allow_empty_mesh(self, allow_empty_mesh: bool):  # numpydoc ignore=GL08
+        self._allow_empty_mesh = bool(allow_empty_mesh)
+
+    def restore_defaults(self):  # numpydoc ignore=GL08
         """Restore the theme defaults.
 
         Examples
@@ -2785,12 +2821,12 @@ class Theme(_ThemeConfig):
         return '\n'.join(txt)
 
     @property
-    def name(self) -> str:
+    def name(self) -> str:  # numpydoc ignore=RT01
         """Return or set the name of the theme."""
         return self._name
 
     @name.setter
-    def name(self, name: str):
+    def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
     def load_theme(self, theme):
@@ -2835,7 +2871,7 @@ class Theme(_ThemeConfig):
                 '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
             )
 
-        for attr_name in theme.__slots__:
+        for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
 
     def save(self, filename):
@@ -2866,7 +2902,7 @@ class Theme(_ThemeConfig):
             json.dump(data, f)
 
     @property
-    def split_sharp_edges(self) -> bool:
+    def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01
         """Set or return splitting sharp edges.
 
         See :ref:`shading_example` for an example showing split sharp edges.
@@ -2891,11 +2927,11 @@ class Theme(_ThemeConfig):
         return self._split_sharp_edges
 
     @split_sharp_edges.setter
-    def split_sharp_edges(self, value: bool):
+    def split_sharp_edges(self, value: bool):  # numpydoc ignore=GL08
         self._split_sharp_edges = value
 
     @property
-    def sharp_edges_feature_angle(self) -> float:
+    def sharp_edges_feature_angle(self) -> float:  # numpydoc ignore=RT01
         """Set or return the angle of the sharp edges feature angle.
 
         See :ref:`shading_example` for an example showing split sharp edges.
@@ -2913,36 +2949,57 @@ class Theme(_ThemeConfig):
         return self._sharp_edges_feature_angle
 
     @sharp_edges_feature_angle.setter
-    def sharp_edges_feature_angle(self, value: float):
+    def sharp_edges_feature_angle(self, value: float):  # numpydoc ignore=GL08
         self._sharp_edges_feature_angle = float(value)
 
     @property
-    def lighting_params(self) -> _LightingConfig:
+    def lighting_params(self) -> _LightingConfig:  # numpydoc ignore=RT01
         """Return or set the default lighting configuration."""
         return self._lighting_params
 
     @lighting_params.setter
-    def lighting_params(self, config: _LightingConfig):
+    def lighting_params(self, config: _LightingConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _LightingConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
 
+    @property
+    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
+        """Return or set the logo file.
 
-class DefaultTheme(Theme):
-    """Deprecated default theme.
+        .. note::
 
-    .. deprecated:: 0.40.0
-        Deprecated and renamed to ``Theme``. No longer the default.
+            :func:`pyvista.Plotter.add_logo_widget` will default to
+            PyVista's logo if this is unset.
 
-    """
+        Example
+        -------
+        Set the logo file to a custom logo.
 
-    def __init__(self):
-        """Initialize the theme."""
-        super().__init__()
-        warnings.warn(
-            '`DefaultTheme` has been deprecated and renamed `Theme`. Further, `DocumentTheme` is now the PyVista default theme.',
-            PyVistaDeprecationWarning,
-        )
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> logo_file = examples.download_file('vtk.png')
+        >>> pv.global_theme.logo_file = logo_file
+
+        Now the logo will be used by default for :func:`pyvista.Plotter.add_logo_widget`.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        return self._logo_file
+
+    @logo_file.setter
+    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
+        if logo_file is None:
+            path = None
+        else:
+            if not pathlib.Path(logo_file).exists():
+                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+            path = str(logo_file)
+        self._logo_file = path
 
 
 class DarkTheme(Theme):
@@ -3079,7 +3136,7 @@ class DocumentProTheme(DocumentTheme):
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
-        self.multi_samples = 2
+        self.multi_samples = 8
         self.depth_peeling.number_of_peels = 4
         self.depth_peeling.occlusion_ratio = 0.0
         self.depth_peeling.enabled = True

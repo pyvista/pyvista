@@ -14,7 +14,19 @@ from .observers import Observer
 
 
 def set_pickle_format(format: str):
-    """Set the format used to serialize :class:`pyvista.DataObject` when pickled."""
+    """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
+
+    Parameters
+    ----------
+    format : str
+        The format for serialization. Acceptable values are "xml" or "legacy".
+
+    Raises
+    ------
+    ValueError
+        If the provided format is not supported.
+
+    """
     supported = {'xml', 'legacy'}
     format = format.lower()
     if format not in supported:
@@ -36,6 +48,18 @@ def get_ext(filename):
 
     For files with the .gz suffix, the previous extension is returned as well.
     This is needed e.g. for the compressed NIFTI format (.nii.gz).
+
+    Parameters
+    ----------
+    filename : str
+        The filename from which to extract the extension.
+
+    Returns
+    -------
+    str
+        The extracted extension. For files with the .gz suffix, the previous
+        extension is returned as well.
+
     """
     base, ext = os.path.splitext(filename)
     ext = ext.lower()
@@ -46,7 +70,22 @@ def get_ext(filename):
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
-    """Set any vtk writer to write as binary or ascii."""
+    """Set any vtk writer to write as binary or ascii.
+
+    Parameters
+    ----------
+    vtk_writer : vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+        The vtk writer instance to be configured.
+    use_binary : bool, default: True
+        If ``True``, the writer is set to write files in binary format. If
+        ``False``, the writer is set to write files in ASCII format.
+
+    Returns
+    -------
+    vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+        The configured vtk writer instance.
+
+    """
     from vtkmodules.vtkIOGeometry import vtkSTLWriter
     from vtkmodules.vtkIOLegacy import vtkDataWriter
     from vtkmodules.vtkIOPLY import vtkPLYWriter
@@ -64,50 +103,8 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def read_legacy(filename, progress_bar=False):
-    """Use VTK's legacy reader to read a file.
-
-    .. deprecated:: 0.35.0
-       This function is deprecated. Use :func:`pyvista.read` instead.
-
-    This uses ``vtk.vtkDataSetReader`` to read the data.
-
-    Parameters
-    ----------
-    filename : str
-        The string path to the file to read.
-
-    progress_bar : bool, default: False
-        Optionally show a progress bar.
-
-    Returns
-    -------
-    pyvista.DataSet
-        Wrapped pyvista mesh.
-
-    Examples
-    --------
-    Load an example mesh using the legacy reader.
-
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
-
-    """
-    # Deprecated on v0.35.0, estimated removal on v0.40.0
-    warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
-    )
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    return read(filename, progress_bar=progress_bar)
-
-
-def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
+def read(filename, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
-
-    .. deprecated:: 0.35.0
-        Use of `attrs` is deprecated.
-        Use a reader class using :func:`pyvista.get_reader`
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
@@ -126,13 +123,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
-
-    attrs : dict, optional
-        Deprecated. Use a Reader class using :func:`pyvista.get_reader`.
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
 
     force_ext : str, optional
         If specified, the reader will be chosen by an extension which
@@ -154,18 +144,18 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     --------
     Load an example mesh.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = pyvista.read(examples.antfile)
+    >>> mesh = pv.read(examples.antfile)
     >>> mesh.plot(cpos='xz')
 
     Load a vtk file.
 
-    >>> mesh = pyvista.read('my_mesh.vtk')  # doctest:+SKIP
+    >>> mesh = pv.read('my_mesh.vtk')  # doctest:+SKIP
 
     Load a meshio file.
 
-    >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
+    >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
@@ -177,7 +167,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi.append(read(each, attrs=attrs, file_format=file_format), name)
+            multi.append(read(each, file_format=file_format), name)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
@@ -206,8 +196,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     else:
         observer = Observer()
         observer.observe(reader.reader)
-        if attrs is not None:
-            _apply_attrs_to_reader(reader, attrs)
         if progress_bar:
             reader.show_progress()
         mesh = reader.read()
@@ -246,7 +234,7 @@ def _apply_attrs_to_reader(reader, attrs):
             attr()
 
 
-def read_texture(filename, attrs=None, progress_bar=False):
+def read_texture(filename, progress_bar=False):
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -256,12 +244,6 @@ def read_texture(filename, attrs=None, progress_bar=False):
     ----------
     filename : str
         The path of the texture file to read.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
 
     progress_bar : bool, default: False
         Optionally show a progress bar.
@@ -276,11 +258,11 @@ def read_texture(filename, attrs=None, progress_bar=False):
     Read in an example jpg map file as a texture.
 
     >>> import os
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> os.path.basename(examples.mapfile)
     '2k_earth_daymap.jpg'
-    >>> texture = pyvista.read_texture(examples.mapfile)
+    >>> texture = pv.read_texture(examples.mapfile)
     >>> type(texture)
     <class 'pyvista.plotting.texture.Texture'>
 
@@ -289,7 +271,7 @@ def read_texture(filename, attrs=None, progress_bar=False):
     try:
         # initialize the reader using the extension to find it
 
-        image = read(filename, attrs=attrs, progress_bar=progress_bar)
+        image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")
         return pyvista.Texture(image)
@@ -390,65 +372,12 @@ def read_exodus(
     return wrap(reader.GetOutput())
 
 
-def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress_bar=False):
-    """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
-
-    .. deprecated:: 0.35.0
-        This function is deprecated and will be removed in a future version.
-        Use :class:`pyvista.MultiBlockPlot3DReader`.
-
-    Parameters
-    ----------
-    filename : str
-        The string filename to the data file to read.
-
-    q_filenames : str or sequence[str], default: ()
-        The string filename of the q-file, or iterable of such
-        filenames.
-
-    auto_detect : bool, default: True
-        When this option is turned on, the reader will try to figure
-        out the values of various options such as byte order, byte
-        count etc.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
-
-    progress_bar : bool, default: False
-        Optionally show a progress bar.
-
-    Returns
-    -------
-    pyvista.MultiBlock
-        Data read from the file.
-
-    """
-    # Deprecated on v0.35.0, estimated removal on v0.40.0
-    warnings.warn(
-        "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
-        PyVistaDeprecationWarning,
-    )
-
-    filename = _process_filename(filename)
-    reader = pyvista.MultiBlockPlot3DReader(filename)
-    reader.add_q_files(q_filenames)
-    reader.auto_detect_format = auto_detect
-    if attrs is not None:
-        _apply_attrs_to_reader(reader, attrs)
-    if progress_bar:
-        reader.show_progress()
-    return reader.read()
-
-
 def is_meshio_mesh(obj):
     """Test if passed object is instance of ``meshio.Mesh``.
 
     Parameters
     ----------
-    obj
+    obj : object
         Any object.
 
     Returns
@@ -466,7 +395,24 @@ def is_meshio_mesh(obj):
 
 
 def from_meshio(mesh):
-    """Convert a ``meshio`` mesh instance to a PyVista mesh."""
+    """Convert a ``meshio`` mesh instance to a PyVista mesh.
+
+    Parameters
+    ----------
+    mesh : meshio.Mesh
+        A mesh instance from the ``meshio`` library.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        A PyVista unstructured grid representation of the input ``meshio`` mesh.
+
+    Raises
+    ------
+    ImportError
+        If the appropriate version of ``meshio`` library is not found.
+
+    """
     try:  # meshio<5.0 compatibility
         from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
     except ImportError:  # pragma: no cover
@@ -513,7 +459,27 @@ def from_meshio(mesh):
 
 
 def read_meshio(filename, file_format=None):
-    """Read any mesh file using meshio."""
+    """Read any mesh file using meshio.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to read. It should include the file extension.
+    file_format : str, optional
+        The format of the file to read. If not provided, the file format will
+        be inferred from the file extension.
+
+    Returns
+    -------
+    pyvista.Dataset
+        The mesh read from the file.
+
+    Raises
+    ------
+    ImportError
+        If the meshio package is not installed.
+
+    """
     try:
         import meshio
     except ImportError:  # pragma: no cover
@@ -550,9 +516,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     --------
     Save a pyvista sphere to a Abaqus data file.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere()
-    >>> pyvista.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
+    >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
     try:

@@ -109,7 +109,7 @@ PyVista.
 .. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
-Share this project on Twitter: |tweet|
+Share this project on X: |tweet|
 
 
 PyVista is a NumFOCUS affiliated project
@@ -270,3 +270,21 @@ BibTex:
       title = {{PyVista}: {3D} plotting and mesh analysis through a streamlined interface for the {Visualization Toolkit} ({VTK})},
       journal = {Journal of Open Source Software}
     }
+
+Professional Support
+====================
+
+While PyVista is an Open Source project with a big community, you might be looking for professional support.
+This section aims to list companies with VTK/PyVista expertise who can help you with your software project.
+
++---------------+-----------------------------------------+
+| Company Name  | Kitware Inc.                            |
++---------------+-----------------------------------------+
+| Description   | Kitware is dedicated to build solutions |
+|               | for our customers based on our          |
+|               | well-established open source platforms. |
++---------------+-----------------------------------------+
+| Expertise     | CMake, VTK, PyVista, ParaView, Trame    |
++---------------+-----------------------------------------+
+| Contact       | https://www.kitware.com/contact/        |
++---------------+-----------------------------------------+

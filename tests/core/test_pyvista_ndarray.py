@@ -8,7 +8,7 @@ from pyvista import examples, pyvista_ndarray
 
 
 @pytest.fixture
-def pv_ndarray_1d():
+def pyvista_ndarray_1d():
     return pyvista_ndarray([1.0, 2.0, 3.0])
 
 
@@ -71,21 +71,21 @@ def test_slices_are_associated_single_index():
     assert points[1, 1].association == points.association
 
 
-def test_min(pv_ndarray_1d):
-    arr = np.array(pv_ndarray_1d)
-    assert pv_ndarray_1d.min() == arr.min()
+def test_min(pyvista_ndarray_1d):
+    arr = np.array(pyvista_ndarray_1d)
+    assert pyvista_ndarray_1d.min() == arr.min()
 
     # also ensure that methods return float-like values just like numpy
-    assert isinstance(pv_ndarray_1d.min(), type(arr.min()))
+    assert isinstance(pyvista_ndarray_1d.min(), type(arr.min()))
 
 
-def test_squeeze(pv_ndarray_1d):
-    reshaped_pvarr = pv_ndarray_1d.reshape((3, 1))
+def test_squeeze(pyvista_ndarray_1d):
+    reshaped_pvarr = pyvista_ndarray_1d.reshape((3, 1))
     assert np.array_equal(reshaped_pvarr.squeeze(), np.array(reshaped_pvarr.squeeze()))
 
 
-def test_tobytes(pv_ndarray_1d):
-    assert pv_ndarray_1d.tobytes() == np.array(pv_ndarray_1d).tobytes()
+def test_tobytes(pyvista_ndarray_1d):
+    assert pyvista_ndarray_1d.tobytes() == np.array(pyvista_ndarray_1d).tobytes()
 
 
 def test_add_1d():

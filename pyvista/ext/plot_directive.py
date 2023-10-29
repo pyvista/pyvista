@@ -11,8 +11,8 @@ The source code for the plot may be included in one of two ways:
 
     .. pyvista-plot::
 
-       >>> import pyvista
-       >>> sphere = pyvista.Sphere()
+       >>> import pyvista as pv
+       >>> sphere = pv.Sphere()
        >>> out = sphere.plot()
 
 2. **A path to a source file** as the argument to the directive::
@@ -38,8 +38,7 @@ The source code for the plot may be included in one of two ways:
    Animations will not be saved, only the last frame will be shown.
 
 
-Options
--------
+**Options**
 The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
@@ -70,8 +69,7 @@ directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
 
-Configuration options
----------------------
+**Configuration options**
 The plot directive has the following configuration options:
 
     plot_include_source : bool
@@ -221,10 +219,10 @@ def _split_code_at_show(text):
 
     Includes logic to deal with edge cases like:
 
-    >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+    >>> import pyvista as pv
+    >>> pv.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red', cpos='xy')
+    >>> pv.Sphere().plot(color='red', cpos='xy')
 
     """
     parts = []
@@ -298,7 +296,7 @@ class ImageFile:
         self.dirname = dirname
 
     @property
-    def filename(self):
+    def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
 

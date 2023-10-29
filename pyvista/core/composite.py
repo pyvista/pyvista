@@ -43,6 +43,14 @@ class MultiBlock(
        from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
 
+    Parameters
+    ----------
+    *args : dict, optional
+        Data object dictionary.
+
+    **kwargs : dict, optional
+        See :func:`pyvista.read` for additional options.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -144,13 +152,13 @@ class MultiBlock(
                 self.SetBlock(i, wrap(block))
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Find min/max for bounds across blocks.
 
         Returns
         -------
         tuple[float, float, float, float, float, float]
-            length 6 tuple of floats containing min/max along each axis
+            Length 6 tuple of floats containing min/max along each axis.
 
         Examples
         --------
@@ -184,8 +192,13 @@ class MultiBlock(
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def center(self) -> Any:
+    def center(self) -> Any:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
+
+        Returns
+        -------
+        Any
+            Center of the bounding box.
 
         Examples
         --------
@@ -204,8 +217,13 @@ class MultiBlock(
         return np.reshape(cast(list, self.bounds), (3, 2)).mean(axis=1)
 
     @property
-    def length(self) -> float:
+    def length(self) -> float:  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box.
+
+        Returns
+        -------
+        float
+            Length of the diagonal of the bounding box.
 
         Examples
         --------
@@ -223,8 +241,13 @@ class MultiBlock(
         return Box(self.bounds).length
 
     @property
-    def n_blocks(self) -> int:
+    def n_blocks(self) -> int:  # numpydoc ignore=RT01
         """Return the total number of blocks set.
+
+        Returns
+        -------
+        int
+            Total number of blocks set.
 
         Examples
         --------
@@ -242,13 +265,20 @@ class MultiBlock(
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n):
-        """Change the total number of blocks set."""
+    def n_blocks(self, n):  # numpydoc ignore=GL08
+        """Change the total number of blocks set.
+
+        Parameters
+        ----------
+        n : int
+            The total number of blocks set.
+
+        """
         self.SetNumberOfBlocks(n)
         self.Modified()
 
     @property
-    def volume(self) -> float:
+    def volume(self) -> float:  # numpydoc ignore=RT01
         """Return the total volume of all meshes in this dataset.
 
         Returns
@@ -338,7 +368,9 @@ class MultiBlock(
         raise KeyError(f'Block name ({name}) not found')
 
     @overload
-    def __getitem__(self, index: Union[int, str]) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105
+    def __getitem__(
+        self, index: Union[int, str]
+    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -609,13 +641,13 @@ class MultiBlock(
     @overload
     def __setitem__(
         self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
-    ):  # noqa: D105
+    ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
-    ):  # noqa: D105
+    ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
@@ -627,16 +659,16 @@ class MultiBlock(
 
         To set the name simultaneously, pass a string name as the 2nd index.
 
-        Example
-        -------
-        >>> import pyvista
-        >>> multi = pyvista.MultiBlock()
-        >>> multi.append(pyvista.PolyData())
-        >>> multi[0] = pyvista.UnstructuredGrid()
-        >>> multi.append(pyvista.PolyData(), 'poly')
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock()
+        >>> multi.append(pv.PolyData())
+        >>> multi[0] = pv.UnstructuredGrid()
+        >>> multi.append(pv.PolyData(), 'poly')
         >>> multi.keys()
         ['Block-00', 'poly']
-        >>> multi['bar'] = pyvista.PolyData()
+        >>> multi['bar'] = pv.PolyData()
         >>> multi.n_blocks
         3
 
@@ -948,7 +980,7 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    def copy_meta_from(self, ido, deep):
+    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
@@ -991,6 +1023,20 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         newobject.wrap_nested()
         return newobject
+
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+        """Shallow copy the given multiblock to this multiblock.
+
+        Parameters
+        ----------
+        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+            Data object to perform a shallow copy from.
+
+        """
+        if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+            self.CompositeShallowCopy(to_copy)
+        else:
+            self.ShallowCopy(to_copy)
 
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
@@ -1128,7 +1174,7 @@ class MultiBlock(
         return dataset
 
     @property
-    def is_all_polydata(self) -> bool:
+    def is_all_polydata(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also
@@ -1229,7 +1275,7 @@ class MultiBlock(
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(self):
-        """Check if there are any consistent active scalars."""
+        """Get if there are any consistent active scalars."""
         point_names = set()
         cell_names = set()
         for block in self:

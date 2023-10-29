@@ -31,8 +31,10 @@ from .mapper import (
 )
 from .picking import PickingHelper
 from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
-from .render_window_interactor import RenderWindowInteractor
+from .prop3d import Prop3D
+from .render_window_interactor import RenderWindowInteractor, Timer
 from .renderer import CameraPosition, Renderer, scale_point
+from .text import CornerAnnotation, Text, TextProperty
 from .texture import Texture, image_to_texture, numpy_to_texture
 from .themes import (
     DocumentTheme as _GlobalTheme,
@@ -55,10 +57,10 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper
 from .volume import Volume
 from .volume_property import VolumeProperty
-from .widgets import WidgetHelper
+from .widgets import AffineWidget3D, WidgetHelper
 
 
-class QtDeprecationError(Exception):
+class QtDeprecationError(Exception):  # numpydoc ignore=PR01
     """Deprecation Error for features that moved to `pyvistaqt`."""
 
     message = """`{}` has moved to pyvistaqt.
@@ -73,7 +75,7 @@ class QtDeprecationError(Exception):
         Exception.__init__(self, self.message.format(*[feature_name] * 4))
 
 
-class BackgroundPlotter:
+class BackgroundPlotter:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""
 
     def __init__(self, *args, **kwargs):
@@ -81,7 +83,7 @@ class BackgroundPlotter:
         raise QtDeprecationError('BackgroundPlotter')
 
 
-class QtInteractor:
+class QtInteractor:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""
 
     def __init__(self, *args, **kwargs):

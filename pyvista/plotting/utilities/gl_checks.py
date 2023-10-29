@@ -49,6 +49,13 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
 
 def uses_egl() -> bool:
-    """Check if VTK has been compiled with EGL support via OSMesa."""
+    """Check if VTK has been compiled with EGL support via OSMesa.
+
+    Returns
+    -------
+    bool
+        ``True`` if VTK has been compiled with EGL support via OSMesa,
+        otherwise ``False``.
+    """
     ren_win_str = str(type(_vtk.vtkRenderWindow()))
     return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str

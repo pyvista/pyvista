@@ -66,6 +66,7 @@ from vtkmodules.vtkCommonComputationalGeometry import (
 from vtkmodules.vtkCommonCore import (
     VTK_ARIAL,
     VTK_COURIER,
+    VTK_FONT_FILE,
     VTK_TIMES,
     VTK_UNSIGNED_CHAR,
     buffer_shared,
@@ -252,6 +253,11 @@ from vtkmodules.vtkFiltersExtraction import (
     vtkExtractSelection,
 )
 from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
+
+try:  # Introduced VTK v9.1.0
+    from vtkmodules.vtkFiltersGeneral import vtkRemovePolyData
+except ImportError:  # pragma: no cover
+    pass
 from vtkmodules.vtkFiltersGeneral import (
     vtkAxes,
     vtkBooleanOperationPolyDataFilter,
@@ -377,7 +383,11 @@ from vtkmodules.vtkImagingCore import (
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
-from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+
+try:
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+except ImportError:  # pragma: no cover
+    pass
 
 try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
@@ -404,5 +414,10 @@ from vtkmodules.vtkImagingFourier import (
 # 9.1+ imports
 try:
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
+except ImportError:  # pragma: no cover
+    pass
+
+try:  # Introduced prior to VTK 9.3
+    from vtkmodules.vtkRenderingCore import vtkViewport
 except ImportError:  # pragma: no cover
     pass

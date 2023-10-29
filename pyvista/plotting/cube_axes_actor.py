@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import convert_string_array
 
@@ -11,7 +11,26 @@ from . import _vtk
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
-    """Create a axis labels as a vtkStringArray."""
+    """
+    Create axis labels as a vtkStringArray.
+
+    Parameters
+    ----------
+    vmin : float
+        The minimum value for the axis labels.
+    vmax : float
+        The maximum value for the axis labels.
+    n : int
+        The number of labels to create.
+    fmt : str
+        A format string for the labels. If the string starts with '%', the label will be formatted using the old-style string formatting method.
+        Otherwise, the label will be formatted using the new-style string formatting method.
+
+    Returns
+    -------
+    vtkStringArray
+        The created labels as a vtkStringArray object.
+    """
     labels = _vtk.vtkStringArray()
     for v in np.linspace(vmin, vmax, n):
         if fmt:
@@ -161,15 +180,15 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._z_label_visibility = z_label_visibility
 
         if x_label_format is None:
-            x_label_format = pv.global_theme.font.fmt
+            x_label_format = pyvista.global_theme.font.fmt
             if x_label_format is None:
                 x_label_format = '%.1f'
         if y_label_format is None:
-            y_label_format = pv.global_theme.font.fmt
+            y_label_format = pyvista.global_theme.font.fmt
             if y_label_format is None:
                 y_label_format = '%.1f'
         if z_label_format is None:
-            z_label_format = pv.global_theme.font.fmt
+            z_label_format = pyvista.global_theme.font.fmt
             if z_label_format is None:
                 z_label_format = '%.1f'
 
@@ -186,7 +205,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.z_axis_visibility = z_axis_visibility
 
     @property
-    def tick_location(self) -> str:
+    def tick_location(self) -> str:  # numpydoc ignore=RT01
         """Return or set how the ticks are drawn on the axes grid.
 
         Options include: ``'inside', 'outside', 'both'``.
@@ -199,7 +218,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         return 'both'
 
     @tick_location.setter
-    def tick_location(self, value: str):
+    def tick_location(self, value: str):  # numpydoc ignore=GL08
         if not isinstance(value, str):
             raise TypeError(f'`tick_location` must be a string, not {type(value)}')
         value = value.lower()
@@ -216,12 +235,12 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             )
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return or set the bounding box."""
         return self.GetBounds()
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         self.SetBounds(bounds)
         self._update_labels()
         self.x_axis_range = float(bounds[0]), float(bounds[1])
@@ -229,205 +248,205 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.z_axis_range = float(bounds[4]), float(bounds[5])
 
     @property
-    def x_axis_range(self) -> Tuple[float, float]:
+    def x_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the X axis range."""
         return self.GetXAxisRange()
 
     @x_axis_range.setter
-    def x_axis_range(self, value: Tuple[float, float]):
+    def x_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetXAxisRange(value)
 
     @property
-    def y_axis_range(self) -> Tuple[float, float]:
+    def y_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the Y axis range."""
         return self.GetYAxisRange()
 
     @y_axis_range.setter
-    def y_axis_range(self, value: Tuple[float, float]):
+    def y_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetYAxisRange(value)
 
     @property
-    def z_axis_range(self) -> Tuple[float, float]:
+    def z_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the Z axis range."""
         return self.GetZAxisRange()
 
     @z_axis_range.setter
-    def z_axis_range(self, value: Tuple[float, float]):
+    def z_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetZAxisRange(value)
 
     @property
-    def label_offset(self) -> float:
+    def label_offset(self) -> float:  # numpydoc ignore=RT01
         """Return or set the distance between labels and the axis."""
         return self.GetLabelOffset()
 
     @label_offset.setter
-    def label_offset(self, offset: float):
+    def label_offset(self, offset: float):  # numpydoc ignore=GL08
         self.SetLabelOffset(offset)
 
     @property
-    def title_offset(self) -> float:
+    def title_offset(self) -> float:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
         return self.GetTitleOffset()
 
     @title_offset.setter
-    def title_offset(self, offset: float):
+    def title_offset(self, offset: float):  # numpydoc ignore=GL08
         self.SetTitleOffset(offset)
 
     @property
-    def camera(self) -> 'pv.Camera':
+    def camera(self) -> 'pyvista.Camera':  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: 'pv.Camera'):
+    def camera(self, camera: 'pyvista.Camera'):  # numpydoc ignore=GL08
         self.SetCamera(camera)
 
     @property
-    def x_axis_minor_tick_visibility(self) -> bool:
+    def x_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set visibility of the X axis minior tick."""
         return bool(self.GetXAxisMinorTickVisibility())
 
     @x_axis_minor_tick_visibility.setter
-    def x_axis_minor_tick_visibility(self, value: bool):
+    def x_axis_minor_tick_visibility(self, value: bool):  # numpydoc ignore=GL08
         self.SetXAxisMinorTickVisibility(value)
 
     @property
-    def y_axis_minor_tick_visibility(self) -> bool:
+    def y_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set visibility of the Y axis minior tick."""
         return bool(self.GetYAxisMinorTickVisibility())
 
     @y_axis_minor_tick_visibility.setter
-    def y_axis_minor_tick_visibility(self, value: bool):
+    def y_axis_minor_tick_visibility(self, value: bool):  # numpydoc ignore=GL08
         self.SetYAxisMinorTickVisibility(value)
 
     @property
-    def z_axis_minor_tick_visibility(self) -> bool:
+    def z_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set visibility of the Z axis minior tick."""
         return bool(self.GetZAxisMinorTickVisibility())
 
     @z_axis_minor_tick_visibility.setter
-    def z_axis_minor_tick_visibility(self, value: bool):
+    def z_axis_minor_tick_visibility(self, value: bool):  # numpydoc ignore=GL08
         self.SetZAxisMinorTickVisibility(value)
 
     @property
-    def x_label_visibility(self) -> bool:
+    def x_label_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the X axis labels."""
         return self._x_label_visibility
 
     @x_label_visibility.setter
-    def x_label_visibility(self, value: bool):
+    def x_label_visibility(self, value: bool):  # numpydoc ignore=GL08
         self._x_label_visibility = bool(value)
         self._update_x_labels()
 
     @property
-    def y_label_visibility(self) -> bool:
+    def y_label_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Y axis labels."""
         return self._y_label_visibility
 
     @y_label_visibility.setter
-    def y_label_visibility(self, value: bool):
+    def y_label_visibility(self, value: bool):  # numpydoc ignore=GL08
         self._y_label_visibility = bool(value)
         self._update_y_labels()
 
     @property
-    def z_label_visibility(self) -> bool:
+    def z_label_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Z axis labels."""
         return self._z_label_visibility
 
     @z_label_visibility.setter
-    def z_label_visibility(self, value: bool):
+    def z_label_visibility(self, value: bool):  # numpydoc ignore=GL08
         self._z_label_visibility = bool(value)
         self._update_z_labels()
 
     @property
-    def x_axis_visibility(self) -> bool:
+    def x_axis_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the X axis."""
         return bool(self.GetXAxisVisibility())
 
     @x_axis_visibility.setter
-    def x_axis_visibility(self, value: bool):
+    def x_axis_visibility(self, value: bool):  # numpydoc ignore=GL08
         self.SetXAxisVisibility(value)
 
     @property
-    def y_axis_visibility(self) -> bool:
+    def y_axis_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Y axis."""
         return bool(self.GetYAxisVisibility())
 
     @y_axis_visibility.setter
-    def y_axis_visibility(self, value: bool):
+    def y_axis_visibility(self, value: bool):  # numpydoc ignore=GL08
         self.SetYAxisVisibility(value)
 
     @property
-    def z_axis_visibility(self) -> bool:
+    def z_axis_visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of the Y axis."""
         return bool(self.GetZAxisVisibility())
 
     @z_axis_visibility.setter
-    def z_axis_visibility(self, value: bool):
+    def z_axis_visibility(self, value: bool):  # numpydoc ignore=GL08
         self.SetZAxisVisibility(value)
 
     @property
-    def x_label_format(self) -> str:
+    def x_label_format(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label of the X axis."""
         return self.GetXLabelFormat()
 
     @x_label_format.setter
-    def x_label_format(self, value: str):
+    def x_label_format(self, value: str):  # numpydoc ignore=GL08
         self.SetXLabelFormat(value)
         self._update_x_labels()
 
     @property
-    def y_label_format(self) -> str:
+    def y_label_format(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label of the Y axis."""
         return self.GetYLabelFormat()
 
     @y_label_format.setter
-    def y_label_format(self, value: str):
+    def y_label_format(self, value: str):  # numpydoc ignore=GL08
         self.SetYLabelFormat(value)
         self._update_y_labels()
 
     @property
-    def z_label_format(self) -> str:
+    def z_label_format(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label of the Z axis."""
         return self.GetZLabelFormat()
 
     @z_label_format.setter
-    def z_label_format(self, value: str):
+    def z_label_format(self, value: str):  # numpydoc ignore=GL08
         self.SetZLabelFormat(value)
         self._update_z_labels()
 
     @property
-    def x_title(self) -> str:
+    def x_title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the title of the X axis."""
         return self._x_title
 
     @x_title.setter
-    def x_title(self, value: str):
+    def x_title(self, value: str):  # numpydoc ignore=GL08
         self._x_title = value
         self._update_x_labels()
 
     @property
-    def y_title(self) -> str:
+    def y_title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the title of the Y axis."""
         return self._y_title
 
     @y_title.setter
-    def y_title(self, value: str):
+    def y_title(self, value: str):  # numpydoc ignore=GL08
         self._y_title = value
         self._update_y_labels()
 
     @property
-    def z_title(self) -> str:
+    def z_title(self) -> str:  # numpydoc ignore=RT01
         """Return or set the title of the Z axis."""
         return self._z_title
 
     @z_title.setter
-    def z_title(self, value: str):
+    def z_title(self, value: str):  # numpydoc ignore=GL08
         self._z_title = value
         self._update_z_labels()
 
     @property
-    def use_2d_mode(self) -> bool:
+    def use_2d_mode(self) -> bool:  # numpydoc ignore=RT01
         """Use the 2d render mode.
 
         This can be enabled for smoother plotting.
@@ -435,36 +454,36 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         return bool(self.GetUse2DMode())
 
     @use_2d_mode.setter
-    def use_2d_mode(self, value: bool):
+    def use_2d_mode(self, value: bool):  # numpydoc ignore=GL08
         self.SetUse2DMode(value)
 
     @property
-    def n_xlabels(self):
+    def n_xlabels(self):  # numpydoc ignore=RT01
         """Number of labels on the X axis."""
         return self._n_xlabels
 
     @n_xlabels.setter
-    def n_xlabels(self, value: int):
+    def n_xlabels(self, value: int):  # numpydoc ignore=GL08
         self._n_xlabels = value
         self._update_x_labels()
 
     @property
-    def n_ylabels(self):
+    def n_ylabels(self):  # numpydoc ignore=RT01
         """Number of labels on the Y axis."""
         return self._n_ylabels
 
     @n_ylabels.setter
-    def n_ylabels(self, value: int):
+    def n_ylabels(self, value: int):  # numpydoc ignore=GL08
         self._n_ylabels = value
         self._update_y_labels()
 
     @property
-    def n_zlabels(self):
+    def n_zlabels(self):  # numpydoc ignore=RT01
         """Number of labels on the Z axis."""
         return self._n_zlabels
 
     @n_zlabels.setter
-    def n_zlabels(self, value: int):
+    def n_zlabels(self, value: int):  # numpydoc ignore=GL08
         self._n_zlabels = value
         self._update_z_labels()
 
@@ -517,17 +536,17 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetAxisLabels(2, self._empty_str)
 
     @property
-    def x_labels(self) -> List[str]:
+    def x_labels(self) -> List[str]:  # numpydoc ignore=RT01
         """Return the x axis labels."""
         return convert_string_array(self.GetAxisLabels(0))
 
     @property
-    def y_labels(self) -> List[str]:
+    def y_labels(self) -> List[str]:  # numpydoc ignore=RT01
         """Return the y axis labels."""
         return convert_string_array(self.GetAxisLabels(1))
 
     @property
-    def z_labels(self) -> List[str]:
+    def z_labels(self) -> List[str]:  # numpydoc ignore=RT01
         """Return the z axis labels."""
         return convert_string_array(self.GetAxisLabels(2))
 

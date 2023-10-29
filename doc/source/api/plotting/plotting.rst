@@ -1,4 +1,4 @@
-.. _plotting_ref:
+.. _plotting:
 
 Plotting
 --------
@@ -63,10 +63,9 @@ It is possible to use the ``Plotter`` class as well.
     plotter.add_mesh(sphere)
     plotter.show(jupyter_backend='static')
 
-Additionally, you can generate interactive plots by leveraging a
-jupyter plotting backend like ``panel``, ``ipygany``, or
-``pythreejs``.  You can even use it to create interactive
-documentation online.
+Additionally, you can generate interactive plots by leveraging our
+jupyter plotting backend ``trame``.  You can even use it to create
+interactive documentation online.
 
 .. jupyter-execute::
 
@@ -74,7 +73,7 @@ documentation online.
     plotter.background_color = 'w'
     plotter.enable_anti_aliasing()
     plotter.add_mesh(sphere, color='lightblue', show_edges=True)
-    plotter.show(jupyter_backend='pythreejs')
+    plotter.show(jupyter_backend='static')
 
 For more details, see the section on :ref:`jupyter_plotting`.
 

@@ -5,7 +5,12 @@ import os
 import warnings
 
 from trame.ui.vuetify import VAppLayout
-from trame.widgets import html as html_widgets, vtk as vtk_widgets, vuetify as vuetify_widgets
+from trame.widgets import (
+    html as html_widgets,
+    vtk as vtk_widgets,
+    vuetify as vuetify2_widgets,
+    vuetify3 as vuetify3_widgets,
+)
 
 try:
     from ipywidgets.widgets import HTML
@@ -14,7 +19,7 @@ except ImportError:
 
 
 import pyvista
-from pyvista.trame.ui import UI_TITLE, get_or_create_viewer
+from pyvista.trame.ui import UI_TITLE, get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
@@ -33,7 +38,7 @@ JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
-    pv.set_jupyter_backend('trame')
+    pyvista.set_jupyter_backend('trame')
 
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
@@ -42,7 +47,7 @@ If this issue persists, please open an issue in PyVista: https://github.com/pyvi
 logger = logging.getLogger(__name__)
 
 
-class TrameServerDownError(RuntimeError):
+class TrameServerDownError(RuntimeError):  # numpydoc ignore=PR01
     """Exception when trame server is down for Jupyter."""
 
     def __init__(self, server_name):
@@ -62,30 +67,33 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(HTML):
+class Widget(HTML):  # numpydoc ignore=PR01
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width, height, **kwargs):
         """Initialize."""
         if HTML is object:
             raise ImportError('Please install `ipywidgets`.')
-        value = f"<iframe src='{src}' style='width: {width}; height: {height};'></iframe>"
+        # eventually we could maybe expose this, but for now make sure we're at least
+        # consistent with matplotlib's color (light gray)
+        border = "border: 1px solid rgb(221,221,221);"
+        value = f"<iframe src='{src}' class='pyvista' style='width: {width}; height: {height}; {border}'></iframe>"
         super().__init__(value, **kwargs)
         self._viewer = viewer
         self._src = src
 
     @property
-    def viewer(self):
+    def viewer(self):  # numpydoc ignore=RT01
         """Get the associated viewer instance."""
         return self._viewer
 
     @property
-    def src(self):
+    def src(self):  # numpydoc ignore=RT01
         """Get the src URL."""
         return self._src
 
 
-def launch_server(server=None, port=None, host=None):
+def launch_server(server=None, port=None, host=None, **kwargs):
     """Launch a trame server for use with Jupyter.
 
     Parameters
@@ -105,6 +113,8 @@ def launch_server(server=None, port=None, host=None):
     host : str, optional
         The host name to bind the server to on launch. Server will bind to
         ``127.0.0.1`` by default unless user sets the environment variable ``TRAME_DEFAULT_HOST``.
+    **kwargs : dict, optional
+        Any additional keyword arguments to pass to ``pyvista.trame.views.get_server``.
 
     Returns
     -------
@@ -116,7 +126,7 @@ def launch_server(server=None, port=None, host=None):
     if server is None:
         server = pyvista.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
-        server = get_server(server)
+        server = get_server(server, **kwargs)
     if port is None:
         port = pyvista.global_theme.trame.jupyter_server_port
     if host is None:
@@ -126,9 +136,13 @@ def launch_server(server=None, port=None, host=None):
     # Must enable all used modules
     html_widgets.initialize(server)
     vtk_widgets.initialize(server)
-    vuetify_widgets.initialize(server)
 
-    def on_ready(**_):
+    if server.client_type == 'vue2':
+        vuetify2_widgets.initialize(server)
+    else:
+        vuetify3_widgets.initialize(server)
+
+    def on_ready(**_):  # numpydoc ignore=GL08
         logger.debug(f'Server ready: {server}')
 
     if server._running_stage == 0:
@@ -153,7 +167,7 @@ def build_url(
     server_proxy_prefix=None,
     host='localhost',
     protocol='http',
-):
+):  # numpydoc ignore=PR01,RT01
     """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
@@ -173,12 +187,16 @@ def build_url(
 
 def initialize(
     server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
-):
+):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
     state = server.state
     state.trame__title = UI_TITLE
 
-    viewer = get_or_create_viewer(plotter, suppress_rendering=mode == 'client')
+    viewer = get_viewer(
+        plotter,
+        server=server,
+        suppress_rendering=mode == 'client',
+    )
 
     with VAppLayout(server, template_name=plotter._id_name):
         viewer.ui(
@@ -199,6 +217,7 @@ def show_trame(
     server_proxy_prefix=None,
     collapse_menu=False,
     add_menu=True,
+    add_menu_items=None,
     default_server_rendering=True,
     handler=None,
     **kwargs,
@@ -236,6 +255,10 @@ def show_trame(
     add_menu : bool, default: True
         Add a UI controls VCard to the VContainer.
 
+    add_menu_items : callable, default: None
+        Append more UI controls to the VCard menu. Should be a function similar to
+        Viewer.ui_controls().
+
     default_server_rendering : bool, default: True
         Whether to use server-side or client-side rendering on-start when
         using the ``'trame'`` mode.
@@ -249,14 +272,14 @@ def show_trame(
             import pyvista as pv
             from IPython.display import IFrame
 
-            mesh = pv.Wavelet()
+            mesh = pyvista.Wavelet()
 
 
             def handler(viewer, src, **kwargs):
                 return IFrame(src, '75%', '500px')
 
 
-            p = pv.Plotter(notebook=True)
+            p = pyvista.Plotter(notebook=True)
             _ = p.add_mesh(mesh)
             iframe = p.show(
                 jupyter_backend='trame',
@@ -299,6 +322,7 @@ def show_trame(
         default_server_rendering=default_server_rendering,
         collapse_menu=collapse_menu,
         add_menu=add_menu,
+        add_menu_items=add_menu_items,
     )
 
     # Show as cell result
@@ -325,7 +349,7 @@ def show_trame(
     return Widget(viewer, src, **kwargs)
 
 
-def elegantly_launch(*args, **kwargs):
+def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     """Elegantly launch the Trame server without await.
 
     This provides a mechanism to launch the Trame Jupyter backend in
@@ -358,7 +382,7 @@ def elegantly_launch(*args, **kwargs):
 """
         )
 
-    async def launch_it():
+    async def launch_it():  # numpydoc ignore=GL08
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this

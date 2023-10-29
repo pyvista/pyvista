@@ -1,4 +1,4 @@
-.. _ref_pyinstaller:
+.. _pyinstaller:
 
 Freezing PyVista with PyInstaller
 =================================

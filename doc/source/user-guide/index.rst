@@ -22,7 +22,7 @@ This basic example demonstrates three key features of PyVista:
    :hide-code:
 
    import pyvista
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
@@ -42,9 +42,6 @@ identically locally.
     >>> mesh['scalars'] = mesh.points[:, 1]
     >>> mesh.plot(cpos='xy', cmap='plasma', pbr=True, metallic=1.0, roughness=0.6,
     ...           zoom=1.7)
-
-.. note::
-   This example (and many others) is interactive.
 
 With just a few lines of code we downloaded a sample mesh from the
 web, added scalars to it based on the points of the mesh, and plotted

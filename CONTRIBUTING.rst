@@ -33,6 +33,19 @@ running:
    cd pyvista
    python -m pip install -e .
 
+Quick Start Development with Codespaces
+---------------------------------------
+A dev container is provided to quickly get started. The default container
+comes with the repository code checked out on a branch of your choice
+and all pyvista dependencies including test dependencies pre-installed.
+In addition, it uses the
+`desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
+to provide live interaction windows.  Follow directions
+`Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+to use the live interaction.
+
+Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+
 Questions
 ---------
 
@@ -300,6 +313,40 @@ Note the following:
 * The examples section references the "full example" in the gallery if it
   exists.
 
+These standards will be enforced using ``pre-commit`` using
+``numpydoc-validate``, with errors being reported as:
+
+.. code-block:: text
+
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | file            | item                     | check   | description                                     |
+   +=================+==========================+=========+=================================================+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | features.py:250 | features.merge           | PR09    | Parameter "datasets" description should finish  |
+   |                 |                          |         | with "."                                        |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+
+If for whatever reason you feel that your function should have an exception to
+any of the rules, add an exception to the function either in the
+``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
+comment to exclude a certain check. For example, we do not enforce
+documentation strings for setters and skip the GL08 check.
+
+.. code:: python
+
+    @strips.setter
+    def strips(self, strips):  # numpydoc ignore=GL08
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
+
+See the available validation checks in `numpydoc Validation
+<https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
+
 
 Deprecating Features or other Backwards-Breaking Changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -360,6 +407,20 @@ three minor releases and completely remove in the following minor release. For
 significant changes, this can be made longer, and for trivial ones this can be
 kept short.
 
+Here's an example of adding error test codes that raise deprecation warning messages.
+
+.. code:: python
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        addition(a, b)
+        if pv._version.version_info >= (0, 40):
+            raise RuntimeError("Convert error this function")
+        if pv._version.version_info >= (0, 41):
+            raise RuntimeError("Remove this function")
+
+In the above code example, the old test code raises an error in v0.40 and v0.41.
+This will prevent us from forgetting to remove deprecations on version upgrades.
+
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
 
@@ -416,21 +477,6 @@ dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 Then, if you have everything installed, you can run the various test
 suites.
-
-Using Gitpod Workspace
-~~~~~~~~~~~~~~~~~~~~~~
-
-A gitpod workspace is available for a quick start development
-environment. To start a workspace from the main branch of pyvista, go
-to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
-`Gitpod Getting Started
-<https://www.gitpod.io/docs/getting-started>`_ for more details.
-
-The workspace has vnc capability through the browser for
-interactive plotting. The workspace also has the ability to view the
-documentation with a live-viewer. Hit the ``Go Live`` button
-and browse to ``doc/_build/html``. The workspace also preloads
-pre-commit environments and installs requirements.
 
 Unit Testing
 ~~~~~~~~~~~~
@@ -756,10 +802,16 @@ created the following will occur:
 1.  Create a new branch from the ``main`` branch with name
     ``release/MAJOR.MINOR`` (for example ``release/0.25``).
 
-2.  Locally run all tests as outlined in the `Testing
+2.  Update the development version numbers in ``pyvista/_version.py``
+    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
+    and create a new PR for this release that merges it to main.
+    Development to main should be limited at this point while effort
+    is focused on the release.
+
+3.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-3.  Locally test and build the documentation with link checking to make
+4.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
@@ -770,14 +822,8 @@ created the following will occur:
        make doctest-modules
        make html -b linkcheck
 
-4.  After building the documentation, open the local build and examine
+5.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
-
-5.  Update the development version numbers in ``pyvista/_version.py``
-    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
-    and create a new PR for this release that merges it to main.
-    Development to main should be limited at this point while effort
-    is focused on the release.
 
 6.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
@@ -793,9 +839,14 @@ created the following will occur:
     .. code:: bash
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
+
+8.  Please check again that the tag has been created correctly and push the tag.
+
+    .. code:: bash
+
        git push origin --tags
 
-8.  Create a list of all changes for the release. It is often helpful to
+9.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
     feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
@@ -803,17 +854,17 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-9.  Place your release notes from step 8 in the description for `the new
+10. Place your release notes from previous step in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
-10. Go grab a beer/coffee/water and wait for
+11. Go grab a beer/coffee/water and wait for
     `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-11. Announce the new release in the PyVista Slack workspace and
+12. Announce the new release in the Discussions page and
     celebrate.
 
 Patch Release Steps

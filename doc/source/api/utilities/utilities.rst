@@ -26,6 +26,21 @@ Object Conversions or Wrapping
    vtkmatrix_from_array
    wrap
 
+Features
+~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   cartesian_to_spherical
+   create_grid
+   grid_from_sph_coords
+   merge
+   perlin_noise
+   sample_function
+   spherical_to_cartesian
+   transform_vectors_sph_to_cart
+   voxelize
 
 File IO
 ~~~~~~~
@@ -34,7 +49,6 @@ File IO
 
    read
    read_exodus
-   read_legacy
    read_texture
    save_meshio
 

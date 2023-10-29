@@ -22,7 +22,17 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 @abstract_class
 class DataObject:
-    """Methods common to all wrapped data objects."""
+    """Methods common to all wrapped data objects.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to all wrapped data objects.
+
+    **kwargs :
+        Any extra keyword args are passed as option to all wrapped data objects.
+
+    """
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
@@ -63,6 +73,7 @@ class DataObject:
         self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
+        """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
@@ -290,8 +301,8 @@ class DataObject:
         --------
         Create and make a deep copy of a PolyData object.
 
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere()
         >>> mesh_b = mesh_a.copy()
         >>> mesh_a == mesh_b
         True
@@ -361,16 +372,16 @@ class DataObject:
         --------
         Add field data to a PolyData dataset.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.ImageData(dimensions=(2, 2, 1))
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(
         ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
         ... )
@@ -379,9 +390,9 @@ class DataObject:
 
         Add field data to a MultiBlock dataset.
 
-        >>> blocks = pyvista.MultiBlock()
-        >>> blocks.append(pyvista.Sphere())
-        >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+        >>> blocks = pv.MultiBlock()
+        >>> blocks.append(pv.Sphere())
+        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
@@ -393,20 +404,25 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:
+    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
 
+        Returns
+        -------
+        DataSetAttributes
+            FieldData as DataSetAttributes.
+
         Examples
         --------
         Add field data to a PolyData dataset and then return it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = np.arange(10)
         >>> mesh.field_data['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -423,8 +439,8 @@ class DataObject:
         --------
         Add field data to a PolyData dataset and then remove it.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = range(10)
         >>> len(mesh.field_data)
         1
@@ -439,7 +455,7 @@ class DataObject:
         self.field_data.clear()
 
     @property
-    def memory_address(self) -> str:
+    def memory_address(self) -> str:  # numpydoc ignore=RT01
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -449,8 +465,8 @@ class DataObject:
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.memory_address
         'Addr=...'
 
@@ -458,7 +474,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:
+    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
         """Return the actual size of the dataset object.
 
         Returns

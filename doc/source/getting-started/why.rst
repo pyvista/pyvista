@@ -9,7 +9,7 @@ Why PyVista?
    # jupyterlab boilerplate setup
    import pyvista
 
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
@@ -112,7 +112,7 @@ to a description of how to use those methods:
 .. figure:: ../images/gifs/documentation.gif
 
 
-Interfacing With Other Libraries
+Interfacing with Other Libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PyVista is heavily dependent on `numpy <https://numpy.org/>`_ and uses
 it to represent point, cell, field, and other data from the VTK
@@ -140,7 +140,7 @@ field of arrows using :func:`numpy.meshgrid`:
     # Make a grid
     x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
                           np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 5), 
+                          np.linspace(-5, 5, 5),
                           indexing='ij')
 
     points = np.empty((x.size, 3))
