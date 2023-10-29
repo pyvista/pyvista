@@ -930,9 +930,9 @@ def test_validate_axes():
 @pytest.mark.parametrize('bias_index', [(0, 1), (1, 0), (2, 0)])
 def test_validate_axes_orthogonal(bias_index):
     axes_right = np.eye(3)
-    axes_right[*bias_index] = 0.1
+    axes_right[bias_index[0], bias_index[1]] = 0.1
     axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
-    axes_left[*bias_index] = 0.1
+    axes_left[bias_index[0], bias_index[1]] = 0.1
 
     msg = "Axes are not orthogonal."
     axes = validate_axes(
