@@ -286,7 +286,7 @@ def test_voxelize_throws_point_cloud(hexbeam):
 
 
 def test_voxelize_volume_default_density(uniform):
-    expected = pv.voxelize_volume(uniform, density=uniform.length/100).n_cells
+    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
     actual = pv.voxelize_volume(uniform).n_cells
     assert actual == expected
 
