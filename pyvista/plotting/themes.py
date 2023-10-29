@@ -31,6 +31,7 @@ pyvista.
 """
 
 from enum import Enum
+from itertools import chain
 import json
 import os
 import pathlib
@@ -134,7 +135,18 @@ def set_plot_theme(theme):
         )
 
 
-class _ThemeConfig:
+# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
+class _ForceSlots(type):
+    """Metaclass to force classes and subclasses to have __slots__."""
+
+    @classmethod
+    def __prepare__(metaclass, name, bases, **kwargs):
+        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
+        super_prepared['__slots__'] = tuple()
+        return super_prepared
+
+
+class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -162,7 +174,7 @@ class _ThemeConfig:
         """
         # remove the first underscore in each entry
         dict_ = {}
-        for key in self.__slots__:
+        for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
@@ -175,7 +187,7 @@ class _ThemeConfig:
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other.__slots__:
+        for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -200,6 +212,12 @@ class _ThemeConfig:
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+    @classmethod
+    def _all__slots__(cls):
+        """Get all slots including parent classes."""
+        mro = cls.mro()
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
@@ -1546,6 +1564,7 @@ class Theme(_ThemeConfig):
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
         '_logo_file',
     ]
 
@@ -2852,7 +2871,7 @@ class Theme(_ThemeConfig):
                 '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
             )
 
-        for attr_name in theme.__slots__:
+        for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
 
     def save(self, filename):
