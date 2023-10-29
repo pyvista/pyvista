@@ -227,7 +227,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
         y_label = kwargs.pop('ylabel', y_label)
         z_label = kwargs.pop('zlabel', z_label)
 
-        # Deprecated on v0.43.0, completely removed in version 0.46.0
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         cone_radius = kwargs.pop('cone_radius', False)
         if cone_radius:  # pragma: no cover
             warnings.warn(
@@ -237,7 +237,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             )
             tip_radius = cone_radius
 
-        # Deprecated on v0.43.0, completely removed in version 0.46.0
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         line_width = kwargs.pop('line_width', False)
         if line_width:  # pragma: no cover
             warnings.warn(
@@ -252,7 +252,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
         if not isinstance(properties, dict):
             raise TypeError("Properties must be a dictionary.")
 
-        # Deprecated on v0.43.0, completely removed in version 0.46.0
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         ambient = kwargs.pop('ambient', False)
         if ambient:  # pragma: no cover
             warnings.warn(
@@ -499,6 +499,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
             Use `tip_resolution` instead.
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cone_resolution` is deprecated and will be removed in 0.46.0. "
             "Use `tip_resolution` instead.",
@@ -508,6 +509,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @cone_resolution.setter
     def cone_resolution(self, resolution: int):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cone_resolution` is deprecated and will be removed in 0.46.0. "
             "Use `tip_resolution` instead.",
@@ -525,6 +527,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
             Use `tip_resolution` instead.
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `sphere_resolution` is deprecated and will be removed in 0.46.0. "
             "Use `tip_resolution` instead.",
@@ -534,6 +537,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @sphere_resolution.setter
     def sphere_resolution(self, resolution: int):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `sphere_resolution` is deprecated and will be removed in 0.46.0. "
             "Use `tip_resolution` instead.",
@@ -573,6 +577,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `shaft_resolution` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cylinder_resolution` is deprecated and will be removed in 0.46.0. "
             "Use `shaft_resolution` instead.",
@@ -582,6 +587,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @cylinder_resolution.setter
     def cylinder_resolution(self, res: int):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cylinder_resolution` is deprecated and will be removed in 0.46.0. "
             "Use `shaft_resolution` instead.",
@@ -627,6 +633,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `tip_radius` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cone_radius` is deprecated and will be removed in 0.46.0. "
             "Use `tip_radius` instead.",
@@ -636,6 +643,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @cone_radius.setter
     def cone_radius(self, radius: float):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cone_radius` is deprecated and will be removed in 0.46.0. "
             "Use `tip_radius` instead.",
@@ -654,6 +662,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `tip_radius` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `sphere_radius` is deprecated and will be removed in 0.46.0. "
             "Use `tip_radius` instead.",
@@ -663,6 +672,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @sphere_radius.setter
     def sphere_radius(self, radius: float):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `sphere_radius` is deprecated and will be removed in 0.46.0. "
             "Use `tip_radius` instead.",
@@ -681,6 +691,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `shaft_radius` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cylinder_radius` is deprecated and will be removed in 0.46.0. "
             "Use `shaft_radius` instead.",
@@ -690,6 +701,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @cylinder_radius.setter
     def cylinder_radius(self, radius: float):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `cylinder_radius` is deprecated and will be removed in 0.46.0. "
             "Use `shaft_radius` instead.",
@@ -821,6 +833,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `x_label` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `x_axis_label` is deprecated and will be removed in 0.46.0. "
             "Use `x_label` instead.",
@@ -830,6 +843,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @x_axis_label.setter
     def x_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `x_axis_label` is deprecated and will be removed in 0.46.0. "
             "Use `x_label` instead.",
@@ -867,6 +881,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `y_label` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `y_axis_label` is deprecated and will be removed in 0.46.0. "
             "Use `y_label` instead.",
@@ -876,6 +891,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @y_axis_label.setter
     def y_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `y_axis_label` is deprecated and will be removed in 0.46.0. "
             "Use `y_label` instead.",
@@ -913,6 +929,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
             Use `z_label` instead.
 
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `z_axis_label` is deprecated and will be removed in 0.46.0. "
             "Use `z_label` instead.",
@@ -922,6 +939,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
 
     @z_axis_label.setter
     def z_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `z_axis_label` is deprecated and will be removed in 0.46.0. "
             "Use `z_label` instead.",
