@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import DeprecationError, MissingDataError
+from pyvista.core.errors import MissingDataError
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -366,16 +366,6 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
         pl.add_volume(sphere)
 
 
-def test_deprecated_store_image():
-    """Test to make sure store_image is deprecated."""
-    pl = pv.Plotter()
-    with pytest.raises(DeprecationError):
-        assert isinstance(pl.store_image, bool)
-
-    with pytest.raises(DeprecationError):
-        pl.store_image = True
-
-
 def test_plotter_add_volume_clim(uniform: pv.ImageData):
     """Verify clim is set correctly for volume."""
     arr = uniform.x.astype(np.uint8)
@@ -402,6 +392,34 @@ def test_plotter_meshes(sphere, cube):
     assert sphere in pl.meshes
     assert cube in pl.meshes
     assert len(pl.meshes) == 2
+
+
+def test_multi_block_color_cycler():
+    """Test passing a custom color cycler"""
+    plotter = pv.Plotter()
+    data = {
+        "sphere1": pv.Sphere(center=(1, 0, 0)),
+        "sphere2": pv.Sphere(center=(2, 0, 0)),
+        "sphere3": pv.Sphere(center=(3, 0, 0)),
+        "sphere4": pv.Sphere(center=(4, 0, 0)),
+    }
+    spheres = pv.MultiBlock(data)
+    actor, mapper = plotter.add_composite(spheres)
+
+    # pass custom cycler
+    mapper.set_unique_colors(['red', 'green', 'blue'])
+
+    assert mapper.block_attr[0].color.name == 'red'
+    assert mapper.block_attr[1].color.name == 'green'
+    assert mapper.block_attr[2].color.name == 'blue'
+    assert mapper.block_attr[3].color.name == 'red'
+
+    # test wrong args
+    with pytest.raises(ValueError):
+        mapper.set_unique_colors('foo')
+
+    with pytest.raises(TypeError):
+        mapper.set_unique_colors(5)
 
 
 @pytest.mark.parametrize(

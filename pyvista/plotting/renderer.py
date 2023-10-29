@@ -21,6 +21,7 @@ from .charts import Charts
 from .colors import Color, get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
+from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 from .utilities.gl_checks import check_depth_peeling, uses_egl
@@ -1908,8 +1909,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif face.lower() in '-y':
             center[1] = self.bounds[2] - (ranges[1] * offset)
             normal = (0, 1, 0)
-            i_size = ranges[0]
-            j_size = ranges[2]
+            i_size = ranges[2]
+            j_size = ranges[0]
         elif face.lower() in '-x':
             center[0] = self.bounds[0] - (ranges[0] * offset)
             normal = (1, 0, 0)
@@ -1923,8 +1924,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif face.lower() in '+y':
             center[1] = self.bounds[3] + (ranges[1] * offset)
             normal = (0, -1, 0)
-            i_size = ranges[0]
-            j_size = ranges[2]
+            i_size = ranges[2]
+            j_size = ranges[0]
         elif face.lower() in '+x':
             center[0] = self.bounds[1] + (ranges[0] * offset)
             normal = (-1, 0, 0)
@@ -1946,7 +1947,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             lighting = self._theme.lighting
 
         self.remove_bounding_box()
-        mapper = _vtk.vtkDataSetMapper()
+        mapper = DataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
             mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable

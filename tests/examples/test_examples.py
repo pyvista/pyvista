@@ -78,3 +78,8 @@ def test_load_hydrogen_orbital():
     assert orbital.point_data['wf'].dtype == np.complex128
     assert 'real_wf' in orbital.point_data
     assert orbital.point_data['real_wf'].dtype == np.float64
+
+
+def test_load_logo():
+    mesh = examples.load_logo()
+    assert mesh.n_points

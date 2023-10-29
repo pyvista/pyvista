@@ -1,5 +1,8 @@
 """Module dedicated to widgets."""
 
+import pathlib
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 
 import pyvista
@@ -83,6 +86,7 @@ class WidgetHelper:
         self.sphere_widgets = []
         self.button_widgets = []
         self.distance_widgets = []
+        self.logo_widgets = []
 
     def add_box_widget(
         self,
@@ -1260,7 +1264,6 @@ class WidgetHelper:
         color=None,
         interaction_event='end',
         style=None,
-        **kwargs,
     ):
         """Add a text slider bar widget.
 
@@ -1307,12 +1310,6 @@ class WidgetHelper:
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
 
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
@@ -1384,7 +1381,6 @@ class WidgetHelper:
         fmt=None,
         slider_width=None,
         tube_width=None,
-        **kwargs,
     ):
         """Add a slider bar widget.
 
@@ -1461,13 +1457,6 @@ class WidgetHelper:
 
         tube_width : float, optional
             Normalized width of the tube. Defaults to the theme's tube width.
-
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
@@ -2644,6 +2633,79 @@ class WidgetHelper:
         """Remove all of the button widgets."""
         self.button_widgets.clear()
 
+    def add_logo_widget(
+        self,
+        logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
+        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
+        opacity: float = 1.0,
+    ):
+        """Add a logo widget to the top of the viewport.
+
+        If no logo is passed, the PyVista logo will be used.
+
+        Parameters
+        ----------
+        logo : pyvista.ImageData or pathlib.Path, optional
+            The logo to display. If a pathlike is passed, it is assumed to be a
+            file path to an image.
+
+        position : tuple(float), optional
+            The position of the logo in the viewport. The first value is the
+            horizontal position and the second value is the vertical position.
+            Both values must be between 0 and 1.
+
+        size : tuple(float), optional
+            The size of the logo in the viewport. The first value is the
+            horizontal size and the second value is the vertical size. Both
+            values must be between 0 and 1.
+
+        opacity : float, optional
+            The opacity of the logo. Must be between 0 and 1.
+
+        Returns
+        -------
+        vtkLogoWidget
+            The logo widget.
+
+        Examples
+        --------
+        Add a logo widget to the scene.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        if logo is None:
+            logo = pyvista.global_theme.logo_file
+        if logo is None:
+            # Fallback to PyVista logo
+            from pyvista import examples
+
+            logo = examples.logofile
+        if isinstance(logo, (str, pathlib.Path)):
+            logo = pyvista.read(logo)
+        if not isinstance(logo, pyvista.ImageData):
+            raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+        representation = _vtk.vtkLogoRepresentation()
+        representation.SetImage(logo)
+        representation.SetPosition(position)
+        representation.SetPosition2(size)
+        representation.GetImageProperty().SetOpacity(opacity)
+        widget = _vtk.vtkLogoWidget()
+        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.logo_widgets.append(widget)
+        return widget
+
+    def clear_logo_widgets(self):
+        """Remove all of the logo widgets."""
+        self.logo_widgets.clear()
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -2655,3 +2717,4 @@ class WidgetHelper:
         self.clear_button_widgets()
         self.clear_camera_widgets()
         self.clear_measure_widgets()
+        self.clear_logo_widgets()
