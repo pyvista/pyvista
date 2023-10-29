@@ -41,7 +41,6 @@ Features
    spherical_to_cartesian
    transform_vectors_sph_to_cart
    voxelize
-   voxelize_volume
 
 File IO
 ~~~~~~~
