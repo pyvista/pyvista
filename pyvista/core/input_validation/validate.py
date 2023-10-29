@@ -28,6 +28,7 @@ from pyvista.core.input_validation.check import (
     check_is_real,
     check_is_sorted,
     check_is_string,
+    check_is_string_in_iterable,
     check_is_subdtype,
 )
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
@@ -332,6 +333,124 @@ def validate_array(
     return arr_out
 
 
+def validate_axes(*axes, normalize=True, must_be_orthogonal=True, must_have_orientation='right'):
+    """Validate 3D axes vectors.
+
+    By default, the axes are normalized and checked to ensure they are orthogonal and
+    have a right-handed orientation.
+
+    Parameters
+    ----------
+    *axes : array_like
+        Axes to be validated. Axes may be specified as a single argument of a 3x3
+        array of row vectors or as separate arguments for each 3-element axis vector.
+        If only two vectors are given and ``must_have_orientation`` is not ``None``,
+        the third vector is automatically calculated as the cross-product of the
+        two vectors such that the axes have the correct orientation.
+
+    normalize : bool, default: True
+        If ``True``, the axes vectors are individually normalized to each have a norm
+        of 1.
+
+    must_be_orthogonal : bool, default: True
+        Check if the axes are orthogonal. If ``True``, the cross product between any
+        two axes vectors must be parallel to the third.
+
+    must_have_orientation : str, default: 'right'
+        Check if the axes have a specific orientation. If ``right``, the
+        cross-product of the first axis vector with the second must have a positive
+        direction. If ``left``, the direction must be negative. If ``None``, the
+        orientation is not checked.
+
+    Returns
+    -------
+    np.ndarray
+        Validated 3x3 axes array of row vectors.
+
+
+    Examples
+    --------
+    Validate axes array.
+
+    >>> import numpy as np
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.validate_axes(np.eye(3))
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+
+    Validate individual axes vectors as a 3x3 array.
+    >>> valid.validate_axes([1, 0, 0], [0, 1, 0], [0, 0, 1])
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+
+    Create a validated left-handed axes array from two vectors.
+    >>> valid.validate_axes(
+    ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
+    ... )
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., -1.]])
+
+    """
+    # Validate number of args
+    check_has_length(axes, exact_length=[1, 2, 3], name="Axes arguments")
+    if must_have_orientation is not None:
+        check_is_string_in_iterable(
+            must_have_orientation, ['right', 'left'], name="Axes orientation"
+        )
+    elif must_have_orientation is None and len(axes) == 2:
+        raise ValueError("Axes orientation must be specified when only two vectors are given.")
+
+    # Validate axes array
+    axes_array = np.zeros((3, 3))
+    if len(axes) == 1:
+        axes_array = validate_array(axes[0], must_have_shape=(3, 3), name="Axes array")
+    else:
+        axes_array[0] = validate_array3(axes[0], name="First axis vector")
+        axes_array[1] = validate_array3(axes[1], name="Second axis vector")
+        if len(axes) == 3:
+            axes_array[2] = validate_array3(axes[2], name="Third axis vector")
+        else:  # len(axes) == 2
+            if must_have_orientation == 'right':
+                axes_array[2] = np.cross(axes_array[0], axes_array[1])
+            else:
+                axes_array[2] = np.cross(axes_array[1], axes_array[0])
+    check_is_finite(axes_array, name="Axes array")
+
+    if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
+        np.dot(axes_array[0], axes_array[2]), 1
+    ):
+        raise ValueError("Axes cannot be parallel.")
+    if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
+        raise ValueError("Axes cannot be zeros.")
+
+    axes_array_norm = axes_array / np.linalg.norm(axes_array, axis=1).reshape((3, 1))
+
+    cross_0_1 = np.cross(axes_array_norm[0], axes_array_norm[1])
+    cross_1_2 = np.cross(axes_array_norm[1], axes_array_norm[2])
+    if must_be_orthogonal and not (
+        (np.allclose(cross_0_1, axes_array_norm[2]) or np.allclose(cross_0_1, -axes_array_norm[2]))
+        and (
+            np.allclose(cross_1_2, axes_array_norm[0])
+            or np.allclose(cross_1_2, -axes_array_norm[0])
+        )
+    ):
+        raise ValueError("Axes are not orthogonal.")
+
+    if must_have_orientation:
+        dot = np.dot(cross_0_1, axes_array_norm[2])
+        if must_have_orientation == 'right' and dot < 0:
+            raise ValueError("Axes do not have a right-handed orientation.")
+        if must_have_orientation == 'left' and dot > 0:
+            raise ValueError("Axes do not have a left-handed orientation.")
+
+    if normalize:
+        return axes_array_norm
+    return axes_array
+
+
 def validate_transform4x4(transform, /, *, name="Transform"):
     """Validate transform-like input as a 4x4 ndarray.
 
@@ -368,7 +487,9 @@ def validate_transform4x4(transform, /, *, name="Transform"):
         arr = array_from_vtkmatrix(transform.GetMatrix())
     else:
         try:
-            valid_arr = validate_array(transform, must_have_shape=[(3, 3), (4, 4)], name=name)
+            valid_arr = validate_array(
+                transform, must_have_shape=[(3, 3), (4, 4)], must_be_finite=True, name=name
+            )
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
             else:
@@ -806,6 +927,13 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     """Validate a numeric 1D array with 3 elements.
 
+    The array is checked to ensure its input values:
+
+    * have shape ``(3,)`` or can be reshaped to ``(3,)``
+    * are numeric and real
+
+    The returned array is formatted so that it has shape ``(3,)``.
+
     Parameters
     ----------
     arr : array_like[float, float, float]
@@ -868,6 +996,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     shape = [(3,)]
     if reshape:
         shape.append((1, 3))
+        shape.append((3, 1))
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     if broadcast:
         shape.append(())  # allow 0D scalars

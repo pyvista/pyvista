@@ -41,6 +41,7 @@ from pyvista.core.input_validation.validate import (
     validate_arrayN,
     validate_arrayN_uintlike,
     validate_arrayNx3,
+    validate_axes,
     validate_data_range,
     validate_dtype,
     validate_number,
@@ -354,6 +355,10 @@ def test_validate_array3(reshape):
     assert arr.shape == (3,)
     assert np.array_equal(arr, [1, 2, 3])
 
+    arr = validate_array3([[1], [2], [3]])
+    assert arr.shape == (3,)
+    assert np.array_equal(arr, [1, 2, 3])
+
     if not reshape:
         # test check fails with 2D input and no reshape
         msg = 'Array has shape (1, 3) which is not allowed. Shape must be (3,).'
@@ -366,14 +371,14 @@ def test_validate_array3(reshape):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
     else:
         # test error msg shows correct shape with broadcast and with reshape
-        msg = "Shape must be one of [(3,), (1, 3), (), (1,)]"
+        msg = "Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]"
         with pytest.raises(ValueError, match=escape(msg)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
 
     # test shape cannot be overridden
     msg = (
         "Parameter 'must_have_shape' cannot be set for function `validate_array3`.\n"
-        "Its value is automatically set to `[(3,), (1, 3)]`."
+        "Its value is automatically set to `[(3,), (1, 3), (3, 1)]`."
     )
     with pytest.raises(ValueError, match=escape(msg)):
         validate_array3((1, 2, 3), must_have_shape=3)
@@ -868,3 +873,78 @@ def test_check_is_string_in_iterable():
     msg = "_input must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
         check_is_string_in_iterable(1, 2, name="_input")
+
+
+def test_validate_axes():
+    axes_right = np.eye(3)
+    axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
+
+    # test different input args
+    axes = validate_axes(axes_right)
+    assert np.array_equal(axes, axes_right)
+    axes = validate_axes(
+        [[1], [0], [0]], [[0, 1, 0]], must_have_orientation='right', must_be_orthogonal=True
+    )
+    assert np.array_equal(axes, axes_right)
+    axes = validate_axes([1, 0, 0], [[0, 1, 0]], (0, 0, 1))
+    assert np.array_equal(axes, axes_right)
+
+    # test bad input
+    with pytest.raises(ValueError, match="Axes cannot be parallel."):
+        validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]])
+    with pytest.raises(ValueError, match="Axes cannot be parallel."):
+        validate_axes([[0, 1, 0], [1, 0, 0], [0, 1, 0]])
+    with pytest.raises(ValueError, match="Axes cannot be zeros."):
+        validate_axes([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
+    with pytest.raises(ValueError, match="Axes cannot be zeros."):
+        validate_axes([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
+    with pytest.raises(ValueError, match="Axes cannot be zeros."):
+        validate_axes([[0, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    # test normalize
+    axes_scaled = axes_right * 2
+    axes = validate_axes(axes_scaled, normalize=False)
+    assert np.array_equal(axes, axes_scaled)
+    axes = validate_axes(axes_scaled, normalize=True)
+    assert np.array_equal(axes, axes_right)
+
+    # test orientation
+    validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation='left')
+    validate_axes(axes_left, must_have_orientation=None)
+    validate_axes(axes_left, must_have_orientation='left')
+    with pytest.raises(ValueError, match="Axes do not have a right-handed orientation."):
+        validate_axes(axes_left, must_have_orientation='right')
+
+    validate_axes(axes_right, must_have_orientation=None)
+    validate_axes(axes_right, must_have_orientation='right')
+    with pytest.raises(ValueError, match="Axes do not have a left-handed orientation."):
+        validate_axes(axes_right, must_have_orientation='left')
+
+    # test specifying two vectors without orientation raises error (3rd cannot be computed)
+    with pytest.raises(
+        ValueError, match="Axes orientation must be specified when only two vectors are given."
+    ):
+        validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None)
+
+
+@pytest.mark.parametrize('bias_index', [(0, 1), (1, 0), (2, 0)])
+def test_validate_axes_orthogonal(bias_index):
+    axes_right = np.eye(3)
+    axes_right[*bias_index] = 0.1
+    axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
+    axes_left[*bias_index] = 0.1
+
+    msg = "Axes are not orthogonal."
+    axes = validate_axes(
+        axes_right, must_be_orthogonal=False, normalize=False, must_have_orientation='right'
+    )
+    assert np.array_equal(axes, axes_right)
+    with pytest.raises(ValueError, match=msg):
+        validate_axes(axes_right, must_be_orthogonal=True)
+
+    axes = validate_axes(
+        axes_left, must_be_orthogonal=False, normalize=False, must_have_orientation='left'
+    )
+    assert np.array_equal(axes, axes_left)
+    with pytest.raises(ValueError, match=msg):
+        validate_axes(axes_left, must_be_orthogonal=True)

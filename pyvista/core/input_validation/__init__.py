@@ -30,6 +30,7 @@ from .validate import (  # noqa: 401
     validate_arrayN,
     validate_arrayN_uintlike,
     validate_arrayNx3,
+    validate_axes,
     validate_data_range,
     validate_dtype,
     validate_number,
