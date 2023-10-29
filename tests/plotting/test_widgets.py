@@ -582,3 +582,30 @@ def test_affine_widget(sphere):
     widget.remove()
     assert not widget._circles
     assert not widget._arrows
+
+
+def test_logo_widget(verify_image_cache):
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_logo_widget()
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_logo_widget(position=(0.01, 0.01), size=(0.8, 0.8))
+    pl.show()
+
+    pl = pv.Plotter()
+    # has a 2 x 1 aspect ratio
+    pl.add_logo_widget(examples.mapfile, position=(0.0, 0.0), size=(0.99, 0.495))
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_logo_widget(
+        examples.download_vtk_logo().to_image(), position=(0.0, 0.0), size=(0.8, 0.8)
+    )
+    pl.show()
+
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
+        pl.add_logo_widget(logo=0)

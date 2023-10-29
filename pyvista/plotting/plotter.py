@@ -3475,9 +3475,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
-        if algo is None and not mesh.n_points:
+        if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
-            raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
+            raise ValueError(
+                'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
+            )
 
         # set main values
         self.mesh = mesh
@@ -4906,7 +4908,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Open a MP4 movie and set the quality to maximum.
 
         >>> import pyvista as pv
-        >>> pl = pv.Plotter
+        >>> pl = pv.Plotter()
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
 
         """

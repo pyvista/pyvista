@@ -31,8 +31,10 @@ pyvista.
 """
 
 from enum import Enum
+from itertools import chain
 import json
 import os
+import pathlib
 from typing import Callable, List, Optional, Union
 import warnings
 
@@ -133,7 +135,18 @@ def set_plot_theme(theme):
         )
 
 
-class _ThemeConfig:
+# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
+class _ForceSlots(type):
+    """Metaclass to force classes and subclasses to have __slots__."""
+
+    @classmethod
+    def __prepare__(metaclass, name, bases, **kwargs):
+        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
+        super_prepared['__slots__'] = tuple()
+        return super_prepared
+
+
+class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -161,7 +174,7 @@ class _ThemeConfig:
         """
         # remove the first underscore in each entry
         dict_ = {}
-        for key in self.__slots__:
+        for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
@@ -174,7 +187,7 @@ class _ThemeConfig:
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other.__slots__:
+        for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -199,6 +212,12 @@ class _ThemeConfig:
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+    @classmethod
+    def _all__slots__(cls):
+        """Get all slots including parent classes."""
+        mro = cls.mro()
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
@@ -1541,9 +1560,12 @@ class Theme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_allow_empty_mesh',
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
+        '_logo_file',
     ]
 
     def __init__(self):
@@ -1598,6 +1620,7 @@ class Theme(_ThemeConfig):
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
         self._before_close_callback = None
+        self._allow_empty_mesh = False
 
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
@@ -1626,6 +1649,8 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+
+        self._logo_file = None
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2709,6 +2734,30 @@ class Theme(_ThemeConfig):
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
+    @property
+    def allow_empty_mesh(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to allow plotting empty meshes.
+
+        Examples
+        --------
+        Enable plotting of empty meshes.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.allow_empty_mesh = True
+
+        Now add an empty mesh to a plotter
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.PolyData())
+        >>> pl.show()  # doctest: +SKIP
+
+        """
+        return self._allow_empty_mesh
+
+    @allow_empty_mesh.setter
+    def allow_empty_mesh(self, allow_empty_mesh: bool):  # numpydoc ignore=GL08
+        self._allow_empty_mesh = bool(allow_empty_mesh)
+
     def restore_defaults(self):  # numpydoc ignore=GL08
         """Restore the theme defaults.
 
@@ -2822,7 +2871,7 @@ class Theme(_ThemeConfig):
                 '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
             )
 
-        for attr_name in theme.__slots__:
+        for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
 
     def save(self, filename):
@@ -2913,6 +2962,44 @@ class Theme(_ThemeConfig):
         if not isinstance(config, _LightingConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
+
+    @property
+    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
+        """Return or set the logo file.
+
+        .. note::
+
+            :func:`pyvista.Plotter.add_logo_widget` will default to
+            PyVista's logo if this is unset.
+
+        Example
+        -------
+        Set the logo file to a custom logo.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> logo_file = examples.download_file('vtk.png')
+        >>> pv.global_theme.logo_file = logo_file
+
+        Now the logo will be used by default for :func:`pyvista.Plotter.add_logo_widget`.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        return self._logo_file
+
+    @logo_file.setter
+    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
+        if logo_file is None:
+            path = None
+        else:
+            if not pathlib.Path(logo_file).exists():
+                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+            path = str(logo_file)
+        self._logo_file = path
 
 
 class DarkTheme(Theme):

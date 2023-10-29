@@ -2095,6 +2095,18 @@ def test_add_background_image_subplots(airplane):
     pl.show()
 
 
+@pytest.mark.parametrize(
+    'face',
+    ['-Z', '-Y', '-X', '+Z', '+Y', '+X'],
+)
+def test_add_floor(face):
+    box = pv.Box((-100.0, -90.0, 20.0, 40.0, 100, 105)).outline()
+    pl = pv.Plotter()
+    pl.add_mesh(box, color='k')
+    pl.add_floor(face=face, color='red', opacity=1.0)
+    pl.show()
+
+
 def test_add_remove_floor(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -3591,6 +3603,7 @@ def test_plot_texture_flip_y(texture):
 
 @pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
+@pytest.mark.skipif(pv.vtk_version_info >= (9, 3), reason="This is broken on VTK 9.3")
 def test_plot_cubemap_alone(cubemap):
     """Test plotting directly from the Texture class."""
     cubemap.plot()
@@ -3760,3 +3773,9 @@ def test_radial_gradient_background():
     with pytest.raises(ValueError):
         plotter = pv.Plotter()
         plotter.set_background('white', top='black', right='black')
+
+
+def test_no_empty_meshes():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Empty meshes'):
+        pl.add_mesh(pv.PolyData())
