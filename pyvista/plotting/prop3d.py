@@ -46,10 +46,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @scale.setter
     def scale(self, value: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
-        if isinstance(value, Sequence):
-            self.SetScale(*value)
-        else:
-            self.SetScale(value)
+        self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01

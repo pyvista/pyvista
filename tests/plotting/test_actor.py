@@ -103,6 +103,8 @@ def test_actor_scale(actor):
     scale = (2, 2, 2)
     actor.scale = scale
     assert actor.scale == scale
+    actor.scale = 3
+    assert actor.scale == (3, 3, 3)
 
 
 def test_actor_position(actor):
