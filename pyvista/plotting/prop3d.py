@@ -1,5 +1,5 @@
 """Prop3D module."""
-from typing import Sequence, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -45,7 +45,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
+    def scale(self, value: Union[float, Vector]):  # numpydoc ignore=GL08
         self.SetScale(value)
 
     @property
@@ -167,7 +167,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> tuple:  # numpydoc ignore=RT01
+    def orientation(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity orientation angles.
 
         Orientation angles of the axes which define rotations about the
@@ -217,11 +217,11 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: tuple):  # numpydoc ignore=GL08
+    def orientation(self, value: Vector):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
-    def origin(self) -> tuple:  # numpydoc ignore=RT01
+    def origin(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity origin.
 
         This is the point about which all rotations take place.
@@ -230,7 +230,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value: tuple):  # numpydoc ignore=GL08
+    def origin(self, value: Vector):  # numpydoc ignore=GL08
         self.SetOrigin(value)
 
     @property
@@ -252,7 +252,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> tuple:  # numpydoc ignore=RT01
+    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples
