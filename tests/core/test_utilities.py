@@ -285,6 +285,22 @@ def test_voxelize_throws_point_cloud(hexbeam):
         pv.voxelize(mesh)
 
 
+def test_voxelize_volume_default_density(uniform):
+    expected = pv.voxelize_volume(uniform, density=uniform.length/100).n_cells
+    actual = pv.voxelize_volume(uniform).n_cells
+    assert actual == expected
+
+
+def test_voxelize_volume_invalid_density(rectilinear):
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pv.voxelize(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_volume_no_face_mesh(rectilinear):
+    with pytest.raises(ValueError, match='must have faces'):
+        pv.voxelize(pv.PolyData())
+
+
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
