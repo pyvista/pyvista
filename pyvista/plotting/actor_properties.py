@@ -143,7 +143,11 @@ class ActorProperties:
 
     @property
     def ambient(self):  # numpydoc ignore=RT01
-        """Return or set the ambient lighting coefficient."""
+        """Return or set the ambient lighting coefficient.
+
+        Value should be between 0 and 1.
+
+        """
         return self.properties.GetAmbient()
 
     @ambient.setter
