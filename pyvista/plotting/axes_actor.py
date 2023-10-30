@@ -186,7 +186,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     ...     position=(1, 2, 3), orientation=(10, 20, 30)
     ... )
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_actor)
+    >>> _ = pl.add_actor(axes_actor, reset_camera=True)
+    >>> _ = pl.show_grid()
     >>> pl.show()
 
     Create an axes actor with custom colors and axis labels.

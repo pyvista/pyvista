@@ -993,7 +993,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...         [0.0, 0.0, 0.0, 1.0],
         ...     ]
         ... )
-        >>> mesh.transform(transform)
+        >>> mesh = mesh.transform(transform)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_axes_marker(user_matrix=transform)
