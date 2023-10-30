@@ -140,7 +140,7 @@ lines, even in two sections.
     >>> pyvista.Sphere().plot(color='red',
     ...                       cpos='xy')
 
-Plot _ forces a static image instead of an interactive scene:
+Forces a static image instead of an interactive scene:
 
 .. pyvista-plot::
    :force_static:
