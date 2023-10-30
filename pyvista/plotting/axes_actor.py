@@ -1126,15 +1126,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         super().SetPosition(*args)
         self._update_UserMatrix() if self._enable_orientation_workaround else None
 
-    @wraps(_vtk.vtkAxesActor.GetUserTransform)
-    def GetUserTransform(self):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
-        transform = super().GetUserTransform()
-        if self._enable_orientation_workaround:
-            transform_out = _vtk.vtkTransform()
-            transform_out.SetMatrix(transform.GetMatrix())
-        return transform
-
     @property
     def user_matrix(self) -> np.ndarray:  # numpydoc ignore=RT01
         """User-specified transformation matrix.
