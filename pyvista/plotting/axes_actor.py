@@ -232,8 +232,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         cone_radius = kwargs.pop('cone_radius', False)
         if cone_radius:  # pragma: no cover
             warnings.warn(
-                "Use of `cone_radius` is deprecated and will be removed in 0.46.0. "
-                "Use `tip_radius` instead.",
+                "Use of `cone_radius` is deprecated. Use `tip_radius` instead.",
                 PyVistaDeprecationWarning,
             )
             tip_radius = cone_radius
@@ -242,8 +241,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         line_width = kwargs.pop('line_width', False)
         if line_width:  # pragma: no cover
             warnings.warn(
-                "Use of `line_width` is deprecated and will be removed in 0.46.0. "
-                "Use `shaft_width` instead.",
+                "Use of `line_width` is deprecated. Use `shaft_width` instead.",
                 PyVistaDeprecationWarning,
             )
             shaft_width = line_width
@@ -257,8 +255,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         ambient = kwargs.pop('ambient', False)
         if ambient:  # pragma: no cover
             warnings.warn(
-                f"Use of `ambient` is deprecated and will be removed in 0.46.0. "
-                f"Use `properties={{'ambient':{ambient}}}` instead.",
+                f"Use of `ambient` is deprecated. Use `properties={{'ambient':{ambient}}}` instead.",
                 PyVistaDeprecationWarning,
             )
             properties.setdefault('ambient', ambient)
@@ -495,15 +492,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Resolution of the axes cone tips.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
+            This parameter is deprecated. Use `tip_resolution` instead.
 
-            Use `tip_resolution` instead.
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cone_resolution` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_resolution` instead.",
+            "Use of `cone_resolution` is deprecated. Use `tip_resolution` instead.",
             PyVistaDeprecationWarning,
         )
         return self.tip_resolution
@@ -512,8 +506,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def cone_resolution(self, resolution: int):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cone_resolution` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_resolution` instead.",
+            "Use of `cone_resolution` is deprecated. Use `tip_resolution` instead.",
             PyVistaDeprecationWarning,
         )
         self.tip_resolution = resolution
@@ -523,15 +516,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Resolution of the axes sphere tips.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
+            This parameter is deprecated. Use `tip_resolution` instead.
 
-            Use `tip_resolution` instead.
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `sphere_resolution` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_resolution` instead.",
+            "Use of `sphere_resolution` is deprecated. Use `tip_resolution` instead.",
             PyVistaDeprecationWarning,
         )
         return self.tip_resolution
@@ -540,8 +530,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def sphere_resolution(self, resolution: int):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `sphere_resolution` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_resolution` instead.",
+            "Use of `sphere_resolution` is deprecated. Use `tip_resolution` instead.",
             PyVistaDeprecationWarning,
         )
         self.tip_resolution = resolution
@@ -572,16 +561,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Cylinder resolution of the axes shafts.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `shaft_resolution` instead.
+            This parameter is deprecated. Use `shaft_resolution` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cylinder_resolution` is deprecated and will be removed in 0.46.0. "
-            "Use `shaft_resolution` instead.",
+            "Use of `cylinder_resolution` is deprecated. Use `shaft_resolution` instead.",
             PyVistaDeprecationWarning,
         )
         return self.shaft_resolution
@@ -590,8 +575,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def cylinder_resolution(self, res: int):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cylinder_resolution` is deprecated and will be removed in 0.46.0. "
-            "Use `shaft_resolution` instead.",
+            "Use of `cylinder_resolution` is deprecated. Use `shaft_resolution` instead.",
             PyVistaDeprecationWarning,
         )
         self.SetCylinderResolution(res)
@@ -628,16 +612,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Radius of the axes cone tips.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `tip_radius` instead.
+            This parameter is deprecated. Use `tip_radius` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cone_radius` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_radius` instead.",
+            "Use of `cone_radius` is deprecated. Use `tip_radius` instead.",
             PyVistaDeprecationWarning,
         )
         return self.tip_radius
@@ -646,8 +626,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def cone_radius(self, radius: float):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cone_radius` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_radius` instead.",
+            "Use of `cone_radius` is deprecated. Use `tip_radius` instead.",
             PyVistaDeprecationWarning,
         )
         self.tip_radius = radius
@@ -657,16 +636,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Radius of the axes sphere tips.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `tip_radius` instead.
+            This parameter is deprecated. Use `tip_radius` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `sphere_radius` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_radius` instead.",
+            "Use of `sphere_radius` is deprecated. Use `tip_radius` instead.",
             PyVistaDeprecationWarning,
         )
         return self.tip_radius
@@ -675,8 +650,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def sphere_radius(self, radius: float):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `sphere_radius` is deprecated and will be removed in 0.46.0. "
-            "Use `tip_radius` instead.",
+            "Use of `sphere_radius` is deprecated. Use `tip_radius` instead.",
             PyVistaDeprecationWarning,
         )
         self.tip_radius = radius
@@ -686,16 +660,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Cylinder radius of the axes shafts.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `shaft_radius` instead.
+            This parameter is deprecated. Use `shaft_radius` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cylinder_radius` is deprecated and will be removed in 0.46.0. "
-            "Use `shaft_radius` instead.",
+            "Use of `cylinder_radius` is deprecated. Use `shaft_radius` instead.",
             PyVistaDeprecationWarning,
         )
         return self.shaft_radius
@@ -704,8 +674,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def cylinder_radius(self, radius: float):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `cylinder_radius` is deprecated and will be removed in 0.46.0. "
-            "Use `shaft_radius` instead.",
+            "Use of `cylinder_radius` is deprecated. Use `shaft_radius` instead.",
             PyVistaDeprecationWarning,
         )
         self.shaft_radius = radius
@@ -828,16 +797,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Text label for the x-axis.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `x_label` instead.
+            This parameter is deprecated. Use `x_label` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `x_axis_label` is deprecated and will be removed in 0.46.0. "
-            "Use `x_label` instead.",
+            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
             PyVistaDeprecationWarning,
         )
         return self.x_label
@@ -846,8 +811,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def x_axis_label(self, label: str):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `x_axis_label` is deprecated and will be removed in 0.46.0. "
-            "Use `x_label` instead.",
+            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
             PyVistaDeprecationWarning,
         )
         self.x_label = label
@@ -876,16 +840,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Text label for the y-axis.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `y_label` instead.
+            This parameter is deprecated. Use `y_label` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `y_axis_label` is deprecated and will be removed in 0.46.0. "
-            "Use `y_label` instead.",
+            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
             PyVistaDeprecationWarning,
         )
         return self.y_label
@@ -894,8 +854,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def y_axis_label(self, label: str):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `y_axis_label` is deprecated and will be removed in 0.46.0. "
-            "Use `y_label` instead.",
+            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
             PyVistaDeprecationWarning,
         )
         self.y_label = label
@@ -924,16 +883,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Text label for the z-axis.
 
         .. deprecated:: 0.43.0
-            This parameter is deprecated and will be completely removed
-            in version 0.46.0.
-
-            Use `z_label` instead.
+            This parameter is deprecated. Use `z_label` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `z_axis_label` is deprecated and will be removed in 0.46.0. "
-            "Use `z_label` instead.",
+            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
             PyVistaDeprecationWarning,
         )
         return self.z_label
@@ -942,8 +897,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def z_axis_label(self, label: str):  # numpydoc ignore=GL08
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `z_axis_label` is deprecated and will be removed in 0.46.0. "
-            "Use `z_label` instead.",
+            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
             PyVistaDeprecationWarning,
         )
         self.z_label = label
