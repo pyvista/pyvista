@@ -2096,6 +2096,18 @@ def test_add_background_image_subplots(airplane):
     pl.show()
 
 
+@pytest.mark.parametrize(
+    'face',
+    ['-Z', '-Y', '-X', '+Z', '+Y', '+X'],
+)
+def test_add_floor(face):
+    box = pv.Box((-100.0, -90.0, 20.0, 40.0, 100, 105)).outline()
+    pl = pv.Plotter()
+    pl.add_mesh(box, color='k')
+    pl.add_floor(face=face, color='red', opacity=1.0)
+    pl.show()
+
+
 def test_add_remove_floor(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
