@@ -903,6 +903,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         origin=(0, 0, 0),
         scale=(1, 1, 1),
         user_matrix=np.eye(4),
+        reset_camera=True,
         **kwargs,
     ) -> AxesActor:
         """Add axes actor to the scene.
@@ -959,7 +960,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Transformation to apply to the axes. Can be a vtkTransform,
             3x3 transformation matrix, or 4x4 transformation matrix.
 
-        **kwargs : dict
+        reset_camera : bool, default: True
+            If ``True ``, the camera is reset after adding the axes marker
+            to the scene.
+
+        **kwargs : dict, optional
             See :class:`~pyvista.AxesActor` for additional keyword arguments.
 
         Returns
@@ -1017,10 +1022,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             user_matrix=user_matrix,
             **kwargs,
         )
-        self.AddActor(self._marker_actor)
-        memory_address = self._marker_actor.GetAddressAsString("")
-        self._actors[memory_address] = self._marker_actor
-        self.Modified()
+        self.add_actor(self._marker_actor, reset_camera=reset_camera)
         return self._marker_actor
 
     def add_orientation_widget(
