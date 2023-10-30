@@ -406,14 +406,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.tip_length
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.tip_length
         (0.2, 0.2, 0.2)
-        >>> axes.axes_actor.tip_length = 0.3
-        >>> axes.axes_actor.tip_length
+        >>> axes_actor.tip_length = 0.3
+        >>> axes_actor.tip_length
         (0.3, 0.3, 0.3)
-        >>> axes.axes_actor.tip_length = (0.1, 0.4, 0.2)
-        >>> axes.axes_actor.tip_length
+        >>> axes_actor.tip_length = (0.1, 0.4, 0.2)
+        >>> axes_actor.tip_length
         (0.1, 0.4, 0.2)
 
         """
@@ -596,11 +596,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.tip_radius
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.tip_radius
         0.4
-        >>> axes.axes_actor.tip_radius = 0.8
-        >>> axes.axes_actor.tip_radius
+        >>> axes_actor.tip_radius = 0.8
+        >>> axes_actor.tip_radius
         0.8
 
         """
@@ -756,9 +756,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.shaft_type = "line"
-        >>> axes.axes_actor.shaft_type
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.shaft_type = "line"
+        >>> axes_actor.shaft_type
         <ShaftType.LINE: 1>
 
         """
@@ -781,9 +781,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.tip_type = axes.axes_actor.TipType.SPHERE
-        >>> axes.axes_actor.tip_type
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.tip_type = axes_actor.TipType.SPHERE
+        >>> axes_actor.tip_type
         <TipType.SPHERE: 1>
 
         """
@@ -804,9 +804,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.x_label = 'This axis'
-        >>> axes.axes_actor.x_label
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.x_label = 'This axis'
+        >>> axes_actor.x_label
         'This axis'
 
         """
@@ -852,9 +852,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.y_label = 'This axis'
-        >>> axes.axes_actor.y_label
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.y_label = 'This axis'
+        >>> axes_actor.y_label
         'This axis'
 
         """
@@ -900,9 +900,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.z_label = 'This axis'
-        >>> axes.axes_actor.z_label
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.z_label = 'This axis'
+        >>> axes_actor.z_label
         'This axis'
 
         """
