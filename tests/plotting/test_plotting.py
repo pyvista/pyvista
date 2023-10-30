@@ -3802,9 +3802,6 @@ def test_axes_marker():
     plot.show()
 
 
-# def test_axes_actor_shaft_tip_radius():
-
-
 @skip_lesser_9_0_X
 def test_axes_actor_properties():
     axes_actor = pv.AxesActor(
