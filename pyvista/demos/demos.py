@@ -207,7 +207,7 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None):
+def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -220,10 +220,6 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
 
     wavetime : float, default: 3.0
         The desired total display time in seconds.
-
-    interactive : bool, default: False
-        Allows the user to set the camera position before the start of the
-        wave movement.
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
