@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
+from pyvista.core._typing_core import BoundsLike, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import (
     _coerce_transformlike_arg,
@@ -45,22 +45,26 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     labels_off : bool, default: False
         Enable or disable the text labels for the axes.
 
-    label_size : List[float, float, float], default: (0.25, 0.1)
+    label_size : Sequence[float], default: (0.25, 0.1)
         The width and height of the axes labels. Values should
         be in range ``[0, 1]``.
 
-    label_position : float | Sequence[float], default: 1
-        Normalized label position along the axes shafts. Values should
-        be in range ``[0, 1]``.
+    label_position : float | Vector, default: 1
+        Normalized label position along the axes shafts. If a number,
+        the label position for all axes is set to this value. Values
+        should be in range ``[0, 1]``.
 
     x_color : ColorLike, optional
-        Color of the x-axis shaft and tip.
+        Color of the x-axis shaft and tip. By default, the color is
+        set to ``pyvista.global_theme.axes.x_color``.
 
     y_color : ColorLike, optional
-        Color of the y-axis shaft and tip.
+        Color of the y-axis shaft and tip. By default, the color is
+        set to ``pyvista.global_theme.axes.y_color``.
 
     z_color : ColorLike, optional
-        Color of the z-axis shaft and tip.
+        Color of the z-axis shaft and tip. By default, the color is
+        set to ``pyvista.global_theme.axes.z_color``.
 
     shaft_type : str | AxesActor.ShaftType, default: 'cylinder'
         Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
@@ -73,9 +77,10 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Line width of the axes shafts in screen units. Only has
         an effect if ``shaft_type`` is ``'line'``.
 
-    shaft_length : float | Sequence[float], default: 0.8
-        Normalized length of the shaft for each axis. Values should be
-        in range ``[0, 1]``.
+    shaft_length : float | Vector, default: 0.8
+        Normalized length of the shaft for each axis. If a number, the shaft
+        length for all axes is set to this value. Values should be in range
+        ``[0, 1]``.
 
     shaft_resolution : int, default: 16
         Resolution of the axes shafts.
@@ -86,33 +91,35 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     tip_radius : float, default: 0.4
         Radius of the axes tips.
 
-    tip_length : float | Sequence[float], default: 0.2
-        Normalized length of the axes tips in range ``[0, 1]``.
+    tip_length : float | Vector, default: 0.2
+        Normalized length of the axes tips. If a number, the shaft
+        length for all axes is set to this value. Values should be in range
+        ``[0, 1]``.
 
     tip_resolution : int , default: 16
         Resolution of the axes tips.
 
-    total_length : float | Sequence[float], default: (1, 1, 1)
+    total_length : float | Vector, default: (1, 1, 1)
         Total length of each axis (shaft plus tip).
 
-    position : Sequence[float], default: (0, 0, 0)
+    position : Vector, default: (0, 0, 0)
         Position of the axes.
 
-    orientation : Sequence[float], default: (0, 0, 0)
+    orientation : Vector, default: (0, 0, 0)
         Orientation angles of the axes which define rotations about
         the world's x-y-z axes. The angles are specified in degrees
         and in x-y-z order. However, the actual rotations are
         applied in the following order: rotate_z first,
         then rotate_x, and finally rotate_y.
 
-    origin : Sequence[float], default: (0, 0, 0)
+    origin : Vector, default: (0, 0, 0)
         Origin of the axes. This is the point about which all
         rotations take place.
 
-    scale : float | Sequence[float], default: (1, 1, 1)
+    scale : float | Vector, default: (1, 1, 1)
         Scaling factor for the axes.
 
-    user_matrix : TransformLike
+    user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
         Transformation to apply to the axes. Can be a vtkTransform,
         3x3 transformation matrix, or 4x4 transformation matrix.
 
@@ -342,7 +349,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.SetVisibility(value)
 
     @property
-    def total_length(self) -> tuple:  # numpydoc ignore=RT01
+    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Total length of each axis (shaft plus tip).
 
         Examples
@@ -362,14 +369,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return self.GetTotalLength()
 
     @total_length.setter
-    def total_length(self, length):  # numpydoc ignore=GL08
-        if isinstance(length, Sequence):
-            self.SetTotalLength(length[0], length[1], length[2])
-        else:
+    def total_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+        if isinstance(length, (int, float)):
             self.SetTotalLength(length, length, length)
+        else:
+            self.SetTotalLength(length[0], length[1], length[2])
 
     @property
-    def shaft_length(self) -> tuple:  # numpydoc ignore=RT01
+    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized length of the shaft for each axis.
 
         Values should be in range ``[0, 1]``.
@@ -391,11 +398,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
-        if isinstance(length, Sequence):
-            self.SetNormalizedShaftLength(length[0], length[1], length[2])
-        else:
+    def shaft_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+        if isinstance(length, (int, float)):
             self.SetNormalizedShaftLength(length, length, length)
+        else:
+            self.SetNormalizedShaftLength(length[0], length[1], length[2])
 
     @property
     def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -420,14 +427,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
-        if isinstance(length, Sequence):
-            self.SetNormalizedTipLength(length[0], length[1], length[2])
-        else:
+    def tip_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+        if isinstance(length, (int, float)):
             self.SetNormalizedTipLength(length, length, length)
+        else:
+            self.SetNormalizedTipLength(length[0], length[1], length[2])
 
     @property
-    def label_position(self) -> tuple:  # numpydoc ignore=RT01
+    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized position of the text label along each axis.
 
         Values should be in range ``[0, 1]``.
@@ -449,11 +456,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length: Union[float, Sequence[float]]):  # numpydoc ignore=GL08
-        if isinstance(length, Sequence):
-            self.SetNormalizedLabelPosition(length[0], length[1], length[2])
-        else:
+    def label_position(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+        if isinstance(length, (int, float)):
             self.SetNormalizedLabelPosition(length, length, length)
+        else:
+            self.SetNormalizedLabelPosition(length[0], length[1], length[2])
 
     @property
     def tip_resolution(self) -> int:  # numpydoc ignore=RT01
