@@ -28,6 +28,43 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     The axes colors, labels, and shaft/tip geometry can all be customized.
     The axes can also be arbitrarily positioned and oriented in a scene.
 
+    .. versionadded:: 0.43.0
+
+        - ``AxesActor`` can now be initialized with any/all properties specified.
+        - The shaft and tip type can now be set using strings. Previously, the use
+          of a ``ShaftType`` or ``TipType`` Enum was required.
+        - Added ability to position and orient the axes in space.
+        - Added spatial properties ``orientation``, ``scale``, ``position``, ``origin``,
+          and ``user_matrix``.
+        - Added spatial methods ``rotate_x``, ``rotate_y``, ``rotate_z``.
+        - Added color properties ``label_color``, ``x_color``, ``y_color``, and ``z_color``.
+        - Added ``label_size`` property.
+        - Added ``properties`` keyword to initialize any ``ActorProperty`` properties
+          (e.g. ``ambient``, ``specular``, etc.).
+
+    .. versionchanged:: 0.43.0
+
+        - The default shaft type has been changed from 'line' to 'cylinder'.
+        - The axes shaft and tip properties have been abstracted, e.g. use
+          ``tip_radius`` to set the radius of the axes tips regardless of the ``tip_type``
+          used. Previously, it was necessary to use ``cone_radius`` or ``sphere_radius``
+          separately. See the list of deprecated properties below for details.
+
+    .. deprecated:: 0.43.0
+
+        The following properties have been deprecated:
+
+        - ``x_axis_label`` -> use `x_label` instead.
+        - ``y_axis_label`` -> use `y_label` instead.
+        - ``z_axis_label`` -> use `z_label` instead.
+        - ``cone_radius`` ->  use ``tip_radius`` instead.
+        - ``sphere_radius`` -> use ``tip_radius`` instead.
+        - ``cone_resolution`` -> use ``tip_resolution`` instead.
+        - ``sphere_resolution`` -> use ``tip_resolution`` instead.
+        - ``cylinder_resolution`` -> use ``shaft_resolution`` instead.
+        - ``cylinder_radius`` -> use ``shaft_radius`` instead.
+        - ``line_width`` -> use ``shaft_width`` instead.
+
     Parameters
     ----------
     x_label : str, default: "X"
@@ -83,7 +120,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         ``[0, 1]``.
 
     shaft_resolution : int, default: 16
-        Resolution of the axes shafts.
+        Resolution of the axes shafts. Only has an effect if ``shaft_type``
+        is ``'cylinder'``.
 
     tip_type : str | AxesActor.TipType, default: 'cone'
         Tip type of the axes, either ``'cone'`` or ``'sphere'``.
@@ -124,21 +162,29 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         3x3 transformation matrix, or 4x4 transformation matrix.
 
     visibility : bool, default: True
-        Visibility of the axes. If ``False``, the axes are not
-        visible.
+        Visibility of the axes. If ``False``, the axes are not visible.
 
     properties : dict, optional
-        Apply``:class:~pyvista.ActorProperties`` to all axes shafts and tips.
+        Apply any ``:class:~pyvista.ActorProperties`` to all axes shafts and tips.
 
     **kwargs : dict, optional
         Used for handling deprecated parameters.
 
     Examples
     --------
-    Create the default axes marker.
+    Create the default axes actor.
 
     >>> import pyvista as pv
     >>> axes_actor = pv.AxesActor()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes_actor)
+    >>> pl.show()
+
+    Create an axes actor with a specific position and orientation in space.
+
+    >>> axes_actor = pv.AxesActor(
+    ...     position=(1, 2, 3), orientation=(10, 20, 30)
+    ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes_actor)
     >>> pl.show()
