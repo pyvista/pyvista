@@ -369,8 +369,10 @@ the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
 directive.
 
 .. code:: python
+
     import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
+
     def addition(a, b):
         """Add two numbers.
 
