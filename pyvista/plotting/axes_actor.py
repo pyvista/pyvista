@@ -157,7 +157,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     scale : float | Vector, default: (1, 1, 1)
         Scaling factor for the axes.
 
-    user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
+    user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray, default: None
         Transformation to apply to the axes. Can be a vtkTransform,
         3x3 transformation matrix, or 4x4 transformation matrix.
 
@@ -261,7 +261,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         orientation=(0, 0, 0),
         origin=(0, 0, 0),
         scale=(1, 1, 1),
-        user_matrix=np.eye(4),
+        user_matrix=None,
         visibility=True,
         properties=None,
         **kwargs,
@@ -366,7 +366,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.label_color = label_color
 
         # Set Prop3D properties
-        self._user_matrix = user_matrix
+        self._user_matrix = np.eye(4) if user_matrix is None else user_matrix
         self.position = position
         self.origin = origin
         self.orientation = orientation

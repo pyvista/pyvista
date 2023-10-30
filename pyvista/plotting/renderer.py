@@ -902,7 +902,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         orientation=(0, 0, 0),
         origin=(0, 0, 0),
         scale=(1, 1, 1),
-        user_matrix=np.eye(4),
+        user_matrix=None,
         reset_camera=True,
         **kwargs,
     ) -> AxesActor:
@@ -928,35 +928,38 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Enable or disable the text labels for the axes.
 
         x_color : ColorLike, optional
-            Color of the x-axis shaft and tip.
+            Color of the x-axis shaft and tip. By default, the color is
+            set to ``pyvista.global_theme.axes.x_color``.
 
         y_color : ColorLike, optional
-            Color of the y-axis shaft and tip.
+            Color of the y-axis shaft and tip. By default, the color is
+            set to ``pyvista.global_theme.axes.y_color``.
 
         z_color : ColorLike, optional
-            Color of the z-axis shaft and tip.
+            Color of the z-axis shaft and tip. By default, the color is
+            set to ``pyvista.global_theme.axes.z_color``.
 
-        total_length : float | Sequence[float], default: 1
+        total_length : float | Vector, default: (1, 1, 1)
             Total length of each axis (shaft plus tip).
 
-        position : Sequence[float], default: (0, 0, 0)
+        position : Vector, default: (0, 0, 0)
             Position of the axes.
 
-        orientation : Sequence[float], default: (0, 0, 0)
+        orientation : Vector, default: (0, 0, 0)
             Orientation angles of the axes which define rotations about
             the world's x-y-z axes. The angles are specified in degrees
             and in x-y-z order. However, the actual rotations are
             applied in the following order: rotate_z first,
             then rotate_x, and finally rotate_y.
 
-        origin : Sequence[float], default: (0, 0, 0)
+        origin : Vector, default: (0, 0, 0)
             Origin of the axes. This is the point about which all
             rotations take place.
 
-        scale : float | Sequence[float], default: (1, 1, 1)
+        scale : float | Vector, default: (1, 1, 1)
             Scaling factor for the axes.
 
-        user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
+        user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray, default: None
             Transformation to apply to the axes. Can be a vtkTransform,
             3x3 transformation matrix, or 4x4 transformation matrix.
 
