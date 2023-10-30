@@ -22,10 +22,150 @@ from .colors import Color, ColorLike
 from .prop3d import Prop3D
 
 
-class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
-    """Wrapper for vtkAxesActor.
+class AxesActor(Prop3D, _vtk.vtkAxesActor):
+    """Create a hybrid 2D/3D actor to represent 3D axes in a scene.
 
-    Hybrid 2D/3D actor used to represent 3D axes in a scene.
+    The axes colors, labels, and shaft/tip geometry can all be customized.
+    The axes can also be arbitrarily positioned and oriented in a scene.
+
+    Parameters
+    ----------
+    x_label : str, default: "X"
+        Text label for the x-axis.
+
+    y_label : str, default: "Y"
+        Text label for the y-axis.
+
+    z_label : str, default: "Z"
+        Text label for the z-axis.
+
+    label_color : ColorLike, optional
+        Color of the label text for all axes.
+
+    labels_off : bool, default: False
+        Enable or disable the text labels for the axes.
+
+    label_size : List[float, float, float], default: (0.25, 0.1)
+        The width and height of the axes labels. Values should
+        be in range ``[0, 1]``.
+
+    label_position : float | Sequence[float], default: 1
+        Normalized label position along the axes shafts. Values should
+        be in range ``[0, 1]``.
+
+    x_color : ColorLike, optional
+        Color of the x-axis shaft and tip.
+
+    y_color : ColorLike, optional
+        Color of the y-axis shaft and tip.
+
+    z_color : ColorLike, optional
+        Color of the z-axis shaft and tip.
+
+    shaft_type : str | AxesActor.ShaftType, default: 'cylinder'
+        Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
+
+    shaft_radius : float, default: 0.1
+        Cylinder radius of the axes shafts. Only has an effect if ``shaft_type``
+        is ``'cylinder'``.
+
+    shaft_width : float, default: 2
+        Line width of the axes shafts in screen units. Only has
+        an effect if ``shaft_type`` is ``'line'``.
+
+    shaft_length : float | Sequence[float], default: 0.8
+        Normalized length of the shaft for each axis. Values should be
+        in range ``[0, 1]``.
+
+    shaft_resolution : int, default: 16
+        Resolution of the axes shafts.
+
+    tip_type : str | AxesActor.TipType, default: 'cone'
+        Tip type of the axes, either ``'cone'`` or ``'sphere'``.
+
+    tip_radius : float, default: 0.4
+        Radius of the axes tips.
+
+    tip_length : float | Sequence[float], default: 0.2
+        Normalized length of the axes tips in range ``[0, 1]``.
+
+    tip_resolution : int , default: 16
+        Resolution of the axes tips.
+
+    total_length : float | Sequence[float], default: (1, 1, 1)
+        Total length of each axis (shaft plus tip).
+
+    position : Sequence[float], default: (0, 0, 0)
+        Position of the axes.
+
+    orientation : Sequence[float], default: (0, 0, 0)
+        Orientation angles of the axes which define rotations about
+        the world's x-y-z axes. The angles are specified in degrees
+        and in x-y-z order. However, the actual rotations are
+        applied in the following order: rotate_z first,
+        then rotate_x, and finally rotate_y.
+
+    origin : Sequence[float], default: (0, 0, 0)
+        Origin of the axes. This is the point about which all
+        rotations take place.
+
+    scale : float | Sequence[float], default: (1, 1, 1)
+        Scaling factor for the axes.
+
+    user_matrix : TransformLike
+        Transformation to apply to the axes. Can be a vtkTransform,
+        3x3 transformation matrix, or 4x4 transformation matrix.
+
+    visibility : bool, default: True
+        Visibility of the axes. If ``False``, the axes are not
+        visible.
+
+    properties : dict, optional
+        Apply``:class:~pyvista.ActorProperties`` to all axes shafts and tips.
+
+    **kwargs : dict, optional
+        Used for handling deprecated parameters.
+
+    Examples
+    --------
+    Create the default axes marker.
+
+    >>> import pyvista as pv
+    >>> axes_actor = pv.AxesActor()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes_actor)
+    >>> pl.show()
+
+    Create an axes actor with custom colors and axis labels.
+
+    >>> axes_actor = pv.AxesActor(
+    ...     shaft_type='line',
+    ...     shaft_width=4,
+    ...     x_color="#378df0",
+    ...     y_color="#ab2e5d",
+    ...     z_color="#f7fb9a",
+    ...     x_label="X Axis",
+    ...     y_label="Y Axis",
+    ...     z_label="Z Axis",
+    ...     label_size=(0.1, 0.1),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes_actor)
+    >>> pl.show()
+
+
+    The actor can also be used as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`
+
+    >>> axes_actor = pv.AxesActor(x_label="U", y_label="V", z_label="W")
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cone())
+    >>> _ = pl.add_orientation_widget(
+    ...     axes_actor,
+    ...     viewport=(0, 0, 0.5, 0.5),
+    ... )
+    >>> pl.show()
 
     """
 
@@ -54,13 +194,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
         y_color=None,
         z_color=None,
         shaft_type="cylinder",
-        shaft_length=0.8,
         shaft_radius=0.01,
         shaft_width=2,
+        shaft_length=0.8,
         shaft_resolution=16,
+        tip_type="cone",
         tip_radius=0.4,
         tip_length=0.2,
-        tip_type="cone",
         tip_resolution=16,
         total_length=(1, 1, 1),
         position=(0, 0, 0),
@@ -72,153 +212,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):  # numpydoc ignore=PR01
         properties=None,
         **kwargs,
     ):
-        """Create a hybrid 2D/3D actor to represent 3D axes in a scene.
-
-        The axes colors, labels, and shaft/tip geometry can all be customized.
-        The axes can also be arbitrarily positioned and oriented in a scene.
-
-        Parameters
-        ----------
-        x_label : str, default: "X"
-            Text label for the x-axis.
-
-        y_label : str, default: "Y"
-            Text label for the y-axis.
-
-        z_label : str, default: "Z"
-            Text label for the z-axis.
-
-        label_color : ColorLike, optional
-            Color of the label text for all axes.
-
-        labels_off : bool, default: False
-            Enable or disable the text labels for the axes.
-
-        label_size : Sequence[float], default: (0.25, 0.1)
-            The width and height of the axes labels. Values should
-            be in range ``[0, 1]``.
-
-        label_position : float | Sequence[float], default: 1
-            Normalized label position along the axes shafts. Values should
-            be in range ``[0, 1]``.
-
-        x_color : ColorLike, optional
-            Color of the x-axis shaft and tip.
-
-        y_color : ColorLike, optional
-            Color of the y-axis shaft and tip.
-
-        z_color : ColorLike, optional
-            Color of the z-axis shaft and tip.
-
-        shaft_type : str | AxesActor.ShaftType, default: 'cylinder'
-            Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
-
-        shaft_length : float | Sequence[float], default: 0.8
-            Normalized length of the shaft for each axis. Values should be
-            in range ``[0, 1]``.
-
-        shaft_radius : float, default: 0.1
-            Cylinder radius of the axes shafts. Only has an effect if ``shaft_type``
-            is ``'cylinder'``.
-
-        shaft_width : float, default: 2
-            Line width of the axes shafts in screen units. Only has
-            an effect if ``shaft_type`` is ``'line'``.
-
-        shaft_resolution : int, default: 16
-            Resolution of the axes shafts.
-
-        tip_type : str | AxesActor.TipType, default: 'cone'
-            Tip type of the axes, either ``'cone'`` or ``'sphere'``.
-
-        tip_radius : float, default: 0.4
-            Radius of the axes tips.
-
-        tip_length : float | Sequence[float], default: 0.2
-            Normalized length of the axes tips in range ``[0, 1]``.
-
-        tip_resolution : int , default: 16
-            Resolution of the axes tips.
-
-        total_length : float | Sequence[float], default: (1, 1, 1)
-            Total length of each axis (shaft plus tip).
-
-        position : Sequence[float], default: (0, 0, 0)
-            Position of the axes.
-
-        orientation : Sequence[float], default: (0, 0, 0)
-            Orientation angles of the axes which define rotations about
-            the world's x-y-z axes. The angles are specified in degrees
-            and in x-y-z order. However, the actual rotations are
-            applied in the following order: rotate_z first,
-            then rotate_x, and finally rotate_y.
-
-        origin : Sequence[float], default: (0, 0, 0)
-            Origin of the axes. This is the point about which all
-            rotations take place.
-
-        scale : float | Sequence[float], default: (1, 1, 1)
-            Scaling factor for the axes.
-
-        user_matrix : TransformLike
-            Transformation to apply to the axes. Can be a vtkTransformation,
-            3x3 transformation matrix, or 4x4 transformation matrix.
-
-        properties: dict, optional
-            Apply``:class:~pyvista.ActorProperties`` to all axes shafts and tips.
-
-        **kwargs : dict, optional
-            Used for handling deprecated parameters.
-
-        Returns
-        -------
-        pvista.AxesActor
-
-        Examples
-        --------
-        Create the default axes marker.
-
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesActor()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes_actor)
-        >>> pl.show()
-
-        Create an axes actor with custom colors and axis labels.
-
-        >>> axes_actor = pv.AxesActor(
-        ...     shaft_type='line',
-        ...     shaft_width=4,
-        ...     x_color="#378df0",
-        ...     y_color="#ab2e5d",
-        ...     z_color="#f7fb9a",
-        ...     xlabel="X Axis",
-        ...     ylabel="Y Axis",
-        ...     zlabel="Z Axis",
-        ...     label_size=(0.1, 0.1),
-        ... )
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes_actor)
-        >>> pl.show()
-
-
-        The actor can also be used as a custom orientation widget with
-        :func:`~pyvista.Renderer.add_orientation_widget`
-
-        >>> axes_actor = pv.AxesActor(
-        ...     x_label="U", y_label="V", z_label="W"
-        ... )
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Cone())
-        >>> _ = pl.add_orientation_widget(
-        ...     axes_actor,
-        ...     viewport=(0, 0, 0.5, 0.5),
-        ... )
-        >>> pl.show()
-
-        """
+        """Initialize AxesActor."""
         super().__init__()
         self.__enable_orientation_workaround = True
 
