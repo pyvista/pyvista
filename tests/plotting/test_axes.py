@@ -442,9 +442,8 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
 
 
 def test_axes_actor_deprecated_constructor():
-    # test deprecation of `create_axes_marker` as an AxesActor constructor
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove this deprecated constructor')
+        raise RuntimeError('Remove deprecated AxesActor constructor `create_axes_marker`')
 
     # test create_axes_marker raises deprecation error
     with pytest.warns(PyVistaDeprecationWarning, match='`create_axes_actor` has been deprecated'):

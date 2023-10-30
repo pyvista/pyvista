@@ -2,6 +2,7 @@ import pytest
 from pytest import raises
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
@@ -177,3 +178,11 @@ def test_legend_face(sphere, face):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
+
+
+def test_add_axes_at_origin_deprecated():
+    if pv._version.version_info >= (0, 46):
+        raise RuntimeError('Remove deprecated method `add_axes_at_origin`')
+    p = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match='`add_axes_at_origin` is deprecated'):
+        p.add_axes_at_origin()

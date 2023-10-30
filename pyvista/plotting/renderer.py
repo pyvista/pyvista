@@ -877,8 +877,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_axes_at_origin(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Add axes actor at the origin.
 
-        This method is deprecated. Use `add_axes_marker` instead.
+        .. deprecated:: 0.43.0
+            This method is deprecated. Use `add_axes_marker` instead.
+
         """
+        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
         warnings.warn(
             "Use of `add_axes_at_origin` is deprecated. Use `add_axes_marker` instead.",
             PyVistaDeprecationWarning,
@@ -1130,7 +1133,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Returns
         -------
         AxesActor
-            Axes actor for the added widget.
+            Axes actor of the added widget.
 
         Examples
         --------
@@ -1238,7 +1241,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def axes_enabled(self):  # numpydoc ignore=RT01
-        """Return ``True`` when the axes widget enabled.
+        """Return ``True`` when the axes widget is enabled.
 
         Examples
         --------

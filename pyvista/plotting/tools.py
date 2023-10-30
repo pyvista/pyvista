@@ -109,7 +109,7 @@ def create_axes_marker(*args, **kwargs):  # numpydoc ignore=RT01,PR01
     """Create an axes actor.
 
     .. deprecated:: 0.43.0
-       Use :func:`pyvista.AxesActor` instead.
+       This method is deprecated. Use :func:`pyvista.AxesActor` instead.
 
     """
     # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
