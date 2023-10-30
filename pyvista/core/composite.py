@@ -396,12 +396,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        data = self.GetBlock(index)
-        if data is None:
-            return data
-        if data is not None and not is_pyvista_dataset(data):
-            data = wrap(data)
-        return data
+        return wrap(self.GetBlock(index))
 
     def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
         """Add a data set to the next block index.
@@ -438,8 +433,7 @@ class MultiBlock(
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
-        if not is_pyvista_dataset(dataset):
-            dataset = wrap(dataset)
+        dataset = wrap(dataset)
         self.n_blocks += 1
         self[index] = dataset
         # No overwrite if name is None
@@ -698,9 +692,7 @@ class MultiBlock(
             i = index
 
         # data, i, and name are a single value now
-        if data is not None and not is_pyvista_dataset(data):
-            data = wrap(data)
-        data = cast(pyvista.DataSet, data)
+        data = cast(pyvista.DataSet, wrap(data))
 
         i = range(self.n_blocks)[i]
 

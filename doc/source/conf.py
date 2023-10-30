@@ -361,9 +361,7 @@ sphinx_gallery_conf = {
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
     "image_scrapers": (DynamicScraper(), "matplotlib"),
-    "first_notebook_cell": (
-        "%matplotlib inline\n" "from pyvista import set_plot_theme\n" "set_plot_theme('document')\n"
-    ),
+    "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }
