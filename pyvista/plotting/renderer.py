@@ -881,7 +881,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             This method is deprecated. Use `add_axes_marker` instead.
 
         """
-        # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
             "Use of `add_axes_at_origin` is deprecated. Use `add_axes_marker` instead.",
             PyVistaDeprecationWarning,

@@ -117,7 +117,9 @@ def test_axes_actor_label_position(axes_actor):
 
 def test_axes_actor_tip_resolution(axes_actor):
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove this deprecated property')
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError('Remove deprecated property `cone_resolution` and `sphere_resolution')
 
     axes_actor.tip_resolution = 42
     assert axes_actor.tip_resolution == 42
@@ -136,7 +138,9 @@ def test_axes_actor_tip_resolution(axes_actor):
 
 def test_axes_actor_shaft_resolution(axes_actor):
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove this deprecated property')
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError('Remove deprecated property `shaft_resolution')
 
     axes_actor.shaft_resolution = 42
     assert axes_actor.shaft_resolution == 42
@@ -161,7 +165,9 @@ def test_axes_actor_tip_radius(axes_actor):
 
 def test_axes_actor_cone_radius(axes_actor):
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove this deprecated property')
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError('Remove deprecated `cone_radius`')
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_radius` instead."):
         axes_actor.cone_radius = 0.8
@@ -170,7 +176,9 @@ def test_axes_actor_cone_radius(axes_actor):
 
 def test_axes_actor_sphere_radius(axes_actor):
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove this deprecated property')
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError('Remove deprecated property `sphere_radius')
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_radius` instead."):
         axes_actor.sphere_radius = 0.8
@@ -179,7 +187,9 @@ def test_axes_actor_sphere_radius(axes_actor):
 
 def test_axes_actor_cylinder_radius(axes_actor):
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove this deprecated property')
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError('Remove deprecated property `cylinder_radius')
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `shaft_radius` instead."):
         axes_actor.cylinder_radius = 0.03
@@ -239,7 +249,11 @@ def test_axes_actor_axes_labels(axes_actor):
     assert actor_init.z_label == 'C'
 
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Remove "xyz_axis_label" deprecated property')
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError(
+            'Remove deprecated properties `x_axis_label`, `y_axis_label`, `z_axis_label`'
+        )
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `x_label` instead."):
         axes_actor.x_axis_label = 'Axis X'
@@ -443,6 +457,8 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
 
 def test_axes_actor_deprecated_constructor():
     if pv._version.version_info >= (0, 46):
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
         raise RuntimeError('Remove deprecated AxesActor constructor `create_axes_marker`')
 
     # test create_axes_marker raises deprecation error

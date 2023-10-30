@@ -182,6 +182,8 @@ def test_legend_face(sphere, face):
 
 def test_add_axes_at_origin_deprecated():
     if pv._version.version_info >= (0, 46):
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
         raise RuntimeError('Remove deprecated method `add_axes_at_origin`')
     p = pv.Plotter()
     with pytest.warns(PyVistaDeprecationWarning, match='`add_axes_at_origin` is deprecated'):
