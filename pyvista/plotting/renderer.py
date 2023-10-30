@@ -907,6 +907,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     ) -> AxesActor:
         """Add axes actor to the scene.
 
+        The axes colors, labels, and shaft/tip geometry can all be customized.
+        The axes can also be arbitrarily positioned and oriented in space.
+
+        .. versionadded:: 0.43.0
+
         Parameters
         ----------
         x_label : str, default: "X"
@@ -950,8 +955,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         scale : float | Sequence[float], default: (1, 1, 1)
             Scaling factor for the axes.
 
-        user_matrix : TransformLike
-            Transformation to apply to the axes. Can be a vtkTransformation,
+        user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
+            Transformation to apply to the axes. Can be a vtkTransform,
             3x3 transformation matrix, or 4x4 transformation matrix.
 
         **kwargs : dict
@@ -964,12 +969,35 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
+        Add an axes marker to a scene. By default, the marker is positioned
+        at the origin.
+
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere(center=(2, 0, 0)), color='r')
         >>> _ = pl.add_mesh(pv.Sphere(center=(0, 2, 0)), color='g')
         >>> _ = pl.add_mesh(pv.Sphere(center=(0, 0, 2)), color='b')
         >>> _ = pl.add_axes_marker()
+        >>> pl.show()
+
+        Apply a transformation to a mesh and show an axes marker with
+        the same transformation.
+
+        >>> mesh = pv.ParametricSuperEllipsoid(0.6, 0.4, 0.2)
+        >>> transform = np.array(
+        ...     [
+        ...         [0.78410209, -0.49240388, 0.37778609, 1.0],
+        ...         [0.52128058, 0.85286853, 0.02969559, 2.0],
+        ...         [-0.33682409, 0.17364818, 0.92541658, 3.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
+        >>> mesh.transform(transform)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_axes_marker(user_matrix=transform)
+        >>> _ = pl.show_grid()
         >>> pl.show()
 
         """
