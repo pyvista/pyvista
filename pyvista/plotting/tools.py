@@ -1,14 +1,15 @@
 """Module containing useful plotting tools."""
 
 from enum import Enum
-from functools import wraps
 import os
 import platform
 from subprocess import PIPE, Popen, TimeoutExpired
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.axes_actor import AxesActor
 
 from . import _vtk
@@ -104,9 +105,18 @@ def system_supports_plotting():
     return SUPPORTS_PLOTTING
 
 
-@wraps(AxesActor.__init__)
 def create_axes_marker(*args, **kwargs):  # numpydoc ignore=RT01,PR01
-    """Wrap ``AxesActor`` constructor."""
+    """Create an axes actor.
+
+    .. deprecated:: 0.43.0
+       Use :func:`pyvista.AxesActor` instead.
+
+    """
+    # deprecated 0.43.0, convert to error in 0.45.0, remove 0.46.0
+    warnings.warn(
+        '`create_axes_actor` has been deprecated. Use `pyvista.AxesActor` instead',
+        PyVistaDeprecationWarning,
+    )
     return AxesActor(*args, **kwargs)
 
 

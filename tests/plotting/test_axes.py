@@ -441,11 +441,17 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
     assert np.allclose(actual_bounds, default_bounds)
 
 
-def test_create_axes_marker_deprecated_constructor():
+def test_axes_actor_deprecated_constructor():
+    # test deprecation of `create_axes_marker` as an AxesActor constructor
     if pv._version.version_info >= (0, 46):
         raise RuntimeError('Remove this deprecated constructor')
 
-    # define valid args for PyVista version < 0.43.0
+    # test create_axes_marker raises deprecation error
+    with pytest.warns(PyVistaDeprecationWarning, match='`create_axes_actor` has been deprecated'):
+        create_axes_marker()
+
+    # test that deprecated args used by `create_axes_marker` are handled correctly by AxesActor
+    # define valid default args originally used by `create_axes_marker` in PyVista version < 0.43.0
     old_args = dict(
         label_color='yellow',
         x_color='red',
@@ -500,13 +506,6 @@ def test_create_axes_marker_deprecated_constructor():
     assert tuple([old_args["tip_length"]] * 3) == axes_actor.tip_length
     assert old_args["ambient"] == axes_actor.x_axis_shaft_properties.ambient
     assert old_args["label_size"] == axes_actor.label_size
-
-    with pytest.warns(PyVistaDeprecationWarning):
-        axes = create_axes_marker(**old_args)
-    axes = create_axes_marker(**old_args_modified)
-    assert np.any(axes)
-    axes = create_axes_marker()
-    assert np.any(axes)
 
 
 def test_axes_actor_raises():

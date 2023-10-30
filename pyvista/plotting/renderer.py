@@ -23,7 +23,7 @@ from .colors import Color, get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .render_passes import RenderPasses
-from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
+from .tools import create_axes_orientation_box, parse_font_family
 from .utilities.gl_checks import check_depth_peeling, uses_egl
 
 ACTOR_LOC_MAP = [
@@ -1124,12 +1124,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
-            widget. See the parameters of :func:`pyvista.create_axes_marker`.
+            widget. See the parameters of :func:`pyvista.AxesActor`.
 
         Returns
         -------
-        vtk.vtkAxesActor
-            Axes actor.
+        AxesActor
+            Axes actor for the added widget.
 
         Examples
         --------
@@ -1187,7 +1187,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **box_args,
             )
         else:
-            self.axes_actor = create_axes_marker(
+            self.axes_actor = AxesActor(
                 label_color=color,
                 x_color=x_color,
                 y_color=y_color,
@@ -1237,7 +1237,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def axes_enabled(self):  # numpydoc ignore=RT01
-        """Return ``True`` when axes are enabled.
+        """Return ``True`` when the axes widget enabled.
 
         Examples
         --------

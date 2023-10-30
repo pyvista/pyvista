@@ -3779,14 +3779,12 @@ def test_axes_actor():
 
 
 def test_axes_marker():
-    # Create actor from three different methods
+    # Create actor with two different methods
     kwargs = dict(properties=dict(specular=0.1), shaft_radius=0.5, shaft_length=1)
-    axes_actor1 = pv.create_axes_marker(position=(0, 0, 0), **kwargs)
-    axes_actor2 = pv.AxesActor(position=(1.5, 0, 0), **kwargs)
+    axes_actor = pv.AxesActor(position=(1.5, 0, 0), **kwargs)
 
     plot = pv.Plotter()
-    plot.add_actor(axes_actor1)
-    plot.add_actor(axes_actor2)
+    plot.add_actor(axes_actor)
     plot.add_axes_marker(position=(-1.5, 0, 0), **kwargs)
     plot.show_grid()
     plot.show()
