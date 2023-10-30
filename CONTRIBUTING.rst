@@ -391,7 +391,7 @@ directive.
             Sum of the two inputs.
 
         """
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
         warnings.warn(
             '`addition` has been deprecated. Use pyvista.add instead',
             PyVistaDeprecationWarning
