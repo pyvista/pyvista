@@ -188,10 +188,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
         if not isinstance(other, _ThemeConfig):
             return False
 
-        if not set(self._all__slots__()) == set(other._all__slots__()):
-            return False
-
-        for attr_name in other._all__slots__():
+        for attr_name in other.__slots__:
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -1568,6 +1565,7 @@ class Theme(_ThemeConfig):
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
         '_logo_file',
         '_before_close_callback',
     ]
