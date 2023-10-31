@@ -124,7 +124,7 @@ def set_plot_theme(theme):
     if isinstance(theme, str):
         theme = theme.lower()
         try:
-            new_theme_type = _NATIVE_THEMES[theme].value
+            new_theme_type = getattr(Theme, _NATIVE_THEMES[theme].value)()
         except KeyError:
             raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
         pyvista.global_theme.load_theme(new_theme_type)
@@ -3404,10 +3404,10 @@ class _TestingTheme(Theme):
 class _NATIVE_THEMES(Enum):
     """Global built-in themes available to PyVista."""
 
-    paraview = Theme.paraview_theme()
-    document = Theme.document_theme()
-    document_pro = Theme.document_pro_theme()
-    dark = Theme.dark_theme()
-    default = Theme.document_theme()
-    testing = Theme.testing_theme()
-    vtk = Theme.vtk_theme()
+    paraview = "paraview_theme"
+    document = "document_theme"
+    document_pro = "document_pro_theme"
+    dark = "dark_theme"
+    default = "document_theme"
+    testing = "testing_theme"
+    vtk = "vtk_theme"

@@ -7,7 +7,7 @@ import pyvista as pv
 from pyvista import colors
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
+from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -234,7 +234,7 @@ def test_colorbar_position_y(default_theme):
 def test_themes(theme):
     try:
         pv.set_plot_theme(theme.name)
-        assert pv.global_theme == theme.value
+        assert pv.global_theme == getattr(Theme, theme.value)()
     finally:
         # always return to testing theme
         pv.set_plot_theme('testing')
@@ -396,7 +396,10 @@ def test_theme_slots(default_theme):
         default_theme.lighting_params.new_attr = 1
 
     # subclasses should also prevent arbitrary attributes
-    theme = DarkTheme()
+    class MyTheme(Theme):
+        pass
+
+    theme = MyTheme()
     with pytest.raises(AttributeError, match='has no attribute'):
         theme.new_attr = 1
 
