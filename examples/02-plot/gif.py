@@ -30,7 +30,7 @@ z = np.sin(r)
 
 # Create and structured surface
 grid = pv.StructuredGrid(x, y, z)
-grid["Height"] = z.rave()
+grid["Height"] = z.ravel()
 grid.plot()
 
 
