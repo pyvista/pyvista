@@ -8,13 +8,8 @@ Contributing
    :target: https://www.codetriage.com/pyvista/pyvista
    :alt: Code Triage
 
-.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
-   :target: https://codespaces.new/pyvista/pyvista
-   :alt: Open in GitHub Codespaces
-
 |Contributor Covenant|
 |codetriage|
-|Open in GitHub Codespaces|
 
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
@@ -50,6 +45,13 @@ running:
 
 Quick Start Development with Codespaces
 ---------------------------------------
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
+|Open in GitHub Codespaces|
+
 A dev container is provided to quickly get started. The default container
 comes with the repository code checked out on a branch of your choice
 and all pyvista dependencies including test dependencies pre-installed.
