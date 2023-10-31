@@ -4580,6 +4580,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
 
+        .. deprecated:: 0.43.0
+            This method is deprecated and will be removed in a future version of
+            PyVista. It is functionally equivalent to directly modifying the
+            scalars of a mesh in-place.
+
+            .. code:: python
+
+                # Modify the points in place
+                mesh["my scalars"] = values
+                # Explicitly call render if needed
+                plotter.render()
+
         Parameters
         ----------
         scalars : sequence
@@ -4592,6 +4604,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
         """
+        # Deprecated on 0.43.0, estimated removal on v0.50.0
+        warnings.warn(
+            "This method is deprecated and will be removed in a future version of "
+            "PyVista. Directly modify the scalars of a mesh in-place instead.",
+            PyVistaDeprecationWarning,
+        )
+
         if mesh is None:
             mesh = self.mesh
 
@@ -4639,6 +4658,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def update_coordinates(self, points, mesh=None, render=True):
         """Update the points of an object in the plotter.
 
+        .. deprecated:: 0.43.0
+            This method is deprecated and will be removed in a future version of
+            PyVista. It is functionally equivalent to directly modifying the
+            points of a mesh in-place.
+
+            .. code:: python
+
+                # Modify the points in place
+                mesh.points = points
+                # Explicitly call render if needed
+                plotter.render()
+
         Parameters
         ----------
         points : np.ndarray
@@ -4651,6 +4682,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
         """
+        # Deprecated on 0.43.0, estimated removal on v0.50.0
+        warnings.warn(
+            "This method is deprecated and will be removed in a future version of "
+            "PyVista. Directly modify the points of a mesh in-place instead.",
+            PyVistaDeprecationWarning,
+        )
         if mesh is None:
             mesh = self.mesh
 

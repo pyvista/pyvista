@@ -257,13 +257,12 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
     # Create and plot structured grid
     sgrid = pyvista.StructuredGrid(X, Y, Z)
 
-    # Get pointer to points
-    points = sgrid.points.copy()
     mesh = sgrid.extract_surface()
+    mesh["Height"] = Z.ravel()
 
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False, smooth_shading=True)
+    plotter.add_mesh(mesh, scalars="Height", show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
         title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True
@@ -278,11 +277,9 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
         telap = time.time() - tstart
         phase = telap * 2 * np.pi * frequency
         Z = np.sin(R + phase)
-        points[:, -1] = Z.ravel()
+        mesh.points[:, -1] = Z.ravel()
+        mesh["Height"] = Z.ravel()
 
-        # update plotting object, but don't automatically render
-        plotter.update_coordinates(points, render=False)
-        plotter.update_scalars(Z.ravel(), render=False)
         mesh.compute_normals(inplace=True)
 
         # Render and get time to render
@@ -298,7 +295,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
 
     # Close movie and delete object
     plotter.close()
-    return points
+    return mesh.points
 
 
 def plot_ants_plane(notebook=None):
