@@ -878,6 +878,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Add axes actor at the origin.
 
         .. deprecated:: 0.43.0
+
             This method is deprecated. Use `add_axes_marker` instead.
 
         """

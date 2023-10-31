@@ -54,9 +54,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         The following properties have been deprecated:
 
-        - ``x_axis_label`` -> use `x_label` instead.
-        - ``y_axis_label`` -> use `y_label` instead.
-        - ``z_axis_label`` -> use `z_label` instead.
+        - ``x_axis_label`` -> use ``x_label`` instead.
+        - ``y_axis_label`` -> use ``y_label`` instead.
+        - ``z_axis_label`` -> use ``z_label`` instead.
         - ``cone_radius`` ->  use ``tip_radius`` instead.
         - ``sphere_radius`` -> use ``tip_radius`` instead.
         - ``cone_resolution`` -> use ``tip_resolution`` instead.
@@ -539,6 +539,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Resolution of the axes cone tips.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `tip_resolution` instead.
 
         """
@@ -563,6 +564,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Resolution of the axes sphere tips.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `tip_resolution` instead.
 
         """
@@ -608,6 +610,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Cylinder resolution of the axes shafts.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `shaft_resolution` instead.
 
         """
@@ -659,6 +662,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Radius of the axes cone tips.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `tip_radius` instead.
 
         """
@@ -683,6 +687,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Radius of the axes sphere tips.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `tip_radius` instead.
 
         """
@@ -707,6 +712,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Cylinder radius of the axes shafts.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `shaft_radius` instead.
 
         """
@@ -844,6 +850,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Text label for the x-axis.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `x_label` instead.
 
         """
@@ -887,6 +894,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Text label for the y-axis.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `y_label` instead.
 
         """
@@ -930,6 +938,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Text label for the z-axis.
 
         .. deprecated:: 0.43.0
+
             This parameter is deprecated. Use `z_label` instead.
 
         """
