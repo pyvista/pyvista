@@ -89,7 +89,7 @@ jobs:
       - uses: awalsh128/cache-apt-pkgs-action@v1.3.1
         with:
           packages: libgl1-mesa-glx xvfb
-          version: 3.0
+          version: 3.1
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
