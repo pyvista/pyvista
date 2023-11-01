@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -453,3 +453,14 @@ def test_plotter_zoom_camera():
 def test_plotter_reset_key_events():
     pl = pv.Plotter()
     pl.reset_key_events()
+
+
+def test_plotter_update_coordinates(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.update_coordinates(sphere.points * 2.0)
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
