@@ -214,8 +214,14 @@ class RenderWindowInteractor:
         """
         call = partial(try_callback, call)
         event = self._get_event_str(event)
-        observer = self.interactor.AddObserver(event, call)
-        self._observers[observer] = event
+        if event in ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent']:
+            # Release events are swallowed by the interactor, but registering
+            # on the interactor style seems to work.
+            # See https://github.com/pyvista/pyvista/issues/4976
+            observer = self.style.add_observer(event, call)
+        else:
+            observer = self.interactor.AddObserver(event, call)
+            self._observers[observer] = event
         return observer
 
     def remove_observer(self, observer):
@@ -416,6 +422,20 @@ class RenderWindowInteractor:
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
+
+    @property
+    def style(self):
+        """Return the current interactor style.
+
+        Returns
+        -------
+        vtkInteractorStyle
+            The current interactor style.
+
+        """
+        if self._style_class is None:
+            self.update_style()
+        return self._style_class
 
     def _toggle_chart_interaction(self, mouse_pos):
         """Toggle interaction with indicated charts.
