@@ -484,10 +484,10 @@ class AffineWidget3D:
             "MouseMoveEvent", self._move_callback
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent", self._press_callback
+            "LeftButtonPressEvent", self._press_callback, interactor_style_fallback=False
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent", self._release_callback
+            "LeftButtonReleaseEvent", self._release_callback, interactor_style_fallback=False
         )
 
     def disable(self):

@@ -184,7 +184,7 @@ class RenderWindowInteractor:
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    def add_observer(self, event, call):
+    def add_observer(self, event, call, interactor_style_fallback=True):
         """Add an observer for the given event.
 
         Parameters
@@ -195,6 +195,10 @@ class RenderWindowInteractor:
 
         call : callable
             Callback to be called when the event is invoked.
+
+        interactor_style_fallback : bool
+            If ``True``, the observer will be added to the interactor style
+            in cases known to be problematic.
 
         Returns
         -------
@@ -214,7 +218,10 @@ class RenderWindowInteractor:
         """
         call = partial(try_callback, call)
         event = self._get_event_str(event)
-        if event in ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent']:
+        if interactor_style_fallback and event in [
+            'LeftButtonReleaseEvent',
+            'RightButtonReleaseEvent',
+        ]:
             # Release events are swallowed by the interactor, but registering
             # on the interactor style seems to work.
             # See https://github.com/pyvista/pyvista/issues/4976
