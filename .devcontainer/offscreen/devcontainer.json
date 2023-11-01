@@ -6,7 +6,7 @@
     },
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "onCreateCommand": "./.devcontainer/osmesa/oncreatecommand.sh",
+  "onCreateCommand": "./.devcontainer/offscreen/oncreatecommand.sh",
   "remoteEnv": {
     "PYVISTA_OFF_SCREEN": "true"
   },
