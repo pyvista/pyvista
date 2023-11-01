@@ -625,8 +625,16 @@ def test_plot_no_active_scalars(sphere):
     plotter.add_mesh(sphere)
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
         plotter.update_scalars(np.arange(5))
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
         plotter.update_scalars(np.arange(sphere.n_faces))
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
 
 
 def test_plot_show_bounds(sphere):

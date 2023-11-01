@@ -4604,7 +4604,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
         """
-        # Deprecated on 0.43.0, estimated removal on v0.50.0
+        # Deprecated on 0.43.0, estimated removal on v0.46.0
         warnings.warn(
             "This method is deprecated and will be removed in a future version of "
             "PyVista. Directly modify the scalars of a mesh in-place instead.",
@@ -4682,7 +4682,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
         """
-        # Deprecated on 0.43.0, estimated removal on v0.50.0
+        # Deprecated on 0.43.0, estimated removal on v0.46.0
         warnings.warn(
             "This method is deprecated and will be removed in a future version of "
             "PyVista. Directly modify the points of a mesh in-place instead.",
