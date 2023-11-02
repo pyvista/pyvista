@@ -135,3 +135,14 @@ lines, even in two sections.
 
     >>> pyvista.Sphere().plot(color='red',
     ...                       cpos='xy')
+
+
+Trying static html for jupyter backend
+
+.. jupyter-execute::
+
+   import pyvista
+   sphere = pyvista.Sphere()
+   pl = pyvista.Plotter(notebook=True)
+   pl.add_mesh(sphere)
+   pl.show(jupyter_backend='html')
