@@ -1,5 +1,6 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
+from typing import cast
 
 import numpy as np
 
@@ -771,4 +772,4 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return wrap(alg.GetOutput())
+        return cast(pyvista.ImageData, wrap(alg.GetOutput()))

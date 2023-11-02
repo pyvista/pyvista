@@ -64,7 +64,7 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
+def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> np.ndarray:
     """Run a ``vtkWindowToImageFilter`` and get output as array.
 
     Parameters
@@ -84,6 +84,8 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
     imfilter.Modified()
     imfilter.Update()
     image = wrap(imfilter.GetOutput())
+    if image is None:
+        return np.empty()
     img_size = image.dimensions
     img_array = point_array(image, 'ImageScalars')
     # Reshape and write

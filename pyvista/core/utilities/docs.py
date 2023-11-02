@@ -3,9 +3,10 @@ import inspect
 import os
 import os.path as op
 import sys
+from typing import Dict
 
 
-def linkcode_resolve(domain, info, edit=False):
+def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> str:
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -22,7 +23,7 @@ def linkcode_resolve(domain, info, edit=False):
     Returns
     -------
     str
-        The code URL.
+        The code URL. Empty string if there is no valid link.
 
     Notes
     -----
@@ -36,7 +37,7 @@ def linkcode_resolve(domain, info, edit=False):
     import pyvista
 
     if domain != 'py':
-        return None
+        return ''
 
     modname = info['module']
     fullname = info['fullname']
@@ -47,14 +48,14 @@ def linkcode_resolve(domain, info, edit=False):
 
     submod = sys.modules.get(modname)
     if submod is None:
-        return None
+        return ''
 
     obj = submod
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
         except Exception:
-            return None
+            return ''
 
     # deal with our decorators properly
     while hasattr(obj, 'fget'):
@@ -69,8 +70,8 @@ def linkcode_resolve(domain, info, edit=False):
         try:
             fn = inspect.getsourcefile(sys.modules[obj.__module__])
         except Exception:
-            return None
-        return None
+            return ''
+        return ''
 
     fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
     fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows

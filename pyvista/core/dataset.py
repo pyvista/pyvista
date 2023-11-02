@@ -67,7 +67,7 @@ class ActiveArrayInfo:
         self.association = association
         self.name = name
 
-    def copy(self):
+    def copy(self) -> ActiveArrayInfo:
         """Return a copy of this object.
 
         Returns
@@ -657,7 +657,7 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
-    def set_active_vectors(self, name: Optional[str], preference='point'):
+    def set_active_vectors(self, name: Optional[str], preference: str = 'point'):
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -694,7 +694,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name: Optional[str], preference='point'):
+    def set_active_tensors(self, name: Optional[str], preference: str = 'point'):
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -874,7 +874,11 @@ class DataSet(DataSetFilters, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
     def rotate_x(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
+        self,
+        angle: float,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about the x-axis.
 
@@ -928,7 +932,11 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def rotate_y(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
+        self,
+        angle: float,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about the y-axis.
 
@@ -981,7 +989,11 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def rotate_z(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
+        self,
+        angle: float,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about the z-axis.
 
@@ -1036,11 +1048,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_vector(
         self,
-        vector: Iterable[float],
+        vector: Vector,
         angle: float,
-        point=(0.0, 0.0, 0.0),
-        transform_all_input_vectors=False,
-        inplace=False,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about a vector.
 
@@ -1098,7 +1110,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def translate(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+        self, xyz: Vector, transform_all_input_vectors: bool = False, inplace: bool = False
     ):
         """Translate the mesh.
 
@@ -1147,8 +1159,8 @@ class DataSet(DataSetFilters, DataObject):
     def scale(
         self,
         xyz: Union[Number, list, tuple, np.ndarray],
-        transform_all_input_vectors=False,
-        inplace=False,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Scale the mesh.
 
@@ -1203,7 +1215,12 @@ class DataSet(DataSetFilters, DataObject):
             transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_x(
+        self,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
         """Flip mesh about the x-axis.
 
         .. note::
@@ -1254,7 +1271,12 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_y(
+        self,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
         """Flip mesh about the y-axis.
 
         .. note::
@@ -1305,7 +1327,12 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_z(
+        self,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
         """Flip mesh about the z-axis.
 
         .. note::
@@ -1315,16 +1342,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : list, optional
+        point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1357,7 +1384,11 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def flip_normal(
-        self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False
+        self,
+        normal: Vector,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Flip mesh about the normal.
 
@@ -1368,7 +1399,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        normal : tuple
+        normal : sequence[float]
            Normal vector to flip about.
 
         point : sequence[float]
@@ -1413,7 +1444,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: DataSet, deep: bool = True):
+    def copy_meta_from(self, ido: DataSet, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1438,6 +1469,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
+        return None
 
     @property
     def point_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -1484,7 +1516,7 @@ class DataSet(DataSetFilters, DataObject):
             self.GetPointData(), dataset=self, association=FieldAssociation.POINT
         )
 
-    def clear_point_data(self):
+    def clear_point_data(self) -> None:
         """Remove all point arrays.
 
         Examples
@@ -1502,12 +1534,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.point_data.clear()
+        return None
 
-    def clear_cell_data(self):
+    def clear_cell_data(self) -> None:
         """Remove all cell arrays."""
         self.cell_data.clear()
+        return None
 
-    def clear_data(self):
+    def clear_data(self) -> None:
         """Remove all arrays from point/cell/field data.
 
         Examples
@@ -1527,6 +1561,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
+        return None
 
     @property
     def cell_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -2063,7 +2098,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self, mesh: _vtk.vtkDataSet, deep: bool = True):
+    def copy_from(self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -2099,6 +2134,7 @@ class DataSet(DataSetFilters, DataObject):
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
+        return None
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2486,7 +2522,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         pointa: Iterable[float],
         pointb: Iterable[float],
-        tolerance=0.0,
+        tolerance: float = 0.0,
     ) -> np.ndarray:
         """Find the index of cells whose bounds intersect a line.
 
@@ -2547,7 +2583,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         pointa: Iterable[float],
         pointb: Iterable[float],
-        tolerance=0.0,
+        tolerance: float = 0.0,
     ) -> np.ndarray:
         """Find the index of cells that intersect a line.
 

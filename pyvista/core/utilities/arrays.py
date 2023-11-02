@@ -232,7 +232,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters

@@ -48,7 +48,7 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 
-def _set_plot_theme_from_env():
+def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
@@ -60,6 +60,7 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
+    return None
 
 
 def load_theme(filename):
@@ -1825,7 +1826,7 @@ class Theme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: ColorLike):  # numpydoc ignore=GL08
+    def background(self, new_background: ColorLike) -> None:  # numpydoc ignore=GL08
         self._background = Color(new_background)
 
     @property
@@ -2829,7 +2830,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme):
+    def load_theme(self, theme: Union[str, 'Theme']) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -2873,8 +2874,9 @@ class Theme(_ThemeConfig):
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
+        return None
 
-    def save(self, filename):
+    def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
 
         ``before_close_callback`` is non-serializable and is omitted.
@@ -2900,6 +2902,8 @@ class Theme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
+
+        return None
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01

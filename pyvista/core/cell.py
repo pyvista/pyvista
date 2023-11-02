@@ -1,7 +1,7 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Tuple, cast
+from typing import List, Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -570,7 +570,12 @@ class CellArray(_vtk.vtkCellArray):
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
     """
 
-    def __init__(self, cells=None, n_cells=None, deep=False):
+    def __init__(
+        self,
+        cells: Optional[Union[np.ndarray, List[int]]] = None,
+        n_cells: Optional[int] = None,
+        deep: bool = False,
+    ):
         """Initialize a vtkCellArray."""
         self.__offsets = None
         self.__connectivity = None
@@ -594,7 +599,7 @@ class CellArray(_vtk.vtkCellArray):
         self.__offsets = self.__connectivity = None
 
     @property
-    def cells(self):  # numpydoc ignore=RT01
+    def cells(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return a numpy array of the cells.
 
         Returns
@@ -605,7 +610,7 @@ class CellArray(_vtk.vtkCellArray):
         return _vtk.vtk_to_numpy(self.GetData()).ravel()
 
     @property
-    def n_cells(self):  # numpydoc ignore=RT01
+    def n_cells(self) -> int:  # numpydoc ignore=RT01
         """Return the number of cells.
 
         Returns
@@ -616,7 +621,7 @@ class CellArray(_vtk.vtkCellArray):
         return self.GetNumberOfCells()
 
     @property
-    def connectivity_array(self):  # numpydoc ignore=RT01
+    def connectivity_array(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return the array with the point ids that define the cells' connectivity.
 
         Returns
@@ -627,7 +632,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_connectivity_array(self)
 
     @property
-    def offset_array(self):  # numpydoc ignore=RT01
+    def offset_array(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return the array used to store cell offsets.
 
         Returns
@@ -649,7 +654,11 @@ class CellArray(_vtk.vtkCellArray):
         self.__connectivity = connectivity
 
     @staticmethod
-    def from_arrays(offsets, connectivity, deep=False) -> CellArray:
+    def from_arrays(
+        offsets: Union[np.ndarray, List[int]],
+        connectivity: Union[np.ndarray, List[int]],
+        deep: bool = False,
+    ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
 
         Parameters
@@ -691,7 +700,9 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(cls, cells, deep=False):
+    def from_regular_cells(
+        cls, cells: Union[np.ndarray, List[List[int]]], deep: bool = False
+    ) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -721,12 +732,12 @@ class CellArray(_vtk.vtkCellArray):
 # returned as CellArrays
 
 
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray):
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> np.ndarray:
     """Return the array with the point ids that define the cells' connectivity."""
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray):
+def _get_offset_array(cellarr: _vtk.vtkCellArray) -> np.ndarray:
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
