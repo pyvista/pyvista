@@ -93,6 +93,23 @@ class Widget(HTML):  # numpydoc ignore=PR01
         return self._src
 
 
+class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
+    """Custom HTML iframe widget for embedding the trame viewer."""
+
+    def __init__(self, plotter, width, height, **kwargs):
+        """Initialize."""
+        if HTML is object:
+            raise ImportError('Please install `ipywidgets`.')
+        scene = plotter.export_html(filename=None)
+        src = scene.getvalue().replace('"', '&quot;')
+        # eventually we could maybe expose this, but for now make sure we're at least
+        # consistent with matplotlib's color (light gray)
+        border = "border: 1px solid rgb(221,221,221);"
+        value = f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; height: {height}; {border}"></iframe>'
+        super().__init__(value, **kwargs)
+        self._src = src
+
+
 def launch_server(server=None, port=None, host=None, **kwargs):
     """Launch a trame server for use with Jupyter.
 
@@ -237,6 +254,8 @@ def show_trame(
         * ``'server'``: Uses a view that is purely server rendering.
         * ``'client'``: Uses a view that is purely client rendering (generally
           safe without a virtual frame buffer)
+        * ``'html'``: Exports the scene for client rendering that can be
+          embedded in a webpage.
 
     name : str, optional
         The name of the trame server on which the UI is defined.
@@ -303,6 +322,18 @@ def show_trame(
     if plotter.render_window is None:
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
+    if plotter._window_size_unset:
+        dw, dh = '99%', '600px'
+    else:
+        dw, dh = plotter.window_size
+        dw = f'{dw}px'
+        dh = f'{dh}px'
+    kwargs.setdefault('width', dw)
+    kwargs.setdefault('height', dh)
+
+    if True:  # mode == 'html':
+        return EmbeddableWidget(plotter, **kwargs)
+
     if name is None:
         server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
     else:
@@ -334,15 +365,6 @@ def show_trame(
         host=kwargs.get('host', 'localhost'),
         protocol=kwargs.get('protocol', 'http'),
     )
-
-    if plotter._window_size_unset:
-        dw, dh = '99%', '600px'
-    else:
-        dw, dh = plotter.window_size
-        dw = f'{dw}px'
-        dh = f'{dh}px'
-    kwargs.setdefault('width', dw)
-    kwargs.setdefault('height', dh)
 
     if callable(handler):
         return handler(viewer, src, **kwargs)
