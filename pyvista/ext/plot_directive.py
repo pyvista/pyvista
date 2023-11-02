@@ -268,7 +268,22 @@ TEMPLATE = """
 
    {% for img in images %}
    {% if img.extension == 'vtksz' %}
-   .. offlineviewer:: {{ build_dir }}/{{ img.basename }}
+
+   .. tab-set::
+
+       .. tab-item:: Static Scene
+
+           .. figure:: {{ build_dir }}/{{ img.stem }}.png
+              {% for option in options -%}
+              {{ option }}
+              {% endfor %}
+
+              {{ caption }}  {# appropriate leading whitespace added beforehand #}
+
+       .. tab-item:: Interactive Scene
+
+           .. offlineviewer:: {{ build_dir }}/{{ img.stem }}.vtksz
+
    {% else %}
    .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
@@ -308,6 +323,14 @@ class ImageFile:
     def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
+
+    @property
+    def stem(self):  # numpydoc ignore=RT01
+        """Return the basename without the suffix."""
+        return Path(self.basename).stem
+
+    def __repr__(self) -> str:
+        return self.filename
 
 
 class PlotError(RuntimeError):
@@ -384,14 +407,15 @@ def render_figures(
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
-                    # if an interactive plot is available pick it up, otherwise fallback to a screenshot
+                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                    try:
+                        plotter.screenshot(image_file.filename)
+                    except RuntimeError:  # pragma no cover
+                        # ignore closed, unrendered plotters
+                        continue
                     if force_static or (plotter.last_vtksz is None):
-                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                        try:
-                            plotter.screenshot(image_file.filename)
-                        except RuntimeError:  # pragma no cover
-                            # ignore closed, unrendered plotters
-                            continue
+                        images.append(image_file)
+                        continue
                     else:
                         image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
                         with open(image_file.filename, "wb") as f:
