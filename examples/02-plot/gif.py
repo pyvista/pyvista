@@ -30,6 +30,7 @@ z = np.sin(r)
 
 # Create and structured surface
 grid = pv.StructuredGrid(x, y, z)
+grid["Height"] = z.ravel()
 grid.plot()
 
 
@@ -42,26 +43,22 @@ grid.plot()
 plotter = pv.Plotter(notebook=False, off_screen=True)
 plotter.add_mesh(
     grid,
-    scalars=z.ravel(),
+    scalars="Height",
     lighting=False,
     show_edges=True,
-    scalar_bar_args={"title": "Height"},
     clim=[-1, 1],
 )
 
 # Open a gif
 plotter.open_gif("wave.gif")
 
-pts = grid.points.copy()
-
 # Update Z and write a frame for each updated position
 nframe = 15
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     z = np.sin(r + phase)
-    pts[:, -1] = z.ravel()
-    plotter.update_coordinates(pts, render=False)
-    plotter.update_scalars(z.ravel(), render=False)
-
+    # Update values inplace
+    grid.points[:, -1] = z.ravel()
+    grid["Height"] = z.ravel()
     # Write a frame. This triggers a render.
     plotter.write_frame()
 
