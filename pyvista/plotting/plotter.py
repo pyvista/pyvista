@@ -2091,7 +2091,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.key_press_event."""
         self.iren.key_press_event(*args, **kwargs)
 
-    def left_button_down(self, obj, event_type):
+    def left_button_down(self, *args):
         """Register the event for a left button down click."""
         if hasattr(self.render_window, 'GetOffScreenFramebuffer'):
             if not self.render_window.GetOffScreenFramebuffer().GetFBOIndex():
@@ -4707,15 +4707,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.Finalize()
             del self.ren_win
 
-    def close(self, render=False):
-        """Close the render window.
-
-        Parameters
-        ----------
-        render : bool
-            Unused argument.
-
-        """
+    def close(self):
+        """Close the render window."""
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)
@@ -6318,11 +6311,6 @@ class Plotter(BasePlotter):
         set differently in the relevant theme's ``window_size``
         property.
 
-    multi_samples : int, optional
-        The number of multi-samples used to mitigate aliasing. 4 is a
-        good default but 8 will have better results with a potential
-        impact on performance.
-
     line_smoothing : bool, default: False
         If ``True``, enable line smoothing.
 
@@ -6374,7 +6362,6 @@ class Plotter(BasePlotter):
         border_color='k',
         border_width=2.0,
         window_size=None,
-        multi_samples=None,
         line_smoothing=False,
         point_smoothing=False,
         polygon_smoothing=False,

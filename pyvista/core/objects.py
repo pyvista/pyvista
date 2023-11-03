@@ -244,7 +244,7 @@ class Table(_vtk.vtkTable, DataObject):
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, field, key):
+    def _remove_array(self, _, key):
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
