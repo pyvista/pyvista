@@ -1,13 +1,14 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, cast
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
+from ._typing_core import IntMatrix, NumpyIntArray
 from .celltype import CellType
 from .dataset import DataObject
 from .utilities.cells import ncells_from_cells, numpy_to_idarr
@@ -572,19 +573,19 @@ class CellArray(_vtk.vtkCellArray):
 
     def __init__(
         self,
-        cells: Optional[Union[np.ndarray, List[int]]] = None,
+        cells: Optional[IntMatrix] = None,
         n_cells: Optional[int] = None,
         deep: bool = False,
     ):
         """Initialize a vtkCellArray."""
-        self.__offsets = None
-        self.__connectivity = None
+        self.__offsets: Optional[_vtk.vtkIdTypeArray] = None
+        self.__connectivity: Optional[_vtk.vtkIdTypeArray] = None
         if cells is not None:
-            self._set_cells(cells, n_cells, deep)
+            self._set_cells(np.asarray(cells), n_cells, deep)
 
-    def _set_cells(self, cells, n_cells, deep):
+    def _set_cells(self, cells: NumpyIntArray, n_cells: Optional[int], deep: bool) -> None:
         """Set a vtkCellArray."""
-        vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
+        vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)  # type: ignore
 
         # Get number of cells if None.  This is quite a performance
         # bottleneck and we can consider adding a warning.  Good
@@ -597,6 +598,7 @@ class CellArray(_vtk.vtkCellArray):
 
         self.SetCells(n_cells, vtk_idarr)
         self.__offsets = self.__connectivity = None
+        return None
 
     @property
     def cells(self) -> np.ndarray:  # numpydoc ignore=RT01
@@ -642,31 +644,31 @@ class CellArray(_vtk.vtkCellArray):
         """
         return _get_offset_array(self)
 
-    def _set_data(self, offsets, connectivity, deep=False):
+    def _set_data(self, offsets: IntMatrix, connectivity: IntMatrix, deep: bool = False):
         """Set the offsets and connectivity arrays."""
-        offsets = numpy_to_idarr(offsets, deep=deep)
-        connectivity = numpy_to_idarr(connectivity, deep=deep)
-        self.SetData(offsets, connectivity)
+        vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
+        vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
+        self.SetData(vtk_offsets, vtk_connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
         # garbage collected. Keep a reference to them for safety
-        self.__offsets = offsets
-        self.__connectivity = connectivity
+        self.__offsets = vtk_offsets
+        self.__connectivity = vtk_connectivity
 
     @staticmethod
     def from_arrays(
-        offsets: Union[np.ndarray, List[int]],
-        connectivity: Union[np.ndarray, List[int]],
+        offsets: IntMatrix,
+        connectivity: IntMatrix,
         deep: bool = False,
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
 
         Parameters
         ----------
-        offsets : numpy.ndarray or list[int]
+        offsets : IntMatrix
             Offsets array of length `n_cells + 1`.
 
-        connectivity : numpy.ndarray or list[int]
+        connectivity : IntMatrix
             Connectivity array.
 
         deep : bool, default: False
@@ -700,9 +702,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(
-        cls, cells: Union[np.ndarray, List[List[int]]], deep: bool = False
-    ) -> pyvista.CellArray:
+    def from_regular_cells(cls, cells: IntMatrix, deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters

@@ -1,4 +1,6 @@
 """Image regression module."""
+from typing import Optional, cast
+
 import numpy as np
 
 import pyvista
@@ -72,6 +74,10 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> np.ndarray:
     imfilter : _vtk.vtkWindowToImageFilter
         The ``vtkWindowToImageFilter`` instance to be processed.
 
+    Notes
+    -----
+    An empty array will be returned if an image cannot be extracted.
+
     Returns
     -------
     numpy.ndarray
@@ -83,9 +89,9 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> np.ndarray:
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = wrap(imfilter.GetOutput())
+    image = cast(Optional[pyvista.ImageData], wrap(imfilter.GetOutput()))
     if image is None:
-        return np.empty()
+        return np.empty((0, 0, 0))
     img_size = image.dimensions
     img_array = point_array(image, 'ImageScalars')
     # Reshape and write
