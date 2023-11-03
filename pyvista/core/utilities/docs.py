@@ -3,10 +3,10 @@ import inspect
 import os
 import os.path as op
 import sys
-from typing import Dict
+from typing import Dict, Optional
 
 
-def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> str:
+def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -37,7 +37,7 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> s
     import pyvista
 
     if domain != 'py':
-        return ''
+        return None
 
     modname = info['module']
     fullname = info['fullname']
@@ -48,14 +48,14 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> s
 
     submod = sys.modules.get(modname)
     if submod is None:
-        return ''
+        return None
 
     obj = submod
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
         except Exception:
-            return ''
+            return None
 
     # deal with our decorators properly
     while hasattr(obj, 'fget'):
@@ -70,8 +70,8 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> s
         try:
             fn = inspect.getsourcefile(sys.modules[obj.__module__])
         except Exception:
-            return ''
-        return ''
+            return None
+        return None
 
     fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
     fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows
@@ -109,7 +109,7 @@ def pv_html_page_context(
 
     """
 
-    def fix_edit_link_button(link: str) -> str:
+    def fix_edit_link_button(link: str) -> Optional[str]:
         """Transform "edit on github" links to the correct url.
 
         This is specific to PyVista to ensure that the "edit this page" link
