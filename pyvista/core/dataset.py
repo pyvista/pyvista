@@ -1712,7 +1712,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        float :
+        float
             Length of the diagonal of the bounding box.
 
         Examples
@@ -1730,12 +1730,12 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> Vector:  # numpydoc ignore=RT01
+    def center(self) -> FloatVector:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
         -------
-        Vector :
+        FloatVector
             Center of the bounding box.
 
         Examples
@@ -3259,7 +3259,9 @@ class DataSet(DataSetFilters, DataObject):
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
-    def point_is_inside_cell(self, ind: int, point: FloatVector | FloatMatrix) -> Union[int, np.ndarray]:
+    def point_is_inside_cell(
+        self, ind: int, point: FloatVector | FloatMatrix
+    ) -> Union[int, np.ndarray]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0

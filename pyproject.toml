@@ -24,10 +24,11 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
 ]
 dependencies = [
     'matplotlib>=3.0.1',
-    'numpy',
+    'numpy>=1.21.0',  # minimum typing support
     'pillow',
     'pooch',
     'scooby>=0.5.1',
