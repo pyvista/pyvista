@@ -1220,7 +1220,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_x(
         self,
-        point: Optional[Vector] = None,
+        point: Optional[FloatVector] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1345,7 +1345,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : FloatVector, optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
