@@ -182,7 +182,7 @@ class _PointSet(DataSet):
         xyz : Vector
             A vector of three floats of cartesian values to translate the mesh with.
 
-        Transform_all_input_vectors : bool, default: False
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
             the points, normals and active vectors are transformed. This is
             only valid when not updating in place.

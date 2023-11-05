@@ -432,7 +432,7 @@ class MultiBlock(
             raise ValueError("Cannot nest a composite dataset in itself.")
 
         index = self.n_blocks  # note off by one so use as index
-        # always wrap since we may need to reference the VTK memory address]
+        # always wrap since we may need to reference the VTK memory address
         wrapped = wrap(dataset)
         if isinstance(wrapped, pyvista_ndarray):
             raise TypeError('dataset should not be or contain an array')

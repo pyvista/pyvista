@@ -11,7 +11,7 @@ from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html

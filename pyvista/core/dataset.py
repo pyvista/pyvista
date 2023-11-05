@@ -2654,7 +2654,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds: Vector) -> np.ndarray:
+    def find_cells_within_bounds(self, bounds: BoundsLike) -> np.ndarray:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
@@ -2685,7 +2685,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if np.array(bounds).size != 6:
-            raise TypeError("Bounds must be a length three tuple of floats.")
+            raise TypeError("Bounds must be a length six tuple of floats.")
         locator = _vtk.vtkCellTreeLocator()
         locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
@@ -3259,7 +3259,7 @@ class DataSet(DataSetFilters, DataObject):
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
-    def point_is_inside_cell(self, ind: int, point: FloatMatrix) -> Union[int, np.ndarray]:
+    def point_is_inside_cell(self, ind: int, point: FloatVector | FloatMatrix) -> Union[int, np.ndarray]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0

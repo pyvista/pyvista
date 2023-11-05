@@ -2,7 +2,7 @@
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from trimesh import Trimesh
     from meshio import Mesh
 
