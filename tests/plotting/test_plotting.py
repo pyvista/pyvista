@@ -3801,14 +3801,19 @@ def test_axes_actor():
 
 
 def test_axes_marker():
+    position = np.array((-3, 2, -1))
+    orientation = np.array((10,20,30))
+
     # Create actor with two different methods
-    kwargs = dict(properties=dict(specular=0.1), shaft_radius=0.5, shaft_length=1)
-    axes_actor = pv.AxesActor(position=(1.5, 0, 0), **kwargs)
+    kwargs = dict(properties=dict(specular=0.1), shaft_radius=0.1, tip_radius=0.4, total_length = 2)
+    axes_actor = pv.AxesActor(x_label="a",y_label='b', z_label='c', position=position, orientation=orientation, **kwargs)
 
     plot = pv.Plotter()
     plot.add_actor(axes_actor)
-    plot.add_axes_marker(position=(-1.5, 0, 0), **kwargs)
-    plot.show_grid()
+    plot.add_axes_marker(position=-position, orientation=-orientation, **kwargs)
+
+    # Test adding a second marker. Make it origin-centered for visual reference
+    plot.add_axes_marker(x_color = 'black',y_color = 'black', z_color = 'black', labels_off=True,**kwargs)
     plot.show()
 
 

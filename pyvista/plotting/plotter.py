@@ -6170,7 +6170,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
+                    renderer.ResetCamera(self.bounds)
             self._first_time = False
 
     def reset_camera_clipping_range(self):
