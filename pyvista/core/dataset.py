@@ -26,7 +26,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, FloatMatrix, FloatVector, Matrix, Number, Vector
+from ._typing_core import BoundsLike, Matrix, Number, Vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning, VTKVersionError
@@ -500,7 +500,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        points : Union[FloatMatrix, _vtk.vtkPoints]
+        points : Union[Matrix, _vtk.vtkPoints]
             Points as a array object.
 
         """
@@ -880,7 +880,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: FloatVector = (0.0, 0.0, 0.0),
+        point: Vector = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -896,7 +896,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : FloatVector, default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -938,7 +938,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: FloatVector = (0.0, 0.0, 0.0),
+        point: Vector = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -954,7 +954,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : FloatVector, default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -995,7 +995,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_z(
         self,
         angle: float,
-        point: FloatVector = (0.0, 0.0, 0.0),
+        point: Vector = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1011,7 +1011,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : FloatVector, default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about.  Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1052,9 +1052,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_vector(
         self,
-        vector: FloatVector,
+        vector: Vector,
         angle: float,
-        point: FloatVector = (0.0, 0.0, 0.0),
+        point: Vector = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1067,13 +1067,13 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        vector : FloatVector
+        vector : Vector
             Vector to rotate about.
 
         angle : float
             Angle to rotate.
 
-        point : FloatVector, default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1114,7 +1114,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def translate(
-        self, xyz: FloatVector, transform_all_input_vectors: bool = False, inplace: bool = False
+        self, xyz: Vector, transform_all_input_vectors: bool = False, inplace: bool = False
     ):
         """Translate the mesh.
 
@@ -1125,7 +1125,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : FloatVector
+        xyz : Vector
             A vector of three floats.
 
         transform_all_input_vectors : bool, default: False
@@ -1220,7 +1220,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_x(
         self,
-        point: Optional[FloatVector] = None,
+        point: Optional[Vector] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1345,7 +1345,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : FloatVector, optional
+        point : Vector, optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1730,12 +1730,12 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> FloatVector:  # numpydoc ignore=RT01
+    def center(self) -> Vector:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
         -------
-        FloatVector
+        Vector
             Center of the bounding box.
 
         Examples
@@ -2325,14 +2325,14 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_closest_cell(
         self,
-        point: Union[FloatVector, FloatMatrix],
+        point: Union[Vector, Matrix],
         return_closest_point: bool = False,
     ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
         ----------
-        point : FloatVector | FloatMatrix
+        point : Vector | Matrix
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2456,14 +2456,12 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(
-        self, point: Union[FloatVector, FloatMatrix]
-    ) -> Union[int, np.ndarray]:
+    def find_containing_cell(self, point: Union[Vector, Matrix]) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
         ----------
-        point : FloatVector, FloatMatrix
+        point : Vector, Matrix
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2523,8 +2521,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_along_line(
         self,
-        pointa: FloatVector,
-        pointb: FloatVector,
+        pointa: Vector,
+        pointb: Vector,
         tolerance: float = 0.0,
     ) -> np.ndarray:
         """Find the index of cells whose bounds intersect a line.
@@ -2533,10 +2531,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : FloatVector
+        pointa : Vector
             Length 3 coordinate of the start of the line.
 
-        pointb : FloatVector
+        pointb : Vector
             Length 3 coordinate of the end of the line.
 
         tolerance : float, default: 0.0
@@ -2589,8 +2587,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_intersecting_line(
         self,
-        pointa: FloatVector,
-        pointb: FloatVector,
+        pointa: Vector,
+        pointb: Vector,
         tolerance: float = 0.0,
     ) -> np.ndarray:
         """Find the index of cells that intersect a line.
@@ -3259,9 +3257,7 @@ class DataSet(DataSetFilters, DataObject):
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
-    def point_is_inside_cell(
-        self, ind: int, point: FloatVector | FloatMatrix
-    ) -> Union[int, np.ndarray]:
+    def point_is_inside_cell(self, ind: int, point: Vector | Matrix) -> Union[int, np.ndarray]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
@@ -3271,7 +3267,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : FloatMatrix
+        point : Matrix
             Point or points to query if are inside a cell.
 
         Returns

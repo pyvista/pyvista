@@ -15,13 +15,12 @@ from . import _vtk_core as _vtk
 from ._typing_core import (
     BoolVector,
     BoundsLike,
-    FloatMatrix,
-    FloatVector,
     IntArray,
     IntMatrix,
     IntVector,
     Matrix,
     NumpyUINT8Array,
+    Vector,
 )
 from .cell import CellArray, _get_connectivity_array, _get_offset_array, _get_regular_cells
 from .celltype import CellType
@@ -174,7 +173,7 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(self, xyz: FloatVector, transform_all_input_vectors=False, inplace=None):
+    def translate(self, xyz: Vector, transform_all_input_vectors=False, inplace=None):
         """Translate the mesh.
 
         Parameters
@@ -2451,7 +2450,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """Return the standard ``str`` representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, dims: IntVector, corners: FloatMatrix) -> None:
+    def _from_arrays(self, dims: IntVector, corners: Matrix) -> None:
         """Create a VTK explicit structured grid from NumPy arrays.
 
         Parameters
@@ -2460,8 +2459,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             A sequence of integers with shape (3,) containing the
             topological dimensions of the grid.
 
-        corners : FloatMatrix
-            A sequence of floats with shape (number of corners, 3)
+        corners : Matrix
+            A sequence of numbers with shape ``(number of corners, 3)``
             containing the coordinates of the corner points.
 
         """
