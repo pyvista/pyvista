@@ -366,6 +366,156 @@ def test_axes_actor_properties(axes_actor):
     assert axes_actor.z_axis_tip_properties.ambient == 0.13
 
 
+def test_axes_actor_user_matrix():
+    eye = np.eye(4)
+
+    a = pv.AxesActor(_make_orientable=False)
+    assert np.array_equal(a.user_matrix, eye)
+    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye)
+
+    a.user_matrix = eye * 2
+    assert np.array_equal(a.user_matrix, eye * 2)
+    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye * 2)
+
+    a._make_orientable = True
+    assert np.array_equal(a.user_matrix, np.eye(4))
+    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye)
+
+    a.user_matrix = eye * 2
+    assert np.array_equal(a.user_matrix, eye * 2)
+    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye * 2)
+
+    # test that vtkAxesActor getter and pyvista.Prop3D getter return the same value
+
+
+def _compute_expected_bounds(axes_actor):
+    # Compute expected bounds by transforming vtkAxesActor actors
+
+    # Create two vtkAxesActor (one for (+) and one for (-) axes)
+    # and store their actors
+    actors = []
+    vtk_axes = [vtk.vtkAxesActor(), vtk.vtkAxesActor()]
+    for axes in vtk_axes:
+        axes.SetNormalizedShaftLength(axes_actor.shaft_length)
+        axes.SetNormalizedTipLength(axes_actor.tip_length)
+        axes.SetTotalLength(axes_actor.total_length)
+        axes.SetShaftTypeToCylinder()
+
+        props = vtk.vtkPropCollection()
+        axes.GetActors(props)
+        for num in range(6):
+            actors.append(props.GetItemAsObject(num))
+
+    # Transform actors and get their bounds
+    # Half of the actors are reflected to give symmertric axes
+    bounds = []
+    matrix = axes_actor._concatenate_implicit_matrix_and_user_matrix()
+    matrix_reflect = matrix @ np.diag((-1, -1, -1, 1))
+    for i, actor in enumerate(actors):
+        if i < 6:
+            m = matrix
+        else:
+            m = matrix_reflect
+        actor.SetUserMatrix(vtkmatrix_from_array(m))
+        bounds.append(actor.GetBounds())
+
+    b = np.array(bounds)
+    return (
+        np.min(b[:, 0]),
+        np.max(b[:, 1]),
+        np.min(b[:, 2]),
+        np.max(b[:, 3]),
+        np.min(b[:, 4]),
+        np.max(b[:, 5]),
+    )
+
+
+np.random.seed(42)
+
+
+@pytest.mark.parametrize('shaft_tip_length', [(0, 1), (0.2, 0.3), (0.3, 0.8), (0.4, 0.6), (1, 0)])
+@pytest.mark.parametrize('total_length', [[1, 1, 1], [4, 3, 2], [0.4, 0.5, 1.1]])
+@pytest.mark.parametrize('scale', [[1, 1, 1], [0.1, 0.2, 0.3], [2, 3, 4]])
+@pytest.mark.parametrize('position', [[0, 0, 0], [2, 3, 4]])
+def test_axes_actor_GetBounds(shaft_tip_length, total_length, scale, position):
+    shaft_length, tip_length = shaft_tip_length
+
+    # Test the override for GetBounds() returns the same result as without override
+    # for zero-centered, axis-aligned cases (i.e. no position, scale, etc.)
+    vtk_axes_actor = vtk.vtkAxesActor()
+    vtk_axes_actor.SetNormalizedShaftLength(shaft_length, shaft_length, shaft_length)
+    vtk_axes_actor.SetNormalizedTipLength(tip_length, tip_length, tip_length)
+    vtk_axes_actor.SetTotalLength(total_length)
+    vtk_axes_actor.SetShaftTypeToCylinder()
+    expected = vtk_axes_actor.GetBounds()
+
+    axes_actor = pv.AxesActor(
+        shaft_length=shaft_length,
+        tip_length=tip_length,
+        total_length=total_length,
+        _make_orientable=True,
+    )
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    axes_actor._make_orientable = False
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    # test GetBounds() returns correct output when axes are orientable
+    axes_actor._make_orientable = True
+    axes_actor.position = position
+    axes_actor.scale = scale
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    # test that changing properties dynamically updates the axes
+    axes_actor.position = np.random.rand(3) * 2 - 1
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    axes_actor.scale = np.random.rand(3) * 2
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    axes_actor.user_matrix = np.diag(np.append(np.random.rand(3), 1))
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    axes_actor.tip_length = np.random.rand(3)
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    axes_actor.shaft_length = np.random.rand(3)
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    axes_actor.total_length = np.random.rand(3) * 2
+    expected = _compute_expected_bounds(axes_actor)
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+    # test disabling workaround correctly resets axes actors
+    vtk_axes_actor = vtk.vtkAxesActor()
+    vtk_axes_actor.SetPosition(axes_actor.position)
+    vtk_axes_actor.SetScale(axes_actor.scale)
+    vtk_axes_actor.SetNormalizedShaftLength(axes_actor.shaft_length)
+    vtk_axes_actor.SetNormalizedTipLength(axes_actor.tip_length)
+    vtk_axes_actor.SetTotalLength(axes_actor.total_length)
+    vtk_axes_actor.SetShaftTypeToCylinder()
+
+    axes_actor._make_orientable = False
+    expected = vtk_axes_actor.GetBounds()
+    actual = axes_actor.GetBounds()
+    assert np.allclose(actual, expected)
+
+
 def get_matrix_cases():
     from enum import IntEnum
 
@@ -409,7 +559,7 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
     )
 
     # test each property separately and also all together
-    axes_actor._enable_orientation_workaround = True
+    axes_actor._make_orientable = True
     if case in [cases.ALL, cases.ORIENTATION]:
         vtk_axes_actor.SetOrientation(*orientation)
         axes_actor.orientation = orientation
@@ -436,10 +586,10 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
         axes_actor.user_matrix = user_matrix
 
     expected = array_from_vtkmatrix(vtk_axes_actor.GetMatrix())
-    actual = array_from_vtkmatrix(axes_actor.GetUserMatrix())
+    actual = array_from_vtkmatrix(axes_actor._actors[0].GetUserMatrix())
     assert np.allclose(expected, actual)
 
-    default_bounds = (-1, 1, -1, 1, -1, 1)
+    default_bounds = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
     assert np.allclose(vtk_axes_actor.GetBounds(), default_bounds)
 
     # test AxesActor has non-default bounds except in ORIGIN case
@@ -450,7 +600,7 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
         assert not np.allclose(actual_bounds, default_bounds)
 
     # test that bounds are always default (i.e. incorrect) after disabling orientation
-    axes_actor._enable_orientation_workaround = False
+    axes_actor._make_orientable = False
     actual_bounds = axes_actor.GetBounds()
     assert np.allclose(actual_bounds, default_bounds)
 

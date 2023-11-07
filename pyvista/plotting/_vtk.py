@@ -96,6 +96,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkPolyDataMapper2D,
     vtkProp3D,
     vtkPropAssembly,
+    vtkPropCollection,
     vtkProperty,
     vtkPropPicker,
     vtkRenderedAreaPicker,

@@ -324,5 +324,5 @@ class Prop3D(_vtk.vtkProp3D):
     def user_matrix(
         self, value: Union[_vtk.vtkMatrix4x4, np.ndarray, _vtk.vtkMatrix3x3, _vtk.vtkTransform]
     ):  # numpydoc ignore=GL08
-        array = _coerce_transformlike_arg(value)
+        array = np.eye(4) if value is None else _coerce_transformlike_arg(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
