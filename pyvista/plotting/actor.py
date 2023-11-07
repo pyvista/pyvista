@@ -2,6 +2,8 @@
 
 from typing import Optional
 
+import numpy as np
+
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -317,7 +319,12 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
-        mat_info = 'Unset' if self.user_matrix is None else 'Set'
+        if self.user_matrix is None:
+            mat_info = 'Unset'
+        elif np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
         bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',

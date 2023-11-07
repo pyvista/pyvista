@@ -368,6 +368,51 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.orientation = orientation
         self.scale = scale
 
+    def __repr__(self):
+        """Representation of the actor."""
+        if self.user_matrix is None:
+            mat_info = 'Unset'
+        elif np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
+
+        if self.shaft_type.annotation == 'cylinder':
+            shaft_param = 'Shaft radius:'
+            shaft_value = self.shaft_radius
+        else:
+            shaft_param = 'Shaft width: '
+            shaft_value = self.shaft_width
+
+        bnds = self.bounds
+
+        attr = [
+            f"{type(self).__name__} ({hex(id(self))})",
+            f"  X label:                    '{self.x_label}'",
+            f"  Y label:                    '{self.y_label}'",
+            f"  Z label:                    '{self.z_label}'",
+            f"  Show labels:                {not self.labels_off}",
+            f"  Label position:             {self.label_position}",
+            f"  Label size:                 {self.label_size}",
+            f"  Shaft type:                 '{self.shaft_type.annotation}'",
+            f"  {shaft_param}               {shaft_value}",
+            f"  Shaft length:               {self.shaft_length}",
+            f"  Tip type:                   '{self.tip_type.annotation}'",
+            f"  Tip radius:                 {self.tip_radius}",
+            f"  Tip length:                 {self.tip_length}",
+            f"  Total length:               {self.total_length}",
+            f"  Position:                   {self.position}",
+            f"  Orientation:                {self.orientation}",
+            f"  Origin:                     {self.origin}",
+            f"  Scale:                      {self.scale}",
+            f"  User matrix:                {mat_info}",
+            f"  Visible:                    {self.visibility}",
+            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
+            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
+            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+        ]
+        return '\n'.join(attr)
+
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Enable or disable the visibility of the axes.
@@ -1085,7 +1130,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @wraps(_vtk.vtkAxesActor.GetBounds)
     def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01,GL08
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         if self._make_orientable:
             # GetBounds() defined by vtkAxesActor accesses a protected self.Bounds property
             # which is hard-coded to be centered and symmetric about the origin.
@@ -1101,67 +1146,67 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @wraps(_vtk.vtkProp3D.RotateX)
     def RotateX(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().RotateX(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.RotateY)
     def RotateY(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().RotateY(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.RotateZ)
     def RotateZ(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().RotateZ(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetScale)
     def SetScale(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetScale(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetOrientation)
     def SetOrientation(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetOrientation(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetOrigin)
     def SetOrigin(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetOrigin(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetPosition)
     def SetPosition(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetPosition(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkAxesActor.SetNormalizedShaftLength)
     def SetNormalizedShaftLength(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetNormalizedShaftLength(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkAxesActor.SetNormalizedTipLength)
     def SetNormalizedTipLength(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetNormalizedTipLength(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkAxesActor.SetTotalLength)
     def SetTotalLength(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetTotalLength(*args)
         self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.GetUserMatrix)
     def GetUserMatrix(self):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         if self._make_orientable:
             self._user_matrix = np.eye(4) if self._user_matrix is None else self._user_matrix
             return vtkmatrix_from_array(self._user_matrix)
@@ -1172,7 +1217,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @wraps(_vtk.vtkProp3D.SetUserMatrix)
     def SetUserMatrix(self, *args):  # numpydoc ignore=RT01,PR01
-        """Wrap method for orientation workaround."""
+        """Wrap method to make axes orientable in space."""
         super().SetUserMatrix(*args)
         self._user_matrix = array_from_vtkmatrix(*args)
         self._update_actor_transformations() if self._make_orientable else None
