@@ -6170,7 +6170,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera(self.bounds)
+                    if any(
+                        map(lambda x: isinstance(x, pyvista.AxesActor), renderer.actors.values())
+                    ):
+                        # Manually specify the camera bounds if AxesActor is present.
+                        # This is because AxesActor overrides GetBounds(), and the
+                        # override is not recognized by ResetCamera() (compiled c++),
+                        # but works as expected when computing bounds in python
+                        renderer.ResetCamera(self.bounds)
+                    else:
+                        renderer.ResetCamera()
             self._first_time = False
 
     def reset_camera_clipping_range(self):
