@@ -6019,8 +6019,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_position(point, render=False)
                 self.set_focus(focus, render=False)
                 self.set_viewup(viewup, render=False)
-                self.renderer.ResetCameraClippingRange()
-                # self.reset_camera_clipping_range()
+                self.reset_camera_clipping_range()
                 if write_frames:
                     self.write_frame()
                 else:
