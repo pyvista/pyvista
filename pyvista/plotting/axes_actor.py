@@ -152,15 +152,16 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     scale : float | Vector, default: (1, 1, 1)
         Scaling factor for the axes.
 
-    user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray, default: None
+    user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
         Transformation to apply to the axes. Can be a vtkTransform,
         3x3 transformation matrix, or 4x4 transformation matrix.
+        Defaults to the identity matrix.
 
     visibility : bool, default: True
         Visibility of the axes. If ``False``, the axes are not visible.
 
     properties : dict, optional
-        Apply any ``:class:~pyvista.ActorProperties`` to all axes shafts and tips.
+        Apply any :class:`~pyvista.ActorProperties` to all axes shafts and tips.
 
     **kwargs : dict, optional
         Used for handling deprecated parameters.

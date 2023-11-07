@@ -960,12 +960,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         scale : float | Vector, default: (1, 1, 1)
             Scaling factor for the axes.
 
-        user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray, default: None
+        user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
             Transformation to apply to the axes. Can be a vtkTransform,
             3x3 transformation matrix, or 4x4 transformation matrix.
+            Defaults to the identity matrix.
 
         reset_camera : bool, default: True
-            If ``True ``, the camera is reset after adding the axes marker
+            If ``True``, the camera is reset after adding the axes marker
             to the scene.
 
         **kwargs : dict, optional
