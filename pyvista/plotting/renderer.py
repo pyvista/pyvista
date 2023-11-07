@@ -417,12 +417,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def reset_camera_clipping_range(self):
-        """Reset the camera clipping range based on the bounds of the visible actors.
+    def reset_camera_clipping_range(self, bounds=None):
+        """Reset the camera clipping range.
 
-        This ensures that no props are cut off
+        The clipping range is set based on the specified bounds. By default,
+        the range is set from the visible actors.
+
+        Parameters
+        ----------
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
         """
-        self.ResetCameraClippingRange()
+        if bounds is None:
+            bounds, is_initialized = self._compute_bounds()
+            # Only reset if initialized
+            if is_initialized:
+                self.ResetCameraClippingRange(bounds)
+        else:
+            self.ResetCameraClippingRange(bounds)
 
     @property
     def camera(self):  # numpydoc ignore=RT01
@@ -443,8 +456,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return the bounds of all actors present in the rendering window."""
-        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        """Return the bounds of all visible actors in the rendering window."""
+        return self._compute_bounds(only_visible=True)[0]
+
+    def _compute_bounds(self, only_visible=True):
+        """Compute renderer bounds.
+
+        Parameters
+        ----------
+        only_visible : bool, default: True
+            If ``True``, only visible actors with `VisibilityOn()` and `UseBoundsOn()`
+            are used to calculate the bounds.
+
+        Return
+        ------
+            BoundsLike
+                The computed bounds
+
+            bool
+                ``True`` if the bounds were initialized, ``False`` otherwise (e.g. no actors).
+
+        """
+        the_bounds_init = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        the_bounds = the_bounds_init.copy()
 
         def _update_bounds(bounds):
             def update_axis(ax):
@@ -460,6 +494,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         for actor in self._actors.values():
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
+            # skip if actor is invisible, or if its bounds should be ignored
+            if only_visible and not (
+                hasattr(actor, 'GetVisibility')
+                and actor.GetVisibility()
+                and hasattr(actor, 'GetUseBounds')
+                and actor.GetUseBounds()
+            ):
+                continue
             if (
                 hasattr(actor, 'GetBounds')
                 and actor.GetBounds() is not None
@@ -467,11 +509,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ):
                 _update_bounds(actor.GetBounds())
 
+        is_initialized = False
         if np.any(np.abs(the_bounds)):
+            if not np.array_equal(the_bounds, the_bounds_init):
+                is_initialized = True
+
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(BoundsLike, tuple(the_bounds))
+        return cast(BoundsLike, tuple(the_bounds)), is_initialized
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -2247,7 +2293,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         y = focus[1] - distance * direction[1]
         z = focus[2] - distance * direction[2]
         self.camera.position = (x, y, z)
-        self.ResetCameraClippingRange()
+        self.reset_camera_clipping_range()
 
         self.camera.disable_parallel_projection()
         self.Modified()
@@ -2444,8 +2490,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def get_default_cam_pos(self, negative=False):
         """Return the default focal points and viewup.
 
-        Uses ResetCamera to make a useful view.
-
         Parameters
         ----------
         negative : bool, default: False
@@ -2522,12 +2566,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if bounds is not None:
-            self.ResetCamera(*bounds)
+        if bounds is None:
+            # Reset camera to show visible renderer bounds or set to default
+            bounds, is_initialized = self._compute_bounds()
+            if is_initialized:
+                self.ResetCamera(bounds)
+                self.ResetCameraClippingRange(bounds)
+            else:
+                self.camera_position = self.get_default_cam_pos()
         else:
-            self.ResetCamera()
-
-        self.reset_camera_clipping_range()
+            self.ResetCamera(bounds)
+            self.ResetCameraClippingRange(bounds)
 
         if render:
             self.parent.render()

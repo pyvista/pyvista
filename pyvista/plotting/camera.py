@@ -831,7 +831,8 @@ class Camera(_vtk.vtkCamera):
 
         """
         # Inspired by vedo resetCamera. Thanks @marcomusy.
-        x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+        # x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+        x0, x1, y0, y1, z0, z1 = self._renderer.bounds
 
         self.enable_parallel_projection()
 
@@ -861,23 +862,26 @@ class Camera(_vtk.vtkCamera):
 
         ps = max(horiz_dist / aspect[0], vert_dist) / 2
         self.parallel_scale = ps * (1 + padding)
-        self._renderer.ResetCameraClippingRange(x0, x1, y0, y1, z0, z1)
+        self._renderer.reset_camera_clipping_range((x0, x1, y0, y1, z0, z1))
 
         if adjust_render_window:
             ren_win = self._renderer.GetRenderWindow()
-            size = list(ren_win.GetSize())
-            size_ratio = size[0] / size[1]
-            tight_ratio = horiz_dist / vert_dist
-            resize_ratio = tight_ratio / size_ratio
-            if resize_ratio < 1:
-                size[0] = round(size[0] * resize_ratio)
-            else:
-                size[1] = round(size[1] / resize_ratio)
+            if ren_win is not None:
+                size = list(ren_win.GetSize())
+                size_ratio = size[0] / size[1]
+                tight_ratio = horiz_dist / vert_dist
+                resize_ratio = tight_ratio / size_ratio
+                if resize_ratio < 1:
+                    size[0] = round(size[0] * resize_ratio)
+                else:
+                    size[1] = round(size[1] / resize_ratio)
 
-            ren_win.SetSize(size)
+                ren_win.SetSize(size)
 
-            # simply call tight again to reset the parallel scale due to the
-            # resized window
-            self.tight(padding=padding, adjust_render_window=False, view=view, negative=negative)
+                # simply call tight again to reset the parallel scale due to the
+                # resized window
+                self.tight(
+                    padding=padding, adjust_render_window=False, view=view, negative=negative
+                )
 
         self.is_set = True

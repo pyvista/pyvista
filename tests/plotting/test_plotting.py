@@ -1679,7 +1679,7 @@ def test_image_properties():
     p = pv.Plotter()
     p.add_mesh(mesh, color=True)
     p.renderer.camera_position = (0.0, 0.0, 1.0)
-    p.renderer.ResetCamera()
+    p.renderer.reset_camera()
     p.enable_parallel_projection()
     assert p.renderer.camera_set
     p.show(interactive=False, auto_close=False)

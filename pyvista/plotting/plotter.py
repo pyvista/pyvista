@@ -5107,7 +5107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
-            self.renderer.ResetCameraClippingRange()
+            self.renderer.reset_camera_clipping_range()
 
         # Get the z-buffer image
         ifilter = _vtk.vtkWindowToImageFilter()
@@ -6020,6 +6020,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_focus(focus, render=False)
                 self.set_viewup(viewup, render=False)
                 self.renderer.ResetCameraClippingRange()
+                # self.reset_camera_clipping_range()
                 if write_frames:
                     self.write_frame()
                 else:
@@ -6165,12 +6166,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
+                    renderer.reset_camera()
             self._first_time = False
 
-    def reset_camera_clipping_range(self):
-        """Reset camera clipping planes."""
-        self.renderer.ResetCameraClippingRange()
+    @wraps(Renderer.reset_camera_clipping_range)
+    def reset_camera_clipping_range(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.reset_camera_clipping_range``."""
+        self.renderer.reset_camera_clipping_range(*args, **kwargs)
 
     def add_light(self, light, only_active=False):
         """Add a Light to the scene.

@@ -1,5 +1,7 @@
+import numpy as np
 import pytest
 from pytest import raises
+import vtk
 
 import pyvista as pv
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
@@ -177,3 +179,118 @@ def test_legend_face(sphere, face):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
+
+
+class ActorBounds(vtk.vtkActor):
+    def __init__(self, bounds):
+        super().__init__()
+        self.bounds = bounds
+
+    def GetBounds(self):
+        return self.bounds
+
+
+@pytest.mark.parametrize('override_GetBounds', [True, False])
+@pytest.mark.parametrize('reset_camera', [True, False])
+def test_bounds_and_reset_camera(override_GetBounds, reset_camera, verify_image_cache):
+    # test the following:
+    #  - renderer.bounds behaviour matches renderer.ComputeVisiblePropBounds())
+    #  - renderer.reset_camera uses correct bounds when called
+    #  - renderer bounds are correct when actor overrides GetBounds()
+    #  - related bounds-dependent methods camera.tight and plotter.add_actor
+    verify_image_cache.skip = True
+    dataset = pv.ParametricEllipsoid(xradius=3, yradius=4, zradius=5)
+    bounds_offset = 0.5
+    if override_GetBounds:
+        # define actor with re-defined bounds, e.g. add offset
+        actor = ActorBounds(tuple(map(lambda x: x + bounds_offset, dataset.bounds)))
+    else:
+        actor = pv.Actor(mapper=pv.DataSetMapper(dataset))
+
+    # check default bounds and camera position
+    pl = pv.Plotter()
+    initial_cpos = [(0.0, 0.0, 1.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    # Note: ComputeVisiblePropBounds() returns default uninitialized bounds with min/max reversed
+    default_bounds = np.array((-1.0, 1, -1, 1, -1, 1))
+    assert np.array_equal(pl.renderer.bounds, default_bounds)
+    assert np.array_equal(pl.renderer.ComputeVisiblePropBounds(), -default_bounds)
+    assert np.array_equal(pl.renderer.camera_position.to_list(), initial_cpos)
+    pl.show()
+    default_cpos = [(1.0, 1.0, 1.0), (0.0, 0.0, 0.0), (0.0, 0.0, 1.0)]
+    assert np.array_equal(pl.renderer.get_default_cam_pos(), default_cpos)
+    assert np.array_equal(pl.renderer.camera_position.to_list(), default_cpos)
+
+    # do testing with add_actor
+    pl = pv.Plotter()
+    pl.add_actor(actor, reset_camera=reset_camera)
+
+    # test renderer bounds
+    expected_bounds = actor.GetBounds()
+    actual_vtk_bounds = pl.renderer.ComputeVisiblePropBounds()
+    actual_pyvista_bounds = pl.renderer.bounds
+    assert np.allclose(actual_pyvista_bounds, expected_bounds)
+    if override_GetBounds:
+        # test that ComputeVisiblePropBounds returns incorrect result when actor overrides GetBounds()
+        assert not np.allclose(actual_vtk_bounds, expected_bounds)
+    else:
+        assert np.allclose(actual_vtk_bounds, expected_bounds)
+
+    # test that camera is only reset if called by add_actor
+    cpos = pl.renderer.camera_position.to_list()
+    if reset_camera:
+        assert not np.array_equal(cpos, initial_cpos)
+    else:
+        assert np.array_equal(cpos, initial_cpos)
+
+    # test that calling show() has no effect on the renderer's bounds
+    pl.show()
+    actual_vtk_bounds = pl.renderer.ComputeVisiblePropBounds()
+    actual_pyvista_bounds = pl.renderer.bounds
+    assert np.array_equal(actual_pyvista_bounds, expected_bounds)
+    if override_GetBounds:
+        assert not np.allclose(actual_vtk_bounds, expected_bounds)
+    else:
+        assert np.allclose(actual_vtk_bounds, expected_bounds)
+
+    # test that the camera has been reset correctly
+    expected_cpos = np.array(
+        [
+            (15.771915414303583, 15.771160342663569, 15.771160342663569),
+            (0.0007550716400146484, 0.0, 0.0),
+            (0.0, 0.0, 1.0),
+        ]
+    )
+    if override_GetBounds:
+        expected_cpos[(0, 1), :] += bounds_offset
+    actual_cpos = pl.renderer.camera_position.to_list()
+    assert np.allclose(actual_cpos, expected_cpos)
+
+    # test that bounds are updated when making actor invisible
+    actor.VisibilityOff()
+    assert np.array_equal(pl.renderer.bounds, default_bounds)
+    assert np.array_equal(pl.renderer.ComputeVisiblePropBounds(), -default_bounds)
+
+    # test that camera has not yet changed
+    actual_cpos = pl.renderer.camera_position.to_list()
+    assert np.array_equal(actual_cpos, expected_cpos)
+
+    # test that the camera is reset back to default
+    pl.reset_camera()
+    actual_cpos = pl.renderer.camera_position.to_list()
+    assert np.array_equal(actual_cpos, default_cpos)
+
+    # test camera.tight
+    actor.VisibilityOn()
+    pl.camera.tight()
+    expected_cpos = np.array(
+        [(0.0007550716400146, 0.0, 1.0), (0.0007550716400146, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    )
+    if override_GetBounds:
+        expected_cpos[(0, 1), :] += bounds_offset
+    actual_cpos = pl.renderer.camera_position.to_list()
+    assert np.allclose(actual_cpos, expected_cpos)
+
+    # test actor bounds are ignored if UseBoundsOff()
+    actor.UseBoundsOff()
+    assert np.array_equal(pl.renderer.bounds, default_bounds)
+    assert np.array_equal(pl.renderer.ComputeVisiblePropBounds(), -default_bounds)
