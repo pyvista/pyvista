@@ -904,7 +904,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         origin=(0, 0, 0),
         scale=(1, 1, 1),
         user_matrix=None,
-        reset_camera=True,
         **kwargs,
     ) -> AxesActor:
         """Add axes actor to the scene.
@@ -913,6 +912,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         The axes can also be arbitrarily positioned and oriented in space.
 
         .. versionadded:: 0.43.0
+
+        .. warning::
+
+            Positioning and orienting the axes in space by setting ``position``,
+            ``orientation``, ``origin``, ``scale``, or ``user_matrix`` to
+            non-default values is an experimental feature. In some cases, this
+            may result in the axes not being visible in the plot. Call
+            ``plotter.reset_camera(plotter.bounds)`` after calling ``plotter.show()``
+            to reset the camera if necessary.
 
         Parameters
         ----------
@@ -964,10 +972,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Transformation to apply to the axes. Can be a vtkTransform,
             3x3 transformation matrix, or 4x4 transformation matrix.
             Defaults to the identity matrix.
-
-        reset_camera : bool, default: True
-            If ``True``, the camera is reset after adding the axes marker
-            to the scene.
 
         **kwargs : dict, optional
             See :class:`~pyvista.AxesActor` for additional keyword arguments.
@@ -1027,7 +1031,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             user_matrix=user_matrix,
             **kwargs,
         )
-        self.add_actor(self._marker_actor, reset_camera=reset_camera)
+        self.add_actor(self._marker_actor)
         return self._marker_actor
 
     def add_orientation_widget(
