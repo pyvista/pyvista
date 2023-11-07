@@ -299,8 +299,10 @@ def test_axes_actor_axis_color(axes_actor):
 
 
 def test_axes_shaft_width(axes_actor):
+    axes_actor.shaft_type = 'cylinder'
     axes_actor.shaft_width = 100
 
+    assert axes_actor.shaft_type.annotation == 'line'
     assert axes_actor.shaft_width == 100
     assert axes_actor.GetXAxisShaftProperty().GetLineWidth() == 100
     assert axes_actor.GetYAxisShaftProperty().GetLineWidth() == 100
@@ -311,7 +313,10 @@ def test_axes_shaft_width(axes_actor):
 
 
 def test_axes_shaft_radius(axes_actor):
+    axes_actor.shaft_type = 'line'
     axes_actor.shaft_radius = 100
+
+    assert axes_actor.shaft_type.annotation == 'cylinder'
     assert axes_actor.shaft_radius == 100
 
     actor_init = AxesActor(shaft_radius=50)
@@ -407,7 +412,7 @@ def _compute_expected_bounds(axes_actor):
             actors.append(props.GetItemAsObject(num))
 
     # Transform actors and get their bounds
-    # Half of the actors are reflected to give symmertric axes
+    # Half of the actors are reflected to give symmetric axes
     bounds = []
     matrix = axes_actor._concatenate_implicit_matrix_and_user_matrix()
     matrix_reflect = matrix @ np.diag((-1, -1, -1, 1))

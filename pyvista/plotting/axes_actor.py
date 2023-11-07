@@ -102,12 +102,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
 
     shaft_radius : float, default: 0.1
-        Cylinder radius of the axes shafts. Only has an effect if ``shaft_type``
-        is ``'cylinder'``.
+        Cylinder radius of the axes shafts. Only has an effect on the
+        rendered axes if ``shaft_type`` is ``'cylinder'``.
 
     shaft_width : float, default: 2
         Line width of the axes shafts in screen units. Only has
-        an effect if ``shaft_type`` is ``'line'``.
+        an effect on the rendered axes if ``shaft_type`` is ``'line'``.
 
     shaft_length : float | Vector, default: 0.8
         Normalized length of the shaft for each axis. If a number, the shaft
@@ -338,11 +338,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.z_color = z_color
 
         # Set shaft properties
-        self.shaft_type = shaft_type
         self.shaft_radius = shaft_radius
         self.shaft_width = shaft_width
         self.shaft_length = shaft_length
         self.shaft_resolution = shaft_resolution
+        self.shaft_type = shaft_type
 
         # Set tip properties
         self.tip_type = tip_type
@@ -778,7 +778,10 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def shaft_radius(self):  # numpydoc ignore=RT01
         """Cylinder radius of the axes shafts.
 
-        This property only has an effect if ``shaft_type`` is ``'cylinder'``.
+        Notes
+        -----
+        Setting this property will automatically change the ``shaft_type``
+        to ``'line'``.
 
         Examples
         --------
@@ -795,13 +798,17 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @shaft_radius.setter
     def shaft_radius(self, radius):  # numpydoc ignore=GL08
+        self.shaft_type = 'cylinder'
         self.SetCylinderRadius(radius)
 
     @property
     def shaft_width(self):  # numpydoc ignore=RT01
         """Line width of the axes shafts in screen units.
 
-        This property only has an effect if ``shaft_type`` is ``'line'``.
+        Notes
+        -----
+        Setting this property will automatically change the ``shaft_type``
+        to ``'line'``.
 
         """
         # Get x width and assume width is the same for each x, y, and z
@@ -814,6 +821,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @shaft_width.setter
     def shaft_width(self, width):  # numpydoc ignore=GL08
+        self.shaft_type = 'line'
         self.GetXAxisShaftProperty().SetLineWidth(width)
         self.GetYAxisShaftProperty().SetLineWidth(width)
         self.GetZAxisShaftProperty().SetLineWidth(width)
