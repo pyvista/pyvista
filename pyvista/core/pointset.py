@@ -19,6 +19,7 @@ from ._typing_core import (
     IntMatrix,
     IntVector,
     Matrix,
+    NumpyIntArray,
     NumpyUINT8Array,
     Vector,
 )
@@ -102,7 +103,7 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        ind : sequence
+        ind : BoolVector | IntVector
             Cell indices to be removed.  The array can also be a
             boolean array of the same size as the number of cells.
 
@@ -596,16 +597,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     def __init__(
         self,
-        var_inp=None,
-        faces=None,
-        n_faces=None,
-        lines=None,
-        n_lines=None,
-        strips=None,
-        n_strips=None,
-        deep=False,
-        force_ext=None,
-        force_float=True,
+        var_inp: Union[_vtk.vtkPolyData, str, Matrix] = None,
+        faces: Optional[IntVector] = None,
+        n_faces: Optional[int] = None,
+        lines: Optional[IntVector] = None,
+        n_lines: Optional[int] = None,
+        strips: Optional[IntVector] = None,
+        n_strips: Optional[int] = None,
+        deep: bool = False,
+        force_ext: Optional[str] = None,
+        force_float: Optional[bool] = True,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -662,43 +663,44 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if faces is None and lines is None and strips is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
-            self.verts = CellArray(verts, self.n_points, deep)
+            self.verts = CellArray(verts, self.n_points, deep)  # type: ignore
         elif strips is not None:
-            self.strips = CellArray(strips, n_strips, deep)
+            self.strips = CellArray(strips, n_strips, deep)  # type: ignore
         elif faces is not None:
             # here we use CellArray since we must specify deep and n_faces
-            self.faces = CellArray(faces, n_faces, deep)
+            self.faces = CellArray(faces, n_faces, deep)  # type: ignore
 
         # can always set lines
         if lines is not None:
             # here we use CellArray since we must specify deep and n_lines
-            self.lines = CellArray(lines, n_lines, deep)
+            self.lines = CellArray(lines, n_lines, deep)  # type: ignore
 
-    def _post_file_load_processing(self):
+    def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             verts = self._make_vertex_cells(self.n_points)
-            self.verts = CellArray(verts, self.n_points, deep=False)
+            self.verts = CellArray(verts, self.n_points, deep=False)  # type: ignore
+        return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
     @staticmethod
-    def _make_vertex_cells(npoints):
+    def _make_vertex_cells(npoints: int) -> NumpyIntArray:
         cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
         cells[:, 0] = 1
         cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
         return cells
 
     @property
-    def verts(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def verts(self) -> NumpyIntArray:  # numpydoc ignore=RT01
         """Get the vertex cells.
 
         Returns
@@ -737,14 +739,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
-    def verts(self, verts):  # numpydoc ignore=GL08
+    def verts(self, verts: IntVector):  # numpydoc ignore=GL08
         if isinstance(verts, CellArray):
             self.SetVerts(verts)
         else:
             self.SetVerts(CellArray(verts))
 
     @property
-    def lines(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def lines(self) -> NumpyIntArray:  # numpydoc ignore=RT01
         """Return a pointer to the lines as a numpy array.
 
         Examples
@@ -762,14 +764,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
-    def lines(self, lines):  # numpydoc ignore=GL08
+    def lines(self, lines: IntVector):  # numpydoc ignore=GL08
         if isinstance(lines, CellArray):
             self.SetLines(lines)
         else:
             self.SetLines(CellArray(lines))
 
     @property
-    def faces(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def faces(self) -> NumpyIntArray:  # numpydoc ignore=RT01
         """Return the connectivity array of the faces of this PolyData.
 
         The faces array is organized as::
@@ -833,7 +835,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return array
 
     @faces.setter
-    def faces(self, faces):  # numpydoc ignore=GL08
+    def faces(self, faces: NumpyIntArray):  # numpydoc ignore=GL08
         if isinstance(faces, CellArray):
             self.SetPolys(faces)
         else:
@@ -841,7 +843,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetPolys(CellArray(faces))
 
     @property
-    def regular_faces(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def regular_faces(self) -> NumpyIntArray:  # numpydoc ignore=RT01
         """Return a face array of point indices when all faces have the same size.
 
         Returns
@@ -877,7 +879,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     @regular_faces.setter
     def regular_faces(self, faces: Union[np.ndarray, IntMatrix]):  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
-        self.faces = CellArray.from_regular_cells(faces)
+        self.faces = CellArray.from_regular_cells(faces)  # type: ignore
 
     @classmethod
     def from_regular_faces(cls, points: Matrix, faces: IntMatrix, deep=False):
@@ -940,7 +942,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetStrips(CellArray(strips))
 
     @property
-    def is_all_triangles(self):  # numpydoc ignore=RT01
+    def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
         Returns
@@ -983,12 +985,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return self.boolean_difference(cutting_mesh)
 
     @property
-    def _offset_array(self):
+    def _offset_array(self) -> NumpyIntArray:
         """Return the array used to store cell offsets."""
         return _get_offset_array(self.GetPolys())
 
     @property
-    def _connectivity_array(self):
+    def _connectivity_array(self) -> NumpyIntArray:
         """Return the array with the point ids that define the cells' connectivity."""
         return _get_connectivity_array(self.GetPolys())
 
