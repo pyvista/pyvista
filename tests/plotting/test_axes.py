@@ -368,24 +368,24 @@ def test_axes_actor_properties(axes_actor):
 
 def test_axes_actor_user_matrix():
     eye = np.eye(4)
+    eye2 = eye * 2
+    eye3 = eye * 3
 
     a = pv.AxesActor(_make_orientable=False)
     assert np.array_equal(a.user_matrix, eye)
+    assert np.array_equal(a._user_matrix, eye)
     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye)
 
-    a.user_matrix = eye * 2
-    assert np.array_equal(a.user_matrix, eye * 2)
-    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye * 2)
+    a.user_matrix = eye2
+    assert np.array_equal(a.user_matrix, eye2)
+    assert np.array_equal(a._user_matrix, eye2)
+    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye2)
 
     a._make_orientable = True
-    assert np.array_equal(a.user_matrix, np.eye(4))
-    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye)
-
-    a.user_matrix = eye * 2
-    assert np.array_equal(a.user_matrix, eye * 2)
-    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye * 2)
-
-    # test that vtkAxesActor getter and pyvista.Prop3D getter return the same value
+    a.SetUserMatrix(vtkmatrix_from_array(eye3))
+    assert np.array_equal(a.user_matrix, eye3)
+    assert np.array_equal(a._user_matrix, eye3)
+    assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye3)
 
 
 def _compute_expected_bounds(axes_actor):

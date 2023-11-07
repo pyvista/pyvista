@@ -1087,9 +1087,15 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01,GL08
         """Wrap method for orientation workaround."""
         if self._make_orientable:
-            # The default GetBounds() method from vtkProp3D does not compute the actual
-            # bounds of the rendered vtkAxesActor (see pyvista issue #5019).
-            # Instead, compute the bounds from the actual shaft and tip actor bounds.
+            # GetBounds() defined by vtkAxesActor accesses a protected self.Bounds property
+            # which is hard-coded to be centered and symmetric about the origin.
+            # However, since the axes are made orientable, we instead compute the bounds from the
+            # actual shaft and tip actor bounds.
+
+            # NOTE: Overriding GetBounds() only works for python methods that call GetBounds().
+            # It has no effect on compiled vtk code which directly calls vtkAxesActor.GetBounds().
+            # This can result in camera issues when rendering a scene since vtkRenderer.ComputeVisiblePropBounds()
+            # uses GetBounds() of all actors when resetting the camera, which will not execute this override.
             return self._compute_actor_bounds()
         return super().GetBounds()
 
@@ -1097,89 +1103,79 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def RotateX(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().RotateX(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.RotateY)
     def RotateY(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().RotateY(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.RotateZ)
     def RotateZ(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().RotateZ(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetScale)
     def SetScale(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetScale(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetOrientation)
     def SetOrientation(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetOrientation(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetOrigin)
     def SetOrigin(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetOrigin(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.SetPosition)
     def SetPosition(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetPosition(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkAxesActor.SetNormalizedShaftLength)
     def SetNormalizedShaftLength(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetNormalizedShaftLength(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkAxesActor.SetNormalizedTipLength)
     def SetNormalizedTipLength(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetNormalizedTipLength(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkAxesActor.SetTotalLength)
     def SetTotalLength(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
         super().SetTotalLength(*args)
-        self._update_actor_UserMatrix() if self._make_orientable else None
+        self._update_actor_transformations() if self._make_orientable else None
 
     @wraps(_vtk.vtkProp3D.GetUserMatrix)
     def GetUserMatrix(self):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
-        if not self._make_orientable:
-            return super().GetUserMatrix()
-        else:
-            # For the workaround, the UserMatrix must always
-            # be the identity matrix. Therefore, we store the
-            # the desired user matrix as a separate variable
-            # and return that instead.
+        if self._make_orientable:
             self._user_matrix = np.eye(4) if self._user_matrix is None else self._user_matrix
             return vtkmatrix_from_array(self._user_matrix)
+        else:
+            matrix = super().GetUserMatrix()
+            self._user_matrix = array_from_vtkmatrix(matrix)
+            return matrix
 
     @wraps(_vtk.vtkProp3D.SetUserMatrix)
     def SetUserMatrix(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method for orientation workaround."""
-        if not self._make_orientable:
-            super().SetUserMatrix(*args)
-        else:
-            # For the workaround, the UserMatrix must always
-            # be the identity matrix. Therefore, we store the
-            # the desired user matrix as a separate variable.
-
-            # Make sure the actual underlying UserMatrix is identity
-            super().SetUserMatrix(vtkmatrix_from_array(np.eye(4)))
-            self._user_matrix = array_from_vtkmatrix(*args)
-            self._update_actor_UserMatrix()
+        super().SetUserMatrix(*args)
+        self._user_matrix = array_from_vtkmatrix(*args)
+        self._update_actor_transformations() if self._make_orientable else None
 
     @property
     def _implicit_matrix(
@@ -1195,9 +1191,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             return array_from_vtkmatrix(temp_actor.GetMatrix())
         return temp_actor.GetMatrix()
 
-    def _update_actor_UserMatrix(self):  # numpydoc ignore=RT01,PR01
-        matrix = self._concatenate_implicit_matrix_and_user_matrix()
-        [actor.SetUserMatrix(vtkmatrix_from_array(matrix)) for actor in self._actors]
+    def _update_actor_transformations(self, reset=False):  # numpydoc ignore=RT01,PR01
+        if reset:
+            matrix = vtkmatrix_from_array(np.eye(4))
+        else:
+            matrix = vtkmatrix_from_array(self._concatenate_implicit_matrix_and_user_matrix())
+        super().SetUserMatrix(matrix)
+        [actor.SetUserMatrix(matrix) for actor in self._actors]
         # # Update text caption positions
         # t = _vtk.vtkTransform()
         # t.SetMatrix(matrix)
@@ -1236,6 +1236,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             self.tip_type = 'sphere'
 
     def _compute_actor_bounds(self) -> BoundsLike:
+        """Compute symmetric axes bounds from the shaft and tip actors."""
         all_bounds = np.zeros((12, 3))
         for i, a in enumerate(self._actors):
             bnds = a.GetBounds()
@@ -1259,21 +1260,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @_make_orientable.setter
     def _make_orientable(self, value: bool):
         self.__make_orientable = value
-        if value:
-            # The vtkAxesActor's protected self.Bounds property is hard-coded to
-            # be centered and symmetric about the origin. This means any vtk code which
-            # directly uses vtkAxesActor.GetBounds() (and which does not call the overridden
-            # GetBounds method defined here by pyvista.AxesActor) will get an incorrect
-            # bounds value. This can result in camera issues when rendering a scene with the
-            # axes since the camera will insist on including the origin in the scene, even if
-            # the axes have been positioned elsewhere.
-            # As a workaround, we disable the use of the axes bounds when rendering.
-            self.UseBoundsOff()
-            self._update_actor_UserMatrix()
-        else:
-            self.UseBoundsOn()
-            # Remove transformations from actors
-            [actor.SetUserMatrix(vtkmatrix_from_array(np.eye(4))) for actor in self._actors]
+        self._update_actor_transformations(reset=not value)
 
     def _init_make_orientable(self, kwargs):
         """Initialize workaround to make axes orientable in space."""
