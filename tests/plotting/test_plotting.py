@@ -18,7 +18,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
@@ -623,10 +623,18 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
         plotter.update_scalars(np.arange(5))
-    with pytest.raises(ValueError):
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
         plotter.update_scalars(np.arange(sphere.n_faces))
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
 
 
 def test_plot_show_bounds(sphere):
@@ -786,11 +794,13 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
+    movie_sphere["scalars"] = np.random.random(movie_sphere.n_faces)
+
     plotter = pv.Plotter()
     plotter.open_movie(filename)
     actor = plotter.add_axes_marker()
     plotter.remove_actor(actor, reset_camera=False, render=True)
-    plotter.add_mesh(movie_sphere, scalars=np.random.random(movie_sphere.n_faces))
+    plotter.add_mesh(movie_sphere, scalars="scalars")
     plotter.show(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
     for _ in range(3):  # limiting number of frames to write for speed
@@ -799,7 +809,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
         scalars = np.random.random(movie_sphere.n_faces)
-        plotter.update_scalars(scalars)
+        movie_sphere["scalars"] = scalars
 
     # remove file
     plotter.close()

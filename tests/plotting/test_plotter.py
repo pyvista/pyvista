@@ -467,3 +467,14 @@ def test_add_axes_marker(sphere):
     with pytest.raises(PyVistaDeprecationWarning):
         pl = pv.Plotter()
         pl.add_axes_at_origin()
+
+
+def test_plotter_update_coordinates(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.update_coordinates(sphere.points * 2.0)
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
