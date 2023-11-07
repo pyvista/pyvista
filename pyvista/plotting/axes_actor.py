@@ -1239,11 +1239,22 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     def _update_actor_transformations(self, reset=False):  # numpydoc ignore=RT01,PR01
         if reset:
-            matrix = vtkmatrix_from_array(np.eye(4))
+            matrix = np.eye(4)
         else:
-            matrix = vtkmatrix_from_array(self._concatenate_implicit_matrix_and_user_matrix())
-        super().SetUserMatrix(matrix)
-        [actor.SetUserMatrix(matrix) for actor in self._actors]
+            matrix = self._concatenate_implicit_matrix_and_user_matrix()
+        if not np.array_equal(matrix, self._cached_matrix) or reset:
+            if np.array_equal(matrix, np.eye(4)):
+                self.UseBoundsOn()
+            else:
+                # Calls to vtkRenderer.ResetCamera() will use the incorrect axes bounds
+                # when axes have a transformation applied. As a workaround, set
+                # UseBoundsOff(). In some cases, this will require manual adjustment
+                # of the camera from the user
+                self.UseBoundsOff()
+            self._cached_matrix = matrix
+            matrix = vtkmatrix_from_array(matrix)
+            super().SetUserMatrix(matrix)
+            [actor.SetUserMatrix(matrix) for actor in self._actors]
         # # Update text caption positions
         # t = _vtk.vtkTransform()
         # t.SetMatrix(matrix)
@@ -1311,6 +1322,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def _init_make_orientable(self, kwargs):
         """Initialize workaround to make axes orientable in space."""
         self._user_matrix = np.eye(4)
+        self._cached_matrix = np.eye(4)
+        self._update_actor_transformations(reset=True)
         self.__make_orientable = kwargs.pop('_make_orientable', True)
         self._make_orientable = self.__make_orientable
 
