@@ -179,9 +179,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
       X label:                    'X'
       Y label:                    'Y'
       Z label:                    'Z'
-      Show labels:                True
+      Labels off:                False
       Label position:             (1.0, 1.0, 1.0)
-      Label size:                 (0.25, 0.1)
       Shaft type:                 'cylinder'
       Shaft radius:               0.01
       Shaft length:               (0.8, 0.8, 0.8)
@@ -190,8 +189,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
       Tip length:                 (0.2, 0.2, 0.2)
       Total length:               (1.0, 1.0, 1.0)
       Position:                   (0.01, 0.0, 0.0)
-      Orientation:                (0.0, -0.0, 0.0)
-      Origin:                     (0.0, 0.0, 0.0)
       Scale:                      (1.0, 1.0, 1.0)
       User matrix:                Identity
       Visible:                    True
@@ -419,7 +416,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
-            f"  Labels off:                {self.labels_off}",
+            f"  Labels off:                 {self.labels_off}",
             f"  Label position:             {self.label_position}",
             f"  Shaft type:                 '{self.shaft_type.annotation}'",
             f"  {shaft_param}               {shaft_value}",

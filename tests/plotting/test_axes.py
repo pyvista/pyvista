@@ -683,3 +683,9 @@ def test_axes_actor_raises():
         pv.AxesActor(properties="not_a_dict")
     with pytest.raises(TypeError, match="invalid keyword"):
         pv.AxesActor(not_valid_kwarg="some_value")
+
+
+def test_axes_actor_repr(axes_actor):
+    repr_ = repr(axes_actor)
+    expected = "X label:                    'X'\n  Y label:                    'Y'\n  Z label:                    'Z'\n  Labels off:                 False\n  Label position:             (1.0, 1.0, 1.0)\n  Shaft type:                 'cylinder'\n  Shaft radius:               0.01\n  Shaft length:               (0.8, 0.8, 0.8)\n  Tip type:                   'cone'\n  Tip radius:                 0.4\n  Tip length:                 (0.2, 0.2, 0.2)\n  Total length:               (1.0, 1.0, 1.0)\n  Position:                   (0.0, 0.0, 0.0)\n  Scale:                      (1.0, 1.0, 1.0)\n  User matrix:                Identity\n  Visible:                    True\n  X Bounds                    -1.000E+00, 1.000E+00\n  Y Bounds                    -1.000E+00, 1.000E+00\n  Z Bounds                    -1.000E+00, 1.000E+00"
+    assert expected in repr_
