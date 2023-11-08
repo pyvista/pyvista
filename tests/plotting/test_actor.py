@@ -144,6 +144,13 @@ def test_actor_orientation(actor):
     assert np.allclose(actor.orientation, orientation)
 
 
+def test_actor_origin(actor):
+    assert actor.origin == (0, 0, 0)
+    origin = (1, 2, 3)
+    actor.origin = origin
+    assert np.allclose(actor.origin, origin)
+
+
 def test_actor_unit_matrix(actor):
     assert np.allclose(actor.user_matrix, np.eye(4))
 
