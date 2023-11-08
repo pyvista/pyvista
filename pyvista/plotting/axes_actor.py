@@ -179,7 +179,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
       X label:                    'X'
       Y label:                    'Y'
       Z label:                    'Z'
-      Labels off:                False
+      Labels off:                 False
       Label position:             (1.0, 1.0, 1.0)
       Shaft type:                 'cylinder'
       Shaft radius:               0.01
@@ -1253,18 +1253,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self._update_actor_transformations() if self._make_orientable else None
 
     @property
-    def _implicit_matrix(
-        self, as_ndarray=True
-    ) -> Union[np.ndarray, _vtk.vtkMatrix4x4]:  # numpydoc ignore=GL08
+    def _implicit_matrix(self) -> Union[np.ndarray, _vtk.vtkMatrix4x4]:  # numpydoc ignore=GL08
         """Compute the transformation matrix implicitly defined by 3D parameters."""
         temp_actor = _vtk.vtkActor()
         temp_actor.SetOrigin(self.GetOrigin())
         temp_actor.SetScale(self.GetScale())
         temp_actor.SetPosition(self.GetPosition())
         temp_actor.SetOrientation(self.GetOrientation())
-        if as_ndarray:
-            return array_from_vtkmatrix(temp_actor.GetMatrix())
-        return temp_actor.GetMatrix()
+        return array_from_vtkmatrix(temp_actor.GetMatrix())
 
     def _update_actor_transformations(self, reset=False):  # numpydoc ignore=RT01,PR01
         if reset:
@@ -1284,20 +1280,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             matrix = vtkmatrix_from_array(matrix)
             super().SetUserMatrix(matrix)
             [actor.SetUserMatrix(matrix) for actor in self._actors]
-        # # Update text caption positions
-        # t = _vtk.vtkTransform()
-        # t.SetMatrix(matrix)
-        # label_scale = np.array(self.label_position) * np.array(self.total_length)
-        # label_position = array_from_vtkmatrix(matrix) @ (np.eye(4) * np.diag((*label_scale,1)))
-        # print(label_position)
-        # x = self.GetXAxisCaptionActor2D()
-        # x.LeaderOn()
-        # x.SetAttachmentPoint(0,0,0)
-        # x.GetTextActor()
-        # y=self.GetYAxisCaptionActor2D()
-        # y.SetAttachmentPoint(label_position[1,:3] *5)
-        # z = self.GetZAxisCaptionActor2D()
-        # z.SetAttachmentPoint(label_position[2,:3] *5)
 
     @property
     def _actors(self):
@@ -1310,16 +1292,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     def _concatenate_implicit_matrix_and_user_matrix(self) -> np.ndarray:
         return self._user_matrix @ self._implicit_matrix
-
-    def _update_props(self):
-        # indirectly trigger a call to protected function self.UpdateProps()
-        # by toggling the tip type
-        if self.tip_type == 'cone':
-            self.tip_type = 'sphere'
-            self.tip_type = 'cone'
-        else:
-            self.tip_type = 'cone'
-            self.tip_type = 'sphere'
 
     def _compute_actor_bounds(self) -> BoundsLike:
         """Compute symmetric axes bounds from the shaft and tip actors."""
@@ -1355,25 +1327,3 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self._update_actor_transformations(reset=True)
         self.__make_orientable = kwargs.pop('_make_orientable', True)
         self._make_orientable = self.__make_orientable
-
-    # def _re_init(self):
-    #     """Re-initialize AxesActor."""
-    #     # Create dict of current object properties and their values
-    #     # using
-    #     import inspect
-
-    #     old_params = dict()
-    #     param_keys = inspect.signature(AxesActor).parameters.keys()
-    #     for key in param_keys:
-    #         try:
-    #             old_params[key] = getattr(self, key)
-    #         except AttributeError:
-    #             pass
-    #     # Create new instances of axes actors and copy their default properties
-    #     [actor.ShallowCopy(type(actor)()) for actor in self._actors]
-    #     # Re-assign property values
-    #     [setattr(self, key, val) for key, val in old_params.items()]
-
-
-# def _orientation_to_direction(orientation, origin=(0,0,0), as_ndarray=True):
-#     return _compute_implicit_matrix(orientation=orientation, origin=origin, as_ndarray=as_ndarray)
