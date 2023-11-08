@@ -168,14 +168,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     Examples
     --------
-    Create the default axes actor.
+    Plot the default axes actor.
 
     >>> import pyvista as pv
     >>> axes_actor = pv.AxesActor()
     >>> pl = pv.Plotter()
     >>> pl.add_actor(axes_actor)
-    >>> pl.show()
-    AxesActor (...)
+    (AxesActor (...)
       X label:                    'X'
       Y label:                    'Y'
       Z label:                    'Z'
@@ -188,15 +187,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
       Tip radius:                 0.4
       Tip length:                 (0.2, 0.2, 0.2)
       Total length:               (1.0, 1.0, 1.0)
-      Position:                   (0.01, 0.0, 0.0)
+      Position:                   (0.0, 0.0, 0.0)
       Scale:                      (1.0, 1.0, 1.0)
       User matrix:                Identity
       Visible:                    True
-      X Bounds                    -9.900E-01, 1.010E+00
+      X Bounds                    -1.000E+00, 1.000E+00
       Y Bounds                    -1.000E+00, 1.000E+00
-      Z Bounds                    -1.000E+00, 1.000E+00
-    ...
-
+      Z Bounds                    -1.000E+00, 1.000E+00, None)
+    >>> pl.show()
 
     Create an axes actor with a specific position and orientation in space.
 
@@ -224,7 +222,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes_actor)
     >>> pl.show()
-
 
     The actor can also be used as a custom orientation widget with
     :func:`~pyvista.Renderer.add_orientation_widget`
@@ -799,8 +796,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         Notes
         -----
-        Setting this property will automatically change the ``shaft_type``
-        to ``'line'``.
+        Setting this property will automatically change the ``shaft_type`` to ``'line'``.
 
         Examples
         --------
@@ -826,8 +822,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         Notes
         -----
-        Setting this property will automatically change the ``shaft_type``
-        to ``'line'``.
+        Setting this property will automatically change the ``shaft_type`` to ``'line'``.
 
         """
         # Get x width and assume width is the same for each x, y, and z

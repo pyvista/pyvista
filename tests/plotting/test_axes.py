@@ -86,22 +86,22 @@ def test_axes_actor_shaft_length(axes_actor):
     axes_actor.shaft_length = 1
     assert axes_actor.shaft_length == (1, 1, 1)
 
-    axes_actor.shaft_length = (1, 2, 3)
-    assert axes_actor.shaft_length == (1, 2, 3)
+    axes_actor.shaft_length = (0.1, 0.2, 0.3)
+    assert axes_actor.shaft_length == (0.1, 0.2, 0.3)
 
-    actor_init = AxesActor(shaft_length=9)
-    assert actor_init.shaft_length == (9, 9, 9)
+    actor_init = AxesActor(shaft_length=0.9)
+    assert actor_init.shaft_length == (0.9, 0.9, 0.9)
 
 
 def test_axes_actor_tip_length(axes_actor):
     axes_actor.tip_length = 1
     assert axes_actor.tip_length == (1, 1, 1)
 
-    axes_actor.tip_length = (1, 2, 3)
-    assert axes_actor.tip_length == (1, 2, 3)
+    axes_actor.tip_length = (0.1, 0.2, 0.3)
+    assert axes_actor.tip_length == (0.1, 0.2, 0.3)
 
-    actor_init = AxesActor(tip_length=9)
-    assert actor_init.tip_length == (9, 9, 9)
+    actor_init = AxesActor(tip_length=0.9)
+    assert actor_init.tip_length == (0.9, 0.9, 0.9)
 
 
 def test_axes_actor_label_position(axes_actor):
