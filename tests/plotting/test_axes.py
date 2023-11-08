@@ -265,6 +265,24 @@ def test_axes_actor_axes_labels(axes_actor):
         axes_actor.z_axis_label = 'Axis Z'
         assert axes_actor.z_axis_label == 'Axis Z'
 
+    axes_actor.labels = ('U', 'V', 'W')
+    assert axes_actor.x_label == 'U'
+    assert axes_actor.y_label == 'V'
+    assert axes_actor.z_label == 'W'
+
+    axes_actor.labels = 'UVW'
+    assert axes_actor.x_label == 'U'
+    assert axes_actor.y_label == 'V'
+    assert axes_actor.z_label == 'W'
+
+    actor_init = AxesActor(x_label='A', y_label='B', z_label='C', labels='UVW')
+    assert actor_init.x_label == 'U'
+    assert actor_init.y_label == 'V'
+    assert actor_init.z_label == 'W'
+
+    with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
+        axes_actor.labels = 'abcd'
+
 
 def test_axes_actor_label_color(axes_actor):
     axes_actor.label_color = 'purple'

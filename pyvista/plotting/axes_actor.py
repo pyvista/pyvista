@@ -82,6 +82,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     z_label : str, default: "Z"
         Text label for the z-axis.
 
+    labels : str | Sequence[str], optional
+        Convenience parameter for setting text labels. Value must be a
+        sequence of three strings or a single string with three characters
+        (one for each of the x, y, and z axes, respectively). Setting this
+        parameter is equivalent to setting ``x_label``, ``y_label``, and
+        ``z_label`` separately. If set, the specified labels will take
+        precedence, i.e. the values of ``x_label``, etc. are ignored.
+
     label_color : ColorLike, optional
         Color of the label text for all axes.
 
@@ -266,6 +274,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         x_label='X',
         y_label='Y',
         z_label='Z',
+        labels=None,
         label_color=None,
         labels_off=False,
         label_size=(0.25, 0.1),
@@ -383,9 +392,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.tip_resolution = tip_resolution
 
         # Set text label properties
-        self.x_label = x_label
-        self.y_label = y_label
-        self.z_label = z_label
+        if labels is None:
+            self.x_label = x_label
+            self.y_label = y_label
+            self.z_label = z_label
+        else:
+            self.labels = labels
         self.labels_off = labels_off
         self.label_size = label_size
         self.label_position = label_position
@@ -900,6 +912,40 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             self.SetTipTypeToCone()
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
+
+    @property
+    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Axes text labels.
+
+        This property can be used as an alternative to using :attr:`~x_label`,
+        :attr:`~y_label`, and :attr:`~z_label` separately for setting or
+        getting the axes text labels.
+
+        A single string with exactly three characters can be used to set the labels
+        of the x, y, and z axes (respectively) to a single character. Alternatively.
+        a sequence of three strings can be used.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.labels = 'UVW'
+        >>> axes_actor.labels
+        ('U', 'V', 'W')
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+
+        """
+        return self.GetXAxisLabelText(), self.GetYAxisLabelText(), self.GetZAxisLabelText()
+
+    @labels.setter
+    def labels(self, labels: Union[str, Sequence[str]]):  # numpydoc ignore=GL08
+        self.SetXAxisLabelText(labels[0])
+        self.SetYAxisLabelText(labels[1])
+        self.SetZAxisLabelText(labels[2])
+        if len(labels) > 3:
+            raise ValueError('Labels sequence must have exactly 3 items.')
 
     @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
