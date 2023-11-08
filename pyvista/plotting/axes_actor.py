@@ -220,6 +220,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     >>> axes_actor = pv.AxesActor(
     ...     position=(1, 2, 3), orientation=(10, 20, 30)
     ... )
+    >>>
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes_actor, reset_camera=True)
     >>> _ = pl.show_grid()
@@ -228,16 +229,15 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     Create an axes actor with custom colors and axis labels.
 
     >>> axes_actor = pv.AxesActor(
+    ...     labels='UVW',
     ...     shaft_type='line',
     ...     shaft_width=4,
     ...     x_color="#378df0",
     ...     y_color="#ab2e5d",
     ...     z_color="#f7fb9a",
-    ...     x_label="X Axis",
-    ...     y_label="Y Axis",
-    ...     z_label="Z Axis",
     ...     label_size=(0.1, 0.1),
     ... )
+    >>>
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes_actor)
     >>> pl.show()
