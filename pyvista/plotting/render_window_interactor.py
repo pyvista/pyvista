@@ -42,7 +42,7 @@ class Timer:
         self.id = None
         self.callback = callback
 
-    def execute(self, obj, event):  # pragma: no cover # numpydoc ignore=PR01,RT01
+    def execute(self, obj, _event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
         while self.step < self.max_steps:
             self.callback(self.step)
@@ -321,7 +321,7 @@ class RenderWindowInteractor:
         else:
             raise TypeError(f"Side ({side}) not supported. Try `left` or `right`.")
 
-    def _click_event(self, obj, event):
+    def _click_event(self, _obj, event):
         t = time.time()
         dt = t - self._click_time
         last_pos = self._plotter.click_position or (0, 0)
@@ -399,7 +399,7 @@ class RenderWindowInteractor:
         """Clear key event callbacks."""
         self._key_press_event_callbacks.clear()
 
-    def key_press_event(self, obj, event):
+    def key_press_event(self, *args):
         """Listen for key press event."""
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
@@ -752,7 +752,7 @@ class RenderWindowInteractor:
 
         if mouse_wheel_zooms:
 
-            def wheel_zoom_callback(obj, event):  # pragma: no cover
+            def wheel_zoom_callback(_obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
@@ -770,7 +770,7 @@ class RenderWindowInteractor:
 
         if shift_pans:
 
-            def pan_on_shift_callback(obj, event):  # pragma: no cover
+            def pan_on_shift_callback(_obj, event):  # pragma: no cover
                 """Trigger left mouse panning if shift is pressed."""
                 if event == 'LeftButtonPressEvent':
                     if self.interactor.GetShiftKey():
@@ -1237,7 +1237,7 @@ def _style_factory(klass):
                     self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
                 )
 
-            def _press(self, obj, event):
+            def _press(self, *args):
                 # Figure out which renderer has the event and disable the
                 # others
                 super().OnLeftButtonDown()
@@ -1248,7 +1248,7 @@ def _style_factory(klass):
                         interact = renderer.IsInViewport(*click_pos)
                         renderer.SetInteractive(interact)
 
-            def _release(self, obj, event):
+            def _release(self, *args):
                 super().OnLeftButtonUp()
                 parent = self._parent()
                 if len(parent._plotter.renderers) > 1:

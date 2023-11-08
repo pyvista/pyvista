@@ -54,13 +54,15 @@ mesh = grid.extract_geometry().clean(tolerance=1e-6)
 dists = np.linalg.norm(mesh.points, axis=1)
 dists = 2 * np.pi * (dists - dists.min()) / (dists.max() - dists.min())
 
+mesh["distances"] = np.sin(dists)
+
 # Make the movie
 pltr = pv.Plotter(window_size=[512, 512])
 pltr.set_focus([0, 0, 0])
 pltr.set_position([40, 0, 0])
 pltr.add_mesh(
     mesh,
-    scalars=np.sin(dists),
+    scalars="distances",
     smooth_shading=True,
     specular=1,
     cmap="nipy_spectral",
@@ -69,7 +71,7 @@ pltr.add_mesh(
 pltr.open_gif("Hopf_torus.gif")
 
 for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
-    pltr.update_scalars(np.sin(dists - t), render=False)
+    mesh["distances"] = np.sin(dists - t)
     pltr.write_frame()
 
 pltr.show()

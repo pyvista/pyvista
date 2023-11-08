@@ -226,8 +226,13 @@ Contributing
    :target: https://www.codetriage.com/pyvista/pyvista
    :alt: Code Triage
 
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
 |Contributor Covenant|
 |codetriage|
+|Open in GitHub Codespaces|
 
 We absolutely welcome contributions and we hope that our `Contributing Guide`_
 will facilitate your ability to make PyVista better. PyVista is mostly
