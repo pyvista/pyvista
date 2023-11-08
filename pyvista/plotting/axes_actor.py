@@ -29,36 +29,47 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         - The shaft and tip type can now be set using strings. Previously, the use
           of a ``ShaftType`` or ``TipType`` Enum was required.
         - Added ability to position and orient the axes in space.
-        - Added spatial properties ``orientation``, ``scale``, ``position``, ``origin``,
-          and ``user_matrix``.
-        - Added spatial methods ``rotate_x``, ``rotate_y``, ``rotate_z``.
-        - Added color properties ``label_color``, ``x_color``, ``y_color``, and ``z_color``.
-        - Added ``label_size`` property.
-        - Added ``properties`` keyword to initialize any ``ActorProperty`` properties
+        - Added spatial properties :attr:`~orientation`, :attr:`~scale`, :attr:`~position`, :attr:`~origin`,
+          and :attr:`~user_matrix`.
+        - Added spatial methods :func:`~rotate_x`, :func:`~rotate_y`, :func:`~rotate_z`.
+        - Added color properties :attr:`~label_color`, :attr:`~x_color`, :attr:`~y_color`, and :attr:`~z_color`.
+        - Added :attr:`~label_size` property.
+        - Added ``properties`` keyword to initialize any :class:`pyvista.ActorProperty` properties
           (e.g. ``ambient``, ``specular``, etc.).
 
     .. versionchanged:: 0.43.0
 
-        - The default shaft type has been changed from 'line' to 'cylinder'.
+        - The default shaft type has been changed from ``'line'`` to ``'cylinder'``.
         - The axes shaft and tip properties have been abstracted, e.g. use
           ``tip_radius`` to set the radius of the axes tips regardless of the ``tip_type``
           used. Previously, it was necessary to use ``cone_radius`` or ``sphere_radius``
           separately. See the list of deprecated properties below for details.
+        - Setting ``shaft_width`` will automatically change the shaft type to ``line``.
+        - Setting ``shaft_radius`` will automatically change the shaft type to ``cylinder``.
 
     .. deprecated:: 0.43.0
 
         The following properties have been deprecated:
 
-        - ``x_axis_label`` -> use ``x_label`` instead.
-        - ``y_axis_label`` -> use ``y_label`` instead.
-        - ``z_axis_label`` -> use ``z_label`` instead.
-        - ``cone_radius`` ->  use ``tip_radius`` instead.
-        - ``sphere_radius`` -> use ``tip_radius`` instead.
-        - ``cone_resolution`` -> use ``tip_resolution`` instead.
-        - ``sphere_resolution`` -> use ``tip_resolution`` instead.
-        - ``cylinder_resolution`` -> use ``shaft_resolution`` instead.
-        - ``cylinder_radius`` -> use ``shaft_radius`` instead.
-        - ``line_width`` -> use ``shaft_width`` instead.
+        - ``x_axis_label`` -> use :attr:`~x_label` instead.
+        - ``y_axis_label`` -> use :attr:`~y_label` instead.
+        - ``z_axis_label`` -> use :attr:`~z_label` instead.
+        - ``cone_radius`` ->  use :attr:`~tip_radius` instead.
+        - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
+        - ``cone_resolution`` -> use :attr:`~tip_resolution` instead.
+        - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
+        - ``cylinder_resolution`` -> use :attr:`~shaft_resolution` instead.
+        - ``cylinder_radius`` -> use :attr:`~shaft_radius` instead.
+        - ``line_width`` -> use :attr:`~shaft_width` instead.
+
+    .. warning::
+
+        Positioning and orienting the axes in space by setting ``position``,
+        ``orientation``, ``origin``, ``scale``, or ``user_matrix`` to
+        non-default values is an experimental feature. In some cases, this
+        may result in the axes not being visible when plotting the axes. Call
+        :func:`pyvista.Plotter.reset_camera` with :attr:`pyvista.Plotter.bounds`
+        (e.g. ``pl.reset_camera(pl.bounds)``) to reset the camera if necessary.
 
     Parameters
     ----------
@@ -161,7 +172,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Visibility of the axes. If ``False``, the axes are not visible.
 
     properties : dict, optional
-        Apply any :class:`~pyvista.ActorProperties` to all axes shafts and tips.
+        Apply any :class:`pyvista.ActorProperties` to all axes shafts and tips.
 
     **kwargs : dict, optional
         Used for handling deprecated parameters.
@@ -224,10 +235,10 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     >>> pl.show()
 
     The actor can also be used as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`
+    :func:`~pyvista.Plotter.add_orientation_widget`.
 
     >>> axes_actor = pv.AxesActor(x_label="U", y_label="V", z_label="W")
-
+    >>>
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
     >>> _ = pl.add_orientation_widget(
@@ -598,7 +609,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `tip_resolution` instead.
+            This parameter is deprecated. Use :attr:`tip_resolution` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -623,7 +634,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `tip_resolution` instead.
+            This parameter is deprecated. Use :attr:`tip_resolution` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -669,7 +680,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `shaft_resolution` instead.
+            This parameter is deprecated. Use :attr:`shaft_resolution` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -721,7 +732,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `tip_radius` instead.
+            This parameter is deprecated. Use :attr:`tip_radius` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -746,7 +757,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `tip_radius` instead.
+            This parameter is deprecated. Use :attr:`tip_radius` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -771,7 +782,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `shaft_radius` instead.
+            This parameter is deprecated. Use :attr:`shaft_radius` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -915,7 +926,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `x_label` instead.
+            This parameter is deprecated. Use :attr:`x_label` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -959,7 +970,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `y_label` instead.
+            This parameter is deprecated. Use :attr:`y_label` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -1003,7 +1014,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         .. deprecated:: 0.43.0
 
-            This parameter is deprecated. Use `z_label` instead.
+            This parameter is deprecated. Use :attr:`z_label` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0

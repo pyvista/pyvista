@@ -879,7 +879,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         .. deprecated:: 0.43.0
 
-            This method is deprecated. Use `add_axes_marker` instead.
+            This method is deprecated. Use :func:`add_axes_marker` instead.
 
         """
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
@@ -905,7 +905,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         scale=(1, 1, 1),
         user_matrix=None,
         **kwargs,
-    ) -> AxesActor:
+    ):
         """Add axes actor to the scene.
 
         The axes colors, labels, and shaft/tip geometry can all be customized.
@@ -918,9 +918,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Positioning and orienting the axes in space by setting ``position``,
             ``orientation``, ``origin``, ``scale``, or ``user_matrix`` to
             non-default values is an experimental feature. In some cases, this
-            may result in the axes not being visible in the plot. Call
-            ``plotter.reset_camera(plotter.bounds)`` after calling ``plotter.show()``
-            to reset the camera if necessary.
+            may result in the axes not being visible when plotting the axes. Call
+            :func:`reset_camera` with :attr:`bounds` (e.g.
+            ``ren.reset_camera(ren.bounds)``) to reset the camera if necessary.
 
         Parameters
         ----------
