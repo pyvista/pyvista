@@ -173,8 +173,33 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     >>> import pyvista as pv
     >>> axes_actor = pv.AxesActor()
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_actor)
+    >>> pl.add_actor(axes_actor)
     >>> pl.show()
+    AxesActor (...)
+      X label:                    'X'
+      Y label:                    'Y'
+      Z label:                    'Z'
+      Show labels:                True
+      Label position:             (1.0, 1.0, 1.0)
+      Label size:                 (0.25, 0.1)
+      Shaft type:                 'cylinder'
+      Shaft radius:               0.01
+      Shaft length:               (0.8, 0.8, 0.8)
+      Tip type:                   'cone'
+      Tip radius:                 0.4
+      Tip length:                 (0.2, 0.2, 0.2)
+      Total length:               (1.0, 1.0, 1.0)
+      Position:                   (0.01, 0.0, 0.0)
+      Orientation:                (0.0, -0.0, 0.0)
+      Origin:                     (0.0, 0.0, 0.0)
+      Scale:                      (1.0, 1.0, 1.0)
+      User matrix:                Identity
+      Visible:                    True
+      X Bounds                    -9.900E-01, 1.010E+00
+      Y Bounds                    -1.000E+00, 1.000E+00
+      Z Bounds                    -1.000E+00, 1.000E+00
+    ...
+
 
     Create an axes actor with a specific position and orientation in space.
 
@@ -264,10 +289,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     ):
         """Initialize AxesActor."""
         super().__init__()
-        # Enable workaround to make axes orientable in space
+        # Enable workaround to make axes orientable in space.
+        # Use undocumented keyword `_make_orientable=False` to disable it
+        # and restore the default vtkAxesActor orientation behavior.
         self._init_make_orientable(kwargs)
 
-        # Supported aliases (inherited from `create_axes_actor`)
+        # Supported aliases (legacy names from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
         y_label = kwargs.pop('ylabel', y_label)
         z_label = kwargs.pop('zlabel', z_label)
@@ -370,7 +397,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.scale = scale
 
     def __repr__(self):
-        """Representation of the actor."""
+        """Representation of the axes actor."""
         if self.user_matrix is None:
             mat_info = 'Unset'
         elif np.array_equal(self.user_matrix, np.eye(4)):
@@ -392,9 +419,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
-            f"  Show labels:                {not self.labels_off}",
+            f"  Labels off:                {self.labels_off}",
             f"  Label position:             {self.label_position}",
-            f"  Label size:                 {self.label_size}",
             f"  Shaft type:                 '{self.shaft_type.annotation}'",
             f"  {shaft_param}               {shaft_value}",
             f"  Shaft length:               {self.shaft_length}",
@@ -403,8 +429,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             f"  Tip length:                 {self.tip_length}",
             f"  Total length:               {self.total_length}",
             f"  Position:                   {self.position}",
-            f"  Orientation:                {self.orientation}",
-            f"  Origin:                     {self.origin}",
             f"  Scale:                      {self.scale}",
             f"  User matrix:                {mat_info}",
             f"  Visible:                    {self.visibility}",
