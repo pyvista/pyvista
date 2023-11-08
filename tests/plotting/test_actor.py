@@ -43,6 +43,14 @@ def test_actor_init_empty():
 
     assert actor.memory_address == actor.GetAddressAsString("")
 
+    actor.user_matrix = None
+    repr_ = repr(actor)
+    assert "User matrix:                Identity" in repr_
+
+    actor.user_matrix = np.eye(4) * 2
+    repr_ = repr(actor)
+    assert "User matrix:                Set" in repr_
+
 
 def test_actor_from_plotter():
     mesh = pv.Sphere()
@@ -130,7 +138,7 @@ def test_actor_rotate_z(actor):
 
 
 def test_actor_orientation(actor):
-    actor.orientation == (0, 0, 0)
+    assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)
@@ -153,6 +161,14 @@ def test_actor_bounds(actor):
 
 def test_actor_center(actor):
     assert actor.center == (0.0, 0.0, 0.0)
+
+
+def test_actor_name(actor):
+    actor.name = 1
+    assert actor._name == 1
+
+    with pytest.raises(ValueError, match='Name must be truthy'):
+        actor.name = None
 
 
 def test_actor_backface_prop(actor):
