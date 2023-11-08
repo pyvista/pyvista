@@ -395,9 +395,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     def __repr__(self):
         """Representation of the axes actor."""
-        if self.user_matrix is None:
-            mat_info = 'Unset'
-        elif np.array_equal(self.user_matrix, np.eye(4)):
+        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
             mat_info = 'Identity'
         else:
             mat_info = 'Set'
