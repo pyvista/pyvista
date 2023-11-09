@@ -11,11 +11,12 @@ from pyvista.core._typing_core import BoundsLike, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.misc import AnnotatedIntEnum, assert_empty_kwargs
-from pyvista.plotting import _vtk
-from pyvista.plotting._property import Property
-from pyvista.plotting.actor_properties import ActorProperties
-from pyvista.plotting.colors import Color, ColorLike
-from pyvista.plotting.prop3d import Prop3D
+
+from . import _vtk
+from ._property import Property
+from .actor_properties import ActorProperties
+from .colors import Color, ColorLike
+from .prop3d import Prop3D
 
 AxesTuple = namedtuple('AxesTuple', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
 
@@ -32,24 +33,26 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         - The shaft and tip type can now be set using strings. Previously, the use
           of a ``ShaftType`` or ``TipType`` Enum was required.
         - Added ability to position and orient the axes in space.
-        - Added spatial properties :attr:`~position`, :attr:`~orientation`, :attr:`~scale`, :attr:`~origin`,
-          and :attr:`~user_matrix`.
-        - Added spatial methods :func:`~rotate_x`, :func:`~rotate_y`, :func:`~rotate_z`.
-        - Added color properties :attr:`~label_color`, :attr:`~x_color`, :attr:`~y_color`, and :attr:`~z_color`.
-        - Added :attr:`~label_size` property.
+        - Added spatial properties :attr:`position`, :attr:`orientation`, :attr:`scale`, :attr:`origin`,
+          and :attr:`user_matrix`.
+        - Added spatial methods :func:`rotate_x`, :func:`rotate_y`, :func:`rotate_z`.
+        - Added color properties :attr:`label_color`, :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
+        - Added :attr:`label_size` property.
+        - Added :attr:`labels` property.
         - Added ``properties`` keyword to initialize any :class:`pyvista.Property` values
           (e.g. ``ambient``, ``specular``, etc.).
         - Added :func:`set_prop` and :func:`get_prop` methods to more easily set or get specific shaft or tip properties.
+        - Added :func:`plot` method.
 
     .. versionchanged:: 0.43.0
 
         - The default shaft type has been changed from ``'line'`` to ``'cylinder'``.
         - The axes shaft and tip properties have been abstracted, e.g. use
-          ``tip_radius`` to set the radius of the axes tips regardless of the ``tip_type``
+          :attr:`tip_radius` to set the radius of the axes tips regardless of the :attr:`tip_type`
           used. Previously, it was necessary to use ``cone_radius`` or ``sphere_radius``
           separately. See the list of deprecated properties below for details.
-        - Setting ``shaft_width`` will automatically change the shaft type to ``line``.
-        - Setting ``shaft_radius`` will automatically change the shaft type to ``cylinder``.
+        - Setting :attr:`shaft_width` will automatically change the shaft type to ``'line'``.
+        - Setting :attr:`shaft_radius` will automatically change the shaft type to ``'cylinder'``.
         - Axes shaft and tip type can now be themed with :class:`pyvista.plotting.themes._AxesConfig`.
         - Axes shaft and tip properties now apply default theme parameters set by :class:`pyvista.Property`.
 
@@ -187,6 +190,17 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     **kwargs : dict, optional
         Used for handling deprecated parameters.
+
+    See Also
+    --------
+    pyvista.Plotter.add_axes_marker
+        Add a :class:`pyvista.AxesActor` to a scene.
+
+    pyvista.Plotter.add_axes
+        Add an axes orientation widget to a scene.
+
+    pyvista.Property
+        Graphics properties used by the axes shaft and tips.
 
     Examples
     --------

@@ -906,7 +906,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         user_matrix=None,
         **kwargs,
     ):
-        """Add axes actor to the scene.
+        """Add an axes actor to the scene.
 
         The axes colors, labels, and shaft/tip geometry can all be customized.
         The axes can also be arbitrarily positioned and oriented in space.
@@ -955,11 +955,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Position of the axes.
 
         orientation : Vector, default: (0, 0, 0)
-            Orientation angles of the axes which define rotations about
-            the world's x-y-z axes. The angles are specified in degrees
-            and in x-y-z order. However, the actual rotations are
-            applied in the following order: rotate_z first,
-            then rotate_x, and finally rotate_y.
+            Orientation angles of the axes which define rotations about the
+            world's x-y-z axes. The angles are specified in degrees and in
+            x-y-z order. However, the actual rotations are applied in the
+            following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+            and finally :func:`~rotate_z`.
 
         origin : Vector, default: (0, 0, 0)
             Origin of the axes. This is the point about which all
@@ -980,6 +980,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         -------
         pyvista.AxesActor
             Actor of the axes.
+
+        See Also
+        --------
+        pyvista.Plotter.add_axes
+            Add an axes orientation widget to a scene.
+
+        pyvista.AxesActor
+            Actor used by this method.
+
+
 
         Examples
         --------
@@ -1066,6 +1076,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkOrientationMarkerWidget
             Orientation marker widget.
+
+        See Also
+        --------
+        add_axes
+            Add an axes orientation widget.
 
         Examples
         --------
@@ -1174,6 +1189,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         AxesActor
             Axes actor of the added widget.
 
+
+        See Also
+        --------
+        show_axes
+            Similar method which calls :func:`add_axes` without any parameters.
+
+        add_axes_marker
+            Add an :class:`pyvista.AxesActor` to a scene.
+
         Examples
         --------
         Show axes without labels and with thick axes shafts.
@@ -1250,6 +1274,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def hide_axes(self):
         """Hide the axes orientation widget.
 
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1263,6 +1295,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def show_axes(self):
         """Show the axes orientation widget.
+
+        See Also
+        --------
+        add_axes
+            Similar method with additional options.
+
+        hide_axes
+            Hide the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
+        add_axes_marker
+            Add a :class:`pyvista.AxesActor` to a scene.
 
         Examples
         --------
@@ -1281,6 +1327,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def axes_enabled(self):  # numpydoc ignore=RT01
         """Return ``True`` when the axes widget is enabled.
+
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        hide_axes
+            Hide the axes orientation widget.
 
         Examples
         --------
