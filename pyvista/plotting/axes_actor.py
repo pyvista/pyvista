@@ -1,4 +1,5 @@
 """Axes actor module."""
+from collections import namedtuple
 from functools import wraps
 from typing import Sequence, Tuple, Union
 import warnings
@@ -10,11 +11,13 @@ from pyvista.core._typing_core import BoundsLike, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.misc import AnnotatedIntEnum, assert_empty_kwargs
+from pyvista.plotting import _vtk
+from pyvista.plotting._property import Property
+from pyvista.plotting.actor_properties import ActorProperties
+from pyvista.plotting.colors import Color, ColorLike
+from pyvista.plotting.prop3d import Prop3D
 
-from . import _vtk
-from .actor_properties import ActorProperties
-from .colors import Color, ColorLike
-from .prop3d import Prop3D
+AxesTuple = namedtuple('AxesTuple', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
 
 
 class AxesActor(Prop3D, _vtk.vtkAxesActor):
@@ -83,11 +86,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Text label for the z-axis.
 
     labels : str | Sequence[str], optional
-        Convenience parameter for setting text labels. Value must be a
-        sequence of three strings or a single string with three characters
-        (one for each of the x, y, and z axes, respectively). Setting this
+        Convenience parameter for setting text labels. Setting this
         parameter is equivalent to setting ``x_label``, ``y_label``, and
-        ``z_label`` separately. If set, the specified labels will take
+        ``z_label`` separately. Value must be a sequence of three strings
+        or a single string with three characters (one for each of the x,
+        y, and z axes, respectively). If set, the specified labels will take
         precedence, i.e. the values of ``x_label``, etc. are ignored.
 
     label_color : ColorLike, optional
@@ -105,17 +108,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         the label position for all axes is set to this value. Values
         should be in range ``[0, 1]``.
 
-    x_color : ColorLike, optional
-        Color of the x-axis shaft and tip. By default, the color is
-        set to ``pyvista.global_theme.axes.x_color``.
+    x_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.x_color`
+        Color of the x-axis shaft and tip.
 
-    y_color : ColorLike, optional
-        Color of the y-axis shaft and tip. By default, the color is
-        set to ``pyvista.global_theme.axes.y_color``.
+    y_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.y_color`
+        Color of the y-axis shaft and tip.
 
-    z_color : ColorLike, optional
-        Color of the z-axis shaft and tip. By default, the color is
-        set to ``pyvista.global_theme.axes.z_color``.
+    z_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.z_color`
+        Color of the z-axis shaft and tip.
 
     shaft_type : str | AxesActor.ShaftType, default: 'cylinder'
         Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
@@ -158,11 +158,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Position of the axes.
 
     orientation : Vector, default: (0, 0, 0)
-        Orientation angles of the axes which define rotations about
-        the world's x-y-z axes. The angles are specified in degrees
-        and in x-y-z order. However, the actual rotations are
-        applied in the following order: rotate_z first,
-        then rotate_x, and finally rotate_y.
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
 
     origin : Vector, default: (0, 0, 0)
         Origin of the axes. This is the point about which all
@@ -303,10 +303,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     ):
         """Initialize AxesActor."""
         super().__init__()
-        # Enable workaround to make axes orientable in space.
-        # Use undocumented keyword `_make_orientable=False` to disable it
-        # and restore the default vtkAxesActor orientation behavior.
-        self._init_make_orientable(kwargs)
 
         # Supported aliases (legacy names from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
@@ -333,34 +329,45 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         if properties is None:
             properties = dict()
-        if not isinstance(properties, dict):
+        elif not isinstance(properties, dict):
             raise TypeError("Properties must be a dictionary.")
 
         # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
-        ambient = kwargs.pop('ambient', False)
-        if ambient:  # pragma: no cover
+        ambient = kwargs.pop('ambient', None)
+        if ambient is not None:  # pragma: no cover
             warnings.warn(
                 f"Use of `ambient` is deprecated. Use `properties={{'ambient':{ambient}}}` instead.",
                 PyVistaDeprecationWarning,
             )
             properties.setdefault('ambient', ambient)
 
-        # Set axis shaft and tip properties
-        properties.setdefault('lighting', pyvista.global_theme.lighting)
-        if len(properties) > 0:
-            x_shaft = self.x_axis_shaft_properties
-            y_shaft = self.y_axis_shaft_properties
-            z_shaft = self.z_axis_shaft_properties
-            x_tip = self.x_axis_tip_properties
-            y_tip = self.y_axis_tip_properties
-            z_tip = self.z_axis_tip_properties
-            for name, value in properties.items():
-                setattr(x_shaft, name, value)
-                setattr(y_shaft, name, value)
-                setattr(z_shaft, name, value)
-                setattr(x_tip, name, value)
-                setattr(y_tip, name, value)
-                setattr(z_tip, name, value)
+        # Store actors
+        props = _vtk.vtkPropCollection()
+        self.GetActors(props)
+        self._actors = AxesTuple(
+            x_shaft=props.GetItemAsObject(0),
+            y_shaft=props.GetItemAsObject(1),
+            z_shaft=props.GetItemAsObject(2),
+            x_tip=props.GetItemAsObject(3),
+            y_tip=props.GetItemAsObject(4),
+            z_tip=props.GetItemAsObject(5),
+        )
+
+        # Initialize actor properties
+        self._props = AxesTuple(
+            x_shaft=Property(**properties),
+            y_shaft=Property(**properties),
+            z_shaft=Property(**properties),
+            x_tip=Property(**properties),
+            y_tip=Property(**properties),
+            z_tip=Property(**properties),
+        )
+        [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._props)]
+
+        # Enable workaround to make axes orientable in space.
+        # Use undocumented keyword `_make_orientable=False` to disable it
+        # and restore the default vtkAxesActor orientation behavior.
+        self._init_make_orientable(kwargs)
 
         assert_empty_kwargs(**kwargs)
 
@@ -1110,6 +1117,192 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return ActorProperties(self.GetZAxisTipProperty())
 
     @property
+    def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
+        """Return or set the property object of the x-axis shaft."""
+        return self._props.x_shaft
+
+    @x_shaft_prop.setter
+    def x_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+        self._set_prop_obj(prop, index=0)
+
+    @property
+    def y_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
+        """Return or set the property object of the y-axis shaft."""
+        return self._props.y_shaft
+
+    @y_shaft_prop.setter
+    def y_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+        self._set_prop_obj(prop, index=1)
+
+    @property
+    def z_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
+        """Return or set the property object of the z-axis shaft."""
+        return self._props.z_shaft
+
+    @z_shaft_prop.setter
+    def z_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+        self._set_prop_obj(prop, index=2)
+
+    @property
+    def x_tip_prop(self) -> Property:  # numpydoc ignore=RT01
+        """Return or set the property object of the x-axis tip."""
+        return self._props.x_tip
+
+    @x_tip_prop.setter
+    def x_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+        self._set_prop_obj(prop, index=3)
+
+    @property
+    def y_tip_prop(self) -> Property:  # numpydoc ignore=RT01
+        """Return or set the property object of the y-axis tip."""
+        return self._props.y_tip
+
+    @y_tip_prop.setter
+    def y_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+        self._set_prop_obj(prop, index=4)
+
+    @property
+    def z_tip_prop(self) -> Property:  # numpydoc ignore=RT01
+        """Return or set the property object of the z-axis tip."""
+        return self._props.z_tip
+
+    @z_tip_prop.setter
+    def z_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+        self._set_prop_obj(prop, index=5)
+
+    def _set_prop_obj(self, obj, index):
+        if not isinstance(obj, Property):
+            raise TypeError(f'Object must have type {Property}, got {type(obj)} instead.')
+
+        # Update props
+        props = list(self._props)
+        props[index] = obj
+        self._props = AxesTuple(*props)
+
+        # Update actor
+        self._actors[index].SetProperty(self._props[index])
+
+    def set_prop(self, name, value, axis='all', part='all'):
+        """Set the axes shaft and tip properties.
+
+        This is a generalized setter method which sets the value of
+        a specific property for any combination of axis shaft or tip
+        :class:`pyvista.Property` objects.
+
+        Parameters
+        ----------
+        name : str
+            Name of the property to set.
+
+        value : Any
+            Value to set the property to.
+
+        axis : str | int, default: 'all'
+            Set the property for a specific part of the axes. Specify one of:
+
+            - ``'x'`` or ``0``: only set the property for the x-axis.
+            - ``'y'`` or ``1``: only set the property for the y-axis.
+            - ``'z'`` or ``2``: only set the property for the z-axis.
+            - ``'all'``: set the property for all three axes.
+
+        part : str, default: 'all'
+            Set the property for a specific part of the axes. Specify one of:
+
+            - ``'shaft'``: only set the property for the axes shafts.
+            - ``'tip'``: only set the property for the axes tips.
+            - ``'all'``: set the property for axes shafts and tips.
+
+        Examples
+        --------
+        Set the ambient property for all axes shafts and tips.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.set_prop('ambient', 0.7)
+        >>> axes_actor.get_prop('ambient')
+        AxesTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+
+        Set a property for the x-axis only. The property is set for
+        both the axis shaft and tip by default.
+
+        >>> axes_actor.set_prop('ambient', 0.3, axis='x')
+        >>> axes_actor.get_prop('ambient')
+        AxesTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
+
+        Set a property for the axes tips only. The property is set for
+        all axes by default.
+
+        >>> axes_actor.set_prop('ambient', 0.1, part='tip')
+        >>> axes_actor.get_prop('ambient')
+        AxesTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+
+        Set a property for a single axis and specific part.
+
+        >>> axes_actor.set_prop('ambient', 0.9, axis='z', part='shaft')
+        >>> axes_actor.get_prop('ambient')
+        AxesTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+
+        The last example is equivalent to setting the property directly.
+
+        >>> axes_actor.z_shaft_prop.ambient = 0.9
+        >>> axes_actor.get_prop('ambient')
+        AxesTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+
+        """
+        props_dict = self._filter_prop_objects(axis=axis, part=part)
+        for prop in props_dict.values():
+            setattr(prop, name, value)
+
+    def get_prop(self, name):
+        """Get the axes shaft and tip properties.
+
+        This is a generalized getter method which returns the value of
+        a specific property for all shaft and tip :class:`pyvista.Property` objects.
+
+        Parameters
+        ----------
+        name : str
+            Name of the property to set.
+
+        Returns
+        -------
+        AxesTuple
+            Named tuple with the requested property value for the axes shafts and tips.
+
+        Examples
+        --------
+        Get the ambient property of the axes shafts and tips.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.get_prop('ambient')
+        AxesTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
+
+        """
+        props = [getattr(prop, name) for prop in self._props]
+        return AxesTuple(*props)
+
+    def _filter_prop_objects(self, axis: Union[str, int] = 'all', part: str = 'all'):
+        valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
+        if axis not in valid_axis:
+            raise ValueError(f"Axis must be one of {valid_axis}")
+        valid_part = ['shaft', 'tip', 'all']
+        if part not in valid_part:
+            raise ValueError(f"Axis must be one of {valid_part}")
+
+        props = dict()
+        for num, char in enumerate(['x', 'y', 'z']):
+            if axis in [num, char, 'all']:
+                if part in ['shaft', 'all']:
+                    key = char + '_shaft'
+                    props[key] = getattr(self._props, key)
+                if part in ['tip', 'all']:
+                    key = char + '_tip'
+                    props[key] = getattr(self._props, key)
+
+        return props
+
+    @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the label text for all axes."""
         # Get x color and assume label color is the same for each x, y, and z
@@ -1133,47 +1326,56 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @property
     def x_color(self):  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
-        color = self.x_axis_tip_properties.color
-        opacity = self.x_axis_tip_properties.opacity
+        # Assume shaft and tip color are the same
+        color = self.x_tip_prop.color
+        opacity = self.x_tip_prop.opacity
+
+        # Make sure the assumption is correct and set shaft color
+        self.x_shaft_prop.color = color
+        self.x_shaft_prop.opacity = opacity
         return Color(color=color, opacity=opacity)
 
     @x_color.setter
     def x_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
-        self.x_axis_shaft_properties.color = color.float_rgb
-        self.x_axis_tip_properties.color = color.float_rgb
-        self.x_axis_shaft_properties.opacity = color.float_rgba[3]
-        self.x_axis_tip_properties.opacity = color.float_rgba[3]
+        self.set_prop('color', color, axis='x')
+        self.set_prop('opacity', color.float_rgba[3], axis='x')
 
     @property
     def y_color(self):  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
-        color = self.y_axis_tip_properties.color
-        opacity = self.y_axis_tip_properties.opacity
+        # Assume shaft and tip color are the same
+        color = self.y_tip_prop.color
+        opacity = self.y_tip_prop.opacity
+
+        # Make sure the assumption is correct and set shaft color
+        self.y_shaft_prop.color = color
+        self.y_shaft_prop.opacity = opacity
         return Color(color=color, opacity=opacity)
 
     @y_color.setter
     def y_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
-        self.y_axis_shaft_properties.color = color.float_rgb
-        self.y_axis_tip_properties.color = color.float_rgb
-        self.y_axis_shaft_properties.opacity = color.float_rgba[3]
-        self.y_axis_tip_properties.opacity = color.float_rgba[3]
+        self.set_prop('color', color, axis='y')
+        self.set_prop('opacity', color.float_rgba[3], axis='y')
 
     @property
     def z_color(self):  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
-        color = self.z_axis_tip_properties.color
-        opacity = self.z_axis_tip_properties.opacity
+        # Assume shaft and tip color are the same
+        color = self.z_tip_prop.color
+        opacity = self.z_tip_prop.opacity
+
+        # Make sure the assumption is correct and set shaft color
+        self.z_shaft_prop.color = color
+        self.z_shaft_prop.opacity = opacity
         return Color(color=color, opacity=opacity)
 
     @z_color.setter
     def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
         color = Color(color)
-        self.z_axis_shaft_properties.color = color.float_rgb
-        self.z_axis_tip_properties.color = color.float_rgb
-        self.z_axis_shaft_properties.opacity = color.float_rgba[3]
-        self.z_axis_tip_properties.opacity = color.float_rgba[3]
+        self.set_prop('color', color, axis='z')
+        self.set_prop('opacity', color.float_rgba[3], axis='z')
 
     @property
     def labels_off(self) -> bool:  # numpydoc ignore=RT01
@@ -1212,15 +1414,19 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01,GL08
         """Wrap method to make axes orientable in space."""
         if self._make_orientable:
-            # GetBounds() defined by vtkAxesActor accesses a protected self.Bounds property
-            # which is hard-coded to be centered and symmetric about the origin.
-            # However, since the axes are made orientable, we instead compute the bounds from the
-            # actual shaft and tip actor bounds.
+            # GetBounds() defined by vtkAxesActor accesses a protected
+            # self.Bounds property which is hard-coded to be centered
+            # and symmetric about the origin.However, since the axes
+            # are made orientable, we instead compute the bounds from
+            # the actual shaft and tip actor bounds.
 
-            # NOTE: Overriding GetBounds() only works for python methods that call GetBounds().
-            # It has no effect on compiled vtk code which directly calls vtkAxesActor.GetBounds().
-            # This can result in camera issues when rendering a scene since vtkRenderer.ComputeVisiblePropBounds()
-            # uses GetBounds() of all actors when resetting the camera, which will not execute this override.
+            # NOTE: Overriding GetBounds() only works for python methods
+            # that call GetBounds(). It has no effect on compiled vtk
+            # code which directly calls vtkAxesActor.GetBounds().This
+            # can result in camera issues when rendering a scene since
+            # vtkRenderer.ComputeVisiblePropBounds() uses GetBounds()
+            # of all actors when resetting the camera, which will not
+            # execute this override.
             return self._compute_actor_bounds()
         return super().GetBounds()
 
@@ -1321,24 +1527,16 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             if np.array_equal(matrix, np.eye(4)):
                 self.UseBoundsOn()
             else:
-                # Calls to vtkRenderer.ResetCamera() will use the incorrect axes bounds
-                # when axes have a transformation applied. As a workaround, set
-                # UseBoundsOff(). In some cases, this will require manual adjustment
-                # of the camera from the user
+                # Calls to vtkRenderer.ResetCamera() will use the
+                # incorrect axes bounds a transformation applied.
+                # As a workaround, set UseBoundsOff(). In some cases,
+                # this will require manual adjustment of the camera
+                # from the user.
                 self.UseBoundsOff()
             self._cached_matrix = matrix
             matrix = vtkmatrix_from_array(matrix)
             super().SetUserMatrix(matrix)
             [actor.SetUserMatrix(matrix) for actor in self._actors]
-
-    @property
-    def _actors(self):
-        props = _vtk.vtkPropCollection()
-        self.GetActors(props)
-        actors = []
-        for num in range(6):
-            actors.append(props.GetItemAsObject(num))
-        return tuple(actors)
 
     def _concatenate_implicit_matrix_and_user_matrix(self) -> np.ndarray:
         return self._user_matrix @ self._implicit_matrix
@@ -1351,8 +1549,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             all_bounds[i] = bnds[0::2]
             all_bounds[i + 6] = bnds[1::2]
 
-        # Append the same bounds, but inverted around the axes position to mimic having symmetric axes
-        # The position may be moved with `user_matrix`, so apply the transform to position
+        # Append the same bounds, but inverted around the axes position
+        # to mimic having symmetric axes. The position may be moved with
+        # `user_matrix`, so apply the transform to position.
         position = (self._user_matrix @ np.append(self.GetPosition(), 1))[:3]
         all_bounds = np.vstack((all_bounds, 2 * position - all_bounds))
 

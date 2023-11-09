@@ -6,7 +6,7 @@ from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
 from .colors import Color
-from .opts import InterpolationType
+from .opts import InterpolationType, RepresentationType
 
 
 @no_new_attr
@@ -1122,6 +1122,57 @@ class Property(_vtk.vtkProperty):
             raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
+
+    @property
+    def anisotropy_rotation(self):  # numpydoc ignore=RT01
+        """Return or set the anisotropy rotation coefficient."""
+        return self.GetAnisotropyRotation()
+
+    @anisotropy_rotation.setter
+    def anisotropy_rotation(self, value: float):  # numpydoc ignore=GL08
+        self.SetAnisotropyRotation(value)
+
+    @property
+    def interpolation_model(self):  # numpydoc ignore=RT01
+        """Return or set the interpolation model.
+
+        Can be any of the options in :class:`pyvista.plotting.opts.InterpolationType` enum.
+        """
+        return InterpolationType.from_any(self.GetInterpolation())
+
+    @interpolation_model.setter
+    def interpolation_model(self, model: InterpolationType):  # numpydoc ignore=GL08
+        self.SetInterpolation(model.value)
+
+    @property
+    def index_of_refraction(self):  # numpydoc ignore=RT01
+        """Return or set the Index Of Refraction of the base layer."""
+        return self.GetBaseIOR()
+
+    @index_of_refraction.setter
+    def index_of_refraction(self, value: float):  # numpydoc ignore=GL08
+        self.SetBaseIOR(value)
+
+    @property
+    def representation(self) -> RepresentationType:  # numpydoc ignore=RT01
+        """Return or set the representation of the actor.
+
+        Can be any of the options in :class:`pyvista.plotting.opts.RepresentationType` enum.
+        """
+        return RepresentationType.from_any(self.GetRepresentation())
+
+    @representation.setter
+    def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
+        self.SetRepresentation(RepresentationType.from_any(value).value)
+
+    @property
+    def shading(self):  # numpydoc ignore=RT01
+        """Return or set the flag to activate the shading."""
+        return self.GetShading()
+
+    @shading.setter
+    def shading(self, is_active: bool):  # numpydoc ignore=GL08
+        self.SetShading(is_active)
 
     def plot(self, **kwargs) -> None:
         """Plot this property on the Stanford Bunny.

@@ -715,3 +715,98 @@ def test_axes_actor_repr(axes_actor):
     axes_actor.user_matrix = np.eye(4) * 2
     repr_ = repr(axes_actor)
     assert "User matrix:                Set" in repr_
+
+
+@pytest.mark.parametrize('use_axis_num', [True, False])
+def test_axes_actor_set_get_prop(axes_actor, use_axis_num):
+    val = axes_actor.get_prop('ambient')
+    assert val == (0, 0, 0, 0, 0, 0)
+
+    axes_actor.set_prop('ambient', 1.0)
+    val = axes_actor.get_prop('ambient')
+    assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+
+    axes_actor.set_prop('ambient', 0.5, axis=0 if use_axis_num else 'x')
+    val = axes_actor.get_prop('ambient')
+    assert val.x_shaft == 0.5
+    assert val.x_tip == 0.5
+    assert val == (0.5, 1.0, 1.0, 0.5, 1.0, 1.0)
+
+    axes_actor.set_prop('ambient', 0.7, axis=1 if use_axis_num else 'y', part='tip')
+    val = axes_actor.get_prop('ambient')
+    assert val == (0.5, 1.0, 1.0, 0.5, 0.7, 1.0)
+
+    axes_actor.set_prop('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
+    val = axes_actor.get_prop('ambient')
+    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+
+    axes_actor.set_prop('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
+    val = axes_actor.get_prop('ambient')
+    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+
+    axes_actor.set_prop('ambient', 0.0, part='shaft')
+    val = axes_actor.get_prop('ambient')
+    assert val == (0.0, 0.0, 0.0, 0.5, 0.7, 1.0)
+
+    axes_actor.set_prop('ambient', 0.0, part='tip')
+    val = axes_actor.get_prop('ambient')
+    assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+
+def test_axes_actor_props(axes_actor):
+    # test actors and props are stored correctly
+    actors = vtk.vtkPropCollection()
+    axes_actor.GetActors(actors)
+    actors = [actors.GetItemAsObject(i) for i in range(6)]
+
+    assert actors[0].GetProperty() is axes_actor._props[0]
+    assert actors[1].GetProperty() is axes_actor._props[1]
+    assert actors[2].GetProperty() is axes_actor._props[2]
+    assert actors[3].GetProperty() is axes_actor._props[3]
+    assert actors[4].GetProperty() is axes_actor._props[4]
+    assert actors[5].GetProperty() is axes_actor._props[5]
+
+    assert axes_actor.GetXAxisShaftProperty() is axes_actor.x_shaft_prop
+    assert axes_actor.GetYAxisShaftProperty() is axes_actor.y_shaft_prop
+    assert axes_actor.GetZAxisShaftProperty() is axes_actor.z_shaft_prop
+    assert axes_actor.GetXAxisTipProperty() is axes_actor.x_tip_prop
+    assert axes_actor.GetYAxisTipProperty() is axes_actor.y_tip_prop
+    assert axes_actor.GetZAxisTipProperty() is axes_actor.z_tip_prop
+
+    # test prop objects are distinct
+    for i in range(6):
+        for j in range(6):
+            if i == j:
+                assert axes_actor._props[i] is axes_actor._props[j]
+            else:
+                assert axes_actor._props[i] is not axes_actor._props[j]
+
+    # test setting new prop
+    new_prop = pv.Property()
+    axes_actor.x_shaft_prop = new_prop
+    assert axes_actor.x_shaft_prop is new_prop
+    axes_actor.y_shaft_prop = new_prop
+    assert axes_actor.y_shaft_prop is new_prop
+    axes_actor.z_shaft_prop = new_prop
+    assert axes_actor.z_shaft_prop is new_prop
+    axes_actor.x_tip_prop = new_prop
+    assert axes_actor.x_tip_prop is new_prop
+    axes_actor.y_tip_prop = new_prop
+    assert axes_actor.y_tip_prop is new_prop
+    axes_actor.z_tip_prop = new_prop
+    assert axes_actor.z_tip_prop is new_prop
+
+    # test again that actors and props are stored correctly
+    assert actors[0].GetProperty() is axes_actor._props[0]
+    assert actors[1].GetProperty() is axes_actor._props[1]
+    assert actors[2].GetProperty() is axes_actor._props[2]
+    assert actors[3].GetProperty() is axes_actor._props[3]
+    assert actors[4].GetProperty() is axes_actor._props[4]
+    assert actors[5].GetProperty() is axes_actor._props[5]
+
+    assert axes_actor.GetXAxisShaftProperty() is axes_actor.x_shaft_prop
+    assert axes_actor.GetYAxisShaftProperty() is axes_actor.y_shaft_prop
+    assert axes_actor.GetZAxisShaftProperty() is axes_actor.z_shaft_prop
+    assert axes_actor.GetXAxisTipProperty() is axes_actor.x_tip_prop
+    assert axes_actor.GetYAxisTipProperty() is axes_actor.y_tip_prop
+    assert axes_actor.GetZAxisTipProperty() is axes_actor.z_tip_prop
