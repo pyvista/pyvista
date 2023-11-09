@@ -32,13 +32,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         - The shaft and tip type can now be set using strings. Previously, the use
           of a ``ShaftType`` or ``TipType`` Enum was required.
         - Added ability to position and orient the axes in space.
-        - Added spatial properties :attr:`~orientation`, :attr:`~scale`, :attr:`~position`, :attr:`~origin`,
+        - Added spatial properties :attr:`~position`, :attr:`~orientation`, :attr:`~scale`, :attr:`~origin`,
           and :attr:`~user_matrix`.
         - Added spatial methods :func:`~rotate_x`, :func:`~rotate_y`, :func:`~rotate_z`.
         - Added color properties :attr:`~label_color`, :attr:`~x_color`, :attr:`~y_color`, and :attr:`~z_color`.
         - Added :attr:`~label_size` property.
-        - Added ``properties`` keyword to initialize any :class:`pyvista.ActorProperty` properties
+        - Added ``properties`` keyword to initialize any :class:`pyvista.Property` values
           (e.g. ``ambient``, ``specular``, etc.).
+        - Added :func:`set_prop` and :func:`get_prop` methods to more easily set or get specific shaft or tip properties.
 
     .. versionchanged:: 0.43.0
 
@@ -49,6 +50,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
           separately. See the list of deprecated properties below for details.
         - Setting ``shaft_width`` will automatically change the shaft type to ``line``.
         - Setting ``shaft_radius`` will automatically change the shaft type to ``cylinder``.
+        - Axes shaft and tip type can now be themed with :class:`pyvista.plotting.themes._AxesConfig`.
+        - Axes shaft and tip properties now apply default theme parameters set by :class:`pyvista.Property`.
 
     .. deprecated:: 0.43.0
 
@@ -117,7 +120,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     z_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.z_color`
         Color of the z-axis shaft and tip.
 
-    shaft_type : str | AxesActor.ShaftType, default: 'cylinder'
+    shaft_type : str | AxesActor.ShaftType, default: :attr:`pyvista.plotting.themes._AxesConfig.shaft_type`
         Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
 
     shaft_radius : float, default: 0.1
@@ -137,7 +140,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Resolution of the axes shafts. Only has an effect if ``shaft_type``
         is ``'cylinder'``.
 
-    tip_type : str | AxesActor.TipType, default: 'cone'
+    tip_type : str | AxesActor.TipType, default: :attr:`pyvista.plotting.themes._AxesConfig.tip_type`
         Tip type of the axes, either ``'cone'`` or ``'sphere'``.
 
     tip_radius : float, default: 0.4
@@ -282,12 +285,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         x_color=None,
         y_color=None,
         z_color=None,
-        shaft_type="cylinder",
+        shaft_type=None,
         shaft_radius=0.01,
         shaft_width=2,
         shaft_length=0.8,
         shaft_resolution=16,
-        tip_type="cone",
+        tip_type=None,
         tip_radius=0.4,
         tip_length=0.2,
         tip_resolution=16,
@@ -375,14 +378,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.total_length = total_length
 
         # Set shaft and tip color
-        if x_color is None:
-            x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
         self.x_color = x_color
-        if y_color is None:
-            y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
         self.y_color = y_color
-        if z_color is None:
-            z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
         self.z_color = z_color
 
         # Set shaft properties
@@ -390,9 +387,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.shaft_width = shaft_width
         self.shaft_length = shaft_length
         self.shaft_resolution = shaft_resolution
+        if shaft_type is None:
+            shaft_type = pyvista.global_theme.axes.shaft_type
         self.shaft_type = shaft_type
 
         # Set tip properties
+        if tip_type is None:
+            tip_type = pyvista.global_theme.axes.tip_type
         self.tip_type = tip_type
         self.tip_radius = tip_radius
         self.tip_length = tip_length
@@ -1337,7 +1338,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @x_color.setter
     def x_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        color = Color(color)
+        color = Color(color, default_color=pyvista.global_theme.axes.x_color)
         self.set_prop('color', color, axis='x')
         self.set_prop('opacity', color.float_rgba[3], axis='x')
 
@@ -1355,7 +1356,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @y_color.setter
     def y_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        color = Color(color)
+        color = Color(color, default_color=pyvista.global_theme.axes.y_color)
         self.set_prop('color', color, axis='y')
         self.set_prop('opacity', color.float_rgba[3], axis='y')
 
@@ -1373,7 +1374,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @z_color.setter
     def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        color = Color(color)
+        color = Color(color, default_color=pyvista.global_theme.axes.z_color)
         self.set_prop('color', color, axis='z')
         self.set_prop('opacity', color.float_rgba[3], axis='z')
 

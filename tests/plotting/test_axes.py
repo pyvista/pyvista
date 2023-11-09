@@ -810,3 +810,32 @@ def test_axes_actor_props(axes_actor):
     assert axes_actor.GetXAxisTipProperty() is axes_actor.x_tip_prop
     assert axes_actor.GetYAxisTipProperty() is axes_actor.y_tip_prop
     assert axes_actor.GetZAxisTipProperty() is axes_actor.z_tip_prop
+
+
+def test_axes_actor_theme():
+    axes_actor = pv.AxesActor()
+    assert axes_actor.x_color.name == 'tomato'
+    assert axes_actor.y_color.name == 'seagreen'
+    assert axes_actor.z_color.name == 'mediumblue'
+    assert axes_actor.shaft_type.annotation == 'cylinder'
+    assert axes_actor.tip_type.annotation == 'cone'
+
+    pv.global_theme.axes.x_color = 'black'
+    pv.global_theme.axes.y_color = 'white'
+    pv.global_theme.axes.z_color = 'gray'
+    pv.global_theme.axes.shaft_type = 'line'
+    pv.global_theme.axes.tip_type = 'sphere'
+
+    axes_actor = pv.AxesActor()
+    assert axes_actor.x_color.name == 'black'
+    assert axes_actor.y_color.name == 'white'
+    assert axes_actor.z_color.name == 'gray'
+    assert axes_actor.shaft_type.annotation == 'line'
+    assert axes_actor.tip_type.annotation == 'sphere'
+
+    # restore values
+    pv.global_theme.axes.x_color = 'tomato'
+    pv.global_theme.axes.y_color = 'seagreen'
+    pv.global_theme.axes.z_color = 'mediumblue'
+    pv.global_theme.axes.shaft_type = 'cylinder'
+    pv.global_theme.axes.tip_type = 'cone'

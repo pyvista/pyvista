@@ -782,7 +782,7 @@ class _AxesConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the x axis color to black.
+    Set the x-axis color to black.
 
     >>> import pyvista as pv
     >>> pv.global_theme.axes.x_color = 'black'
@@ -797,22 +797,26 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
+    __slots__ = ['_x_color', '_y_color', '_z_color', '_shaft_type', '_tip_type', '_box', '_show']
 
     def __init__(self):
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
+        self._shaft_type = 'cylinder'
+        self._tip_type = 'cone'
         self._box = False
         self._show = True
 
     def __repr__(self):
         txt = ['Axes configuration']
         parm = {
-            'X Color': 'x_color',
-            'Y Color': 'y_color',
-            'Z Color': 'z_color',
-            'Use Box': 'box',
+            'X color': 'x_color',
+            'Y color': 'y_color',
+            'Z color': 'z_color',
+            'Shaft type': 'shaft_type',
+            'Tip type': 'tip_type',
+            'Use box': 'box',
             'Show': 'show',
         }
         for name, attr in parm.items():
@@ -823,7 +827,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set x axis color.
+        """Return or set x-axis color.
 
         Examples
         --------
@@ -838,7 +842,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def y_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set y axis color.
+        """Return or set y-axis color.
 
         Examples
         --------
@@ -853,7 +857,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def z_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set z axis color.
+        """Return or set z-axis color.
 
         Examples
         --------
@@ -867,8 +871,38 @@ class _AxesConfig(_ThemeConfig):
         self._z_color = Color(color)
 
     @property
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Return or set axes shaft type.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.axes.shaft_type = 'line'
+        """
+        return self._shaft_type
+
+    @shaft_type.setter
+    def shaft_type(self, shaft_type: str):  # numpydoc ignore=GL08
+        self._shaft_type = shaft_type
+
+    @property
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Return or set axes tip type.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.axes.tip_type = 'sphere'
+        """
+        return self._tip_type
+
+    @tip_type.setter
+    def tip_type(self, tip_type: str):  # numpydoc ignore=GL08
+        self._tip_type = tip_type
+
+    @property
     def box(self) -> bool:  # numpydoc ignore=RT01
-        """Use the ``vtk.vtkCubeAxesActor`` instead of the default ``vtk.vtkAxesActor``.
+        """Use the :class:`pyvista.CubeAxesActor` instead of the default :class:`pyvista.AxesActor`.
 
         Examples
         --------
@@ -2701,7 +2735,7 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Set the x axis color to black.
+        Set the x-axis color to black.
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.x_color = 'black'
