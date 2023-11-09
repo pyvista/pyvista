@@ -1119,7 +1119,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @property
     def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
-        """Return or set the property object of the x-axis shaft."""
+        """Return or set the property object of the x-axis shaft.
+
+        Examples
+        --------
+        Set the
+        """
         return self._props.x_shaft
 
     @x_shaft_prop.setter
@@ -1302,6 +1307,44 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
                     props[key] = getattr(self._props, key)
 
         return props
+
+    def plot(self, **kwargs):
+        """Plot just the axes actor.
+
+        This may be useful when interrogating or debugging the axes.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Optional keyword arguments passed to :func:`pyvista.Plotter.show`.
+
+        Examples
+        --------
+        Create an axes actor without the :class:`pyvista.Plotter`,
+        and replace its shaft and tip properties with default
+        :class:`pyvista.Property` objects.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.x_shaft_prop = pv.Property()
+        >>> axes_actor.y_shaft_prop = pv.Property()
+        >>> axes_actor.z_shaft_prop = pv.Property()
+        >>> axes_actor.x_tip_prop = pv.Property()
+        >>> axes_actor.y_tip_prop = pv.Property()
+        >>> axes_actor.z_tip_prop = pv.Property()
+        >>> axes_actor.plot()
+
+        Restore the default colors.
+
+        >>> axes_actor.x_color = pv.global_theme.axes.x_color
+        >>> axes_actor.y_color = pv.global_theme.axes.y_color
+        >>> axes_actor.z_color = pv.global_theme.axes.z_color
+        >>> axes_actor.plot()
+
+        """
+        pl = pyvista.Plotter()
+        pl.add_actor(self)
+        pl.show(**kwargs)
 
     @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01

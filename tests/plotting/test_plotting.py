@@ -3804,7 +3804,7 @@ def test_axes_marker():
     position = np.array((-3, 2, -1))
     orientation = np.array((10, 20, 30))
 
-    # Create actor with two different methods
+    # Test init actor with constructor
     kwargs = dict(properties=dict(specular=0.1), shaft_radius=0.1, tip_radius=0.4, total_length=2)
     axes_actor = pv.AxesActor(
         x_label="a", y_label='b', z_label='c', position=position, orientation=orientation, **kwargs
@@ -3812,6 +3812,7 @@ def test_axes_marker():
 
     plot = pv.Plotter()
     plot.add_actor(axes_actor)
+    # Test init actor through axes_marker
     plot.add_axes_marker(position=-position, orientation=-orientation, **kwargs)
 
     # Test adding a second marker. Make it origin-centered for visual reference
@@ -3881,6 +3882,10 @@ def test_axes_actor_properties():
     pl.add_actor(axes_actor)
     pl.camera.zoom(1.5)
     pl.show()
+
+
+def test_axes_actor_plot():
+    pv.AxesActor().plot()
 
 
 def test_show_bounds_no_labels():
