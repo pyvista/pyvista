@@ -7,9 +7,8 @@
 import warnings
 
 from pyvista.core.errors import PyVistaDeprecationWarning
-
-from . import _vtk
-from .opts import InterpolationType, RepresentationType
+from pyvista.plotting import _vtk
+from pyvista.plotting.opts import InterpolationType, RepresentationType
 
 
 class ActorProperties:
@@ -32,12 +31,14 @@ class ActorProperties:
     >>> z_axes_prop = (
     ...     axes.axes_actor.z_axis_shaft_properties
     ... )  # doctest:+SKIP
-    >>> z_axes_prop.color = (1, 1, 0)
-    >>> z_axes_prop.opacity = 0.5
-    >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
+    >>> z_axes_prop.color = (1, 1, 0)  # doctest:+SKIP
+    >>> z_axes_prop.opacity = 0.5  # doctest:+SKIP
+    >>> axes.axes_actor.shaft_type = (
+    ...     axes.axes_actor.ShaftType.CYLINDER
+    ... )  # doctest:+SKIP
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes.axes_actor)
+    >>> _ = pl.add_actor(axes.axes_actor)  # doctest:+SKIP
     >>> _ = pl.add_mesh(pv.Sphere())
     >>> pl.show()
 
