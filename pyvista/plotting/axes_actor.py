@@ -200,7 +200,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Add an axes orientation widget to a scene.
 
     pyvista.Property
-        Graphics properties used by the axes shaft and tips.
+        Surface properties used by the axes shaft and tips.
 
     Examples
     --------

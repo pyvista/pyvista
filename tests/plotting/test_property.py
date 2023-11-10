@@ -1,7 +1,10 @@
 import pytest
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting._property import _check_range
+from pyvista.plotting.actor_properties import ActorProperties
+from pyvista.plotting.opts import InterpolationType
 
 
 @pytest.fixture()
@@ -170,3 +173,19 @@ def test_property_anisotropy(prop):
     assert isinstance(prop.anisotropy, float)
     prop.anisotropy = value
     assert prop.anisotropy == value
+
+
+def test_property_deprecated(prop):
+    if pv._version.version_info >= (0, 46):
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError(
+            'Remove deprecated properties `interpolation_model` and '
+            '`representation`. Remove class `ActorProperties`.'
+        )
+    with pytest.raises(PyVistaDeprecationWarning):
+        prop.interpolation_model = InterpolationType.PHONG
+    with pytest.raises(PyVistaDeprecationWarning):
+        prop.representation = 'points'
+    with pytest.raises(PyVistaDeprecationWarning):
+        ActorProperties(prop)

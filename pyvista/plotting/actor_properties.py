@@ -1,4 +1,13 @@
-"""Module containing pyvista implementation of vtkProperty."""
+"""Module containing pyvista implementation of vtkProperty.
+
+.. deprecated:: 0.43.0
+
+    This class is deprecated. Use :class:`pyvista.Property` instead.
+"""
+import warnings
+
+from pyvista.core.errors import PyVistaDeprecationWarning
+
 from . import _vtk
 from .opts import InterpolationType, RepresentationType
 
@@ -35,6 +44,11 @@ class ActorProperties:
     def __init__(self, properties: _vtk.vtkProperty) -> None:
         super().__init__()
         self.properties = properties
+
+        warnings.warn(
+            "Use of `ActorProperties` is deprecated. Use `pyvista.Property` instead.",
+            PyVistaDeprecationWarning,
+        )
 
     @property
     def color(self):  # numpydoc ignore=RT01

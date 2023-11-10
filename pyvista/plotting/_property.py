@@ -1,12 +1,13 @@
 """This module contains the Property class."""
 from typing import Union
+import warnings
 
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range, no_new_attr
-
-from . import _vtk
-from .colors import Color
-from .opts import InterpolationType, RepresentationType
+from pyvista.plotting import _vtk
+from pyvista.plotting.colors import Color
+from pyvista.plotting.opts import InterpolationType, RepresentationType
 
 
 @no_new_attr
@@ -1083,7 +1084,7 @@ class Property(_vtk.vtkProperty):
         self.SetDiffuseColor(Color(value).float_rgb)
 
     @property
-    def anisotropy(self):  # numpydoc ignore=RT01
+    def anisotropy(self) -> float:  # numpydoc ignore=RT01
         """Return or set the anisotropy coefficient.
 
         This value controls the anisotropy of the material (0.0 means
@@ -1124,12 +1125,43 @@ class Property(_vtk.vtkProperty):
         self.SetAnisotropy(value)
 
     @property
-    def anisotropy_rotation(self):  # numpydoc ignore=RT01
-        """Return or set the anisotropy rotation coefficient."""
+    def anisotropy_rotation(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the anisotropy rotation coefficient.
+
+        This value controls the rotation of the direction of the anisotropy.
+        This requires physically based rendering.
+
+        For further details see `PBR Journey Part 2 : Anisotropy model with VTK
+        <https://www.kitware.com/pbr-journey-part-2-anisotropy-model-with-vtk/>`_
+
+        Notes
+        -----
+        This attribute requires VTK v9.1.0 or newer.
+
+        Examples
+        --------
+        Set anisotropy rotation to 0.1
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
+        >>> prop.anisotropy_rotation
+        0.1
+
+        """
+        if not hasattr(self, 'GetAnisotropyRotation'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Anisotropy rotation requires VTK v9.1.0 or newer.')
         return self.GetAnisotropyRotation()
 
     @anisotropy_rotation.setter
     def anisotropy_rotation(self, value: float):  # numpydoc ignore=GL08
+        if not hasattr(self, 'SetAnisotropyRotation'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Anisotropy rotation requires VTK v9.1.0 or newer.')
         self.SetAnisotropyRotation(value)
 
     @property
@@ -1137,16 +1169,50 @@ class Property(_vtk.vtkProperty):
         """Return or set the interpolation model.
 
         Can be any of the options in :class:`pyvista.plotting.opts.InterpolationType` enum.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`interpolation` instead.
+
         """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `interpolation_model` is deprecated. Use `interpolation` instead.",
+            PyVistaDeprecationWarning,
+        )
         return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation_model.setter
     def interpolation_model(self, model: InterpolationType):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `interpolation_model` is deprecated. Use `interpolation` instead.",
+            PyVistaDeprecationWarning,
+        )
         self.SetInterpolation(model.value)
 
     @property
     def index_of_refraction(self):  # numpydoc ignore=RT01
-        """Return or set the Index Of Refraction of the base layer."""
+        """Return or set the Index Of Refraction (IOR) of the base layer.
+
+        The IOR controls the amount of light reflected at normal incidence.
+
+        This parameter is only used by PBR Interpolation.
+
+        Default value is 1.5
+
+        Examples
+        --------
+        Get the index of refraction of the base
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
+        >>> prop.index_of_refraction
+        1.5
+
+        """
         return self.GetBaseIOR()
 
     @index_of_refraction.setter
@@ -1158,17 +1224,46 @@ class Property(_vtk.vtkProperty):
         """Return or set the representation of the actor.
 
         Can be any of the options in :class:`pyvista.plotting.opts.RepresentationType` enum.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`style` instead.
+
         """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `representation` is deprecated. Use `style` instead.",
+            PyVistaDeprecationWarning,
+        )
         return RepresentationType.from_any(self.GetRepresentation())
 
     @representation.setter
     def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `representation` is deprecated. Use `style` instead.",
+            PyVistaDeprecationWarning,
+        )
         self.SetRepresentation(RepresentationType.from_any(value).value)
 
     @property
-    def shading(self):  # numpydoc ignore=RT01
-        """Return or set the flag to activate the shading."""
-        return self.GetShading()
+    def shading(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set the flag to activate the shading.
+
+        Examples
+        --------
+        Enable shading.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.shading
+        False
+        >>> prop.shading = True
+        >>> prop.shading
+        True
+
+        """
+        return bool(self.GetShading())
 
     @shading.setter
     def shading(self, is_active: bool):  # numpydoc ignore=GL08
@@ -1239,9 +1334,11 @@ class Property(_vtk.vtkProperty):
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
         ]
-
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove skips of deprecated parameters from `__repr__`.')
+        deprecated = ['interpolation_model', 'representation']
         for attr in dir(self):
-            if not attr.startswith('_') and attr[0].islower():
+            if not attr.startswith('_') and attr[0].islower() and attr not in deprecated:
                 name = ' '.join(attr.split('_')).capitalize() + ':'
                 try:
                     value = getattr(self, attr)

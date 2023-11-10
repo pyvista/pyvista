@@ -22,7 +22,7 @@ from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -3863,8 +3863,8 @@ def test_axes_actor_properties():
     prop = axes_actor.y_tip_prop
     prop.lighting = False
     assert not prop.lighting
-    prop.representation = RepresentationType.POINTS
-    assert prop.representation == RepresentationType.POINTS
+    prop.style = 'points'
+    assert prop.style == 'Points'
 
     # test z shaft
     prop = axes_actor.z_shaft_prop
@@ -3875,8 +3875,8 @@ def test_axes_actor_properties():
 
     # test z tip
     prop = axes_actor.z_tip_prop
-    prop.interpolation_model = InterpolationType.PHONG
-    assert prop.interpolation_model == InterpolationType.PHONG
+    prop.interpolation = InterpolationType.PHONG
+    assert prop.interpolation == InterpolationType.PHONG
 
     pl = pv.Plotter()
     pl.add_actor(axes_actor)

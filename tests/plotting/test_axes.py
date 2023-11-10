@@ -367,26 +367,20 @@ def test_axes_label_size(axes_actor):
 
 
 def test_axes_actor_properties(axes_actor):
-    x_shaft = axes_actor.x_axis_shaft_properties
-    x_shaft.ambient = 0.1
-    assert axes_actor.x_axis_shaft_properties.ambient == 0.1
-    x_tip = axes_actor.x_axis_tip_properties
-    x_tip.ambient = 0.11
-    assert axes_actor.x_axis_tip_properties.ambient == 0.11
+    axes_actor.x_shaft_prop.ambient = 0.1
+    assert axes_actor.x_shaft_prop.ambient == 0.1
+    axes_actor.x_tip_prop.ambient = 0.11
+    assert axes_actor.x_tip_prop.ambient == 0.11
 
-    y_shaft = axes_actor.y_axis_shaft_properties
-    y_shaft.ambient = 0.2
-    assert axes_actor.y_axis_shaft_properties.ambient == 0.2
-    y_tip = axes_actor.y_axis_tip_properties
-    y_tip.ambient = 0.12
-    assert axes_actor.y_axis_tip_properties.ambient == 0.12
+    axes_actor.y_shaft_prop.ambient = 0.2
+    assert axes_actor.y_shaft_prop.ambient == 0.2
+    axes_actor.y_tip_prop.ambient = 0.12
+    assert axes_actor.y_tip_prop.ambient == 0.12
 
-    z_shaft = axes_actor.z_axis_shaft_properties
-    z_shaft.ambient = 0.3
-    assert axes_actor.z_axis_shaft_properties.ambient == 0.3
-    z_tip = axes_actor.z_axis_tip_properties
-    z_tip.ambient = 0.13
-    assert axes_actor.z_axis_tip_properties.ambient == 0.13
+    axes_actor.z_shaft_prop.ambient = 0.3
+    assert axes_actor.z_shaft_prop.ambient == 0.3
+    axes_actor.z_tip_prop.ambient = 0.13
+    assert axes_actor.z_tip_prop.ambient == 0.13
 
 
 def test_axes_actor_user_matrix():
@@ -692,7 +686,7 @@ def test_axes_actor_deprecated_constructor():
     assert old_args["cone_radius"] == axes_actor.tip_radius
     assert tuple([old_args["shaft_length"]] * 3) == axes_actor.shaft_length
     assert tuple([old_args["tip_length"]] * 3) == axes_actor.tip_length
-    assert old_args["ambient"] == axes_actor.x_axis_shaft_properties.ambient
+    assert old_args["ambient"] == axes_actor.x_shaft_prop.ambient
     assert old_args["label_size"] == axes_actor.label_size
 
 
