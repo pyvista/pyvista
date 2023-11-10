@@ -175,6 +175,37 @@ def test_property_anisotropy(prop):
     assert prop.anisotropy == value
 
 
+def test_property_anisotropy_rotation(prop):
+    value = 0.1
+    if pv.vtk_version_info < (9, 1, 0):
+        with pytest.raises(pv.core.errors.VTKVersionError):
+            prop.anisotropy_rotation = value
+        return
+
+    assert isinstance(prop.anisotropy_rotation, float)
+    prop.anisotropy_rotation = value
+    assert prop.anisotropy_rotation == value
+
+
+def test_property_index_of_refraction(prop):
+    value = 2
+    if pv.vtk_version_info < (9, 1, 0):
+        with pytest.raises(pv.core.errors.VTKVersionError):
+            prop.index_of_refraction = value
+        return
+
+    assert isinstance(prop.index_of_refraction, float)
+    prop.index_of_refraction = value
+    assert prop.index_of_refraction == value
+
+
+def test_property_shading(prop):
+    assert isinstance(prop.shading, bool)
+    value = True
+    prop.line_width = value
+    assert prop.line_width == value
+
+
 def test_property_deprecated(prop):
     if pv._version.version_info >= (0, 46):
         raise RuntimeError('Convert this deprecation warning to an error.')
