@@ -1201,6 +1201,10 @@ class Property(_vtk.vtkProperty):
 
         Default value is 1.5
 
+        Notes
+        -----
+        This attribute requires VTK v9.1.0 or newer.
+
         Examples
         --------
         Get the index of refraction of the base
@@ -1213,10 +1217,18 @@ class Property(_vtk.vtkProperty):
         1.5
 
         """
+        if not hasattr(self, 'SetAnisotropyRotation'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Anisotropy rotation requires VTK v9.1.0 or newer.')
         return self.GetBaseIOR()
 
     @index_of_refraction.setter
     def index_of_refraction(self, value: float):  # numpydoc ignore=GL08
+        if not hasattr(self, 'SetAnisotropyRotation'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Anisotropy rotation requires VTK v9.1.0 or newer.')
         self.SetBaseIOR(value)
 
     @property
