@@ -48,12 +48,12 @@ class Property(_vtk.vtkProperty):
     metallic : float, default: :attr:`pyvista.plotting.themes._LightingConfig.metallic`
         Usually this value is either 0 or 1 for a real material but any
         value in between is valid. This parameter is only used by PBR
-        interpolation.
+        :attr:`interpolation`.
 
     roughness : float, default: :attr:`pyvista.plotting.themes._LightingConfig.roughness`
         This value has to be between 0 (glossy) and 1 (rough). A glossy
         material has reflections and a high specular part. This parameter
-        is only used by PBR interpolation.
+        is only used by PBR :attr:`interpolation`.
 
     point_size : float, default: :attr:`pyvista.plotting.themes.Theme.point_size`
         Size of the points represented by this property.
@@ -301,17 +301,18 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set the color to blue.
+        Get the default color.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.color = 'b'
         >>> prop.color
-        Color(name='blue', hex='#0000ffff', opacity=255)
+        Color(name='lightblue', hex='#add8e6ff', opacity=255)
 
-        Visualize setting the property to blue.
+        Visualize setting the color to red.
 
-        >>> prop.color = 'b'
+        >>> prop.color = 'red'
+        >>> prop.color
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> prop.plot()
 
         Visualize setting the color using an RGB value.
@@ -337,17 +338,24 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
+        Get the default edge color.
+
         >>> import pyvista as pv
         >>> prop = pv.Property()
+        >>> prop.edge_color
+        Color(name='black', hex='#000000ff', opacity=255)
+
+        Visualize the default edge color. Set the edge's visibility
+        to ``True`` so we can see them.
+
+        >>> prop.show_edges = True
+        >>> prop.plot()
+
+        Visualize red edges.
+
         >>> prop.edge_color = 'red'
         >>> prop.edge_color
         Color(name='red', hex='#ff0000ff', opacity=255)
-
-        Visualize red edges. Set the edge's visibility to ``True`` so we can see
-        them.
-
-        >>> prop.show_edges = True
-        >>> prop.edge_color = 'red'
         >>> prop.plot()
 
         """
@@ -362,18 +370,19 @@ class Property(_vtk.vtkProperty):
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity of this property.
 
-        Opacity of the mesh. A single float value that will be applied globally
-        opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
+        The opacity is applied to the surface uniformly.
+
+        Property has range ``[0, 1]``. A value of 1.0 is totally opaque
+        and 0.0 is completely transparent.
 
         Examples
         --------
-        Set opacity to ``0.5``.
+        Get the default opacity.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.opacity = 0.5
         >>> prop.opacity
-        0.5
+        1.0
 
         Visualize default opacity of ``1.0``.
 
@@ -390,7 +399,6 @@ class Property(_vtk.vtkProperty):
         >>> prop.opacity = 0.25
         >>> prop.plot()
 
-
         """
         return self.GetOpacity()
 
@@ -403,20 +411,19 @@ class Property(_vtk.vtkProperty):
     def show_edges(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of edges.
 
-        Shows or hides the edges.  Does not apply to a wireframe
-        representation.
+        Shows or hides the edges. Does not apply to a wireframe
+        :attr:`style`.
 
         Examples
         --------
+        Get the default edge visibility.
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.show_edges = True
         >>> prop.show_edges
-        True
+        False
 
         Visualize default edge visibility of ``False``.
 
-        >>> prop.show_edges = False
         >>> prop.plot()
 
         Visualize edge visibility of ``True``.
@@ -437,16 +444,20 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Disable lighting.
+        Get the default lighting.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.lighting = False
         >>> prop.lighting
-        False
+        True
 
-        Visualize it.
+        Visualize default lighting.
 
+        >>> prop.plot()
+
+        Visualize disabled lighting.
+
+        >>> prop.lighting = False
         >>> prop.plot()
 
         """
@@ -464,21 +475,23 @@ class Property(_vtk.vtkProperty):
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.ambient`.
 
-        When lighting is enabled, this is the amount of light in the range
-        of 0 to 1 that reaches the actor when not directed at the light
-        source emitted from the viewer.
+        When lighting is enabled, this is the amount of light that reaches
+        the actor when not directed at the light source emitted from the
+        viewer.
+
+        Property has range ``[0, 1]``.
 
         Examples
         --------
+        Get the default ambient value.
+
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.ambient = 0.2
         >>> prop.ambient
-        0.2
+        0.0
 
         Visualize default ambient light.
 
-        >>> prop.ambient = 0.0
         >>> prop.plot()
 
         Visualize ambient at ``0.5``.
@@ -508,19 +521,21 @@ class Property(_vtk.vtkProperty):
         This is the scattering of light by reflection or
         transmission. Diffuse reflection results when light strikes an
         irregular surface such as a frosted window or the surface of a
-        frosted or coated light bulb. Must be between 0 and 1.
+        frosted or coated light bulb.
+
+        Property has range ``[0, 1]``.
 
         Examples
         --------
+        Get the default diffuse value.
+
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.diffuse = 0.2
         >>> prop.diffuse
-        0.2
+        1.0
 
         Visualize default diffuse light.
 
-        >>> prop.diffuse = 1.0
         >>> prop.plot()
 
         Visualize diffuse at ``0.5``.
@@ -548,19 +563,21 @@ class Property(_vtk.vtkProperty):
         Default :attr:`pyvista.plotting.themes._LightingConfig.specular`.
 
         Specular lighting simulates the bright spot of a light that appears
-        on shiny objects. Must be between 0 and 1.
+        on shiny objects.
+
+        Property has range ``[0, 1]``.
 
         Examples
         --------
+        Get the default specular value.
+
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.specular = 0.2
         >>> prop.specular
-        0.2
+        0.0
 
         Visualize default specular light.
 
-        >>> prop.specular = 0.0
         >>> prop.plot()
 
         Visualize specular at ``0.5``.
@@ -587,35 +604,33 @@ class Property(_vtk.vtkProperty):
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.specular_power`.
 
-        The specular power. Must be between 0.0 and 128.0.
+        Property has range ``[0, 128]``.
 
         Examples
         --------
-        Set specular power to 5.0
+        Get the default specular power value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.specular = 0.1  # enable specular
-        >>> prop.specular_power = 5.0
         >>> prop.specular_power
-        5.0
+        100.0
 
         Visualize default specular power.
 
-        >>> prop.specular_power = 1.0
+        >>> prop.specular = 0.5  # enable specular
         >>> prop.plot()
 
-        Visualize specular power at ``0.1``.
+        Visualize specular power at ``0.0``.
 
         >>> prop.specular_power = 0.1
         >>> prop.plot()
 
-        Visualize specular power at ``5.0``.
+        Visualize specular power at ``10.0``.
 
-        >>> prop.specular_power = 5.0
+        >>> prop.specular_power = 10.0
         >>> prop.plot()
 
-        Visualize specular power at ``128.0``.
+        Visualize maximum specular power at ``128.0``.
 
         >>> prop.specular_power = 128.0
         >>> prop.plot()
@@ -634,24 +649,24 @@ class Property(_vtk.vtkProperty):
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.metallic`.
 
-        This requires that the interpolation be set to ``'Physically based
-        rendering'``. Must be between 0 and 1.
+        This requires that the :attr:`interpolation` be set to ``'Physically based
+        rendering'``.
+
+        Property has range ``[0, 1]``.
 
         Examples
         --------
-        Set metallic to 0.1
+        Get the default metallic value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> # requires physically based rendering
-        >>> prop.interpolation = 'pbr'
-        >>> prop.metallic = 0.1
         >>> prop.metallic
-        0.1
+        0.0
 
         Visualize default metallic.
 
-        >>> prop.metallic = 0.0
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
         >>> prop.plot()
 
         Visualize metallic at ``0.5``.
@@ -678,35 +693,36 @@ class Property(_vtk.vtkProperty):
 
         Default :attr:`pyvista.plotting.themes._LightingConfig.roughness`.
 
-        This requires that the interpolation be set to ``'Physically based
-        rendering'``. Must be between 0 and 1.
+        This requires that the :attr:`interpolation` be set to ``'Physically based
+        rendering'``.
+
+        Property has range ``[0, 1]``. A value of 0 is glossy and a value of 1
+        is rough.
 
         Examples
         --------
-        Set roughness to 0.1
+        Get the default roughness value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> # requires physically based rendering
-        >>> prop.interpolation = 'pbr'
-        >>> prop.metallic = 0.5  # helps to visualize metallic
-        >>> prop.roughness = 0.1
         >>> prop.roughness
-        0.1
+        0.5
 
         Visualize default roughness with metallic of ``0.5``.
 
-        >>> prop.roughness = 0.5
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
+        >>> prop.metallic = 0.5  # helps to visualize metallic
         >>> prop.plot()
 
-        Visualize roughness at ``0.0`` with metallic of ``0.5``.
+        Visualize roughness at ``0.1`` with metallic of ``0.5``.
 
-        >>> prop.roughness = 0.0
+        >>> prop.roughness = 0.1
         >>> prop.plot()
 
-        Visualize roughness at ``1.0`` with metallic of ``0.5``.
+        Visualize roughness at ``0.9`` with metallic of ``0.5``.
 
-        >>> prop.roughness = 1.0
+        >>> prop.roughness = 0.9
         >>> prop.plot()
 
         """
@@ -735,32 +751,30 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set interpolation to physically based rendering.
+        Get the default interpolation.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'
         >>> prop.interpolation
-        <InterpolationType.PBR: 3>
+        <InterpolationType.FLAT: 0>
 
         Visualize default flat shading.
 
-        >>> prop.interpolation = 'Flat'
         >>> prop.plot()
 
         Visualize gouraud shading.
 
-        >>> prop.interpolation = 'Gouraud'
+        >>> prop.interpolation = 'gouraud'
         >>> prop.plot()
 
         Visualize phong shading.
 
-        >>> prop.interpolation = 'Phong'
+        >>> prop.interpolation = 'phong'
         >>> prop.plot()
 
         Visualize physically based rendering.
 
-        >>> prop.interpolation = 'Physically based rendering'
+        >>> prop.interpolation = 'pbr'
         >>> prop.plot()
 
         """
@@ -817,7 +831,7 @@ class Property(_vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
 
-        Requires representation style be set to ``'wireframe'``.
+        Requires :attr:`style` be set to ``'wireframe'``.
 
         Examples
         --------
@@ -854,25 +868,29 @@ class Property(_vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.line_width`.
 
+        The width is expressed in screen units and must be positive.
+
         Examples
         --------
-        Change the line width to ``10``.
-
+        Get the default line width.
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.line_width = 10
         >>> prop.line_width
-        10.0
+        1.0
 
         Visualize the default line width.
 
-        >>> prop.line_width = 1.0
         >>> prop.show_edges = True
         >>> prop.plot()
 
-        Visualize with a line width of 5.0
+        Visualize a line width of ``5.0``.
 
         >>> prop.line_width = 5.0
+        >>> prop.plot()
+
+        Visualize a line width of ``10.0``.
+
+        >>> prop.line_width = 10.0
         >>> prop.plot()
 
         """
@@ -880,6 +898,7 @@ class Property(_vtk.vtkProperty):
 
     @line_width.setter
     def line_width(self, value: float):  # numpydoc ignore=GL08
+        _check_range(value, [0, float('inf')], parm_name='line_width')
         self.SetLineWidth(value)
 
     @property
@@ -888,25 +907,32 @@ class Property(_vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.point_size`.
 
+        This requires that the :attr:`style` be set to ``'points'``.
+
+        The size is expressed in screen units and must be positive.
+
         Examples
         --------
-        Change the point size to ``10.0``.
+        Get the default point size.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.point_size = 10
         >>> prop.point_size
-        10.0
+        5.0
 
-        Visualize a point size of ``5.0``.
+        Visualize the default point size.
 
-        >>> prop.point_size = 5.0
         >>> prop.style = 'points'
         >>> prop.plot()
 
-        Visualize the a point size of ``10.0``.
+        Visualize a point size of ``10.0``.
 
         >>> prop.point_size = 10.0
+        >>> prop.plot()
+
+        Visualize a point size of ``50.0``.
+
+        >>> prop.point_size = 50.0
         >>> prop.plot()
 
         """
@@ -914,6 +940,7 @@ class Property(_vtk.vtkProperty):
 
     @point_size.setter
     def point_size(self, new_size):  # numpydoc ignore=GL08
+        _check_range(new_size, [0, float('inf')], parm_name='point_size')
         self.SetPointSize(new_size)
 
     @property
@@ -931,20 +958,18 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Enable back face culling
+        Get the default culling value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.culling = 'back'
         >>> prop.culling
-        'back'
+        'none'
 
-        Plot default culling.
+        Visualize default culling.
 
-        >>> prop.culling = 'none'
         >>> prop.plot()
 
-        Plot backface culling. This looks the same as the default culling
+        Visualize backface culling. This looks the same as the default culling
         ``'none'`` because the forward facing faces are already obscuring the
         back faces.
 
@@ -1000,18 +1025,23 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set the ambient color to blue.
+        Get the default ambient color.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.ambient_color = 'b'
         >>> prop.ambient_color
-        Color(name='blue', hex='#0000ffff', opacity=255)
+        Color(name='lightblue', hex='#add8e6ff', opacity=255)
 
-        Visualize setting the ambient color to blue with ``ambient = 0.1``
+        Visualize default ambient color with ``ambient = 0.5``
 
-        >>> prop.ambient = 0.1
-        >>> prop.ambient_color = 'b'
+        >>> prop.ambient = 0.5
+        >>> prop.plot()
+
+        Visualize red ambient color.
+
+        >>> prop.ambient_color = 'red'
+        >>> prop.ambient_color
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> prop.plot()
 
         """
@@ -1031,20 +1061,29 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set the specular color to blue.
+        Get the default specular color.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.specular_color = 'b'
         >>> prop.specular_color
-        Color(name='blue', hex='#0000ffff', opacity=255)
+        Color(name='lightblue', hex='#add8e6ff', opacity=255)
 
-        Visualize setting the specular color to blue with ``specular = 0.2``
+        Visualize default specular color with ``specular = 0.5``.
 
-        >>> prop.specular = 0.2
-        >>> prop.specular_color = 'r'
+        >>> prop.specular = 0.5
         >>> prop.plot()
 
+        Visualize red specular color with ``specular = 0.5``.
+
+        >>> prop.specular_color = 'red'
+        >>> prop.specular_color
+        Color(name='red', hex='#ff0000ff', opacity=255)
+        >>> prop.plot()
+
+        Visualize white specular color with ``specular = 0.5``.
+
+        >>> prop.specular_color = 'white'
+        >>> prop.plot()
         """
         return Color(self.GetSpecularColor())
 
@@ -1062,18 +1101,28 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set the diffuse color to blue.
+        Get the default diffuse color.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.diffuse_color = 'b'
-        >>> prop.diffuse_color
-        Color(name='blue', hex='#0000ffff', opacity=255)
+        >>> prop.ambient_color
+        Color(name='lightblue', hex='#add8e6ff', opacity=255)
 
-        Visualize setting the diffuse color to white with ``diffuse = 0.5``
+        Visualize default diffuse color with ``diffuse = 0.5``
 
         >>> prop.diffuse = 0.5
-        >>> prop.diffuse_color = 'w'
+        >>> prop.plot()
+
+        Visualize red diffuse color with ``diffuse = 0.5``.
+
+        >>> prop.diffuse_color = 'red'
+        >>> prop.diffuse_color
+        Color(name='red', hex='#ff0000ff', opacity=255)
+        >>> prop.plot()
+
+        Visualize white diffuse color with ``diffuse = 0.5``.
+
+        >>> prop.diffuse_color = 'white'
         >>> prop.plot()
 
         """
@@ -1088,10 +1137,13 @@ class Property(_vtk.vtkProperty):
         """Return or set the anisotropy coefficient.
 
         This value controls the anisotropy of the material (0.0 means
-        isotropic). This requires physically based rendering.
+        isotropic). This requires that the :attr:`interpolation` be set
+        to ``'Physically based rendering'``.
 
         For further details see `PBR Journey Part 2 : Anisotropy model with VTK
         <https://www.kitware.com/pbr-journey-part-2-anisotropy-model-with-vtk/>`_
+
+        Property has range ``[0, 1]``.
 
         Notes
         -----
@@ -1099,14 +1151,18 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set anisotropy to 0.1
+        Get the default anisotropy value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
+        >>> prop.anisotropy
+        0.0
+
+        Visualize default anisotropy.
+
         >>> # requires physically based rendering
         >>> prop.interpolation = 'pbr'
-        >>> prop.anisotropy
-        0.1
+        >>> prop.plot()
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
@@ -1129,10 +1185,13 @@ class Property(_vtk.vtkProperty):
         """Return or set the anisotropy rotation coefficient.
 
         This value controls the rotation of the direction of the anisotropy.
-        This requires physically based rendering.
+        This requires that the :attr:`interpolation` be set to ``'Physically based
+        rendering'``.
 
         For further details see `PBR Journey Part 2 : Anisotropy model with VTK
         <https://www.kitware.com/pbr-journey-part-2-anisotropy-model-with-vtk/>`_
+
+        Property has range ``[0, 1]``.
 
         Notes
         -----
@@ -1140,14 +1199,18 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Set anisotropy rotation to 0.1
+        Get the default anisotropy rotation value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
+        >>> prop.anisotropy_rotation
+        0.0
+
+        Visualize default anisotropy.
+
         >>> # requires physically based rendering
         >>> prop.interpolation = 'pbr'
-        >>> prop.anisotropy_rotation
-        0.1
+        >>> prop.plot()
 
         """
         if not hasattr(self, 'GetAnisotropyRotation'):  # pragma: no cover
@@ -1162,6 +1225,7 @@ class Property(_vtk.vtkProperty):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('Anisotropy rotation requires VTK v9.1.0 or newer.')
+        _check_range(value, (0, 1), 'anisotropy_rotation')
         self.SetAnisotropyRotation(value)
 
     @property
@@ -1197,9 +1261,13 @@ class Property(_vtk.vtkProperty):
 
         The IOR controls the amount of light reflected at normal incidence.
 
-        This parameter is only used by PBR Interpolation.
+        For further details see `PBR Journey Part 3 : Clear Coat Model with VTK
+        <https://www.kitware.com/pbr-journey-part-3-clear-coat-model-with-vtk/>`_
 
-        Default value is 1.5
+        This requires that the :attr:`interpolation` be set to ``'Physically based
+        rendering'``.
+
+        Value must be greater than 1.
 
         Notes
         -----
@@ -1207,14 +1275,18 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Get the index of refraction of the base
+        Get the default index of refraction of the base.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> # requires physically based rendering
-        >>> prop.interpolation = 'pbr'
         >>> prop.index_of_refraction
         1.5
+
+        Visualize default IOR.
+
+        >>> # requires physically based rendering
+        >>> prop.interpolation = 'pbr'
+        >>> prop.plot()
 
         """
         if not hasattr(self, 'SetAnisotropyRotation'):  # pragma: no cover
@@ -1229,6 +1301,7 @@ class Property(_vtk.vtkProperty):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('Anisotropy rotation requires VTK v9.1.0 or newer.')
+        _check_range(value, (1, float('inf')), 'index_of_refraction')
         self.SetBaseIOR(value)
 
     @property
@@ -1264,12 +1337,15 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Enable shading.
+        Get the default shading value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.shading
         False
+
+        Enable shading.
+
         >>> prop.shading = True
         >>> prop.shading
         True
