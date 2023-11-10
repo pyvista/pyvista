@@ -443,7 +443,8 @@ def test_observer():
     assert ret[3] == "ALERT"
     for kind in ["WARNING", "ERROR"]:
         obs.log_message(kind, "foo")
-    obs(obj=None, event=None, message=msg)
+    # Pass positionally as that's what VTK will do
+    obs(None, None, msg)
     assert obs.has_event_occurred()
     assert obs.get_message() == "ALERT"
     assert obs.get_message(etc=True) == msg
