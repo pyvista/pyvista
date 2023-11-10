@@ -153,12 +153,6 @@ def test_actor_orientation(actor):
     actor.orientation = orientation
     assert np.allclose(dataset.bounds, actor.bounds)
 
-    actor2 = pv.Actor(mapper=pv.DataSetMapper(pv.Cube()))
-    actor2.rotate_y(orientation[1])
-    actor2.rotate_x(orientation[0])
-    actor2.rotate_z(orientation[2])
-    assert np.allclose(dataset.bounds, actor.bounds)
-
 
 def test_actor_origin(actor):
     assert actor.origin == (0, 0, 0)

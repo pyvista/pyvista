@@ -1422,7 +1422,7 @@ class Property(_vtk.vtkProperty):
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
         ]
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma:no cover
             raise RuntimeError('Remove skips of deprecated parameters from `__repr__`.')
         deprecated = ['interpolation_model', 'representation']
         for attr in dir(self):

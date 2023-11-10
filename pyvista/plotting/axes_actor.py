@@ -60,16 +60,23 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         The following properties have been deprecated:
 
-        - ``x_axis_label`` -> use :attr:`~x_label` instead.
-        - ``y_axis_label`` -> use :attr:`~y_label` instead.
-        - ``z_axis_label`` -> use :attr:`~z_label` instead.
+
         - ``cone_radius`` ->  use :attr:`~tip_radius` instead.
-        - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
         - ``cone_resolution`` -> use :attr:`~tip_resolution` instead.
-        - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
         - ``cylinder_resolution`` -> use :attr:`~shaft_resolution` instead.
         - ``cylinder_radius`` -> use :attr:`~shaft_radius` instead.
         - ``line_width`` -> use :attr:`~shaft_width` instead.
+        - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
+        - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
+        - ``x_axis_label`` -> use :attr:`~x_label` instead.
+        - ``y_axis_label`` -> use :attr:`~y_label` instead.
+        - ``z_axis_label`` -> use :attr:`~z_label` instead.
+        - ``x_axis_shaft_properties`` -> use :attr:`~x_shaft_prop` instead.
+        - ``y_axis_shaft_properties`` -> use :attr:`~y_shaft_prop` instead.
+        - ``z_axis_shaft_properties`` -> use :attr:`~z_shaft_prop` instead.
+        - ``x_axis_tip_properties`` -> use :attr:`~x_tip_prop` instead.
+        - ``y_axis_tip_properties`` -> use :attr:`~y_tip_prop` instead.
+        - ``z_axis_tip_properties`` -> use :attr:`~z_tip_prop` instead.
 
     .. warning::
 
@@ -1103,42 +1110,103 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @property
     def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the x-axis shaft."""
+        """:class:`~pyvista.ActorProperties` of the x-axis shaft.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`x_shaft_prop` instead.
+
+        """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `x_axis_shaft_properties` is deprecated. Use `x_shaft_prop` instead.",
+            PyVistaDeprecationWarning,
+        )
         return ActorProperties(self.GetXAxisShaftProperty())
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the y-axis shaft."""
+        """:class:`~pyvista.ActorProperties` of the y-axis shaft.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`y_shaft_prop` instead.
+
+        """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `y_axis_shaft_properties` is deprecated. Use `y_shaft_prop` instead.",
+            PyVistaDeprecationWarning,
+        )
         return ActorProperties(self.GetYAxisShaftProperty())
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the z-axis shaft."""
+        """:class:`~pyvista.ActorProperties` of the z-axis shaft.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`z_shaft_prop` instead.
+
+        """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `z_axis_shaft_properties` is deprecated. Use `z_shaft_prop` instead.",
+            PyVistaDeprecationWarning,
+        )
         return ActorProperties(self.GetZAxisShaftProperty())
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the x-axis tip."""
+        """:class:`~pyvista.ActorProperties` of the x-axis tip.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`x_tip_prop` instead.
+
+        """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `x_axis_tip_properties` is deprecated. Use `x_tip_prop` instead.",
+            PyVistaDeprecationWarning,
+        )
         return ActorProperties(self.GetXAxisTipProperty())
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the y-axis tip."""
+        """:class:`~pyvista.ActorProperties` of the y-axis tip.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`y_tip_prop` instead.
+
+        """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `y_axis_tip_properties` is deprecated. Use `y_tip_prop` instead.",
+            PyVistaDeprecationWarning,
+        )
         return ActorProperties(self.GetYAxisTipProperty())
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the z-axis tip."""
+        """:class:`~pyvista.ActorProperties` of the z-axis tip.
+
+        .. deprecated:: 0.43.0
+
+            This parameter is deprecated. Use :attr:`z_tip_prop` instead.
+
+        """
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `z_axis_tip_properties` is deprecated. Use `z_tip_prop` instead.",
+            PyVistaDeprecationWarning,
+        )
         return ActorProperties(self.GetZAxisTipProperty())
 
     @property
     def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
-        """Return or set the property object of the x-axis shaft.
-
-        Examples
-        --------
-        Set the
-        """
+        """Return or set the property object of the x-axis shaft."""
         return self._props.x_shaft
 
     @x_shaft_prop.setter
@@ -1305,10 +1373,10 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def _filter_prop_objects(self, axis: Union[str, int] = 'all', part: str = 'all'):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
         if axis not in valid_axis:
-            raise ValueError(f"Axis must be one of {valid_axis}")
+            raise ValueError(f"Axis must be one of {valid_axis}.")
         valid_part = ['shaft', 'tip', 'all']
         if part not in valid_part:
-            raise ValueError(f"Axis must be one of {valid_part}")
+            raise ValueError(f"Part must be one of {valid_part}.")
 
         props = dict()
         for num, char in enumerate(['x', 'y', 'z']):

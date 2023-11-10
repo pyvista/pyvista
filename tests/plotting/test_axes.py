@@ -1,3 +1,5 @@
+from re import escape
+
 import numpy as np
 import pytest
 import vtk
@@ -116,13 +118,35 @@ def test_axes_actor_label_position(axes_actor):
 
 
 def test_axes_actor_tip_resolution(axes_actor):
+    axes_actor.tip_resolution = 42
+    assert axes_actor.tip_resolution == 42
+
+    actor_init = AxesActor(tip_resolution=42)
+    assert actor_init.tip_resolution == 42
+
+
+def test_axes_actor_deprecated_parameters(axes_actor):
     if pv._version.version_info >= (0, 46):
         raise RuntimeError('Convert this deprecation warning to an error.')
     if pv._version.version_info >= (0, 47):
-        raise RuntimeError('Remove deprecated property `cone_resolution` and `sphere_resolution')
-
-    axes_actor.tip_resolution = 42
-    assert axes_actor.tip_resolution == 42
+        raise RuntimeError(
+            'Remove deprecated properties:\n'
+            'cone_resolution\n'
+            'sphere_resolution\n'
+            'shaft_resolution\n'
+            'cone_radius\n'
+            'sphere_radius\n'
+            'cylinder_radius\n'
+            'x_axis_label\n'
+            'y_axis_label\n'
+            'z_axis_label\n'
+            'x_axis_shaft_properties\n'
+            'y_axis_shaft_properties\n'
+            'z_axis_shaft_properties\n'
+            'x_axis_tip_properties\n'
+            'y_axis_tip_properties\n'
+            'z_axis_tip_properties\n'
+        )
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_resolution` instead."):
         axes_actor.cone_resolution = 24
@@ -132,22 +156,56 @@ def test_axes_actor_tip_resolution(axes_actor):
         axes_actor.sphere_resolution = 24
         assert axes_actor.sphere_resolution == 24
 
-    actor_init = AxesActor(tip_resolution=42)
-    assert actor_init.tip_resolution == 42
-
-
-def test_axes_actor_shaft_resolution(axes_actor):
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError('Remove deprecated property `shaft_resolution')
-
-    axes_actor.shaft_resolution = 42
-    assert axes_actor.shaft_resolution == 42
-
     with pytest.warns(PyVistaDeprecationWarning, match="Use `shaft_resolution` instead."):
         axes_actor.cylinder_resolution = 24
         assert axes_actor.cylinder_resolution == 24
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_radius` instead."):
+        axes_actor.cone_radius = 0.8
+        assert axes_actor.cone_radius == 0.8
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_radius` instead."):
+        axes_actor.sphere_radius = 0.8
+        assert axes_actor.sphere_radius == 0.8
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `shaft_radius` instead."):
+        axes_actor.cylinder_radius = 0.03
+        assert axes_actor.cylinder_radius == 0.03
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `x_label` instead."):
+        axes_actor.x_axis_label = 'Axis X'
+        assert axes_actor.x_axis_label == 'Axis X'
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `y_label` instead."):
+        axes_actor.y_axis_label = 'Axis Y'
+        assert axes_actor.y_axis_label == 'Axis Y'
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `z_label` instead."):
+        axes_actor.z_axis_label = 'Axis Z'
+        assert axes_actor.z_axis_label == 'Axis Z'
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `x_shaft_prop` instead."):
+        axes_actor.x_axis_shaft_properties
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `y_shaft_prop` instead."):
+        axes_actor.y_axis_shaft_properties
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `z_shaft_prop` instead."):
+        axes_actor.z_axis_shaft_properties
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `x_tip_prop` instead."):
+        axes_actor.x_axis_tip_properties
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `y_tip_prop` instead."):
+        axes_actor.y_axis_tip_properties
+
+    with pytest.warns(PyVistaDeprecationWarning, match="Use `z_tip_prop` instead."):
+        axes_actor.z_axis_tip_properties
+
+
+def test_axes_actor_shaft_resolution(axes_actor):
+    axes_actor.shaft_resolution = 42
+    assert axes_actor.shaft_resolution == 42
 
     actor_init = AxesActor(shaft_resolution=42)
     assert actor_init.shaft_resolution == 42
@@ -161,39 +219,6 @@ def test_axes_actor_tip_radius(axes_actor):
 
     actor_init = AxesActor(tip_radius=9)
     assert actor_init.tip_radius == 9
-
-
-def test_axes_actor_cone_radius(axes_actor):
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError('Remove deprecated `cone_radius`')
-
-    with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_radius` instead."):
-        axes_actor.cone_radius = 0.8
-        assert axes_actor.cone_radius == 0.8
-
-
-def test_axes_actor_sphere_radius(axes_actor):
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError('Remove deprecated property `sphere_radius')
-
-    with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_radius` instead."):
-        axes_actor.sphere_radius = 0.8
-        assert axes_actor.sphere_radius == 0.8
-
-
-def test_axes_actor_cylinder_radius(axes_actor):
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError('Remove deprecated property `cylinder_radius')
-
-    with pytest.warns(PyVistaDeprecationWarning, match="Use `shaft_radius` instead."):
-        axes_actor.cylinder_radius = 0.03
-        assert axes_actor.cylinder_radius == 0.03
 
 
 def test_axes_actor_shaft_type(axes_actor):
@@ -230,7 +255,7 @@ def test_axes_actor_tip_type(axes_actor):
     assert actor_init.tip_type.annotation == "sphere"
 
 
-def test_axes_actor_axes_labels(axes_actor):
+def test_axes_actor_labels(axes_actor):
     axes_actor.x_label = 'A'
     assert axes_actor.x_label == 'A'
     axes_actor.y_label = 'B'
@@ -248,29 +273,13 @@ def test_axes_actor_axes_labels(axes_actor):
     assert actor_init.y_label == 'B'
     assert actor_init.z_label == 'C'
 
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError(
-            'Remove deprecated properties `x_axis_label`, `y_axis_label`, `z_axis_label`'
-        )
-
-    with pytest.warns(PyVistaDeprecationWarning, match="Use `x_label` instead."):
-        axes_actor.x_axis_label = 'Axis X'
-        assert axes_actor.x_axis_label == 'Axis X'
-    with pytest.warns(PyVistaDeprecationWarning, match="Use `y_label` instead."):
-        axes_actor.y_axis_label = 'Axis Y'
-        assert axes_actor.y_axis_label == 'Axis Y'
-    with pytest.warns(PyVistaDeprecationWarning, match="Use `z_label` instead."):
-        axes_actor.z_axis_label = 'Axis Z'
-        assert axes_actor.z_axis_label == 'Axis Z'
-
     axes_actor.labels = ('U', 'V', 'W')
     assert axes_actor.x_label == 'U'
     assert axes_actor.y_label == 'V'
     assert axes_actor.z_label == 'W'
 
     axes_actor.labels = 'UVW'
+    assert axes_actor.labels == ('U', 'V', 'W')
     assert axes_actor.x_label == 'U'
     assert axes_actor.y_label == 'V'
     assert axes_actor.z_label == 'W'
@@ -746,6 +755,14 @@ def test_axes_actor_set_get_prop(axes_actor, use_axis_num):
     val = axes_actor.get_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
+    msg = "Part must be one of ['shaft', 'tip', 'all']."
+    with pytest.raises(ValueError, match=escape(msg)):
+        axes_actor.set_prop('ambient', 0.0, part=1)
+
+    msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
+    with pytest.raises(ValueError, match=escape(msg)):
+        axes_actor.set_prop('ambient', 0.0, axis='a')
+
 
 def test_axes_actor_props(axes_actor):
     # test actors and props are stored correctly
@@ -805,9 +822,12 @@ def test_axes_actor_props(axes_actor):
     assert axes_actor.GetYAxisTipProperty() is axes_actor.y_tip_prop
     assert axes_actor.GetZAxisTipProperty() is axes_actor.z_tip_prop
 
+    msg = "Object must have type <class 'pyvista.plotting._property.Property'>, got <class 'int'> instead."
+    with pytest.raises(TypeError, match=msg):
+        axes_actor.x_shaft_prop = 0
 
-def test_axes_actor_theme():
-    axes_actor = pv.AxesActor()
+
+def test_axes_actor_theme(axes_actor):
     assert axes_actor.x_color.name == 'tomato'
     assert axes_actor.y_color.name == 'seagreen'
     assert axes_actor.z_color.name == 'mediumblue'
