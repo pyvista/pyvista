@@ -22,7 +22,7 @@ from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -3820,48 +3820,6 @@ def test_axes_marker():
         x_color='black', y_color='black', z_color='black', labels_off=True, **kwargs
     )
     plot.show()
-
-
-@skip_lesser_9_0_X
-def test_axes_actor_properties_deprecated():
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError('Remove this method')
-
-    # this test has been deprecated and replaced with `test_axes_actor_properties`
-    axes_actor = pv.AxesActor()
-    with pytest.raises(PyVistaDeprecationWarning):
-        axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-        assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
-        axes_actor.y_axis_shaft_properties.metallic = 0.2
-        assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-        axes_actor.z_axis_shaft_properties.roughness = 0.3
-        assert axes_actor.z_axis_shaft_properties.roughness == 0.3
-
-        axes_actor.x_axis_tip_properties.anisotropy = 0.4
-        assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
-        axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-        assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
-        axes_actor.y_axis_tip_properties.lighting = False
-        assert not axes_actor.y_axis_tip_properties.lighting
-        axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
-        assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
-
-        axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
-        assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
-        axes_actor.y_axis_shaft_properties.opacity = 0.6
-        assert axes_actor.y_axis_shaft_properties.opacity == 0.6
-        axes_actor.z_axis_shaft_properties.shading = False
-        assert not axes_actor.z_axis_shaft_properties.shading
-
-        axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
-        assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
-
-        axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
-        pl = pv.Plotter()
-        pl.add_actor(axes_actor)
-        pl.show()
 
 
 @skip_lesser_9_0_X
