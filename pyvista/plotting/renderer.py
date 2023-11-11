@@ -898,7 +898,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x_color=None,
         y_color=None,
         z_color=None,
-        total_length=(1, 1, 1),
         position=(0, 0, 0),
         orientation=(0, 0, 0),
         origin=(0, 0, 0),
@@ -918,8 +917,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Positioning and orienting the axes in space by setting ``position``,
             ``orientation``, etc. is an experimental feature. In some cases, this
             may result in the axes not being visible when plotting the axes. Call
-            :func:`pyvista.Plotter.reset_camera` with :attr:`pyvista.Plotter.bounds`
-            (e.g. ``pl.reset_camera(pl.bounds)``) to reset the camera if necessary.
+            :func:`reset_camera` with :attr:`bounds`
+            (e.g. ``ren.reset_camera(ren.bounds)``) to reset the camera if necessary.
 
         Parameters
         ----------
@@ -943,10 +942,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         z_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.z_color`
             Color of the z-axis shaft and tip.
-
-        total_length : float | Vector, default: (1, 1, 1)
-            Total length of each axis (shaft plus tip). Values must be
-            non-negative.
 
         position : Vector, default: (0, 0, 0)
             Position of the axes.
@@ -1028,7 +1023,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
-            total_length=total_length,
             position=position,
             orientation=orientation,
             origin=origin,
