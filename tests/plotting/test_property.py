@@ -216,9 +216,11 @@ def test_property_deprecated(prop):
         )
     with pytest.raises(PyVistaDeprecationWarning, match="Use `interpolation` instead."):
         prop.interpolation_model = InterpolationType.PHONG
-        assert prop.interpolation_model == InterpolationType.PHONG
+    with pytest.raises(PyVistaDeprecationWarning, match="Use `interpolation` instead."):
+        prop.interpolation_model
     with pytest.raises(PyVistaDeprecationWarning, match="Use `style` instead."):
         prop.representation = 'points'
-        assert prop.representation == 'Points'
+    with pytest.raises(PyVistaDeprecationWarning, match="Use `style` instead."):
+        prop.representation
     with pytest.raises(PyVistaDeprecationWarning, match="Use `pyvista.Property` instead."):
         ActorProperties(prop)
