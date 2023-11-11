@@ -916,11 +916,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         .. warning::
 
             Positioning and orienting the axes in space by setting ``position``,
-            ``orientation``, ``origin``, ``scale``, or ``user_matrix`` to
-            non-default values is an experimental feature. In some cases, this
+            ``orientation``, etc. is an experimental feature. In some cases, this
             may result in the axes not being visible when plotting the axes. Call
-            :func:`reset_camera` with :attr:`bounds` (e.g.
-            ``ren.reset_camera(ren.bounds)``) to reset the camera if necessary.
+            :func:`pyvista.Plotter.reset_camera` with :attr:`pyvista.Plotter.bounds`
+            (e.g. ``pl.reset_camera(pl.bounds)``) to reset the camera if necessary.
 
         Parameters
         ----------
@@ -936,20 +935,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
 
-        x_color : ColorLike, optional
-            Color of the x-axis shaft and tip. By default, the color is
-            set to ``pyvista.global_theme.axes.x_color``.
+        x_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.x_color`
+            Color of the x-axis shaft and tip.
 
-        y_color : ColorLike, optional
-            Color of the y-axis shaft and tip. By default, the color is
-            set to ``pyvista.global_theme.axes.y_color``.
+        y_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.y_color`
+            Color of the y-axis shaft and tip.
 
-        z_color : ColorLike, optional
-            Color of the z-axis shaft and tip. By default, the color is
-            set to ``pyvista.global_theme.axes.z_color``.
+        z_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.z_color`
+            Color of the z-axis shaft and tip.
 
         total_length : float | Vector, default: (1, 1, 1)
-            Total length of each axis (shaft plus tip).
+            Total length of each axis (shaft plus tip). Values must be
+            non-negative.
 
         position : Vector, default: (0, 0, 0)
             Position of the axes.
@@ -988,8 +985,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         pyvista.AxesActor
             Actor used by this method.
-
-
 
         Examples
         --------

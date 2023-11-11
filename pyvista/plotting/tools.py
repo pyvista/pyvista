@@ -137,7 +137,7 @@ def create_axes_orientation_box(
     labels_off=False,
     opacity=0.5,
 ):
-    """Create a Box axes orientation widget with labels.
+    """Create a Box axes orientation actor with labels.
 
     Parameters
     ----------
@@ -193,6 +193,14 @@ def create_axes_orientation_box(
     -------
     vtk.vtkAnnotatedCubeActor
         Annotated cube actor.
+
+    See Also
+    --------
+    pyvista.Plotter.add_axes
+        Add an axes orientation widget to a scene.
+
+    pyvista.AxesActor
+        Create a regular (non-box) axes actor.
 
     Examples
     --------

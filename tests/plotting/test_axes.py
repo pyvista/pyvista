@@ -361,7 +361,7 @@ def test_axes_labels_off(axes_actor):
 
 
 def test_axes_label_size(axes_actor):
-    w, h = 1, 2
+    w, h = 0.1, 0.2
     axes_actor.label_size = (w, h)
     assert axes_actor.label_size == (w, h)
     assert axes_actor.GetXAxisCaptionActor2D().GetWidth() == w
@@ -371,8 +371,8 @@ def test_axes_label_size(axes_actor):
     assert axes_actor.GetZAxisCaptionActor2D().GetWidth() == w
     assert axes_actor.GetZAxisCaptionActor2D().GetHeight() == h
 
-    actor_init = AxesActor(label_size=(2, 3))
-    assert actor_init.label_size == (2, 3)
+    actor_init = AxesActor(label_size=(0.2, 0.3))
+    assert actor_init.label_size == (0.2, 0.3)
 
 
 def test_axes_actor_properties(axes_actor):

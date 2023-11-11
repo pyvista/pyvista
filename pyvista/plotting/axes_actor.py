@@ -13,7 +13,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import AnnotatedIntEnum, assert_empty_kwargs
 
 from . import _vtk
-from ._property import Property
+from ._property import Property, _check_range
 from .actor_properties import ActorProperties
 from .colors import Color, ColorLike
 from .prop3d import Prop3D
@@ -29,60 +29,98 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     .. versionadded:: 0.43.0
 
-        - ``AxesActor`` can now be initialized with any/all properties specified.
-        - The shaft and tip type can now be set using strings. Previously, the use
-          of a ``ShaftType`` or ``TipType`` Enum was required.
-        - Added ability to position and orient the axes in space.
-        - Added spatial properties :attr:`position`, :attr:`orientation`, :attr:`scale`, :attr:`origin`,
-          and :attr:`user_matrix`.
-        - Added spatial methods :func:`rotate_x`, :func:`rotate_y`, :func:`rotate_z`.
-        - Added color properties :attr:`label_color`, :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
-        - Added :attr:`label_size` property.
-        - Added :attr:`labels` property.
-        - Added ``properties`` keyword to initialize any :class:`pyvista.Property` values
-          (e.g. ``ambient``, ``specular``, etc.).
-        - Added :func:`set_prop` and :func:`get_prop` methods to more easily set or get specific shaft or tip properties.
-        - Added :func:`plot` method.
+        - Improved initialization
+
+            - All ``AxesActor`` parameters can be initialized by
+             the constructor.
+            - Added ``properties`` keyword to initialize surface
+              :class:`pyvista.Property` values (e.g. ``ambient``,
+              ``specular``, etc.).
+
+        - Axes are orientable in space
+
+            - Added spatial properties :attr:`position`, :attr:`orientation`,
+              :attr:`scale`, :attr:`origin`, and :attr:`user_matrix`
+              from :class:`pyvista.Prop3D`.
+            - Added spatial methods :func:`rotate_x`, :func:`rotate_y`,
+              :func:`rotate_z` from :class:`pyvista.Prop3D`.
+
+        - New label properties
+
+            - Added color properties :attr:`label_color`, :attr:`x_color`,
+              :attr:`y_color`, and :attr:`z_color`.
+            - Added :attr:`label_size` property.
+            - Added :attr:`labels` property.
+
+        - Improved manipulation of shaft and tip actor properties
+
+            - Shaft and tip actor properties now make use of the
+              :class:`pyvista.Property` API.
+            - Added :func:`set_prop` and :func:`get_prop`.
+
+        - Improved API
+
+            - Added :func:`plot` method.
+            - The shaft and tip type can be set using strings.
+              Previously, the use of a ``ShaftType`` or ``TipType``
+              Enum was required.
 
     .. versionchanged:: 0.43.0
 
-        - The default shaft type has been changed from ``'line'`` to ``'cylinder'``.
-        - The axes shaft and tip properties have been abstracted, e.g. use
-          :attr:`tip_radius` to set the radius of the axes tips regardless of the :attr:`tip_type`
-          used. Previously, it was necessary to use ``cone_radius`` or ``sphere_radius``
-          separately. See the list of deprecated properties below for details.
-        - Setting :attr:`shaft_width` will automatically change the shaft type to ``'line'``.
-        - Setting :attr:`shaft_radius` will automatically change the shaft type to ``'cylinder'``.
-        - Axes shaft and tip type can now be themed with :class:`pyvista.plotting.themes._AxesConfig`.
-        - Axes shaft and tip properties now apply default theme parameters set by :class:`pyvista.Property`.
+        - New default shaft type
+
+            - The default shaft type is changed from ``'line'`` to
+              ``'cylinder'``.
+
+        - Shaft and tip property abstraction
+
+            - Shaft and tip property names are abstracted.
+            - e.g. use :attr:`tip_radius` to set the radius of the
+              axes tips regardless of the :attr:`tip_type` used.
+              Previously, it was necessary to use ``cone_radius`` or
+              ``sphere_radius`` separately.
+            - The use of non-abstract properties is deprecated, see
+              below for details.
+            - Setting :attr:`shaft_width` will automatically change
+              the shaft type to ``'line'``.
+            - Setting :attr:`shaft_radius` will automatically change
+              the shaft type to ``'cylinder'``.
+
+        - Theme changes
+
+            - The axes shaft and tip type are now included be in
+              :class:`pyvista.plotting.themes._AxesConfig`.
+            - Axes shaft and tip properties now apply default theme
+              parameters set by :class:`pyvista.Property`.
 
     .. deprecated:: 0.43.0
 
-        The following properties have been deprecated:
+        - Abstracted properties
 
+            - ``cone_radius`` ->  use :attr:`~tip_radius` instead.
+            - ``cone_resolution`` -> use :attr:`~tip_resolution` instead.
+            - ``cylinder_resolution`` -> use :attr:`~shaft_resolution` instead.
+            - ``cylinder_radius`` -> use :attr:`~shaft_radius` instead.
+            - ``line_width`` -> use :attr:`~shaft_width` instead.
+            - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
+            - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
 
-        - ``cone_radius`` ->  use :attr:`~tip_radius` instead.
-        - ``cone_resolution`` -> use :attr:`~tip_resolution` instead.
-        - ``cylinder_resolution`` -> use :attr:`~shaft_resolution` instead.
-        - ``cylinder_radius`` -> use :attr:`~shaft_radius` instead.
-        - ``line_width`` -> use :attr:`~shaft_width` instead.
-        - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
-        - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
-        - ``x_axis_label`` -> use :attr:`~x_label` instead.
-        - ``y_axis_label`` -> use :attr:`~y_label` instead.
-        - ``z_axis_label`` -> use :attr:`~z_label` instead.
-        - ``x_axis_shaft_properties`` -> use :attr:`~x_shaft_prop` instead.
-        - ``y_axis_shaft_properties`` -> use :attr:`~y_shaft_prop` instead.
-        - ``z_axis_shaft_properties`` -> use :attr:`~z_shaft_prop` instead.
-        - ``x_axis_tip_properties`` -> use :attr:`~x_tip_prop` instead.
-        - ``y_axis_tip_properties`` -> use :attr:`~y_tip_prop` instead.
-        - ``z_axis_tip_properties`` -> use :attr:`~z_tip_prop` instead.
+        - Renamed properties
+
+            - ``x_axis_label`` -> use :attr:`~x_label` instead.
+            - ``y_axis_label`` -> use :attr:`~y_label` instead.
+            - ``z_axis_label`` -> use :attr:`~z_label` instead.
+            - ``x_axis_shaft_properties`` -> use :attr:`~x_shaft_prop` instead.
+            - ``y_axis_shaft_properties`` -> use :attr:`~y_shaft_prop` instead.
+            - ``z_axis_shaft_properties`` -> use :attr:`~z_shaft_prop` instead.
+            - ``x_axis_tip_properties`` -> use :attr:`~x_tip_prop` instead.
+            - ``y_axis_tip_properties`` -> use :attr:`~y_tip_prop` instead.
+            - ``z_axis_tip_properties`` -> use :attr:`~z_tip_prop` instead.
 
     .. warning::
 
         Positioning and orienting the axes in space by setting ``position``,
-        ``orientation``, ``origin``, ``scale``, or ``user_matrix`` to
-        non-default values is an experimental feature. In some cases, this
+        ``orientation``, etc. is an experimental feature. In some cases, this
         may result in the axes not being visible when plotting the axes. Call
         :func:`pyvista.Plotter.reset_camera` with :attr:`pyvista.Plotter.bounds`
         (e.g. ``pl.reset_camera(pl.bounds)``) to reset the camera if necessary.
@@ -99,7 +137,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Text label for the z-axis.
 
     labels : str | Sequence[str], optional
-        Convenience parameter for setting text labels. Setting this
+        Alternative parameter for setting text labels. Setting this
         parameter is equivalent to setting ``x_label``, ``y_label``, and
         ``z_label`` separately. Value must be a sequence of three strings
         or a single string with three characters (one for each of the x,
@@ -113,13 +151,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Enable or disable the text labels for the axes.
 
     label_size : Sequence[float], default: (0.25, 0.1)
-        The width and height of the axes labels. Values should
-        be in range ``[0, 1]``.
+        The width and height of the axes labels expressed as a fraction
+        of the viewport. Values must be in range ``[0, 1]``.
 
     label_position : float | Vector, default: 1
         Normalized label position along the axes shafts. If a number,
         the label position for all axes is set to this value. Values
-        should be in range ``[0, 1]``.
+        should be non-negative.
 
     x_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.x_color`
         Color of the x-axis shaft and tip.
@@ -134,12 +172,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
 
     shaft_radius : float, default: 0.1
-        Cylinder radius of the axes shafts. Only has an effect on the
-        rendered axes if ``shaft_type`` is ``'cylinder'``.
+        Cylinder radius of the axes shafts. Value must be non-negative.
+        Only has an effect on the rendered axes if ``shaft_type`` is
+        ``'cylinder'``.
 
     shaft_width : float, default: 2
-        Line width of the axes shafts in screen units. Only has
-        an effect on the rendered axes if ``shaft_type`` is ``'line'``.
+        Line width of the axes shafts in screen units. Value must be
+        non-negative. Only has an effect on the rendered axes if
+        ``shaft_type`` is ``'line'``.
 
     shaft_length : float | Vector, default: 0.8
         Normalized length of the shaft for each axis. If a number, the shaft
@@ -147,14 +187,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         ``[0, 1]``.
 
     shaft_resolution : int, default: 16
-        Resolution of the axes shafts. Only has an effect if ``shaft_type``
-        is ``'cylinder'``.
+        Resolution of the axes shafts. Value must be a positive integer.
+        Only has an effect if ``shaft_type`` is ``'cylinder'``.
 
     tip_type : str | AxesActor.TipType, default: :attr:`pyvista.plotting.themes._AxesConfig.tip_type`
         Tip type of the axes, either ``'cone'`` or ``'sphere'``.
 
     tip_radius : float, default: 0.4
-        Radius of the axes tips.
+        Radius of the axes tips. Value must be non-negative.
 
     tip_length : float | Vector, default: 0.2
         Normalized length of the axes tips. If a number, the shaft
@@ -162,10 +202,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         ``[0, 1]``.
 
     tip_resolution : int , default: 16
-        Resolution of the axes tips.
+        Resolution of the axes tips. Value must be a positive integer.
 
     total_length : float | Vector, default: (1, 1, 1)
-        Total length of each axis (shaft plus tip).
+        Total length of each axis (shaft plus tip). Values must be
+        non-negative.
 
     position : Vector, default: (0, 0, 0)
         Position of the axes.
@@ -193,7 +234,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Visibility of the axes. If ``False``, the axes are not visible.
 
     properties : dict, optional
-        Apply any :class:`pyvista.ActorProperties` to all axes shafts and tips.
+        Apply any :class:`pyvista.Property` to all axes shafts and tips.
 
     **kwargs : dict, optional
         Used for handling deprecated parameters.
@@ -208,6 +249,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     pyvista.Property
         Surface properties used by the axes shaft and tips.
+
+    pyvista.create_axes_orientation_box
+        Create an axes orientation box actor.
 
     Examples
     --------
@@ -506,6 +550,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Total length of each axis (shaft plus tip).
 
+        Values must be non-negative.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -525,15 +571,17 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @total_length.setter
     def total_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
-            self.SetTotalLength(length, length, length)
-        else:
-            self.SetTotalLength(length[0], length[1], length[2])
+            length = (length, length, length)
+        self.SetTotalLength(length)
+        _check_range(length[0], (0, float('inf')), 'x-axis total_length')
+        _check_range(length[0], (0, float('inf')), 'y-axis total_length')
+        _check_range(length[0], (0, float('inf')), 'z-axis total_length')
 
     @property
     def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized length of the shaft for each axis.
 
-        Values should be in range ``[0, 1]``.
+        Values must be in range ``[0, 1]``.
 
         Examples
         --------
@@ -554,15 +602,17 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @shaft_length.setter
     def shaft_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
-            self.SetNormalizedShaftLength(length, length, length)
-        else:
-            self.SetNormalizedShaftLength(length[0], length[1], length[2])
+            length = (length, length, length)
+        self.SetNormalizedShaftLength(length)
+        _check_range(length[0], (0, 1), 'x-axis shaft_length')
+        _check_range(length[1], (0, 1), 'y-axis shaft_length')
+        _check_range(length[2], (0, 1), 'z-axis shaft_length')
 
     @property
     def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized length of the tip for each axis.
 
-        Values should be in range ``[0, 1]``.
+        Values must be in range ``[0, 1]``.
 
         Examples
         --------
@@ -583,15 +633,17 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @tip_length.setter
     def tip_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
-            self.SetNormalizedTipLength(length, length, length)
-        else:
-            self.SetNormalizedTipLength(length[0], length[1], length[2])
+            length = (length, length, length)
+        self.SetNormalizedTipLength(length)
+        _check_range(length[0], (0, 1), 'x-axis tip_length')
+        _check_range(length[1], (0, 1), 'y-axis tip_length')
+        _check_range(length[2], (0, 1), 'z-axis tip_length')
 
     @property
     def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized position of the text label along each axis.
 
-        Values should be in range ``[0, 1]``.
+        Values must be non-negative.
 
         Examples
         --------
@@ -610,15 +662,19 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
-        if isinstance(length, (int, float)):
-            self.SetNormalizedLabelPosition(length, length, length)
-        else:
-            self.SetNormalizedLabelPosition(length[0], length[1], length[2])
+    def label_position(self, position: Union[float, Vector]):  # numpydoc ignore=GL08
+        if isinstance(position, (int, float)):
+            position = [position, position, position]
+        self.SetNormalizedLabelPosition(position)
+        _check_range(position[0], (0, float('inf')), 'x-axis label_position')
+        _check_range(position[1], (0, float('inf')), 'y-axis label_position')
+        _check_range(position[2], (0, float('inf')), 'z-axis label_position')
 
     @property
     def tip_resolution(self) -> int:  # numpydoc ignore=RT01
         """Resolution of the axes tips.
+
+        Value must be a positive integer.
 
         Examples
         --------
@@ -643,6 +699,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def tip_resolution(self, resolution: int):  # numpydoc ignore=GL08
         self.SetConeResolution(resolution)
         self.SetSphereResolution(resolution)
+        _check_range(resolution, (1, float('inf')), 'tip_resolution')
 
     @property
     def cone_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -698,6 +755,12 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def shaft_resolution(self) -> int:  # numpydoc ignore=RT01
         """Resolution of the axes shafts.
 
+        Value must be a positive integer.
+
+        Notes
+        -----
+        Shaft resolution has no effect if :attr:`shaft_type` is ``'line'``.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -714,6 +777,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @shaft_resolution.setter
     def shaft_resolution(self, resolution: int):  # numpydoc ignore=GL08
         self.SetCylinderResolution(resolution)
+        _check_range(resolution, (1, float('inf')), 'shaft_resolution')
 
     @property
     def cylinder_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -744,6 +808,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def tip_radius(self) -> float:  # numpydoc ignore=RT01
         """Radius of the axes tips.
 
+        Value must be non-negative.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -766,6 +832,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def tip_radius(self, radius: float):  # numpydoc ignore=GL08
         self.SetConeRadius(radius)
         self.SetSphereRadius(radius)
+        _check_range(radius, (0, float('inf')), 'tip_radius')
 
     @property
     def cone_radius(self) -> float:  # numpydoc ignore=RT01
@@ -846,6 +913,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def shaft_radius(self):  # numpydoc ignore=RT01
         """Cylinder radius of the axes shafts.
 
+        Value must be non-negative.
+
         Notes
         -----
         Setting this property will automatically change the ``shaft_type`` to ``'line'``.
@@ -867,10 +936,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def shaft_radius(self, radius):  # numpydoc ignore=GL08
         self.shaft_type = 'cylinder'
         self.SetCylinderRadius(radius)
+        _check_range(radius, (0, float('inf')), 'shaft_radius')
 
     @property
     def shaft_width(self):  # numpydoc ignore=RT01
         """Line width of the axes shafts in screen units.
+
+        Value must be non-negative.
 
         Notes
         -----
@@ -891,6 +963,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.GetXAxisShaftProperty().SetLineWidth(width)
         self.GetYAxisShaftProperty().SetLineWidth(width)
         self.GetZAxisShaftProperty().SetLineWidth(width)
+        _check_range(width, (0, float('inf')), 'shaft_width')
 
     @property
     def shaft_type(self) -> ShaftType:  # numpydoc ignore=RT01
@@ -1516,7 +1589,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def label_size(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """The width and height of the axes labels.
 
-        Values should be in range ``[0, 1]``.
+        The width and height are expressed as a fraction of the viewport.
+        Values must be in range ``[0, 1]``.
         """
         # Assume label size for x is same as y and z
         label_actor = self.GetXAxisCaptionActor2D()
@@ -1535,6 +1609,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         ]:
             label_actor.SetWidth(size[0])
             label_actor.SetHeight(size[1])
+        _check_range(size[0], (0, float('inf')), 'label_size width')
+        _check_range(size[0], (0, float('inf')), 'label_size height')
 
     @wraps(_vtk.vtkAxesActor.GetBounds)
     def GetBounds(self) -> BoundsLike:  # numpydoc ignore=RT01,GL08
@@ -1654,7 +1730,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
                 self.UseBoundsOn()
             else:
                 # Calls to vtkRenderer.ResetCamera() will use the
-                # incorrect axes bounds a transformation applied.
+                # incorrect axes bounds if a transformation applied.
                 # As a workaround, set UseBoundsOff(). In some cases,
                 # this will require manual adjustment of the camera
                 # from the user.
