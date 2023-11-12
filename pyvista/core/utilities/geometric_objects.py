@@ -240,13 +240,15 @@ def CylinderStructured(
 
 def Arrow(
     start=(0.0, 0.0, 0.0),
-    direction=(1.0, 0.0, 0.0),
+    direction=None,
     tip_length=0.25,
     tip_radius=0.1,
     tip_resolution=20,
     shaft_radius=0.05,
     shaft_resolution=20,
     scale=None,
+    normx=(1.0, 0.0, 0.0),
+    normy=(0.0, 1.0, 0.0),
 ):
     """Create an arrow.
 
@@ -255,7 +257,7 @@ def Arrow(
     start : sequence[float], default: (0.0, 0.0, 0.0)
         Start location in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : sequence[float], default: None
         Direction the arrow points to in ``[x, y, z]``.
 
     tip_length : float, default: 0.25
@@ -276,6 +278,12 @@ def Arrow(
     scale : float | str, optional
         Scale factor of the entire object, defaults to a scale of 1.
         ``'auto'`` scales to length of direction array.
+
+    normx : sequence[float], default: (1.0, 0.0, 0.0)
+        Norm x the arrow points to in ``[x, y, z]``.
+
+    normy : sequence[float], default: (0.0, 1.0, 0.0)
+        Norm y the arrow points to in ``[x, y, z]``.
 
     Returns
     -------
@@ -302,13 +310,19 @@ def Arrow(
     surf = wrap(arrow.GetOutput())
 
     if scale == 'auto':
-        scale = float(np.linalg.norm(direction))
+        if direction is not None:
+            scale = float(np.linalg.norm(direction))
+        else:
+            scale = float(np.linalg.norm(normx))
     if isinstance(scale, (float, int)):
         surf.points *= scale
     elif scale is not None:
         raise TypeError("Scale must be either float, int or 'auto'.")
 
-    translate(surf, start, direction)
+    if direction is not None:
+        translate(surf, start, direction)
+    else:
+        translate(surf, start, normx=normx, normy=normy)
     return surf
 
 
