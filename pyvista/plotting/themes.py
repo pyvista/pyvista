@@ -813,7 +813,9 @@ class _AxesConfig(_ThemeConfig):
 
     >>> pv.global_theme.axes.show = True
 
-    Use the :class:`pyvista.CubeAxesActor` as the orientation widget.
+    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
+
+    >>> pv.global_theme.axes.box = True
 
     """
 
@@ -947,7 +949,10 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def box(self) -> bool:  # numpydoc ignore=RT01
-        """Use a :func:`axes orientation box <pyvista.create_axes_orientation_box>` instead of the default :class:`pyvista.AxesActor`.
+        """Use a box axes orientation widget.
+
+        If ``True``, Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+        instead of the :class:`pyvista.AxesActor` as the orientation widget for plots.
 
         Examples
         --------
@@ -2789,7 +2794,7 @@ class Theme(_ThemeConfig):
 
         >>> pv.global_theme.axes.show = True
 
-        Use the :class:`pyvista.CubeAxesActor` as the orientation widget.
+        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
         >>> pv.global_theme.axes.box = True
 
