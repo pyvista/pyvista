@@ -60,6 +60,8 @@ def translate(
             PyVistaDeprecationWarning,
         )
     else:
+        normx = np.array(normx) / np.linalg.norm(normx)
+        normy = np.array(normy) / np.linalg.norm(normy)
         normz = np.cross(normx, normy)
 
     trans = np.zeros((4, 4))
@@ -324,7 +326,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
        :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
        :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
-       orients the mesh to a new ``center`` and ``direction``.
+       orients the mesh to a new ``center``, ``normx`` and ``normy``.
 
     Parameters
     ----------
@@ -333,6 +335,9 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
     direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
+
+        .. versionchanged:: 0.43.0
+            The ``direction`` parameter has been renamed to ``normx`` and ``normy``.
 
     radius : float, default: 0.5
         Radius of the cylinder.
@@ -345,6 +350,12 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
     resolution : int, default: 100
         Number of points on the circular face of the cylinder.
+
+    normx : sequence[float], default: (1.0, 0.0, 0.0)
+        Norm x cylinder points to  in ``[x, y, z]``.
+
+    normy : sequence[float], default: (0.0, 1.0, 0.0)
+        Norm y cylinder points to  in ``[x, y, z]``.
 
     Examples
     --------
@@ -372,25 +383,30 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions = ['_center', '_direction']
+    _new_attr_exceptions = ['_center', '_direction', '_normx', '_normy']
 
     def __init__(
         self,
         center=(0.0, 0.0, 0.0),
-        direction=(1.0, 0.0, 0.0),
+        direction=None,
         radius=0.5,
         height=1.0,
         capping=True,
         resolution=100,
+        normx=(1.0, 0.0, 0.0),
+        normy=(0.0, 1.0, 0.0),
     ):
         """Initialize the cylinder source class."""
         super().__init__()
         self._center = center
-        self._direction = direction
+        if direction is not None:
+            self._direction = direction
         self.radius = radius
         self.height = height
         self.resolution = resolution
         self.capping = capping
+        self._normx = normx
+        self._normy = normy
 
     @property
     def center(self) -> Sequence[float]:
@@ -426,6 +442,11 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
         """
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`direction` property is deprecated. Please use `normx` and `normy`.',
+            PyVistaDeprecationWarning,
+        )
         return self._direction
 
     @direction.setter
@@ -438,6 +459,11 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
         """
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`direction` property is deprecated. Please use `normx` and `normy`.',
+            PyVistaDeprecationWarning,
+        )
         self._direction = direction
 
     @property
@@ -539,6 +565,54 @@ class CylinderSource(_vtk.vtkCylinderSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+    @property
+    def normx(self) -> Sequence[float]:
+        """Get the normx vector in ``[x, y, z]``. Orientation vector of the cylinder.
+
+        Returns
+        -------
+        sequence[float]
+            Norm x vector in ``[x, y, z]``. Orientation vector of the
+            cylinder.
+        """
+        return self._normx
+
+    @normx.setter
+    def normx(self, normx: Sequence[float]):
+        """Set the normx in ``[x, y, z]``. Axis of the cylinder passes through this point.
+
+        Parameters
+        ----------
+        normx : sequence[float]
+            Norm x vector in ``[x, y, z]``. Orientation vector of the
+            cylinder.
+        """
+        self._normx = normx
+
+    @property
+    def normy(self) -> Sequence[float]:
+        """Get the normy vector in ``[x, y, z]``. Orientation vector of the cylinder.
+
+        Returns
+        -------
+        sequence[float]
+            Norm y vector in ``[x, y, z]``. Orientation vector of the
+            cylinder.
+        """
+        return self._normy
+
+    @normy.setter
+    def normy(self, normy: Sequence[float]):
+        """Set the normy in ``[x, y, z]``. Axis of the cylinder passes through this point.
+
+        Parameters
+        ----------
+        normy : sequence[float]
+            Norm y vector in ``[x, y, z]``. Orientation vector of the
+            cylinder.
+        """
+        self._normy = normy
 
 
 @no_new_attr

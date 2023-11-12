@@ -41,11 +41,13 @@ NORMALS = {
 
 def Cylinder(
     center=(0.0, 0.0, 0.0),
-    direction=(1.0, 0.0, 0.0),
+    direction=None,
     radius=0.5,
     height=1.0,
     resolution=100,
     capping=True,
+    normx=(1.0, 0.0, 0.0),
+    normy=(0.0, 1.0, 0.0),
 ):
     """Create the surface of a cylinder.
 
@@ -61,7 +63,7 @@ def Cylinder(
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : sequence[float], default: None
         Direction cylinder points to  in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -76,6 +78,12 @@ def Cylinder(
     capping : bool, default: True
         Cap cylinder ends with polygons.
 
+    normx : sequence[float], default: (1.0, 0.0, 0.0)
+        Norm x cylinder points to  in ``[x, y, z]``.
+
+    normy : sequence[float], default: (0.0, 1.0, 0.0)
+        Norm y cylinder points to  in ``[x, y, z]``.
+
     Returns
     -------
     pyvista.PolyData
@@ -85,14 +93,22 @@ def Cylinder(
     --------
     >>> import pyvista as pv
     >>> cylinder = pv.Cylinder(
-    ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ...     center=[1, 2, 3],
+    ...     radius=1,
+    ...     height=2,
+    ...     normx=(0.57735027, 0.57735027, 0.57735027),
+    ...     normy=(-0.40824829, 0.81649658, -0.40824829),
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     pv.Cylinder(
-    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ...         center=[1, 2, 3],
+    ...         radius=1,
+    ...         height=2,
+    ...         normx=(0.57735027, 0.57735027, 0.57735027),
+    ...         normy=(-0.40824829, 0.81649658, -0.40824829),
     ...     ),
     ...     show_edges=True,
     ...     line_width=5,
@@ -109,10 +125,12 @@ def Cylinder(
         height=height,
         capping=capping,
         resolution=resolution,
+        normx=normx,
+        normy=normy,
     )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
-    translate(output, center, direction)
+    translate(output, center, direction, normx, normy)
     return output
 
 
@@ -297,13 +315,15 @@ def Arrow(
 def Sphere(
     radius=0.5,
     center=(0.0, 0.0, 0.0),
-    direction=(0.0, 0.0, 1.0),
+    direction=None,
     theta_resolution=30,
     phi_resolution=30,
     start_theta=0.0,
     end_theta=360.0,
     start_phi=0.0,
     end_phi=180.0,
+    normx=(0.0, 0.0, 1.0),
+    normy=(0.0, 1.0, 0.0),
 ):
     """Create a sphere.
 
@@ -326,7 +346,7 @@ def Sphere(
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : sequence[float], default: None
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
 
@@ -349,6 +369,13 @@ def Sphere(
 
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
+
+    normx : sequence[float], default: (0.0, 0.0, 1.0)
+        Norm x coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
+    normy : sequence[float], default: (0.0, 1.0, 0.0)
+        Norm y coordinate vector in ``[x, y, z]``.
 
     Returns
     -------
@@ -390,7 +417,10 @@ def Sphere(
     sphere.Update()
     surf = wrap(sphere.GetOutput())
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction)
+    if direction is not None:
+        translate(surf, center, direction)
+    else:
+        translate(surf, center, normx=normx, normy=normy)
     return surf
 
 
@@ -914,11 +944,13 @@ def SolidSphereGeneric(
 
 def Plane(
     center=(0.0, 0.0, 0.0),
-    direction=(0.0, 0.0, 1.0),
+    direction=None,
     i_size=1,
     j_size=1,
     i_resolution=10,
     j_resolution=10,
+    normx=(0.0, 0.0, 1.0),
+    normy=(0.0, 1.0, 0.0),
 ):
     """Create a plane.
 
@@ -927,7 +959,7 @@ def Plane(
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : sequence[float], default: None
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
@@ -941,6 +973,12 @@ def Plane(
 
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
+
+    normx : sequence[float], default: (0.0, 0.0, 1.0)
+        Norm x cylinder points to  in ``[x, y, z]``.
+
+    normy : sequence[float], default: (0.0, 1.0, 0.0)
+        Norm y cylinder points to  in ``[x, y, z]``.
 
     Returns
     -------
@@ -966,7 +1004,10 @@ def Plane(
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction)
+    if direction is not None:
+        translate(surf, center, direction)
+    else:
+        translate(surf, center, normx=normx, normy=normy)
     return surf
 
 

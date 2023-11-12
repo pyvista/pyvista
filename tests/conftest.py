@@ -80,7 +80,7 @@ def struct_grid():
 
 @fixture()
 def plane():
-    return pyvista.Plane(direction=(0, 0, -1))
+    return pyvista.Plane(normx=(0, 0, -1), normy=(0, 1, 0))
 
 
 @fixture()
