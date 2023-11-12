@@ -15,7 +15,7 @@ from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 
-def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
+def translate(surf, center=(0.0, 0.0, 0.0), direction=None, normx=(1.0, 0.0, 0.0), normy=(0.0, 1.0, 0.0)):
     """Translate and orient a mesh to a new center and direction.
 
     By default, the input mesh is considered centered at the origin
@@ -27,23 +27,36 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
         Mesh to be translated and oriented.
     center : tuple, optional, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
-    direction : tuple, optional, default: (1.0, 0.0, 0.0)
+    direction : tuple, optional, default: None
         Direction vector along which the mesh should be oriented.
+    normx : tuple, optional, default: (1.0, 0.0, 0.0)
+        Norm x vector along which the mesh should be oriented.
+    normy : tuple, optional, default: (0.0, 1.0, 0.0)
+        Norm y vector along which the mesh should be oriented.
 
     """
-    normx = np.array(direction) / np.linalg.norm(direction)
-    normy_temp = [0.0, 1.0, 0.0]
+    if direction is not None:
+        normx = np.array(direction) / np.linalg.norm(direction)
+        normy_temp = [0.0, 1.0, 0.0]
 
-    # Adjust normy if collinear with normx since cross-product will
-    # be zero otherwise
-    if np.allclose(normx, [0, 1, 0]):
-        normy_temp = [-1.0, 0.0, 0.0]
-    elif np.allclose(normx, [0, -1, 0]):
-        normy_temp = [1.0, 0.0, 0.0]
+        # Adjust normy if collinear with normx since cross-product will
+        # be zero otherwise
+        if np.allclose(normx, [0, 1, 0]):
+            normy_temp = [-1.0, 0.0, 0.0]
+        elif np.allclose(normx, [0, -1, 0]):
+            normy_temp = [1.0, 0.0, 0.0]
 
-    normz = np.cross(normx, normy_temp)
-    normz /= np.linalg.norm(normz)
-    normy = np.cross(normz, normx)
+        normz = np.cross(normx, normy_temp)
+        normz /= np.linalg.norm(normz)
+        normy = np.cross(normz, normx)
+
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`direction` argument is deprecated. Please use `normx` and `normy`.',
+            PyVistaDeprecationWarning,
+        )
+    else:
+        normz = np.cross(normx, normy)
 
     trans = np.zeros((4, 4))
     trans[:3, 0] = normx
