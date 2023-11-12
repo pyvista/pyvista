@@ -48,7 +48,11 @@ def test_kochanek_spline():
 
 
 def test_ParametricBohemianDome():
-    geom = pv.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
+    with pytest.warns(PyVistaDeprecationWarning):
+        geom = pv.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError('Remove this deprecated parameter')
+    geom = pv.ParametricBohemianDome(a=0.5, b=1.5, c=1.0, normx=[1, 0, 0], normy=[0, 1, 0])
     assert geom.n_points
 
 

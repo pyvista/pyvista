@@ -203,10 +203,15 @@ def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
         parametric_function.SetC(c)
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
-    direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
+    direction = kwargs.pop('direction', None)
+    normx = kwargs.pop('normx', [1.0, 0.0, 0.0])
+    normy = kwargs.pop('normy', [0.0, 1.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    if direction is not None:
+        translate(surf, center, direction)
+    else:
+        translate(surf, center, normx=normx, normy=normy)
     return surf
 
 
