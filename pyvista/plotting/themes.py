@@ -41,11 +41,10 @@ import warnings
 import pyvista
 from pyvista.core._typing_core import Number
 from pyvista.core.utilities.misc import _check_range
-
-from ._typing import ColorLike
-from .colors import Color, get_cmap_safe, get_cycler
-from .opts import InterpolationType
-from .tools import parse_font_family
+from pyvista.plotting._typing import ColorLike
+from pyvista.plotting.colors import Color, get_cmap_safe, get_cycler
+from pyvista.plotting.opts import InterpolationType
+from pyvista.plotting.tools import parse_font_family
 
 
 def _set_plot_theme_from_env():
@@ -787,16 +786,22 @@ class _AxesConfig(_ThemeConfig):
     >>> import pyvista as pv
     >>> pv.global_theme.axes.x_color
     Color(name='tomato', hex='#ff6347ff', opacity=255)
+    >>>
     >>> pv.global_theme.axes.y_color
     Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+    >>>
     >>> pv.global_theme.axes.z_color
     Color(name='blue', hex='#0000ffff', opacity=255)
+    >>>
     >>> pv.global_theme.axes.shaft_type
     'cylinder'
+    >>>
     >>> pv.global_theme.axes.tip_type
     'cone'
+    >>>
     >>> pv.global_theme.axes.box
     False
+    >>>
     >>> pv.global_theme.axes.show
     True
 
@@ -846,7 +851,13 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default x-axis color
+
         >>> import pyvista as pv
+        >>> pv.global_theme.axes.x_color  # doctest: +SKIP
+        Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+        Change the default color.
         >>> pv.global_theme.axes.x_color = 'red'
         """
         return self._x_color
@@ -861,8 +872,14 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default y-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.y_color = 'red'
+        >>> pv.global_theme.axes.y_color
+        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.y_color = 'green'
         """
         return self._y_color
 
@@ -876,8 +893,14 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default z-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.z_color = 'red'
+        >>> pv.global_theme.axes.z_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.z_color = 'purple'
         """
         return self._z_color
 
@@ -891,7 +914,14 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default shaft type.
+
         >>> import pyvista as pv
+        >>> pv.global_theme.axes.shaft_type
+        'cylinder'
+
+        Set the default to 'line'.
+
         >>> pv.global_theme.axes.shaft_type = 'line'
         """
         return self._shaft_type
@@ -917,7 +947,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def box(self) -> bool:  # numpydoc ignore=RT01
-        """Use the :class:`pyvista.CubeAxesActor` instead of the default :class:`pyvista.AxesActor`.
+        """Use a :func:`axes orientation box <pyvista.create_axes_orientation_box>` instead of the default :class:`pyvista.AxesActor`.
 
         Examples
         --------
