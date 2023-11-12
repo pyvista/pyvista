@@ -500,6 +500,7 @@ def test_axes_actor_GetBounds(shaft_tip_length, total_length, scale, position):
         shaft_length=shaft_length,
         tip_length=tip_length,
         total_length=total_length,
+        auto_length=False,
         _make_orientable=True,
     )
     actual = axes_actor.GetBounds()
@@ -937,3 +938,106 @@ def test_axes_actor_symmetric_bounds(axes_actor):
     assert np.allclose(axes_actor.center, (0.5, 0.5, 0.5))
     assert np.allclose(axes_actor.length, default_length / 2)
     assert np.allclose(axes_actor.bounds, (0, 1, 0, 1, 0, 1))
+
+
+@pytest.mark.parametrize('apply_to', ['shaft', 'tip', 'both'])
+@pytest.mark.parametrize('decimals', list(range(8)))
+@pytest.mark.parametrize('enabled', [True, False])
+def test_axes_actor_auto_length(apply_to, decimals, enabled):
+    length = np.random.random()
+    length = np.round(length, decimals=decimals)
+    if apply_to == 'shaft':
+        kwargs = dict(shaft_length=length)
+    elif apply_to == 'tip':
+        kwargs = dict(tip_length=length)
+    else:
+        kwargs = dict(shaft_length=length, tip_length=1 - length)
+    axes_actor = AxesActor(auto_length=True, **kwargs)
+    shaft_length = np.array(axes_actor.shaft_length)
+    tip_length = np.array(axes_actor.tip_length)
+    total = shaft_length + tip_length
+    assert np.array_equal(total, (1, 1, 1))
+
+    # test dynamic update
+    if not enabled:
+        axes_actor.auto_length = False
+    axes_actor.shaft_length = 0.9
+    expected = (0.1, 0.1, 0.1)
+    if enabled:
+        assert np.array_equal(axes_actor.tip_length, expected)
+    else:
+        assert not np.array_equal(axes_actor.tip_length, expected)
+        axes_actor.tip_length = expected
+
+    axes_actor.tip_length = 0.9
+    if enabled:
+        assert np.array_equal(axes_actor.shaft_length, expected)
+    else:
+        assert not np.array_equal(axes_actor.shaft_length, expected)
+
+
+@pytest.mark.parametrize('enabled', [True, False])
+def test_axes_actor_auto_shaft_type(enabled):
+    axes_actor = AxesActor(auto_shaft_type=enabled)
+
+    assert axes_actor.shaft_type.annotation == 'cylinder'
+
+    axes_actor.shaft_width = 5
+    if enabled:
+        assert axes_actor.shaft_type.annotation == 'line'
+    else:
+        assert axes_actor.shaft_type.annotation == 'cylinder'
+        axes_actor.shaft_type = 'line'
+
+    axes_actor.shaft_resolution = 2
+    if enabled:
+        assert axes_actor.shaft_type.annotation == 'cylinder'
+    else:
+        assert axes_actor.shaft_type.annotation == 'line'
+        axes_actor.shaft_type = 'cylinder'
+
+    # set up for next test
+    axes_actor.shaft_type = 'line'
+    assert axes_actor.shaft_type.annotation == 'line'
+
+    axes_actor.shaft_radius = 1
+    if enabled:
+        assert axes_actor.shaft_type.annotation == 'cylinder'
+    else:
+        assert axes_actor.shaft_type.annotation == 'line'
+
+
+def test_axes_actor_auto_length_raises():
+    msg = (
+        "Cannot set both `shaft_length` and `tip_length` when `auto_set_length=True` and when\n"
+        "lengths do not sum to 1.0. Set either `shaft_length` or `tip_length`, but not both."
+    )
+    with pytest.raises(ValueError, match=msg):
+        AxesActor(shaft_length=0.6, tip_length=0.6, auto_length=True)
+
+
+def test_axes_actor_auto_shaft_type_raises():
+    msg = (
+        "Cannot set `shaft_width` when type is 'cylinder' and `auto_set_shaft_type=True`.\n"
+        "Only `shaft_radius` or `shaft_resolution` can be set."
+    )
+    with pytest.raises(ValueError, match=msg):
+        AxesActor(shaft_type='cylinder', shaft_width=5)
+
+    msg = (
+        "Cannot set properties `shaft_radius` or `shaft_resolution` when shaft type is 'line'\n"
+        "and `auto_set_shaft_type=True`. Only `shaft_width` can be set."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        AxesActor(shaft_type='line', shaft_radius=1)
+    with pytest.raises(ValueError, match=msg):
+        AxesActor(shaft_type='line', shaft_resolution=1)
+
+    msg = (
+        'Cannot set line properties (`shaft_width`) and cylinder properties (`shaft_radius`\n'
+        'or `shaft_resolution`) simultaneously when`auto_set_shaft_type=True`.'
+    )
+
+    with pytest.raises(ValueError, match=escape(msg)):
+        AxesActor(shaft_resolution=1, shaft_width=5)

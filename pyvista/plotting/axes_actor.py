@@ -64,6 +64,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             - The shaft and tip type can be set using strings.
               Previously, the use of a ``ShaftType`` or ``TipType``
               Enum was required.
+            - Added :attr:`auto_shaft_type`.
+            - Added :attr:`auto_length`.
 
     .. versionchanged:: 0.43.0
 
@@ -81,10 +83,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
               or ``sphere_radius`` separately.
             - The use of non-abstract properties is deprecated, see
               below for details.
-            - Setting :attr:`shaft_width` will automatically change
-              the shaft type to ``'line'``.
-            - Setting :attr:`shaft_radius` will automatically change
-              the shaft type to ``'cylinder'``.
+            - The shaft type is now modified when setting cylinder-
+              or line- specific parameters. See :attr:`auto_shaft_type`
+              for details.
 
         - Theme changes
 
@@ -171,7 +172,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     shaft_type : str | AxesActor.ShaftType, default: :attr:`pyvista.plotting.themes._AxesConfig.shaft_type`
         Shaft type of the axes, either ``'cylinder'`` or ``'line'``.
 
-    shaft_radius : float, default: 0.1
+    shaft_radius : float, default: 0.01
         Cylinder radius of the axes shafts. Value must be non-negative.
         Only has an effect on the rendered axes if ``shaft_type`` is
         ``'cylinder'``.
@@ -247,6 +248,22 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         placed in a scene with other actors, since the symmetry
         could otherwise lead to undesirable camera positioning
         (e.g. camera is positioned further away than necessary).
+
+    auto_shaft_type : bool, default: True
+        Automatically adjust related properties when setting
+        certain properties. If ``True``:
+
+        - Setting :attr:`shaft_width` will also set :attr:`shaft_type`
+          to ``'line'``.
+
+    auto_length : bool, default: True
+        Automatically set shaft length when setting tip length and vice-versa.
+        If ``True``:
+
+        - Setting :attr:`shaft_length` will also set :attr:`tip_length`
+          to ``1 - shaft_length``.
+        - Setting :attr:`tip_length` will also set :attr:`shaft_length`
+          to ``1 - tip_length``.
 
     properties : dict, optional
         Apply any :class:`pyvista.Property` to all axes shafts and tips.
@@ -366,13 +383,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         y_color=None,
         z_color=None,
         shaft_type=None,
-        shaft_radius=0.01,
-        shaft_width=2,
-        shaft_length=0.8,
-        shaft_resolution=16,
+        shaft_radius=None,
+        shaft_width=None,
+        shaft_length=None,
+        shaft_resolution=None,
         tip_type=None,
         tip_radius=0.4,
-        tip_length=0.2,
+        tip_length=None,
         tip_resolution=16,
         total_length=(1, 1, 1),
         position=(0, 0, 0),
@@ -382,6 +399,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         user_matrix=None,
         visibility=True,
         symmetric_bounds=True,
+        auto_shaft_type=True,
+        auto_length=True,
         properties=None,
         **kwargs,
     ):
@@ -456,30 +475,107 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         assert_empty_kwargs(**kwargs)
 
         self.visibility = visibility
-        self._symmetric_bounds = symmetric_bounds
         self.total_length = total_length
+        self._symmetric_bounds = symmetric_bounds
 
-        # Set shaft and tip color
-        self.x_color = x_color
-        self.y_color = y_color
-        self.z_color = z_color
-
-        # Set shaft properties
-        self.shaft_radius = shaft_radius
-        self.shaft_width = shaft_width
-        self.shaft_length = shaft_length
-        self.shaft_resolution = shaft_resolution
+        # Check shaft params for auto-setting shaft type
         if shaft_type is None:
             shaft_type = pyvista.global_theme.axes.shaft_type
+            shaft_type_not_none = False
+        else:
+            shaft_type_not_none = True
+
+        cylinder_params_not_none = False
+        if shaft_radius is None:
+            shaft_radius = 0.01
+        else:
+            cylinder_params_not_none = True
+
+        if shaft_resolution is None:
+            shaft_resolution = 16
+        else:
+            cylinder_params_not_none = True
+
+        if shaft_width is None:
+            shaft_width = 2
+            line_params_not_none = False
+        else:
+            line_params_not_none = True
+
+        if auto_shaft_type and (
+            shaft_type_not_none or cylinder_params_not_none or line_params_not_none
+        ):
+            # Make sure that we don't auto set with incompatible params
+            if shaft_type_not_none:
+                if shaft_type == 'line' and cylinder_params_not_none:
+                    raise ValueError(
+                        "Cannot set properties `shaft_radius` or `shaft_resolution` when shaft type is 'line'\n"
+                        "and `auto_set_shaft_type=True`. Only `shaft_width` can be set."
+                    )
+                elif shaft_type == 'cylinder' and line_params_not_none:
+                    raise ValueError(
+                        "Cannot set `shaft_width` when type is 'cylinder' and `auto_set_shaft_type=True`.\n"
+                        "Only `shaft_radius` or `shaft_resolution` can be set."
+                    )
+            if cylinder_params_not_none and line_params_not_none:
+                raise ValueError(
+                    "Cannot set line properties (`shaft_width`) and cylinder properties (`shaft_radius`\n"
+                    "or `shaft_resolution`) simultaneously when`auto_set_shaft_type=True`."
+                )
+
+        # Set shaft properties with auto shaft type temporarily disabled
+        self._auto_shaft_type = False
+        self.shaft_radius = shaft_radius
+        self.shaft_width = shaft_width
+        self.shaft_resolution = shaft_resolution
+        self.auto_shaft_type = auto_shaft_type
         self.shaft_type = shaft_type
+
+        # Set shaft and tip length
+        self._auto_length = auto_length
+        if shaft_length is None:
+            shaft_length_is_none = True
+            shaft_length = 0.8
+        else:
+            shaft_length_is_none = False
+
+        if tip_length is None:
+            tip_length_is_none = True
+            tip_length = 0.2
+        else:
+            tip_length_is_none = False
+
+        if auto_length:
+            if shaft_length_is_none and not tip_length_is_none:
+                self.tip_length = tip_length
+            elif not shaft_length_is_none and tip_length_is_none:
+                self.shaft_length = shaft_length
+            elif (
+                not shaft_length_is_none
+                and not tip_length_is_none
+                and shaft_length + tip_length != 1.0
+            ):
+                raise ValueError(
+                    "Cannot set both `shaft_length` and `tip_length` when `auto_set_length=True` and when\n"
+                    "lengths do not sum to 1.0. Set either `shaft_length` or `tip_length`, but not both."
+                )
+            else:
+                self.shaft_length = shaft_length
+        else:
+            self.shaft_length = shaft_length
+            self.tip_length = tip_length
 
         # Set tip properties
         if tip_type is None:
             tip_type = pyvista.global_theme.axes.tip_type
         self.tip_type = tip_type
         self.tip_radius = tip_radius
-        self.tip_length = tip_length
         self.tip_resolution = tip_resolution
+
+        # Set shaft and tip color
+        self.x_color = x_color
+        self.y_color = y_color
+        self.z_color = z_color
 
         # Set text label properties
         if labels is None:
@@ -544,6 +640,83 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return '\n'.join(attr)
 
     @property
+    def auto_length(self) -> bool:  # numpydoc ignore=RT01
+        """Automatically set shaft length when setting tip length and vice-versa.
+
+        If ``True``:
+
+        - Setting :attr:`shaft_length` will also set :attr:`tip_length`
+          to ``1 - shaft_length``.
+        - Setting :attr:`tip_length` will also set :attr:`shaft_length`
+          to ``1 - tip_length``.
+
+        Examples
+        --------
+        Create an axes actor with a specific shaft length.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor(shaft_length=0.7, auto_length=True)
+        >>> axes_actor.shaft_length
+        (0.7, 0.7, 0.7)
+        >>> axes_actor.tip_length
+        (0.3, 0.3, 0.3)
+
+        The tip lengths are adjusted dynamically.
+
+        >>> axes_actor.tip_length = (0.1, 0.2, 0.4)
+        >>> axes_actor.tip_length
+        (0.1, 0.2, 0.4)
+        >>> axes_actor.shaft_length
+        (0.9, 0.8, 0.6)
+
+        """
+        return self._auto_length
+
+    @auto_length.setter
+    def auto_length(self, value: bool):  # numpydoc ignore=GL08
+        self._auto_length = value
+
+    @property
+    def auto_shaft_type(self) -> bool:  # numpydoc ignore=RT01
+        """Automatically set the shaft type when setting some properties.
+
+        If ``True``:
+
+        - Setting :attr:`shaft_width` will also set :attr:`shaft_type`
+          to ``'line'``.
+        - Setting :attr:`shaft_radius` will also set :attr:`shaft_type`
+          to ``'cylinder'``.
+        - Setting :attr:`shaft_resolution` will also set :attr:`shaft_type`
+          to ``'cylinder'``.
+
+
+        Examples
+        --------
+        Create an axes actor with cylinder shafts.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor(
+        ...     shaft_type='cylinder', auto_shaft_type=True
+        ... )
+        >>> axes_actor.shaft_type
+        <ShaftType.CYLINDER: 0>
+
+        Set the shaft width. The shaft type is automatically adjusted.
+
+        >>> axes_actor.shaft_width = 5
+        >>> axes_actor.shaft_width
+        5.0
+        >>> axes_actor.shaft_type
+        <ShaftType.LINE: 1>
+
+        """
+        return self._auto_shaft_type
+
+    @auto_shaft_type.setter
+    def auto_shaft_type(self, value: bool):  # numpydoc ignore=GL08
+        self._auto_shaft_type = value
+
+    @property
     def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
         """Enable or disable symmetry in the axes bounds calculation.
 
@@ -575,10 +748,10 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         Get the asymmetric bounds.
 
         >>> axes_actor.symmetric_bounds = False
-        >>> axes_actor.bounds
-        (-0.0800000011920929, 1.0, -0.08000000119209276, 1.0, -0.0800000011920929, 1.0)
-        >>> axes_actor.center
-        (0.45999999940395353, 0.45999999940395364, 0.45999999940395353)
+        >>> axes_actor.bounds  # doctest:+SKIP
+        (-0.08, 1.0, -0.08, 1.0, -0.08, 1.0)
+        >>> axes_actor.center  # doctest:+SKIP
+        (0.46, 0.46, 0.46)
 
         Observe the difference in camera positioning with and without
         symmetric bounds. Orientation is added for visualization.
@@ -657,6 +830,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         Values must be in range ``[0, 1]``.
 
+        Notes
+        -----
+        Setting this property will automatically change the :attr:`tip_length` to
+        ``1 - shaft_length`` if :attr:`auto_adjust` is ``True``.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -682,11 +860,21 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         _check_range(length[1], (0, 1), 'y-axis shaft_length')
         _check_range(length[2], (0, 1), 'z-axis shaft_length')
 
+        if self.auto_length:
+            # Calc 1-length and round to nearest 1e-8
+            length = list(map(lambda x: round(1 - x, 8), length))
+            self.SetNormalizedTipLength(length)
+
     @property
     def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized length of the tip for each axis.
 
         Values must be in range ``[0, 1]``.
+
+        Notes
+        -----
+        Setting this property will automatically change the :attr:`shaft_length` to
+        ``1 - tip_length`` if :attr:`auto_adjust` is ``True``.
 
         Examples
         --------
@@ -712,6 +900,11 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         _check_range(length[0], (0, 1), 'x-axis tip_length')
         _check_range(length[1], (0, 1), 'y-axis tip_length')
         _check_range(length[2], (0, 1), 'z-axis tip_length')
+
+        if self.auto_length:
+            # Calc 1-length and round to nearest 1e-8
+            length = list(map(lambda x: round(1 - x, 8), length))
+            self.SetNormalizedShaftLength(length)
 
     @property
     def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -833,7 +1026,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         Notes
         -----
-        Shaft resolution has no effect if :attr:`shaft_type` is ``'line'``.
+        Setting this property will automatically change the :attr:`shaft_type` to
+        ``'cylinder'`` if :attr:`auto_adjust` is ``True``.
 
         Examples
         --------
@@ -852,6 +1046,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def shaft_resolution(self, resolution: int):  # numpydoc ignore=GL08
         self.SetCylinderResolution(resolution)
         _check_range(resolution, (1, float('inf')), 'shaft_resolution')
+
+        if self.auto_shaft_type:
+            self.shaft_type = self.ShaftType.CYLINDER
 
     @property
     def cylinder_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -997,7 +1194,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         Notes
         -----
-        Setting this property will automatically change the ``shaft_type`` to ``'line'``.
+        Setting this property will automatically change the ``shaft_type`` to
+        ``'cylinder'`` if :attr:`auto_adjust` is ``True``.
 
         Examples
         --------
@@ -1023,7 +1221,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             # need to update mapper
             self._update_props()
 
-        self.shaft_type = 'cylinder'
+        if self.auto_shaft_type:
+            self.shaft_type = AxesActor.ShaftType.CYLINDER
 
     @property
     def shaft_width(self):  # numpydoc ignore=RT01
@@ -1033,7 +1232,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         Notes
         -----
-        Setting this property will automatically change the ``shaft_type`` to ``'line'``.
+        Setting this property will automatically change the :attr:`shaft_type` to
+        ``'line'`` if :attr:`auto_adjust` is ``True``.
 
         """
         # Get x width and assume width is the same for each x, y, and z
@@ -1046,11 +1246,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @shaft_width.setter
     def shaft_width(self, width):  # numpydoc ignore=GL08
-        self.shaft_type = 'line'
         self.GetXAxisShaftProperty().SetLineWidth(width)
         self.GetYAxisShaftProperty().SetLineWidth(width)
         self.GetZAxisShaftProperty().SetLineWidth(width)
         _check_range(width, (0, float('inf')), 'shaft_width')
+
+        if self.auto_shaft_type:
+            self.shaft_type = AxesActor.ShaftType.LINE
 
     @property
     def shaft_type(self) -> ShaftType:  # numpydoc ignore=RT01
@@ -1882,8 +2084,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             temp_val[0] += delta
 
         # Change value to trigger update
-        self.shaft_length = temp_val
-        self.shaft_length = val
+        self.SetNormalizedShaftLength(temp_val)
+        self.SetNormalizedShaftLength(val)
 
     @property
     def _make_orientable(self) -> bool:
