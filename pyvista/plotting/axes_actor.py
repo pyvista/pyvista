@@ -42,6 +42,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
               from :class:`pyvista.Prop3D`.
             - Added spatial methods :func:`rotate_x`, :func:`rotate_y`
               , :func:`rotate_z` from :class:`pyvista.Prop3D`.
+            - Added bounds-related parameters :attr:`bounds`, :attr:`center`
+              , :attr:`length`, and :attr:`symmetric_bounds`.
 
         - New label properties
 

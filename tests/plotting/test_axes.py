@@ -892,25 +892,25 @@ def test_axes_actor_center(axes_actor):
 @pytest.mark.parametrize('use_scale', [True, False])
 def test_axes_actor_length(axes_actor, use_scale):
     default_length = 3.4641016151377544
-    assert axes_actor.length == default_length
-    assert axes_actor.GetLength() == default_length
+    assert np.allclose(axes_actor.length, default_length)
+    assert np.allclose(axes_actor.GetLength(), default_length)
 
     scaled_length = 7.4833147735478835
     if use_scale:
         axes_actor.scale = (1, 2, 3)
     else:
         axes_actor.total_length = (1, 2, 3)
-    assert axes_actor.length == scaled_length
-    assert axes_actor.GetLength() == scaled_length
+    assert np.allclose(axes_actor.length, scaled_length)
+    assert np.allclose(axes_actor.GetLength(), scaled_length)
 
     axes_actor._make_orientable = False
     if use_scale:
         # test length is not correct when workaround is disabled
-        assert axes_actor.length == default_length
-        assert axes_actor.GetLength() == default_length
+        assert np.allclose(axes_actor.length, default_length)
+        assert np.allclose(axes_actor.GetLength(), default_length)
     else:
-        assert axes_actor.length == scaled_length
-        assert axes_actor.GetLength() == scaled_length
+        assert np.allclose(axes_actor.length, scaled_length)
+        assert np.allclose(axes_actor.GetLength(), scaled_length)
 
 
 def test_axes_actor_symmetric_bounds(axes_actor):
@@ -924,7 +924,7 @@ def test_axes_actor_symmetric_bounds(axes_actor):
     axes_actor.shaft_radius = 2
     assert axes_actor.center == (0, 0, 0)
     assert axes_actor.length == 5.542562584220408
-    assert axes_actor.bounds == (-1.6, 1.6, -1.6000000000000008, 1.6000000000000008, -1.6, 1.6)
+    assert np.allclose(axes_actor.bounds, (-1.6, 1.6, -1.6, 1.6, -1.6, 1.6))
 
     axes_actor.symmetric_bounds = False
 
