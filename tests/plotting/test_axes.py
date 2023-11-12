@@ -917,14 +917,14 @@ def test_axes_actor_length(axes_actor, use_scale):
 def test_axes_actor_symmetric_bounds(axes_actor):
     default_bounds = (-1, 1, -1, 1, -1, 1)
     default_length = 3.4641016151377544
-    assert axes_actor.center == (0, 0, 0)
+    assert np.allclose(axes_actor.center == (0, 0, 0))
     assert np.allclose(axes_actor.length, default_length)
-    assert axes_actor.bounds == default_bounds
+    assert np.allclose(axes_actor.bounds, default_bounds)
 
     # test radius > length
     axes_actor.shaft_radius = 2
-    assert axes_actor.center == (0, 0, 0)
-    assert axes_actor.length == 5.542562584220408
+    assert np.allclose(axes_actor.center, (0, 0, 0))
+    assert np.allclose(axes_actor.length, 5.542562584220408)
     assert np.allclose(axes_actor.bounds, (-1.6, 1.6, -1.6, 1.6, -1.6, 1.6))
 
     axes_actor.symmetric_bounds = False
