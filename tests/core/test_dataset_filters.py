@@ -2968,11 +2968,25 @@ def test_extrude_trim_catch():
 
 def test_extrude_trim_inplace():
     direction = (0, 0, 1)
+    normx = (0, 0, 1)
+    normy = (0, 1, 0)
     mesh = pv.Plane(
-        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+        center=(0, 0, 0),
+        i_size=1,
+        j_size=1,
+        i_resolution=10,
+        j_resolution=10,
+        normx=normx,
+        normy=normy,
     )
     trim_surface = pv.Plane(
-        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+        center=(0, 0, 1),
+        i_size=2,
+        j_size=2,
+        i_resolution=20,
+        j_resolution=20,
+        normx=normx,
+        normy=normy,
     )
     mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
     assert np.isclose(mesh.volume, 1.0)
