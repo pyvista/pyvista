@@ -3888,6 +3888,10 @@ def test_axes_actor_plot():
     pv.AxesActor().plot()
 
 
+def test_axes_actor_plot_asymmetric_bounds():
+    pv.AxesActor(orientation=(90, 0, 0), symmetric_bounds=False).plot()
+
+
 def test_show_bounds_no_labels():
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Cone())

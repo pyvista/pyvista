@@ -212,16 +212,25 @@ def test_axes_actor_shaft_resolution(axes_actor):
 
 
 def test_axes_actor_tip_radius(axes_actor):
+    actor_init = AxesActor(tip_radius=9)
+    assert actor_init.tip_radius == 9
+
     axes_actor.tip_radius = 0.8
     assert axes_actor.tip_radius == 0.8
     assert axes_actor.GetConeRadius() == 0.8
     assert axes_actor.GetSphereRadius() == 0.8
 
-    actor_init = AxesActor(tip_radius=9)
-    assert actor_init.tip_radius == 9
+    # test that bounds are correct when radius >> length
+    axes_actor.tip_radius = 80
+    assert np.allclose(axes_actor.bounds, (-16, 16, -16, 16, -16, 16))
+
+    # test that changing radius correctly updates bounds
+    axes_actor.tip_radius = 30
+    assert np.allclose(axes_actor.bounds, (-6, 6, -6, 6, -6, 6))
 
 
 def test_axes_actor_shaft_type(axes_actor):
+    assert axes_actor.shaft_type == pv.AxesActor.ShaftType.CYLINDER
     axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
     assert axes_actor.shaft_type == pv.AxesActor.ShaftType.CYLINDER
     axes_actor.shaft_type = pv.AxesActor.ShaftType.LINE
@@ -325,7 +334,8 @@ def test_axes_actor_axis_color(axes_actor):
     assert actor_init.z_color.name == 'purple'
 
 
-def test_axes_shaft_width(axes_actor):
+def test_axes_actor_shaft_width(axes_actor):
+    # test setting width automatically changes type to 'line'
     axes_actor.shaft_type = 'cylinder'
     axes_actor.shaft_width = 100
 
@@ -339,18 +349,29 @@ def test_axes_shaft_width(axes_actor):
     assert actor_init.shaft_width == 50
 
 
-def test_axes_shaft_radius(axes_actor):
+def test_axes_actor_shaft_radius(axes_actor):
+    actor_init = AxesActor(shaft_radius=50)
+    assert actor_init.shaft_radius == 50
+
+    # test setting width automatically changes type to 'cylinder'
     axes_actor.shaft_type = 'line'
     axes_actor.shaft_radius = 100
 
     assert axes_actor.shaft_type.annotation == 'cylinder'
     assert axes_actor.shaft_radius == 100
 
-    actor_init = AxesActor(shaft_radius=50)
-    assert actor_init.shaft_radius == 50
+    # test that bounds are correct
+    assert np.allclose(axes_actor.bounds, (-80, 80, -80, 80, -80, 80))
+
+    # test that changing radius only correctly updates bounds
+    axes_actor.shaft_radius = 0
+    assert np.allclose(axes_actor.bounds, (-1, 1, -1, 1, -1, 1))
+
+    axes_actor.shaft_radius = 30
+    assert np.allclose(axes_actor.bounds, (-24, 24, -24, 24, -24, 24))
 
 
-def test_axes_labels_off(axes_actor):
+def test_axes_actor_labels_off(axes_actor):
     axes_actor.labels_off = False
     assert axes_actor.labels_off is False
     axes_actor.labels_off = True
@@ -360,7 +381,7 @@ def test_axes_labels_off(axes_actor):
     assert actor_init.labels_off is True
 
 
-def test_axes_label_size(axes_actor):
+def test_axes_actor_label_size(axes_actor):
     w, h = 0.1, 0.2
     axes_actor.label_size = (w, h)
     assert axes_actor.label_size == (w, h)
@@ -853,3 +874,66 @@ def test_axes_actor_theme(axes_actor):
     pv.global_theme.axes.z_color = 'mediumblue'
     pv.global_theme.axes.shaft_type = 'cylinder'
     pv.global_theme.axes.tip_type = 'cone'
+
+
+def test_axes_actor_center(axes_actor):
+    assert axes_actor.center == (0, 0, 0)
+    assert axes_actor.GetCenter() == (0, 0, 0)
+
+    axes_actor.position = (1, 2, 3)
+    assert axes_actor.center == axes_actor.position
+    assert axes_actor.GetCenter() == axes_actor.position
+
+    # test center is always the origin when workaround is disabled
+    axes_actor._make_orientable = False
+    assert axes_actor.GetCenter() == (0, 0, 0)
+
+
+@pytest.mark.parametrize('use_scale', [True, False])
+def test_axes_actor_length(axes_actor, use_scale):
+    default_length = 3.4641016151377544
+    assert axes_actor.length == default_length
+    assert axes_actor.GetLength() == default_length
+
+    scaled_length = 7.4833147735478835
+    if use_scale:
+        axes_actor.scale = (1, 2, 3)
+    else:
+        axes_actor.total_length = (1, 2, 3)
+    assert axes_actor.length == scaled_length
+    assert axes_actor.GetLength() == scaled_length
+
+    axes_actor._make_orientable = False
+    if use_scale:
+        # test length is not correct when workaround is disabled
+        assert axes_actor.length == default_length
+        assert axes_actor.GetLength() == default_length
+    else:
+        assert axes_actor.length == scaled_length
+        assert axes_actor.GetLength() == scaled_length
+
+
+def test_axes_actor_symmetric_bounds(axes_actor):
+    default_bounds = (-1, 1, -1, 1, -1, 1)
+    default_length = 3.4641016151377544
+    assert axes_actor.center == (0, 0, 0)
+    assert axes_actor.length == default_length
+    assert axes_actor.bounds == default_bounds
+
+    # test radius > length
+    axes_actor.shaft_radius = 2
+    assert axes_actor.center == (0, 0, 0)
+    assert axes_actor.length == 5.542562584220408
+    assert axes_actor.bounds == (-1.6, 1.6, -1.6000000000000008, 1.6000000000000008, -1.6, 1.6)
+
+    axes_actor.symmetric_bounds = False
+
+    # make axes geometry tiny to approximate lines and points
+    axes_actor.shaft_radius = 1e-8
+    axes_actor.tip_radius = 1e-8
+    axes_actor.shaft_length = 1
+    axes_actor.tip_length = 0
+
+    assert np.allclose(axes_actor.center, (0.5, 0.5, 0.5))
+    assert np.allclose(axes_actor.length, default_length / 2)
+    assert np.allclose(axes_actor.bounds, (0, 1, 0, 1, 0, 1))

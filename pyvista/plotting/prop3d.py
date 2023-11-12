@@ -358,3 +358,17 @@ class Prop3D(_vtk.vtkProp3D):
     ):  # numpydoc ignore=GL08
         array = np.eye(4) if value is None else _coerce_transformlike_arg(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
+
+    @property
+    def length(self) -> float:  # numpydoc ignore=RT01
+        """Return the length of the entity.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.length
+        1.7272069317100354
+        """
+        return self.GetLength()

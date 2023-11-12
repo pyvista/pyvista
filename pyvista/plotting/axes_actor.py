@@ -11,12 +11,11 @@ from pyvista.core._typing_core import BoundsLike, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.misc import AnnotatedIntEnum, assert_empty_kwargs
-
-from . import _vtk
-from ._property import Property, _check_range
-from .actor_properties import ActorProperties
-from .colors import Color, ColorLike
-from .prop3d import Prop3D
+from pyvista.plotting import _vtk
+from pyvista.plotting._property import Property, _check_range
+from pyvista.plotting.actor_properties import ActorProperties
+from pyvista.plotting.colors import Color, ColorLike
+from pyvista.plotting.prop3d import Prop3D
 
 AxesTuple = namedtuple('AxesTuple', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
 
@@ -33,29 +32,28 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
             - All ``AxesActor`` parameters can be initialized by
              the constructor.
-            - Added ``properties`` keyword to initialize surface
-              :class:`pyvista.Property` values (e.g. ``ambient``,
-              ``specular``, etc.).
+            - Added ``properties`` keyword to initialize surface :class:`pyvista.Property`
+              values (e.g. ``ambient``, ``specular``, etc.).
 
         - Axes are orientable in space
 
-            - Added spatial properties :attr:`position`, :attr:`orientation`,
-              :attr:`scale`, :attr:`origin`, and :attr:`user_matrix`
+            - Added spatial properties :attr:`position`, :attr:`orientation`
+              , :attr:`scale`, :attr:`origin`, and :attr:`user_matrix`
               from :class:`pyvista.Prop3D`.
-            - Added spatial methods :func:`rotate_x`, :func:`rotate_y`,
-              :func:`rotate_z` from :class:`pyvista.Prop3D`.
+            - Added spatial methods :func:`rotate_x`, :func:`rotate_y`
+              , :func:`rotate_z` from :class:`pyvista.Prop3D`.
 
         - New label properties
 
-            - Added color properties :attr:`label_color`, :attr:`x_color`,
-              :attr:`y_color`, and :attr:`z_color`.
+            - Added color properties :attr:`label_color`, :attr:`x_color`
+              , :attr:`y_color`, and :attr:`z_color`.
             - Added :attr:`label_size` property.
             - Added :attr:`labels` property.
 
         - Improved manipulation of shaft and tip actor properties
 
-            - Shaft and tip actor properties now make use of the
-              :class:`pyvista.Property` API.
+            - Shaft and tip actor properties now make use of
+              the :class:`pyvista.Property` API.
             - Added :func:`set_prop` and :func:`get_prop`.
 
         - Improved API
@@ -69,16 +67,16 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         - New default shaft type
 
-            - The default shaft type is changed from ``'line'`` to
-              ``'cylinder'``.
+            - The default shaft type is changed from ``'line'``
+              to ``'cylinder'``.
 
         - Shaft and tip property abstraction
 
             - Shaft and tip property names are abstracted.
             - e.g. use :attr:`tip_radius` to set the radius of the
               axes tips regardless of the :attr:`tip_type` used.
-              Previously, it was necessary to use ``cone_radius`` or
-              ``sphere_radius`` separately.
+              Previously, it was necessary to use ``cone_radius``
+              or ``sphere_radius`` separately.
             - The use of non-abstract properties is deprecated, see
               below for details.
             - Setting :attr:`shaft_width` will automatically change
@@ -88,8 +86,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         - Theme changes
 
-            - The axes shaft and tip type are now included be in
-              :class:`pyvista.plotting.themes._AxesConfig`.
+            - The axes shaft and tip type are now included be
+              in :class:`pyvista.plotting.themes._AxesConfig`.
             - Axes shaft and tip properties now apply default theme
               parameters set by :class:`pyvista.Property`.
 
@@ -233,6 +231,21 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     visibility : bool, default: True
         Visibility of the axes. If ``False``, the axes are not visible.
 
+    symmetric_bounds : bool, default: True
+        Calculate the axes bounds as though the axes were symmetric,
+        i.e. extended along -X, -Y, and -Z directions. Setting this
+        parameter primarily affects camera positioning in a scene.
+
+        - If ``True``, the axes :attr:`bounds` are symmetric about
+        its :attr:`position`. Symmetric bounds allow for the axes to rotate
+        about its origin, which is useful in cases where the actor
+        is used as an orientation widget.
+        - If ``False``, the axes :attr:`bounds` are calculated as-is.
+        Asymmetric bounds are useful in cases where the axes are
+        placed in a scene with other actors, since the symmetry
+        could otherwise lead to undesirable camera positioning
+        (e.g. camera is positioned further away than necessary).
+
     properties : dict, optional
         Apply any :class:`pyvista.Property` to all axes shafts and tips.
 
@@ -366,6 +379,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         scale=(1, 1, 1),
         user_matrix=None,
         visibility=True,
+        symmetric_bounds=True,
         properties=None,
         **kwargs,
     ):
@@ -440,6 +454,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         assert_empty_kwargs(**kwargs)
 
         self.visibility = visibility
+        self._symmetric_bounds = symmetric_bounds
         self.total_length = total_length
 
         # Set shaft and tip color
@@ -525,6 +540,63 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
         ]
         return '\n'.join(attr)
+
+    @property
+    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable symmetry in the axes bounds calculation.
+
+        Calculate the axes bounds as though the axes were symmetric,
+        i.e. extended along -X, -Y, and -Z directions. Setting this
+        parameter primarily affects camera positioning in a scene.
+
+        - If ``True``, the axes :attr:`bounds` are symmetric about
+        its :attr:`position`. Symmetric bounds allow for the axes to rotate
+        about its origin, which is useful in cases where the actor
+        is used as an orientation widget.
+        - If ``False``, the axes :attr:`bounds` are calculated as-is.
+        Asymmetric bounds are useful in cases where the axes are
+        placed in a scene with other actors, since the symmetry
+        could otherwise lead to undesirable camera positioning
+        (e.g. camera may be positioned further away than necessary).
+
+        Examples
+        --------
+        Get the symmetric bounds of the axes.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor(symmetric_bounds=True)
+        >>> axes_actor.bounds
+        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        >>> axes_actor.center
+        (0.0, 0.0, 0.0)
+
+        Get the asymmetric bounds.
+
+        >>> axes_actor.symmetric_bounds = False
+        >>> axes_actor.bounds
+        (-0.0800000011920929, 1.0, -0.08000000119209276, 1.0, -0.0800000011920929, 1.0)
+        >>> axes_actor.center
+        (0.45999999940395353, 0.45999999940395364, 0.45999999940395353)
+
+        Observe the difference in camera positioning with and without
+        symmetric bounds. Orientation is added for visualization.
+
+        >>> # Symmetric
+        >>> pv.AxesActor(
+        ...     orientation=(90, 0, 0), symmetric_bounds=True
+        ... ).plot()
+
+        >>> # Asymmetric
+        >>> pv.AxesActor(
+        ...     orientation=(90, 0, 0), symmetric_bounds=False
+        ... ).plot()
+
+        """
+        return self._symmetric_bounds
+
+    @symmetric_bounds.setter
+    def symmetric_bounds(self, value: bool):  # numpydoc ignore=GL08
+        self._symmetric_bounds = value
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -825,14 +897,20 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         radius = self.GetConeRadius()
 
         # Make sure our assumption is true and reset value for cone and sphere
-        self.tip_radius = radius
+        self.SetConeRadius(radius)
+        self.SetSphereRadius(radius)
         return radius
 
     @tip_radius.setter
     def tip_radius(self, radius: float):  # numpydoc ignore=GL08
+        is_modified = self.GetConeRadius() != radius and self.GetSphereRadius() != radius
         self.SetConeRadius(radius)
         self.SetSphereRadius(radius)
         _check_range(radius, (0, float('inf')), 'tip_radius')
+
+        if is_modified:
+            # need to update the mapper
+            self._update_props()
 
     @property
     def cone_radius(self) -> float:  # numpydoc ignore=RT01
@@ -934,9 +1012,16 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @shaft_radius.setter
     def shaft_radius(self, radius):  # numpydoc ignore=GL08
-        self.shaft_type = 'cylinder'
+        old_val = self.GetCylinderRadius()
+        old_type = self.shaft_type
         self.SetCylinderRadius(radius)
         _check_range(radius, (0, float('inf')), 'shaft_radius')
+
+        if old_type == AxesActor.ShaftType.CYLINDER and self.GetCylinderRadius() != old_val:
+            # need to update mapper
+            self._update_props()
+
+        self.shaft_type = 'cylinder'
 
     @property
     def shaft_width(self):  # numpydoc ignore=RT01
@@ -1632,6 +1717,26 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             return self._compute_actor_bounds()
         return super().GetBounds()
 
+    @wraps(_vtk.vtkProp3D.GetCenter)
+    def GetCenter(self):  # numpydoc ignore=RT01,GL08
+        """Wrap method to make axes orientable in space."""
+        if self._make_orientable:
+            b = self.bounds
+            return (b[1] + b[0]) / 2, (b[3] + b[2]) / 2, (b[5] + b[4]) / 2
+        return super().GetCenter()
+
+    @wraps(_vtk.vtkProp3D.GetLength)
+    def GetLength(self):  # numpydoc ignore=RT01,GL08
+        """Wrap method to make axes orientable in space."""
+        if self._make_orientable:
+            length = 0
+            bnds = self.bounds
+            for i in range(3):
+                diff = bnds[2 * i + 1] - bnds[2 * i]
+                length += diff * diff
+            return length**0.5
+        return super().GetLength()
+
     @wraps(_vtk.vtkProp3D.RotateX)
     def RotateX(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
@@ -1751,16 +1856,32 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             all_bounds[i] = bnds[0::2]
             all_bounds[i + 6] = bnds[1::2]
 
-        # Append the same bounds, but inverted around the axes position
-        # to mimic having symmetric axes. The position may be moved with
-        # `user_matrix`, so apply the transform to position.
-        position = (self._user_matrix @ np.append(self.GetPosition(), 1))[:3]
-        all_bounds = np.vstack((all_bounds, 2 * position - all_bounds))
+        if self.symmetric_bounds:
+            # Append the same bounds, but inverted around the axes position
+            # to mimic having symmetric axes. The position may be moved with
+            # `user_matrix`, so apply the transform to position.
+            position = (self._user_matrix @ np.append(self.GetPosition(), 1))[:3]
+            all_bounds = np.vstack((all_bounds, 2 * position - all_bounds))
 
         xmin, xmax = np.min(all_bounds[:, 0]), np.max(all_bounds[:, 0])
         ymin, ymax = np.min(all_bounds[:, 1]), np.max(all_bounds[:, 1])
         zmin, zmax = np.min(all_bounds[:, 2]), np.max(all_bounds[:, 2])
         return xmin, xmax, ymin, ymax, zmin, zmax
+
+    def _update_props(self):
+        """Trigger a call to vtkAxesActor.UpdateProps(self)."""
+        # Get a property and modify its value
+        delta = 1e-8
+        val = list(self.shaft_length)
+        temp_val = val.copy()
+        if temp_val[0] > delta:
+            temp_val[0] -= delta
+        else:
+            temp_val[0] += delta
+
+        # Change value to trigger update
+        self.shaft_length = temp_val
+        self.shaft_length = val
 
     @property
     def _make_orientable(self) -> bool:

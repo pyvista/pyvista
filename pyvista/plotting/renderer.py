@@ -1015,6 +1015,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
+        symmetric_bounds = kwargs.pop('symmetric_bounds', False)
         self._marker_actor = AxesActor(
             x_label=x_label,
             y_label=y_label,
@@ -1028,6 +1029,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            symmetric_bounds=symmetric_bounds,
             **kwargs,
         )
         self.add_actor(self._marker_actor)
