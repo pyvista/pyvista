@@ -29,10 +29,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 OFF_SCREEN = os.environ.get("PYVISTA_OFF_SCREEN", "false").lower() == "true"
 
 # flag for when building the sphinx_gallery
-BUILDING_GALLERY = False
-if 'PYVISTA_BUILDING_GALLERY' in os.environ:
-    if os.environ['PYVISTA_BUILDING_GALLERY'].lower() == 'true':
-        BUILDING_GALLERY = True
+BUILDING_GALLERY = os.environ.get("PYVISTA_BUILDING_GALLERY", "false").lower() == "true"
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
