@@ -31,7 +31,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         - Improved initialization
 
             - All ``AxesActor`` parameters can be initialized by
-             the constructor.
+              the constructor.
             - Added ``properties`` keyword to initialize surface :class:`pyvista.Property`
               values (e.g. ``ambient``, ``specular``, etc.).
 
@@ -240,14 +240,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         parameter primarily affects camera positioning in a scene.
 
         - If ``True``, the axes :attr:`bounds` are symmetric about
-        its :attr:`position`. Symmetric bounds allow for the axes to rotate
-        about its origin, which is useful in cases where the actor
-        is used as an orientation widget.
+          its :attr:`position`. Symmetric bounds allow for the axes to rotate
+          about its origin, which is useful in cases where the actor
+          is used as an orientation widget.
         - If ``False``, the axes :attr:`bounds` are calculated as-is.
-        Asymmetric bounds are useful in cases where the axes are
-        placed in a scene with other actors, since the symmetry
-        could otherwise lead to undesirable camera positioning
-        (e.g. camera is positioned further away than necessary).
+          Asymmetric bounds are useful in cases where the axes are
+          placed in a scene with other actors, since the symmetry
+          could otherwise lead to undesirable camera positioning
+          (e.g. camera is positioned further away than necessary).
 
     auto_shaft_type : bool, default: True
         Automatically adjust related properties when setting
@@ -725,14 +725,15 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         parameter primarily affects camera positioning in a scene.
 
         - If ``True``, the axes :attr:`bounds` are symmetric about
-        its :attr:`position`. Symmetric bounds allow for the axes to rotate
-        about its origin, which is useful in cases where the actor
-        is used as an orientation widget.
+          its :attr:`position`. Symmetric bounds allow for the axes to rotate
+          about its origin, which is useful in cases where the actor
+          is used as an orientation widget.
+
         - If ``False``, the axes :attr:`bounds` are calculated as-is.
-        Asymmetric bounds are useful in cases where the axes are
-        placed in a scene with other actors, since the symmetry
-        could otherwise lead to undesirable camera positioning
-        (e.g. camera may be positioned further away than necessary).
+          Asymmetric bounds are useful in cases where the axes are
+          placed in a scene with other actors, since the symmetry
+          could otherwise lead to undesirable camera positioning
+          (e.g. camera may be positioned further away than necessary).
 
         Examples
         --------
@@ -753,18 +754,26 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         >>> axes_actor.center  # doctest:+SKIP
         (0.46, 0.46, 0.46)
 
-        Observe the difference in camera positioning with and without
+        Show the difference in camera positioning with and without
         symmetric bounds. Orientation is added for visualization.
 
-        >>> # Symmetric
-        >>> pv.AxesActor(
+        >>> # Create actors
+        >>> axes_actor_sym = pv.AxesActor(
         ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... ).plot()
-
-        >>> # Asymmetric
-        >>> pv.AxesActor(
+        ... )
+        >>> axes_actor_asym = pv.AxesActor(
         ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... ).plot()
+        ... )
+        >>>
+        >>> # Show multi-window plot
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_text("Symmetric axes")
+        >>> _ = pl.add_actor(axes_actor_sym)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text("Asymmetric axes")
+        >>> _ = pl.add_actor(axes_actor_asym)
+        >>> pl.show()
 
         """
         return self._symmetric_bounds

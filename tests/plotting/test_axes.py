@@ -917,7 +917,7 @@ def test_axes_actor_length(axes_actor, use_scale):
 def test_axes_actor_symmetric_bounds(axes_actor):
     default_bounds = (-1, 1, -1, 1, -1, 1)
     default_length = 3.4641016151377544
-    assert np.allclose(axes_actor.center == (0, 0, 0))
+    assert np.allclose(axes_actor.center, (0, 0, 0))
     assert np.allclose(axes_actor.length, default_length)
     assert np.allclose(axes_actor.bounds, default_bounds)
 

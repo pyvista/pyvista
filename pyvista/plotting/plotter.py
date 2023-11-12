@@ -6177,7 +6177,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         # This is because AxesActor overrides GetBounds(), and the
                         # override is not recognized by ResetCamera() (compiled c++),
                         # but works as expected when computing bounds in python
-                        renderer.ResetCamera(self.bounds)
+                        renderer.ResetCamera(renderer.bounds)
                     else:
                         renderer.ResetCamera()
             self._first_time = False
