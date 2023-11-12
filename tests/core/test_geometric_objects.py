@@ -8,7 +8,13 @@ import pyvista as pv
 
 
 def test_cylinder():
-    surf = pv.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
+    surf = pv.Cylinder(
+        center=[0, 10, 0],
+        radius=1,
+        height=5,
+        normx=[0.57735027, 0.57735027, 0.57735027],
+        normy=[-0.40824829, 0.81649658, -0.40824829],
+    )
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
