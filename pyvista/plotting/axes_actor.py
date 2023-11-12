@@ -28,95 +28,95 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     .. versionadded:: 0.43.0
 
-        - Improved initialization
+        Improved initialization
 
-            - All ``AxesActor`` parameters can be initialized by
-              the constructor.
-            - Added ``properties`` keyword to initialize surface :class:`pyvista.Property`
-              values (e.g. ``ambient``, ``specular``, etc.).
+        - All ``AxesActor`` parameters can be initialized by
+          the constructor.
+        - Added ``properties`` keyword to initialize surface :class:`pyvista.Property`
+          values (e.g. ``ambient``, ``specular``, etc.).
 
-        - Axes are orientable in space
+        Axes are orientable in space
 
-            - Added spatial properties :attr:`position`, :attr:`orientation`
-              , :attr:`scale`, :attr:`origin`, and :attr:`user_matrix`
-              from :class:`pyvista.Prop3D`.
-            - Added spatial methods :func:`rotate_x`, :func:`rotate_y`
-              , :func:`rotate_z` from :class:`pyvista.Prop3D`.
-            - Added bounds-related parameters :attr:`bounds`, :attr:`center`
-              , :attr:`length`, and :attr:`symmetric_bounds`.
+        - Added spatial properties :attr:`position`, :attr:`orientation`
+          , :attr:`scale`, :attr:`origin`, and :attr:`user_matrix`
+          from :class:`pyvista.Prop3D`.
+        - Added spatial methods :func:`rotate_x`, :func:`rotate_y`
+          , :func:`rotate_z` from :class:`pyvista.Prop3D`.
+        - Added bounds-related parameters :attr:`bounds`, :attr:`center`
+          , :attr:`length`, and :attr:`symmetric_bounds`.
 
-        - New label properties
+        New label properties
 
-            - Added color properties :attr:`label_color`, :attr:`x_color`
-              , :attr:`y_color`, and :attr:`z_color`.
-            - Added :attr:`label_size` property.
-            - Added :attr:`labels` property.
+        - Added color properties :attr:`label_color`, :attr:`x_color`
+          , :attr:`y_color`, and :attr:`z_color`.
+        - Added :attr:`label_size` property.
+        - Added :attr:`labels` property.
 
-        - Improved manipulation of shaft and tip actor properties
+        Improved manipulation of shaft and tip actor properties
 
-            - Shaft and tip actor properties now make use of
-              the :class:`pyvista.Property` API.
-            - Added :func:`set_prop` and :func:`get_prop`.
+        - Shaft and tip actor properties now make use of
+          the :class:`pyvista.Property` API.
+        - Added :func:`set_prop` and :func:`get_prop`.
 
-        - Improved API
+        Improved API
 
-            - Added :func:`plot` method.
-            - The shaft and tip type can be set using strings.
-              Previously, the use of a ``ShaftType`` or ``TipType``
-              Enum was required.
-            - Added :attr:`auto_shaft_type`.
-            - Added :attr:`auto_length`.
+        - Added :func:`plot` method.
+        - The shaft and tip type can be set using strings.
+          Previously, the use of a ``ShaftType`` or ``TipType``
+          Enum was required.
+        - Added :attr:`auto_shaft_type`.
+        - Added :attr:`auto_length`.
 
     .. versionchanged:: 0.43.0
 
-        - New default shaft type
+        New default shaft type
 
-            - The default shaft type is changed from ``'line'``
-              to ``'cylinder'``.
+        - The default shaft type is changed from ``'line'``
+          to ``'cylinder'``.
 
-        - Shaft and tip property abstraction
+        Shaft and tip property abstraction
 
-            - Shaft and tip property names are abstracted.
-            - e.g. use :attr:`tip_radius` to set the radius of the
-              axes tips regardless of the :attr:`tip_type` used.
-              Previously, it was necessary to use ``cone_radius``
-              or ``sphere_radius`` separately.
-            - The use of non-abstract properties is deprecated, see
-              below for details.
-            - The shaft type is now modified when setting cylinder-
-              or line- specific parameters. See :attr:`auto_shaft_type`
-              for details.
+        - Shaft and tip property names are abstracted.
+        - e.g. use :attr:`tip_radius` to set the radius of the
+          axes tips regardless of the :attr:`tip_type` used.
+          Previously, it was necessary to use ``cone_radius``
+          or ``sphere_radius`` separately.
+        - The use of non-abstract properties is deprecated, see
+          below for details.
+        - The shaft type is now modified when setting cylinder-
+          or line- specific parameters. See :attr:`auto_shaft_type`
+          for details.
 
-        - Theme changes
+        Theme changes
 
-            - The axes shaft and tip type are now included be
-              in :class:`pyvista.plotting.themes._AxesConfig`.
-            - Axes shaft and tip properties now apply default theme
-              parameters set by :class:`pyvista.Property`.
+        - The axes shaft and tip type are now included be
+          in :class:`pyvista.plotting.themes._AxesConfig`.
+        - Axes shaft and tip properties now apply default theme
+          parameters set by :class:`pyvista.Property`.
 
     .. deprecated:: 0.43.0
 
-        - Abstracted properties
+        Abstracted properties
 
-            - ``cone_radius`` ->  use :attr:`~tip_radius` instead.
-            - ``cone_resolution`` -> use :attr:`~tip_resolution` instead.
-            - ``cylinder_resolution`` -> use :attr:`~shaft_resolution` instead.
-            - ``cylinder_radius`` -> use :attr:`~shaft_radius` instead.
-            - ``line_width`` -> use :attr:`~shaft_width` instead.
-            - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
-            - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
+        - ``cone_radius`` ->  use :attr:`~tip_radius` instead.
+        - ``cone_resolution`` -> use :attr:`~tip_resolution` instead.
+        - ``cylinder_resolution`` -> use :attr:`~shaft_resolution` instead.
+        - ``cylinder_radius`` -> use :attr:`~shaft_radius` instead.
+        - ``line_width`` -> use :attr:`~shaft_width` instead.
+        - ``sphere_radius`` -> use :attr:`~tip_radius` instead.
+        - ``sphere_resolution`` -> use :attr:`~tip_resolution` instead.
 
-        - Renamed properties
+        Renamed properties
 
-            - ``x_axis_label`` -> use :attr:`~x_label` instead.
-            - ``y_axis_label`` -> use :attr:`~y_label` instead.
-            - ``z_axis_label`` -> use :attr:`~z_label` instead.
-            - ``x_axis_shaft_properties`` -> use :attr:`~x_shaft_prop` instead.
-            - ``y_axis_shaft_properties`` -> use :attr:`~y_shaft_prop` instead.
-            - ``z_axis_shaft_properties`` -> use :attr:`~z_shaft_prop` instead.
-            - ``x_axis_tip_properties`` -> use :attr:`~x_tip_prop` instead.
-            - ``y_axis_tip_properties`` -> use :attr:`~y_tip_prop` instead.
-            - ``z_axis_tip_properties`` -> use :attr:`~z_tip_prop` instead.
+        - ``x_axis_label`` -> use :attr:`~x_label` instead.
+        - ``y_axis_label`` -> use :attr:`~y_label` instead.
+        - ``z_axis_label`` -> use :attr:`~z_label` instead.
+        - ``x_axis_shaft_properties`` -> use :attr:`~x_shaft_prop` instead.
+        - ``y_axis_shaft_properties`` -> use :attr:`~y_shaft_prop` instead.
+        - ``z_axis_shaft_properties`` -> use :attr:`~z_shaft_prop` instead.
+        - ``x_axis_tip_properties`` -> use :attr:`~x_tip_prop` instead.
+        - ``y_axis_tip_properties`` -> use :attr:`~y_tip_prop` instead.
+        - ``z_axis_tip_properties`` -> use :attr:`~z_tip_prop` instead.
 
     .. warning::
 
