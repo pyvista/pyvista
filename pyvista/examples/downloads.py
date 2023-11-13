@@ -133,7 +133,7 @@ def file_from_files(target_path, fnames):
     raise FileNotFoundError(f'Missing "{target_path}" from archive. Archive contains:\n{files_str}')
 
 
-def _file_copier(input_file, output_file, pooch):
+def _file_copier(input_file, output_file, *args, **kwargs):
     """Copy a file from a local directory to the output path."""
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'")
