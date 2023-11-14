@@ -4,6 +4,10 @@ import pyvista as pv
 from pyvista.plotting._property import _check_range
 
 
+skip_lesser_9_3_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X"
+)
+
 @pytest.fixture()
 def prop():
     return pv.Property()
@@ -44,6 +48,7 @@ def test_property_opacity(prop):
         prop.opacity = 2
 
 
+@skip_lesser_9_3_X
 def test_property_edge_opacity(prop):
     edge_opacity = 0.5
     assert prop.edge_opacity == edge_opacity
