@@ -144,7 +144,7 @@ jobs:
           - python-version: '3.11'  # Added with VTK 9.2.5
             vtk-version: '9.2.6'
           - python-version: '3.12'
-            vtk-verion: 'latest'
+            vtk-version: 'latest'
     steps:
       - uses: actions/checkout@v4
         with:
