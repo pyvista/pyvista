@@ -141,7 +141,7 @@ jobs:
             vtk-version: '9.1'
           - python-version: '3.10'
             vtk-version: '9.2.2'
-          - python-version: '3.11'  # Added with VTK 9.2.5
+          - python-version: '3.11'
             vtk-version: '9.2.6'
           - python-version: '3.12'
             vtk-version: 'latest'
@@ -187,7 +187,7 @@ jobs:
         if: ${{ matrix.vtk-version == '9.0.3' }}
         run: pip install 'numpy<1.24'
 
-      - name: Limit Matplotlib for VTK<=9.2.2
+      - name: Limit Matplotlib for VTK<9.2.2
         if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
         run: pip install 'matplotlib<3.6'
 
