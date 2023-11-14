@@ -44,6 +44,13 @@ def test_property_opacity(prop):
         prop.opacity = 2
 
 
+def test_property_edge_opacity(prop):
+    edge_opacity = 0.5
+    assert prop.edge_opacity == edge_opacity
+    with pytest.raises(ValueError):
+        prop.edge_opacity = 2
+
+
 def test_property_show_edges(prop):
     value = False
     prop.show_edges = value

@@ -399,6 +399,21 @@ class Property(_vtk.vtkProperty):
         self.SetOpacity(value)
 
     @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edge opacity of this property.
+
+        Edge opacity of the mesh. A single float value that will be applied globally
+        edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
+
+        """
+        return self.GetEdgeOpacity()
+
+    @edge_opacity.setter
+    def edge_opacity(self, value: float):  # numpydoc ignore=GL08
+        _check_range(value, (0, 1), 'edge_opacity')
+        self.SetEdgeOpacity(value)
+
+    @property
     def show_edges(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the visibility of edges.
 
