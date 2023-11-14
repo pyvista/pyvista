@@ -2,6 +2,7 @@
 from typing import Union
 
 import pyvista
+from pyvista import vtk_version_info
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
@@ -107,7 +108,7 @@ class Property(_vtk.vtkProperty):
         * ``"front"`` - Enable frontface culling
         * ``'none'`` - Disable both backface and frontface culling
 
-    edge_opacity : float, default: :attr:`pyvista.plotting.themes.Theme.edge_opacity`
+    edge_opacity : float, default: :attr:`pyvista.plotting.themes.Theme.opacity`
         Edge opacity of the mesh. A single float value that will be applied globally
         edge opacity of the mesh and uniformly applied everywhere - should be
         between 0 and 1.
@@ -237,7 +238,7 @@ class Property(_vtk.vtkProperty):
         if culling is not None:
             self.culling = culling
         if edge_opacity is None:
-            edge_opacity = self._theme.edge_opacity
+            edge_opacity = self._theme.opacity
         self.edge_opacity = edge_opacity
 
     @property
@@ -415,12 +416,18 @@ class Property(_vtk.vtkProperty):
         edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
 
         """
-        return self.GetEdgeOpacity()
+        if vtk_version_info < (9, 3):
+            return 1.0
+        else:
+            return self.GetEdgeOpacity()
 
     @edge_opacity.setter
     def edge_opacity(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'edge_opacity')
-        self.SetEdgeOpacity(value)
+        if vtk_version_info < (9, 3):
+            pass
+        else:
+            self.SetEdgeOpacity(value)
 
     @property
     def show_edges(self) -> bool:  # numpydoc ignore=RT01
