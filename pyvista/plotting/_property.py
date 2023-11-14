@@ -418,7 +418,7 @@ class Property(_vtk.vtkProperty):
         """
         if vtk_version_info < (9, 3):
             return 1.0
-        else:
+        else:  # pragma: no cover
             return self.GetEdgeOpacity()
 
     @edge_opacity.setter
@@ -426,7 +426,7 @@ class Property(_vtk.vtkProperty):
         _check_range(value, (0, 1), 'edge_opacity')
         if vtk_version_info < (9, 3):
             pass
-        else:
+        else:  # pragma: no cover
             self.SetEdgeOpacity(value)
 
     @property
