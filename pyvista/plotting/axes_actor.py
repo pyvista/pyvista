@@ -58,7 +58,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
           the :class:`pyvista.Property` API.
         - Added :func:`set_prop` and :func:`get_prop`.
 
-        Improved API
+        API Improvements
 
         - Added :func:`plot` method.
         - The shaft and tip type can be set using strings.
@@ -66,6 +66,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
           Enum was required.
         - Added :attr:`auto_shaft_type`.
         - Added :attr:`auto_length`.
+        - Added :attr:`true_to_scale`.
 
     .. versionchanged:: 0.43.0
 
@@ -265,6 +266,16 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         - Setting :attr:`tip_length` will also set :attr:`shaft_length`
           to ``1 - tip_length``.
 
+    true_to_scale : bool, default: False
+        Alter the shaft and tip geometry so that it's true to scale.
+
+        - If ``True``, the actual shaft and tip radii will be true to the
+          values specified by :attr:`shaft_radius` and :attr:`tip_radius`,
+          respectively.
+        - If ``False``, the actual shaft and tip radii are normalized and
+          scaled by :attr:`shaft_length` and :attr:`tip_length`, respectively,
+          and the :attr:`total_length` of each axis.
+
     properties : dict, optional
         Apply any :class:`pyvista.Property` to all axes shafts and tips.
 
@@ -401,11 +412,13 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         symmetric_bounds=True,
         auto_shaft_type=True,
         auto_length=True,
+        true_to_scale=False,
         properties=None,
         **kwargs,
     ):
         """Initialize AxesActor."""
         super().__init__()
+        self._true_to_scale = true_to_scale
 
         # Supported aliases (legacy names from `create_axes_actor`)
         x_label = kwargs.pop('xlabel', x_label)
@@ -447,6 +460,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         # Store actors
         props = _vtk.vtkPropCollection()
         self.GetActors(props)
+        self._actors: AxesActor[_vtk.vtkActor]
         self._actors = AxesTuple(
             x_shaft=props.GetItemAsObject(0),
             y_shaft=props.GetItemAsObject(1),
@@ -532,38 +546,38 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.shaft_type = shaft_type
 
         # Set shaft and tip length
-        self._auto_length = auto_length
+        self._auto_length = False  # disable temporarily
         if shaft_length is None:
             shaft_length_is_none = True
             shaft_length = 0.8
         else:
             shaft_length_is_none = False
+        self.shaft_length = shaft_length
 
         if tip_length is None:
             tip_length_is_none = True
             tip_length = 0.2
         else:
             tip_length_is_none = False
+        self.tip_length = tip_length
 
         if auto_length:
+            self._auto_length = True
             if shaft_length_is_none and not tip_length_is_none:
-                self.tip_length = tip_length
+                # Auto resize shaft
+                self.tip_length = self.tip_length
             elif not shaft_length_is_none and tip_length_is_none:
-                self.shaft_length = shaft_length
+                # Auto resize tip
+                self.shaft_length = self.shaft_length
             elif (
                 not shaft_length_is_none
                 and not tip_length_is_none
-                and shaft_length + tip_length != 1.0
+                and not all(map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length))
             ):
                 raise ValueError(
                     "Cannot set both `shaft_length` and `tip_length` when `auto_set_length=True` and when\n"
                     "lengths do not sum to 1.0. Set either `shaft_length` or `tip_length`, but not both."
                 )
-            else:
-                self.shaft_length = shaft_length
-        else:
-            self.shaft_length = shaft_length
-            self.tip_length = tip_length
 
         # Set tip properties
         if tip_type is None:
@@ -640,6 +654,36 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         return '\n'.join(attr)
 
     @property
+    def true_to_scale(self) -> bool:  # numpydoc ignore=RT01
+        """Alter the shaft and tip geometry so that it's true to scale.
+
+        - If ``True``, the rendered shaft and tip radii will be true to the
+          values specified by :attr:`shaft_radius` and :attr:`tip_radius`,
+          respectively.
+        - If ``False``, the rendered shaft and tip radii are normalized by their
+          respective lengths, and therefore the actual shaft and tip radii
+          are not likely not be true to the values specified by :attr:`shaft_radius`
+          and :attr:`tip_radius`, respectively.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor(
+        ...     true_to_scale=True, shaft_radius=0.2, tip_radius=0.2
+        ... )
+        >>> p = pv.Plotter()
+        >>> p.show_grid()
+        >>> _ = p.add_actor(axes_actor)
+        >>> p.show()
+
+        """
+        return self._true_to_scale
+
+    @true_to_scale.setter
+    def true_to_scale(self, value: bool):  # numpydoc ignore=GL08
+        self._true_to_scale = bool(value)
+
+    @property
     def auto_length(self) -> bool:  # numpydoc ignore=RT01
         """Automatically set shaft length when setting tip length and vice-versa.
 
@@ -674,7 +718,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @auto_length.setter
     def auto_length(self, value: bool):  # numpydoc ignore=GL08
-        self._auto_length = value
+        self._auto_length = bool(value)
 
     @property
     def auto_shaft_type(self) -> bool:  # numpydoc ignore=RT01
@@ -714,7 +758,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @auto_shaft_type.setter
     def auto_shaft_type(self, value: bool):  # numpydoc ignore=GL08
-        self._auto_shaft_type = value
+        self._auto_shaft_type = bool(value)
 
     @property
     def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
@@ -780,7 +824,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     @symmetric_bounds.setter
     def symmetric_bounds(self, value: bool):  # numpydoc ignore=GL08
-        self._symmetric_bounds = value
+        self._symmetric_bounds = bool(value)
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -967,7 +1011,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         resolution = self.GetConeResolution()
 
         # Make sure our assumption is true and reset value for cone and sphere
-        self.tip_resolution = resolution
+        # self.tip_resolution = resolution
 
         return resolution
 
@@ -1105,8 +1149,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         radius = self.GetConeRadius()
 
         # Make sure our assumption is true and reset value for cone and sphere
-        self.SetConeRadius(radius)
-        self.SetSphereRadius(radius)
+        # self.SetConeRadius(radius)
+        # self.SetSphereRadius(radius)
         return radius
 
     @tip_radius.setter
@@ -1117,7 +1161,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         _check_range(radius, (0, float('inf')), 'tip_radius')
 
         if is_modified:
-            # need to update the mapper
+            # need to update internal mapper (ConeSource or SphereSource)
+            self.Modified()
             self._update_props()
 
     @property
@@ -1222,16 +1267,17 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     @shaft_radius.setter
     def shaft_radius(self, radius):  # numpydoc ignore=GL08
         old_val = self.GetCylinderRadius()
-        old_type = self.shaft_type
+        old_type = self.GetShaftType()
         self.SetCylinderRadius(radius)
         _check_range(radius, (0, float('inf')), 'shaft_radius')
 
-        if old_type == AxesActor.ShaftType.CYLINDER and self.GetCylinderRadius() != old_val:
-            # need to update mapper
-            self._update_props()
-
         if self.auto_shaft_type:
             self.shaft_type = AxesActor.ShaftType.CYLINDER
+
+        if old_type == AxesActor.ShaftType.CYLINDER and self.GetCylinderRadius() != old_val:
+            # need to update internal CylinderSource mapper
+            self.Modified()
+            self._update_props()
 
     @property
     def shaft_width(self):  # numpydoc ignore=RT01
@@ -1246,12 +1292,14 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         """
         # Get x width and assume width is the same for each x, y, and z
-        width_x = self.GetXAxisShaftProperty().GetLineWidth()
+        width = self.GetXAxisShaftProperty().GetLineWidth()
 
         # Make sure our assumption is true and reset all xyz widths
-        self.shaft_width = width_x
+        # self.GetXAxisShaftProperty().SetLineWidth(width)
+        # self.GetYAxisShaftProperty().SetLineWidth(width)
+        # self.GetZAxisShaftProperty().SetLineWidth(width)
 
-        return width_x
+        return width
 
     @shaft_width.setter
     def shaft_width(self, width):  # numpydoc ignore=GL08
@@ -1312,6 +1360,9 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
             self.SetTipTypeToCone()
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
+
+        if self.true_to_scale:
+            self._update_actor_transformations()
 
     @property
     def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -1807,7 +1858,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         color = Color(prop_x.GetColor())
 
         # Make sure our assumption is true and reset all xyz colors
-        self.label_color = color
+        # self.label_color = color
         return color
 
     @label_color.setter
@@ -1828,8 +1879,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         opacity = self.x_tip_prop.opacity
 
         # Make sure the assumption is correct and set shaft color
-        self.x_shaft_prop.color = color
-        self.x_shaft_prop.opacity = opacity
+        # self.x_shaft_prop.color = color
+        # self.x_shaft_prop.opacity = opacity
         return Color(color=color, opacity=opacity)
 
     @x_color.setter
@@ -1846,8 +1897,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         opacity = self.y_tip_prop.opacity
 
         # Make sure the assumption is correct and set shaft color
-        self.y_shaft_prop.color = color
-        self.y_shaft_prop.opacity = opacity
+        # self.y_shaft_prop.color = color
+        # self.y_shaft_prop.opacity = opacity
         return Color(color=color, opacity=opacity)
 
     @y_color.setter
@@ -1864,8 +1915,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         opacity = self.z_tip_prop.opacity
 
         # Make sure the assumption is correct and set shaft color
-        self.z_shaft_prop.color = color
-        self.z_shaft_prop.opacity = opacity
+        # self.z_shaft_prop.color = color
+        # self.z_shaft_prop.opacity = opacity
         return Color(color=color, opacity=opacity)
 
     @z_color.setter
@@ -1895,7 +1946,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         size = (label_actor.GetWidth(), label_actor.GetHeight())
 
         # Make sure our assumption is correct and reset values
-        self.label_size = size
+        # self.label_size = size
         return size
 
     @label_size.setter
@@ -1954,61 +2005,61 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
     def RotateX(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().RotateX(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.RotateY)
     def RotateY(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().RotateY(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.RotateZ)
     def RotateZ(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().RotateZ(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.SetScale)
     def SetScale(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetScale(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.SetOrientation)
     def SetOrientation(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetOrientation(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.SetOrigin)
     def SetOrigin(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetOrigin(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.SetPosition)
     def SetPosition(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetPosition(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkAxesActor.SetNormalizedShaftLength)
     def SetNormalizedShaftLength(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetNormalizedShaftLength(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkAxesActor.SetNormalizedTipLength)
     def SetNormalizedTipLength(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetNormalizedTipLength(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkAxesActor.SetTotalLength)
     def SetTotalLength(self, *args):  # numpydoc ignore=RT01,PR01
         """Wrap method to make axes orientable in space."""
         super().SetTotalLength(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @wraps(_vtk.vtkProp3D.GetUserMatrix)
     def GetUserMatrix(self):  # numpydoc ignore=RT01,PR01
@@ -2026,40 +2077,126 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         """Wrap method to make axes orientable in space."""
         super().SetUserMatrix(*args)
         self._user_matrix = array_from_vtkmatrix(*args)
-        self._update_actor_transformations() if self._make_orientable else None
+        self._update_actor_transformations()
 
     @property
     def _implicit_matrix(self) -> Union[np.ndarray, _vtk.vtkMatrix4x4]:  # numpydoc ignore=GL08
         """Compute the transformation matrix implicitly defined by 3D parameters."""
-        temp_actor = _vtk.vtkActor()
-        temp_actor.SetOrigin(self.GetOrigin())
-        temp_actor.SetScale(self.GetScale())
-        temp_actor.SetPosition(self.GetPosition())
-        temp_actor.SetOrientation(self.GetOrientation())
-        return array_from_vtkmatrix(temp_actor.GetMatrix())
+        return self._compute_scaled_implicit_matrix(scale=(1, 1, 1))
+
+    def _compute_true_to_scale_factors(self) -> np.ndarray:
+        """Compute radial scale factors for axes shaft and tip actors.
+
+        The scaling factors can be applied to the actors to make it so
+        the actual shaft and tip radii will be equal to the shaft and
+        tip radius property values.
+
+        NOTE: This function assumes the actors have no transformations
+        applied. The calling function should remove any transformations
+        beforehand, and re-apply them afterward.
+        """
+
+        def reciprocal(x):
+            # Calc reciprocal and avoid division by zero
+            tol = 1e-8
+            nonzero = np.logical_or(x > tol, x < tol)
+            x[nonzero] = np.reciprocal(x[nonzero])
+            x[~nonzero] = 0
+            return x
+
+        diag = np.eye(3, dtype=bool)
+        off_diag = np.logical_not(diag)
+
+        # Compute actor sizes
+        bounds = [actor.GetBounds() for actor in self._actors]
+        size = np.array([[b[1] - b[0], b[3] - b[2], b[5] - b[4]] for b in bounds])
+
+        # Get scale factors which will normalize sizes to unity
+        scales = reciprocal(size)
+
+        # Create views for processing
+        shaft_scale = size[:3]
+        tip_scale = size[3:6]
+
+        # Scale radially by the diameter
+        shaft_scale[off_diag] *= self.shaft_radius * 2
+        tip_scale[off_diag] *= self.tip_radius * 2
+
+        # Do not scale axially, only radially
+        shaft_scale[diag] = 1
+        if self.tip_type == AxesActor.TipType.CONE:
+            tip_scale[diag] = 1
+        else:
+            # With spheres, the length is not scaled correctly
+            # by vtkAxesActor and the TotalLength of the axes
+            # will be incorrect. Therefore, we scale axially to
+            # correct for this.
+            tip_scale[diag] = 1
+            # tip_scale[diag] *= reciprocal(np.array(self.tip_radius))
+
+        # Invert, avoid div by 0
+        # ind = size >= 1e-8
+        # size[ind] = np.reciprocal(size[ind])
+        # size[size < 1e-8] = 0
+        # size = reciprocal(size)
+
+        return scales
 
     def _update_actor_transformations(self, reset=False):  # numpydoc ignore=RT01,PR01
-        if reset:
-            matrix = np.eye(4)
-        else:
-            matrix = self._concatenate_implicit_matrix_and_user_matrix()
-        if not np.array_equal(matrix, self._cached_matrix) or reset:
-            if np.array_equal(matrix, np.eye(4)):
-                self.UseBoundsOn()
-            else:
-                # Calls to vtkRenderer.ResetCamera() will use the
-                # incorrect axes bounds if a transformation applied.
-                # As a workaround, set UseBoundsOff(). In some cases,
-                # this will require manual adjustment of the camera
-                # from the user.
-                self.UseBoundsOff()
-            self._cached_matrix = matrix
-            matrix = vtkmatrix_from_array(matrix)
-            super().SetUserMatrix(matrix)
-            [actor.SetUserMatrix(matrix) for actor in self._actors]
+        if self.__make_orientable or reset:
+            if self.true_to_scale:
+                # Compute scaled transforms for each actor.
+                # We need to compensate for the radial scaling that is applied
+                # internally by vtkAxesActor::UpdateProps()
+                [actor.SetUserMatrix(vtkmatrix_from_array(np.eye(4))) for actor in self._actors]
+                scales = self._compute_true_to_scale_factors()
 
-    def _concatenate_implicit_matrix_and_user_matrix(self) -> np.ndarray:
-        return self._user_matrix @ self._implicit_matrix
+                matrices = [self._concatenate_implicit_matrix_and_user_matrix(s) for s in scales]
+                matrix = self._concatenate_implicit_matrix_and_user_matrix()
+            else:
+                if reset:
+                    matrix = np.eye(4)
+                else:
+                    matrix = self._concatenate_implicit_matrix_and_user_matrix()
+
+            is_cached = np.array_equal(matrix, self._cached_matrix)
+            if self.true_to_scale:
+                is_cached = is_cached and all(
+                    [np.array_equal(m, self._cached_actor_matrix) for m in matrices]
+                )
+
+            if not is_cached or reset:
+                if np.array_equal(matrix, np.eye(4)):
+                    self.UseBoundsOn()
+                else:
+                    # Calls to vtkRenderer.ResetCamera() will use the
+                    # incorrect axes bounds if a transformation is applied.
+                    # As a workaround, set UseBoundsOff(). In some cases,
+                    # this will require manual adjustment of the camera
+                    # from the user.
+                    self.UseBoundsOff()
+
+                # Update AxesActor matrix
+                self._cached_matrix = matrix
+                matrix = vtkmatrix_from_array(matrix)
+                super().SetUserMatrix(matrix)
+
+                # Update shaft and tip actor matrices
+                if self.true_to_scale:
+                    self._cached_actor_matrix = matrices
+                    [
+                        actor.SetUserMatrix(vtkmatrix_from_array(mat))
+                        for actor, mat in zip(self._actors, matrices)
+                    ]
+                else:
+                    [actor.SetUserMatrix(matrix) for actor in self._actors]
+
+    def _concatenate_implicit_matrix_and_user_matrix(self, scale=(1, 1, 1)) -> np.ndarray:
+        """Get transformation matrix similar to vtkProp3D::GetMatrix().
+
+        Additional scaling may be passed to the implicit matrix.
+        """
+        return self._user_matrix @ self._compute_scaled_implicit_matrix(scale)
 
     def _compute_actor_bounds(self) -> BoundsLike:
         """Compute symmetric axes bounds from the shaft and tip actors."""
@@ -2081,8 +2218,20 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         zmin, zmax = np.min(all_bounds[:, 2]), np.max(all_bounds[:, 2])
         return xmin, xmax, ymin, ymax, zmin, zmax
 
+    def _compute_scaled_implicit_matrix(
+        self, scale: Sequence[float] = (1.0, 1.0, 1.0)
+    ) -> np.ndarray:
+        old_scale = self.GetScale()
+        new_scale = old_scale[0] * scale[0], old_scale[1] * scale[1], old_scale[2] * scale[2]
+        temp_actor = _vtk.vtkActor()
+        temp_actor.SetOrigin(*self.GetOrigin())
+        temp_actor.SetScale(*new_scale)
+        temp_actor.SetPosition(*self.GetPosition())
+        temp_actor.SetOrientation(*self.GetOrientation())
+        return array_from_vtkmatrix(temp_actor.GetMatrix())
+
     def _update_props(self):
-        """Trigger a call to vtkAxesActor.UpdateProps(self)."""
+        """Trigger a call to protected vtk method vtkAxesActor::UpdateProps()."""
         # Get a property and modify its value
         delta = 1e-8
         val = list(self.shaft_length)
@@ -2096,6 +2245,8 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.SetNormalizedShaftLength(temp_val)
         self.SetNormalizedShaftLength(val)
 
+        self._update_actor_transformations()
+
     @property
     def _make_orientable(self) -> bool:
         return self.__make_orientable
@@ -2107,8 +2258,16 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
     def _init_make_orientable(self, kwargs):
         """Initialize workaround to make axes orientable in space."""
+        self.__make_orientable = kwargs.pop('_make_orientable', True)
         self._user_matrix = np.eye(4)
         self._cached_matrix = np.eye(4)
+        self._cached_actor_matrix = [
+            np.eye(4),
+            np.eye(4),
+            np.eye(4),
+            np.eye(4),
+            np.eye(4),
+            np.eye(4),
+        ]
         self._update_actor_transformations(reset=True)
-        self.__make_orientable = kwargs.pop('_make_orientable', True)
         self._make_orientable = self.__make_orientable

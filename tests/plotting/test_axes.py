@@ -940,6 +940,91 @@ def test_axes_actor_symmetric_bounds(axes_actor):
     assert np.allclose(axes_actor.bounds, (0, 1, 0, 1, 0, 1))
 
 
+@pytest.mark.parametrize('tip_type', ['sphere', 'cone'])
+@pytest.mark.parametrize('radius', [(0.01, 0.4), (0.01, 0.4)])  # ,(1, 0),(0, 1)])
+@pytest.mark.parametrize('shaft_length', [[0.8, 0.8, 0.8]])
+@pytest.mark.parametrize('total_length', [[1, 1, 1], [4, 3, 2], [0.4, 0.5, 1.1]])
+@pytest.mark.parametrize('scale', [1, 2, 0.5])  # , [0.1, 0.2, 0.3], [2, 3, 4]])
+@pytest.mark.parametrize('auto_length', [True, False])  # ,False])
+def test_axes_actor_true_to_scale(tip_type, radius, shaft_length, total_length, scale, auto_length):
+    shaft_radius, tip_radius = radius
+
+    kwargs = dict(
+        shaft_type='cylinder',
+        tip_type=tip_type,
+        shaft_length=shaft_length,
+        total_length=total_length,
+        scale=scale,
+        shaft_radius=shaft_radius,
+        tip_radius=tip_radius,
+        auto_length=auto_length,
+    )
+    # # Create reference axes actor
+    # axes_actor = AxesActor(
+    #     true_to_scale=False,
+    #     **kwargs
+    # )
+    # bounds = [actor.GetBounds() for actor in axes_actor._actors]
+    # normal_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
+    # shaft_scale = normal_size[:3].copy()
+    # shaft_scale[np.invert(np.eye(3,dtype=bool))] /= (shaft_radius * 2)
+    #
+    # tip_scale = normal_size[3:6].copy()
+    # tip_scale[np.invert(np.eye(3,dtype=bool))] /= (tip_radius * 2)
+
+    # Create test
+    axes_actor = AxesActor(true_to_scale=True, **kwargs)
+    # bounds = [actor.GetBounds() for actor in axes_actor_true._actors]
+    # true_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
+
+    #
+    shaft_length_scaled = np.array(shaft_length) * np.array(total_length) * np.array(scale)
+    tip_length_scaled = np.array(axes_actor.tip_length) * np.array(total_length) * np.array(scale)
+
+    # actual_scale = axes_actor._compute_true_to_scale_factors()
+    # assert actual_scale.x_shaft * shaft_length_scaled[0] == 1.0
+    # assert actual_scale.y_shaft * shaft_length_scaled[1] == 1.0
+    # assert actual_scale.z_shaft * shaft_length_scaled[2] == 1.0
+    # assert actual_scale.x_tip * tip_length_scaled[0] == 1.0
+    # assert actual_scale.y_tip * tip_length_scaled[1] == 1.0
+    # assert actual_scale.z_tip * tip_length_scaled[2] == 1.0
+
+    # axes_actor._update_props()
+    xsl, ysl, zsl = shaft_length_scaled
+    xtl, ytl, ztl = tip_length_scaled
+    sr, tr = shaft_radius * scale, tip_radius * scale
+
+    # test x shaft
+    expected_bounds = (0.0, xsl, -sr, sr, -sr, sr)
+    actual_bounds = axes_actor._actors.x_shaft.GetBounds()
+    assert np.allclose(actual_bounds, expected_bounds)
+
+    # test y shaft
+    expected_bounds = (-sr, sr, 0, ysl, -sr, sr)
+    actual_bounds = axes_actor._actors.y_shaft.GetBounds()
+    assert np.allclose(actual_bounds, expected_bounds)
+
+    # test z shaft
+    expected_bounds = (-sr, sr, -sr, sr, 0, zsl)
+    actual_bounds = axes_actor._actors.z_shaft.GetBounds()
+    assert np.allclose(actual_bounds, expected_bounds)
+
+    # test x tip
+    expected_bounds = (xsl, xsl + xtl, -tr, tr, -tr, tr)
+    actual_bounds = axes_actor._actors.x_tip.GetBounds()
+    assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
+
+    # test y tip
+    expected_bounds = (-tr, tr, ysl, ysl + ytl, -tr, tr)
+    actual_bounds = axes_actor._actors.y_tip.GetBounds()
+    assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
+
+    # test z tip
+    expected_bounds = (-tr, tr, -tr, tr, zsl, zsl + ztl)
+    actual_bounds = axes_actor._actors.z_tip.GetBounds()
+    assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
+
+
 @pytest.mark.parametrize('apply_to', ['shaft', 'tip', 'both'])
 @pytest.mark.parametrize('decimals', list(range(8)))
 @pytest.mark.parametrize('enabled', [True, False])
