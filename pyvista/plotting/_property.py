@@ -107,6 +107,11 @@ class Property(_vtk.vtkProperty):
         * ``"front"`` - Enable frontface culling
         * ``'none'`` - Disable both backface and frontface culling
 
+    edge_opacity : float, default: :attr:`pyvista.plotting.themes.Theme.edge_opacity`
+        Edge opacity of the mesh. A single float value that will be applied globally
+        edge opacity of the mesh and uniformly applied everywhere - should be
+        between 0 and 1.
+
     Examples
     --------
     Create a :class:`pyvista.Actor` and assign properties to it.
@@ -166,6 +171,7 @@ class Property(_vtk.vtkProperty):
         lighting=None,
         line_width=None,
         culling=None,
+        edge_opacity=None,
     ):
         """Initialize this property."""
         self._theme = pyvista.themes.Theme()
@@ -230,6 +236,9 @@ class Property(_vtk.vtkProperty):
         self.line_width = line_width
         if culling is not None:
             self.culling = culling
+        if edge_opacity is None:
+            edge_opacity = self._theme.edge_opacity
+        self.edge_opacity = edge_opacity
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01
