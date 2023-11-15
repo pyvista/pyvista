@@ -396,12 +396,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        data = self.GetBlock(index)
-        if data is None:
-            return data
-        if data is not None and not is_pyvista_dataset(data):
-            data = wrap(data)
-        return data
+        return wrap(self.GetBlock(index))
 
     def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
         """Add a data set to the next block index.
@@ -438,8 +433,7 @@ class MultiBlock(
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
-        if not is_pyvista_dataset(dataset):
-            dataset = wrap(dataset)
+        dataset = wrap(dataset)
         self.n_blocks += 1
         self[index] = dataset
         # No overwrite if name is None
@@ -698,9 +692,7 @@ class MultiBlock(
             i = index
 
         # data, i, and name are a single value now
-        if data is not None and not is_pyvista_dataset(data):
-            data = wrap(data)
-        data = cast(pyvista.DataSet, data)
+        data = cast(pyvista.DataSet, wrap(data))
 
         i = range(self.n_blocks)[i]
 
@@ -1023,6 +1015,20 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         newobject.wrap_nested()
         return newobject
+
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+        """Shallow copy the given multiblock to this multiblock.
+
+        Parameters
+        ----------
+        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+            Data object to perform a shallow copy from.
+
+        """
+        if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+            self.CompositeShallowCopy(to_copy)
+        else:
+            self.ShallowCopy(to_copy)
 
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False

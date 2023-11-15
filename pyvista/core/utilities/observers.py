@@ -72,7 +72,7 @@ class VtkErrorCatcher:
         obs.observe(error_output)
         self._observer = obs
 
-    def __exit__(self, type, val, tb):
+    def __exit__(self, *args):
         """Stop observing VTK string output window."""
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
@@ -116,7 +116,7 @@ class Observer:
         else:
             logging.warning(alert)
 
-    def __call__(self, obj, event, message):
+    def __call__(self, _obj, _event, message):
         """Declare standard call function for the observer.
 
         On an event occurrence, this function executes.
@@ -203,12 +203,9 @@ class ProgressMonitor:
     message : str, default: ""
         Message to display in the progress bar.
 
-    scaling : float, optional
-        Unused keyword argument.
-
     """
 
-    def __init__(self, algorithm, message="", scaling=None):
+    def __init__(self, algorithm, message=""):
         """Initialize observer."""
         try:
             from tqdm import tqdm  # noqa
@@ -229,7 +226,7 @@ class ProgressMonitor:
         self._interrupt_signal_received = (sig, frame)
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
-    def __call__(self, obj, event, *args):
+    def __call__(self, obj, *args):
         """Call progress update callback.
 
         On an event occurrence, this function executes.
@@ -256,7 +253,7 @@ class ProgressMonitor:
         self.algorithm.AddObserver(self.event_type, self)
         return self._progress_bar
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *args):
         """Exit event for ``with`` context."""
         self._progress_bar.total = 1
         self._progress_bar.refresh()

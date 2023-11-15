@@ -82,6 +82,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkCellPicker,
     vtkColorTransferFunction,
     vtkCompositeDataDisplayAttributes,
+    vtkCompositePolyDataMapper,
     vtkCoordinate,
     vtkDataSetMapper,
     vtkImageActor,

@@ -27,7 +27,7 @@ PICKED_REPRESENTATION_NAMES = {
 }
 
 
-def _launch_pick_event(interactor, event):
+def _launch_pick_event(interactor, _event):
     """Create a Pick event based on coordinate or left-click."""
     click_x, click_y = interactor.GetEventPosition()
     click_z = 0
@@ -473,7 +473,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picker, event):
+        def _end_pick_event(picker, _event):
             if (
                 not pickable_window
                 and hasattr(picker, 'GetDataSet')
@@ -993,7 +993,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(_, picker):  # numpydoc ignore=GL08
+        def end_pick_call_back(*args):  # numpydoc ignore=GL08
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)
