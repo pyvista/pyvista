@@ -672,7 +672,7 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         ...     true_to_scale=True, shaft_radius=0.2, tip_radius=0.2
         ... )
         >>> p = pv.Plotter()
-        >>> p.show_grid()
+        >>> _ = p.show_grid()
         >>> _ = p.add_actor(axes_actor)
         >>> p.show()
 
