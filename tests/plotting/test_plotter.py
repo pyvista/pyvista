@@ -4,6 +4,8 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+import os
+
 import numpy as np
 import pytest
 
@@ -464,3 +466,31 @@ def test_plotter_update_coordinates(sphere):
             raise RuntimeError("Convert error this method")
         if pv._version.version_info >= (0, 47):
             raise RuntimeError("Remove this method")
+
+
+def test_only_screenshots_flag(sphere):
+    tmpscreenshots = pv.SCREENSHOTS_ONLY
+    tmpfigurepath = pv.FIGURE_PATH
+
+    pv.SCREENSHOTS_ONLY = True
+    entries = os.listdir(".")
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show()
+    entries_after = os.listdir(".")
+    assert len(entries) == len(entries_after) - 1
+    res_file = list(set(entries_after) - set(entries))[0]
+
+    pv.SCREENSHOTS_ONLY = False
+    sphere_screenshot = "sphere_screenshot.png"
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(screenshot=sphere_screenshot)
+
+    error = pv.compare_images(sphere_screenshot, res_file)
+
+    assert error < 100
+    pv.SCREENSHOTS_ONLY = tmpscreenshots
+    pv.FIGURE_PATH = tmpfigurepath
+    os.remove(sphere_screenshot)
+    os.remove(res_file)
