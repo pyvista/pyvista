@@ -852,11 +852,11 @@ class ImageDataFilters(DataSetFilters):
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore
             field, scalars = self.active_scalars_info  # type: ignore
-            if field.value != FieldAssociation.POINT:
+            if field != FieldAssociation.POINT:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore
-            if field.value != FieldAssociation.POINT:
+            if field != FieldAssociation.POINT:
                 raise ValueError(
                     f'Can only process point data, given `scalars` are {field.name.lower()} data.'
                 )
