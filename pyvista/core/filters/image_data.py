@@ -847,7 +847,7 @@ class ImageDataFilters(DataSetFilters):
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Surface nets 3D require VTK 9.3.20230807rc0 or newer.')
+            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
