@@ -9,7 +9,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
@@ -852,12 +852,14 @@ class ImageDataFilters(DataSetFilters):
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore
             field, scalars = self.active_scalars_info  # type: ignore
-            if field.value == 1:
+            if field.value != FieldAssociation.POINT:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore
-            if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+            if field.value != FieldAssociation.POINT:
+                raise ValueError(
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                )
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
