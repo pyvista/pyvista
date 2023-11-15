@@ -25,7 +25,7 @@ def test_contour_labeled_with_smoothing():
     # Load a 3D label map (segmentation of a frog's tissue)
     label_map = examples.download_frog_tissue()
 
-    # Extract surface for each label
+    # Extract smooth surface for each label
     mesh = label_map.contour_labeled(smoothing=True)
     # this somehow mutates the object... also the n_labels is likely not correct
 
@@ -51,7 +51,7 @@ def test_contour_labeled_with_triangle_output_mesh():
     # Load a 3D label map (segmentation of a frog's tissue)
     label_map = examples.download_frog_tissue()
 
-    # Extract smooth surface for each label
+    # Extract surface for each label
     mesh = label_map.contour_labeled(scalars="MetaImage")
 
     assert "BoundaryLabels" in mesh.cell_data
@@ -65,7 +65,7 @@ def test_contour_labeled_with_scalars():
     label_map = examples.download_frog_tissue()
     label_map["labels"] = label_map["MetaImage"] // 2
 
-    # Extract smooth surface for each label
+    # Extract surface for each label
     mesh = label_map.contour_labeled(scalars="labels")
 
     assert "BoundaryLabels" in mesh.cell_data
