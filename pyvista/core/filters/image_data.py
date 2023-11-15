@@ -796,7 +796,6 @@ class ImageDataFilters(DataSetFilters):
         This filter requires that the :class:`ImageData` has integer point
         scalars, such as multi-label maps generated from image segmentation.
 
-
         Parameters
         ----------
         n_labels : int, optional
