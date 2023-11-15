@@ -127,6 +127,10 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     pyvista.RectilinearGrid
         RectilinearGrid as voxelized volume with discretized cells.
 
+    See Also
+    --------
+    pyvista.voxelize
+
     Notes
     -----
     Prior to version 0.39.0, this method improperly handled the order of
