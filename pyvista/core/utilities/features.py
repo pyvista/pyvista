@@ -131,11 +131,6 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     --------
     pyvista.voxelize
 
-    Notes
-    -----
-    Prior to version 0.39.0, this method improperly handled the order of
-    structured coordinates.
-
     Examples
     --------
     Create an equal density voxel volume from input mesh.
