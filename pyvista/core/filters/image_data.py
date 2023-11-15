@@ -842,6 +842,7 @@ class ImageDataFilters(DataSetFilters):
         Examples
         --------
         See :ref:`contouring_example` for a full example using this filter.
+
         """
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
