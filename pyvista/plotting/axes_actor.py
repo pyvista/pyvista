@@ -460,7 +460,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         # Store actors
         props = _vtk.vtkPropCollection()
         self.GetActors(props)
-        self._actors: AxesActor[_vtk.vtkActor]
         self._actors = AxesTuple(
             x_shaft=props.GetItemAsObject(0),
             y_shaft=props.GetItemAsObject(1),
@@ -1361,9 +1360,6 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
 
-        if self.true_to_scale:
-            self._update_actor_transformations()
-
     @property
     def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
         """Axes text labels.
@@ -2124,72 +2120,33 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
 
         # Do not scale axially, only radially
         shaft_scale[diag] = 1
-        if self.tip_type == AxesActor.TipType.CONE:
-            tip_scale[diag] = 1
-        else:
-            # With spheres, the length is not scaled correctly
-            # by vtkAxesActor and the TotalLength of the axes
-            # will be incorrect. Therefore, we scale axially to
-            # correct for this.
-            tip_scale[diag] = 1
-            # tip_scale[diag] *= reciprocal(np.array(self.tip_radius))
-
-        # Invert, avoid div by 0
-        # ind = size >= 1e-8
-        # size[ind] = np.reciprocal(size[ind])
-        # size[size < 1e-8] = 0
-        # size = reciprocal(size)
+        tip_scale[diag] = 1
 
         return scales
 
     def _update_actor_transformations(self, reset=False):  # numpydoc ignore=RT01,PR01
-        if self.__make_orientable or reset:
-            if self.true_to_scale:
-                # Compute scaled transforms for each actor.
-                # We need to compensate for the radial scaling that is applied
-                # internally by vtkAxesActor::UpdateProps()
-                [actor.SetUserMatrix(vtkmatrix_from_array(np.eye(4))) for actor in self._actors]
-                scales = self._compute_true_to_scale_factors()
+        if reset:
+            matrix = np.eye(4)
+        elif self.__make_orientable:
+            matrix = self._concatenate_implicit_matrix_and_user_matrix()
+        else:
+            return
 
-                matrices = [self._concatenate_implicit_matrix_and_user_matrix(s) for s in scales]
-                matrix = self._concatenate_implicit_matrix_and_user_matrix()
+        if not np.array_equal(matrix, self._cached_matrix) or reset:
+            if np.array_equal(matrix, np.eye(4)):
+                self.UseBoundsOn()
             else:
-                if reset:
-                    matrix = np.eye(4)
-                else:
-                    matrix = self._concatenate_implicit_matrix_and_user_matrix()
+                # Calls to vtkRenderer.ResetCamera() will use the
+                # incorrect axes bounds if a transformation is applied.
+                # As a workaround, set UseBoundsOff(). In some cases,
+                # this will require manual adjustment of the camera
+                # from the user.
+                self.UseBoundsOff()
 
-            is_cached = np.array_equal(matrix, self._cached_matrix)
-            if self.true_to_scale:
-                is_cached = is_cached and all(
-                    [np.array_equal(m, self._cached_actor_matrix) for m in matrices]
-                )
-
-            if not is_cached or reset:
-                if np.array_equal(matrix, np.eye(4)):
-                    self.UseBoundsOn()
-                else:
-                    # Calls to vtkRenderer.ResetCamera() will use the
-                    # incorrect axes bounds if a transformation is applied.
-                    # As a workaround, set UseBoundsOff(). In some cases,
-                    # this will require manual adjustment of the camera
-                    # from the user.
-                    self.UseBoundsOff()
-
-                # Update AxesActor matrix
-                self._cached_matrix = matrix
-                matrix = vtkmatrix_from_array(matrix)
-                super().SetUserMatrix(matrix)
-
-                # Update shaft and tip actor matrices
-                if self.true_to_scale:
-                    self._cached_actor_matrix = matrices
-                    [
-                        actor.SetUserMatrix(vtkmatrix_from_array(mat))
-                        for actor, mat in zip(self._actors, matrices)
-                    ]
-                else:
-                    [actor.SetUserMatrix(matrix) for actor in self._actors]
+            self._cached_matrix = matrix
+            matrix = vtkmatrix_from_array(matrix)
+            super().SetUserMatrix(matrix)
+            [actor.SetUserMatrix(matrix) for actor in self._actors]
 
     def _concatenate_implicit_matrix_and_user_matrix(self, scale=(1, 1, 1)) -> np.ndarray:
         """Get transformation matrix similar to vtkProp3D::GetMatrix().
@@ -2261,13 +2218,5 @@ class AxesActor(Prop3D, _vtk.vtkAxesActor):
         self.__make_orientable = kwargs.pop('_make_orientable', True)
         self._user_matrix = np.eye(4)
         self._cached_matrix = np.eye(4)
-        self._cached_actor_matrix = [
-            np.eye(4),
-            np.eye(4),
-            np.eye(4),
-            np.eye(4),
-            np.eye(4),
-            np.eye(4),
-        ]
         self._update_actor_transformations(reset=True)
         self._make_orientable = self.__make_orientable
