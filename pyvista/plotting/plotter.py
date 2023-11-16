@@ -6405,7 +6405,7 @@ class Plotter(BasePlotter):
                 notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
-        if self.notebook or pyvista.SCREENSHOTS_ONLY:
+        if self.notebook or pyvista.ON_SCREENSHOT:
             off_screen = True
         self.off_screen = off_screen
 
