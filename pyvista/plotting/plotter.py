@@ -6761,7 +6761,7 @@ class Plotter(BasePlotter):
                     "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
                 )
         if _is_current:
-            if pyvista.SCREENSHOTS_ONLY:
+            if pyvista.ON_SCREENSHOT:
                 filename = uuid.uuid4().hex
                 self.last_image = self.screenshot(filename, return_img=True)
             else:

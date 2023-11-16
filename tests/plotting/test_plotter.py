@@ -469,10 +469,10 @@ def test_plotter_update_coordinates(sphere):
 
 
 def test_only_screenshots_flag(sphere):
-    tmpscreenshots = pv.SCREENSHOTS_ONLY
+    tmpscreenshots = pv.ON_SCREENSHOT
     tmpfigurepath = pv.FIGURE_PATH
 
-    pv.SCREENSHOTS_ONLY = True
+    pv.ON_SCREENSHOT = True
     entries = os.listdir(".")
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -481,7 +481,7 @@ def test_only_screenshots_flag(sphere):
     assert len(entries) == len(entries_after) - 1
     res_file = list(set(entries_after) - set(entries))[0]
 
-    pv.SCREENSHOTS_ONLY = False
+    pv.ON_SCREENSHOT = False
     sphere_screenshot = "sphere_screenshot.png"
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -490,7 +490,7 @@ def test_only_screenshots_flag(sphere):
     error = pv.compare_images(sphere_screenshot, res_file)
 
     assert error < 100
-    pv.SCREENSHOTS_ONLY = tmpscreenshots
+    pv.ON_SCREENSHOT = tmpscreenshots
     pv.FIGURE_PATH = tmpfigurepath
     os.remove(sphere_screenshot)
     os.remove(res_file)
