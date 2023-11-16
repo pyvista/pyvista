@@ -35,7 +35,7 @@ BUILDING_GALLERY = os.environ.get("PYVISTA_BUILDING_GALLERY", "false").lower() =
 REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
-FIGURE_PATH = None
+FIGURE_PATH = os.environ.get("PYVISTA_FIGURE_PATH", None)
 
 SCREENSHOTS_ONLY = os.environ.get("PYVISTA_SCREENSHOTS_ONLY", "false").lower() == "true"
 
