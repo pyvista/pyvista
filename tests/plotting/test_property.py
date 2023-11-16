@@ -51,6 +51,7 @@ def test_property_opacity(prop):
 @skip_lesser_9_3_X
 def test_property_edge_opacity(prop):
     edge_opacity = 0.5
+    prop.edge_opacity = edge_opacity
     assert prop.edge_opacity == edge_opacity
     with pytest.raises(ValueError):
         prop.edge_opacity = 2
