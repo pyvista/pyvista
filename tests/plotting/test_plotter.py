@@ -478,7 +478,7 @@ def test_only_screenshots_flag(sphere):
     pl.add_mesh(sphere)
     pl.show()
     entries_after = os.listdir(".")
-    assert len(entries_before) == len(entries_after) - 1
+    assert len(entries_before) + 1 == len(entries_after)
     res_file = list(set(entries_after) - set(entries_before))[0]
 
     pv.ON_SCREENSHOT = False
