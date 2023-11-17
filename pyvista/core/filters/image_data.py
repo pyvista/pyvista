@@ -1,6 +1,6 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
 
@@ -781,8 +781,8 @@ class ImageDataFilters(DataSetFilters):
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: float = 1,
-        output_mesh_type: str = 'quads',
-        output_style: str = 'default',
+        output_mesh_type: Literal['quads', 'triangles'] = 'quads',
+        output_style: Literal['default', 'boundary'] = 'default',
         scalars: Optional[str] = None,
         progress_bar: bool = False,
     ) -> 'pyvista.PolyData':
@@ -795,6 +795,9 @@ class ImageDataFilters(DataSetFilters):
 
         This filter requires that the :class:`ImageData` has integer point
         scalars, such as multi-label maps generated from image segmentation.
+
+        .. note::
+           Requires ``vtk>=9.3.0``.
 
         Parameters
         ----------
@@ -814,10 +817,14 @@ class ImageDataFilters(DataSetFilters):
             Constraint distance of the smoothing.
 
         output_mesh_type : str, default: 'quads'
-            Mesh type - triangles or quads.
+            Type of the output mesh. Must be either ``'quads'``, or ``'triangles'``.
 
         output_style : str, default: 'default'
-            Output style (default, boundary). "selected" is currently not implemented.
+            Style of the output mesh. Must be either ``'default'`` or ``'boundary'``.
+            When ``'default'`` is specified, the filter produces a mesh with both
+            interior and exterior polygons. When ``'boundary'`` is selected, only
+            polygons on the border with the background are produced (without interior
+            polygons). Note that style ``'selected'`` is currently not implemented.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -874,9 +881,10 @@ class ImageDataFilters(DataSetFilters):
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
             alg.SetOutputStyleToBoundary()
-        else:
-            alg.SetOutputStyleToSelected()
+        elif output_style == 'selected':
             raise NotImplementedError(f'Output style "{output_style}" is not implemented')
+        else:
+            raise ValueError(f'Invalud output style "{output_style}", use "default" or "boundary"')
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
@@ -884,5 +892,5 @@ class ImageDataFilters(DataSetFilters):
             alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
         else:
             alg.SmoothingOff()
-        _update_alg(alg, progress_bar, 'Performing High Pass Filter')
+        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         return wrap(alg.GetOutput())
