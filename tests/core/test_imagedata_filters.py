@@ -71,6 +71,16 @@ def test_contour_labeled_with_boundary_output_style():
 
 
 @pytest.mark.skipif(not VTK93, reason="At least VTK 9.3 is required")
+def test_contour_labeled_with_invalid_output_mesh_type():
+    # Load a 3D label map (segmentation of a frog's tissue)
+    label_map = examples.download_frog_tissue()
+
+    # Extract surface for each label
+    with pytest.raises(ValueError):
+        label_map.contour_labeled(output_mesh_type="invalid")
+
+
+@pytest.mark.skipif(not VTK93, reason="At least VTK 9.3 is required")
 def test_contour_labeled_with_invalid_output_style():
     # Load a 3D label map (segmentation of a frog's tissue)
     label_map = examples.download_frog_tissue()

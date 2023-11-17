@@ -877,6 +877,10 @@ class ImageDataFilters(DataSetFilters):
             alg.SetOutputMeshTypeToQuads()
         elif output_mesh_type == 'triangles':
             alg.SetOutputMeshTypeToTriangles()
+        else:
+            raise ValueError(
+                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
+            )
         if output_style == 'default':
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
@@ -884,7 +888,7 @@ class ImageDataFilters(DataSetFilters):
         elif output_style == 'selected':
             raise NotImplementedError(f'Output style "{output_style}" is not implemented')
         else:
-            raise ValueError(f'Invalud output style "{output_style}", use "default" or "boundary"')
+            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
