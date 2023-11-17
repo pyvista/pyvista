@@ -468,29 +468,28 @@ def test_plotter_update_coordinates(sphere):
             raise RuntimeError("Remove this method")
 
 
-def test_only_screenshots_flag(sphere):
+def test_only_screenshots_flag(sphere, tmpdir):
     tmpscreenshots = pv.ON_SCREENSHOT
     tmpfigurepath = pv.FIGURE_PATH
 
+    pv.FIGURE_PATH = str(tmpdir)
+
     pv.ON_SCREENSHOT = True
-    entries = os.listdir(".")
+    entries = os.listdir(pv.FIGURE_PATH)
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show()
-    entries_after = os.listdir(".")
+    entries_after = os.listdir(pv.FIGURE_PATH)
     assert len(entries) == len(entries_after) - 1
     res_file = list(set(entries_after) - set(entries))[0]
-
     pv.ON_SCREENSHOT = False
     sphere_screenshot = "sphere_screenshot.png"
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show(screenshot=sphere_screenshot)
-
-    error = pv.compare_images(sphere_screenshot, res_file)
-
+    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
+    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    error = pv.compare_images(sphere_path, res_path)
     assert error < 100
     pv.ON_SCREENSHOT = tmpscreenshots
     pv.FIGURE_PATH = tmpfigurepath
-    os.remove(sphere_screenshot)
-    os.remove(res_file)
