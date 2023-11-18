@@ -237,7 +237,7 @@ class Property(_vtk.vtkProperty):
         self.line_width = line_width
         if culling is not None:
             self.culling = culling
-        if vtk_version_info < (9, 3) and edge_opacity is not None:
+        if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
