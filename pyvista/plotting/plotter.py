@@ -2323,6 +2323,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color_missing_with_nan=False,
         copy_mesh=False,
         show_vertices=None,
+        edge_opacity=1.0,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2587,6 +2588,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2710,6 +2716,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             line_width=line_width,
             opacity=opacity,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
         actor.SetProperty(prop)
 
@@ -2847,6 +2854,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         copy_mesh=False,
         backface_params=None,
         show_vertices=None,
+        edge_opacity=1.0,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3179,6 +3187,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_color`` - The color of the vertices
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
+
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
 
         **kwargs : dict, optional
             Optional keyword arguments.
