@@ -117,29 +117,6 @@ class _AxesProp(ABC, _vtk.vtkProp):
         self.label_size = _set_default(label_size, (0.25, 0.1))
         self.label_color = label_color  # Setter will auto-set theme val
 
-    # def __del__(self):
-    #     del self._label_text_properties.x
-    #     del self._label_text_properties.y
-    #     del self._label_text_properties.z
-    #     del self._label_actors.x
-    #     del self._label_actors.y
-    #     del self._label_actors.z
-    #
-    #     del self._actor_properties.x_shaft
-    #     del self._actor_properties.y_shaft
-    #     del self._actor_properties.z_shaft
-    #     del self._actor_properties.x_tip
-    #     del self._actor_properties.y_tip
-    #     del self._actor_properties.z_tip
-    #     del self._actors.x_shaft
-    #     del self._actors.y_shaft
-    #     del self._actors.z_shaft
-    #     del self._actors.x_tip
-    #     del self._actors.y_tip
-    #     del self._actors.z_tip
-    #     del self._actors
-    #     del self
-
     def __repr__(self):
         """Representation of the axes actor."""
         if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
