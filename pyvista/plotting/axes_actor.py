@@ -76,7 +76,7 @@ class _AxesProp(ABC, _vtk.vtkProp):
         """
         super().__init__()
 
-        # Init actors and props
+        # Init actor props
         if properties is None:
             properties = dict()
         if isinstance(properties, dict):
@@ -91,14 +91,9 @@ class _AxesProp(ABC, _vtk.vtkProp):
 
         else:
             raise TypeError('`properties` must be a property object or a dictionary.')
+        [actor.SetProperty(_new_property()) for actor in self._actors]
 
-        properties = [_new_property() for _ in range(6)]
-        self._actors = self._init_actors(properties)
-        (
-            self._label_actors,
-            self._label_setters,
-            self._label_getters,
-        ) = self._init_label_actors()
+        # Disable text shadows
         [prop.SetShadow(False) for prop in self._label_text_properties]
 
         # Set misc flag params
@@ -122,9 +117,28 @@ class _AxesProp(ABC, _vtk.vtkProp):
         self.label_size = _set_default(label_size, (0.25, 0.1))
         self.label_color = label_color  # Setter will auto-set theme val
 
-    def __del__(self):
-        del self._actors
-        del self._label_actors
+    # def __del__(self):
+    #     del self._label_text_properties.x
+    #     del self._label_text_properties.y
+    #     del self._label_text_properties.z
+    #     del self._label_actors.x
+    #     del self._label_actors.y
+    #     del self._label_actors.z
+    #
+    #     del self._actor_properties.x_shaft
+    #     del self._actor_properties.y_shaft
+    #     del self._actor_properties.z_shaft
+    #     del self._actor_properties.x_tip
+    #     del self._actor_properties.y_tip
+    #     del self._actor_properties.z_tip
+    #     del self._actors.x_shaft
+    #     del self._actors.y_shaft
+    #     del self._actors.z_shaft
+    #     del self._actors.x_tip
+    #     del self._actors.y_tip
+    #     del self._actors.z_tip
+    #     del self._actors
+    #     del self
 
     def __repr__(self):
         """Representation of the axes actor."""
@@ -166,13 +180,27 @@ class _AxesProp(ABC, _vtk.vtkProp):
         ]
         return '\n'.join(attr)
 
+    @property
     @abstractmethod
-    def _init_actors(self, props: Sequence[Property]) -> AxesTuple:
+    def _actors(self) -> AxesTuple:
         """Return initialized actors."""
         ...
 
+    @property
     @abstractmethod
-    def _init_label_actors(self) -> Tuple[Tuple3D, Tuple3D, Tuple3D]:
+    def _label_actors(self) -> Tuple3D:
+        """Return initialized captions."""
+        ...
+
+    @property
+    @abstractmethod
+    def _label_setters(self) -> Tuple3D:
+        """Return initialized captions."""
+        ...
+
+    @property
+    @abstractmethod
+    def _label_getters(self) -> Tuple3D:
         """Return initialized captions."""
         ...
 
@@ -247,7 +275,7 @@ class _AxesProp(ABC, _vtk.vtkProp):
 
     @property
     def _label_text_properties(self) -> Tuple3D:
-        return Tuple3D(*[actor.GetCaptionTextProperty() for actor in self._label_actors])
+        return Tuple3D(*(actor.GetCaptionTextProperty() for actor in self._label_actors))
 
     @property
     def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
@@ -1642,27 +1670,27 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
         ]
         return '\n'.join(attr)
 
-    def _init_actors(self, props: Sequence[Property]) -> AxesTuple:
+    @property
+    def _actors(self) -> AxesTuple:
         collection = _vtk.vtkPropCollection()
         self.GetActors(collection)
-        actors = [collection.GetItemAsObject(i) for i in range(6)]
-        [actor.SetProperty(prop) for actor, prop in zip(actors, props)]
-        return AxesTuple(*actors)
+        return AxesTuple(*(collection.GetItemAsObject(i) for i in range(6)))
 
-    def _init_label_actors(self) -> Tuple[Tuple3D, Tuple3D, Tuple3D]:
-        actors = Tuple3D(
+    @property
+    def _label_actors(self) -> Tuple3D:
+        return Tuple3D(
             x=self.GetXAxisCaptionActor2D(),
             y=self.GetYAxisCaptionActor2D(),
             z=self.GetZAxisCaptionActor2D(),
         )
-        text_setters = Tuple3D(
-            x=self.SetXAxisLabelText, y=self.SetYAxisLabelText, z=self.SetZAxisLabelText
-        )
-        text_getters = Tuple3D(
-            x=self.GetXAxisLabelText, y=self.GetYAxisLabelText, z=self.GetZAxisLabelText
-        )
 
-        return actors, text_setters, text_getters
+    @property
+    def _label_setters(self) -> Tuple3D:
+        return Tuple3D(x=self.SetXAxisLabelText, y=self.SetYAxisLabelText, z=self.SetZAxisLabelText)
+
+    @property
+    def _label_getters(self) -> Tuple3D:
+        return Tuple3D(x=self.GetXAxisLabelText, y=self.GetYAxisLabelText, z=self.GetZAxisLabelText)
 
     @property
     def true_to_scale(self) -> bool:  # numpydoc ignore=RT01
@@ -2760,32 +2788,44 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
 class AxesAssembly(_AxesProp, _vtk.vtkPropAssembly):
     """Assembly of axes actors."""
 
-    def _init_actors(self, props: Sequence[Property]) -> AxesTuple:
-        # Use pyvista namespace to avoid circular import
-        actors = [pyvista.Actor(prop) for prop in props]
-        [self.AddPart(actor) for actor in actors]
-        return AxesTuple(*actors)
+    def __init__(self):
+        # Init actors
 
-    def _init_label_actors(self) -> Tuple[Tuple3D, Tuple3D, Tuple3D]:
-        actors = Tuple3D(
+        # Use pyvista namespace to avoid circular import
+        self.__actors = AxesTuple(*[pyvista.Actor() for _ in range(6)])
+        [self.AddPart(actor) for actor in self.__actors]
+
+        self.__label_actors = Tuple3D(
             x=_vtk.vtkCaptionActor2D(),
             y=_vtk.vtkCaptionActor2D(),
             z=_vtk.vtkCaptionActor2D(),
         )
-        [self.AddPart(actor) for actor in actors]
+        [self.AddPart(actor) for actor in self.__label_actors]
+        super().__init__()
 
-        setters = Tuple3D(
-            x=lambda val: actors.x.SetInput(val),
-            y=lambda val: actors.y.SetInput(val),
-            z=lambda val: actors.z.SetInput(val),
-        )
-        getters = Tuple3D(
-            x=actors.x.GetInput(),
-            y=actors.y.GetInput(),
-            z=actors.z.GetInput(),
+    @property
+    def _actors(self) -> AxesTuple:
+        return self.__actors
+
+    @property
+    def _label_actors(self) -> Tuple3D:
+        return self.__label_actors
+
+    @property
+    def _label_setters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda val: self._label_actors.x.SetInput(val),
+            y=lambda val: self._label_actors.y.SetInput(val),
+            z=lambda val: self._label_actors.z.SetInput(val),
         )
 
-        return actors, setters, getters
+    @property
+    def _label_getters(self) -> Tuple3D:
+        return Tuple3D(
+            x=self._label_actors.x.GetInput(),
+            y=self._label_actors.y.GetInput(),
+            z=self._label_actors.z.GetInput(),
+        )
 
     # @property
     # def _total_length(self):
