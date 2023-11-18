@@ -2323,7 +2323,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color_missing_with_nan=False,
         copy_mesh=False,
         show_vertices=None,
-        edge_opacity=1.0,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2854,7 +2854,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         copy_mesh=False,
         backface_params=None,
         show_vertices=None,
-        edge_opacity=1.0,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
