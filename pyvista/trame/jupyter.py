@@ -331,7 +331,7 @@ def show_trame(
     kwargs.setdefault('width', dw)
     kwargs.setdefault('height', dh)
 
-    if True:  # mode == 'html':
+    if mode == 'html':
         return EmbeddableWidget(plotter, **kwargs)
 
     if name is None:
