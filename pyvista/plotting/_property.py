@@ -439,7 +439,10 @@ class Property(_vtk.vtkProperty):
 
         """
         if vtk_version_info < (9, 3):
-            return 1.0
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError(
+                "`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+            )
         else:
             return self.GetEdgeOpacity()
 
@@ -447,7 +450,11 @@ class Property(_vtk.vtkProperty):
     def edge_opacity(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'edge_opacity')
         if vtk_version_info < (9, 3):
-            pass
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                "`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+            )
         else:
             self.SetEdgeOpacity(value)
 
