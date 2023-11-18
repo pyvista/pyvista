@@ -239,7 +239,6 @@ class Property(_vtk.vtkProperty):
             self.culling = culling
         if vtk_version_info < (9, 3) and edge_opacity is not None:
             from pyvista.core.errors import VTKVersionError
-
             raise VTKVersionError(
                 "`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
