@@ -56,27 +56,32 @@ class _AxesProp(ABC, _vtk.vtkProp):
         label_color,
         labels_off,
         label_size,
+        label_position,
         x_color,
         y_color,
         z_color,
         # colors,
+        shaft_type,
+        shaft_radius,
+        shaft_length,
+        tip_type,
+        tip_radius,
+        tip_length,
+        total_length,
+        position,
+        orientation,
+        origin,
+        scale,
+        user_matrix,
         visibility,
         symmetric_bounds,
         auto_length,
         properties,
     ):
-        """Initialize AxesActorInterface.
-
-        Initialize all concrete properties.
-
-        Any properties which affect the geometry and/or positioning
-        of actors in the scene are not initialized since these are
-        abstracted, and subclasses will need to ensure all actors
-        are updated accordingly.
-        """
+        """Initialize AxesProp."""
         super().__init__()
 
-        # Init actor props
+        # Init actor properties
         if properties is None:
             properties = dict()
         if isinstance(properties, dict):
@@ -96,10 +101,7 @@ class _AxesProp(ABC, _vtk.vtkProp):
         # Disable text shadows
         [prop.SetShadow(False) for prop in self._label_text_properties]
 
-        # Set misc flag params
         self.visibility = _set_default(visibility, True)
-        self._symmetric_bounds = _set_default(symmetric_bounds, True)
-        self._auto_length = _set_default(auto_length, True)
 
         # Set shaft and tip color. The setters will auto-set theme vals
         self.x_color = x_color
@@ -116,6 +118,53 @@ class _AxesProp(ABC, _vtk.vtkProp):
         self.labels_off = _set_default(labels_off, False)
         self.label_size = _set_default(label_size, (0.25, 0.1))
         self.label_color = label_color  # Setter will auto-set theme val
+
+        # Set misc flag params
+        self._symmetric_bounds = _set_default(symmetric_bounds, True)
+        self._auto_length = _set_default(auto_length, True)
+
+        # Set geometry-dependent params
+        self.label_position = _set_default(label_position, 1.0)
+        self.shaft_type = shaft_type
+        self.shaft_radius = _set_default(shaft_radius, 0.01)
+        self.tip_type = tip_type
+        self.tip_radius = _set_default(tip_radius, 0.4)
+        self.total_length = _set_default(total_length, 1.0)
+
+        self.position = _set_default(position, (0.0, 0.0, 0.0))
+        self.orientation = _set_default(orientation, (0.0, 0.0, 0.0))
+        self.origin = _set_default(origin, (0.0, 0.0, 0.0))
+        self.scale = _set_default(scale, 1.0)
+        self.user_matrix = _set_default(user_matrix, np.eye(4))
+
+        # Check auto-length
+        # Disable flag temporarily and restore later
+        auto_length_set = self.auto_length
+        self.auto_length = False
+
+        shaft_length_set = shaft_length is not None
+        tip_length_set = tip_length is not None
+
+        self.shaft_length = _set_default(shaft_length, 0.8)
+        self.tip_length = _set_default(tip_length, 0.2)
+
+        if auto_length_set:
+            lengths_sum_to_one = all(
+                map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length)
+            )
+            if shaft_length_set and tip_length_set and not lengths_sum_to_one:
+                raise ValueError(
+                    "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
+                    "Set either `shaft_length` or `tip_length`, but not both."
+                )
+            # Set property again, this time with auto-length enabled
+            self.auto_length = True
+            if shaft_length_set and not tip_length_set:
+                self.shaft_length = shaft_length
+            elif tip_length_set and not shaft_length_set:
+                self.tip_length = tip_length
+        else:
+            self.auto_length = False
 
     def __repr__(self):
         """Representation of the axes actor."""
@@ -180,63 +229,6 @@ class _AxesProp(ABC, _vtk.vtkProp):
     def _label_getters(self) -> Tuple3D:
         """Return initialized captions."""
         ...
-
-    def _init_geometry_params(
-        self,
-        label_position=None,
-        shaft_type=None,
-        shaft_radius=None,
-        shaft_length=None,
-        tip_type=None,
-        tip_radius=0.4,
-        tip_length=None,
-        total_length=(1, 1, 1),
-        position=(0, 0, 0),
-        orientation=None,
-        origin=None,
-        scale=None,
-        user_matrix=None,
-    ):
-        self.label_position = _set_default(label_position, 1.0)
-        self.shaft_type = shaft_type
-        self.shaft_radius = _set_default(shaft_radius, 0.01)
-        self.tip_type = tip_type
-        self.tip_radius = _set_default(tip_radius, 0.4)
-        self.total_length = _set_default(total_length, 1.0)
-        self.position = _set_default(position, (0.0, 0.0, 0.0))
-        self.orientation = _set_default(orientation, (0.0, 0.0, 0.0))
-        self.origin = _set_default(origin, (0.0, 0.0, 0.0))
-        self.scale = _set_default(scale, 1.0)
-        self.user_matrix = _set_default(user_matrix, np.eye(4))
-
-        # Check auto-length
-        # Disable flag temporarily and restore later
-        auto_length_set = self.auto_length
-        self.auto_length = False
-
-        shaft_length_set = shaft_length is not None
-        tip_length_set = tip_length is not None
-
-        self.shaft_length = _set_default(shaft_length, 0.8)
-        self.tip_length = _set_default(tip_length, 0.2)
-
-        if auto_length_set:
-            lengths_sum_to_one = all(
-                map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length)
-            )
-            if shaft_length_set and tip_length_set and not lengths_sum_to_one:
-                raise ValueError(
-                    "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
-                    "Set either `shaft_length` or `tip_length`, but not both."
-                )
-            # Set property again, this time with auto-length enabled
-            self.auto_length = True
-            if shaft_length_set and not tip_length_set:
-                self.shaft_length = shaft_length
-            elif tip_length_set and not shaft_length_set:
-                self.tip_length = tip_length
-        else:
-            self.auto_length = False
 
     @property
     def _actor_properties(self) -> AxesTuple:
@@ -1531,6 +1523,10 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
             )
             properties = dict(ambient=ambient)
 
+        # Set temp flags for init
+        self._auto_shaft_type = False
+        self._is_init = False
+
         # Init interface kwargs
         super().__init__(
             x_label=x_label,
@@ -1547,32 +1543,6 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
             symmetric_bounds=symmetric_bounds,
             auto_length=auto_length,
             properties=properties,
-        )
-
-        # Init geometry props
-        # Set flag to prevent updates to the actors
-        self._is_init = False
-
-        # Enable workaround to make axes orientable in space.
-        # Use undocumented keyword `_make_orientable=False` to disable it
-        # and restore the default vtkAxesActor orientation behavior.
-        def _init_make_orientable(self, kwargs):
-            """Initialize workaround to make axes orientable in space."""
-            self._user_matrix = np.eye(4)
-            self._cached_matrix = np.eye(4)
-            self._update_actor_transformations(reset=True)
-            self.__make_orientable = kwargs.pop('_make_orientable', True)
-            self._make_orientable = self.__make_orientable
-
-        _init_make_orientable(self, kwargs)
-
-        assert_empty_kwargs(**kwargs)
-
-        # Disable option temporarily for init
-        self._auto_shaft_type = False
-
-        # Init interfaced props
-        self._init_geometry_params(
             label_position=label_position,
             shaft_type=shaft_type,
             shaft_radius=shaft_radius,
@@ -1588,6 +1558,18 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
             user_matrix=user_matrix,
         )
 
+        # Enable workaround to make axes orientable in space.
+        # Use undocumented keyword `_make_orientable=False` to disable it
+        # and restore the default vtkAxesActor orientation behavior.
+        self._cached_matrix = None
+
+        def _init_make_orientable(kwargs):
+            # Execute this line inside a function to prevent some dev
+            # environments from hinting this param
+            self.__make_orientable = kwargs.pop('_make_orientable', True)
+
+        _init_make_orientable(kwargs)
+
         # Init non-interfaced geometry props
         self.shaft_width = _set_default(shaft_width, 2.0)
         self.shaft_resolution = _set_default(shaft_resolution, 16)
@@ -1602,10 +1584,12 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
         if auto_shaft_type:
             self._check_auto_shaft_type(shaft_type_set, cylinder_params_set, line_params_set)
 
+        assert_empty_kwargs(**kwargs)
+
         # self._true_to_scale = true_to_scale
+        self._is_init = True
 
         self._update_props()
-        self._is_init = True
 
     def __repr__(self):
         """Representation of the axes actor."""
@@ -2519,6 +2503,7 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
             # vtkRenderer.ComputeVisiblePropBounds() uses GetBounds()
             # of all actors when resetting the camera, which will not
             # execute this override.
+            self._update_props()
             return self._compute_actor_bounds()
         return super().GetBounds()
 
@@ -2770,14 +2755,15 @@ class AxesAssembly(_AxesProp, _vtk.vtkPropAssembly):
 
         # Use pyvista namespace to avoid circular import
         self.__actors = AxesTuple(*[pyvista.Actor() for _ in range(6)])
-        [self.AddPart(actor) for actor in self.__actors]
-
         self.__label_actors = Tuple3D(
             x=_vtk.vtkCaptionActor2D(),
             y=_vtk.vtkCaptionActor2D(),
             z=_vtk.vtkCaptionActor2D(),
         )
-        [self.AddPart(actor) for actor in self.__label_actors]
+
+        # Add actors to assembly
+        [self.AddPart(actor) for actor in (*self.__actors, *self.__label_actors)]
+
         super().__init__()
 
     @property
@@ -2803,6 +2789,15 @@ class AxesAssembly(_AxesProp, _vtk.vtkPropAssembly):
             y=self._label_actors.y.GetInput(),
             z=self._label_actors.z.GetInput(),
         )
+
+    # @property
+    # def labels_off(self) -> bool:  # numpydoc ignore=RT01
+    #     """Enable or disable the text labels for the axes."""
+    #     ...
+    #
+    # @labels_off.setter
+    # def labels_off(self, value: bool):  # numpydoc ignore=GL08
+    #     ...
 
     # @property
     # def _total_length(self):
