@@ -42,6 +42,8 @@ FIGURE_PATH = None
 
 SCREENSHOTS_ONLY = os.environ.get("PYVISTA_SCREENSHOTS_ONLY", "false").lower() == "true"
 
+ON_SCREENSHOT = os.environ.get("PYVISTA_ON_SCREENSHOT", "false").lower() == "true"
+
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
