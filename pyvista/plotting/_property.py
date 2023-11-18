@@ -415,7 +415,7 @@ class Property(_vtk.vtkProperty):
         Edge opacity of the mesh. A single float value that will be applied globally
         edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
 
- 
+
         Examples
         --------
         Set edge opacity to ``0.5``.
