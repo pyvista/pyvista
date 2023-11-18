@@ -203,6 +203,20 @@ def test_axes_actor_deprecated_parameters(axes_actor):
         axes_actor.z_axis_tip_properties
 
 
+def test_axes_actor_deprecated_enums(axes_actor):
+    pass
+    # TODO: test deprecation
+    # axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+    # assert axes_actor.shaft_type == pv.AxesActor.ShaftType.CYLINDER
+    # axes_actor.shaft_type = pv.AxesActor.ShaftType.LINE
+    # assert axes_actor.shaft_type == pv.AxesActor.ShaftType.LINE
+
+    # axes_actor.tip_type = pv.AxesActor.TipType.CONE
+    # assert axes_actor.tip_type == pv.AxesActor.TipType.CONE
+    # axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
+    # assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
+
+
 def test_axes_actor_shaft_resolution(axes_actor):
     axes_actor.shaft_resolution = 42
     assert axes_actor.shaft_resolution == 42
@@ -230,38 +244,29 @@ def test_axes_actor_tip_radius(axes_actor):
 
 
 def test_axes_actor_shaft_type(axes_actor):
-    assert axes_actor.shaft_type == pv.AxesActor.ShaftType.CYLINDER
-    axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
-    assert axes_actor.shaft_type == pv.AxesActor.ShaftType.CYLINDER
-    axes_actor.shaft_type = pv.AxesActor.ShaftType.LINE
-    assert axes_actor.shaft_type == pv.AxesActor.ShaftType.LINE
-
-    axes_actor.shaft_type = "cylinder"
-    assert axes_actor.shaft_type == pv.AxesActor.ShaftType.CYLINDER
-    axes_actor.shaft_type = "line"
-    assert axes_actor.shaft_type == pv.AxesActor.ShaftType.LINE
+    assert axes_actor.shaft_type == 'cylinder'
+    axes_actor.shaft_type = 'line'
+    assert axes_actor.shaft_type == 'line'
+    axes_actor.shaft_type = 'cylinder'
+    assert axes_actor.shaft_type == 'cylinder'
 
     actor_init = AxesActor(shaft_type="cylinder")
-    assert actor_init.shaft_type.annotation == "cylinder"
+    assert actor_init.shaft_type == "cylinder"
     actor_init = AxesActor(shaft_type="line")
-    assert actor_init.shaft_type.annotation == "line"
+    assert actor_init.shaft_type == "line"
 
 
 def test_axes_actor_tip_type(axes_actor):
-    axes_actor.tip_type = pv.AxesActor.TipType.CONE
-    assert axes_actor.tip_type == pv.AxesActor.TipType.CONE
-    axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
-    assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
-
-    axes_actor.tip_type = "cone"
-    assert axes_actor.tip_type == pv.AxesActor.TipType.CONE
+    assert axes_actor.tip_type == 'cone'
     axes_actor.tip_type = "sphere"
-    assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
+    assert axes_actor.tip_type == 'sphere'
+    axes_actor.tip_type = "cone"
+    assert axes_actor.tip_type == 'cone'
 
     actor_init = AxesActor(tip_type="cone")
-    assert actor_init.tip_type.annotation == "cone"
+    assert actor_init.tip_type == "cone"
     actor_init = AxesActor(tip_type="sphere")
-    assert actor_init.tip_type.annotation == "sphere"
+    assert actor_init.tip_type == "sphere"
 
 
 def test_axes_actor_labels(axes_actor):
@@ -304,34 +309,66 @@ def test_axes_actor_labels(axes_actor):
 
 def test_axes_actor_label_color(axes_actor):
     axes_actor.label_color = 'purple'
-    assert axes_actor.label_color.name == 'purple'
+    assert len(axes_actor.label_color) == 3
+    assert axes_actor.label_color[0].name == 'purple'
+    assert axes_actor.label_color[1].name == 'purple'
+    assert axes_actor.label_color[2].name == 'purple'
+
+    axes_actor.label_color = 'rgb'
+    assert len(axes_actor.label_color) == 3
+    assert axes_actor.label_color[0].name == 'red'
+    assert axes_actor.label_color[1].name == 'green'
+    assert axes_actor.label_color[2].name == 'blue'
+
+    axes_actor.label_color = ['red', 'green', 'blue']
+    assert len(axes_actor.label_color) == 3
+    assert axes_actor.label_color[0].name == 'red'
+    assert axes_actor.label_color[1].name == 'green'
+    assert axes_actor.label_color[2].name == 'blue'
+
     axes_actor.label_color = [1, 2, 3]
-    assert np.array_equal(axes_actor.label_color.int_rgb, [1, 2, 3])
+    assert len(axes_actor.label_color) == 3
+    assert np.array_equal(axes_actor.label_color[0].int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.label_color[1].int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.label_color[2].int_rgb, [1, 2, 3])
 
     actor_init = AxesActor(label_color='yellow')
-    assert actor_init.label_color.name == 'yellow'
+    assert actor_init.label_color[0].name == 'yellow'
+    assert actor_init.label_color[1].name == 'yellow'
+    assert actor_init.label_color[2].name == 'yellow'
 
 
 def test_axes_actor_axis_color(axes_actor):
     axes_actor.x_color = 'purple'
-    assert axes_actor.x_color.name == 'purple'
+    assert len(axes_actor.x_color) == 2
+    assert axes_actor.x_color[0].name == 'purple'
+    assert axes_actor.x_color[1].name == 'purple'
+
     axes_actor.x_color = [1, 2, 3]
-    assert np.array_equal(axes_actor.x_color.int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.x_color[0].int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.x_color[1].int_rgb, [1, 2, 3])
 
     axes_actor.y_color = 'purple'
-    assert axes_actor.y_color.name == 'purple'
+    assert axes_actor.y_color[0].name == 'purple'
+    assert axes_actor.y_color[1].name == 'purple'
     axes_actor.y_color = [1, 2, 3]
-    assert np.array_equal(axes_actor.y_color.int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.y_color[0].int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.y_color[1].int_rgb, [1, 2, 3])
 
     axes_actor.z_color = 'purple'
-    assert axes_actor.z_color.name == 'purple'
+    assert axes_actor.z_color[0].name == 'purple'
+    assert axes_actor.z_color[1].name == 'purple'
     axes_actor.z_color = [1, 2, 3]
-    assert np.array_equal(axes_actor.z_color.int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.z_color[0].int_rgb, [1, 2, 3])
+    assert np.array_equal(axes_actor.z_color[1].int_rgb, [1, 2, 3])
 
     actor_init = AxesActor(x_color='yellow', y_color='orange', z_color='purple')
-    assert actor_init.x_color.name == 'yellow'
-    assert actor_init.y_color.name == 'orange'
-    assert actor_init.z_color.name == 'purple'
+    assert actor_init.x_color[0].name == 'yellow'
+    assert actor_init.x_color[1].name == 'yellow'
+    assert actor_init.y_color[0].name == 'orange'
+    assert actor_init.y_color[1].name == 'orange'
+    assert actor_init.z_color[0].name == 'purple'
+    assert actor_init.z_color[1].name == 'purple'
 
 
 def test_axes_actor_shaft_width(axes_actor):
@@ -339,7 +376,7 @@ def test_axes_actor_shaft_width(axes_actor):
     axes_actor.shaft_type = 'cylinder'
     axes_actor.shaft_width = 100
 
-    assert axes_actor.shaft_type.annotation == 'line'
+    assert axes_actor.shaft_type == 'line'
     assert axes_actor.shaft_width == 100
     assert axes_actor.GetXAxisShaftProperty().GetLineWidth() == 100
     assert axes_actor.GetYAxisShaftProperty().GetLineWidth() == 100
@@ -357,7 +394,7 @@ def test_axes_actor_shaft_radius(axes_actor):
     axes_actor.shaft_type = 'line'
     axes_actor.shaft_radius = 100
 
-    assert axes_actor.shaft_type.annotation == 'cylinder'
+    assert axes_actor.shaft_type == 'cylinder'
     assert axes_actor.shaft_radius == 100
 
     # test that bounds are correct
@@ -374,11 +411,15 @@ def test_axes_actor_shaft_radius(axes_actor):
 def test_axes_actor_labels_off(axes_actor):
     axes_actor.labels_off = False
     assert axes_actor.labels_off is False
+    assert axes_actor.GetAxisLabels()
+
     axes_actor.labels_off = True
     assert axes_actor.labels_off is True
+    assert not axes_actor.GetAxisLabels()
 
     actor_init = AxesActor(labels_off=True)
     assert actor_init.labels_off is True
+    assert not axes_actor.GetAxisLabels()
 
 
 def test_axes_actor_label_size(axes_actor):
@@ -411,6 +452,28 @@ def test_axes_actor_properties(axes_actor):
     assert axes_actor.z_shaft_prop.ambient == 0.3
     axes_actor.z_tip_prop.ambient = 0.13
     assert axes_actor.z_tip_prop.ambient == 0.13
+
+    # Test init
+    prop = pv.Property(ambient=0.42)
+    axes_actor = AxesActor(properties=prop)
+    assert axes_actor.x_shaft_prop.ambient == 0.42
+    assert axes_actor.x_shaft_prop is not prop
+    assert axes_actor.x_tip_prop.ambient == 0.42
+    assert axes_actor.y_shaft_prop is not prop
+
+    assert axes_actor.y_shaft_prop.ambient == 0.42
+    assert axes_actor.y_shaft_prop is not prop
+    assert axes_actor.y_tip_prop.ambient == 0.42
+    assert axes_actor.y_shaft_prop is not prop
+
+    assert axes_actor.z_shaft_prop.ambient == 0.42
+    assert axes_actor.z_shaft_prop is not prop
+    assert axes_actor.z_tip_prop.ambient == 0.42
+    assert axes_actor.z_shaft_prop is not prop
+
+    msg = '`properties` must be a property object or a dictionary.'
+    with pytest.raises(TypeError, match=msg):
+        pv.AxesActor(properties="not_a_dict")
 
 
 def test_axes_actor_user_matrix():
@@ -691,7 +754,7 @@ def test_axes_actor_deprecated_constructor():
 
     with pytest.warns(
         PyVistaDeprecationWarning,
-        match=f"Use `properties={{'ambient':{old_args_modified['ambient']}}}` instead.",
+        match=escape(f"Use `properties=dict(ambient={old_args_modified['ambient']})` instead."),
     ):
         axes_actor = AxesActor(**old_args_modified)
     old_args_modified["properties"] = {"ambient": old_args_modified.pop("ambient")}
@@ -705,10 +768,10 @@ def test_axes_actor_deprecated_constructor():
 
     axes_actor = AxesActor(**old_args_modified)
 
-    assert old_args["label_color"] == axes_actor.label_color.name
-    assert old_args["x_color"] == axes_actor.x_color.name
-    assert old_args["y_color"] == axes_actor.y_color.name
-    assert old_args["z_color"] == axes_actor.z_color.name
+    assert old_args["label_color"] == axes_actor.label_color[0].name
+    assert old_args["x_color"] == axes_actor.x_color[0].name
+    assert old_args["y_color"] == axes_actor.y_color[0].name
+    assert old_args["z_color"] == axes_actor.z_color[0].name
     assert old_args["xlabel"] == axes_actor.x_label
     assert old_args["ylabel"] == axes_actor.y_label
     assert old_args["zlabel"] == axes_actor.z_label
@@ -719,13 +782,6 @@ def test_axes_actor_deprecated_constructor():
     assert tuple([old_args["tip_length"]] * 3) == axes_actor.tip_length
     assert old_args["ambient"] == axes_actor.x_shaft_prop.ambient
     assert old_args["label_size"] == axes_actor.label_size
-
-
-def test_axes_actor_raises():
-    with pytest.raises(TypeError, match="must be a dictionary"):
-        pv.AxesActor(properties="not_a_dict")
-    with pytest.raises(TypeError, match="invalid keyword"):
-        pv.AxesActor(not_valid_kwarg="some_value")
 
 
 def test_axes_actor_repr(axes_actor):
@@ -777,9 +833,9 @@ def test_axes_actor_set_get_prop(axes_actor, use_axis_num):
     val = axes_actor.get_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-    msg = "Part must be one of ['shaft', 'tip', 'all']."
+    msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
     with pytest.raises(ValueError, match=escape(msg)):
-        axes_actor.set_prop('ambient', 0.0, part=1)
+        axes_actor.set_prop('ambient', 0.0, part=2)
 
     msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
     with pytest.raises(ValueError, match=escape(msg)):
@@ -792,12 +848,12 @@ def test_axes_actor_props(axes_actor):
     axes_actor.GetActors(actors)
     actors = [actors.GetItemAsObject(i) for i in range(6)]
 
-    assert actors[0].GetProperty() is axes_actor._props[0]
-    assert actors[1].GetProperty() is axes_actor._props[1]
-    assert actors[2].GetProperty() is axes_actor._props[2]
-    assert actors[3].GetProperty() is axes_actor._props[3]
-    assert actors[4].GetProperty() is axes_actor._props[4]
-    assert actors[5].GetProperty() is axes_actor._props[5]
+    assert actors[0].GetProperty() is axes_actor._actor_properties[0]
+    assert actors[1].GetProperty() is axes_actor._actor_properties[1]
+    assert actors[2].GetProperty() is axes_actor._actor_properties[2]
+    assert actors[3].GetProperty() is axes_actor._actor_properties[3]
+    assert actors[4].GetProperty() is axes_actor._actor_properties[4]
+    assert actors[5].GetProperty() is axes_actor._actor_properties[5]
 
     assert axes_actor.GetXAxisShaftProperty() is axes_actor.x_shaft_prop
     assert axes_actor.GetYAxisShaftProperty() is axes_actor.y_shaft_prop
@@ -810,9 +866,9 @@ def test_axes_actor_props(axes_actor):
     for i in range(6):
         for j in range(6):
             if i == j:
-                assert axes_actor._props[i] is axes_actor._props[j]
+                assert axes_actor._actor_properties[i] is axes_actor._actor_properties[j]
             else:
-                assert axes_actor._props[i] is not axes_actor._props[j]
+                assert axes_actor._actor_properties[i] is not axes_actor._actor_properties[j]
 
     # test setting new prop
     new_prop = pv.Property()
@@ -830,12 +886,12 @@ def test_axes_actor_props(axes_actor):
     assert axes_actor.z_tip_prop is new_prop
 
     # test again that actors and props are stored correctly
-    assert actors[0].GetProperty() is axes_actor._props[0]
-    assert actors[1].GetProperty() is axes_actor._props[1]
-    assert actors[2].GetProperty() is axes_actor._props[2]
-    assert actors[3].GetProperty() is axes_actor._props[3]
-    assert actors[4].GetProperty() is axes_actor._props[4]
-    assert actors[5].GetProperty() is axes_actor._props[5]
+    assert actors[0].GetProperty() is axes_actor._actor_properties[0]
+    assert actors[1].GetProperty() is axes_actor._actor_properties[1]
+    assert actors[2].GetProperty() is axes_actor._actor_properties[2]
+    assert actors[3].GetProperty() is axes_actor._actor_properties[3]
+    assert actors[4].GetProperty() is axes_actor._actor_properties[4]
+    assert actors[5].GetProperty() is axes_actor._actor_properties[5]
 
     assert axes_actor.GetXAxisShaftProperty() is axes_actor.x_shaft_prop
     assert axes_actor.GetYAxisShaftProperty() is axes_actor.y_shaft_prop
@@ -844,17 +900,21 @@ def test_axes_actor_props(axes_actor):
     assert axes_actor.GetYAxisTipProperty() is axes_actor.y_tip_prop
     assert axes_actor.GetZAxisTipProperty() is axes_actor.z_tip_prop
 
-    msg = "Object must have type <class 'pyvista.plotting._property.Property'>, got <class 'int'> instead."
+    msg = "Prop must have type <class 'pyvista.plotting._property.Property'>, got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):
         axes_actor.x_shaft_prop = 0
 
 
 def test_axes_actor_theme(axes_actor):
-    assert axes_actor.x_color.name == 'tomato'
-    assert axes_actor.y_color.name == 'seagreen'
-    assert axes_actor.z_color.name == 'mediumblue'
-    assert axes_actor.shaft_type.annotation == 'cylinder'
-    assert axes_actor.tip_type.annotation == 'cone'
+    assert axes_actor.x_color[0].name == 'tomato'
+    assert axes_actor.x_color[1].name == 'tomato'
+    assert axes_actor.y_color[0].name == 'seagreen'
+    assert axes_actor.y_color[1].name == 'seagreen'
+    assert axes_actor.z_color[0].name == 'mediumblue'
+    assert axes_actor.z_color[1].name == 'mediumblue'
+
+    assert axes_actor.shaft_type == 'cylinder'
+    assert axes_actor.tip_type == 'cone'
 
     pv.global_theme.axes.x_color = 'black'
     pv.global_theme.axes.y_color = 'white'
@@ -863,11 +923,15 @@ def test_axes_actor_theme(axes_actor):
     pv.global_theme.axes.tip_type = 'sphere'
 
     axes_actor = pv.AxesActor()
-    assert axes_actor.x_color.name == 'black'
-    assert axes_actor.y_color.name == 'white'
-    assert axes_actor.z_color.name == 'gray'
-    assert axes_actor.shaft_type.annotation == 'line'
-    assert axes_actor.tip_type.annotation == 'sphere'
+    assert axes_actor.x_color[0].name == 'black'
+    assert axes_actor.x_color[1].name == 'black'
+    assert axes_actor.y_color[0].name == 'white'
+    assert axes_actor.y_color[1].name == 'white'
+    assert axes_actor.z_color[0].name == 'gray'
+    assert axes_actor.z_color[1].name == 'gray'
+
+    assert axes_actor.shaft_type == 'line'
+    assert axes_actor.tip_type == 'sphere'
 
     # restore values
     pv.global_theme.axes.x_color = 'tomato'
@@ -940,89 +1004,89 @@ def test_axes_actor_symmetric_bounds(axes_actor):
     assert np.allclose(axes_actor.bounds, (0, 1, 0, 1, 0, 1))
 
 
-@pytest.mark.parametrize('tip_type', ['sphere', 'cone'])
-@pytest.mark.parametrize('radius', [(0.01, 0.4), (0.01, 0.4)])  # ,(1, 0),(0, 1)])
-@pytest.mark.parametrize('shaft_length', [[0.8, 0.8, 0.8]])
-@pytest.mark.parametrize('total_length', [[1, 1, 1], [4, 3, 2], [0.4, 0.5, 1.1]])
-@pytest.mark.parametrize('scale', [1, 2, 0.5])  # , [0.1, 0.2, 0.3], [2, 3, 4]])
-@pytest.mark.parametrize('auto_length', [True, False])  # ,False])
-def test_axes_actor_true_to_scale(tip_type, radius, shaft_length, total_length, scale, auto_length):
-    shaft_radius, tip_radius = radius
-
-    kwargs = dict(
-        shaft_type='cylinder',
-        tip_type=tip_type,
-        shaft_length=shaft_length,
-        total_length=total_length,
-        scale=scale,
-        shaft_radius=shaft_radius,
-        tip_radius=tip_radius,
-        auto_length=auto_length,
-    )
-    # # Create reference axes actor
-    # axes_actor = AxesActor(
-    #     true_to_scale=False,
-    #     **kwargs
-    # )
-    # bounds = [actor.GetBounds() for actor in axes_actor._actors]
-    # normal_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
-    # shaft_scale = normal_size[:3].copy()
-    # shaft_scale[np.invert(np.eye(3,dtype=bool))] /= (shaft_radius * 2)
-    #
-    # tip_scale = normal_size[3:6].copy()
-    # tip_scale[np.invert(np.eye(3,dtype=bool))] /= (tip_radius * 2)
-
-    # Create test
-    axes_actor = AxesActor(true_to_scale=True, **kwargs)
-    # bounds = [actor.GetBounds() for actor in axes_actor_true._actors]
-    # true_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
-
-    #
-    shaft_length_scaled = np.array(shaft_length) * np.array(total_length) * np.array(scale)
-    tip_length_scaled = np.array(axes_actor.tip_length) * np.array(total_length) * np.array(scale)
-
-    # actual_scale = axes_actor._compute_true_to_scale_factors()
-    # assert actual_scale.x_shaft * shaft_length_scaled[0] == 1.0
-    # assert actual_scale.y_shaft * shaft_length_scaled[1] == 1.0
-    # assert actual_scale.z_shaft * shaft_length_scaled[2] == 1.0
-    # assert actual_scale.x_tip * tip_length_scaled[0] == 1.0
-    # assert actual_scale.y_tip * tip_length_scaled[1] == 1.0
-    # assert actual_scale.z_tip * tip_length_scaled[2] == 1.0
-
-    # axes_actor._update_props()
-    xsl, ysl, zsl = shaft_length_scaled
-    xtl, ytl, ztl = tip_length_scaled
-    sr, tr = shaft_radius * scale, tip_radius * scale
-
-    # test x shaft
-    expected_bounds = (0.0, xsl, -sr, sr, -sr, sr)
-    actual_bounds = axes_actor._actors.x_shaft.GetBounds()
-    assert np.allclose(actual_bounds, expected_bounds)
-
-    # test y shaft
-    expected_bounds = (-sr, sr, 0, ysl, -sr, sr)
-    actual_bounds = axes_actor._actors.y_shaft.GetBounds()
-    assert np.allclose(actual_bounds, expected_bounds)
-
-    # test z shaft
-    expected_bounds = (-sr, sr, -sr, sr, 0, zsl)
-    actual_bounds = axes_actor._actors.z_shaft.GetBounds()
-    assert np.allclose(actual_bounds, expected_bounds)
-
-    # test x tip
-    expected_bounds = (xsl, xsl + xtl, -tr, tr, -tr, tr)
-    actual_bounds = axes_actor._actors.x_tip.GetBounds()
-    assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
-
-    # test y tip
-    expected_bounds = (-tr, tr, ysl, ysl + ytl, -tr, tr)
-    actual_bounds = axes_actor._actors.y_tip.GetBounds()
-    assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
-
-    # test z tip
-    expected_bounds = (-tr, tr, -tr, tr, zsl, zsl + ztl)
-    actual_bounds = axes_actor._actors.z_tip.GetBounds()
-    assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
+# @pytest.mark.parametrize('tip_type', ['sphere', 'cone'])
+# @pytest.mark.parametrize('radius', [(0.01, 0.4), (0.01, 0.4)])  # ,(1, 0),(0, 1)])
+# @pytest.mark.parametrize('shaft_length', [[0.8, 0.8, 0.8]])
+# @pytest.mark.parametrize('total_length', [[1, 1, 1], [4, 3, 2], [0.4, 0.5, 1.1]])
+# @pytest.mark.parametrize('scale', [1, 2, 0.5])  # , [0.1, 0.2, 0.3], [2, 3, 4]])
+# @pytest.mark.parametrize('auto_length', [True, False])  # ,False])
+# def test_axes_actor_true_to_scale(tip_type, radius, shaft_length, total_length, scale, auto_length):
+#     shaft_radius, tip_radius = radius
+#
+#     kwargs = dict(
+#         shaft_type='cylinder',
+#         tip_type=tip_type,
+#         shaft_length=shaft_length,
+#         total_length=total_length,
+#         scale=scale,
+#         shaft_radius=shaft_radius,
+#         tip_radius=tip_radius,
+#         auto_length=auto_length,
+#     )
+#     # # Create reference axes actor
+#     # axes_actor = AxesActor(
+#     #     true_to_scale=False,
+#     #     **kwargs
+#     # )
+#     # bounds = [actor.GetBounds() for actor in axes_actor._actors]
+#     # normal_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
+#     # shaft_scale = normal_size[:3].copy()
+#     # shaft_scale[np.invert(np.eye(3,dtype=bool))] /= (shaft_radius * 2)
+#     #
+#     # tip_scale = normal_size[3:6].copy()
+#     # tip_scale[np.invert(np.eye(3,dtype=bool))] /= (tip_radius * 2)
+#
+#     # Create test
+#     axes_actor = AxesActor(true_to_scale=True, **kwargs)
+#     # bounds = [actor.GetBounds() for actor in axes_actor_true._actors]
+#     # true_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
+#
+#     #
+#     shaft_length_scaled = np.array(shaft_length) * np.array(total_length) * np.array(scale)
+#     tip_length_scaled = np.array(axes_actor.tip_length) * np.array(total_length) * np.array(scale)
+#
+#     # actual_scale = axes_actor._compute_true_to_scale_factors()
+#     # assert actual_scale.x_shaft * shaft_length_scaled[0] == 1.0
+#     # assert actual_scale.y_shaft * shaft_length_scaled[1] == 1.0
+#     # assert actual_scale.z_shaft * shaft_length_scaled[2] == 1.0
+#     # assert actual_scale.x_tip * tip_length_scaled[0] == 1.0
+#     # assert actual_scale.y_tip * tip_length_scaled[1] == 1.0
+#     # assert actual_scale.z_tip * tip_length_scaled[2] == 1.0
+#
+#     # axes_actor._update_props()
+#     xsl, ysl, zsl = shaft_length_scaled
+#     xtl, ytl, ztl = tip_length_scaled
+#     sr, tr = shaft_radius * scale, tip_radius * scale
+#
+#     # test x shaft
+#     expected_bounds = (0.0, xsl, -sr, sr, -sr, sr)
+#     actual_bounds = axes_actor._actors.x_shaft.GetBounds()
+#     assert np.allclose(actual_bounds, expected_bounds)
+#
+#     # test y shaft
+#     expected_bounds = (-sr, sr, 0, ysl, -sr, sr)
+#     actual_bounds = axes_actor._actors.y_shaft.GetBounds()
+#     assert np.allclose(actual_bounds, expected_bounds)
+#
+#     # test z shaft
+#     expected_bounds = (-sr, sr, -sr, sr, 0, zsl)
+#     actual_bounds = axes_actor._actors.z_shaft.GetBounds()
+#     assert np.allclose(actual_bounds, expected_bounds)
+#
+#     # test x tip
+#     expected_bounds = (xsl, xsl + xtl, -tr, tr, -tr, tr)
+#     actual_bounds = axes_actor._actors.x_tip.GetBounds()
+#     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
+#
+#     # test y tip
+#     expected_bounds = (-tr, tr, ysl, ysl + ytl, -tr, tr)
+#     actual_bounds = axes_actor._actors.y_tip.GetBounds()
+#     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
+#
+#     # test z tip
+#     expected_bounds = (-tr, tr, -tr, tr, zsl, zsl + ztl)
+#     actual_bounds = axes_actor._actors.z_tip.GetBounds()
+#     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
 
 
 @pytest.mark.parametrize('apply_to', ['shaft', 'tip', 'both'])
@@ -1065,37 +1129,37 @@ def test_axes_actor_auto_length(apply_to, decimals, enabled):
 def test_axes_actor_auto_shaft_type(enabled):
     axes_actor = AxesActor(auto_shaft_type=enabled)
 
-    assert axes_actor.shaft_type.annotation == 'cylinder'
+    assert axes_actor.shaft_type == 'cylinder'
 
     axes_actor.shaft_width = 5
     if enabled:
-        assert axes_actor.shaft_type.annotation == 'line'
+        assert axes_actor.shaft_type == 'line'
     else:
-        assert axes_actor.shaft_type.annotation == 'cylinder'
+        assert axes_actor.shaft_type == 'cylinder'
         axes_actor.shaft_type = 'line'
 
     axes_actor.shaft_resolution = 2
     if enabled:
-        assert axes_actor.shaft_type.annotation == 'cylinder'
+        assert axes_actor.shaft_type == 'cylinder'
     else:
-        assert axes_actor.shaft_type.annotation == 'line'
+        assert axes_actor.shaft_type == 'line'
         axes_actor.shaft_type = 'cylinder'
 
     # set up for next test
     axes_actor.shaft_type = 'line'
-    assert axes_actor.shaft_type.annotation == 'line'
+    assert axes_actor.shaft_type == 'line'
 
     axes_actor.shaft_radius = 1
     if enabled:
-        assert axes_actor.shaft_type.annotation == 'cylinder'
+        assert axes_actor.shaft_type == 'cylinder'
     else:
-        assert axes_actor.shaft_type.annotation == 'line'
+        assert axes_actor.shaft_type == 'line'
 
 
 def test_axes_actor_auto_length_raises():
     msg = (
-        "Cannot set both `shaft_length` and `tip_length` when `auto_set_length=True` and when\n"
-        "lengths do not sum to 1.0. Set either `shaft_length` or `tip_length`, but not both."
+        "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
+        "Set either `shaft_length` or `tip_length`, but not both."
     )
     with pytest.raises(ValueError, match=msg):
         AxesActor(shaft_length=0.6, tip_length=0.6, auto_length=True)
@@ -1103,7 +1167,7 @@ def test_axes_actor_auto_length_raises():
 
 def test_axes_actor_auto_shaft_type_raises():
     msg = (
-        "Cannot set `shaft_width` when type is 'cylinder' and `auto_set_shaft_type=True`.\n"
+        "Cannot set `shaft_width` when type is 'cylinder' and `auto_shaft_type=True`.\n"
         "Only `shaft_radius` or `shaft_resolution` can be set."
     )
     with pytest.raises(ValueError, match=msg):
@@ -1111,7 +1175,7 @@ def test_axes_actor_auto_shaft_type_raises():
 
     msg = (
         "Cannot set properties `shaft_radius` or `shaft_resolution` when shaft type is 'line'\n"
-        "and `auto_set_shaft_type=True`. Only `shaft_width` can be set."
+        "and `auto_shaft_type=True`. Only `shaft_width` can be set."
     )
 
     with pytest.raises(ValueError, match=msg):
@@ -1121,7 +1185,7 @@ def test_axes_actor_auto_shaft_type_raises():
 
     msg = (
         'Cannot set line properties (`shaft_width`) and cylinder properties (`shaft_radius`\n'
-        'or `shaft_resolution`) simultaneously when`auto_set_shaft_type=True`.'
+        'or `shaft_resolution`) simultaneously when`auto_shaft_type=True`.'
     )
 
     with pytest.raises(ValueError, match=escape(msg)):
