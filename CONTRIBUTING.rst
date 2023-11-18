@@ -1,6 +1,16 @@
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|Contributor Covenant|
+|codetriage|
+
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
 important to note that the PyVista software package is maintained on a
@@ -35,6 +45,13 @@ running:
 
 Quick Start Development with Codespaces
 ---------------------------------------
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
+|Open in GitHub Codespaces|
+
 A dev container is provided to quickly get started. The default container
 comes with the repository code checked out on a branch of your choice
 and all pyvista dependencies including test dependencies pre-installed.
@@ -370,6 +387,9 @@ directive.
 
 .. code:: python
 
+    import warnings
+    from pyvista.core.errors import PyVistaDeprecationWarning
+
     def addition(a, b):
         """Add two numbers.
 
@@ -391,8 +411,9 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        PyVistaDeprecationWarning(
-            '`addition` has been deprecated. Use pyvista.add instead'
+        warnings.warn(
+            '`addition` has been deprecated. Use pyvista.add instead',
+            PyVistaDeprecationWarning
         )
         add(a, b)
 

@@ -325,7 +325,7 @@ class AffineWidget3D:
         # Scale by twice actor length (experimentally determined for good UX)
         return world_coords[:3] * self._actor_length * 2
 
-    def _move_callback(self, interactor, event):
+    def _move_callback(self, interactor, _event):
         """Process actions for the move mouse event."""
         click_x, click_y = interactor.GetEventPosition()
         click_z = 0
@@ -396,7 +396,7 @@ class AffineWidget3D:
                 self._selected_actor = actor
         self._pl.render()
 
-    def _press_callback(self, interactor, event):
+    def _press_callback(self, interactor, _event):
         """Process actions for the mouse button press event."""
         if self._selected_actor:
             self._pl.enable_trackball_actor_style()
@@ -406,7 +406,7 @@ class AffineWidget3D:
             else:
                 self.init_position = self._get_world_coord_trans(interactor)
 
-    def _release_callback(self, interactor, event):
+    def _release_callback(self, _interactor, _event):
         """Process actions for the mouse button release event."""
         self._pl.enable_trackball_style()
         self._pressing_down = False
@@ -484,10 +484,10 @@ class AffineWidget3D:
             "MouseMoveEvent", self._move_callback
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent", self._press_callback
+            "LeftButtonPressEvent", self._press_callback, interactor_style_fallback=False
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent", self._release_callback
+            "LeftButtonReleaseEvent", self._release_callback, interactor_style_fallback=False
         )
 
     def disable(self):

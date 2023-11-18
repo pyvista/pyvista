@@ -1,9 +1,10 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
+aiohttp==3.9.0rc0 ; python_version=="3.12"  # needed until aiohttp 3.9.0 is released
 cmocean<3.1
 colorcet<3.1.0
-hypothesis<6.87.4
+hypothesis<6.88.2
 imageio<2.32.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
@@ -11,7 +12,7 @@ ipywidgets<9.0.0
 meshio<5.4.0
 nest_asyncio<1.5.9
 numpydoc==1.6.0
-param<1.14.0
+param<2.1.0
 pytest<7.5.0
 pytest-cov<4.2.0
 pytest-memprof<0.3.0
