@@ -237,9 +237,15 @@ class Property(_vtk.vtkProperty):
         self.line_width = line_width
         if culling is not None:
             self.culling = culling
+        if vtk_version_info < (9, 3) and edge_opacity is not None:
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError(
+                "`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+            )
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
-        self.edge_opacity = edge_opacity
+        if not vtk_version_info < (9, 3):
+            self.edge_opacity = edge_opacity
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01
