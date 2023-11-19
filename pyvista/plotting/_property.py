@@ -439,9 +439,9 @@ class Property(_vtk.vtkProperty):
         >>> prop.edge_opacity = 1.0
         >>> prop.plot()
 
-        Visualize opacity of ``0.1``.
+        Visualize edge opacity of ``0.1``.
 
-        >>> prop.opacity = 0.1
+        >>> prop.edge_opacity = 0.1
         >>> prop.plot()
 
         """
