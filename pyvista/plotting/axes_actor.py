@@ -18,16 +18,18 @@ from pyvista.plotting.actor_properties import ActorProperties
 from pyvista.plotting.colors import Color, ColorLike
 from pyvista.plotting.prop3d import Prop3D
 
-AxesTuple = namedtuple('AxesTuple', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
-PartTuple = namedtuple('PartTuple', ['shaft', 'tip'])
+AxesPropTuple = namedtuple(
+    'AxesPropTuple', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+)
+AxisPartTuple = namedtuple('AxisPartTuple', ['shaft', 'tip'])
 Tuple3D = namedtuple('Tuple3D', ['x', 'y', 'z'])
 
 
 def _as_nested(obj: Sequence[Any]) -> Tuple3D:
     return Tuple3D(
-        x=PartTuple(shaft=obj[0], tip=obj[3]),
-        y=PartTuple(shaft=obj[1], tip=obj[4]),
-        z=PartTuple(shaft=obj[2], tip=obj[5]),
+        x=AxisPartTuple(shaft=obj[0], tip=obj[3]),
+        y=AxisPartTuple(shaft=obj[1], tip=obj[4]),
+        z=AxisPartTuple(shaft=obj[2], tip=obj[5]),
     )
 
 
@@ -208,7 +210,7 @@ class _AxesProp(ABC, _vtk.vtkProp):
 
     @property
     @abstractmethod
-    def _actors(self) -> AxesTuple:
+    def _actors(self) -> AxesPropTuple:
         """Return initialized actors."""
         ...
 
@@ -231,8 +233,8 @@ class _AxesProp(ABC, _vtk.vtkProp):
         ...
 
     @property
-    def _actor_properties(self) -> AxesTuple:
-        return AxesTuple(*[actor.GetProperty() for actor in self._actors])
+    def _actor_properties(self) -> AxesPropTuple:
+        return AxesPropTuple(*[actor.GetProperty() for actor in self._actors])
 
     @property
     def _actor_properties_nested(self) -> Tuple3D:
@@ -909,7 +911,7 @@ class _AxesProp(ABC, _vtk.vtkProp):
 
         """
         props = [getattr(prop, name) for prop in self._actor_properties]
-        return AxesTuple(*props)
+        return AxesPropTuple(*props)
 
     def _filter_prop_objects(self, axis: Union[str, int] = 'all', part: Union[str, int] = 'all'):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
@@ -1026,7 +1028,7 @@ class _AxesProp(ABC, _vtk.vtkProp):
         prop = self._actor_properties_nested[axis]
         shaft = Color(color=prop.shaft.color, opacity=prop.shaft.opacity)
         tip = Color(color=prop.tip.color, opacity=prop.tip.opacity)
-        return PartTuple(shaft, tip)
+        return AxisPartTuple(shaft, tip)
 
     def _set_axis_color(self, axis, color):
         if color is None:
@@ -1632,10 +1634,10 @@ class AxesActor(_AxesProp, Prop3D, _vtk.vtkAxesActor):
         return '\n'.join(attr)
 
     @property
-    def _actors(self) -> AxesTuple:
+    def _actors(self) -> AxesPropTuple:
         collection = _vtk.vtkPropCollection()
         self.GetActors(collection)
-        return AxesTuple(*(collection.GetItemAsObject(i) for i in range(6)))
+        return AxesPropTuple(*(collection.GetItemAsObject(i) for i in range(6)))
 
     @property
     def _label_actors(self) -> Tuple3D:
@@ -2754,7 +2756,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkPropAssembly):
         # Init actors
 
         # Use pyvista namespace to avoid circular import
-        self.__actors = AxesTuple(*[pyvista.Actor() for _ in range(6)])
+        self.__actors = AxesPropTuple(*[pyvista.Actor() for _ in range(6)])
         self.__label_actors = Tuple3D(
             x=_vtk.vtkCaptionActor2D(),
             y=_vtk.vtkCaptionActor2D(),
@@ -2767,7 +2769,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkPropAssembly):
         super().__init__()
 
     @property
-    def _actors(self) -> AxesTuple:
+    def _actors(self) -> AxesPropTuple:
         return self.__actors
 
     @property
@@ -2777,17 +2779,17 @@ class AxesAssembly(_AxesProp, _vtk.vtkPropAssembly):
     @property
     def _label_setters(self) -> Tuple3D:
         return Tuple3D(
-            x=lambda val: self._label_actors.x.SetInput(val),
-            y=lambda val: self._label_actors.y.SetInput(val),
-            z=lambda val: self._label_actors.z.SetInput(val),
+            x=lambda val: self._label_actors.x.SetCaption(val),
+            y=lambda val: self._label_actors.y.SetCaption(val),
+            z=lambda val: self._label_actors.z.SetCaption(val),
         )
 
     @property
     def _label_getters(self) -> Tuple3D:
         return Tuple3D(
-            x=self._label_actors.x.GetInput(),
-            y=self._label_actors.y.GetInput(),
-            z=self._label_actors.z.GetInput(),
+            x=self._label_actors.x.GetCaption(),
+            y=self._label_actors.y.GetCaption(),
+            z=self._label_actors.z.GetCaption(),
         )
 
     # @property
