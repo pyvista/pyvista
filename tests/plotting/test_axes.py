@@ -1190,3 +1190,8 @@ def test_axes_actor_auto_shaft_type_raises():
 
     with pytest.raises(ValueError, match=escape(msg)):
         AxesActor(shaft_resolution=1, shaft_width=5)
+
+
+def test_axes_assembly():
+    axes = pv.AxesAssembly()
+    assert axes
