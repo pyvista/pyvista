@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from functools import wraps
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 import warnings
 
 import numpy as np
@@ -26,6 +26,7 @@ Tuple3D = namedtuple('Tuple3D', ['x', 'y', 'z'])
 
 
 def _as_nested(obj: Sequence[Any]) -> Tuple3D:
+    """Reshape length-6 shaft and tip sequence as a 3D tuple with nested shaft and tip items."""
     return Tuple3D(
         x=AxisPartTuple(shaft=obj[0], tip=obj[3]),
         y=AxisPartTuple(shaft=obj[1], tip=obj[4]),
@@ -65,9 +66,11 @@ class _AxesProp(ABC, Prop3D):
         shaft_type,
         shaft_radius,
         shaft_length,
+        shaft_resolution,
         tip_type,
         tip_radius,
         tip_length,
+        tip_resolution,
         total_length,
         position,
         orientation,
@@ -127,8 +130,10 @@ class _AxesProp(ABC, Prop3D):
         self.label_position = _set_default(label_position, 1.0)
         self.shaft_type = shaft_type
         self.shaft_radius = _set_default(shaft_radius, 0.01)
+        self.shaft_resolution = _set_default(shaft_resolution, 16)
         self.tip_type = tip_type
         self.tip_radius = _set_default(tip_radius, 0.4)
+        self.tip_resolution = _set_default(tip_resolution, 16)
         self.total_length = _set_default(total_length, 1.0)
 
         self.position = _set_default(position, (0.0, 0.0, 0.0))
@@ -415,10 +420,11 @@ class _AxesProp(ABC, Prop3D):
 
             self._tip_length = calc(length[0]), calc(length[1]), calc(length[2])
 
-    # @property
-    # @abstractmethod
-    # def _shaft_length(self):
-    #     ...
+    @property
+    def _true_shaft_length(self):
+        shaft = self._shaft_length
+        total = self._total_length
+        return shaft[0] * total[0], shaft[1] * total[1], shaft[2] * total[2]
 
     @property
     def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -464,10 +470,11 @@ class _AxesProp(ABC, Prop3D):
 
             self._shaft_length = calc(length[0]), calc(length[1]), calc(length[2])
 
-    # @property
-    # @abstractmethod
-    # def _tip_length(self):
-    #     ...
+    @property
+    def _true_tip_length(self):
+        tip = self._tip_length
+        total = self._total_length
+        return tip[0] * total[0], tip[1] * total[1], tip[2] * total[2]
 
     @property
     def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -604,6 +611,70 @@ class _AxesProp(ABC, Prop3D):
     # @property
     # @abstractmethod
     # def _shaft_radius(self):
+    #     ...
+
+    @property
+    def tip_resolution(self) -> int:  # numpydoc ignore=RT01
+        """Resolution of the axes tips.
+
+        Value must be a positive integer.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.tip_resolution
+        16
+        >>> axes_actor.tip_resolution = 24
+        >>> axes_actor.tip_resolution
+        24
+
+        """
+        # Get cone resolution and assume value is the same for sphere
+        return self._tip_resolution
+
+    @tip_resolution.setter
+    def tip_resolution(self, resolution: int):  # numpydoc ignore=GL08
+        _check_range(resolution, (0, float('inf')), 'tip_resolution')
+        self._tip_resolution = resolution
+
+    # @property
+    # @abstractmethod
+    # def _tip_resolution(self):
+    #     ...
+
+    @property
+    def shaft_resolution(self) -> int:  # numpydoc ignore=RT01
+        """Resolution of the axes shafts.
+
+        Value must be a positive integer.
+
+        Notes
+        -----
+        Setting this property will automatically change the :attr:`shaft_type` to
+        ``'cylinder'`` if :attr:`auto_shaft_type` is ``True``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.shaft_resolution
+        16
+        >>> axes_actor.shaft_resolution = 24
+        >>> axes_actor.shaft_resolution
+        24
+
+        """
+        return self._shaft_resolution
+
+    @shaft_resolution.setter
+    def shaft_resolution(self, resolution: int):  # numpydoc ignore=GL08
+        _check_range(resolution, (0, float('inf')), 'shaft_resolution')
+        self._shaft_resolution = resolution
+
+    # @property
+    # @abstractmethod
+    # def _shaft_resolution(self):
     #     ...
 
     @property
@@ -1530,9 +1601,11 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             shaft_type=shaft_type,
             shaft_radius=shaft_radius,
             shaft_length=shaft_length,
+            shaft_resolution=shaft_resolution,
             tip_type=tip_type,
             tip_radius=tip_radius,
             tip_length=tip_length,
+            tip_resolution=tip_resolution,
             total_length=total_length,
             position=position,
             orientation=orientation,
@@ -1556,8 +1629,6 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         # Init non-interfaced geometry props
         self.label_size = label_size
         self.shaft_width = _set_default(shaft_width, 2.0)
-        self.shaft_resolution = _set_default(shaft_resolution, 16)
-        self.tip_resolution = _set_default(tip_resolution, 16)
 
         # Set auto shaft type params
         shaft_type_set = False if shaft_type is None else True
@@ -1953,7 +2024,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             actor.SetHeight(size[1])
 
     @property
-    def tip_resolution(self) -> int:  # numpydoc ignore=RT01
+    def _tip_resolution(self) -> int:  # numpydoc ignore=RT01
         """Resolution of the axes tips.
 
         Value must be a positive integer.
@@ -1972,11 +2043,10 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         # Get cone resolution and assume value is the same for sphere
         return self.GetConeResolution()
 
-    @tip_resolution.setter
-    def tip_resolution(self, resolution: int):  # numpydoc ignore=GL08
+    @_tip_resolution.setter
+    def _tip_resolution(self, resolution: int):  # numpydoc ignore=GL08
         self.SetConeResolution(resolution)
         self.SetSphereResolution(resolution)
-        _check_range(resolution, (1, float('inf')), 'tip_resolution')
 
     @property
     def cone_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -2029,7 +2099,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         self.tip_resolution = resolution
 
     @property
-    def shaft_resolution(self) -> int:  # numpydoc ignore=RT01
+    def _shaft_resolution(self) -> int:  # numpydoc ignore=RT01
         """Resolution of the axes shafts.
 
         Value must be a positive integer.
@@ -2052,13 +2122,11 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         """
         return self.GetCylinderResolution()
 
-    @shaft_resolution.setter
-    def shaft_resolution(self, resolution: int):  # numpydoc ignore=GL08
+    @_shaft_resolution.setter
+    def _shaft_resolution(self, resolution: int):  # numpydoc ignore=GL08
         if self.auto_shaft_type:
             self.SetShaftTypeToCylinder()
-
         self.SetCylinderResolution(resolution)
-        _check_range(resolution, (1, float('inf')), 'shaft_resolution')
 
     @property
     def cylinder_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -2777,11 +2845,13 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
         y_color=None,
         z_color=None,
         shaft_type=None,
-        shaft_radius=None,
+        shaft_radius=0.05,
         shaft_length=None,
+        shaft_resolution=24,
         tip_type=None,
-        tip_radius=0.4,
+        tip_radius=0.2,
         tip_length=None,
+        tip_resolution=24,
         total_length=(1, 1, 1),
         position=(0, 0, 0),
         orientation=(0, 0, 0),
@@ -2793,10 +2863,11 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
         auto_length=True,
         properties=None,
     ):
-        # Init actors
-
+        # Init shaft and tip actors
         # Use pyvista namespace to avoid circular import
         self.__actors = AxesPropTuple(*[pyvista.Actor() for _ in range(6)])
+
+        # Init text label actors
         self.__label_actors = Tuple3D(
             x=_vtk.vtkBillboardTextActor3D(),
             y=_vtk.vtkBillboardTextActor3D(),
@@ -2805,6 +2876,9 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
 
         # Add actors to assembly
         [self.AddPart(actor) for actor in (*self.__actors, *self.__label_actors)]
+
+        self._shaft_resolution = shaft_resolution
+        self._tip_resolution = tip_resolution
 
         super().__init__(
             x_label=x_label,
@@ -2824,9 +2898,11 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
             shaft_type=shaft_type,
             shaft_radius=shaft_radius,
             shaft_length=shaft_length,
+            shaft_resolution=shaft_resolution,
             tip_type=tip_type,
             tip_radius=tip_radius,
             tip_length=tip_length,
+            tip_resolution=tip_resolution,
             total_length=total_length,
             position=position,
             orientation=orientation,
@@ -2834,6 +2910,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
             scale=scale,
             user_matrix=user_matrix,
         )
+        self._update_geometry()
 
     @property
     def _actors(self) -> AxesPropTuple:
@@ -2905,14 +2982,11 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
 
     @_shaft_type.setter
     def _shaft_type(self, shaft_type: str):
-        self.__shaft_type, datasets = AxesAssembly._make_axes_parts(shaft_type)
-        self._actors.x_shaft.mapper = pyvista.DataSetMapper(datasets.x)
-        self._actors.y_shaft.mapper = pyvista.DataSetMapper(datasets.y)
-        self._actors.z_shaft.mapper = pyvista.DataSetMapper(datasets.z)
+        self.__shaft_type = self._init_mappers(part=0, geometry=shaft_type)
 
     @property
-    def _datasets(self) -> AxesPropTuple:
-        return AxesPropTuple(*[actor.mapper.dataset for actor in self._actors])
+    def _datasets(self) -> Tuple3D:
+        return _as_nested([actor.mapper.dataset for actor in self._actors])
 
     @property
     def _tip_type(self) -> str:
@@ -2920,20 +2994,55 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
 
     @_tip_type.setter
     def _tip_type(self, tip_type: Union[str, pyvista.DataSet]):
-        self.__tip_type, datasets = AxesAssembly._make_axes_parts(tip_type)
-        self._actors.x_tip.mapper = pyvista.DataSetMapper(datasets.x)
-        self._actors.y_tip.mapper = pyvista.DataSetMapper(datasets.y)
-        self._actors.z_tip.mapper = pyvista.DataSetMapper(datasets.z)
+        self.__tip_type = self._init_mappers(part=1, geometry=tip_type)
+
+    def _init_mappers(self, part: int, geometry: Union[str, pyvista.DataSet]):
+        resolution = self._shaft_resolution if part == 0 else self._tip_resolution
+        geometry_name, datasets = AxesAssembly._make_axes_parts(geometry, resolution)
+        actors = _as_nested(self._actors)
+        actors[0][part].mapper = pyvista.DataSetMapper(datasets.x)
+        actors[1][part].mapper = pyvista.DataSetMapper(datasets.y)
+        actors[2][part].mapper = pyvista.DataSetMapper(datasets.z)
+        return geometry_name
+
+    def _update_geometry(self):
+        shaft_radius, shaft_length = self.shaft_radius, self._true_shaft_length
+        tip_radius, tip_length = (
+            self.tip_radius,
+            self._true_tip_length,
+        )
+
+        parts = self._datasets
+        for axis in range(3):
+            for part_num in range(2):
+                # Reset geometry
+                part = AxesAssembly._normalize_part(parts[axis][part_num])
+
+                # Offset so axis bounds are [0, 1]
+                part.points[:, axis] += 0.5
+
+                # Scale by length along axis, scale by radius off-axis
+                if part_num == 0:  # shaft
+                    scale = [shaft_radius] * 3
+                    scale[axis] = shaft_length[axis]
+                    part.scale(scale, inplace=True)
+                else:  # tip
+                    scale = [tip_radius] * 3
+                    scale[axis] = tip_length[axis]
+                    part.scale(scale, inplace=True)
+
+                    # Move tip to end of shaft
+                    part.points[:, axis] += shaft_length[axis]
 
     @staticmethod
-    def _make_default_part(geometry: str) -> pyvista.DataSet:
+    def _make_default_part(geometry: str, resolution: Optional[int]) -> pyvista.DataSet:
         """Create part geometry with its length axis pointing in the +z direction."""
         if geometry == 'cylinder':
-            return pyvista.Cylinder(direction=(0, 0, 1))
+            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
-            return pyvista.Sphere()
+            return pyvista.Sphere(theta_resolution=resolution, phi_resolution=resolution)
         elif geometry == 'cone':
-            return pyvista.Cone(direction=(0, 0, 1))
+            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
             return pyvista.Pyramid()
         elif geometry == 'cuboid':
@@ -2942,10 +3051,12 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
             raise NotImplementedError(f'Geometry for {geometry} is not implemented.')
 
     @staticmethod
-    def _make_any_part(geometry: Union[str, pyvista.DataSet]):
+    def _make_any_part(geometry: Union[str, pyvista.DataSet], resolution=None):
         if isinstance(geometry, str):
             name = geometry
-            part = AxesAssembly._make_default_part(geometry)
+            part = AxesAssembly._make_default_part(
+                geometry, resolution=_set_default(resolution, 16)
+            )
         elif isinstance(geometry, pyvista.DataSet) and not isinstance(
             geometry, (pyvista.PolyData, pyvista.UnstructuredGrid)
         ):
@@ -2972,10 +3083,10 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
 
     @staticmethod
     def _make_axes_parts(
-        geometry: Union[str, pyvista.DataSet], right_handed=True
+        geometry: Union[str, pyvista.DataSet], resolution, right_handed=True
     ) -> Tuple[str, Tuple3D]:
         """Return three axis-aligned normalized parts centered at the origin."""
-        name, part_z = AxesAssembly._make_any_part(geometry)
+        name, part_z = AxesAssembly._make_any_part(geometry, resolution)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         if not right_handed:
