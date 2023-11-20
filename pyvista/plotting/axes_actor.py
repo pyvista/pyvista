@@ -2919,7 +2919,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
         return self.__tip_type
 
     @_tip_type.setter
-    def _tip_type(self, tip_type: str | pyvista.DataSet):
+    def _tip_type(self, tip_type: Union[str, pyvista.DataSet]):
         self.__tip_type, datasets = AxesAssembly._make_axes_parts(tip_type)
         self._actors.x_tip.mapper = pyvista.DataSetMapper(datasets.x)
         self._actors.y_tip.mapper = pyvista.DataSetMapper(datasets.y)
@@ -2942,7 +2942,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
             raise NotImplementedError(f'Geometry for {geometry} is not implemented.')
 
     @staticmethod
-    def _make_any_part(geometry: str | pyvista.DataSet):
+    def _make_any_part(geometry: Union[str, pyvista.DataSet]):
         if isinstance(geometry, str):
             name = geometry
             part = AxesAssembly._make_default_part(geometry)
@@ -2971,7 +2971,9 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
         return part
 
     @staticmethod
-    def _make_axes_parts(geometry: str | pyvista.DataSet, right_handed=True) -> Tuple[str, Tuple3D]:
+    def _make_axes_parts(
+        geometry: Union[str, pyvista.DataSet], right_handed=True
+    ) -> Tuple[str, Tuple3D]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesAssembly._make_any_part(geometry)
         part_x = part_z.copy().rotate_y(90)
