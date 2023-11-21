@@ -1,6 +1,6 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
-from typing import Literal, Optional
+from typing import Literal, Optional, cast
 
 import numpy as np
 
@@ -772,7 +772,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return wrap(alg.GetOutput())
+        return cast(pyvista.ImageData, wrap(alg.GetOutput()))
 
     def contour_labeled(
         self,
@@ -897,4 +897,4 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SmoothingOff()
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
-        return wrap(alg.GetOutput())
+        return cast(pyvista.PolyData, wrap(alg.GetOutput()))

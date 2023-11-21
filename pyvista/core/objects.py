@@ -3,6 +3,8 @@
 The data objects does not have any sort of spatial reference.
 
 """
+from typing import Optional, Tuple
+
 import numpy as np
 
 import pyvista
@@ -339,8 +341,10 @@ class Table(_vtk.vtkTable, DataObject):
             "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         )
 
-    def get_data_range(self, arr=None, preference='row'):
-        """Get the non-NaN min and max of a named array.
+    def get_data_range(
+        self, arr: Optional[str] = None, preference: str = 'row'
+    ) -> Tuple[float, float]:
+        """Get the min and max of a named array.
 
         Parameters
         ----------

@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumericArray, TransformLike, VectorArray
+from pyvista.core._typing_core import Matrix, NumpyFltArray, TransformLike, Vector
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -56,13 +56,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[NumericArray, VectorArray], copy: bool = False
+    points: Union[Matrix, Vector], copy: bool = False
 ) -> Tuple[np.ndarray, bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : array_like[float]
+    points : Matrix, Vector
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -232,7 +232,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.ndarray']:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -586,7 +586,7 @@ def convert_string_array(arr, name=None):
     ########################################
 
 
-def array_from_vtkmatrix(matrix):
+def array_from_vtkmatrix(matrix) -> NumpyFltArray:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -753,7 +753,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
         )
 
 
-def _coerce_transformlike_arg(transform_like: TransformLike):
+def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyFltArray:
     """Check and coerce transform-like arg to a 4x4 numpy array.
 
     Parameters
@@ -768,7 +768,7 @@ def _coerce_transformlike_arg(transform_like: TransformLike):
         4x4 transformation matrix.
 
     """
-    transform_array = np.eye(4)
+    transform_array: NumpyFltArray = np.eye(4)
     if isinstance(transform_like, _vtk.vtkMatrix4x4):
         transform_array = array_from_vtkmatrix(transform_like)
     elif isinstance(transform_like, _vtk.vtkMatrix3x3):
