@@ -453,7 +453,7 @@ class Property(_vtk.vtkProperty):
     @edge_opacity.setter
     def edge_opacity(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'edge_opacity')
-        if not vtk_version_info < (9, 3):
+        if vtk_version_info >= (9, 3):
             self.SetEdgeOpacity(value)
 
     @property
