@@ -180,7 +180,7 @@ def test_legend_face(sphere, face):
 
 
 def test_legend_from_glyph(sphere):
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     x = sphere.face_normals[:, 0] ** 2
     y = sphere.face_normals[:, 1] ** 2
     z = sphere.face_normals[:, 2] ** 2
