@@ -1,12 +1,14 @@
-"""
-Displaying eigenmodes of vibration using ``warp_by_vector``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""".. _eigenmodes_example:
 
-This example applies the ``warp_by_vector`` filter to a cube whose eigenmodes
-have been computed using the Ritz method, as outlined in Visscher, William M.,
-Albert Migliori, Thomas M. Bell, et Robert A. Reinert. "On the normal modes
-of free vibration of inhomogeneous and anisotropic elastic objects". The
-Journal of the Acoustical Society of America 90, n.4 (october 1991): 2154-62.
+Display Eigenmodes of Vibration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This example applies the :func:`warp_by_vector
+<pyvista.DataSetFilters.warp_by_vector>` filter to a cube whose eigenmodes have
+been computed using the Ritz method, as outlined in Visscher, William M.,
+Albert Migliori, Thomas M. Bell, et Robert A. Reinert. "On the normal modes of
+free vibration of inhomogeneous and anisotropic elastic objects". The Journal
+of the Acoustical Society of America 90, n.4 (October 1991): 2154-62.
 https://asa.scitation.org/doi/10.1121/1.401643
 
 """
@@ -15,6 +17,9 @@ https://asa.scitation.org/doi/10.1121/1.401643
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
+
+from itertools import product
+
 import numpy as np
 from scipy.linalg import eigh
 
@@ -67,13 +72,10 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     }
 
     cijkl = np.zeros((3, 3, 3, 3))
-    for i in range(3):
-        for j in range(3):
-            for k in range(3):
-                for l in range(3):
-                    u = coord_mapping[(i + 1, j + 1)]
-                    v = coord_mapping[(k + 1, l + 1)]
-                    cijkl[i, j, k, l] = cij[u - 1, v - 1]
+    for i, j, k, l in product(range(3), repeat=4):
+        u = coord_mapping[i + 1, j + 1]
+        v = coord_mapping[k + 1, l + 1]
+        cijkl[i, j, k, l] = cij[u - 1, v - 1]
     return cijkl, cij
 
 
@@ -103,9 +105,8 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
-    for i in range(3):
-        for triplet in triplets:
-            quadruplets.append((i, *triplet))
+    for i, triplet in product(range(3), triplets):
+        quadruplets.append((i, *triplet))
     assert len(quadruplets) == 3 * (N + 1) * (N + 2) * (N + 3) // 6
 
     # assembling the mass and stiffness matrix in a single loop
@@ -221,24 +222,23 @@ for i, mode_index in enumerate(mode_indices):
 warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
-p = pv.Plotter()
-p.add_mesh(vol, style='wireframe', scalars=warpby)
-p.add_mesh(warped, scalars=warpby)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False)
+pl.add_mesh(warped, scalars=warpby)
+pl.show()
 
 ###############################################################################
 # Finally, let's make a gallery of the first 8 unique eigenmodes.
 
 
-p = pv.Plotter(shape=(2, 4))
-for i in range(2):
-    for j in range(4):
-        p.subplot(i, j)
-        current_index = 4 * i + j
-        vector = f"eigenmode_{current_index:02}"
-        p.add_text(
-            f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
-            font_size=10,
-        )
-        p.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector)
-p.show()
+pl = pv.Plotter(shape=(2, 4))
+for i, j in product(range(2), range(4)):
+    pl.subplot(i, j)
+    current_index = 4 * i + j
+    vector = f"eigenmode_{current_index:02}"
+    pl.add_text(
+        f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
+        font_size=10,
+    )
+    pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)
+pl.show()

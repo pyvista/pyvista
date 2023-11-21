@@ -55,8 +55,8 @@ mesh.faces.reshape(-1, 4)[:, 1:]  # triangular faces
 
 
 ###############################################################################
-# Loading other files types is just as easy! Simply pass your file path to the
-# :func:`pyvista.read` function and that's it!
+# Loading other files types is just as easy. Simply pass your file path to the
+# :func:`pyvista.read` function and that's it.
 #
 # Here are a few other examples - simply replace ``examples.download_*`` in the
 # examples below with ``pyvista.read('path/to/you/file.ext')``

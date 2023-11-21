@@ -1,10 +1,10 @@
-.. _ref_examples:
+.. _examples:
 
 Examples
 ========
 
 Here is a gallery of several examples demonstrating what PyVista can
-do!
+do.
 
 All of these examples are live and available on MyBinder.
 

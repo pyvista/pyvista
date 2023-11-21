@@ -1,20 +1,29 @@
 """PyVista Scalar bar module."""
+import weakref
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import MAX_N_COLOR_BARS
 
+from . import _vtk
 from .colors import Color
 from .tools import parse_font_family
 
 
 class ScalarBars:
-    """Plotter Scalar Bars."""
+    """Plotter Scalar Bars.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter that the scalar bars are associated with.
+
+    """
 
     def __init__(self, plotter):
         """Initialize ScalarBars."""
-        self._plotter = plotter
+        self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
@@ -37,7 +46,9 @@ class ScalarBars:
             lines.append(f'{title:20} {str(interactive):5}')
         return '\n'.join(lines)
 
-    def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):
+    def _remove_mapper_from_plotter(
+        self, actor, reset_camera=False, render=False
+    ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
         This ensures that when actors are removed, their corresponding
@@ -76,9 +87,9 @@ class ScalarBars:
             Title of the scalar bar to remove.  Required if there is
             more than one scalar bar.
 
-        render : bool, optional
+        render : bool, default: True
             Render upon scalar bar removal.  Set this to ``False`` to
-            stop the render window from rendering when an scalar bar
+            stop the render window from rendering when a scalar bar
             is removed.
 
         Examples
@@ -176,34 +187,33 @@ class ScalarBars:
 
         Parameters
         ----------
-        title : str, optional
-            Title of the scalar bar.  Default ``''`` which is
-            rendered as an empty title.
+        title : str, default: ""
+            Title of the scalar bar.  Default is rendered as an empty title.
 
         mapper : vtkMapper, optional
             Mapper used for the scalar bar.  Defaults to the last
             mapper created by the plotter.
 
-        n_labels : int, optional
+        n_labels : int, default: 5
             Number of labels to use for the scalar bar.
 
-        italic : bool, optional
-            Italicises title and bar labels.  Default ``False``.
+        italic : bool, default: False
+            Italicises title and bar labels.
 
-        bold  : bool, optional
-            Bolds title and bar labels.  Default ``True``.
+        bold : bool, default: False
+            Bolds title and bar labels.
 
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to :attr:`pyvista.themes.DefaultTheme.font`.
+            according to :attr:`pyvista.plotting.themes.Theme.font`.
 
         label_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to :attr:`pyvista.themes.DefaultTheme.font`.
+            according to :attr:`pyvista.plotting.themes.Theme.font`.
 
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Default
-            set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
+            set by :attr:`pyvista.plotting.themes.Theme.font`.  Can be
             in one of the following formats:
 
             * ``color='white'``
@@ -213,61 +223,61 @@ class ScalarBars:
 
         font_family : {'courier', 'times', 'arial'}
             Font family.  Default is set by
-            :attr:`pyvista.themes.DefaultTheme.font`.
+            :attr:`pyvista.plotting.themes.Theme.font`.
 
-        shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to ``False``.
+        shadow : bool, default: False
+            Adds a black shadow to the text.
 
         width : float, optional
             The percentage (0 to 1) width of the window for the colorbar.
             Default set by
-            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
-            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         height : float, optional
             The percentage (0 to 1) height of the window for the
             colorbar.  Default set by
-            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
-            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         position_x : float, optional
             The percentage (0 to 1) along the windows's horizontal
             direction to place the bottom left corner of the colorbar.
             Default set by
-            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
-            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         position_y : float, optional
             The percentage (0 to 1) along the windows's vertical
             direction to place the bottom left corner of the colorbar.
             Default set by
-            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
-            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         vertical : bool, optional
             Use vertical or horizontal scalar bar.  Default set by
-            :attr:`pyvista.themes.DefaultTheme.colorbar_orientation`.
+            :attr:`pyvista.plotting.themes.Theme.colorbar_orientation`.
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
-            Default set by :attr:`pyvista.themes.DefaultTheme.interactive`.
+            Default set by :attr:`pyvista.plotting.themes.Theme.interactive`.
 
         fmt : str, optional
             ``printf`` format for labels.
-            Default set by :attr:`pyvista.themes.DefaultTheme.font`.
+            Default set by :attr:`pyvista.plotting.themes.Theme.font`.
 
-        use_opacity : bool, optional
+        use_opacity : bool, default: True
             Optionally display the opacity mapping on the scalar bar.
 
-        outline : bool, optional
+        outline : bool, default: False
             Optionally outline the scalar bar to make opacity mappings more
             obvious.
 
-        nan_annotation : bool, optional
+        nan_annotation : bool, default: False
             Annotate the NaN color.
 
         below_label : str, optional
@@ -276,20 +286,20 @@ class ScalarBars:
         above_label : str, optional
             String annotation for values above the scalars range.
 
-        background_color : color_like, optional
+        background_color : ColorLike, optional
             The color used for the background in RGB format.
 
         n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
 
-        fill : bool, optional
+        fill : bool, default: False
             Draw a filled box behind the scalar bar with the
             ``background_color``.
 
-        render : bool, optional
-            Force a render when True.  Default ``True``.
+        render : bool, default: False
+            Force a render when True.
 
-        theme : pyvista.themes.DefaultTheme, optional
+        theme : pyvista.plotting.themes.Theme, optional
             Plot-specific theme.  By default, calling from the
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
@@ -314,10 +324,15 @@ class ScalarBars:
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
-        ...                            title_font_size=35,
-        ...                            label_font_size=30,
-        ...                            outline=True, fmt='%10.5f')
+        >>> _ = plotter.add_scalar_bar(
+        ...     'Data',
+        ...     interactive=True,
+        ...     vertical=False,
+        ...     title_font_size=35,
+        ...     label_font_size=30,
+        ...     outline=True,
+        ...     fmt='%10.5f',
+        ... )
         >>> plotter.show()
 
         """
@@ -374,12 +389,13 @@ class ScalarBars:
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
-            try:
-                slot = min(self._plotter._scalar_bar_slots)
-                self._plotter._scalar_bar_slots.remove(slot)
-                self._plotter._scalar_bar_slot_lookup[title] = slot
-            except:
-                raise RuntimeError('Maximum number of color bars reached.')
+            if not self._plotter._scalar_bar_slots:
+                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+
+            slot = min(self._plotter._scalar_bar_slots)
+            self._plotter._scalar_bar_slots.remove(slot)
+            self._plotter._scalar_bar_slot_lookup[title] = slot
+
             if position_x is None:
                 if vertical:
                     position_x = theme.colorbar_vertical.position_x
@@ -408,7 +424,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = _vtk.vtkLookupTable()
+            lut = pyvista.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
@@ -420,8 +436,12 @@ class ScalarBars:
             lut = mapper.lookup_table
 
         scalar_bar.SetLookupTable(lut)
-        if n_colors is not None:
-            scalar_bar.SetMaximumNumberOfColors(n_colors)
+        if n_colors is None:
+            # ensure the number of colors in the scalarbar's lookup table is at
+            # least the number in the mapper
+            n_colors = mapper.lookup_table.n_values
+
+        scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
             scalar_bar.SetDrawTickLabels(False)
@@ -432,12 +452,18 @@ class ScalarBars:
         if nan_annotation:
             scalar_bar.DrawNanAnnotationOn()
 
-        if above_label:
+        if above_label is not None:
             scalar_bar.DrawAboveRangeSwatchOn()
             scalar_bar.SetAboveRangeAnnotation(above_label)
-        if below_label:
+        elif lut.above_range_color:
+            scalar_bar.DrawAboveRangeSwatchOn()
+            scalar_bar.SetAboveRangeAnnotation('above')
+        if below_label is not None:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
+        elif lut.below_range_color:
+            scalar_bar.DrawBelowRangeSwatchOn()
+            scalar_bar.SetBelowRangeAnnotation('below')
 
         # edit the size of the colorbar
         scalar_bar.SetHeight(height)

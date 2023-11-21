@@ -1,14 +1,13 @@
 """
-    sphinx.ext.coverage
-    ~~~~~~~~~~~~~~~~~~~
+Modified sphinx.ext.coverage module.
 
-    Check Python modules and C API for coverage.  Mostly written by Josip
-    Dzolonga for the Google Highly Open Participation contest.
+Check Python modules and C API for coverage.  Mostly written by Josip
+Dzolonga for the Google Highly Open Participation contest.
 
-    Modified slightly for ``pyvista``.
+Modified slightly for ``pyvista``.
 
-    :copyright: See `Sphinx copyright <https://github.com/sphinx-doc/sphinx>`_.
-    :license: See `Sphinx license <https://github.com/sphinx-doc/sphinx>`_.
+:copyright: See `Sphinx copyright <https://github.com/sphinx-doc/sphinx>`_.
+:license: See `Sphinx license <https://github.com/sphinx-doc/sphinx>`_.
 
 """
 
@@ -61,9 +60,7 @@ def method_from_obj(obj_name):
 
 
 class CoverageBuilder(Builder):
-    """
-    Evaluates coverage of code in the documentation.
-    """
+    """Evaluates coverage of code in the documentation."""
 
     name = 'coverage'
     epilog = __(
@@ -78,14 +75,14 @@ class CoverageBuilder(Builder):
             self.c_sourcefiles.extend(glob.glob(pattern))
 
         self.c_regexes: List[Tuple[str, Pattern]] = []
-        for (name, exp) in self.config.coverage_c_regexes.items():
+        for name, exp in self.config.coverage_c_regexes.items():
             try:
                 self.c_regexes.append((name, re.compile(exp)))
             except Exception:
                 logger.warning(__('invalid regex %r in coverage_c_regexes'), exp)
 
         self.c_ignorexps: Dict[str, List[Pattern]] = {}
-        for (name, exps) in self.config.coverage_ignore_c_items.items():
+        for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
             'coverage_ignore_modules', self.config.coverage_ignore_modules
@@ -215,7 +212,7 @@ class CoverageBuilder(Builder):
                     # is not defined in this module
                     continue
 
-                full_name = '%s.%s' % (mod_name, name)
+                full_name = f'{mod_name}.{name}'
                 if self.ignore_pyobj(full_name):
                     continue
 
@@ -257,7 +254,7 @@ class CoverageBuilder(Builder):
                             if skip_undoc and not attr.__doc__:
                                 # skip methods without docstring if wished
                                 continue
-                            full_attr_name = '%s.%s' % (full_name, attr_name)
+                            full_attr_name = f'{full_name}.{attr_name}'
                             if self.ignore_pyobj(full_attr_name):
                                 continue
                             if full_attr_name not in objects:

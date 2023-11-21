@@ -1,7 +1,6 @@
 """Plot directive module.
 
 A directive for including a PyVista plot in a Sphinx document
-=============================================================
 
 The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.
@@ -12,8 +11,8 @@ The source code for the plot may be included in one of two ways:
 
     .. pyvista-plot::
 
-       >>> import pyvista
-       >>> sphere = pyvista.Sphere()
+       >>> import pyvista as pv
+       >>> sphere = pv.Sphere()
        >>> out = sphere.plot()
 
 2. **A path to a source file** as the argument to the directive::
@@ -39,8 +38,7 @@ The source code for the plot may be included in one of two ways:
    Animations will not be saved, only the last frame will be shown.
 
 
-Options
--------
+**Options**
 The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
@@ -71,8 +69,7 @@ directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
 
-Configuration options
----------------------
+**Configuration options**
 The plot directive has the following configuration options:
 
     plot_include_source : bool
@@ -113,8 +110,8 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-# must enable BUILDING_GALLERY to to keep windows active
-# enable offscreen to hide figures when generating them
+# must enable BUILDING_GALLERY to keep windows active
+# enable offscreen to hide figures when generating them.
 import pyvista
 
 pyvista.BUILDING_GALLERY = True
@@ -134,7 +131,7 @@ def _option_boolean(arg):
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
     else:  # pragma: no cover
-        raise ValueError('"%s" unknown boolean' % arg)
+        raise ValueError(f'"{arg}" unknown boolean')
 
 
 def _option_context(arg):
@@ -222,12 +219,10 @@ def _split_code_at_show(text):
 
     Includes logic to deal with edge cases like:
 
-    >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue',
-    ...                       cpos='xy')
+    >>> import pyvista as pv
+    >>> pv.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red',
-    ...                       cpos='xy')
+    >>> pv.Sphere().plot(color='red', cpos='xy')
 
     """
     parts = []
@@ -301,7 +296,7 @@ class ImageFile:
         self.dirname = dirname
 
     @property
-    def filename(self):
+    def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
 
@@ -323,6 +318,8 @@ def _run_code(code, code_path, ns=None, function_name=None):
         return ns
 
     try:
+        if pyvista.PLOT_DIRECTIVE_THEME is not None:
+            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
@@ -370,7 +367,7 @@ def render_figures(
             )
 
             images = []
-            figures = pyvista.plotting._ALL_PLOTTERS
+            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
@@ -536,7 +533,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             images = []
 
         opts = [
-            ':%s: %s' % (key, val)
+            f':{key}: {val}'
             for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align')
         ]

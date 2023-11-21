@@ -1,0 +1,23 @@
+image:
+  file: docker/dev-gitpod.Dockerfile
+
+# --------------------------------------------------------
+# exposing ports for liveserve
+ports:
+  - port: 5500
+    onOpen: notify
+  - port: 6080
+    onOpen: open-preview
+
+vscode:
+  extensions:
+    - ms-python.python
+    - ritwickdey.liveserver
+
+tasks:
+  - init: |
+      pip install --no-cache-dir -r requirements_test.txt
+      pip install --no-cache-dir -r requirements_docs.txt
+      pip install --no-cache-dir pre-commit
+      pre-commit install --install-hooks
+      pip install -e .

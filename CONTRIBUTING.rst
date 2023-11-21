@@ -1,6 +1,16 @@
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|Contributor Covenant|
+|codetriage|
+
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
 important to note that the PyVista software package is maintained on a
@@ -15,7 +25,7 @@ Being Respectful
 ----------------
 
 Please demonstrate empathy and kindness toward other people, other software,
-and the communities who have worked diligently to build (un-)related tools.
+and the communities who have worked diligently to build (un)related tools.
 
 Please do not talk down in Pull Requests, Issues, or otherwise in a way that
 portrays other people or their works in a negative light.
@@ -33,6 +43,26 @@ running:
    cd pyvista
    python -m pip install -e .
 
+Quick Start Development with Codespaces
+---------------------------------------
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
+|Open in GitHub Codespaces|
+
+A dev container is provided to quickly get started. The default container
+comes with the repository code checked out on a branch of your choice
+and all pyvista dependencies including test dependencies pre-installed.
+In addition, it uses the
+`desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
+to provide live interaction windows.  Follow directions
+`Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+to use the live interaction.
+
+Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+
 Questions
 ---------
 
@@ -40,16 +70,20 @@ For general questions about the project, its applications, or about
 software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_
-or send one of the developers an email. The project support team can be
-reached at info@pyvista.org
 
-For more technical questions, you are welcome to create an issue on the
-`issues page <https://github.com/pyvista/pyvista/issues>`_ which we
-will address promptly. Through posting on the issues page, your question
-can be addressed by community members with the needed expertise and the
-information gained will remain available on the issues page for other
-users.
+You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+but Slack should be reserved for ad hoc conversations and community engagement
+rather than technical discussions.
+
+For critical, high-level project support and engagement, please email
+info@pyvista.org - but please do not use this email for technical support.
+
+For all technical conversations, you are welcome to create an issue on the
+`Discussions page <https://github.com/pyvista/pyvista/discussions>`_
+which we will address promptly. Through posting on the Discussions page,
+your question can be addressed by community members with the needed
+expertise and the information gained will remain available for other
+users to find.
 
 Reporting Bugs
 --------------
@@ -66,7 +100,7 @@ Feature Requests
 ----------------
 
 We encourage users to submit ideas for improvements to PyVista code
-base! Please create an issue on the `issues
+base. Please create an issue on the `issues
 page <https://github.com/pyvista/pyvista/issues>`_ with a *Feature
 Request* label to suggest an improvement. Please use a descriptive title
 and provide ample background information to help the community implement
@@ -111,12 +145,12 @@ Guidelines
 Through direct access to the Visualization Toolkit (VTK) via direct
 array access and intuitive Python properties, we hope to make the entire
 VTK library easily accessible to researchers of all disciplines. To
-further PyVista towards being the de facto Python interface to VTK, we
-need your help to make it even better!
+further PyVista towards being a valuable Python interface to VTK, we
+need your help to make it even better.
 
 If you want to add one or two interesting analysis algorithms as
 filters, implement a new plotting routine, or just fix 1-2 typos - your
-efforts are welcome!
+efforts are welcome.
 
 There are three general coding paradigms that we believe in:
 
@@ -126,7 +160,7 @@ There are three general coding paradigms that we believe in:
    arguments for users to make the bulk of the library accessible to
    novice users.
 
-2. **Document everything!** At the least, include a docstring for any
+2. **Document everything**. At the least, include a docstring for any
    method or class added. Do not describe what you are doing but why you
    are doing it and provide a simple example for the new features.
 
@@ -140,17 +174,17 @@ There are two important copyright guidelines:
    license of the whole projects.
 
 5. Do not use code snippets for which a license is not available
-   (e.g. from stackoverflow) or commercial use is prohibited. Those can
+   (for example from Stack Overflow) or commercial use is prohibited. Those can
    undermine the license of the whole projects.
 
 Please also take a look at our `Code of
 Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`_.
 
-Contributing to pyvista through GitHub
+Contributing to PyVista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To submit new code to pyvista, first fork the `pyvista GitHub
-Repo <https://github.com/pyvista/pyvista>`_ and then clone the forked
+Repository <https://github.com/pyvista/pyvista>`_ and then clone the forked
 repository to your computer. Then, create a new branch based on the
 `Branch Naming Conventions Section <#branch-naming-conventions>`_ in
 your local repository.
@@ -186,7 +220,7 @@ directive:
    characters, provided that comments and docstrings are still wrapped
    at 72 characters.
 
-Outside of PEP 8, when coding please consider `PEP 20 – The Zen of
+Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
 .. code:: python
@@ -197,22 +231,232 @@ PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
+Documentation Style
+^^^^^^^^^^^^^^^^^^^
+
+PyVista follows the `Google Developer Documentation Style
+<https://developers.google.com/style>`_ with the following exceptions:
+
+- Allow first person pronouns. These pronouns (for example, "We") refer to
+  "PyVista Developers", which can be anyone who contributes to PyVista.
+- Future tense is permitted.
+
+These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
+and partially enforced for Python source files.
+
+These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
+GitHub Actions, and you can run Vale locally with:
+
+.. code::
+
+   pip install vale
+   vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
+
+If you are on Linux or macOS, you can run:
+
+.. code::
+
+   make docstyle
+
 
 Docstrings
 ^^^^^^^^^^
 
 PyVista uses Python docstrings to create reference documentation for our Python
 APIs. Docstrings are read by developers, interactive Python users, and readers
-of our online documentation. This page describes how to write these docstrings
+of our online documentation. This section describes how to write these docstrings
 for PyVista.
 
-* PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
-  `numpydoc Style Guide`_.
+PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
+`numpydoc Style Guide`_ in all ways except for the following:
+
 * Be sure to describe all ``Parameters`` and ``Returns`` for all public
   methods.
 * We strongly encourage you to add an example section. PyVista is a visual
   library, so adding examples that show a plot will really help users figure
   out what individual methods do.
+* With optional parameters, use ``default: <value>`` instead of ``optional``
+  when the parameter has a default value instead of ``None``.
+
+Sample docstring follows:
+
+.. code:: python
+
+    def slice_x(self, x=None, generate_triangles=False):
+        """Create an orthogonal slice through the dataset in the X direction.
+
+        Parameters
+        ----------
+        x : float, optional
+            The X location of the YZ slice. By default this will be the X center
+            of the dataset.
+
+        generate_triangles : bool, default: False
+            If this is enabled, the output will be all triangles. Otherwise the
+            output will consist of the intersection polygons.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
+
+        Examples
+        --------
+        Slice the random hills dataset with one orthogonal plane.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_x(5, generate_triangles=False)
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+
+        pass  # implementation goes here
+
+Note the following:
+
+* The parameter definition of ``generate_triangles`` uses ``default: False``,
+  and does not include the default in the docstring's "description" section.
+* There is a newline between each parameter. This is different than
+  ``numpydoc``'s documentation where there are no empty lines between parameter
+  docstrings.
+* This docstring also contains a returns section and an examples section.
+* The returns section does not include the parameter name if the function has
+  a single return value. Multiple return values (not shown) should have
+  descriptive parameter names for each returned value, in the same format as
+  the input parameters.
+* The examples section references the "full example" in the gallery if it
+  exists.
+
+These standards will be enforced using ``pre-commit`` using
+``numpydoc-validate``, with errors being reported as:
+
+.. code-block:: text
+
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | file            | item                     | check   | description                                     |
+   +=================+==========================+=========+=================================================+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | cells.py:85     | cells.create_mixed_cells | RT05    | Return value description should finish with "." |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+   | features.py:250 | features.merge           | PR09    | Parameter "datasets" description should finish  |
+   |                 |                          |         | with "."                                        |
+   +-----------------+--------------------------+---------+-------------------------------------------------+
+
+If for whatever reason you feel that your function should have an exception to
+any of the rules, add an exception to the function either in the
+``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
+comment to exclude a certain check. For example, we do not enforce
+documentation strings for setters and skip the GL08 check.
+
+.. code:: python
+
+    @strips.setter
+    def strips(self, strips):  # numpydoc ignore=GL08
+        if isinstance(strips, CellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
+
+See the available validation checks in `numpydoc Validation
+<https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
+
+
+Deprecating Features or other Backwards-Breaking Changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When implementing backwards-breaking changes within PyVista, care must be taken
+to give users the chance to adjust to any new changes. Any non-backwards
+compatible modifications should proceed through the following steps:
+
+#. Retain the old behavior and issue a ``PyVistaDeprecationWarning`` indicating
+   the new interface you should use.
+#. Retain the old behavior but raise a ``pyvista.core.errors.DeprecationError``
+   indicating the new interface you must use.
+#. Remove the old behavior.
+
+Whenever possible, PyVista developers should seek to have at least three minor
+versions of backwards compatibility to give users the ability to update their
+software and scripts.
+
+Here's an example of a soft deprecation of a function. Note the usage of both
+the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
+directive.
+
+.. code:: python
+
+    import warnings
+    from pyvista.core.errors import PyVistaDeprecationWarning
+
+    def addition(a, b):
+        """Add two numbers.
+
+        .. deprecated:: 0.37.0
+           Since PyVista 0.37.0, you can use :func:`pyvista.add` instead.
+
+        Parameters
+        ----------
+        a : float
+            First term to add.
+
+        b : float
+            Second term to add.
+
+        Returns
+        -------
+        float
+            Sum of the two inputs.
+
+        """
+        # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
+        warnings.warn(
+            '`addition` has been deprecated. Use pyvista.add instead',
+            PyVistaDeprecationWarning
+        )
+        add(a, b)
+
+
+    def add(a, b):
+        """Add two numbers."""
+
+        pass  # implementation goes here
+
+In the above code example, note how a comment is made to convert to an error in
+three minor releases and completely remove in the following minor release. For
+significant changes, this can be made longer, and for trivial ones this can be
+kept short.
+
+Here's an example of adding error test codes that raise deprecation warning messages.
+
+.. code:: python
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        addition(a, b)
+        if pv._version.version_info >= (0, 40):
+            raise RuntimeError("Convert error this function")
+        if pv._version.version_info >= (0, 41):
+            raise RuntimeError("Remove this function")
+
+In the above code example, the old test code raises an error in v0.40 and v0.41.
+This will prevent us from forgetting to remove deprecations on version upgrades.
+
+When adding an additional parameter to an existing method or function, you are
+encouraged to use the ``.. versionadded`` sphinx directive. For example:
+
+.. code:: python
+
+    def Cube(clean=True):
+        """Create a cube.
+
+        Parameters
+        ----------
+        clean : bool, default: True
+            Whether to clean the raw points of the mesh.
+
+            .. versionadded:: 0.33.0
+        """
 
 
 Branch Naming Conventions
@@ -222,7 +466,7 @@ To streamline development, we have the following requirements for naming
 branches. These requirements help the core developers know what kind of
 changes any given branch is introducing before looking at the code.
 
--  ``fix/``: any bug fixes, patches, or experimental changes that are
+-  ``fix/``, ``patch/`` and ``bug/``: any bug fixes, patches, or experimental changes that are
    minor
 -  ``feat/``: any changes that introduce a new feature or significant
    addition
@@ -234,6 +478,7 @@ changes any given branch is introducing before looking at the code.
    routines
 -  ``testing/``: improvements or changes to testing
 -  ``release/``: releases (see below)
+-  ``breaking-change/``: Changes that break backward compatibility
 
 Testing
 ^^^^^^^
@@ -244,8 +489,7 @@ request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt``,
-``requirements_docs.txt``
+dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 .. code:: bash
 
@@ -279,20 +523,6 @@ Run all code examples in the docstrings with:
 
    python -m pytest -v --doctest-modules pyvista
 
-Build the documentation on Linux or Mac OS with:
-
-.. code:: bash
-
-   make -C doc html
-
-Build the documentation on Windows with:
-
-   cd doc
-   python -msphinx -M html . _build
-
-The generated documentation can be found in the ``doc/_build/html``
-directory.
-
 Style Checking
 ~~~~~~~~~~~~~~
 PyVista follows PEP8 standard as outlined in the `Coding Style section
@@ -303,7 +533,7 @@ To ensure your code meets minimum code styling standards, run::
   pip install pre-commit
   pre-commit run --all-files
 
-If you have issues related to ``setuptools`` when installing ``pre-commit``, see 
+If you have issues related to ``setuptools`` when installing ``pre-commit``, see
 `pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
 for a potential resolution.
 
@@ -322,9 +552,13 @@ requirements::
   flake8...................................................................Passed
   codespell................................................................Passed
 
-The actual installation of the environment happens before the first commit 
+The actual installation of the environment happens before the first commit
 following ``pre-commit install``. This will take a bit longer, but subsequent
 commits will only trigger the actual style checks.
+
+Even if you are not in a situation where you are not performing or able to
+perform the above tasks, you can comment `pre-commit.ci autofix` on a pull
+request to manually trigger auto-fixing.
 
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -333,7 +567,7 @@ Since PyVista is primarily a plotting module, it’s imperative we
 actually check the images that we generate in some sort of regression
 testing. In practice, this ends up being quite a bit of work because:
 
--  OpenGL software vs. hardware rending causes slightly different images
+-  OpenGL software vs. hardware rending causes slightly different images
    to be rendered.
 -  We want our CI (which uses a virtual frame buffer) to match our
    desktop images (uses hardware acceleration).
@@ -341,8 +575,7 @@ testing. In practice, this ends up being quite a bit of work because:
 
 As each platform and environment renders different slightly images
 relative to Linux (which these images were built from), so running these
-tests across all OSes isn’t optimal. We could generate different images
-for each OS, but it’s overkill in my opinion; we need to know if
+tests across all OSes isn’t optimal. We need to know if
 something fundamental changed with our plotting without actually looking
 at the plots (like the docs at dev.pyvista.com)
 
@@ -350,7 +583,7 @@ Based on these points, image regression testing only occurs on Linux CI,
 and multi-sampling is disabled as that seems to be one of the biggest
 difference between software and hardware based rendering.
 
-Image cache is stored here as ``./image_cache``.
+Image cache is stored here as ``./tests/plotting/image_cache``.
 
 Image resolution is kept low at 400x400 as we don’t want to pollute git
 with large images. Small variations between versions and environments
@@ -373,18 +606,22 @@ testing or for potentially a major or minor release. You can use
 temporarily ignore regression testing. Realize that regression testing
 will still occur on our CI testing.
 
-If you need to add a new test to ``tests/plotting/test_plotting.py`` and
-wish to include image regression testing, be sure to add
-``verify_cache_image`` to ``show``. For example:
+Images are currently only cached from tests in
+``tests/plotting/test_plotting.py``. By default, any test that uses
+``Plotter.show`` will cache images automatically. To skip image caching,
+the ``verify_image_cache`` fixture can be utilized:
 
 .. code:: python
 
 
-       @skip_no_plotting
-       def test_add_background_image_not_global():
+       def test_add_background_image_not_global(verify_image_cache):
+           verify_image_cache.skip = True  # Turn off caching
            plotter = pyvista.Plotter()
            plotter.add_mesh(sphere)
-           plotter.show(before_close_callback=verify_cache_image)
+           plotter.show()
+           # Turn on caching for further plotting
+           verify_image_cache.skip = False
+           ...
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
@@ -394,8 +631,137 @@ exists, be sure to add the resulting image with
 
     git add tests/plotting/image_cache/*
 
+During unit testing, if you get image regression failures and would like to
+compare the images generated locally to the regression test suite, allow
+`pytest-pyvista`_ to write all new
+generated images to a local directory using the ``--generated_image_dir`` flag.
+
+.. _pytest-pyvista: https://pytest.pyvista.org/
+
+For example, the following writes all images generated by ``pytest`` to
+``debug_images/`` for any tests in ``tests/plotting`` whose function name has
+``volume`` in it.
+
+.. code:: bash
+
+   pytest tests/plotting/ -k volume --generated_image_dir debug_images
+
+See `pytest-pyvista`_ for more details.
+
+Building the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Build the documentation on Linux or Mac OS with:
+
+.. code:: bash
+
+   make -C doc html
+
+Build the documentation on Windows with:
+
+.. code:: winbatch
+
+   cd doc
+   python -msphinx -M html source _build
+   python -msphinx -M html . _build
+
+The generated documentation can be found in the ``doc/_build/html``
+directory.
+
+The first time you build the documentation locally will take a while as all the
+examples need to be built. After the first build, the documentation should take
+a fraction of the time.
+
+Clearing the Local Build
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you need to clear the locally built documentation, run:
+
+.. code:: bash
+
+   make -C doc clean
+
+This will clear out everything, including the examples gallery. If you only
+want to clear everything except the gallery examples, run:
+
+.. code:: bash
+
+   make -C doc clean-except-examples
+
+This will clear out the cache without forcing you to rebuild all the examples.
+
+
+Parallel Documentation Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can improve your documentation build time on Linux and Mac OS with:
+
+.. code:: bash
+
+   make -C doc phtml
+
+This effectively invokes ``SPHINXOPTS=-j`` and can be especially useful for
+multi-core computers.
+
+
+
+Contributing to the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Documentation for PyVista is generated from three sources:
+
+- Docstrings from the classes, functions, and modules of ``pyvista`` using
+  `sphinx.ext.autodoc
+  <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
+- Restructured test from ``doc/``
+- Gallery examples from ``examples/``
+
+General usage and API descriptions should be placed within ``doc/api`` and
+the docstrings. Full gallery examples should be placed in ``examples``.
+
+
+Adding a New Example
+^^^^^^^^^^^^^^^^^^^^
+PyVista's examples come in two formats: basic code snippets demonstrating the
+functionality of an individual method or a full gallery example displaying one
+or more concepts. Small code samples and snippets are contained in the
+``doc/api`` directory or within our documentation strings, while the full
+gallery examples, meant to be run as individual downloadable scripts, are
+contained in the ``examples`` directory at the root of this repository.
+
+To add a fully fledged, standalone example, add your example to the
+``examples`` directory in the root directory of the `PyVista Repository
+<https://github.com/pyvista/pyvista/>`_ within one of the applicable
+subdirectories. Should none of the existing directories match the category of
+your example, create a new directory with a ``README.txt`` describing the new
+category. Additionally, as these examples are built using the sphinx gallery
+extension, follow coding guidelines as established by `Sphinx-Gallery
+<https://sphinx-gallery.github.io/stable/index.html>`_.
+
+For more details see :ref:`add_example_example`.
+
+
+Add a New Example File
+^^^^^^^^^^^^^^^^^^^^^^
+If you have a dataset that you need for your gallery example, add it to
+`pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
+directions there. You will then need to add a new function to download the
+dataset ``pyvista/examples/downloads.py``. This might be as easy as:
+
+.. code:: python
+
+   def download_my_dataset(load=True):
+       """Download my new dataset."""
+       return _download_and_read('mydata/my_new_dataset.vtk', load=load)
+
+
+Which enables:
+
+.. code::
+
+   >>> from pyvista import examples
+   >>> dataset = examples.download_my_dataset()
+
+
 Creating a New Pull Request
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have tested your branch locally, create a pull request on
 `pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
@@ -433,13 +799,13 @@ The main features of our branching model are:
    from ``fix/`` branches should be merged both to main and to these
    branches. When necessary to create a new patch release these release
    branches will have their ``pyvista/_version.py`` updated and be tagged
-   with a semantic version (e.g. ``v0.24.1``). This triggers CI
+   with a semantic version (for example ``v0.24.1``). This triggers CI
    to push to PyPI, and allow us to rapidly push hotfixes for past
    versions of ``pyvista`` without having to worry about untested
    features.
 -  When a minor release candidate is ready, a new ``release`` branch
    will be created from ``main`` with the next incremented minor version
-   (e.g. ``release/0.25``), which will be thoroughly tested. When deemed
+   (for example ``release/0.25``), which will be thoroughly tested. When deemed
    stable, the release branch will be tagged with the version
    (``v0.25.0`` in this case), and if necessary merged with main if any
    changes were pushed to it. Feature development then continues on
@@ -455,12 +821,18 @@ functionality and stability of ``pyvista``. Before a minor release is
 created the following will occur:
 
 1.  Create a new branch from the ``main`` branch with name
-    ``release/MAJOR.MINOR`` (e.g. ``release/0.25``).
+    ``release/MAJOR.MINOR`` (for example ``release/0.25``).
 
-2.  Locally run all tests as outlined in the `Testing
+2.  Update the development version numbers in ``pyvista/_version.py``
+    and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
+    and create a new PR for this release that merges it to main.
+    Development to main should be limited at this point while effort
+    is focused on the release.
+
+3.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-3.  Locally test and build the documentation with link checking to make
+4.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
@@ -468,17 +840,11 @@ created the following will occur:
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest
+       make doctest-modules
        make html -b linkcheck
 
-4.  After building the documentation, open the local build and examine
+5.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
-
-5.  Update the development version numbers in ``pyvista/_version.py``
-    and commit it (e.g. ``0, 26, 'dev0'``). Push the branch to GitHub
-    and create a new PR for this release that merges it to main.
-    Development to main should be limited at this point while effort
-    is focused on the release.
 
 6.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
@@ -494,9 +860,14 @@ created the following will occur:
     .. code:: bash
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
+
+8.  Please check again that the tag has been created correctly and push the tag.
+
+    .. code:: bash
+
        git push origin --tags
 
-8.  Create a list of all changes for the release. It is often helpful to
+9.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
     feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
@@ -504,18 +875,18 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-9.  Place your release notes from step 8 in the description for `the new
+10. Place your release notes from previous step in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
-10. Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro-cf-autotick-bot>`_
+11. Go grab a beer/coffee/water and wait for
+    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-11. Announce the new release in the PyVista Slack workspace and
-    celebrate!
+12. Announce the new release in the Discussions page and
+    celebrate.
 
 Patch Release Steps
 ^^^^^^^^^^^^^^^^^^^
@@ -524,9 +895,9 @@ Patch releases are for critical and important bugfixes that can not or
 should not wait until a minor release. The steps for a patch release
 
 1. Push the necessary bugfix(es) to the applicable release branch. This
-   will generally be the latest release branch (e.g. ``release/0.25``).
+   will generally be the latest release branch (for example ``release/0.25``).
 
-2. Update ``pyvista/_version.py`` with the next patch increment (e.g.
+2. Update ``pyvista/_version.py`` with the next patch increment (for example
    ``v0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside

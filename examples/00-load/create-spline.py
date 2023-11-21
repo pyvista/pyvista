@@ -1,10 +1,11 @@
 """
-.. _ref_create_spline:
+.. _create_spline_example:
 
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
-Create a spline/polyline from a numpy array of XYZ vertices
+Create a spline/polyline from a numpy array of XYZ vertices using
+:func:`pyvista.Spline`.
 """
 
 import numpy as np
@@ -97,6 +98,15 @@ spline = pv.Spline(points, 400)
 
 # plot without scalars
 spline.plot(line_width=4, color="k")
+
+
+###############################################################################
+# The radius of the tube can be modulated with scalars
+
+spline["theta"] = 0.4 * np.arange(len(spline.points))
+spline["radius"] = np.abs(np.sin(spline["theta"]))
+tube = spline.tube(scalars="radius", absolute=True)
+tube.plot(scalars="theta", smooth_shading=True)
 
 
 ###############################################################################

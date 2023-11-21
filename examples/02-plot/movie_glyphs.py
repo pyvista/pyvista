@@ -5,7 +5,7 @@ Save a Movie Using Glyphs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create an animated GIF by generating glyphs using :func:`glyph()
-<pyvista.DataSet.glyph>` using :func:`pyvista.Sphere`.
+<pyvista.DataSetFilters.glyph>` using :func:`pyvista.Sphere`.
 
 """
 # sphinx_gallery_thumbnail_number = 1
@@ -61,7 +61,7 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     grid.point_data['size'] = z.ravel()
     new_spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 
-    spheres.overwrite(new_spheres)
+    spheres.copy_from(new_spheres)
 
     # Write a frame. This triggers a render.
     plotter.write_frame()

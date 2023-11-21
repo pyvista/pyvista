@@ -1,18 +1,15 @@
 """Module containing useful plotting tools."""
 
-from collections.abc import Sequence
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE, Popen
-import warnings
+from subprocess import PIPE, Popen, TimeoutExpired
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import PyvistaDeprecationWarning
 
+from . import _vtk
 from .colors import Color
 
 
@@ -30,7 +27,17 @@ SUPPORTS_PLOTTING = None
 
 
 def supports_open_gl():
-    """Return if the system supports OpenGL."""
+    """
+    Return if the system supports OpenGL.
+
+    This function checks if the system supports OpenGL by creating a VTK render
+    window and querying its OpenGL support.
+
+    Returns
+    -------
+    bool
+        ``True`` if the system supports OpenGL, ``False`` otherwise.
+    """
     global SUPPORTS_OPENGL
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
@@ -58,8 +65,11 @@ def _system_supports_plotting():
     # mac case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE)
-        proc.communicate()
+        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
+        try:
+            proc.communicate(timeout=10)
+        except TimeoutExpired:
+            return False
         if proc.returncode == 0:
             return True
 
@@ -68,10 +78,10 @@ def _system_supports_plotting():
 
     # Linux case
     try:
-        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
-        proc.communicate()
+        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
+        proc.communicate(timeout=10)
         return proc.returncode == 0
-    except OSError:
+    except (OSError, TimeoutExpired):
         return False
 
 
@@ -126,49 +136,81 @@ def create_axes_marker(
 
     Parameters
     ----------
-    label_color : color_like, optional
-        Unknown
+    label_color : ColorLike, optional
+        Color of the label text.
 
-    x_color : color_like, optional
+    x_color : ColorLike, optional
         Color of the x axis text.
 
-    y_color : color_like, optional
+    y_color : ColorLike, optional
         Color of the y axis text.
 
-    z_color : color_like, optional
+    z_color : ColorLike, optional
         Color of the z axis text.
 
-    xlabel : str, optional
+    xlabel : str, default: "X"
         Text used for the x axis.
 
-    ylabel : str, optional
+    ylabel : str, default: "Y"
         Text used for the y axis.
 
-    zlabel : str, optional
+    zlabel : str, default: "Z"
         Text used for the z axis.
 
-    labels_off : bool, optional
+    labels_off : bool, default: False
         Enable or disable the text labels for the axes.
 
-    line_width : float, optional
+    line_width : float, default: 2
         The width of the marker lines.
 
-    cone_radius: float, optional
+    cone_radius : float, default: 0.4
         The radius of the axes arrow tips.
 
-    shaft_length: float, optional
+    shaft_length : float, default: 0.8
         The length of the axes arrow shafts.
 
-    ambient: float, optional
-        The ambient of the axes arrows.
+    tip_length : float, default: 0.2
+        Length of the tip.
 
-    label_size: sequence, optoinal
-        The width and height of the axes label actors.
+    ambient : float, default: 0.5
+        The ambient of the axes arrows. Value should be between 0 and 1.
+
+    label_size : sequence[float], default: (0.25, 0.1)
+        The width and height of the axes label actors. Values should be between
+        0 and 1. For example ``(0.2, 0.1)``.
 
     Returns
     -------
     vtk.vtkAxesActor
         Axes actor.
+
+    Examples
+    --------
+    Create the default axes marker.
+
+    >>> import pyvista as pv
+    >>> marker = pv.create_axes_marker()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(marker)
+    >>> pl.show()
+
+    Create an axes marker at the origin with custom colors and axis labels.
+
+    >>> import pyvista as pv
+    >>> marker = pv.create_axes_marker(
+    ...     line_width=4,
+    ...     ambient=0.0,
+    ...     x_color="#378df0",
+    ...     y_color="#ab2e5d",
+    ...     z_color="#f7fb9a",
+    ...     xlabel="X Axis",
+    ...     ylabel="Y Axis",
+    ...     zlabel="Z Axis",
+    ...     label_size=(0.1, 0.1),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(marker)
+    >>> pl.show()
 
     """
     x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
@@ -243,16 +285,16 @@ def create_axes_orientation_box(
     text_scale : float, optional
         Size of the text relative to the faces.
 
-    edge_color : color_like, optional
+    edge_color : ColorLike, optional
         Color of the edges.
 
-    x_color : color_like, optional
+    x_color : ColorLike, optional
         Color of the x axis text.
 
-    y_color : color_like, optional
+    y_color : ColorLike, optional
         Color of the y axis text.
 
-    z_color : color_like, optional
+    z_color : ColorLike, optional
         Color of the z axis text.
 
     xlabel : str, optional
@@ -264,22 +306,22 @@ def create_axes_orientation_box(
     zlabel : str, optional
         Text used for the z axis.
 
-    x_face_color : color_like, optional
+    x_face_color : ColorLike, optional
         Color used for the x axis arrow.  Defaults to theme axes
         parameters.
 
-    y_face_color : color_like, optional
+    y_face_color : ColorLike, optional
         Color used for the y axis arrow.  Defaults to theme axes
         parameters.
 
-    z_face_color : color_like, optional
+    z_face_color : ColorLike, optional
         Color used for the z axis arrow.  Defaults to theme axes
         parameters.
 
     color_box : bool, optional
         Enable or disable the face colors.  Otherwise, box is white.
 
-    label_color : color_like, optional
+    label_color : ColorLike, optional
         Color of the labels.
 
     labels_off : bool, optional
@@ -297,15 +339,22 @@ def create_axes_orientation_box(
     --------
     Create and plot an orientation box
 
-    >>> import pyvista
-    >>> actor = pyvista.create_axes_orientation_box(
-    ...    line_width=1, text_scale=0.53,
-    ...    edge_color='black', x_color='k',
-    ...    y_color=None, z_color=None,
-    ...    xlabel='X', ylabel='Y', zlabel='Z',
-    ...    color_box=False,
-    ...    labels_off=False, opacity=1.0)
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> actor = pv.create_axes_orientation_box(
+    ...     line_width=1,
+    ...     text_scale=0.53,
+    ...     edge_color='black',
+    ...     x_color='k',
+    ...     y_color=None,
+    ...     z_color=None,
+    ...     xlabel='X',
+    ...     ylabel='Y',
+    ...     zlabel='Z',
+    ...     color_box=False,
+    ...     labels_off=False,
+    ...     opacity=1.0,
+    ... )
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(actor)
     >>> pl.show()
 
@@ -372,10 +421,9 @@ def create_axes_orientation_box(
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = _vtk.vtkActor()
-        cube_actor.SetMapper(cube_mapper)
-        cube_actor.GetProperty().BackfaceCullingOn()
-        cube_actor.GetProperty().SetOpacity(opacity)
+        cube_actor = pyvista.Actor(mapper=cube_mapper)
+        cube_actor.prop.culling = 'back'
+        cube_actor.prop.opacity = opacity
 
         prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
@@ -390,7 +438,26 @@ def create_axes_orientation_box(
 
 
 def normalize(x, minimum=None, maximum=None):
-    """Normalize the given value between [minimum, maximum]."""
+    """
+    Normalize the given value between [minimum, maximum].
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        The array of values to normalize.
+    minimum : float, optional
+        The minimum value to which ``x`` should be normalized. If not specified,
+        the minimum value in ``x`` will be used.
+    maximum : float, optional
+        The maximum value to which ``x`` should be normalized. If not specified,
+        the maximum value in ``x`` will be used.
+
+    Returns
+    -------
+    numpy.ndarray
+        The normalized array of values, where the values are scaled to the
+        range ``[minimum, maximum]``.
+    """
     if minimum is None:
         minimum = np.nanmin(x)
     if maximum is None:
@@ -420,21 +487,38 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     ----------
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
-        mapping including 'linear', 'geom', 'sigmoid', 'sigmoid_3-10'.
-        Append an '_r' to any of those names to reverse that mapping.
-        This can also be a custom array/list of values that will be
-        interpolated across the ``n_color`` range for user defined mappings.
+        mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
+        ``'sigmoid_1-10'``, and ``foreground``. Append an ``'_r'`` to any
+        of those names (except ``foreground``) to reverse that mapping.
+        The mapping can also be a custom user-defined array/list of values
+        that will be interpolated across the ``n_color`` range.
 
     n_colors : int
-        The amount of colors that the opacities must be mapped to.
+        The number of colors that the opacities must be mapped to.
 
     interpolate : bool
-        Flag on whether or not to interpolate the opacity mapping for all colors
+        Flag on whether or not to interpolate the opacity mapping for all
+        colors.
 
     kind : str
-        The interepolation kind if ``interpolate`` is true and ``scipy`` is
-        available. Options are ('linear', 'nearest', 'zero', 'slinear',
-        'quadratic', 'cubic', 'previous', 'next'.
+        The interpolation kind if ``interpolate`` is ``True`` and ``scipy``
+        is available. If ``scipy`` is not available, linear interpolation
+        is always used. Options are:
+
+        - ``'linear'``
+        - ``'nearest'``
+        - ``'zero'``
+        - ``'slinear'``
+        - ``'quadratic'``
+        - ``'cubic'``
+        - ``'previous'``
+        - ``'next'``
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of ``numpy.uint8`` values ``n_colors`` long containing the
+        [0-255] opacity mapping values.
 
     Examples
     --------
@@ -442,7 +526,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
+    >>> tf = (
+    ...     pv.opacity_transfer_function("geom_r", 256).astype(float)
+    ...     / 255.0
+    ... )
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)
@@ -454,6 +541,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
         'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_1': sigmoid(np.linspace(-1.0, 1.0, n_colors)),
+        'sigmoid_2': sigmoid(np.linspace(-2.0, 2.0, n_colors)),
         'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
         'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
         'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
@@ -462,6 +551,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
         'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
         'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
@@ -473,7 +563,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError(f'opactiy transfer function ({mapping}) unknown.')
+            raise ValueError(
+                f'Opacity transfer function ({mapping}) unknown. '
+                f'Valid options: {list(transfer_func.keys())}'
+            ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -510,118 +603,86 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 
 
-def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
-    """Parse color into a VTK friendly RGB(A) tuple.
-
-    .. deprecated:: 0.34.0
-        Use :class:`Color` to parse and convert colors instead.
-
-    If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter
-    is ignored.
-
-    Values returned will be between 0 and 1.
+def parse_font_family(font_family: str) -> int:
+    """
+    Check and validate the given font family name.
 
     Parameters
     ----------
-    color : color_like
-        Either a string, RGB sequence, RGBA sequence, or hex color string.
-        RGB(A) sequences should only contain values between 0 and 1.
-        For example:
-
-        * ``'white'``
-        * ``'w'``
-        * ``[1.0, 1.0, 1.0]``
-        * ``[0.5, 1.0, 0.7, 1.0]``
-        * ``'#FFFFFF'``
-
-    opacity : float, optional
-        Default opacity of the returned color. Used when ``color`` is
-        not a length 4 RGBA sequence. Only opacities between 0 and 1
-        are allowed.
-
-    default_color : color_like, optional
-        Default color to use when ``color`` is None.  If this value is
-        ``None``, then defaults to the global theme color.  Format is
-        identical to ``color``.
+    font_family : str
+        Font family name to validate. Must be one of the font names defined in
+        the ``FONTS`` enum class.
 
     Returns
     -------
-    tuple
-        Either a length 3 RGB sequence if opacity is unset, or an RGBA
-        sequence when ``opacity`` is set or the input ``color`` is an
-        RGBA sequence.
+    int
+        Corresponding integer value of the valid font family name in the
+        ``FONTS`` enum class.
 
-    Examples
-    --------
-    >>> import pyvista
-    >>> pyvista.parse_color('blue')
-    (0.0, 0.0, 1.0)
-
-    >>> pyvista.parse_color('k')
-    (0.0, 0.0, 0.0)
-
-    >>> pyvista.parse_color('#FFFFFF')
-    (1.0, 1.0, 1.0)
-
-    >>> pyvista.parse_color((0.4, 0.3, 0.4, 1))
-    (0.4, 0.3, 0.4, 1.0)
-
+    Raises
+    ------
+    ValueError
+        If the font_family is not one of the defined font names in the ``FONTS``
+        enum class.
     """
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
-    )
-    color_valid = True
-    if color is None:
-        if default_color is None:
-            color = pyvista.global_theme.color
-        else:
-            color = default_color
-    if isinstance(color, str):
-        color = Color(color).float_rgb
-    elif isinstance(color, (Sequence, np.ndarray)):
-        try:
-            color = np.asarray(color, dtype=np.float64)
-            if (
-                color.ndim != 1
-                or color.size not in (3, 4)
-                or not np.all((0 <= color) & (color <= 1))
-            ):
-                color_valid = False
-            elif len(color) == 4:
-                opacity = color[3]
-                color = color[:3]
-        except ValueError:
-            color_valid = False
-    else:
-        color_valid = False
-    if not color_valid:
-        raise ValueError(
-            "\n"
-            f"\tInvalid color input: ({color})\n"
-            "\tMust be string, rgb list, or hex color string.  For example:\n"
-            "\t\tcolor='white'\n"
-            "\t\tcolor='w'\n"
-            "\t\tcolor=[1, 1, 1]\n"
-            "\t\tcolor='#FFFFFF'"
-        )
-    if opacity is not None:
-        if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
-            color = [color[0], color[1], color[2], float(opacity)]
-        else:
-            raise ValueError(
-                "\n"
-                f"\tInvalid opacity input: {opacity}\n"
-                "\tMust be a scalar value between 0 and 1."
-            )
-    return tuple(color)
-
-
-def parse_font_family(font_family):
-    """Check font name."""
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
         raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
     return FONTS[font_family].value
+
+
+def check_matplotlib_vtk_compatibility():
+    """
+    Check if VTK and Matplotlib versions are compatible for MathText rendering.
+
+    This function is primarily geared towards checking if MathText rendering is
+    supported with the given versions of VTK and Matplotlib. It follows the
+    version constraints:
+
+    * VTK <= 9.2.2 requires Matplotlib < 3.6
+    * VTK > 9.2.2 requires Matplotlib >= 3.6
+
+    Other version combinations of VTK and Matplotlib will work without
+    errors, but some features (like MathText/LaTeX rendering) may
+    silently fail.
+
+    Returns
+    -------
+    bool
+        True if the versions of VTK and Matplotlib are compatible for MathText
+        rendering, False otherwise.
+
+    Raises
+    ------
+    RuntimeError
+        If the versions of VTK and Matplotlib cannot be checked.
+
+    """
+    import matplotlib
+
+    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    if pyvista.vtk_version_info <= (9, 2, 2):
+        if mpl_vers >= (3, 6):
+            return False
+        return True
+    elif pyvista.vtk_version_info > (9, 2, 2):
+        if mpl_vers >= (3, 6):
+            return True
+        return False  # pragma: no cover
+    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
+
+
+def check_math_text_support():
+    """Check if MathText and LaTeX symbols are supported.
+
+    Returns
+    -------
+    bool
+        ``True`` if both MathText and LaTeX symbols are supported, ``False``
+        otherwise.
+    """
+    return (
+        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+        and check_matplotlib_vtk_compatibility()
+    )

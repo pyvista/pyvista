@@ -3,14 +3,16 @@
 The data objects does not have any sort of spatial reference.
 
 """
+from typing import Optional, Tuple
+
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, get_array, row_array
 
+from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
+from .utilities.arrays import FieldAssociation, get_array, row_array
 
 
 class Table(_vtk.vtkTable, DataObject):
@@ -74,25 +76,51 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):
-        """Return the number of rows."""
+    def n_rows(self):  # numpydoc ignore=RT01
+        """Return the number of rows.
+
+        Returns
+        -------
+        int
+            The number of rows.
+
+        """
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n):
-        """Set the number of rows."""
+    def n_rows(self, n):  # numpydoc ignore=GL08
+        """Set the number of rows.
+
+        Parameters
+        ----------
+        n : int
+            The number of rows.
+
+        """
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):
-        """Return the number of columns."""
+    def n_columns(self):  # numpydoc ignore=RT01
+        """Return the number of columns.
+
+        Returns
+        -------
+        int
+            The number of columns.
+
+        """
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):
+    def n_arrays(self):  # numpydoc ignore=RT01
         """Return the number of columns.
 
         Alias for: ``n_columns``.
+
+        Returns
+        -------
+        int
+            The number of columns.
 
         """
         return self.n_columns
@@ -114,8 +142,15 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):
-        """Return the all row arrays."""
+    def row_arrays(self):  # numpydoc ignore=RT01
+        """Return the all row arrays.
+
+        Returns
+        -------
+        int
+            The all row arrays.
+
+        """
         return DataSetAttributes(
             vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
         )
@@ -185,24 +220,6 @@ class Table(_vtk.vtkTable, DataObject):
         """
         return self.row_arrays.pop(name)
 
-    def _add_row_array(self, scalars, name, deep=True):
-        """Add scalars to the vtk object.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Numpy array of scalars.  Must match number of points.
-
-        name : str
-            Name of point scalars to add.
-
-        deep : bool, optional
-            Does not copy scalars when False.  A reference to the scalars
-            must be kept to avoid a segfault.
-
-        """
-        self.row_arrays[name] = scalars
-
     def __getitem__(self, index):
         """Search row data for an array."""
         return self._row_array(name=index)
@@ -229,7 +246,7 @@ class Table(_vtk.vtkTable, DataObject):
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, field, key):
+    def _remove_array(self, _, key):
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
@@ -256,7 +273,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         fmt = ""
         if self.n_arrays > 0:
-            fmt += "<table>"
+            fmt += "<table style='width: 100%;'>"
             fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         # Get the header info
@@ -265,7 +282,7 @@ class Table(_vtk.vtkTable, DataObject):
         if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
-            fmt += "<table>\n"
+            fmt += "<table style='width: 100%;'>\n"
             titles = ["Name", "Type", "N Comp", "Min", "Max"]
             fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
@@ -324,8 +341,10 @@ class Table(_vtk.vtkTable, DataObject):
             "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         )
 
-    def get_data_range(self, arr=None, preference='row'):
-        """Get the non-NaN min and max of a named array.
+    def get_data_range(
+        self, arr: Optional[str] = None, preference: str = 'row'
+    ) -> Tuple[float, float]:
+        """Get the min and max of a named array.
 
         Parameters
         ----------
@@ -346,7 +365,7 @@ class Table(_vtk.vtkTable, DataObject):
         """
         if arr is None:
             # use the first array in the row data
-            self.GetRowData().GetArrayName(0)
+            arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
@@ -354,161 +373,3 @@ class Table(_vtk.vtkTable, DataObject):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
-
-
-class Texture(_vtk.vtkTexture, DataObject):
-    """A helper class for vtkTextures."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the texture."""
-        super().__init__(*args, **kwargs)
-
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkTexture):
-                self._from_texture(args[0])
-            elif isinstance(args[0], np.ndarray):
-                self._from_array(args[0])
-            elif isinstance(args[0], _vtk.vtkImageData):
-                self._from_image_data(args[0])
-            elif isinstance(args[0], str):
-                self._from_file(filename=args[0], **kwargs)
-            else:
-                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
-
-    def _from_file(self, filename, **kwargs):
-        try:
-            image = pyvista.read(filename, **kwargs)
-            if image.GetNumberOfPoints() < 2:
-                raise ValueError("Problem reading the image with VTK.")
-            self._from_image_data(image)
-        except (KeyError, ValueError):
-            from imageio import imread
-
-            self._from_array(imread(filename))
-
-    def _from_texture(self, texture):
-        image = texture.GetInput()
-        self._from_image_data(image)
-
-    def _from_image_data(self, image):
-        if not isinstance(image, pyvista.UniformGrid):
-            image = pyvista.UniformGrid(image)
-        self.SetInputDataObject(image)
-        self.Update()
-
-    def _from_array(self, image):
-        """Create a texture from a np.ndarray."""
-        if not 2 <= image.ndim <= 3:
-            # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
-            raise ValueError('Input image must be nn by nm by RGB[A]')
-
-        if image.ndim == 3:
-            if not 3 <= image.shape[2] <= 4:
-                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
-            n_components = image.shape[2]
-        elif image.ndim == 2:
-            n_components = 1
-
-        grid = pyvista.UniformGrid(dims=(image.shape[1], image.shape[0], 1))
-        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
-            (-1, n_components), order='F'
-        )
-        grid.set_active_scalars('Image')
-        self._from_image_data(grid)
-
-    @property
-    def repeat(self):
-        """Repeat the texture."""
-        return self.GetRepeat()
-
-    @repeat.setter
-    def repeat(self, flag):
-        self.SetRepeat(flag)
-
-    @property
-    def n_components(self):
-        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
-        image = self.to_image()
-        return image.active_scalars.shape[1]
-
-    def flip(self, axis):
-        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
-        if not 0 <= axis <= 1:
-            raise ValueError(f"Axis {axis} out of bounds")
-        array = self.to_array()
-        array = np.flip(array, axis=1 - axis)
-        self._from_array(array)
-
-    def to_image(self):
-        """Return the texture as an image.
-
-        Returns
-        -------
-        pyvista.UniformGrid
-            Texture represented as a uniform grid.
-
-        """
-        return self.GetInput()
-
-    def to_array(self):
-        """Return the texture as an array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Texture as a numpy array
-
-        """
-        image = self.to_image()
-
-        if image.active_scalars.ndim > 1:
-            shape = (image.dimensions[1], image.dimensions[0], self.n_components)
-        else:
-            shape = (image.dimensions[1], image.dimensions[0])
-
-        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
-
-    def plot(self, *args, **kwargs):
-        """Plot the texture as image data by itself."""
-        kwargs.setdefault("rgba", True)
-        return self.to_image().plot(*args, **kwargs)
-
-    @property
-    def cube_map(self):
-        """Return ``True`` if cube mapping is enabled and ``False`` otherwise.
-
-        Is this texture a cube map, if so it needs 6 inputs, one for
-        each side of the cube. You must set this before connecting the
-        inputs.  The inputs must all have the same size, data type,
-        and depth.
-        """
-        return self.GetCubeMap()
-
-    @cube_map.setter
-    def cube_map(self, flag):
-        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
-        self.SetCubeMap(flag)
-
-    def copy(self):
-        """Make a copy of this texture.
-
-        Returns
-        -------
-        pyvista.Texture
-            Copied texture.
-        """
-        return Texture(self.to_image().copy())
-
-    def to_skybox(self):
-        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
-
-        Returns
-        -------
-        vtk.vtkSkybox
-            Skybox if cube mapping is enabled.  Otherwise, ``None``.
-
-        """
-        if self.cube_map:
-            skybox = _vtk.vtkSkybox()
-            skybox.SetTexture(self)
-            return skybox

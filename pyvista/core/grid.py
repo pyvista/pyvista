@@ -1,5 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-import logging
+from functools import wraps
 import pathlib
 from typing import Sequence, Tuple, Union
 import warnings
@@ -7,15 +7,13 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.core.dataset import DataSet
-from pyvista.core.filters import UniformGridFilters, _get_output
-from pyvista.utilities import abstract_class
-import pyvista.utilities.helpers as helpers
-from pyvista.utilities.misc import PyvistaDeprecationWarning, raise_has_duplicates
 
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
+from . import _vtk_core as _vtk
+from .dataset import DataSet
+from .errors import PyVistaDeprecationWarning
+from .filters import ImageDataFilters, RectilinearGridFilters, _get_output
+from .utilities.arrays import convert_array, raise_has_duplicates
+from .utilities.misc import abstract_class, assert_empty_kwargs
 
 
 @abstract_class
@@ -27,18 +25,23 @@ class Grid(DataSet):
         super().__init__()
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
         three dataset axes.
 
+        Returns
+        -------
+        tuple[int]
+            Dimensions of the grid.
+
         Examples
         --------
         Create a uniform grid with dimensions ``(1, 2, 3)``.
 
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 3, 4))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(2, 3, 4))
         >>> grid.dimensions
         (2, 3, 4)
         >>> grid.plot(show_edges=True)
@@ -52,8 +55,7 @@ class Grid(DataSet):
         return self.GetDimensions()
 
     @dimensions.setter
-    def dimensions(self, dims: Sequence[int]):
-        """Set the dataset dimensions."""
+    def dimensions(self, dims: Sequence[int]):  # numpydoc ignore=GL08
         self.SetDimensions(*dims)
         self.Modified()
 
@@ -64,7 +66,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
+class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
@@ -95,58 +97,75 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         ``False``. If ``True``, an error is raised if there are any duplicate
         values in any of the array-valued input arguments.
 
+    deep : bool, optional
+        Whether to deep copy a ``vtk.vtkRectilinearGrid`` object.
+        Default is ``False``.  Keyword only.
+
     Examples
     --------
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> import vtk
     >>> import numpy as np
 
     Create an empty grid.
 
-    >>> grid = pyvista.RectilinearGrid()
+    >>> grid = pv.RectilinearGrid()
 
     Initialize from a vtk.vtkRectilinearGrid object
 
     >>> vtkgrid = vtk.vtkRectilinearGrid()
-    >>> grid = pyvista.RectilinearGrid(vtkgrid)
+    >>> grid = pv.RectilinearGrid(vtkgrid)
 
     Create from NumPy arrays.
 
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
-    >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
+    >>> grid.plot(show_edges=True)
 
     """
 
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
-    def __init__(self, *args, check_duplicates=False, **kwargs):
+    def __init__(
+        self, *args, check_duplicates=False, deep=False, **kwargs
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
         super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkRectilinearGrid):
-                self.deep_copy(args[0])
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
-            elif isinstance(args[0], np.ndarray):
-                self._from_arrays(args[0], None, None, check_duplicates)
+            elif isinstance(args[0], (np.ndarray, Sequence)):
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
+            arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
             if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
+                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
             else:
                 arg2_is_arr = False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]),
+                    np.asanyarray(args[1]),
+                    np.asanyarray(args[2]),
+                    check_duplicates,
+                )
             elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], None, check_duplicates)
+                self._from_arrays(
+                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
+                )
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
@@ -190,32 +209,50 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         # Must at least be an x array
         if check_duplicates:
             raise_has_duplicates(x)
-        self.SetXCoordinates(helpers.convert_array(x.ravel()))
+
+        # edges are shown as triangles if x is not floating point
+        if not np.issubdtype(x.dtype, np.floating):
+            x = x.astype(float)
+        self.SetXCoordinates(convert_array(x.ravel()))
         if y is not None:
             if check_duplicates:
                 raise_has_duplicates(y)
-            self.SetYCoordinates(helpers.convert_array(y.ravel()))
+            if not np.issubdtype(y.dtype, np.floating):
+                y = y.astype(float)
+            self.SetYCoordinates(convert_array(y.ravel()))
         if z is not None:
             if check_duplicates:
                 raise_has_duplicates(z)
-            self.SetZCoordinates(helpers.convert_array(z.ravel()))
+            if not np.issubdtype(z.dtype, np.floating):
+                z = z.astype(float)
+            self.SetZCoordinates(convert_array(z.ravel()))
         # Ensure dimensions are properly set
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> list:
+    def meshgrid(self) -> list:  # numpydoc ignore=RT01
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
         coordinates for this mesh in ``ij`` indexing. These are a copy
         of the points of this mesh.
 
+        Returns
+        -------
+        list[numpy.ndarray]
+            List of numpy arrays representing the points of this mesh.
+
         """
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore
-        """Return a copy of the points as an n by 3 numpy array.
+    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
+        """Return a copy of the points as an ``(n, 3)`` numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of points.
 
         Notes
         -----
@@ -226,11 +263,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         Examples
         --------
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> xrng = np.arange(-10, 10, 10, dtype=float)
         >>> yrng = np.arange(-10, 10, 10, dtype=float)
         >>> zrng = np.arange(-10, 10, 10, dtype=float)
-        >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
         >>> grid.points
         array([[-10., -10., -10.],
                [  0., -10., -10.],
@@ -246,7 +283,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self, points):
+    def points(self, points):  # numpydoc ignore=PR01
         """Raise an AttributeError.
 
         This setter overrides the base class's setter to ensure a user
@@ -259,19 +296,24 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         )
 
     @property
-    def x(self) -> np.ndarray:
+    def x(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return or set the coordinates along the X-direction.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of points along the X-direction.
 
         Examples
         --------
         Return the x coordinates of a RectilinearGrid.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> xrng = np.arange(-10, 10, 10, dtype=float)
         >>> yrng = np.arange(-10, 10, 10, dtype=float)
         >>> zrng = np.arange(-10, 10, 10, dtype=float)
-        >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
         >>> grid.x
         array([-10.,   0.])
 
@@ -282,29 +324,33 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetXCoordinates())
+        return convert_array(self.GetXCoordinates())
 
     @x.setter
-    def x(self, coords: Sequence):
-        """Set the coordinates along the X-direction."""
-        self.SetXCoordinates(helpers.convert_array(coords))
+    def x(self, coords: Sequence):  # numpydoc ignore=GL08
+        self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
-    def y(self) -> np.ndarray:
+    def y(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return or set the coordinates along the Y-direction.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of points along the Y-direction.
 
         Examples
         --------
         Return the y coordinates of a RectilinearGrid.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> xrng = np.arange(-10, 10, 10, dtype=float)
         >>> yrng = np.arange(-10, 10, 10, dtype=float)
         >>> zrng = np.arange(-10, 10, 10, dtype=float)
-        >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
         >>> grid.y
         array([-10.,   0.])
 
@@ -315,29 +361,33 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetYCoordinates())
+        return convert_array(self.GetYCoordinates())
 
     @y.setter
-    def y(self, coords: Sequence):
-        """Set the coordinates along the Y-direction."""
-        self.SetYCoordinates(helpers.convert_array(coords))
+    def y(self, coords: Sequence):  # numpydoc ignore=GL08
+        self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
-    def z(self) -> np.ndarray:
+    def z(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return or set the coordinates along the Z-direction.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of points along the Z-direction.
 
         Examples
         --------
         Return the z coordinates of a RectilinearGrid.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> xrng = np.arange(-10, 10, 10, dtype=float)
         >>> yrng = np.arange(-10, 10, 10, dtype=float)
         >>> zrng = np.arange(-10, 10, 10, dtype=float)
-        >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+        >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
         >>> grid.z
         array([-10.,   0.])
 
@@ -348,18 +398,24 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         array([-10.,   0.,  10.])
 
         """
-        return helpers.convert_array(self.GetZCoordinates())
+        return convert_array(self.GetZCoordinates())
 
     @z.setter
-    def z(self, coords: Sequence):
-        """Set the coordinates along the Z-direction."""
-        self.SetZCoordinates(helpers.convert_array(coords))
+    def z(self, coords: Sequence):  # numpydoc ignore=GL08
+        self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore
-    def dimensions(self, dims):
-        """Do not let the dimensions of the RectilinearGrid be set."""
+    def dimensions(self, _dims):  # numpydoc ignore=GL08
+        """Set Dimensions.
+
+        Parameters
+        ----------
+        _dims : sequence
+            Ignored dimensions.
+
+        """
         raise AttributeError(
             "The dimensions of a `RectilinearGrid` are implicitly "
             "defined and thus cannot be set."
@@ -380,7 +436,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         return _get_output(alg)
 
 
-class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
+class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:
@@ -394,63 +450,68 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         ``vtk.vtkImageData``. Use keyword arguments to specify the
         dimensions, spacing, and origin of the uniform grid.
 
+    .. versionchanged:: 0.37.0
+        The ``dims`` parameter has been renamed to ``dimensions``.
+
     Parameters
     ----------
-    uinput : str, vtk.vtkImageData, pyvista.UniformGrid, optional
+    uinput : str, vtk.vtkImageData, pyvista.ImageData, optional
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
-    dims : iterable, optional
+    dimensions : sequence[int], optional
         Dimensions of the uniform grid.
 
-    spacing : iterable, optional
-        Spacing of the uniform in each dimension.  Defaults to
-        ``(1.0, 1.0, 1.0)``. Must be positive.
+    spacing : sequence[float], default: (1.0, 1.0, 1.0)
+        Spacing of the uniform grid in each dimension. Must be positive.
 
-    origin : iterable, optional
-        Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
+    origin : sequence[float], default: (0.0, 0.0, 0.0)
+        Origin of the uniform grid.
+
+    deep : bool, default: False
+        Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
     Examples
     --------
-    Create an empty UniformGrid.
+    Create an empty ImageData.
 
-    >>> import pyvista
-    >>> grid = pyvista.UniformGrid()
+    >>> import pyvista as pv
+    >>> grid = pv.ImageData()
 
     Initialize from a ``vtk.vtkImageData`` object.
 
     >>> import vtk
     >>> vtkgrid = vtk.vtkImageData()
-    >>> grid = pyvista.UniformGrid(vtkgrid)
+    >>> grid = pv.ImageData(vtkgrid)
 
-    Initialize using using just the grid dimensions and default
+    Initialize using just the grid dimensions and default
     spacing and origin. These must be keyword arguments.
 
-    >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+    >>> grid = pv.ImageData(dimensions=(10, 10, 10))
 
     Initialize using dimensions and spacing.
 
-    >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    >>> grid = pv.ImageData(
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ... )
 
     Initialize using dimensions, spacing, and an origin.
 
-    >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    >>> grid = pv.ImageData(
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ...     origin=(10, 35, 50),
     ... )
 
-    Initialize from another UniformGrid.
+    Initialize from another ImageData.
 
-    >>> grid = pyvista.UniformGrid(
-    ...     dims=(10, 10, 10),
+    >>> grid = pv.ImageData(
+    ...     dimensions=(10, 10, 10),
     ...     spacing=(2, 1, 5),
     ...     origin=(10, 35, 50),
     ... )
-    >>> grid_from_grid = pyvista.UniformGrid(grid)
+    >>> grid_from_grid = pv.ImageData(grid)
     >>> grid_from_grid == grid
     True
 
@@ -459,45 +520,65 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(
-        self, uinput=None, *args, dims=None, spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
+        self,
+        uinput=None,
+        *args,
+        dimensions=None,
+        spacing=(1.0, 1.0, 1.0),
+        origin=(0.0, 0.0, 0.0),
+        deep=False,
+        **kwargs,
     ):
         """Initialize the uniform grid."""
         super().__init__()
 
         # permit old behavior
         if isinstance(uinput, Sequence) and not isinstance(uinput, str):
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
-                "Behavior of pyvista.UniformGrid has changed. First argument must be "
+                "Behavior of pyvista.ImageData has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
-            dims = uinput
+            dimensions = uinput
             uinput = None
 
-        if args:
+        if dimensions is None and 'dims' in kwargs:
+            dimensions = kwargs.pop('dims')
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
-                "Behavior of pyvista.UniformGrid has changed. Use keyword arguments "
+                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
+            )
+        assert_empty_kwargs(**kwargs)
+
+        if args:
+            # Deprecated on v0.37.0, estimated removal on v0.40.0
+            warnings.warn(
+                "Behavior of pyvista.ImageData has changed. Use keyword arguments "
                 "to specify dimensions, spacing, and origin. For example:\n\n"
-                "    >>> grid = pyvista.UniformGrid(\n"
-                "    ...     dims=(10, 10, 10),\n"
+                "    >>> grid = pv.ImageData(\n"
+                "    ...     dimensions=(10, 10, 10),\n"
                 "    ...     spacing=(2, 1, 5),\n"
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
-                PyvistaDeprecationWarning,
+                PyVistaDeprecationWarning,
             )
             origin = args[0]
             if len(args) > 1:
                 spacing = args[1]
             if len(args) > 2:
                 raise ValueError(
-                    "Too many additional arguments specified for UniformGrid. "
+                    "Too many additional arguments specified for ImageData. "
                     f"Accepts at most 2, and {len(args)} have been input."
                 )
 
         # first argument must be either vtkImageData or a path
         if uinput is not None:
             if isinstance(uinput, _vtk.vtkImageData):
-                self.deep_copy(uinput)
+                if deep:
+                    self.deep_copy(uinput)
+                else:
+                    self.shallow_copy(uinput)
             elif isinstance(uinput, (str, pathlib.Path)):
                 self._from_file(uinput)
             else:
@@ -505,14 +586,14 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                     "First argument, ``uinput`` must be either ``vtk.vtkImageData`` "
                     f"or a path, not {type(uinput)}.  Use keyword arguments to "
                     "specify dimensions, spacing, and origin. For example:\n\n"
-                    "    >>> grid = pyvista.UniformGrid(\n"
-                    "    ...     dims=(10, 10, 10),\n"
+                    "    >>> grid = pv.ImageData(\n"
+                    "    ...     dimensions=(10, 10, 10),\n"
                     "    ...     spacing=(2, 1, 5),\n"
                     "    ...     origin=(10, 35, 50),\n"
                     "    ... )\n"
                 )
-        elif dims is not None:
-            self._from_specs(dims, spacing, origin)
+        elif dimensions is not None:
+            self._from_specs(dimensions, spacing, origin)
 
     def __repr__(self):
         """Return the default representation."""
@@ -522,7 +603,9 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def _from_specs(self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):
+    def _from_specs(
+        self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
+    ):  # numpydoc ignore=PR01,RT01
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the point spacings for each axis
@@ -534,11 +617,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         dims : tuple(int)
             Length 3 tuple of ints specifying how many points along each axis.
 
-        spacing : tuple(float)
+        spacing : sequence[float], default: (1.0, 1.0, 1.0)
             Length 3 tuple of floats/ints specifying the point spacings
             for each axis. Must be positive.
 
-        origin : tuple(float)
+        origin : sequence[float], default: (0.0, 0.0, 0.0)
             Length 3 tuple of floats/ints specifying minimum value for each axis.
 
         """
@@ -549,17 +632,22 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         self.spacing = (spacing[0], spacing[1], spacing[2])
 
     @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore
+    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
         """Build a copy of the implicitly defined points as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of points representing the image data.
 
         Notes
         -----
-        The ``points`` for a :class:`pyvista.UniformGrid` cannot be set.
+        The ``points`` for a :class:`pyvista.ImageData` cannot be set.
 
         Examples
         --------
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(2, 2, 2))
         >>> grid.points
         array([[0., 0., 0.],
                [1., 0., 0.],
@@ -587,7 +675,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self, points):
+    def points(self, points):  # numpydoc ignore=PR01
         """Points cannot be set.
 
         This setter overrides the base class's setter to ensure a user does not
@@ -596,18 +684,18 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         """
         raise AttributeError(
             "The points cannot be set. The points of "
-            "`UniformGrid`/`vtkImageData` are implicitly defined by the "
+            "`ImageData`/`vtkImageData` are implicitly defined by the "
             "`origin`, `spacing`, and `dimensions` of the grid."
         )
 
     @property
-    def x(self) -> np.ndarray:
+    def x(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return all the X points.
 
         Examples
         --------
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(2, 2, 2))
         >>> grid.x
         array([0., 1., 0., 1., 0., 1., 0., 1.])
 
@@ -615,13 +703,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.points[:, 0]
 
     @property
-    def y(self) -> np.ndarray:
+    def y(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return all the Y points.
 
         Examples
         --------
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(2, 2, 2))
         >>> grid.y
         array([0., 0., 1., 1., 0., 0., 1., 1.])
 
@@ -629,13 +717,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.points[:, 1]
 
     @property
-    def z(self) -> np.ndarray:
+    def z(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return all the Z points.
 
         Examples
         --------
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(2, 2, 2))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(2, 2, 2))
         >>> grid.z
         array([0., 0., 0., 0., 1., 1., 1., 1.])
 
@@ -643,30 +731,30 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.points[:, 2]
 
     @property
-    def origin(self) -> Tuple[float]:
+    def origin(self) -> Tuple[float]:  # numpydoc ignore=RT01
         """Return the origin of the grid (bottom southwest corner).
 
         Examples
         --------
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(5, 5, 5))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
         >>> grid.origin
         (0.0, 0.0, 0.0)
 
         Show how the origin is in the bottom "southwest" corner of the
-        UniformGrid.
+        ImageData.
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(grid, show_edges=True)
         >>> _ = pl.add_axes_at_origin(ylabel=None)
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
         Set the origin to ``(1, 1, 1)`` and show how this shifts the
-        UniformGrid.
+        ImageData.
 
         >>> grid.origin = (1, 1, 1)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(grid, show_edges=True)
         >>> _ = pl.add_axes_at_origin(ylabel=None)
         >>> pl.camera_position = 'xz'
@@ -676,13 +764,12 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, origin: Sequence[Union[float, int]]):
-        """Set the origin."""
+    def origin(self, origin: Sequence[Union[float, int]]):  # numpydoc ignore=GL08
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 
     @property
-    def spacing(self) -> Tuple[float, float, float]:
+    def spacing(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the spacing for each axial direction.
 
         Notes
@@ -695,8 +782,8 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         --------
         Create a 5 x 5 x 5 uniform grid.
 
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(5, 5, 5))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
         >>> grid.spacing
         (1.0, 1.0, 1.0)
         >>> grid.plot(show_edges=True)
@@ -710,8 +797,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetSpacing()
 
     @spacing.setter
-    def spacing(self, spacing: Sequence[Union[float, int]]):
-        """Set spacing."""
+    def spacing(self, spacing: Sequence[Union[float, int]]):  # numpydoc ignore=GL08
         if min(spacing) < 0:
             raise ValueError(f"Spacing must be non-negative, got {spacing}")
         self.SetSpacing(*spacing)
@@ -748,7 +834,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
 
         """
 
-        def gen_coords(i):
+        def gen_coords(i):  # numpydoc ignore=GL08
             coords = (
                 np.cumsum(np.insert(np.full(self.dimensions[i] - 1, self.spacing[i]), 0, 0))
                 + self.origin[i]
@@ -766,17 +852,17 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return grid
 
     @property
-    def extent(self) -> tuple:
-        """Return or set the extent of the UniformGrid.
+    def extent(self) -> tuple:  # numpydoc ignore=RT01
+        """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
 
         Examples
         --------
-        Create a ``UniformGrid`` and show its extent.
+        Create a ``ImageData`` and show its extent.
 
-        >>> import pyvista
-        >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
         >>> grid.extent
         (0, 9, 0, 9, 0, 9)
 
@@ -796,8 +882,12 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return self.GetExtent()
 
     @extent.setter
-    def extent(self, new_extent: Sequence[int]):
-        """Set the extent of the UniformGrid."""
+    def extent(self, new_extent: Sequence[int]):  # numpydoc ignore=GL08
         if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
         self.SetExtent(new_extent)
+
+    @wraps(RectilinearGridFilters.to_tetrahedra)
+    def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Cast to a rectangular grid and then convert to tetrahedra."""
+        return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)

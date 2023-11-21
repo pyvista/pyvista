@@ -1,5 +1,5 @@
 """
-.. _ref_texture_example:
+.. _texture_example:
 
 Applying Textures
 ~~~~~~~~~~~~~~~~~
@@ -57,7 +57,7 @@ elevated.plot(scalars='Elevation', cmap='terrain', texture=tex, interpolate_befo
 
 
 ###############################################################################
-# Note that this process can be completed with any image texture!
+# Note that this process can be completed with any image texture.
 
 # use the puppy image
 tex = examples.download_puppy_texture()
@@ -82,7 +82,7 @@ curvsurf.plot(texture=tex)
 # NumPy Arrays as Textures
 # ++++++++++++++++++++++++
 #
-# Want to use a programmatically built image? :class:`pyvista.UniformGrid`
+# Want to use a programmatically built image? :class:`pyvista.ImageData`
 # objects can be converted to textures using :func:`pyvista.image_to_texture`
 # and 3D NumPy (X by Y by RGB) arrays can be converted to textures using
 # :func:`pyvista.numpy_to_texture`.
@@ -102,7 +102,7 @@ image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
 # Convert 3D numpy array to texture
 tex = pv.numpy_to_texture(image)
 
-# Render it!
+# Render it
 curvsurf.plot(texture=tex)
 
 ###############################################################################
@@ -110,21 +110,22 @@ curvsurf.plot(texture=tex)
 # +++++++++++++++++++++++++++++++++++++++++
 # Generate a moving gif from an active plotter with updating textures.
 
+mesh = curvsurf.extract_surface()
+
 # Create a plotter object
 plotter = pv.Plotter(notebook=False, off_screen=True)
+
+actor = plotter.add_mesh(mesh, smooth_shading=True, color="white")
 
 # Open a gif
 plotter.open_gif("texture.gif")
 
-pts = curvsurf.points.copy()
-
 # Update Z and write a frame for each updated position
 nframe = 15
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
-
     # create an image using numpy,
     z = np.sin(r + phase)
-    pts[:, -1] = z.ravel()
+    mesh.points[:, -1] = z.ravel()
 
     # Creating a custom RGB image
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -133,13 +134,10 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
 
     # Convert 3D numpy array to texture
-    tex = pv.numpy_to_texture(image)
-
-    plotter.add_mesh(curvsurf, smooth_shading=True, texture=tex)
-    plotter.update_coordinates(pts, render=False)
+    actor.texture = pv.numpy_to_texture(image)
 
     # must update normals when smooth shading is enabled
-    plotter.mesh.compute_normals(cell_normals=False, inplace=True)
+    mesh.compute_normals(cell_normals=False, inplace=True)
     plotter.write_frame()
     plotter.clear()
 
@@ -162,7 +160,7 @@ rgba.n_components
 
 ###############################################################################
 
-# Render it!
+# Render it
 curvsurf.plot(texture=rgba, show_grid=True)
 
 
@@ -189,12 +187,12 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 # produce 4 repetitions of the same texture on this mesh.
 #
 # Then we must associate those texture coordinates with the mesh through the
-# :attr:`pyvista.DataSet.active_t_coords` property.
+# :attr:`pyvista.DataSet.active_texture_coordinates` property.
 
-curvsurf.active_t_coords = puppy_coords
+curvsurf.active_texture_coordinates = puppy_coords
 
 ###############################################################################
-# Now display all the puppies!
+# Now display all the puppies.
 
 # use the puppy image
 tex = examples.download_puppy_texture()
@@ -226,11 +224,11 @@ sphere = pv.Sphere(
 )
 
 # Initialize the texture coordinates array
-sphere.active_t_coords = np.zeros((sphere.points.shape[0], 2))
+sphere.active_texture_coordinates = np.zeros((sphere.points.shape[0], 2))
 
 # Populate by manually calculating
 for i in range(sphere.points.shape[0]):
-    sphere.active_t_coords[i] = [
+    sphere.active_texture_coordinates[i] = [
         0.5 + np.arctan2(-sphere.points[i, 0], sphere.points[i, 1]) / (2 * np.pi),
         0.5 + np.arcsin(sphere.points[i, 2]) / np.pi,
     ]

@@ -1,17 +1,21 @@
-"""glTF examples."""
+"""Contains glTF examples."""
 
-from .downloads import _retrieve_file
+import pooch
 
-GLTF_SAMPLES_ROOT_URL = (
-    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
+from .downloads import USER_DATA_PATH
+
+GLTF_FETCHER = pooch.create(
+    path=USER_DATA_PATH,
+    base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
+    registry={
+        'Avocado/glTF-Binary/Avocado.glb': None,
+        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
+        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
+        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
+        'SheenChair/glTF-Binary/SheenChair.glb': None,
+    },
+    retry_if_failed=3,
 )
-
-
-def _download_file(end_url):  # pragma: no cover
-    """Download a gltf example file."""
-    basename = end_url.split('/')[-1]
-    filename, _ = _retrieve_file(GLTF_SAMPLES_ROOT_URL + end_url, basename)
-    return filename
 
 
 def download_damaged_helmet():  # pragma: no cover
@@ -26,17 +30,17 @@ def download_damaged_helmet():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
-    >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_damaged_helmet()
+    >>> cubemap = examples.download_sky_box_cube_map()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.set_environment_texture(cubemap)
+    >>> pl.show()
 
     """
-    return _download_file('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
+    return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
 
 
 def download_sheen_chair():  # pragma: no cover
@@ -51,17 +55,17 @@ def download_sheen_chair():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_sheen_chair()  # doctest:+SKIP
-    >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_sheen_chair()
+    >>> cubemap = examples.download_sky_box_cube_map()
+    >>> pl = pv.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
     >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return _download_file('SheenChair/glTF-Binary/SheenChair.glb')
+    return GLTF_FETCHER.fetch('SheenChair/glTF-Binary/SheenChair.glb')
 
 
 def download_gearbox():  # pragma: no cover
@@ -76,15 +80,15 @@ def download_gearbox():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_gearbox()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_gearbox()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
 
     """
-    return _download_file('GearboxAssy/glTF-Binary/GearboxAssy.glb')
+    return GLTF_FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
 
 
 def download_avocado():  # pragma: no cover
@@ -99,19 +103,19 @@ def download_avocado():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_avocado()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_avocado()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
 
     """
-    return _download_file('Avocado/glTF-Binary/Avocado.glb')
+    return GLTF_FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
 
 
 def download_milk_truck():  # pragma: no cover
-    """Download the avocado example.
+    """Download the milk truck example.
 
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -122,12 +126,12 @@ def download_milk_truck():  # pragma: no cover
 
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples    # doctest:+SKIP
-    >>> gltf_file = examples.gltf.download_milk_truck()  # doctest:+SKIP
-    >>> pl = pyvista.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_milk_truck()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
 
     """
-    return _download_file('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
+    return GLTF_FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')

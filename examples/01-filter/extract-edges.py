@@ -19,7 +19,7 @@ from pyvista import examples
 # 3. feature edges (edges used by two triangles and whose dihedral angle > feature_angle)
 # 4. manifold edges (edges used by exactly two polygons).
 #
-# The :func:`extract_feature_edges() <pyvista.PolyDataFilters.extract_feature_edges>`
+# The :func:`extract_feature_edges() <pyvista.DataSetFilters.extract_feature_edges>`
 # filter will extract those edges given a feature angle and return a dataset
 # with lines that represent the edges of the original mesh.
 #
@@ -53,8 +53,8 @@ p.show()
 
 ###############################################################################
 # We can leverage the :any:`pyvista.PolyData.n_open_edges` property and
-# :func:`pyvista.PolyDataFilters.extract_feature_edges` filter to count and extract the
-# open edges on a :class:`pyvista.PolyData` mesh.
+# :func:`pyvista.DataSetFilters.extract_feature_edges` filter to count and
+# extract the open edges on a :class:`pyvista.PolyData` mesh.
 
 # Download a sample surface mesh with visible open edges
 mesh = examples.download_bunny()
@@ -67,7 +67,7 @@ mesh.n_open_edges
 
 ###############################################################################
 # And we can extract those edges with the ``boundary_edges`` option of
-# :func:`pyvista.PolyDataFilters.extract_feature_edges`:
+# :func:`pyvista.DataSetFilters.extract_feature_edges`:
 edges = mesh.extract_feature_edges(boundary_edges=True, feature_edges=False, manifold_edges=False)
 
 p = pv.Plotter()

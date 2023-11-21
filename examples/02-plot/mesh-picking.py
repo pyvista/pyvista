@@ -26,20 +26,48 @@ pl.show()
 
 
 ###############################################################################
-# Pick using the left-mouse button
-# ++++++++++++++++++++++++++++++++
-# Pick using the left mouse button and trigger a callback that "shrinks" the
-# mesh each time it's selected.
+# Deform the mesh after picking
+# +++++++++++++++++++++++++++++
+# Pick to trigger a callback that "shrinks" the mesh each time it's selected.
 
 
 def callback(mesh):
     """Shrink the mesh each time it's clicked."""
     shrunk = mesh.shrink(0.9)
-    mesh.overwrite(shrunk)  # must operate "in-place" by overwrite
+    mesh.copy_from(shrunk)  # make operation "in-place" by replacing the original mesh
 
 
 pl = pv.Plotter()
 pl.add_mesh(sphere, color='r')
 pl.add_mesh(cube, color='b')
-pl.enable_mesh_picking(callback=callback, left_clicking=True, show=False)
+pl.enable_mesh_picking(callback=callback, show=False)
+pl.show()
+
+
+###############################################################################
+# Pick based on Actors
+# ++++++++++++++++++++
+# Return the picked actor to the callback
+
+pl = pv.Plotter()
+pl.add_mesh(pv.Cone(center=(0, 0, 0)), name='Cone')
+pl.add_mesh(pv.Cube(center=(1, 0, 0)), name='Cube')
+pl.add_mesh(pv.Sphere(center=(1, 1, 0)), name='Sphere')
+pl.add_mesh(pv.Cylinder(center=(0, 1, 0)), name='Cylinder')
+
+
+def reset():
+    for a in pl.renderer.actors.values():
+        if isinstance(a, pv.Actor):
+            a.prop.color = 'lightblue'
+            a.prop.show_edges = False
+
+
+def callback(actor):
+    reset()
+    actor.prop.color = 'green'
+    actor.prop.show_edges = True
+
+
+pl.enable_mesh_picking(callback, use_actor=True, show=False)
 pl.show()

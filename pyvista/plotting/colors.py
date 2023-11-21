@@ -1,6 +1,6 @@
 """Color module supporting plotting module.
 
-Used code from matplotlib.colors.  Thanks for your work!
+Used code from matplotlib.colors.  Thanks for your work.
 
 
 SUPPORTED COLORS
@@ -169,15 +169,26 @@ tab:cyan
 # of methods defined in this module.
 from __future__ import annotations
 
+import inspect
 from typing import Optional, Tuple, Union
-import warnings
 
+from cycler import Cycler, cycler
+
+try:
+    from matplotlib import colormaps, colors
+except ImportError:  # pragma: no cover
+    from matplotlib import cm as colormaps
+    from matplotlib import colors
+
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista._typing import color_like
-from pyvista.utilities import PyvistaDeprecationWarning
+from pyvista.core.utilities.misc import has_module
+
+from . import _vtk
+from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -369,21 +380,275 @@ color_synonyms = {
     'slategrey': 'slategray',
 }
 
+matplotlib_default_colors = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+]
+
+COLOR_SCHEMES = {
+    "spectrum": {
+        "id": _vtk.vtkColorSeries.SPECTRUM,
+        "descr": "black, red, blue, green, purple, orange, brown",
+    },
+    "warm": {"id": _vtk.vtkColorSeries.WARM, "descr": "dark red → yellow"},
+    "cool": {"id": _vtk.vtkColorSeries.COOL, "descr": "green → blue → purple"},
+    "blues": {"id": _vtk.vtkColorSeries.BLUES, "descr": "Different shades of blue"},
+    "wild_flower": {"id": _vtk.vtkColorSeries.WILD_FLOWER, "descr": "blue → purple → pink"},
+    "citrus": {"id": _vtk.vtkColorSeries.CITRUS, "descr": "green → yellow → orange"},
+    "div_purple_orange11": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
+        "descr": "dark brown → white → dark purple",
+    },
+    "div_purple_orange10": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
+        "descr": "dark brown → white → dark purple",
+    },
+    "div_purple_orange9": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange8": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange7": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange6": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
+        "descr": "brown → white → purple",
+    },
+    "div_purple_orange5": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
+        "descr": "orange → white → purple",
+    },
+    "div_purple_orange4": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
+        "descr": "orange → white → purple",
+    },
+    "div_purple_orange3": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
+        "descr": "orange → white → purple",
+    },
+    "div_spectral11": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
+        "descr": "dark red → light yellow → dark blue",
+    },
+    "div_spectral10": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
+        "descr": "dark red → light yellow → dark blue",
+    },
+    "div_spectral9": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral8": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral7": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral6": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral5": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral4": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
+        "descr": "red → light yellow → blue",
+    },
+    "div_spectral3": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
+        "descr": "orange → light yellow → green",
+    },
+    "div_brown_blue_green11": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
+        "descr": "dark brown → white → dark blue-green",
+    },
+    "div_brown_blue_green10": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
+        "descr": "dark brown → white → dark blue-green",
+    },
+    "div_brown_blue_green9": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green8": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green7": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green6": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green5": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green4": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
+        "descr": "brown → white → blue-green",
+    },
+    "div_brown_blue_green3": {
+        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
+        "descr": "brown → white → blue-green",
+    },
+    "seq_blue_green9": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
+        "descr": "light blue → dark green",
+    },
+    "seq_blue_green8": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
+        "descr": "light blue → dark green",
+    },
+    "seq_blue_green7": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
+        "descr": "light blue → dark green",
+    },
+    "seq_blue_green6": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
+        "descr": "light blue → green",
+    },
+    "seq_blue_green5": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
+        "descr": "light blue → green",
+    },
+    "seq_blue_green4": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
+        "descr": "light blue → green",
+    },
+    "seq_blue_green3": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
+        "descr": "light blue → green",
+    },
+    "seq_yellow_orange_brown9": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
+        "descr": "light yellow → orange → dark brown",
+    },
+    "seq_yellow_orange_brown8": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown7": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown6": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown5": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
+        "descr": "light yellow → orange → brown",
+    },
+    "seq_yellow_orange_brown4": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
+        "descr": "light yellow → orange",
+    },
+    "seq_yellow_orange_brown3": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
+        "descr": "light yellow → orange",
+    },
+    "seq_blue_purple9": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
+        "descr": "light blue → dark purple",
+    },
+    "seq_blue_purple8": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple7": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple6": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple5": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple4": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
+        "descr": "light blue → purple",
+    },
+    "seq_blue_purple3": {
+        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
+        "descr": "light blue → purple",
+    },
+    "qual_accent": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
+        "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray",
+    },
+    "qual_dark2": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
+        "descr": "darker shade of qual_set2",
+    },
+    "qual_set3": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
+        "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow",
+    },
+    "qual_set2": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
+        "descr": "blue green, orange, purple, pink, green, yellow, brown, gray",
+    },
+    "qual_set1": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
+        "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray",
+    },
+    "qual_pastel2": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
+        "descr": "pastel shade of qual_set2",
+    },
+    "qual_pastel1": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
+        "descr": "pastel shade of qual_set1",
+    },
+    "qual_paired": {
+        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
+        "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow",
+    },
+    "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None},
+}
+
+SCHEME_NAMES = {
+    scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
+}
+
 
 class Color:
     """Helper class to convert between different color representations used in the pyvista library.
 
-    Many pyvista methods accept :data:`color_like` parameters. This helper class
+    Many pyvista methods accept :data:`ColorLike` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :data:`color_like` parameter and can be converted
+    or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
     See :attr:`Color.name` for a list of supported color names.
 
     Parameters
     ----------
-    color : color_like, optional
+    color : ColorLike, optional
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
         or as ints between 0 and 255. Hex color strings can contain optional
@@ -398,7 +663,7 @@ class Color:
         * ``[255, 255, 255, 255]``
         * ``'#FFFFFF'``
 
-    opacity : int, float or str, optional
+    opacity : int | float | str, optional
         Opacity of the represented color. Overrides any opacity associated
         with the provided ``color``. Allowed opacities are floats between 0
         and 1, ints between 0 and 255 or hexadecimal strings of length 2
@@ -409,12 +674,12 @@ class Color:
         * ``255``
         * ``'#ff'``
 
-    default_color : color_like, optional
+    default_color : ColorLike, optional
         Default color to use when ``color`` is ``None``. If this value is
         ``None``, then defaults to the global theme color. Format is
         identical to ``color``.
 
-    default_opacity : int, float or str, optional
+    default_opacity : int | float | str, optional
         Default opacity of the represented color. Used when ``color``
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
@@ -428,7 +693,7 @@ class Color:
 
        <details><summary>Refer to the table below for a list of supported colors.</summary>
 
-    .. include:: ../colors.rst
+    .. include:: ../color_table/color_table.rst
 
     .. raw:: html
 
@@ -439,15 +704,15 @@ class Color:
     Create a transparent green color using a color name, float RGBA sequence,
     integer RGBA sequence and RGBA hexadecimal string.
 
-    >>> import pyvista
-    >>> pyvista.Color("green", opacity=0.5)
-    Color(name='green', hex='#00800080')
-    >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
-    Color(name='green', hex='#00800080')
-    >>> pyvista.Color([0, 128, 0, 128])
-    Color(name='green', hex='#00800080')
-    >>> pyvista.Color("#00800080")
-    Color(name='green', hex='#00800080')
+    >>> import pyvista as pv
+    >>> pv.Color("green", opacity=0.5)
+    Color(name='green', hex='#00800080', opacity=128)
+    >>> pv.Color([0.0, 0.5, 0.0, 0.5])
+    Color(name='green', hex='#00800080', opacity=128)
+    >>> pv.Color([0, 128, 0, 128])
+    Color(name='green', hex='#00800080', opacity=128)
+    >>> pv.Color("#00800080")
+    Color(name='green', hex='#00800080', opacity=128)
 
     """
 
@@ -461,9 +726,9 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[color_like] = None,
+        color: Optional[ColorLike] = None,
         opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[color_like] = None,
+        default_color: Optional[ColorLike] = None,
         default_opacity: Union[int, float, str] = 255,
     ):
         """Initialize new instance."""
@@ -549,7 +814,7 @@ class Color:
 
         Parameters
         ----------
-        val : int, float or str
+        val : int | float | str
             Color channel value to convert. Supported input values are a
             hex string of length 2 (``'00'`` to ``'ff'``) with an optional
             prefix (``'#'`` or ``'0x'``), a float (``0.0`` to ``1.0``) or
@@ -587,9 +852,9 @@ class Color:
         try:
             if len(rgba) != 4:
                 raise ValueError("Invalid length for RGBA sequence.")
-            self._red, self._green, self._blue, self._opacity = [
+            self._red, self._green, self._blue, self._opacity = (
                 self.convert_color_channel(c) for c in rgba
-            ]
+            )
         except ValueError:
             raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
 
@@ -630,25 +895,25 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:
+    def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA integer tuple.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=128)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=128)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
         (0, 0, 255, 128)
 
         Create a transparent red color using an integer RGBA sequence.
 
-        >>> c = pyvista.Color([255, 0, 0, 64])
+        >>> c = pv.Color([255, 0, 0, 64])
         >>> c
-        Color(name='red', hex='#ff000040')
+        Color(name='red', hex='#ff000040', opacity=64)
         >>> c.int_rgba
         (255, 0, 0, 64)
 
@@ -656,25 +921,25 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:
+    def int_rgb(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGB integer tuple.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=128)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=128)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
         (0, 0, 255)
 
         Create a red color using an integer RGB sequence.
 
-        >>> c = pyvista.Color([255, 0, 0])
+        >>> c = pv.Color([255, 0, 0])
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.int_rgb
         (255, 0, 0)
 
@@ -682,25 +947,25 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:
+    def float_rgba(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA float tuple.
 
         Examples
         --------
         Create a blue color with custom opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", opacity=0.6)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff99')
+        Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
         (0.0, 0.0, 1.0, 0.6)
 
         Create a transparent red color using a float RGBA sequence.
 
-        >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
+        >>> c = pv.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
-        Color(name='red', hex='#ff000033')
+        Color(name='red', hex='#ff000033', opacity=51)
         >>> c.float_rgba
         (1.0, 0.0, 0.0, 0.2)
 
@@ -708,25 +973,25 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:
+    def float_rgb(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGB float tuple.
 
         Examples
         --------
         Create a blue color with custom opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.6)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff99')
+        Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
         (0.0, 0.0, 1.0)
 
         Create a red color using a float RGB sequence.
 
-        >>> c = pyvista.Color([1.0, 0.0, 0.0])
+        >>> c = pv.Color([1.0, 0.0, 0.0])
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.float_rgb
         (1.0, 0.0, 0.0)
 
@@ -734,25 +999,25 @@ class Color:
         return self.float_rgba[:3]
 
     @property
-    def hex_rgba(self) -> str:
+    def hex_rgba(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGBA hexadecimal value.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity="#80")
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
         '#0000ff80'
 
         Create a transparent red color using an RGBA hexadecimal value.
 
-        >>> c = pyvista.Color("0xff000040")
+        >>> c = pv.Color("0xff000040")
         >>> c
-        Color(name='red', hex='#ff000040')
+        Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
         '#ff000040'
 
@@ -762,25 +1027,25 @@ class Color:
         )
 
     @property
-    def hex_rgb(self) -> str:
+    def hex_rgb(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGB hexadecimal value.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity="#80")
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
         '#0000ff'
 
         Create a red color using an RGB hexadecimal value.
 
-        >>> c = pyvista.Color("0xff0000")
+        >>> c = pv.Color("0xff0000")
         >>> c
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
         '#ff0000'
 
@@ -788,12 +1053,12 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> Optional[str]:  # numpydoc ignore=RT01
         """Get the color name.
 
         Returns
         -------
-        str or None
+        str | None
             The color name, in case this color has a name; otherwise ``None``.
 
         Notes
@@ -806,26 +1071,26 @@ class Color:
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
 
         """
         return self._name
 
     @property
-    def vtk_c3ub(self) -> _vtk.vtkColor3ub:
+    def vtk_c3ub(self) -> _vtk.vtkColor3ub:  # numpydoc ignore=RT01
         """Get the color value as a VTK Color3ub instance.
 
         Examples
         --------
         Create a blue color with half opacity.
 
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> import pyvista as pv
+        >>> c = pv.Color("blue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub
         vtkmodules.vtkCommonDataModel.vtkColor3ub([0, 0, 255])
 
@@ -871,6 +1136,22 @@ class Color:
         """Convert to dictionary for JSON serialization."""
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
+    @property
+    def opacity(self):  # numpydoc ignore=RT01
+        """Return the opacity of this color in the range of ``(0-255)``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> color = pv.Color('r', opacity=0.5)
+        >>> color.opacity
+        128
+        >>> color
+        Color(name='red', hex='#ff000080', opacity=128)
+
+        """
+        return self._opacity
+
     def __eq__(self, other):
         """Equality comparison."""
         try:
@@ -901,7 +1182,7 @@ class Color:
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
-        kwargs = f"hex={self.hex_rgba!r}"
+        kwargs = f"hex={self.hex_rgba!r}, opacity={self.opacity}"
         if self._name is not None:
             kwargs = f"name={self._name!r}, " + kwargs
         return f"Color({kwargs})"
@@ -910,80 +1191,193 @@ class Color:
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
-def hex_to_rgb(h):  # pragma: no cover
-    """Return 0 to 1 rgb from a hex list or tuple."""
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
-    )
-    return Color(h).float_rgb
+def get_cmap_safe(cmap):
+    """
+    Fetch a colormap by name from matplotlib, colorcet, or cmocean.
 
+    Parameters
+    ----------
+    cmap : str or list of str
+        Name of the colormap to fetch. If the input is a list of strings,
+        it will create a ``ListedColormap`` with the input list.
 
-def string_to_rgb(string):  # pragma: no cover
-    """Convert a literal color string (i.e. white) to a color rgb.
+    Returns
+    -------
+    matplotlib.colors.Colormap
+        The requested colormap if available.
 
-    Also accepts hex strings or single characters from the following list.
-
-        b: blue
-        g: green
-        r: red
-        c: cyan
-        m: magenta
-        y: yellow
-        k: black
-        w: white
+    Raises
+    ------
+    ValueError
+        If the input colormap name is not valid.
+    TypeError
+        If the input is a list of items that are not strings.
 
     """
-    # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn(
-        "The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
-        PyvistaDeprecationWarning,
-    )
-    return Color(string).float_rgb
-
-
-def get_cmap_safe(cmap):
-    """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
-    try:
-        from matplotlib.cm import get_cmap
-    except ImportError:  # pragma: no cover
-        raise ImportError(
-            'The use of custom colormaps requires the installation of matplotlib'
-        ) from None
-
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        try:
+        if has_module('colorcet'):
             import colorcet
 
-            cmap = colorcet.cm[cmap]
-        except (ImportError, KeyError):
-            pass
-        else:
-            return cmap
+            try:
+                return colorcet.cm[cmap]
+            except KeyError:
+                pass
+
         # Try cmocean second
-        try:
+        if has_module('cmocean'):
             import cmocean
 
-            cmap = getattr(cmocean.cm, cmap)
-        except (ImportError, AttributeError):
-            pass
-        else:
-            return cmap
-        # Else use Matplotlib
-        cmap = get_cmap(cmap)
+            try:
+                return getattr(cmocean.cm, cmap)
+            except AttributeError:
+                pass
+
+        if not isinstance(cmap, colors.Colormap):
+            if inspect.ismodule(colormaps):  # pragma: no cover
+                # Backwards compatibility with matplotlib<3.5.0
+                if not hasattr(colormaps, cmap):
+                    raise ValueError(f'Invalid colormap "{cmap}"')
+                cmap = getattr(colormaps, cmap)
+            else:
+                try:
+                    cmap = colormaps[cmap]
+                except KeyError:
+                    raise ValueError(f'Invalid colormap "{cmap}"') from None
 
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
                 raise TypeError('When inputting a list as a cmap, each item should be a string.')
-        from matplotlib.colors import ListedColormap
 
         cmap = ListedColormap(cmap)
 
     return cmap
+
+
+def get_default_cycler():
+    """Return the default color cycler (matches matplotlib's default).
+
+    Returns
+    -------
+    cycler.Cycler
+        A cycler object for color that matches matplotlib's default colors.
+
+    """
+    return cycler('color', matplotlib_default_colors)
+
+
+def get_hexcolors_cycler():
+    """Return a color cycler for all of the available hexcolors.
+
+    See ``pyvista.plotting.colors.hexcolors``.
+
+    Returns
+    -------
+    cycler.Cycler
+        A cycler object for color using all the available hexcolors from
+        ``pyvista.plotting.colors.hexcolors``.
+
+    """
+    return cycler('color', hexcolors.keys())
+
+
+def get_matplotlib_theme_cycler():
+    """
+    Return the color cycler of the current matplotlib theme.
+
+    Returns
+    -------
+    cycler.Cycler
+        Color cycler of the current matplotlib theme.
+
+    """
+    return plt.rcParams['axes.prop_cycle']
+
+
+def color_scheme_to_cycler(scheme):
+    """Convert a color scheme to a Cycler.
+
+    Parameters
+    ----------
+    scheme : str, int, or _vtk.vtkColorSeries
+        Color scheme to be converted. If a string, it should correspond to a
+        valid color scheme name (e.g., 'viridis'). If an integer, it should
+        correspond to a valid color scheme ID. If an instance of
+        `_vtk.vtkColorSeries`, it should be a valid color series.
+
+    Returns
+    -------
+    cycler.Cycler
+        A Cycler object with the color scheme.
+
+    Raises
+    ------
+    ValueError
+        If the provided `scheme` is not a valid color scheme.
+    """
+    if not isinstance(scheme, _vtk.vtkColorSeries):
+        series = _vtk.vtkColorSeries()
+        if isinstance(scheme, str):
+            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())["id"])
+        elif isinstance(scheme, int):
+            series.SetColorScheme(scheme)
+        else:
+            raise ValueError(f'Color scheme not understood: {scheme}')
+    else:
+        series = scheme
+    colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
+    return cycler('color', colors)
+
+
+def get_cycler(color_cycler):
+    """Return a color cycler based on the input value.
+
+    Parameters
+    ----------
+    color_cycler : str, list, tuple, or Cycler
+        Specifies the desired color cycler. The value must be one of the following:
+        - A list or tuple of color-like objects
+        - A Cycler object with color-like objects
+        - One of the following string values:
+            - ``'default'``: Use the default color cycler (matches matplotlib's default)
+            - ``'matplotlib'``: Dynamically get matplotlib's current theme's color cycler.
+            - ``'all'``: Cycle through all available colors in ``pyvista.plotting.colors.hexcolors``
+        - A named color scheme from ``pyvista.plotting.colors.COLOR_SCHEMES``
+
+    Returns
+    -------
+    Cycler
+        The color cycler corresponding to the input value.
+
+    Raises
+    ------
+    ValueError
+        Raised if the input is a string not found in named color schemes.
+    TypeError
+        Raised if the input is of an unsupported type.
+
+    """
+    if color_cycler is None:
+        return None
+    elif isinstance(color_cycler, str):
+        if color_cycler == 'default':
+            return get_default_cycler()
+        elif color_cycler == 'matplotlib':
+            return get_matplotlib_theme_cycler()
+        elif color_cycler == 'all':
+            return get_hexcolors_cycler()
+        elif color_cycler in COLOR_SCHEMES:
+            return color_scheme_to_cycler(color_cycler)
+        else:
+            raise ValueError(f'color cycler of name `{color_cycler}` not found.')
+    elif isinstance(color_cycler, (tuple, list)):
+        return cycler('color', color_cycler)
+    elif isinstance(color_cycler, Cycler):
+        return color_cycler
+    else:
+        raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')

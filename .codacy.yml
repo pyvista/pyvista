@@ -1,0 +1,6 @@
+---
+exclude_paths:
+  - "examples/**/*"
+  - "examples_trame/**/*"
+  - "tests/*"
+  - "tests/**/*"

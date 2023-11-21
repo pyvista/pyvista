@@ -4,16 +4,48 @@ from typing import Union
 
 import numpy as np
 
-from pyvista import _vtk
-from pyvista.utilities.helpers import FieldAssociation, convert_array
+from . import _vtk_core as _vtk
+from ._typing_core import Array
+from .utilities.arrays import FieldAssociation, convert_array
 
 
-class pyvista_ndarray(np.ndarray):
-    """An ndarray which references the owning dataset and the underlying vtkArray."""
+class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
+    """A ndarray which references the owning dataset and the underlying vtkArray.
+
+    This array can be acted upon just like a :class:`numpy.ndarray`.
+
+    Parameters
+    ----------
+    array : Array or vtk.vtkAbstractArray
+        Array like.
+
+    dataset : pyvista.DataSet
+        Input dataset.
+
+    association : pyvista.core.utilities.arrays.FieldAssociation
+        Field association.
+
+    Examples
+    --------
+    Return the points of a Sphere as a :class:`pyvista.pyvista_ndarray`.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
+    >>> mesh.points  # doctest:+SKIP
+    pyvista_ndarray([[-5.5511151e-17,  0.0000000e+00, -5.0000000e-01],
+                     [ 5.5511151e-17,  0.0000000e+00,  5.0000000e-01],
+                     [-5.4059509e-02,  0.0000000e+00, -4.9706897e-01],
+                     ...,
+                     [-1.5616201e-01, -3.3193260e-02,  4.7382659e-01],
+                     [-1.0513641e-01, -2.2347433e-02,  4.8831028e-01],
+                     [-5.2878179e-02, -1.1239604e-02,  4.9706897e-01]],
+                    dtype=float32)
+
+    """
 
     def __new__(
         cls,
-        array: Union[Iterable, _vtk.vtkAbstractArray],
+        array: Union[Array, _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -42,7 +74,7 @@ class pyvista_ndarray(np.ndarray):
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
         #
-        # the VTKArray class uses attributes called `DataSet` and `Assocation`
+        # the VTKArray class uses attributes called `DataSet` and `Association`
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class

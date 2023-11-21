@@ -2,9 +2,10 @@
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, abstract_class
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.utilities.misc import abstract_class
 
 
 @abstract_class
@@ -26,23 +27,21 @@ class StructuredGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        voi : tuple(int)
+        voi : sequence[int]
             Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
-        rate : tuple(int), optional
+        rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
-            Default: ``(1, 1, 1)``.
 
-        boundary : bool, optional
+        boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
             is output in the subsampling process. (This only has
             effect when the rate in any direction is not equal to
             1). When this is on, the subsampling will always include
             the boundary of the grid even if the sample rate is
-            not an even multiple of the grid dimensions.  By default
-            this is ``False``.
+            not an even multiple of the grid dimensions.
 
         Returns
         -------
@@ -54,11 +53,15 @@ class StructuredGridFilters(DataSetFilters):
         Split a grid in half.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_structured()
-        >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
-        >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+        >>> voi_1 = grid.extract_subset(
+        ...     [0, 80, 0, 40, 0, 1], boundary=True
+        ... )
+        >>> voi_2 = grid.extract_subset(
+        ...     [0, 80, 40, 80, 0, 1], boundary=True
+        ... )
 
         For fun, add the two grids back together and show they are
         identical to the original grid.
@@ -91,7 +94,7 @@ class StructuredGridFilters(DataSetFilters):
         axis : int
             Axis along which to concatenate.
 
-        tolerance : float, optional
+        tolerance : float, default: 0.0
             Tolerance for point coincidence along joining seam.
 
         Returns
@@ -104,11 +107,15 @@ class StructuredGridFilters(DataSetFilters):
         Split a grid in half and join them.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_structured()
-        >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
-        >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+        >>> voi_1 = grid.extract_subset(
+        ...     [0, 80, 0, 40, 0, 1], boundary=True
+        ... )
+        >>> voi_2 = grid.extract_subset(
+        ...     [0, 80, 40, 80, 0, 1], boundary=True
+        ... )
         >>> joined = voi_1.concatenate(voi_2, axis=1)
         >>> f'{grid.dimensions} same as {joined.dimensions}'
         '(80, 80, 1) same as (80, 80, 1)'
@@ -122,9 +129,9 @@ class StructuredGridFilters(DataSetFilters):
             if i == axis:
                 continue
             if dim1 != dim2:
-                raise RuntimeError(
-                    'StructuredGrids with dimensions %s and %s '
-                    'are not compatible.' % (self.dimensions, other.dimensions)
+                raise ValueError(
+                    f'StructuredGrids with dimensions {self.dimensions} and {other.dimensions} '
+                    'are not compatible.'
                 )
 
         # check point/cell variables are the same
@@ -140,8 +147,8 @@ class StructuredGridFilters(DataSetFilters):
             atol=tolerance,
         ):
             raise RuntimeError(
-                'Grids cannot be joined along axis %d, as points '
-                'are not coincident within tolerance of %f.' % (axis, tolerance)
+                f'Grids cannot be joined along axis {axis}, as points '
+                'are not coincident within tolerance of {tolerance}.'
             )
 
         # slice to cut off the repeated grid face
@@ -163,8 +170,8 @@ class StructuredGridFilters(DataSetFilters):
                 np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis)
             ):
                 raise RuntimeError(
-                    'Grids cannot be joined along axis %d, as field '
-                    '`%s` is not identical along the seam.' % (axis, name)
+                    f'Grids cannot be joined along axis {axis}, as field '
+                    '`{name}` is not identical along the seam.'
                 )
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(
                 order='F'

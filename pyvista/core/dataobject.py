@@ -2,22 +2,20 @@
 
 from abc import abstractmethod
 import collections.abc
-import logging
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Type, Union
-import warnings
+from typing import Any, DefaultDict, Dict, Optional, Type, Union
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
-from pyvista.utilities import FieldAssociation, abstract_class, fileio
-from pyvista.utilities.misc import PyvistaDeprecationWarning
 
+from . import _vtk_core as _vtk
+from ._typing_core import NumpyUINT8Array
 from .datasetattributes import DataSetAttributes
-
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
+from .utilities.arrays import FieldAssociation
+from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.helpers import wrap
+from .utilities.misc import abstract_class
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -25,7 +23,17 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 @abstract_class
 class DataObject:
-    """Methods common to all wrapped data objects."""
+    """Methods common to all wrapped data objects.
+
+    Parameters
+    ----------
+    *args :
+        Any extra args are passed as option to all wrapped data objects.
+
+    **kwargs :
+        Any extra keyword args are passed as option to all wrapped data objects.
+
+    """
 
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
@@ -43,7 +51,7 @@ class DataObject:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
+    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.
 
         Parameters
@@ -53,8 +61,9 @@ class DataObject:
 
         """
         self.ShallowCopy(to_copy)
+        return None
 
-    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
+    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
 
         Parameters
@@ -64,9 +73,11 @@ class DataObject:
 
         """
         self.DeepCopy(to_copy)
+        return None
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
-        data = pyvista.read(filename, **kwargs)
+        """Read data objects from file."""
+        data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
                 f'Reading file returned data of `{type(data).__name__}`, '
@@ -79,7 +90,12 @@ class DataObject:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
         pass
 
-    def save(self, filename: str, binary=True, texture=None):
+    def save(
+        self,
+        filename: Union[Path, str],
+        binary: bool = True,
+        texture: Optional[Union[NumpyUINT8Array, str]] = None,
+    ) -> None:
         """Save this vtk object to file.
 
         Parameters
@@ -88,7 +104,7 @@ class DataObject:
             Filename of output file. Writer type is inferred from
             the extension of the filename.
 
-        binary : bool, optional
+        binary : bool, default: True
             If ``True``, write as binary.  Otherwise, write as ASCII.
 
         texture : str, np.ndarray, optional
@@ -127,8 +143,11 @@ class DataObject:
                 f' Must be one of: {self._WRITERS.keys()}'
             )
 
+        # store complex and bitarray types as field data
+        self._store_metadata()
+
         writer = self._WRITERS[file_ext]()
-        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         if file_ext == '.ply' and texture is not None:
@@ -144,6 +163,37 @@ class DataObject:
             if self[array_name].shape[-1] == 4:  # type: ignore
                 writer.SetEnableAlpha(True)
         writer.Write()
+        return None
+
+    def _store_metadata(self) -> None:
+        """Store metadata as field data."""
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                array_names = assoc_data.get(assoc_type)
+                if array_names:
+                    key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                    fdata[key] = list(array_names)
+        return None
+
+    def _restore_metadata(self) -> None:
+        """Restore PyVista metadata from field data.
+
+        Metadata is stored using ``_store_metadata`` and contains entries in
+        the format of f'_PYVISTA_{assoc_name}_{assoc_type}_'. These entries are
+        removed when calling this method.
+
+        """
+        fdata = self.field_data
+        for assoc_name in ('bitarray', 'complex'):
+            for assoc_type in ('POINT', 'CELL'):
+                key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
+                if key in fdata:
+                    assoc_data = getattr(self, f'_association_{assoc_name}_names')
+                    assoc_data[assoc_type] = set(fdata[key])
+                    del fdata[key]
+        return None
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
@@ -156,7 +206,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html: bool = None):
+    def head(self, display=True, html=None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -164,7 +214,7 @@ class DataObject:
 
         Parameters
         ----------
-        display : bool, optional
+        display : bool, default: True
             Display this header in iPython.
 
         html : bool, optional
@@ -181,7 +231,7 @@ class DataObject:
             fmt = ""
             # HTML version
             fmt += "\n"
-            fmt += "<table>\n"
+            fmt += "<table style='width: 100%;'>\n"
             fmt += f"<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n"
             row = "<tr><td>{}</td><td>{}</td></tr>\n"
             # now make a call on the object to get its attributes as a list of len 2 tuples
@@ -203,15 +253,20 @@ class DataObject:
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
+        # get longest row header
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+
+        # now make a call on the object to get its attributes as a list of len
+        # 2 tuples
+        row = "  {:%ds}{}\n" % max_len
         for attr in self._get_attrs():
             try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+                fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
             except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
+                fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
-            fmt += row.format('N Arrays', self.n_arrays)
-        return fmt
+            fmt += row.format('N Arrays:', self.n_arrays)
+        return fmt.strip()
 
     def _repr_html_(self):  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.
@@ -221,8 +276,20 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, ido, deep):  # pragma: no cover
-        """Copy pyvista meta data onto this object from another object."""
+    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+        """Copy pyvista meta data onto this object from another object.
+
+        Intended to be overridden by subclasses.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments.
+
+        **kwargs : dict, optional
+            Keyword arguments.
+
+        """
         pass  # called only by the inherited class
 
     def copy(self, deep=True):
@@ -230,7 +297,7 @@ class DataObject:
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             When ``True`` makes a full copy of the object.  When
             ``False``, performs a shallow copy where the points, cell,
             and data arrays are references to the original object.
@@ -245,8 +312,8 @@ class DataObject:
         --------
         Create and make a deep copy of a PolyData object.
 
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere()
         >>> mesh_b = mesh_a.copy()
         >>> mesh_a == mesh_b
         True
@@ -262,7 +329,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -293,19 +360,7 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):  # pragma: no cover
-        """Add field data.
-
-        .. deprecated:: 0.32.0
-           Use :func:`DataObject.add_field_data` instead.
-        """
-        warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning,
-        )
-        return self.clear_point_data()
-
-    def add_field_data(self, array: np.ndarray, name: str, deep=True):
+    def add_field_data(self, array: np.ndarray, name: str, deep: bool = True):
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -320,70 +375,65 @@ class DataObject:
         name : str
             Name to assign the field array.
 
-        deep : bool, optional
+        deep : bool, default: True
             Perform a deep copy of the data when adding it to the
-            dataset.  Default ``True``.
+            dataset.
 
         Examples
         --------
         Add field data to a PolyData dataset.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        Add field data to a UniformGrid dataset.
+        Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.UniformGrid(dims=(2, 2, 1))
-        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
-        ...                      'my-field-data')
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
+        >>> mesh.add_field_data(
+        ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
+        ... )
         >>> mesh['my-field-data']
         pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
         Add field data to a MultiBlock dataset.
 
-        >>> blocks = pyvista.MultiBlock()
-        >>> blocks.append(pyvista.Sphere())
-        >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+        >>> blocks = pv.MultiBlock()
+        >>> blocks.append(pv.Sphere())
+        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
-        """Return vtkFieldData as DataSetAttributes.
-
-        .. deprecated:: 0.32.0
-            Use :attr:`DataObject.field_data` to return field data.
-
-        """
-        warnings.warn(
-            "Use of `field_arrays` is deprecated. Use `field_data` instead.",
-            PyvistaDeprecationWarning,
-        )
-        return self.field_data
-
-    @property
-    def field_data(self) -> DataSetAttributes:
+    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
 
+        Returns
+        -------
+        DataSetAttributes
+            FieldData as DataSetAttributes.
+
         Examples
         --------
         Add field data to a PolyData dataset and then return it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = np.arange(10)
         >>> mesh.field_data['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -393,28 +443,15 @@ class DataObject:
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
 
-    def clear_field_arrays(self):  # pragma: no cover
-        """Remove all field data.
-
-        .. deprecated:: 0.32.0
-            Use :func:`DataObject.clear_field_data` instead.
-
-        """
-        warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
-            PyvistaDeprecationWarning,
-        )
-        self.field_data
-
-    def clear_field_data(self):
+    def clear_field_data(self) -> None:
         """Remove all field data.
 
         Examples
         --------
         Add field data to a PolyData dataset and then remove it.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = range(10)
         >>> len(mesh.field_data)
         1
@@ -423,10 +460,14 @@ class DataObject:
         0
 
         """
+        if not hasattr(self, 'field_data'):
+            raise NotImplementedError(f'`{type(self)}` does not support field data')
+
         self.field_data.clear()
+        return None
 
     @property
-    def memory_address(self) -> str:
+    def memory_address(self) -> str:  # numpydoc ignore=RT01
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -436,8 +477,8 @@ class DataObject:
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.memory_address
         'Addr=...'
 
@@ -445,7 +486,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:
+    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
         """Return the actual size of the dataset object.
 
         Returns
@@ -464,7 +505,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: _vtk.vtkDataSet):
+    def copy_structure(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Parameters
@@ -475,15 +516,16 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
-        >>> target = pv.UniformGrid()
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
+        >>> target = pv.ImageData()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
 
         """
         self.CopyStructure(dataset)
+        return None
 
-    def copy_attributes(self, dataset: _vtk.vtkDataSet):
+    def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
@@ -494,39 +536,109 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid(dims=(10, 10, 5))
+        >>> source = pv.ImageData(dimensions=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid(dims=(10, 10, 5))
+        >>> target = pv.ImageData(dimensions=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 
         """
         self.CopyAttributes(dataset)
+        return None
 
     def __getstate__(self):
-        """Support pickle. Serialize the VTK object to ASCII string."""
+        """Support pickle by serializing the VTK object data to something which can be pickled natively.
+
+        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
+        - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
+        - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
+        """
         state = self.__dict__.copy()
-        writer = _vtk.vtkDataSetWriter()
-        writer.SetInputDataObject(self)
-        writer.SetWriteToOutputString(True)
-        writer.SetFileTypeToBinary()
-        writer.Write()
-        to_serialize = writer.GetOutputStdString()
+
+        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
+            # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+            writers = {
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+                _vtk.vtkTable: _vtk.vtkXMLTableWriter,
+            }
+
+            for parent_type, writer_type in writers.items():
+                if isinstance(self, parent_type):
+                    writer = writer_type()
+                    break
+            else:
+                raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetDataModeToBinary()
+            writer.SetCompressorTypeToNone()
+            writer.Write()
+            to_serialize = writer.GetOutputString()
+
+        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
+            writer = _vtk.vtkDataSetWriter()
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetFileTypeToBinary()
+            writer.Write()
+            to_serialize = writer.GetOutputStdString()
+
         state['vtk_serialized'] = to_serialize
+
+        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
+        # processes
+        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
     def __setstate__(self, state):
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
+        pickle_format = state.pop(
+            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'legacy'
+        )
         self.__dict__.update(state)
-        reader = _vtk.vtkDataSetReader()
-        reader.ReadFromInputStringOn()
-        if isinstance(vtk_serialized, bytes):
-            reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
-        elif isinstance(vtk_serialized, str):
+
+        if pickle_format.lower() == 'xml':
+            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
+            # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+            readers = {
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+                _vtk.vtkTable: _vtk.vtkXMLTableReader,
+            }
+
+            for parent_type, reader_type in readers.items():
+                if isinstance(self, parent_type):
+                    reader = reader_type()
+                    break
+            else:
+                raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+
+            reader.ReadFromInputStringOn()
             reader.SetInputString(vtk_serialized)
-        reader.Update()
-        mesh = pyvista.wrap(reader.GetOutput())
+            reader.Update()
+
+        elif pickle_format.lower() == 'legacy':
+            reader = _vtk.vtkDataSetReader()
+            reader.ReadFromInputStringOn()
+            if isinstance(vtk_serialized, bytes):
+                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+            elif isinstance(vtk_serialized, str):
+                reader.SetInputString(vtk_serialized)
+            reader.Update()
+
+        mesh = wrap(reader.GetOutput())
 
         # copy data
         self.copy_structure(mesh)

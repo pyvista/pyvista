@@ -1,5 +1,7 @@
 """Module containing pyvista implementation of vtkAxes."""
-from pyvista import _vtk
+from . import _vtk
+from .actor import Actor
+from .axes_actor import AxesActor
 
 
 class Axes(_vtk.vtkAxes):
@@ -23,37 +25,35 @@ class Axes(_vtk.vtkAxes):
     --------
     Create an instance of axes at the pyvista module level.
 
-    >>> import pyvista
-    >>> axes = pyvista.Axes()
+    >>> import pyvista as pv
+    >>> axes = pv.Axes()
 
     """
 
-    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False):
+    def __init__(
+        self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False
+    ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()
-        self.mapper = None
-        self.actor = None
         self.SetSymmetric(symmetric)
-
         # Add the axes mapper
         self.mapper = _vtk.vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.GetOutputPort())
         # Add the axes actor
-        self.actor = _vtk.vtkActor()
-        self.actor.SetMapper(self.mapper)
-        self.actor.SetVisibility(show_actor)
-        self.actor.SetScale(actor_scale)
-        prop = self.actor.GetProperty()
-        prop.SetLineWidth(line_width)
+        self.actor = Actor(mapper=self.mapper)
+        self.axes_actor = AxesActor()
+        self.actor.visibility = show_actor
+        self.actor.scale = actor_scale
+        self.actor.prop.line_width = line_width
 
     @property
-    def origin(self):
-        """Origin of the axes in world coordinates.
+    def origin(self):  # numpydoc ignore=RT01
+        """Return or set th origin of the axes in world coordinates.
 
         Examples
         --------
-        >>> import pyvista
-        >>> axes = pyvista.Axes()
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
         >>> axes.origin
         (0.0, 0.0, 0.0)
 
@@ -67,8 +67,7 @@ class Axes(_vtk.vtkAxes):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value):
-        """Set the origin of the camera."""
+    def origin(self, value):  # numpydoc ignore=GL08
         self.SetOrigin(value)
 
     def show_actor(self):
@@ -80,7 +79,7 @@ class Axes(_vtk.vtkAxes):
         >>> axes = pv.Axes()
         >>> axes.show_actor()
         """
-        self.actor.VisibilityOn()
+        self.actor.visibility = True
 
     def hide_actor(self):
         """Hide an actor of axes.
@@ -91,7 +90,7 @@ class Axes(_vtk.vtkAxes):
         >>> axes = pv.Axes()
         >>> axes.hide_actor()
         """
-        self.actor.VisibilityOff()
+        self.actor.visibility = False
 
     def show_symmetric(self):
         """Show symmetric of axes.
@@ -114,3 +113,9 @@ class Axes(_vtk.vtkAxes):
         >>> axes.hide_symmetric()
         """
         self.SymmetricOff()
+
+    def __del__(self):
+        """Clean the attributes of the class."""
+        self.axes_actor = None
+        self.actor = None
+        self.mapper = None

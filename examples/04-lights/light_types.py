@@ -15,9 +15,10 @@ Lights come in three types:
 Headlight
 =========
 
-For headlights the :py:attr:`position` and :py:attr:`focal_point` properties
-are meaningless. No matter where you move the camera, the light always emanates
-from the view point:
+For headlights the :py:attr:`pyvista.Camera.position` and
+:py:attr:`pyvista.Camera.focal_point` properties are meaningless. No matter
+where you move the camera, the light always emanates from the view point:
+
 """
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
@@ -28,7 +29,7 @@ mesh.rotate_x(90, inplace=True)
 mesh.rotate_z(180, inplace=True)
 
 plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='tan', smooth_shading=True)
+plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
 light = pv.Light(light_type='headlight')
 # these don't do anything for a headlight:
 light.position = (1, 2, 3)
@@ -41,15 +42,17 @@ plotter.show()
 # Camera light
 # ============
 #
-# Camera lights define their :py:attr:`position` and :py:attr:`focal_point`
-# properties in a coordinate system that is local to the camera. The coordinates
-# in the scene's coordinate system can be accessed through the :py:attr:`world_position`
-# and :py:attr:`world_focal_point` read-only properties, respectively. For specifics
-# of the local coordinate system used for the coordinates please see the documentation
-# of :func:`pyvista.Light.set_camera_light`.
+# Camera lights define their :py:attr:`pyvista.Camera.position` and
+# :py:attr:`pyvista.Camera.focal_point` properties in a coordinate system that
+# is local to the camera. The coordinates in the scene's coordinate system can
+# be accessed through the :py:attr:`pyvista.Light.world_position` and
+# :py:attr:`pyvista.Light.world_focal_point` read-only properties,
+# respectively. For specifics of the local coordinate system used for the
+# coordinates please see the documentation of
+# :func:`pyvista.Light.set_camera_light`.
 
 plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='tan', smooth_shading=True)
+plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
 # a light that always shines from the right of the camera
 light = pv.Light(position=(1, 0, 0), light_type='camera light')
 plotter.add_light(light)
@@ -64,7 +67,7 @@ plotter.show()
 # interpreted as global coordinates:
 
 plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='tan', smooth_shading=True)
+plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
 # a light that always shines on the left side of the bunny
 light = pv.Light(position=(0, 1, 0), light_type='scene light')
 plotter.add_light(light)

@@ -43,7 +43,7 @@ cell_volumes = sized.cell_data["Volume"]
 volume = dataset.volume
 
 ###############################################################################
-# Okay awesome! But what if we have have a dataset that we threshold with two
+# But what if we have a dataset that we threshold with two
 # volumetric bodies left over in one dataset? Take this for example:
 
 
@@ -53,7 +53,7 @@ threshed.plot(show_grid=True, cpos=[-2, 5, 3])
 ###############################################################################
 # We could then assign a classification array for the two bodies, compute the
 # cell sizes, then extract the volumes of each body. Note that there is a
-# simpler implementation of this below in :ref:`split_vol_ref`.
+# simpler implementation of this below in :ref:`split_vol`.
 
 # Create a classifying array to ID each body
 rng = dataset.get_data_range()
@@ -64,7 +64,7 @@ classifier = threshed.cell_data["Spatial Cell Data"] > cval
 sizes = threshed.compute_cell_sizes()
 volumes = sizes.cell_data["Volume"]
 
-# Split volumes based on classifier and get volumes!
+# Split volumes based on classifier and get the volumes
 idx = np.argwhere(classifier)
 hvol = np.sum(volumes[idx])
 idx = np.argwhere(~classifier)
@@ -76,24 +76,24 @@ print(f"Original volume: {dataset.volume}")
 
 ###############################################################################
 # Or better yet, you could simply extract the largest volume from your
-# thresholded dataset by passing ``largest=True`` to the ``connectivity``
-# filter or by using ``extract_largest`` filter (both are equivalent).
+# dataset directly by passing ``'largest'`` to the ``connectivity`` and
+# specifying the scalar range of interest.
 
-# Grab the largest connected volume present
-largest = threshed.connectivity(largest=True)
-# or: largest = threshed.extract_largest()
+# Grab the largest connected volume within a scalar range
+scalar_range = [0, 77]  # Range corresponding to bottom 15% of values
+largest = threshed.connectivity('largest', scalar_range=scalar_range)
 
 # Get volume as numeric value
 large_volume = largest.volume
 
-# Display it!
+# Display it
 largest.plot(show_grid=True, cpos=[-2, 5, 3])
 
 
 ###############################################################################
 # -----
 #
-# .. _split_vol_ref:
+# .. _split_vol:
 #
 # Splitting Volumes
 # +++++++++++++++++
@@ -129,7 +129,7 @@ bodies.plot(show_grid=True, multi_colors=True, cpos=[-2, 5, 3])
 #
 # Here is a realistic training dataset of fluvial channels in the subsurface.
 # This will threshold the channels from the dataset then separate each
-# significantly large body and compute the volumes for each!
+# significantly large body and compute the volumes for each.
 #
 # Load up the data and threshold the channels:
 

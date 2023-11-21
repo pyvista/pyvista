@@ -5,6 +5,9 @@ changelog:
     labels:
       - ignore-for-release
   categories:
+    - title: Breaking Changes
+      labels:
+        - breaking-change
     - title: New Features
       labels:
         - enhancement

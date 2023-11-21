@@ -3,9 +3,10 @@
 
 Depth Peeling
 ~~~~~~~~~~~~~
-Depth peeling is a technique to correctly render translucent geometry.
-This is not enabled by default in :attr:`pyvista.global_theme` as some
-operating systems and versions of VTK have issues with this routine.
+Depth peeling is a technique to correctly render translucent geometry.  This is
+not enabled by default in :attr:`pyvista.global_theme
+<pyvista.plotting.themes.Theme>` as some operating systems and versions of VTK
+have issues with this routine.
 
 For this example, we will showcase the difference that depth peeling
 provides.
@@ -26,7 +27,7 @@ for i, c in enumerate(centers):
 ###############################################################################
 dargs = dict(opacity=0.5, color="red", smooth_shading=True)
 
-p = pv.Plotter(shape=(1, 2), multi_samples=8)
+p = pv.Plotter(shape=(1, 2))
 
 p.add_mesh(spheres, **dargs)
 p.enable_depth_peeling(10)
@@ -51,12 +52,12 @@ room = examples.download_room_surface_mesh()
 p = pv.Plotter(shape=(1, 2))
 
 p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
-p.add_mesh(room, opacity=0.5, color="tan")
+p.add_mesh(room, opacity=0.5, color='lightblue')
 p.add_text("Depth Peeling")
 
 p.subplot(0, 1)
 p.add_text("Standard")
-p.add_mesh(room.copy(), opacity=0.5, color="tan")
+p.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
 p.link_views()
 p.camera_position = [(43.6, 49.5, 19.8), (0.0, 2.25, 0.0), (-0.57, 0.70, -0.42)]
@@ -71,7 +72,7 @@ p.show()
 mesh = examples.download_brain().contour(5)
 cmap = "viridis_r"
 
-p = pv.Plotter(shape=(1, 2), multi_samples=4)
+p = pv.Plotter(shape=(1, 2))
 
 p.add_mesh(mesh, opacity=0.5, cmap=cmap)
 p.enable_depth_peeling(10)

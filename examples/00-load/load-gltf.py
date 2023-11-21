@@ -7,8 +7,6 @@ Import a glTF file directly into a PyVista plotting scene.  For more
 details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 
-Note this feature is only available for ``vtk>=9``.
-
 First, download the examples.  Note that here we're using a high
 dynamic range texture since glTF files generally contain physically
 based rendering and VTK v9 supports high dynamic range textures.
@@ -19,7 +17,7 @@ import pyvista
 from pyvista import examples
 
 helmet_file = examples.gltf.download_damaged_helmet()
-texture = examples.hdr.download_dikhololo_night()
+texture = examples.download_dikhololo_night()
 
 
 ###############################################################################
@@ -40,4 +38,4 @@ pl.show()
 
 block = pyvista.read(helmet_file)
 mesh = block[0][0][0]
-mesh.plot(color='tan', show_edges=True, cpos='xy')
+mesh.plot(color='lightblue', show_edges=True, cpos='xy')

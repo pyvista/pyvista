@@ -1,22 +1,30 @@
 import pathlib
 
+import meshio
 import numpy as np
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
-beam = pyvista.UnstructuredGrid(examples.hexbeamfile)
+beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
+mesh2d = meshio.Mesh(
+    points=[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+    cells=[("triangle", [[0, 1, 2], [1, 3, 2]])],
+)
 
 
-@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform])
+@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform, mesh2d])
 def test_meshio(mesh_in, tmpdir):
+    if isinstance(mesh_in, meshio.Mesh):
+        mesh_in = pv.from_meshio(mesh_in)
+
     # Save and read reference mesh using meshio
     filename = tmpdir.mkdir("tmpdir").join("test_mesh.vtk")
-    pyvista.save_meshio(filename, mesh_in)
-    mesh = pyvista.read_meshio(filename)
+    pv.save_meshio(filename, mesh_in)
+    mesh = pv.read_meshio(filename)
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
@@ -33,11 +41,11 @@ def test_meshio(mesh_in, tmpdir):
 
 def test_pathlib_read_write(tmpdir, sphere):
     path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
-    pyvista.save_meshio(path, sphere)
+    pv.save_meshio(path, sphere)
     assert path.is_file()
 
-    mesh = pyvista.read_meshio(path)
-    assert isinstance(mesh, pyvista.UnstructuredGrid)
+    mesh = pv.read_meshio(path)
+    assert isinstance(mesh, pv.UnstructuredGrid)
     assert mesh.points.shape == sphere.points.shape
 
 
@@ -45,10 +53,10 @@ def test_file_format():
     from meshio._exceptions import ReadError, WriteError
 
     with pytest.raises(ReadError):
-        _ = pyvista.read_meshio(examples.hexbeamfile, file_format="bar")
+        _ = pv.read_meshio(examples.hexbeamfile, file_format="bar")
 
     with pytest.raises((KeyError, WriteError)):
-        pyvista.save_meshio("foo.bar", beam, file_format="bar")
+        pv.save_meshio("foo.bar", beam, file_format="bar")
 
     with pytest.raises((KeyError, WriteError)):
-        pyvista.save_meshio("foo.npy", beam, file_format="npy")
+        pv.save_meshio("foo.npy", beam, file_format="npy")

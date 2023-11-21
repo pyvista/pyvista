@@ -28,7 +28,6 @@ mesh = examples.load_channels()
 # define a categorical colormap
 cmap = plt.cm.get_cmap("viridis", 4)
 
-
 mesh.plot(cmap=cmap)
 
 ###############################################################################
@@ -72,7 +71,7 @@ slices.plot(cmap=cmap)
 # ++++++++++++++++
 #
 # We can also slice a dataset along a :func:`pyvista.Spline` or
-# :func:`pyvista.Line` using the :func:`DataSetFilters.slice_along_line` filter.
+# :func:`pyvista.Line` using the :func:`pyvista.DataSetFilters.slice_along_line` filter.
 #
 # First, define a line source through the dataset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while
@@ -118,7 +117,7 @@ p.show(cpos=[1, -1, 1])
 mesh = examples.download_brain()
 
 # Create vector
-vec = np.random.rand(3)
+vec = np.array([1.0, 2.0, 1.0])
 # Normalize the vector
 normal = vec / np.linalg.norm(vec)
 
@@ -170,7 +169,7 @@ for theta in np.arange(0, np.pi, increment):
 slices
 
 ###############################################################################
-# And now display it!
+# And now display it.
 p = pv.Plotter()
 p.add_mesh(slices, cmap=cmap)
 p.add_mesh(model.outline())

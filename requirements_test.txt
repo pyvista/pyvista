@@ -1,26 +1,28 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
-
-Sphinx<4.6.0
-cmocean<2.1
-codecov<2.2.0
+-r requirements.txt
+aiohttp==3.9.0rc0 ; python_version=="3.12"  # needed until aiohttp 3.9.0 is released
+cmocean<3.1
 colorcet<3.1.0
-hypothesis<6.49.2
+hypothesis<6.88.2
+imageio<2.32.0
 imageio-ffmpeg<0.5.0
-imageio<2.20.0
-ipygany<0.6.0
 ipython<9.0.0
-ipyvtklink<0.4.0
-itkwidgets<0.33.0; python_version < '3.10'
-matplotlib<3.6.0
+ipywidgets<9.0.0
 meshio<5.4.0
-panel<0.14.0
-param<1.13.0
-pytest-cov<3.1.0
+nest_asyncio<1.5.9
+numpydoc==1.6.0
+param<2.1.0
+pytest<7.5.0
+pytest-cov<4.2.0
 pytest-memprof<0.3.0
-pytest-xdist<2.6.0
-pytest<7.2.0
-pythreejs<2.4.0
-sphinx-gallery<0.11.0
-tqdm<4.65.0
-trimesh<3.13.0
+pytest-xdist<3.4.0
+pytest_pyvista==0.1.8
+Sphinx<7.2.0
+sphinx-gallery<0.15.0
+sympy<1.13.0
+tqdm<4.67.0
+trame>=2.5.2,<3.3
+trame-vtk>=2.5.8,<2.6
+trame-vuetify>=2.3.1,<2.4
+trimesh<3.24.0

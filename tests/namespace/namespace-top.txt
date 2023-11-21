@@ -1,0 +1,345 @@
+AVSucdReader, <class 'pyvista.utilities.reader.AVSucdReader'>
+Actor, <class 'pyvista.plotting.actor.Actor'>
+ActorProperties, <class 'pyvista.plotting.actor_properties.ActorProperties'>
+AmbiguousDataError, <class 'pyvista.errors.AmbiguousDataError'>
+Arrow, <function Arrow at 0x1641c01f0>
+Axes, <class 'pyvista.plotting.axes.Axes'>
+AxesActor, <class 'pyvista.plotting.axes_actor.AxesActor'>
+BMPReader, <class 'pyvista.utilities.reader.BMPReader'>
+BUILDING_GALLERY, False
+BYUReader, <class 'pyvista.utilities.reader.BYUReader'>
+BackgroundPlotter, <class 'pyvista.plotting.BackgroundPlotter'>
+BasePlotter, <class 'pyvista.plotting.plotting.BasePlotter'>
+BaseReader, <class 'pyvista.utilities.reader.BaseReader'>
+BinaryMarchingCubesReader, <class 'pyvista.utilities.reader.BinaryMarchingCubesReader'>
+BlockAttributes, <class 'pyvista.plotting.composite_mapper.BlockAttributes'>
+Box, <function Box at 0x1641c05e0>
+CGNSReader, <class 'pyvista.utilities.reader.CGNSReader'>
+Camera, <class 'pyvista.plotting.camera.Camera'>
+CameraPosition, <class 'pyvista.plotting.renderer.CameraPosition'>
+Cell, <class 'pyvista.core.cell.Cell'>
+CellType, <enum 'CellType'>
+Chart, typing.Union[ForwardRef('Chart2D'), ForwardRef('ChartBox'), ForwardRef('ChartPie'), ForwardRef('ChartMPL')]
+Chart2D, <class 'pyvista.plotting.charts.Chart2D'>
+ChartBox, <class 'pyvista.plotting.charts.ChartBox'>
+ChartMPL, <class 'pyvista.plotting.charts.ChartMPL'>
+ChartPie, <class 'pyvista.plotting.charts.ChartPie'>
+Circle, <function Circle at 0x1641c0ca0>
+CircularArc, <function CircularArc at 0x1641c0940>
+CircularArcFromNormal, <function CircularArcFromNormal at 0x1641c09d0>
+Color, <class 'pyvista.plotting.colors.Color'>
+ColorLike, typing.Union[typing.Tuple[int, int, int], typing.Tuple[int, int, int, int], typing.Tuple[float, float, float], typing.Tuple[float, float, float, float], typing.Sequence[int], typing.Sequence[float], numpy.ndarray, typing.Dict[str, typing.Union[int, float, str]], str, ForwardRef('Color'), vtkmodules.vtkCommonDataModel.vtkColor3ub]
+CompositeAttributes, <class 'pyvista.plotting.composite_mapper.CompositeAttributes'>
+CompositeFilters, <class 'pyvista.core.filters.composite.CompositeFilters'>
+CompositePolyDataMapper, <class 'pyvista.plotting.composite_mapper.CompositePolyDataMapper'>
+Cone, <function Cone at 0x1641c0670>
+Cube, <function Cube at 0x1641c0550>
+CubeAxesActor, <class 'pyvista.plotting.cube_axes_actor.CubeAxesActor'>
+Cylinder, <function Cylinder at 0x1641c00d0>
+CylinderStructured, <function CylinderStructured at 0x1641c0160>
+DEFAULT_SCALARS_NAME, Data
+DEMReader, <class 'pyvista.utilities.reader.DEMReader'>
+DICOMReader, <class 'pyvista.utilities.reader.DICOMReader'>
+DataObject, <class 'pyvista.core.dataobject.DataObject'>
+DataSet, <class 'pyvista.core.dataset.DataSet'>
+DataSetAttributes, <class 'pyvista.core.datasetattributes.DataSetAttributes'>
+DataSetFilters, <class 'pyvista.core.filters.data_set.DataSetFilters'>
+DataSetMapper, <class 'pyvista.plotting.mapper.DataSetMapper'>
+Disc, <function Disc at 0x1641c0790>
+Dodecahedron, <function Dodecahedron at 0x1641c1040>
+Ellipse, <function Ellipse at 0x1641c0d30>
+EnSightReader, <class 'pyvista.utilities.reader.EnSightReader'>
+ExplicitStructuredGrid, <class 'pyvista.core.pointset.ExplicitStructuredGrid'>
+FIGURE_PATH, None
+FLOAT_FORMAT, {:.3e}
+FONTS, <enum 'FONTS'>
+FacetReader, <class 'pyvista.utilities.reader.FacetReader'>
+FieldAssociation, <enum 'FieldAssociation'>
+FluentReader, <class 'pyvista.utilities.reader.FluentReader'>
+GIFReader, <class 'pyvista.utilities.reader.GIFReader'>
+GLTFReader, <class 'pyvista.utilities.reader.GLTFReader'>
+GPUInfo, <class 'pyvista.utilities.errors.GPUInfo'>
+Grid, <class 'pyvista.core.grid.Grid'>
+HDFReader, <class 'pyvista.utilities.reader.HDFReader'>
+HDRReader, <class 'pyvista.utilities.reader.HDRReader'>
+ID_TYPE, <class 'numpy.int64'>
+Icosahedron, <function Icosahedron at 0x1641c10d0>
+Icosphere, <function Icosphere at 0x1641c1160>
+JPEGReader, <class 'pyvista.utilities.reader.JPEGReader'>
+KochanekSpline, <function KochanekSpline at 0x1641c1940>
+Light, <class 'pyvista.plotting.lights.Light'>
+Line, <function Line at 0x1641c03a0>
+LookupTable, <class 'pyvista.plotting.lookup_table.LookupTable'>
+MAX_N_COLOR_BARS, 10
+MFIXReader, <class 'pyvista.utilities.reader.MFIXReader'>
+MetaImageReader, <class 'pyvista.utilities.reader.MetaImageReader'>
+MissingDataError, <class 'pyvista.errors.MissingDataError'>
+MultiBlock, <class 'pyvista.core.composite.MultiBlock'>
+MultiBlockPlot3DReader, <class 'pyvista.utilities.reader.MultiBlockPlot3DReader'>
+MultipleLines, <function MultipleLines at 0x1641c0430>
+NIFTIReader, <class 'pyvista.utilities.reader.NIFTIReader'>
+NORMALS, {'x': [1, 0, 0], 'y': [0, 1, 0], 'z': [0, 0, 1], '-x': [-1, 0, 0], '-y': [0, -1, 0], '-z': [0, 0, -1]}
+NRRDReader, <class 'pyvista.utilities.reader.NRRDReader'>
+OBJReader, <class 'pyvista.utilities.reader.OBJReader'>
+OFF_SCREEN, False
+Observer, <class 'pyvista.utilities.errors.Observer'>
+Octahedron, <function Octahedron at 0x1641c0f70>
+OpenFOAMReader, <class 'pyvista.utilities.reader.OpenFOAMReader'>
+PARAVIEW_BACKGROUND, (0.3215686274509804, 0.3411764705882353, 0.43137254901960786)
+PICKLE_FORMAT, xml
+PLOT_DIRECTIVE_THEME, None
+PLYReader, <class 'pyvista.utilities.reader.PLYReader'>
+PNGReader, <class 'pyvista.utilities.reader.PNGReader'>
+PNMReader, <class 'pyvista.utilities.reader.PNMReader'>
+POpenFOAMReader, <class 'pyvista.utilities.reader.POpenFOAMReader'>
+PTSReader, <class 'pyvista.utilities.reader.PTSReader'>
+PVDDataSet, <class 'pyvista.utilities.reader.PVDDataSet'>
+PVDReader, <class 'pyvista.utilities.reader.PVDReader'>
+ParametricBohemianDome, <function ParametricBohemianDome at 0x1641c19d0>
+ParametricBour, <function ParametricBour at 0x1641c1a60>
+ParametricBoy, <function ParametricBoy at 0x1641c1af0>
+ParametricCatalanMinimal, <function ParametricCatalanMinimal at 0x1641c1b80>
+ParametricConicSpiral, <function ParametricConicSpiral at 0x1641c1c10>
+ParametricCrossCap, <function ParametricCrossCap at 0x1641c1ca0>
+ParametricDini, <function ParametricDini at 0x1641c1d30>
+ParametricEllipsoid, <function ParametricEllipsoid at 0x1641c1dc0>
+ParametricEnneper, <function ParametricEnneper at 0x1641c1e50>
+ParametricFigure8Klein, <function ParametricFigure8Klein at 0x1641c1ee0>
+ParametricHenneberg, <function ParametricHenneberg at 0x1641c1f70>
+ParametricKlein, <function ParametricKlein at 0x1641c8040>
+ParametricKuen, <function ParametricKuen at 0x1641c80d0>
+ParametricMobius, <function ParametricMobius at 0x1641c8160>
+ParametricPluckerConoid, <function ParametricPluckerConoid at 0x1641c81f0>
+ParametricPseudosphere, <function ParametricPseudosphere at 0x1641c8280>
+ParametricRandomHills, <function ParametricRandomHills at 0x1641c8310>
+ParametricRoman, <function ParametricRoman at 0x1641c83a0>
+ParametricSuperEllipsoid, <function ParametricSuperEllipsoid at 0x1641c8430>
+ParametricSuperToroid, <function ParametricSuperToroid at 0x1641c84c0>
+ParametricTorus, <function ParametricTorus at 0x1641c8550>
+Plane, <function Plane at 0x1641c0310>
+PlatonicSolid, <function PlatonicSolid at 0x1641c0e50>
+Plot3DFunctionEnum, <enum 'Plot3DFunctionEnum'>
+Plot3DMetaReader, <class 'pyvista.utilities.reader.Plot3DMetaReader'>
+Plotter, <class 'pyvista.plotting.plotting.Plotter'>
+PointCellDataSelection, <class 'pyvista.utilities.reader.PointCellDataSelection'>
+PointGrid, <class 'pyvista.core.pointset.PointGrid'>
+PointSet, <class 'pyvista.core.pointset.PointSet'>
+PolyData, <class 'pyvista.core.pointset.PolyData'>
+PolyDataFilters, <class 'pyvista.core.filters.poly_data.PolyDataFilters'>
+Polygon, <function Polygon at 0x1641c0700>
+ProgressMonitor, <class 'pyvista.utilities.helpers.ProgressMonitor'>
+Property, <class 'pyvista.plotting._property.Property'>
+PyVistaDeprecationWarning, <class 'pyvista.utilities.misc.PyVistaDeprecationWarning'>
+Pyramid, <function Pyramid at 0x1641c0a60>
+QtDeprecationError, <class 'pyvista.plotting.QtDeprecationError'>
+QtInteractor, <class 'pyvista.plotting.QtInteractor'>
+Quadrilateral, <function Quadrilateral at 0x1641c0c10>
+REPR_VOLUME_MAX_CELLS, 1000000.0
+Rectangle, <function Rectangle at 0x1641c0b80>
+RectilinearGrid, <class 'pyvista.core.grid.RectilinearGrid'>
+Renderer, <class 'pyvista.plotting.renderer.Renderer'>
+Report, <class 'pyvista.utilities.errors.Report'>
+SLCReader, <class 'pyvista.utilities.reader.SLCReader'>
+STLReader, <class 'pyvista.utilities.reader.STLReader'>
+Scraper, <class 'pyvista.utilities.sphinx_gallery.Scraper'>
+SegYReader, <class 'pyvista.utilities.reader.SegYReader'>
+Sphere, <function Sphere at 0x1641c0280>
+Spline, <function Spline at 0x1641c18b0>
+StructuredGrid, <class 'pyvista.core.pointset.StructuredGrid'>
+Superquadric, <function Superquadric at 0x1641c0dc0>
+TIFFReader, <class 'pyvista.utilities.reader.TIFFReader'>
+Table, <class 'pyvista.core.objects.Table'>
+TecplotReader, <class 'pyvista.utilities.reader.TecplotReader'>
+Tetrahedron, <function Tetrahedron at 0x1641c0ee0>
+Text3D, <function Text3D at 0x1641c0820>
+Texture, <class 'pyvista.core.texture.Texture'>
+TimeReader, <class 'pyvista.utilities.reader.TimeReader'>
+Triangle, <function Triangle at 0x1641c0af0>
+Tube, <function Tube at 0x1641c04c0>
+UnstructuredGrid, <class 'pyvista.core.pointset.UnstructuredGrid'>
+UnstructuredGridFilters, <class 'pyvista.core.filters.unstructured_grid.UnstructuredGridFilters'>
+VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
+VTKPDataSetReader, <class 'pyvista.utilities.reader.VTKPDataSetReader'>
+VtkErrorCatcher, <class 'pyvista.utilities.errors.VtkErrorCatcher'>
+Wavelet, <function Wavelet at 0x1641c08b0>
+WidgetHelper, <class 'pyvista.plotting.widgets.WidgetHelper'>
+XMLImageDataReader, <class 'pyvista.utilities.reader.XMLImageDataReader'>
+XMLMultiBlockDataReader, <class 'pyvista.utilities.reader.XMLMultiBlockDataReader'>
+XMLPImageDataReader, <class 'pyvista.utilities.reader.XMLPImageDataReader'>
+XMLPRectilinearGridReader, <class 'pyvista.utilities.reader.XMLPRectilinearGridReader'>
+XMLPUnstructuredGridReader, <class 'pyvista.utilities.reader.XMLPUnstructuredGridReader'>
+XMLPolyDataReader, <class 'pyvista.utilities.reader.XMLPolyDataReader'>
+XMLRectilinearGridReader, <class 'pyvista.utilities.reader.XMLRectilinearGridReader'>
+XMLStructuredGridReader, <class 'pyvista.utilities.reader.XMLStructuredGridReader'>
+XMLUnstructuredGridReader, <class 'pyvista.utilities.reader.XMLUnstructuredGridReader'>
+XdmfReader, <class 'pyvista.utilities.reader.XdmfReader'>
+_GlobalTheme, <class 'pyvista.themes.DefaultTheme'>
+__builtins__, None
+__cached__, pyvista/pyvista/__pycache__/__init__.cpython-39.pyc
+__doc__, PyVista package for 3D plotting and mesh analysis.
+__file__, pyvista/pyvista/__init__.py
+__loader__, <_frozen_importlib_external.SourceFileLoader object at 0x1030a2d30>
+__name__, pyvista
+__package__, pyvista
+__path__, ['pyvista/pyvista']
+__spec__, ModuleSpec(name='pyvista', loader=<_frozen_importlib_external.SourceFileLoader object at 0x1030a2d30>, origin='pyvista/pyvista/__init__.py', submodule_search_locations=['pyvista/pyvista'])
+__version__, 0.40.dev0
+_get_sg_image_scraper, <function _get_sg_image_scraper at 0x1641c8790>
+_get_vtk_id_type, <function _get_vtk_id_type at 0x163f2cdc0>
+# _rcParams, <class 'pyvista.themes._rcParams'>
+_set_plot_theme_from_env, <function _set_plot_theme_from_env at 0x163f2c9d0>
+_typing, <module 'pyvista._typing' from 'pyvista/pyvista/_typing.py'>
+_version, <module 'pyvista._version' from 'pyvista/pyvista/_version.py'>
+_vtk, <module 'pyvista._vtk' from 'pyvista/pyvista/_vtk.py'>
+_wrappers, {'vtkExplicitStructuredGrid': <class 'pyvista.core.pointset.ExplicitStructuredGrid'>, 'vtkUnstructuredGrid': <class 'pyvista.core.pointset.UnstructuredGrid'>, 'vtkRectilinearGrid': <class 'pyvista.core.grid.RectilinearGrid'>, 'vtkStructuredGrid': <class 'pyvista.core.pointset.StructuredGrid'>, 'vtkPolyData': <class 'pyvista.core.pointset.PolyData'>, 'vtkImageData': <class 'pyvista.core.grid.UniformGrid'>, 'vtkStructuredPoints': <class 'pyvista.core.grid.UniformGrid'>, 'vtkMultiBlockDataSet': <class 'pyvista.core.composite.MultiBlock'>, 'vtkTable': <class 'pyvista.core.objects.Table'>, 'vtkPointSet': <class 'pyvista.core.pointset.PointSet'>}
+# abstract_class, <function abstract_class at 0x163f40e50>
+# actor, <module 'pyvista.plotting.actor' from 'pyvista/pyvista/plotting/actor.py'>
+actor_properties, <module 'pyvista.plotting.actor_properties' from 'pyvista/pyvista/plotting/actor_properties.py'>
+algorithm_to_mesh_handler, <function algorithm_to_mesh_handler at 0x11ffbdaf0>
+algorithms, <module 'pyvista.utilities.algorithms' from 'pyvista/pyvista/utilities/algorithms.py'>
+array_from_vtkmatrix, <function array_from_vtkmatrix at 0x163f40700>
+# arrays, <module 'pyvista.utilities.arrays' from 'pyvista/pyvista/utilities/arrays.py'>
+# assert_empty_kwargs, <function assert_empty_kwargs at 0x1641b30d0>
+# axes, <module 'pyvista.plotting.axes' from 'pyvista/pyvista/plotting/axes.py'>
+# axes_actor, <module 'pyvista.plotting.axes_actor' from 'pyvista/pyvista/plotting/axes_actor.py'>
+axis_rotation, <function axis_rotation at 0x163f413a0>
+# background_renderer, <module 'pyvista.plotting.background_renderer' from 'pyvista/pyvista/plotting/background_renderer.py'>
+# camera, <module 'pyvista.plotting.camera' from 'pyvista/pyvista/plotting/camera.py'>
+cartesian_to_spherical, <function cartesian_to_spherical at 0x1641b3940>
+# cell, <module 'pyvista.core.cell' from 'pyvista/pyvista/core/cell.py'>
+cell_array, <function cell_array at 0x163f400d0>
+celltype, <module 'pyvista.core.celltype' from 'pyvista/pyvista/core/celltype.py'>
+charts, <module 'pyvista.plotting.charts' from 'pyvista/pyvista/plotting/charts.py'>
+check_depth_peeling, <function check_depth_peeling at 0x163f40d30>
+check_math_text_support, <function check_math_text_support at 0x1641af9d0>
+check_matplotlib_vtk_compatibility, <function check_matplotlib_vtk_compatibility at 0x1641af940>
+check_valid_vector, <function check_valid_vector at 0x1641b35e0>
+close_all, <function close_all at 0x164297d30>
+color_char_to_word, {'b': 'blue', 'g': 'green', 'r': 'red', 'c': 'cyan', 'm': 'magenta', 'y': 'yellow', 'k': 'black', 'w': 'white'}
+colors, <module 'pyvista.plotting.colors' from 'pyvista/pyvista/plotting/colors.py'>
+# common, <module 'pyvista.utilities.common' from 'pyvista/pyvista/utilities/common.py'>
+compare_images, <function compare_images at 0x1641c8b80>
+# composite, <module 'pyvista.core.composite' from 'pyvista/pyvista/core/composite.py'>
+# composite_mapper, <module 'pyvista.plotting.composite_mapper' from 'pyvista/pyvista/plotting/composite_mapper.py'>
+conditional_decorator, <class 'pyvista.utilities.helpers.conditional_decorator'>
+convert_array, <function convert_array at 0x163f3edc0>
+convert_string_array, <function convert_string_array at 0x163f3ed30>
+core, <module 'pyvista.core' from 'pyvista/pyvista/core/__init__.py'>
+create_axes_marker, <function create_axes_marker at 0x1641af670>
+create_axes_orientation_box, <function create_axes_orientation_box at 0x1641af700>
+create_grid, <function create_grid at 0x1641b3790>
+# cube_axes_actor, <module 'pyvista.plotting.cube_axes_actor' from 'pyvista/pyvista/plotting/cube_axes_actor.py'>
+cubemap, <function cubemap at 0x163f41430>
+cubemap_from_filenames, <function cubemap_from_filenames at 0x163f414c0>
+# dataobject, <module 'pyvista.core.dataobject' from 'pyvista/pyvista/core/dataobject.py'>
+# dataset, <module 'pyvista.core.dataset' from 'pyvista/pyvista/core/dataset.py'>
+# datasetattributes, <module 'pyvista.core.datasetattributes' from 'pyvista/pyvista/core/datasetattributes.py'>
+errors, <module 'pyvista.core.errors' from 'pyvista/pyvista/core/errors.py'>
+# export_plotter_vtkjs, <function export_plotter_vtkjs at 0x16427c9d0>
+# export_vtkjs, <module 'pyvista.plotting.export_vtkjs' from 'pyvista/pyvista/plotting/export_vtkjs.py'> # TODO: this should be a function?
+# features, <module 'pyvista.utilities.features' from 'pyvista/pyvista/utilities/features.py'>
+field_array, <function field_array at 0x163f40040>
+# fileio, <module 'pyvista.utilities.fileio' from 'pyvista/pyvista/utilities/fileio.py'>
+# filters, <module 'pyvista.core.filters' from 'pyvista/pyvista/core/filters/__init__.py'>
+fit_plane_to_points, <function fit_plane_to_points at 0x163f40af0>
+from_meshio, <function from_meshio at 0x163f3e9d0>
+generate_plane, <function generate_plane at 0x163f40c10>
+geometric_objects, <module 'pyvista.utilities.geometric_objects' from 'pyvista/pyvista/utilities/geometric_objects.py'>
+get_array, <function get_array at 0x163f40280>
+get_array_association, <function get_array_association at 0x163f40310>
+get_cmap_safe, <function get_cmap_safe at 0x16419d310>
+get_ext, <function get_ext at 0x163f3e550>
+get_gpu_info, <function get_gpu_info at 0x1641b3040>
+get_reader, <function get_reader at 0x1641d35e0>
+get_vtk_type, <function get_vtk_type at 0x163f2c160>
+# get_vtkjs_url, <function get_vtkjs_url at 0x16427cb80>
+global_theme, None
+# grid, <module 'pyvista.core.grid' from 'pyvista/pyvista/core/grid.py'>
+grid_from_sph_coords, <function grid_from_sph_coords at 0x1641b3820>
+# helpers, <module 'pyvista.utilities.helpers' from 'pyvista/pyvista/utilities/helpers.py'>
+hexcolors, {'aliceblue': '#F0F8FF', 'antiquewhite': '#FAEBD7', 'aquamarine': '#7FFFD4', 'azure': '#F0FFFF', 'beige': '#F5F5DC', 'bisque': '#FFE4C4', 'black': '#000000', 'blanchedalmond': '#FFEBCD', 'blue': '#0000FF', 'blueviolet': '#8A2BE2', 'brown': '#654321', 'burlywood': '#DEB887', 'cadetblue': '#5F9EA0', 'chartreuse': '#7FFF00', 'chocolate': '#D2691E', 'coral': '#FF7F50', 'cornflowerblue': '#6495ED', 'cornsilk': '#FFF8DC', 'crimson': '#DC143C', 'cyan': '#00FFFF', 'darkblue': '#00008B', 'darkcyan': '#008B8B', 'darkgoldenrod': '#B8860B', 'darkgray': '#A9A9A9', 'darkgreen': '#006400', 'darkkhaki': '#BDB76B', 'darkmagenta': '#8B008B', 'darkolivegreen': '#556B2F', 'darkorange': '#FF8C00', 'darkorchid': '#9932CC', 'darkred': '#8B0000', 'darksalmon': '#E9967A', 'darkseagreen': '#8FBC8F', 'darkslateblue': '#483D8B', 'darkslategray': '#2F4F4F', 'darkturquoise': '#00CED1', 'darkviolet': '#9400D3', 'deeppink': '#FF1493', 'deepskyblue': '#00BFFF', 'dimgray': '#696969', 'dodgerblue': '#1E90FF', 'firebrick': '#B22222', 'floralwhite': '#FFFAF0', 'forestgreen': '#228B22', 'gainsboro': '#DCDCDC', 'ghostwhite': '#F8F8FF', 'gold': '#FFD700', 'goldenrod': '#DAA520', 'gray': '#808080', 'green': '#008000', 'greenyellow': '#ADFF2F', 'honeydew': '#F0FFF0', 'hotpink': '#FF69B4', 'indianred': '#CD5C5C', 'indigo': '#4B0082', 'ivory': '#FFFFF0', 'khaki': '#F0E68C', 'lavender': '#E6E6FA', 'lavenderblush': '#FFF0F5', 'lawngreen': '#7CFC00', 'lemonchiffon': '#FFFACD', 'lightblue': '#ADD8E6', 'lightcoral': '#F08080', 'lightcyan': '#E0FFFF', 'lightgoldenrodyellow': '#FAFAD2', 'lightgray': '#D3D3D3', 'lightgreen': '#90EE90', 'lightpink': '#FFB6C1', 'lightsalmon': '#FFA07A', 'lightseagreen': '#20B2AA', 'lightskyblue': '#87CEFA', 'lightslategray': '#778899', 'lightsteelblue': '#B0C4DE', 'lightyellow': '#FFFFE0', 'lime': '#00FF00', 'limegreen': '#32CD32', 'linen': '#FAF0E6', 'magenta': '#FF00FF', 'maroon': '#800000', 'mediumaquamarine': '#66CDAA', 'mediumblue': '#0000CD', 'mediumorchid': '#BA55D3', 'mediumpurple': '#9370DB', 'mediumseagreen': '#3CB371', 'mediumslateblue': '#7B68EE', 'mediumspringgreen': '#00FA9A', 'mediumturquoise': '#48D1CC', 'mediumvioletred': '#C71585', 'midnightblue': '#191970', 'mintcream': '#F5FFFA', 'mistyrose': '#FFE4E1', 'moccasin': '#FFE4B5', 'navajowhite': '#FFDEAD', 'navy': '#000080', 'oldlace': '#FDF5E6', 'olive': '#808000', 'olivedrab': '#6B8E23', 'orange': '#FFA500', 'orangered': '#FF4500', 'orchid': '#DA70D6', 'palegoldenrod': '#EEE8AA', 'palegreen': '#98FB98', 'paleturquoise': '#AFEEEE', 'palevioletred': '#DB7093', 'papayawhip': '#FFEFD5', 'paraview_background': '#52576e', 'peachpuff': '#FFDAB9', 'peru': '#CD853F', 'pink': '#FFC0CB', 'plum': '#DDA0DD', 'powderblue': '#B0E0E6', 'purple': '#800080', 'raw_sienna': '#965434', 'rebeccapurple': '#663399', 'red': '#FF0000', 'rosybrown': '#BC8F8F', 'royalblue': '#4169E1', 'saddlebrown': '#8B4513', 'salmon': '#FA8072', 'sandybrown': '#F4A460', 'seagreen': '#2E8B57', 'seashell': '#FFF5EE', 'sienna': '#A0522D', 'silver': '#C0C0C0', 'skyblue': '#87CEEB', 'slateblue': '#6A5ACD', 'slategray': '#708090', 'snow': '#FFFAFA', 'springgreen': '#00FF7F', 'steelblue': '#4682B4', 'tan': '#D2B48C', 'teal': '#008080', 'thistle': '#D8BFD8', 'tomato': '#FF6347', 'turquoise': '#40E0D0', 'violet': '#EE82EE', 'wheat': '#F5DEB3', 'white': '#FFFFFF', 'whitesmoke': '#F5F5F5', 'yellow': '#FFFF00', 'yellowgreen': '#9ACD32', 'tab:blue': '#1f77b4', 'tab:orange': '#ff7f0e', 'tab:green': '#2ca02c', 'tab:red': '#d62728', 'tab:purple': '#9467bd', 'tab:brown': '#8c564b', 'tab:pink': '#e377c2', 'tab:gray': '#7f7f7f', 'tab:olive': '#bcbd22', 'tab:cyan': '#17becf'}
+image_to_texture, <function image_to_texture at 0x163f40940>
+is_inside_bounds, <function is_inside_bounds at 0x163f40a60>
+is_meshio_mesh, <function is_meshio_mesh at 0x163f40820>
+is_pyvista_dataset, <function is_pyvista_dataset at 0x163f3ee50>
+jupyter, <module 'pyvista.jupyter' from 'pyvista/pyvista/jupyter/__init__.py'>
+# lights, <module 'pyvista.plotting.lights' from 'pyvista/pyvista/plotting/lights.py'>
+line_segments_from_points, <function line_segments_from_points at 0x163f40430>
+lines_from_points, <function lines_from_points at 0x163f404c0>
+load_theme, <function load_theme at 0x16476de50>
+# lookup_table, <module 'pyvista.plotting.lookup_table' from 'pyvista/pyvista/plotting/lookup_table.py'>
+make_tri_mesh, <function make_tri_mesh at 0x163f40550>
+# mapper, <module 'pyvista.plotting.mapper' from 'pyvista/pyvista/plotting/mapper.py'>
+merge, <function merge at 0x1641b39d0>
+# misc, <module 'pyvista.utilities.misc' from 'pyvista/pyvista/utilities/misc.py'>
+numpy_to_texture, <function numpy_to_texture at 0x163f409d0>
+# objects, <module 'pyvista.core.objects' from 'pyvista/pyvista/core/objects.py'>
+opacity_transfer_function, <function opacity_transfer_function at 0x1641af820>
+# opts, <module 'pyvista.plotting.opts' from 'pyvista/pyvista/plotting/opts.py'>
+parametric_keywords, <function parametric_keywords at 0x1641c85e0>
+parametric_objects, <module 'pyvista.utilities.parametric_objects' from 'pyvista/pyvista/utilities/parametric_objects.py'>
+parse_field_choice, <function parse_field_choice at 0x163f401f0>
+parse_font_family, <function parse_font_family at 0x1641af8b0>
+perlin_noise, <function perlin_noise at 0x163f434c0>
+# picking, <module 'pyvista.plotting.picking' from 'pyvista/pyvista/plotting/picking.py'>
+plot, <function plot at 0x16427cca0>
+plot_arrows, <function plot_arrows at 0x16427cd30>
+plot_compare_four, <function plot_compare_four at 0x16427cdc0>
+plotting, <module 'pyvista.plotting.plotting' from 'pyvista/pyvista/plotting/plotting.py'>
+point_array, <function point_array at 0x163f3ef70>
+# pointset, <module 'pyvista.core.pointset' from 'pyvista/pyvista/core/pointset.py'>
+# prop3d, <module 'pyvista.plotting.prop3d' from 'pyvista/pyvista/plotting/prop3d.py'>
+# pyvista, <module 'pyvista' from 'pyvista/pyvista/__init__.py'>
+pyvista_ndarray, <class 'pyvista.core.pyvista_ndarray.pyvista_ndarray'>
+raise_not_matching, <function raise_not_matching at 0x163f40b80>
+# rcParams, None
+read, <function read at 0x163f3e700>
+read_exodus, <function read_exodus at 0x163f3e8b0>
+read_meshio, <function read_meshio at 0x163f3ea60>
+read_texture, <function read_texture at 0x163f3e820>
+# reader, <module 'pyvista.utilities.reader' from 'pyvista/pyvista/utilities/reader.py'>
+# regression, <module 'pyvista.utilities.regression' from 'pyvista/pyvista/utilities/regression.py'>
+# render_passes, <module 'pyvista.plotting.render_passes' from 'pyvista/pyvista/plotting/render_passes.py'>
+# render_window_interactor, <module 'pyvista.plotting.render_window_interactor' from 'pyvista/pyvista/plotting/render_window_interactor.py'>
+# renderer, <module 'pyvista.plotting.renderer' from 'pyvista/pyvista/plotting/renderer.py'>
+# renderers, <module 'pyvista.plotting.renderers' from 'pyvista/pyvista/plotting/renderers.py'>
+row_array, <function row_array at 0x163f40160>
+sample_function, <function sample_function at 0x163f43550>
+save_meshio, <function save_meshio at 0x163f3eaf0>
+# scalar_bars, <module 'pyvista.plotting.scalar_bars' from 'pyvista/pyvista/plotting/scalar_bars.py'>
+scale_point, <function scale_point at 0x1643555e0>
+send_errors_to_logging, <function send_errors_to_logging at 0x163f63d30>
+set_algorithm_input, <function set_algorithm_input at 0x163f41700>
+set_default_active_scalars, <function set_default_active_scalars at 0x163f41670>
+set_default_active_vectors, <function set_default_active_vectors at 0x163f415e0>
+set_error_output_file, <function set_error_output_file at 0x163f438b0>
+set_jupyter_backend, <function set_jupyter_backend at 0x1645b2f70>
+set_pickle_format, <function set_pickle_format at 0x163f3e3a0>
+set_plot_theme, <function set_plot_theme at 0x1647a4670>
+set_vtkwriter_mode, <function set_vtkwriter_mode at 0x163f3e5e0>
+# sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/pyvista/utilities/sphinx_gallery.py'>
+start_xvfb, <function start_xvfb at 0x1641c8ca0>
+surface_from_para, <function surface_from_para at 0x1641c8670>
+system_supports_plotting, <function system_supports_plotting at 0x1641af550>
+# texture, <module 'pyvista.core.texture' from 'pyvista/pyvista/core/texture.py'>
+themes, <module 'pyvista.themes' from 'pyvista/pyvista/themes.py'>
+threaded, <function threaded at 0x163f40dc0>
+# tools, <module 'pyvista.plotting.tools' from 'pyvista/pyvista/plotting/tools.py'>
+# trans_from_matrix, <function trans_from_matrix at 0x163f40670>
+transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x1641b38b0>  # DEPRECATED
+# transformations, <module 'pyvista.utilities.transformations' from 'pyvista/pyvista/utilities/transformations.py'>
+translate, <function translate at 0x1641b3f70>
+# try_callback, <function try_callback at 0x163f40ca0>
+utilities, <module 'pyvista.utilities' from 'pyvista/pyvista/utilities/__init__.py'>
+vector_poly_data, <function vector_poly_data at 0x163f405e0>
+# volume, <module 'pyvista.plotting.volume' from 'pyvista/pyvista/plotting/volume.py'>
+# volume_property, <module 'pyvista.plotting.volume_property' from 'pyvista/pyvista/plotting/volume_property.py'>
+voxelize, <function voxelize at 0x1641b3670>
+vtk_bit_array_to_char, <function vtk_bit_array_to_char at 0x163f3ec10>
+vtk_id_list_to_array, <function vtk_id_list_to_array at 0x163f3eca0>
+vtk_points, <function vtk_points at 0x163f403a0>
+vtk_version_info, VTKVersionInfo(major=9, minor=2, micro=5)
+vtkmatrix_from_array, <function vtkmatrix_from_array at 0x163f40790>
+# widgets, <module 'pyvista.plotting.widgets' from 'pyvista/pyvista/plotting/widgets.py'>
+wrap, <function wrap at 0x163f408b0>
+# xvfb, <module 'pyvista.utilities.xvfb' from 'pyvista/pyvista/utilities/xvfb.py'>

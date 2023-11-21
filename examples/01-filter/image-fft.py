@@ -5,7 +5,7 @@ Fast Fourier Transform
 ~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how to apply a Fast Fourier Transform (FFT) to a
-:class:`pyvista.UniformGrid` using :func:`pyvista.UniformGridFilters.fft`
+:class:`pyvista.ImageData` using :func:`pyvista.ImageDataFilters.fft`
 filter.
 
 Here, we demonstrate FFT usage by denoising an image, effectively removing any
@@ -64,6 +64,7 @@ fft_image.plot(
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT',
+    copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
 
@@ -78,7 +79,7 @@ fft_image.plot(
 #
 # .. note::
 #    It is easier and more efficient to use the existing
-#    :func:`pyvista.UniformGridFilters.low_pass` filter. This section is here
+#    :func:`pyvista.ImageDataFilters.low_pass` filter. This section is here
 #    for demonstration purposes.
 
 ratio_to_keep = 0.10
@@ -95,6 +96,7 @@ fft_image.plot(
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT with Noise Removed',
+    copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
 

@@ -11,8 +11,9 @@ try:
 except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
-from ..utilities.helpers import vtkmatrix_from_array
-from .colors import Color, color_like
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
+
+from .colors import Color, ColorLike
 
 
 class LightType(IntEnum):
@@ -32,23 +33,23 @@ class Light(vtkLight):
 
     Parameters
     ----------
-    position : list or tuple, optional
+    position : sequence[float], optional
         The position of the light. The interpretation of the position
         depends on the type of the light and whether the light has a
         transformation matrix.  See also the :py:attr:`position`
         property.
 
-    focal_point : list or tuple, optional
+    focal_point : sequence[float], optional
         The focal point of the light. The interpretation of the focal
         point depends on the type of the light and whether the light
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : color_like, optional
+    color : ColorLike, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
-    light_type : str or int, optional
+    light_type : str | int, default: 'scene light'
         The type of the light. If a string, one of ``'headlight'``,
         ``'camera light'`` or ``'scene light'``. If an int, one of 1,
         2 or 3, respectively. The class constants ``Light.HEADLIGHT``,
@@ -79,7 +80,7 @@ class Light(vtkLight):
     cone_angle : float, optional
         Cone angle of a positional light in degrees.
 
-    show_actor : bool, optional
+    show_actor : bool, default: False
         Show an actor for a spotlight that depicts the geometry of the
         beam.
 
@@ -114,8 +115,13 @@ class Light(vtkLight):
     Create a positional light at (0, 0, 3) with a cone angle of
     30, exponent of 20, and a visible actor.
 
-    >>> light = pv.Light(position=(0, 0, 3), show_actor=True,
-    ...                  positional=True, cone_angle=30, exponent=20)
+    >>> light = pv.Light(
+    ...     position=(0, 0, 3),
+    ...     show_actor=True,
+    ...     positional=True,
+    ...     cone_angle=30,
+    ...     exponent=20,
+    ... )
 
     """
 
@@ -248,7 +254,7 @@ class Light(vtkLight):
         self._renderers.clear()
 
     @property
-    def shadow_attenuation(self):
+    def shadow_attenuation(self):  # numpydoc ignore=RT01
         """Return or set the value of shadow attenuation.
 
         By default a light will be completely blocked when in shadow.
@@ -271,12 +277,11 @@ class Light(vtkLight):
         return self.GetShadowAttenuation()
 
     @shadow_attenuation.setter
-    def shadow_attenuation(self, value):
-        """Set the shadow intensity."""
+    def shadow_attenuation(self, value):  # numpydoc ignore=GL08
         self.SetShadowAttenuation(value)
 
     @property
-    def ambient_color(self):
+    def ambient_color(self):  # numpydoc ignore=RT01
         """Return or set the ambient color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -291,22 +296,21 @@ class Light(vtkLight):
         --------
         Create a light and set its ambient color to red.
 
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.ambient_color = 'red'
         >>> light.ambient_color
-        Color(name='red', hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff', opacity=255)
 
         """
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color: color_like):
-        """Set the ambient color of the light."""
+    def ambient_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self.SetAmbientColor(Color(color).float_rgb)
 
     @property
-    def diffuse_color(self):
+    def diffuse_color(self):  # numpydoc ignore=RT01
         """Return or set the diffuse color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -325,18 +329,17 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.diffuse_color = (0.0, 0.0, 1.0)
         >>> light.diffuse_color
-        Color(name='blue', hex='#0000ffff')
+        Color(name='blue', hex='#0000ffff', opacity=255)
 
         """
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color: color_like):
-        """Set the diffuse color of the light."""
+    def diffuse_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self.SetDiffuseColor(Color(color).float_rgb)
 
     @property
-    def specular_color(self):
+    def specular_color(self):  # numpydoc ignore=RT01
         """Return or set the specular color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -355,18 +358,17 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.specular_color = '#00FF00'
         >>> light.specular_color
-        Color(name='lime', hex='#00ff00ff')
+        Color(name='lime', hex='#00ff00ff', opacity=255)
 
         """
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color: color_like):
-        """Set the specular color of the light."""
+    def specular_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self.SetSpecularColor(Color(color).float_rgb)
 
     @property
-    def position(self):
+    def position(self):  # numpydoc ignore=RT01
         """Return the position of the light.
 
         Note: the position is defined in the coordinate space
@@ -393,12 +395,11 @@ class Light(vtkLight):
         return self.GetPosition()
 
     @position.setter
-    def position(self, pos):
-        """Set the position of the light."""
+    def position(self, pos):  # numpydoc ignore=GL08
         self.SetPosition(pos)
 
     @property
-    def world_position(self):
+    def world_position(self):  # numpydoc ignore=RT01
         """Return the world space position of the light.
 
         The world space position is the :py:attr:`position` property
@@ -428,7 +429,7 @@ class Light(vtkLight):
         return self.GetTransformedPosition()
 
     @property
-    def focal_point(self):
+    def focal_point(self):  # numpydoc ignore=RT01
         """Return the focal point of the light.
 
         Note: the focal point is defined in the coordinate space
@@ -448,12 +449,11 @@ class Light(vtkLight):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, pos):
-        """Set the focal point of the light."""
+    def focal_point(self, pos):  # numpydoc ignore=GL08
         self.SetFocalPoint(pos)
 
     @property
-    def world_focal_point(self):
+    def world_focal_point(self):  # numpydoc ignore=RT01
         """Return the world space focal point of the light.
 
         The world space focal point is the :py:attr:`focal_point`
@@ -484,8 +484,8 @@ class Light(vtkLight):
         return self.GetTransformedFocalPoint()
 
     @property
-    def intensity(self):
-        """Return the brightness of the light (between 0 and 1).
+    def intensity(self):  # numpydoc ignore=RT01
+        """Return or set the brightness of the light (between 0 and 1).
 
         Examples
         --------
@@ -495,8 +495,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
-        >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
-        >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
+        >>> light_bright = pv.Light(
+        ...     position=(3, 0, 0), light_type='scene light'
+        ... )
+        >>> light_dim = pv.Light(
+        ...     position=(0, 3, 0), light_type='scene light'
+        ... )
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
@@ -508,13 +512,12 @@ class Light(vtkLight):
         return self.GetIntensity()
 
     @intensity.setter
-    def intensity(self, intensity):
-        """Set the brightness of the light (between 0 and 1)."""
+    def intensity(self, intensity):  # numpydoc ignore=GL08
         self.SetIntensity(intensity)
 
     @property
-    def on(self):
-        """Return whether the light is on.
+    def on(self):  # numpydoc ignore=RT01
+        """Return or set whether the light is on.
 
         This corresponds to the Switch state of the ``vtk.vtkLight`` class.
 
@@ -532,13 +535,12 @@ class Light(vtkLight):
         return bool(self.GetSwitch())
 
     @on.setter
-    def on(self, state):
-        """Set whether the light should be on."""
+    def on(self, state):  # numpydoc ignore=GL08
         self.SetSwitch(state)
 
     @property
-    def positional(self):
-        """Return whether the light is positional.
+    def positional(self):  # numpydoc ignore=RT01
+        """Return or set whether the light is positional.
 
         The default is a directional light, i.e. an infinitely distant
         point source. A positional light with a cone angle of at least
@@ -568,8 +570,7 @@ class Light(vtkLight):
         return bool(self.GetPositional())
 
     @positional.setter
-    def positional(self, state):
-        """Set whether the light should be positional."""
+    def positional(self, state):  # numpydoc ignore=GL08
         if not state:
             self.hide_actor()
         self.SetPositional(state)
@@ -599,8 +600,8 @@ class Light(vtkLight):
                     renderer.remove_actor(self.actor, render=False)
 
     @property
-    def exponent(self):
-        """Return the exponent of the cosine used for spotlights.
+    def exponent(self):  # numpydoc ignore=RT01
+        """Return or set the exponent of the cosine used for spotlights.
 
         With a spotlight (a positional light with cone angle less than
         90 degrees) the shape of the light beam within the light cone
@@ -627,8 +628,13 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
-        ...     light = pv.Light(position=(offset, 0, 0.1), focal_point=(offset, 0, 0))
+        ...     _ = plotter.add_mesh(
+        ...         pv.Plane((offset, 0, 0)), color='white'
+        ...     )
+        ...     light = pv.Light(
+        ...         position=(offset, 0, 0.1),
+        ...         focal_point=(offset, 0, 0),
+        ...     )
         ...     light.exponent = exponent
         ...     light.positional = True
         ...     light.cone_angle = 80
@@ -641,13 +647,12 @@ class Light(vtkLight):
         return self.GetExponent()
 
     @exponent.setter
-    def exponent(self, exp):
-        """Set the exponent of the cosine used in positional lighting."""
+    def exponent(self, exp):  # numpydoc ignore=GL08
         self.SetExponent(exp)
 
     @property
-    def cone_angle(self):
-        """Return the cone angle of a positional light.
+    def cone_angle(self):  # numpydoc ignore=RT01
+        """Return or set the cone angle of a positional light.
 
         The angle is in degrees and is measured between the axis of
         the cone and an extremal ray of the cone. A value smaller than
@@ -671,8 +676,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
-        ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
+        ...     _ = plotter.add_mesh(
+        ...         pv.Plane((offset, 0, 0)), color='white'
+        ...     )
+        ...     light = pv.Light(
+        ...         position=(offset, 0, 1), focal_point=(offset, 0, 0)
+        ...     )
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
@@ -685,16 +694,15 @@ class Light(vtkLight):
         return self.GetConeAngle()
 
     @cone_angle.setter
-    def cone_angle(self, angle):
-        """Set the cone angle of a positional light."""
+    def cone_angle(self, angle):  # numpydoc ignore=GL08
         if angle >= 90:
             self.hide_actor()
         self.SetConeAngle(angle)
         self._check_actor()
 
     @property
-    def attenuation_values(self):
-        """Return the quadratic attenuation constants.
+    def attenuation_values(self):  # numpydoc ignore=RT01
+        """Return or set the quadratic attenuation constants.
 
         The values are 3-length sequences which specify the constant,
         linear and quadratic constants in this order. These parameters
@@ -717,19 +725,22 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset in 1, 2.5, 4:
-        ...     _ = plotter.add_mesh(pv.Cube(center=(offset, offset, 0)), color='white')
+        ...     _ = plotter.add_mesh(
+        ...         pv.Cube(center=(offset, offset, 0)), color='white'
+        ...     )
         ...
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
-        >>> for color, attenuation_constants, center in zip(colors, all_attenuations, centers):
+        >>> for color, attenuation_constants, center in zip(
+        ...     colors, all_attenuations, centers
+        ... ):
         ...     light = pv.Light(position=center, color=color)
         ...     light.focal_point = (1 + center[0], 1 + center[1], 0)
         ...     light.cone_angle = 90
         ...     light.positional = True
         ...     light.attenuation_values = attenuation_constants
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_vector((-1, -1, 1))
         >>> plotter.show()
 
@@ -737,13 +748,12 @@ class Light(vtkLight):
         return self.GetAttenuationValues()
 
     @attenuation_values.setter
-    def attenuation_values(self, values):
-        """Set the quadratic attenuation constants."""
+    def attenuation_values(self, values):  # numpydoc ignore=GL08
         self.SetAttenuationValues(values)
 
     @property
-    def transform_matrix(self):
-        """Return the transformation matrix of the light (if any).
+    def transform_matrix(self):  # numpydoc ignore=RT01
+        """Return (if any) or set the transformation matrix of the light.
 
         The transformation matrix is ``None`` by default, and it is
         stored as a ``vtk.vtkMatrix4x4`` object when set. If set, the
@@ -785,8 +795,7 @@ class Light(vtkLight):
         return self.GetTransformMatrix()
 
     @transform_matrix.setter
-    def transform_matrix(self, matrix):
-        """Set the 4x4 transformation matrix of the light."""
+    def transform_matrix(self, matrix):  # numpydoc ignore=GL08
         if matrix is None or isinstance(matrix, vtkMatrix4x4):
             trans = matrix
         else:
@@ -799,8 +808,8 @@ class Light(vtkLight):
         self.SetTransformMatrix(trans)
 
     @property
-    def light_type(self):
-        """Return the light type.
+    def light_type(self):  # numpydoc ignore=RT01
+        """Return or set the light type.
 
         The default light type is a scene light which lives in world
         coordinate space.
@@ -824,6 +833,9 @@ class Light(vtkLight):
             - ``Light.HEADLIGHT == 1``
             - ``Light.CAMERA_LIGHT == 2``
             - ``Light.SCENE_LIGHT == 3``
+
+        If setting the value, either an integer code or a class constant enum
+        value must be used.
 
         Examples
         --------
@@ -849,12 +861,7 @@ class Light(vtkLight):
         return LightType(self.GetLightType())
 
     @light_type.setter
-    def light_type(self, ltype):
-        """Set the light type.
-
-        Either an integer code or a class constant enum value must be used.
-
-        """
+    def light_type(self, ltype):  # numpydoc ignore=GL08
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
             raise TypeError(
@@ -863,7 +870,7 @@ class Light(vtkLight):
         self.SetLightType(ltype)
 
     @property
-    def is_headlight(self):
+    def is_headlight(self):  # numpydoc ignore=RT01
         """Return whether the light is a headlight.
 
         Examples
@@ -880,7 +887,7 @@ class Light(vtkLight):
         return bool(self.LightTypeIsHeadlight())
 
     @property
-    def is_camera_light(self):
+    def is_camera_light(self):  # numpydoc ignore=RT01
         """Return whether the light is a camera light.
 
         Examples
@@ -898,7 +905,7 @@ class Light(vtkLight):
         return bool(self.LightTypeIsCameraLight())
 
     @property
-    def is_scene_light(self):
+    def is_scene_light(self):  # numpydoc ignore=RT01
         """Return whether the light is a scene light.
 
         Examples
@@ -996,9 +1003,9 @@ class Light(vtkLight):
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default: True
             Whether to return a deep copy rather than a shallow
-            one. Default ``True``.
+            one.
 
         Returns
         -------
@@ -1012,8 +1019,12 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
-        ...                           [0, 0, 0, 1]]
+        >>> light.transform_matrix = [
+        ...     [1, 0, 0, 0],
+        ...     [0, 1, 0, 0],
+        ...     [0, 0, 1, 0],
+        ...     [0, 0, 0, 1],
+        ... ]
         >>> shallow_copied = light.copy(deep=False)
         >>> shallow_copied == light
         True
@@ -1062,8 +1073,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.set_headlight()
         >>> light.light_type
         <LightType.HEADLIGHT: 1>
@@ -1084,8 +1095,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.set_camera_light()
         >>> light.light_type
         <LightType.CAMERA_LIGHT: 2>
@@ -1102,8 +1113,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.set_scene_light()
         >>> light.light_type
         <LightType.SCENE_LIGHT: 3>
@@ -1120,6 +1131,11 @@ class Light(vtkLight):
         vtk_light : vtk.vtkLight
             The ``vtk.vtkLight`` to be copied.
 
+        Returns
+        -------
+        pyvista.Light
+            Wrapped light.
+
         """
         if not isinstance(vtk_light, vtkLight):
             raise TypeError(
@@ -1127,7 +1143,7 @@ class Light(vtkLight):
             )
 
         light = cls()
-        light.light_type = vtk_light.GetLightType()  # resets transformation matrix!
+        light.light_type = vtk_light.GetLightType()  # resets transformation matrix
         light.position = vtk_light.GetPosition()
         light.focal_point = vtk_light.GetFocalPoint()
         light.ambient_color = vtk_light.GetAmbientColor()
@@ -1186,8 +1202,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.hide_actor()
 
         """
@@ -1196,7 +1212,7 @@ class Light(vtkLight):
         self.actor.VisibilityOff()
 
     @property
-    def renderers(self):
+    def renderers(self):  # numpydoc ignore=RT01
         """Return the renderers associated with this light."""
         return self._renderers
 

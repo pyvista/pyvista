@@ -11,11 +11,15 @@ like this:
     Examples
     --------
     >>> import numpy
-    >>> import vtk
     >>> import pyvista
+    >>> from pyvista import CellType
     >>> offset = np.array([0, 9])
-    >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-    >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
+    >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+    >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
+    >>> cells = np.hstack((cell0_ids, cell1_ids))
+    >>> cell_type = np.array(
+    ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
+    ... )
 
 there will be a ``NameError`` when the code block is copied into Python
 because the ``np`` name is undefined. However, pytest and sphinx test
@@ -128,7 +132,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         of failed doctests under the specified modules.
 
     """
-    skip_pattern = re.compile('doctest: *\+SKIP')  # noqa: W605
+    skip_pattern = re.compile(r'doctest: *\+SKIP')
 
     if modules is None:
         modules = discover_modules()

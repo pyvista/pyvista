@@ -1,5 +1,7 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 import collections
+from itertools import product
+from weakref import proxy
 
 import numpy as np
 
@@ -10,7 +12,37 @@ from .renderer import Renderer
 
 
 class Renderers:
-    """Organize Renderers for ``pyvista.Plotter``."""
+    """Organize Renderers for ``pyvista.Plotter``.
+
+    Parameters
+    ----------
+    plotter : str
+        The PyVista plotter.
+
+    shape : tuple[int], optional
+        The initial shape of the PyVista plotter, (rows, columns).
+
+    splitting_position : float, optional
+        The position to place the splitting line between plots.
+
+    row_weights : sequence, optional
+        The weights of the rows when the plot window is resized.
+
+    col_weights : sequence, optional
+        The weights of the columns when the plot window is resized.
+
+    groups : list, optional
+        A list of sequences that defines the grouping of the sub-datasets.
+
+    border : bool, optional
+        Whether or not a border should be added around each subplot.
+
+    border_color : str, optional
+        The color of the border around each subplot.
+
+    border_width : float, optional
+        The width of the border around each subplot.
+    """
 
     def __init__(
         self,
@@ -26,8 +58,9 @@ class Renderers:
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
-        self._plotter = plotter
+        self._plotter = proxy(plotter)
         self._renderers = []
+        self._shadow_renderer = None
 
         # by default add border for multiple plots
         if border is None:
@@ -147,42 +180,43 @@ class Renderers:
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i in range(norm_group[0], norm_group[2] + 1):
-                        for j in range(norm_group[1], norm_group[3] + 1):
-                            if self.loc_to_group((i, j)) is not None:
-                                raise ValueError(
-                                    f'Groups cannot overlap. Overlap found at position {(i, j)}.'
-                                )
+                    for i, j in product(
+                        range(norm_group[0], norm_group[2] + 1),
+                        range(norm_group[1], norm_group[3] + 1),
+                    ):
+                        if self.loc_to_group((i, j)) is not None:
+                            raise ValueError(
+                                f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                            )
                     self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)), axis=0
                     )
             # Create subplot renderers
-            for row in range(shape[0]):
-                for col in range(shape[1]):
-                    group = self.loc_to_group((row, col))
-                    nb_rows = None
-                    nb_cols = None
-                    if group is not None:
-                        if row == self.groups[group, 0] and col == self.groups[group, 1]:
-                            # Only add renderer for first location of the group
-                            nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
-                            nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
-                    else:
-                        nb_rows = 1
-                        nb_cols = 1
-                    if nb_rows is not None:
-                        renderer = Renderer(self._plotter, border, border_color, border_width)
-                        x0 = col_off[col]
-                        y0 = row_off[row + nb_rows]
-                        x1 = col_off[col + nb_cols]
-                        y1 = row_off[row]
-                        renderer.SetViewport(x0, y0, x1, y1)
-                        self._render_idxs[row, col] = len(self)
-                        self._renderers.append(renderer)
-                    else:
-                        self._render_idxs[row, col] = self._render_idxs[
-                            self.groups[group, 0], self.groups[group, 1]
-                        ]
+            for row, col in product(range(shape[0]), range(shape[1])):
+                group = self.loc_to_group((row, col))
+                nb_rows = None
+                nb_cols = None
+                if group is not None:
+                    if row == self.groups[group, 0] and col == self.groups[group, 1]:
+                        # Only add renderer for first location of the group
+                        nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
+                        nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
+                else:
+                    nb_rows = 1
+                    nb_cols = 1
+                if nb_rows is not None:
+                    renderer = Renderer(self._plotter, border, border_color, border_width)
+                    x0 = col_off[col]
+                    y0 = row_off[row + nb_rows]
+                    x1 = col_off[col + nb_cols]
+                    y1 = row_off[row]
+                    renderer.SetViewport(x0, y0, x1, y1)
+                    self._render_idxs[row, col] = len(self)
+                    self._renderers.append(renderer)
+                else:
+                    self._render_idxs[row, col] = self._render_idxs[
+                        self.groups[group, 0], self.groups[group, 1]
+                    ]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self))]
@@ -193,7 +227,19 @@ class Renderers:
         self._shadow_renderer.SetDraw(False)
 
     def loc_to_group(self, loc):
-        """Return group id of the given location index or ``None`` if this location is not part of any group."""
+        """Return index of the render window given a location index.
+
+        Parameters
+        ----------
+        loc : int | sequence[int]
+            Index of the renderer to add the actor to.  For example, ``loc=2``
+            or ``loc=(1, 1)``.
+
+        Returns
+        -------
+        int
+            Index of the render window.
+        """
         group_idxs = np.arange(self.groups.shape[0])
         index = (
             (loc[0] >= self.groups[:, 0])
@@ -209,13 +255,13 @@ class Renderers:
 
         Parameters
         ----------
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.
+        loc : int | sequence[int]
+            Index of the renderer to add the actor to. For example, ``loc=2``
+            or ``loc=(1, 1)``.
 
         Returns
         -------
-        idx : int
+        int
             Index of the render window.
 
         """
@@ -244,16 +290,32 @@ class Renderers:
 
     def __iter__(self):
         """Return a iterable of renderers."""
-        for renderer in self._renderers:
-            yield renderer
+        yield from self._renderers
 
     @property
-    def active_index(self):
-        """Return the active index."""
+    def active_index(self):  # numpydoc ignore=RT01
+        """Return the active index.
+
+        Returns
+        -------
+        int
+            Active index.
+        """
         return self._active_index
 
     def index_to_loc(self, index):
-        """Convert a 1D index location to the 2D location on the plotting grid."""
+        """Convert a 1D index location to the 2D location on the plotting grid.
+
+        Parameters
+        ----------
+        index : int
+            A scalar integer that refers to the 1D location index.
+
+        Returns
+        -------
+        numpy.ndarray
+            2D location on the plotting grid.
+        """
         if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
@@ -264,13 +326,25 @@ class Renderers:
         return args[0]
 
     @property
-    def active_renderer(self):
-        """Return the active renderer."""
+    def active_renderer(self):  # numpydoc ignore=RT01
+        """Return the active renderer.
+
+        Returns
+        -------
+        Renderer
+            Active renderer.
+        """
         return self._renderers[self._active_index]
 
     @property
-    def shape(self):
-        """Return the shape of the renderers."""
+    def shape(self):  # numpydoc ignore=RT01
+        """Return the shape of the renderers.
+
+        Returns
+        -------
+        tuple
+            Shape of the renderers.
+        """
         return self._shape
 
     def set_active_renderer(self, index_row, index_column=None):
@@ -281,7 +355,7 @@ class Renderers:
         index_row : int
             Index of the subplot to activate along the rows.
 
-        index_column : int
+        index_column : int, optional
             Index of the subplot to activate along the columns.
 
         """
@@ -295,12 +369,59 @@ class Renderers:
             raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_index = self.loc_to_index((index_row, index_column))
 
+    def set_chart_interaction(self, interactive, toggle=False):
+        """
+        Set or toggle interaction with charts for the active renderer.
+
+        Interaction with other charts in other renderers is disabled.
+        Interaction with other charts in the active renderer is only disabled
+        when ``toggle`` is ``False``.
+
+        Parameters
+        ----------
+        interactive : bool | Chart | int | sequence[Chart] | sequence[int]
+            Following parameter values are accepted:
+
+            * A boolean to enable (``True``) or disable (``False``) interaction
+              with all charts in the active renderer.
+            * The chart or its index to enable interaction with. Interaction
+              with multiple charts can be enabled by passing a list of charts
+              or indices.
+
+        toggle : bool, default: False
+            Instead of enabling interaction with the provided chart(s), interaction
+            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            is not a boolean.
+
+        Returns
+        -------
+        list of Chart
+            The list of all interactive charts for the active renderer.
+
+        """
+        interactive_scene, interactive_charts = None, []
+        if self.active_renderer.has_charts:
+            interactive_scene = self.active_renderer._charts._scene
+            interactive_charts = self.active_renderer.set_chart_interaction(interactive, toggle)
+        # Disable chart interaction for other renderers
+        for renderer in self:
+            if renderer is not self.active_renderer:
+                renderer.set_chart_interaction(False)
+        # Setup the context interactor style based on the resulting amount of interactive charts.
+        self._plotter.iren._set_context_style(interactive_scene if interactive_charts else None)
+        return interactive_charts
+
+    def on_plotter_render(self):
+        """Notify all renderers of explicit plotter render call."""
+        for renderer in self:
+            renderer.on_plotter_render()
+
     def deep_clean(self):
         """Clean all renderers."""
         # Do not remove the renderers on the clean
         for renderer in self:
             renderer.deep_clean()
-        if hasattr(self, '_shadow_renderer'):
+        if self._shadow_renderer is not None:
             self._shadow_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
             for renderer in self._background_renderers:
@@ -315,13 +436,13 @@ class Renderers:
         image_path : str
             Path to an image file.
 
-        scale : float, optional
+        scale : float
             Scale the image larger or smaller relative to the size of
             the window.  For example, a scale size of 2 will make the
             largest dimension of the image twice as large as the
             largest dimension of the render window.  Defaults to 1.
 
-        as_global : bool, optional
+        as_global : bool
             When multiple render windows are present, setting
             ``as_global=False`` will cause the background to only
             appear in one window.
@@ -347,8 +468,15 @@ class Renderers:
         return renderer
 
     @property
-    def has_active_background_renderer(self):
-        """Return ``True`` when Renderer has an active background renderer."""
+    def has_active_background_renderer(self):  # numpydoc ignore=RT01
+        """Return ``True`` when Renderer has an active background renderer.
+
+        Returns
+        -------
+        bool
+            Whether or not the active renderer has a background renderer.
+
+        """
         return self._background_renderers[self.active_index] is not None
 
     def clear_background_renderers(self):
@@ -356,6 +484,11 @@ class Renderers:
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.clear()
+
+    def clear_actors(self):
+        """Clear actors from all renderers."""
+        for renderer in self:
+            renderer.clear_actors()
 
     def clear(self):
         """Clear all renders."""
@@ -381,16 +514,24 @@ class Renderers:
             renderer.remove_all_lights()
 
     @property
-    def shadow_renderer(self):
-        """Shadow renderer."""
+    def shadow_renderer(self):  # numpydoc ignore=RT01
+        """Shadow renderer.
+
+        Returns
+        -------
+        pyvista.plotting.renderer.Renderer
+            Shadow renderer.
+        """
         return self._shadow_renderer
 
-    def set_background(self, color, top=None, all_renderers=True):
+    def set_background(
+        self, color, top=None, right=None, side=None, corner=None, all_renderers=True
+    ):
         """Set the background color.
 
         Parameters
         ----------
-        color : color_like, optional
+        color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Defaults
             to current theme parameters.  For example:
 
@@ -399,12 +540,27 @@ class Renderers:
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : color_like, optional
+        top : ColorLike, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
 
-        all_renderers : bool
+        right : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the left and the color given in ``right``
+            will be the color at the right of the renderer.
+
+        side : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in ``side``
+            will be the color at the side of the renderer.
+
+        corner : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in ``corner``
+            will be the color at the corner of the renderer.
+
+        all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 
@@ -412,43 +568,91 @@ class Renderers:
         --------
         Set the background color to black.
 
-        >>> import pyvista
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
-        Color(name='black', hex='#000000ff')
+        Color(name='black', hex='#000000ff', opacity=255)
         >>> plotter.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Cone())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Cone())
         >>> pl.set_background('black', top='white')
         >>> pl.show()
 
         """
         if all_renderers:
             for renderer in self:
-                renderer.set_background(color, top=top)
+                renderer.set_background(color, top=top, right=right, side=side, corner=corner)
             self._shadow_renderer.set_background(color)
         else:
-            self.active_renderer.set_background(color, top=top)
+            self.active_renderer.set_background(
+                color, top=top, right=right, side=side, corner=corner
+            )
+
+    def set_color_cycler(self, color_cycler, all_renderers=True):
+        """Set or reset the color cycler.
+
+        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        call to set the default color of the dataset being plotted.
+
+        When setting, the value must be either a list of color-like objects,
+        or a cycler of color-like objects. If the value passed is a single
+        string, it must be one of:
+
+            * ``'default'`` - Use the default color cycler (matches matplotlib's default)
+            * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
+            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+
+        Setting to ``None`` will disable the use of the color cycler on this
+        renderer.
+
+        Parameters
+        ----------
+        color_cycler : str | cycler.Cycler | sequence[ColorLike]
+            The colors to cycle through.
+
+        all_renderers : bool, default: True
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
+
+        Examples
+        --------
+        Set the default color cycler to iterate through red, green, and blue.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.set_color_cycler(['red', 'green', 'blue'])
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        """
+        if all_renderers:
+            for renderer in self:
+                renderer.set_color_cycler(color_cycler)
+        else:
+            self.active_renderer.set_color_cycler(color_cycler)
 
     def remove_background_image(self):
         """Remove the background image at the current renderer.
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.add_background_image(examples.mapfile, as_global=False)
         >>> pl.subplot(0, 1)
-        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> actor = pl.add_mesh(pv.Cube())
         >>> pl.add_background_image(examples.mapfile, as_global=False)
         >>> pl.remove_background_image()
         >>> pl.show()
@@ -462,5 +666,4 @@ class Renderers:
 
     def __del__(self):
         """Destructor."""
-        if hasattr(self, '_shadow_renderer'):
-            del self._shadow_renderer
+        self._shadow_renderer = None
