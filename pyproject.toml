@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     'matplotlib>=3.0.1',
-    'numpy',
+    'numpy>=1.21.0',  # minimum typing support
     'pillow',
     'pooch',
     'scooby>=0.5.1',
@@ -159,6 +159,7 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+plugins = ['numpy.typing.mypy_plugin']
 
 [tool.numpydoc_validation]
 checks = [
