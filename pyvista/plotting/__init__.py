@@ -91,7 +91,7 @@ class QtInteractor:  # numpydoc ignore=PR01
         raise QtDeprecationError('QtInteractor')
 
 
-global_theme = _GlobalTheme()
+global_theme: _GlobalTheme = _GlobalTheme()
 
 # Set preferred plot theme
 _set_plot_theme_from_env()
