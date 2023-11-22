@@ -929,7 +929,7 @@ def Plane(
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: None
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
