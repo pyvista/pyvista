@@ -4,14 +4,12 @@ Also includes some pure-python helpers.
 
 """
 from typing import Sequence, Union
-import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Matrix, Vector
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import no_new_attr
 
 from .arrays import _coerce_pointslike_arg
