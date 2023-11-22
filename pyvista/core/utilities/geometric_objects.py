@@ -41,13 +41,11 @@ NORMALS = {
 
 def Cylinder(
     center=(0.0, 0.0, 0.0),
-    direction=None,
+    direction=(1.0, 0.0, 0.0),
     radius=0.5,
     height=1.0,
     resolution=100,
     capping=True,
-    normx=(1.0, 0.0, 0.0),
-    normy=(0.0, 1.0, 0.0),
 ):
     """Create the surface of a cylinder.
 
@@ -63,7 +61,7 @@ def Cylinder(
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: None
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -78,12 +76,6 @@ def Cylinder(
     capping : bool, default: True
         Cap cylinder ends with polygons.
 
-    normx : sequence[float], default: (1.0, 0.0, 0.0)
-        Norm x cylinder points to  in ``[x, y, z]``.
-
-    normy : sequence[float], default: (0.0, 1.0, 0.0)
-        Norm y cylinder points to  in ``[x, y, z]``.
-
     Returns
     -------
     pyvista.PolyData
@@ -93,22 +85,14 @@ def Cylinder(
     --------
     >>> import pyvista as pv
     >>> cylinder = pv.Cylinder(
-    ...     center=[1, 2, 3],
-    ...     radius=1,
-    ...     height=2,
-    ...     normx=(0.57735027, 0.57735027, 0.57735027),
-    ...     normy=(-0.40824829, 0.81649658, -0.40824829),
+    ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ... )
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     pv.Cylinder(
-    ...         center=[1, 2, 3],
-    ...         radius=1,
-    ...         height=2,
-    ...         normx=(0.57735027, 0.57735027, 0.57735027),
-    ...         normy=(-0.40824829, 0.81649658, -0.40824829),
+    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ...     ),
     ...     show_edges=True,
     ...     line_width=5,
@@ -125,12 +109,10 @@ def Cylinder(
         height=height,
         capping=capping,
         resolution=resolution,
-        normx=normx,
-        normy=normy,
     )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
-    translate(output, center, direction, normx, normy)
+    translate(output, center, direction)
     return output
 
 
@@ -240,15 +222,13 @@ def CylinderStructured(
 
 def Arrow(
     start=(0.0, 0.0, 0.0),
-    direction=None,
+    direction=(1.0, 0.0, 0.0),
     tip_length=0.25,
     tip_radius=0.1,
     tip_resolution=20,
     shaft_radius=0.05,
     shaft_resolution=20,
     scale=None,
-    normx=(1.0, 0.0, 0.0),
-    normy=(0.0, 1.0, 0.0),
 ):
     """Create an arrow.
 
@@ -257,7 +237,7 @@ def Arrow(
     start : sequence[float], default: (0.0, 0.0, 0.0)
         Start location in ``[x, y, z]``.
 
-    direction : sequence[float], default: None
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction the arrow points to in ``[x, y, z]``.
 
     tip_length : float, default: 0.25
@@ -278,12 +258,6 @@ def Arrow(
     scale : float | str, optional
         Scale factor of the entire object, defaults to a scale of 1.
         ``'auto'`` scales to length of direction array.
-
-    normx : sequence[float], default: (1.0, 0.0, 0.0)
-        Norm x the arrow points to in ``[x, y, z]``.
-
-    normy : sequence[float], default: (0.0, 1.0, 0.0)
-        Norm y the arrow points to in ``[x, y, z]``.
 
     Returns
     -------
@@ -310,34 +284,26 @@ def Arrow(
     surf = wrap(arrow.GetOutput())
 
     if scale == 'auto':
-        if direction is not None:
-            scale = float(np.linalg.norm(direction))
-        else:
-            scale = float(np.linalg.norm(normx))
+        scale = float(np.linalg.norm(direction))
     if isinstance(scale, (float, int)):
         surf.points *= scale
     elif scale is not None:
         raise TypeError("Scale must be either float, int or 'auto'.")
 
-    if direction is not None:
-        translate(surf, start, direction)
-    else:
-        translate(surf, start, normx=normx, normy=normy)
+    translate(surf, start, direction)
     return surf
 
 
 def Sphere(
     radius=0.5,
     center=(0.0, 0.0, 0.0),
-    direction=None,
+    direction=(0.0, 0.0, 1.0),
     theta_resolution=30,
     phi_resolution=30,
     start_theta=0.0,
     end_theta=360.0,
     start_phi=0.0,
     end_phi=180.0,
-    normx=(0.0, 0.0, 1.0),
-    normy=(0.0, 1.0, 0.0),
 ):
     """Create a sphere.
 
@@ -360,7 +326,7 @@ def Sphere(
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: None
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's north pole at zero degrees ``phi``.
 
@@ -383,13 +349,6 @@ def Sphere(
 
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
-
-    normx : sequence[float], default: (0.0, 0.0, 1.0)
-        Norm x coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
-
-    normy : sequence[float], default: (0.0, 1.0, 0.0)
-        Norm y coordinate vector in ``[x, y, z]``.
 
     Returns
     -------
@@ -431,10 +390,7 @@ def Sphere(
     sphere.Update()
     surf = wrap(sphere.GetOutput())
     surf.rotate_y(90, inplace=True)
-    if direction is not None:
-        translate(surf, center, direction)
-    else:
-        translate(surf, center, normx=normx, normy=normy)
+    translate(surf, center, direction)
     return surf
 
 
