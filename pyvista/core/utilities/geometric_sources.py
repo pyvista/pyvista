@@ -325,7 +325,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
        :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
        :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
-       orients the mesh to a new ``center`` and ``direction`` (or ``normx`` and ``normy``).
+       orients the mesh to a new ``center`` and ``direction``.
 
     Parameters
     ----------
@@ -346,18 +346,6 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
     resolution : int, default: 100
         Number of points on the circular face of the cylinder.
-
-    normx : sequence[float], default: (1.0, 0.0, 0.0)
-        Norm x cylinder points to  in ``[x, y, z]``.
-
-        .. versionchanged:: 0.43.0
-            The ``normx`` parameter has been added.
-
-    normy : sequence[float], default: (0.0, 1.0, 0.0)
-        Norm y cylinder points to  in ``[x, y, z]``.
-
-        .. versionchanged:: 0.43.0
-            The ``normy`` parameter has been added.
 
     Examples
     --------
@@ -385,30 +373,25 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions = ['_center', '_direction', '_normx', '_normy']
+    _new_attr_exceptions = ['_center', '_direction']
 
     def __init__(
         self,
         center=(0.0, 0.0, 0.0),
-        direction=None,
+        direction=(1.0, 0.0, 0.0),
         radius=0.5,
         height=1.0,
         capping=True,
         resolution=100,
-        normx=(1.0, 0.0, 0.0),
-        normy=(0.0, 1.0, 0.0),
     ):
         """Initialize the cylinder source class."""
         super().__init__()
         self._center = center
-        if direction is not None:
-            self._direction = direction
+        self._direction = direction
         self.radius = radius
         self.height = height
         self.resolution = resolution
         self.capping = capping
-        self._normx = normx
-        self._normy = normy
 
     @property
     def center(self) -> Sequence[float]:
@@ -558,53 +541,6 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self.Update()
         return wrap(self.GetOutput())
 
-    @property
-    def normx(self) -> Sequence[float]:
-        """Get the normx vector in ``[x, y, z]``. Orientation vector of the cylinder.
-
-        Returns
-        -------
-        sequence[float]
-            Norm x vector in ``[x, y, z]``. Orientation vector of the
-            cylinder.
-        """
-        return self._normx
-
-    @normx.setter
-    def normx(self, normx: Sequence[float]):
-        """Set the normx in ``[x, y, z]``. Axis of the cylinder passes through this point.
-
-        Parameters
-        ----------
-        normx : sequence[float]
-            Norm x vector in ``[x, y, z]``. Orientation vector of the
-            cylinder.
-        """
-        self._normx = normx
-
-    @property
-    def normy(self) -> Sequence[float]:
-        """Get the normy vector in ``[x, y, z]``. Orientation vector of the cylinder.
-
-        Returns
-        -------
-        sequence[float]
-            Norm y vector in ``[x, y, z]``. Orientation vector of the
-            cylinder.
-        """
-        return self._normy
-
-    @normy.setter
-    def normy(self, normy: Sequence[float]):
-        """Set the normy in ``[x, y, z]``. Axis of the cylinder passes through this point.
-
-        Parameters
-        ----------
-        normy : sequence[float]
-            Norm y vector in ``[x, y, z]``. Orientation vector of the
-            cylinder.
-        """
-        self._normy = normy
 
 
 @no_new_attr
