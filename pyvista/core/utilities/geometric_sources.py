@@ -20,8 +20,8 @@ def translate(
     surf,
     center=(0.0, 0.0, 0.0),
     direction=(1.0, 0.0, 0.0),
-    normx=(1.0, 0.0, 0.0),
-    normy=(0.0, 1.0, 0.0),
+    directionx=(1.0, 0.0, 0.0),
+    directiony=(0.0, 1.0, 0.0),
 ):
     """Translate and orient a mesh to a new center and direction.
 
@@ -36,14 +36,14 @@ def translate(
         Center point to which the mesh should be translated.
     direction : tuple, optional, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
-    normx : tuple, optional, default: (1.0, 0.0, 0.0)
-        Norm x vector along which the mesh should be oriented.
+    directionx : tuple, optional, default: (1.0, 0.0, 0.0)
+        Direction of the plane's x direction in ``[x, y, z]``.
         .. versionchanged:: 0.43.0
-            The ``normx`` parameter has been added.
-    normy : tuple, optional, default: (0.0, 1.0, 0.0)
-        Norm y vector along which the mesh should be oriented.
+            The ``directionx`` parameter has been added.
+    directiony : tuple, optional, default: (0.0, 1.0, 0.0)
+        Direction of the plane's y direction in ``[x, y, z]``.
         .. versionchanged:: 0.43.0
-            The ``normy`` parameter has been added.
+            The ``directiony`` parameter has been added.
 
     """
     if direction is not None:
@@ -61,8 +61,8 @@ def translate(
         normz /= np.linalg.norm(normz)
         normy = np.cross(normz, normx)
     else:
-        normx = np.array(normx) / np.linalg.norm(normx)
-        normy = np.array(normy) / np.linalg.norm(normy)
+        normx = np.array(directionx) / np.linalg.norm(directionx)
+        normy = np.array(directiony) / np.linalg.norm(directiony)
         normz = np.cross(normx, normy)
 
     trans = np.zeros((4, 4))

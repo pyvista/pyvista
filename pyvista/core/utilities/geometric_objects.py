@@ -919,8 +919,8 @@ def Plane(
     j_size=1,
     i_resolution=10,
     j_resolution=10,
-    normx=(0.0, 0.0, 1.0),
-    normy=(0.0, 1.0, 0.0),
+    i_direction=(0.0, 0.0, 1.0),
+    j_direction=(0.0, 1.0, 0.0),
 ):
     """Create a plane.
 
@@ -944,11 +944,11 @@ def Plane(
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
-    normx : sequence[float], default: (0.0, 0.0, 1.0)
-        Norm x cylinder points to  in ``[x, y, z]``.
+    i_direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction of the plane's i direction in ``[x, y, z]``.
 
-    normy : sequence[float], default: (0.0, 1.0, 0.0)
-        Norm y cylinder points to  in ``[x, y, z]``.
+    j_direction : sequence[float], default: (0.0, 1.0, 0.0)
+        Direction of the plane's j direction in ``[x, y, z]``.
 
     Returns
     -------
@@ -974,7 +974,7 @@ def Plane(
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction, normx, normy)
+    translate(surf, center, direction, i_direction, j_direction)
     return surf
 
 
