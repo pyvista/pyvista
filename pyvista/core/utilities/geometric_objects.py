@@ -944,7 +944,7 @@ def Plane(
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
-    i_direction : sequence[float], default: (0.0, 0.0, 1.0)
+    i_direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction of the plane's i direction in ``[x, y, z]``.
         This is used when ``direction=None``.
 
