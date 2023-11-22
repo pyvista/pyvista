@@ -914,7 +914,7 @@ def SolidSphereGeneric(
 
 def Plane(
     center=(0.0, 0.0, 0.0),
-    direction=None,
+    direction=(0.0, 0.0, 1.0),
     i_size=1,
     j_size=1,
     i_resolution=10,
