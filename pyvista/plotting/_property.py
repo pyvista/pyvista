@@ -245,8 +245,7 @@ class Property(_vtk.vtkProperty):
             )
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
-        if not vtk_version_info < (9, 3):
-            self.edge_opacity = edge_opacity
+        self.edge_opacity = edge_opacity
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01
