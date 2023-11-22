@@ -48,11 +48,7 @@ def test_kochanek_spline():
 
 
 def test_ParametricBohemianDome():
-    with pytest.warns(PyVistaDeprecationWarning):
-        geom = pv.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
-        if pv._version.version_info >= (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
-    geom = pv.ParametricBohemianDome(a=0.5, b=1.5, c=1.0, normx=[1, 0, 0], normy=[0, 1, 0])
+    geom = pv.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
     assert geom.n_points
 
 
@@ -199,10 +195,10 @@ def test_ParametricTorus():
     assert geom.n_points
 
 
-def test_norm():
-    geom1 = pv.ParametricEllipsoid(300, 100, 10, normx=[1, 0, 0], normy=[0, 1, 0])
-    geom2 = pv.ParametricEllipsoid(300, 100, 10, normx=[0, 1, 0], normy=[-1, 0, 0])
-    geom3 = pv.ParametricEllipsoid(300, 100, 10, normx=[0, -1, 0], normy=[1, 0, 0])
+def test_direction():
+    geom1 = pv.ParametricEllipsoid(300, 100, 10, direction=[1, 0, 0])
+    geom2 = pv.ParametricEllipsoid(300, 100, 10, direction=[0, 1, 0])
+    geom3 = pv.ParametricEllipsoid(300, 100, 10, direction=[0, -1, 0])
     assert geom1.n_points
     assert geom2.n_points
     assert geom3.n_points
