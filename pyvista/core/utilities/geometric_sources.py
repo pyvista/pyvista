@@ -36,8 +36,12 @@ def translate(
         Direction vector along which the mesh should be oriented.
     normx : tuple, optional, default: (1.0, 0.0, 0.0)
         Norm x vector along which the mesh should be oriented.
+        .. versionchanged:: 0.43.0
+            The ``normx`` parameter has been added.
     normy : tuple, optional, default: (0.0, 1.0, 0.0)
         Norm y vector along which the mesh should be oriented.
+        .. versionchanged:: 0.43.0
+            The ``normy`` parameter has been added.
 
     """
     if direction is not None:
