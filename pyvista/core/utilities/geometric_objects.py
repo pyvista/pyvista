@@ -974,7 +974,7 @@ def Plane(
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction)
+    translate(surf, center, direction, normx, normy)
     return surf
 
 
