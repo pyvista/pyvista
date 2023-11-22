@@ -32,7 +32,7 @@ def translate(
         Mesh to be translated and oriented.
     center : tuple, optional, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
-    direction : tuple, optional, default: None
+    direction : tuple, optional, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
     normx : tuple, optional, default: (1.0, 0.0, 0.0)
         Norm x vector along which the mesh should be oriented.
