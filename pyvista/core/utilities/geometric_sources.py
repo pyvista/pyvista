@@ -327,7 +327,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
        :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
        :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
-       orients the mesh to a new ``center``, ``normx`` and ``normy``.
+       orients the mesh to a new ``center`` and ``direction`` (or ``normx`` and ``normy``).
 
     Parameters
     ----------
