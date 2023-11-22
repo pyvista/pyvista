@@ -333,6 +333,23 @@ def test_plane_direction(expected):
     assert np.array_equal(actual, expected)
 
 
+@pytest.mark.parametrize(
+    'i_direction, j_direction, expected',
+    [
+        ([0, 1, 0], [0, 0, 1], [1, 0, 0]),
+        ([0, 0, 1], [1, 0, 0], [0, 1, 0]),
+        ([1, 0, 0], [0, 1, 0], [0, 0, 1]),
+        ([0, 0, 1], [0, 1, 0], [-1, 0, 0]),
+        ([1, 0, 0], [0, 0, 1], [0, -1, 0]),
+        ([0, 1, 0], [1, 0, 0], [0, 0, -1]),
+    ],
+)
+def test_plane_ij_direction(i_direction, j_direction, expected):
+    surf = pv.Plane(direction=None, i_direction=i_direction, j_direction=j_direction)
+    actual = surf.point_normals[0]
+    assert np.array_equal(actual, expected)
+
+
 def test_plane_size():
     i_sz = 2
     j_sz = 3

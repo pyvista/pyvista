@@ -919,7 +919,7 @@ def Plane(
     j_size=1,
     i_resolution=10,
     j_resolution=10,
-    i_direction=(0.0, 0.0, 1.0),
+    i_direction=(1.0, 0.0, 0.0),
     j_direction=(0.0, 1.0, 0.0),
 ):
     """Create a plane.
@@ -980,7 +980,9 @@ def Plane(
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction, i_direction, j_direction)
+    directionx = np.cross(i_direction, j_direction)
+    directiony = j_direction
+    translate(surf, center, direction, directionx, directiony)
     return surf
 
 
