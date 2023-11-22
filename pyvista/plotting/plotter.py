@@ -3655,13 +3655,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
 
-        if hasattr(self.mesh, '_glyph_geom'):
-            geom = pyvista.PolyData(self.mesh._glyph_geom[0])  # Using only the first geometry
+        if hasattr(self.mesh, '_glyph_geom') and self.mesh._glyph_geom[0] is not None:
+            # Using only the first geometry
+            geom = pyvista.PolyData(self.mesh._glyph_geom[0])
         else:
             geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
-                color = Color('black')
 
         geom.points -= geom.center
 
