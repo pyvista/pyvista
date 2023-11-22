@@ -337,9 +337,6 @@ class CylinderSource(_vtk.vtkCylinderSource):
     direction : sequence[float], default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
 
-        .. versionchanged:: 0.43.0
-            The ``direction`` parameter has been renamed to ``normx`` and ``normy``.
-
     radius : float, default: 0.5
         Radius of the cylinder.
 
@@ -355,8 +352,14 @@ class CylinderSource(_vtk.vtkCylinderSource):
     normx : sequence[float], default: (1.0, 0.0, 0.0)
         Norm x cylinder points to  in ``[x, y, z]``.
 
+        .. versionchanged:: 0.43.0
+            The ``normx`` parameter has been added.
+
     normy : sequence[float], default: (0.0, 1.0, 0.0)
         Norm y cylinder points to  in ``[x, y, z]``.
+
+        .. versionchanged:: 0.43.0
+            The ``normy`` parameter has been added.
 
     Examples
     --------
