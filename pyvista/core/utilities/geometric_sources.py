@@ -58,12 +58,6 @@ def translate(
         normz = np.cross(normx, normy_temp)
         normz /= np.linalg.norm(normz)
         normy = np.cross(normz, normx)
-
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`direction` argument is deprecated. Please use `normx` and `normy`.',
-            PyVistaDeprecationWarning,
-        )
     else:
         normx = np.array(normx) / np.linalg.norm(normx)
         normy = np.array(normy) / np.linalg.norm(normy)
