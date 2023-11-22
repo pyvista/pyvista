@@ -2593,10 +2593,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             edge opacity of the mesh and uniformly applied everywhere - should be
             between 0 and 1.
 
-        .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
-            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -3198,10 +3198,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             edge opacity of the mesh and uniformly applied everywhere - should be
             between 0 and 1.
 
-        .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
-            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
 
         **kwargs : dict, optional
             Optional keyword arguments.
