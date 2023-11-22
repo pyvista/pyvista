@@ -38,12 +38,12 @@ def translate(
         Direction vector along which the mesh should be oriented.
     directionx : tuple, optional, default: (1.0, 0.0, 0.0)
         Direction of the plane's x direction in ``[x, y, z]``.
-        .. versionchanged:: 0.43.0
-            The ``directionx`` parameter has been added.
+        This is used when ``direction=None``.
+        .. versionadded:: 0.43.0
     directiony : tuple, optional, default: (0.0, 1.0, 0.0)
         Direction of the plane's y direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
         .. versionchanged:: 0.43.0
-            The ``directiony`` parameter has been added.
 
     """
     if direction is not None:

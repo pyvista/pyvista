@@ -946,9 +946,15 @@ def Plane(
 
     i_direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction of the plane's i direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
+
+        .. versionadded:: 0.43.0
 
     j_direction : sequence[float], default: (0.0, 1.0, 0.0)
         Direction of the plane's j direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
+
+        .. versionadded:: 0.43.0
 
     Returns
     -------
