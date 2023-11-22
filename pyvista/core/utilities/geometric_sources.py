@@ -3,13 +3,14 @@
 Also includes some pure-python helpers.
 
 """
-from typing import Sequence
+from typing import Sequence, Union
 import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import Matrix, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -634,17 +635,17 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
     @property
     def points(self) -> np.ndarray:
-        """Get the list of points defining a broken line.
+        """Return the points defining a broken line.
 
         Returns
         -------
         np.ndarray
-            List of points defining a broken line.
+            Points defining a broken line.
         """
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Sequence[Sequence[float]]):
+    def points(self, points: Union[Matrix, Vector]):
         """Set the list of points defining a broken line.
 
         Parameters
