@@ -19,7 +19,11 @@ from .helpers import wrap
 
 
 def translate(
-    surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0), normx=(1.0, 0.0, 0.0), normy=(0.0, 1.0, 0.0)
+    surf,
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    normx=(1.0, 0.0, 0.0),
+    normy=(0.0, 1.0, 0.0),
 ):
     """Translate and orient a mesh to a new center and direction.
 
