@@ -542,7 +542,6 @@ class CylinderSource(_vtk.vtkCylinderSource):
         return wrap(self.GetOutput())
 
 
-
 @no_new_attr
 class MultipleLinesSource(_vtk.vtkLineSource):
     """Multiple lines source algorithm class.
