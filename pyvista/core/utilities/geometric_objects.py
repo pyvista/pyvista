@@ -981,6 +981,8 @@ def Plane(
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
     directionx = np.cross(i_direction, j_direction)
+    if not np.isclose(np.linalg.norm(directionx), 1.0):
+        raise ValueError('i_direction and j_direction must be 90 degrees.')
     directiony = j_direction
     translate(surf, center, direction, directionx, directiony)
     return surf

@@ -350,6 +350,11 @@ def test_plane_ij_direction(i_direction, j_direction, expected):
     assert np.array_equal(actual, expected)
 
 
+def test_plane_ij_direction_errors():
+    with pytest.raises(ValueError, match="i_direction and j_direction must be 90 degrees."):
+        _ = pv.Plane(direction=None, i_direction=[1, 0, 0], j_direction=[1, 0, 0])
+
+
 def test_plane_size():
     i_sz = 2
     j_sz = 3
