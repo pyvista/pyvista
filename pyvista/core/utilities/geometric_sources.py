@@ -455,11 +455,6 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
         """
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`direction` property is deprecated. Please use `normx` and `normy`.',
-            PyVistaDeprecationWarning,
-        )
         self._direction = direction
 
     @property
