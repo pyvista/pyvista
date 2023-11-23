@@ -1404,7 +1404,7 @@ def Text3D(string, width=None, height=None, depth=None, center=(0, 0, 0), normal
     Parameters
     ----------
     string : str
-        Text string of the source.
+        String to generate 3D text from.
 
     width : float, optional
         Width of the text. If ``None``, the width is scaled
