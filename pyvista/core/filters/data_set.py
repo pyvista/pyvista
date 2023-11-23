@@ -6339,7 +6339,10 @@ class DataSetFilters:
         such that the output labels are contiguous from ``[0, N)``. The
         output may optionally be sorted by label count.
 
-        See also :func:`pyvista.DatasetFilters.sort_labels`.
+        See Also
+        --------
+        sort_labels
+            Similar function with ``sort=True`` by default.
 
         Notes
         -----
@@ -6347,6 +6350,8 @@ class DataSetFilters:
         requires VTK version 9.3 or higher. If ``vtkPackLabels`` is not
         available, packing is done with ``NumPy`` instead which may be
         slower. For best performance, consider upgrading VTK.
+
+        .. versionadded:: 0.43
 
         Parameters
         ----------
@@ -6423,7 +6428,7 @@ class DataSetFilters:
             raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
 
         # Do packing
-        if _vtk.VTK93:  # pragma: no cover
+        if hasattr(_vtk, 'vtkPackLabels'):  # pragma: no cover
             alg = _vtk.vtkPackLabels()
             alg.SetInputDataObject(self)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)

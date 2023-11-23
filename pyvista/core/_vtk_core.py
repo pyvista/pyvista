@@ -11,10 +11,6 @@ the entire library.
 
 from vtkmodules.vtkCommonCore import vtkVersion
 
-VTK93 = vtkVersion().GetVTKMajorVersion() >= 9 and vtkVersion().GetVTKMinorVersion() >= 3
-if VTK93:  # pragma: no cover
-    from vtkmodules.vtkFiltersCore import vtkPackLabels
-
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
 try:
@@ -428,6 +424,6 @@ except ImportError:  # pragma: no cover
 
 # 9.3+ imports
 try:
-    from vtkmodules.vtkFiltersCore import vtkSurfaceNets3D
+    from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
 except ImportError:  # pragma: no cover
     pass
