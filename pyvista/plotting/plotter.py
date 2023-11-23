@@ -14,6 +14,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import Dict, Optional
+import uuid
 import warnings
 import weakref
 
@@ -6404,7 +6405,7 @@ class Plotter(BasePlotter):
                 notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
-        if self.notebook:
+        if self.notebook or pyvista.ON_SCREENSHOT:
             off_screen = True
         self.off_screen = off_screen
 
@@ -6760,7 +6761,11 @@ class Plotter(BasePlotter):
                     "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
                 )
         if _is_current:
-            self.last_image = self.screenshot(screenshot, return_img=True)
+            if pyvista.ON_SCREENSHOT:
+                filename = uuid.uuid4().hex
+                self.last_image = self.screenshot(filename, return_img=True)
+            else:
+                self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the
