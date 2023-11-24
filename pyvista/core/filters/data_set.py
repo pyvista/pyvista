@@ -6270,10 +6270,11 @@ class DataSetFilters:
 
         output_scalars : str, None
             Name of the sorted output scalars. By default, the output is
-            saved to currently active scalars.
+            saved to ``'packed_labels'``.
 
         progress_bar : bool, default: False
-            If ``True``, display a progress bar.
+            If ``True``, display a progress bar. Has no effect if VTK
+            version is lower than 9.3.
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -6307,7 +6308,7 @@ class DataSetFilters:
         Show sorted label info for the four largest labels. Note
         the difference in label size after sorting.
         >>> sorted_label_number, sorted_label_size = np.unique(
-        ...     sorted_labels["MetaImage"], return_counts=True
+        ...     sorted_labels["packed_labels"], return_counts=True
         ... )
         >>> sorted_label_number[:4]
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
@@ -6437,7 +6438,6 @@ class DataSetFilters:
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
             if sort:
                 alg.SortByLabelCount()
-
             alg.PassFieldDataOn()
             alg.PassCellDataOn()
             alg.PassPointDataOn()
