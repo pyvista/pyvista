@@ -6339,6 +6339,9 @@ class DataSetFilters:
         such that the output labels are contiguous from ``[0, N)``. The
         output may optionally be sorted by label count.
 
+        The output array ``'packed_labels'`` is added to the output by default,
+        and is automatically set as the active scalars.
+
         See Also
         --------
         sort_labels
@@ -6369,7 +6372,7 @@ class DataSetFilters:
 
         output_scalars : str, None
             Name of the packed output scalars. By default, the output is
-            saved to currently active scalars.
+            saved to ``'packed_labels'``.
 
         progress_bar : bool, default: False
             If ``True``, display a progress bar. Has no effect if VTK
@@ -6411,17 +6414,17 @@ class DataSetFilters:
         (0, 25)
 
         """
-        # Determine input scalars
+        # Set a input scalars
         if scalars is None:
             set_default_active_scalars(self)
             _, scalars = self.active_scalars_info
-        arr = get_array(self, scalars, preference=preference, err=True)
 
         field = get_array_association(self, scalars, preference=preference)
 
         # Determine output scalars
+        default_output_scalars = "packed_labels"
         if output_scalars is None:
-            output_scalars = scalars
+            output_scalars = default_output_scalars
         elif isinstance(output_scalars, str):
             output_scalars = output_scalars
         else:
@@ -6434,21 +6437,30 @@ class DataSetFilters:
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
             if sort:
                 alg.SortByLabelCount()
-            # vtkPackLabels does not always pass data correctly and will sometimes
-            # replace input data. Instead, turn off data passing and copy the output later
-            alg.PassFieldDataOff()
-            alg.PassCellDataOff()
-            alg.PassPointDataOff()
-            _update_alg(alg, progress_bar, 'Sorting')
-            output = _get_output(alg)
 
-            # Get sorted data array
-            if field == FieldAssociation.POINT:
-                packed_array = output.point_data['PackedLabels']
-            else:
-                packed_array = output.cell_data['PackedLabels']
-        else:
+            alg.PassFieldDataOn()
+            alg.PassCellDataOn()
+            alg.PassPointDataOn()
+            _update_alg(alg, progress_bar, 'Packing labels')
+            result = _get_output(alg)
+
+            if output_scalars is not scalars:
+                # vtkPackLabels does not pass un-packed labels through to the
+                # output, so add it back here
+                if field == FieldAssociation.POINT:
+                    result.point_data[scalars] = self.point_data[scalars]
+                else:
+                    result.cell_data[scalars] = self.cell_data[scalars]
+            result.rename_array("PackedLabels", output_scalars)
+
+            if inplace:
+                self.copy_from(result, deep=False)
+                return self
+            return result
+
+        else:  # Use numpy
             # Get mapping from input ID to output ID
+            arr = get_array(self, scalars, preference=preference, err=True)
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
@@ -6460,19 +6472,21 @@ class DataSetFilters:
             for num_in, num_out in zip(label_numbers_in, label_numbers_out):
                 packed_array[arr == num_in] = num_out
 
-        if inplace:
-            result = self
-        else:
-            result = self.copy()
+            if inplace:
+                result = self
+            else:
+                result = self.copy(deep=True)
 
-        # Add output to mesh
-        if field == FieldAssociation.POINT:
-            result.point_data[output_scalars] = packed_array
-            result.set_active_scalars(output_scalars, preference='point')
-        else:
-            result.cell_data[output_scalars] = packed_array
-            result.set_active_scalars(output_scalars, preference='cell')
-        return result
+            # Add output to mesh
+            if field == FieldAssociation.POINT:
+                result.point_data[output_scalars] = packed_array
+            else:
+                result.cell_data[output_scalars] = packed_array
+
+            # vtkPackLabels sets active scalars by default, so do the same here
+            result.set_active_scalars(output_scalars, preference=field)
+
+            return result
 
 
 def _set_threshold_limit(alg, value, method, invert):

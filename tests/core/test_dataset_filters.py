@@ -3121,7 +3121,7 @@ def labeled_image():
 
 def test_sort_labels(labeled_image):
     sorted_ = labeled_image.sort_labels()
-    assert np.array_equal(sorted_['labels'], [2, 0, 0, 0, 0, 2, 1, 1])
+    assert np.array_equal(sorted_['packed_labels'], [2, 0, 0, 0, 0, 2, 1, 1])
 
     # test no data
     with pytest.raises(ValueError):
@@ -3129,13 +3129,16 @@ def test_sort_labels(labeled_image):
 
     # test single label
     labeled_image['labels'] = [0, 0, 0, 0, 0, 0, 0, 0]
-    sorted_ = labeled_image.sort_labels()
-    assert np.array_equal(sorted_['labels'], [0, 0, 0, 0, 0, 0, 0, 0])
+    sorted_ = labeled_image.sort_labels(scalars='labels')
+    assert np.array_equal(sorted_['packed_labels'], [0, 0, 0, 0, 0, 0, 0, 0])
 
 
 def test_pack_labels(labeled_image):
+    labeled_image["misc"] = [0, 0, 0, 0, 0, 0, 0, 0]
     packed = labeled_image.pack_labels(progress_bar=True)
-    assert np.array_equal(packed['labels'], [0, 2, 2, 2, 2, 0, 1, 1])
+    assert np.array_equal(packed['packed_labels'], [0, 2, 2, 2, 2, 0, 1, 1])
+    assert 'labels' in packed.array_names
+    assert 'packed_labels' in packed.array_names
 
 
 def test_pack_labels_inplace(uniform):
@@ -3155,25 +3158,25 @@ def test_pack_labels_output_scalars(labeled_image):
 
 
 def test_pack_labels_preference(uniform):
-    uniform.rename_array('Spatial Point Data', 'labels')
-    uniform.rename_array('Spatial Cell Data', 'labels')
+    uniform.rename_array('Spatial Point Data', 'labels_in')
+    uniform.rename_array('Spatial Cell Data', 'labels_in')
 
     mesh = uniform.copy()
     packed = mesh.pack_labels(preference='point')
-    expected_shape = mesh.point_data['labels'].shape
-    actual_shape = packed.point_data['labels'].shape
+    expected_shape = mesh.point_data['labels_in'].shape
+    actual_shape = packed.point_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
 
     mesh = uniform.copy()
     packed = mesh.pack_labels(preference='cell')
-    expected_shape = mesh.cell_data['labels'].shape
-    actual_shape = packed.cell_data['labels'].shape
+    expected_shape = mesh.cell_data['labels_in'].shape
+    actual_shape = packed.cell_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
 
     # test point preference without point data
     mesh = uniform.copy()
-    uniform.point_data.remove('labels')
+    mesh.point_data.remove('labels_in')
     packed = mesh.pack_labels(preference='point')
-    expected_shape = mesh.cell_data['labels'].shape
-    actual_shape = packed.cell_data['labels'].shape
+    expected_shape = mesh.cell_data['labels_in'].shape
+    actual_shape = packed.cell_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
