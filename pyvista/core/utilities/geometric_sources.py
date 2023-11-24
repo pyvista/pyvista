@@ -648,7 +648,7 @@ class Text3DSource(vtkVectorText):
         """Initialize source."""
         super().__init__()
 
-        # Create output filters
+        # Create output filters to make text 3D
         extrude = _vtk.vtkLinearExtrusionFilter()
         extrude.SetInputConnection(self.GetOutputPort())
         extrude.SetExtrusionTypeToNormalExtrusion()
@@ -792,7 +792,8 @@ class Text3DSource(vtkVectorText):
                 out = self._tri_filter.GetOutput()
 
             # Modify output object
-            self._output.copy_from(out)
+            self._output.SetPoints(out.GetPoints())
+            self._output.SetPolys(out.GetPolys())
 
             # For empty strings, the bounds are either default values (+/- 1) initially or
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time

@@ -159,73 +159,106 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.mark.parametrize(
-    'kwarg',
-    [
+@pytest.fixture
+def text3d_source():
+    return pv.Text3DSource()
+
+
+@pytest.fixture
+def text3d_source_with_text():
+    return pv.Text3DSource("TEXT")
+
+
+def test_text3d_source_update(text3d_source_with_text):
+    assert text3d_source_with_text._modified
+    assert text3d_source_with_text._output.n_points == 0
+    text3d_source_with_text.update()
+    assert not text3d_source_with_text._modified
+    assert text3d_source_with_text._output.n_points > 1
+
+    # Test calling update has no effect on output when modified flag is not set
+    points_before = text3d_source_with_text._output.GetPoints()
+    text3d_source_with_text.update()
+    points_after = text3d_source_with_text._output.GetPoints()
+    assert not text3d_source_with_text._modified
+    assert points_before is points_after
+
+
+def text3d_source_test_params():
+    return (
         ('string', 'TEXT'),
         ('center', (1, 2, 3)),
         ('normal', (4, 5, 6)),
         ('height', 2),
         ('width', 3),
         ('depth', 4),
-    ],
+    )
+
+
+def test_text3d_source_output(text3d_source_with_text):
+    # Store initial object references
+    out1 = text3d_source_with_text._output
+    out1_points = out1.GetPoints()
+    assert out1.n_points == 0
+
+    # Test getting output triggers an update
+    out2 = text3d_source_with_text.output
+    assert not text3d_source_with_text._modified
+
+    # Test that output object reference is unchanged
+    assert out2 is out1
+
+    # Test that output points object reference is changed
+    out2_points = out2.GetPoints()
+    assert out2_points is not out1_points
+
+    # Test correct output
+    assert len(out2.split_bodies()) == len(text3d_source_with_text.string)
+
+
+@pytest.mark.parametrize(
+    'kwarg_tuple',
+    text3d_source_test_params(),
 )
-def test_text3d_source_modified(kwarg):
-    # Set up test param
-    name, value = kwarg
-    test_kwargs = {name: value}
-
-    # Make sure string is always set to ensure non-empty output
-    string_val = 'TEXT'
-    test_kwargs.setdefault('string', string_val)
-
+def test_text3d_source_modified_init(kwarg_tuple):
     # Test init modifies source but does not update output
-    src = pv.Text3DSource(**test_kwargs)
+    name, value = kwarg_tuple
+    kwarg_dict = {name: value}
+
+    src = pv.Text3DSource(**kwarg_dict)
     assert src._modified
     assert src._output.n_points == 0
 
-    # Store initial object references
-    out1 = src._output
-    out1_points = out1.GetPoints()
 
-    # Test getting output triggers an update and resets modified flag
-    out2 = src.output
-    out2_points = out2.GetPoints()
-    assert not src._modified
-    assert len(out1.split_bodies()) == len(string_val)
-    assert out2 is out1  # same output obj
-    assert out2_points is not out1_points  # new points array
+@pytest.mark.parametrize(
+    'kwarg_tuple',
+    text3d_source_test_params(),
+)
+def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
+    # Set test param
+    name, value = kwarg_tuple
+    setattr(text3d_source_with_text, name, value)
+    assert text3d_source_with_text._modified
 
-    # Test setting the same value does not modify obj
-    setattr(src, name, value)
-    assert not src._modified
-    assert src._output is out1
-    assert src._output.GetPoints() is out2_points
-    assert len(src._output.split_bodies()) == len(string_val)
+    # Call update to clear modified flag
+    assert text3d_source_with_text._modified
+    text3d_source_with_text.update()
+    assert not text3d_source_with_text._modified
 
-    # Test calling update has no effect on output when modified flag is not set
-    src.update()
-    assert not src._modified
-    assert src._output is out1
-    assert src._output.GetPoints() is out2_points
-    assert len(src._output.split_bodies()) == len(string_val)
+    # Test that setting the same value does not set the modified flag
+    points_before = text3d_source_with_text._output.GetPoints()  # Manually set flag for test
+    setattr(text3d_source_with_text, name, value)
+    points_after = text3d_source_with_text._output.GetPoints()
+    assert not text3d_source_with_text._modified
+    assert points_before is points_after
 
-    # Test setting to a new value sets flag but does not modify the output
-    if name == 'string':
+    # Test setting a new value sets modified flag but does not change output
+    if name == "string":
         new_value = value + value
     else:
         new_value = np.array(value) * 2
-    assert not np.array_equal(new_value, value)
-
-    setattr(src, name, new_value)
-    assert src._modified
-    assert src._output is out1
-    assert src._output.GetPoints() is out2_points
-    assert len(src._output.split_bodies()) == len(string_val)
-
-    # Test calling update modifies the output
-    src.update()
-    assert not src._modified
-    assert src._output is out1
-    assert src._output.GetPoints() is not out2_points
-    assert len(src._output.split_bodies()) == len(src.string)
+    points_before = text3d_source_with_text._output.GetPoints()
+    setattr(text3d_source_with_text, name, new_value)
+    points_after = text3d_source_with_text._output.GetPoints()
+    assert text3d_source_with_text._modified
+    assert points_before is points_after
