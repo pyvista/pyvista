@@ -90,7 +90,7 @@ def test_text3d_source_empty_string():
     out = src.output
     assert out.n_points == 0
 
-    if vtk.__version__ == '9.0.3':
+    if pv.vtk_version_info == (9, 0, 3):
         mx, mn = 1, -1
     else:
         mx, mn = vtk.VTK_DOUBLE_MAX, vtk.VTK_DOUBLE_MIN
