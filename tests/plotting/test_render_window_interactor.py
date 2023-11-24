@@ -252,3 +252,24 @@ def test_add_pick_observer():
         pl.iren.add_pick_obeserver(empty_callback)
     pl = pv.Plotter()
     pl.iren.add_pick_observer(empty_callback)
+
+
+@pytest.mark.needs_vtk_version(9, 1)
+@pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
+def test_release_button_observers(event):
+    class CallBack:
+        def __init__(self):
+            self._i = 0
+
+        def __call__(self, *_):
+            self._i += 1
+
+    cb = CallBack()
+    pl = pv.Plotter()
+    pl.iren.add_observer(event, cb)
+
+    pl.iren.interactor.GetInteractorStyle().InvokeEvent(event)
+    assert cb._i == 1
+
+    pl.iren.interactor.GetInteractorStyle().InvokeEvent(event)
+    assert cb._i == 2

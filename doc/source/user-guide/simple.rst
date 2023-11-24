@@ -116,7 +116,7 @@ access an array on that dataset, then add some more data:
 
     Assign a new array to the cell data:
 
-    >>> mesh.cell_arrays['foo'] = np.random.rand(mesh.n_cells)
+    >>> mesh.cell_data['foo'] = np.random.rand(mesh.n_cells)
 
     Don't remember if your array is point or cell data? You can
     directly query the mesh object and access the array from the

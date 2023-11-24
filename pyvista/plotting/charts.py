@@ -4287,7 +4287,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         return (*self.position, t_w, t_h)
 
     @_geometry.setter
-    def _geometry(self, value):
+    def _geometry(self, _):
         raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance

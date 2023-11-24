@@ -229,7 +229,7 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
@@ -359,9 +359,7 @@ sphinx_gallery_conf = {
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
     "image_scrapers": ("pyvista", "matplotlib"),
-    "first_notebook_cell": (
-        "%matplotlib inline\n" "from pyvista import set_plot_theme\n" "set_plot_theme('document')\n"
-    ),
+    "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }

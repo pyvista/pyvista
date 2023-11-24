@@ -377,6 +377,7 @@ scalars of the grid copied to the plotting object. Here is a full example:
     # Create fictitious displacements as a function of Z location
     d = np.zeros_like(grid.points)
     d[:, 1] = grid.points[:, 2]**3/250
+    grid['Y Displacement'] = d[:, 1]
 
     # use hardcoded camera position
     cpos = [(11.915, 6.114, 3.612),
@@ -384,8 +385,7 @@ scalars of the grid copied to the plotting object. Here is a full example:
             (-0.425, 0.902, -0.0679)]
 
     plotter = pv.Plotter(window_size=(800, 600))
-    plotter.add_mesh(grid, scalars=d[:, 1],
-                     scalar_bar_args={'title': 'Y Displacement'},
+    plotter.add_mesh(grid, scalars='Y Displacement',
                      show_edges=True, rng=[-d.max(), d.max()],
                      interpolate_before_map=True)
     plotter.add_axes()
@@ -397,8 +397,8 @@ scalars of the grid copied to the plotting object. Here is a full example:
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
     for phase in np.linspace(0, 2*np.pi, 20):
-        plotter.update_coordinates(pts + d*np.cos(phase))
-        plotter.update_scalars(d[:, 1]*np.cos(phase))
+        grid.points = pts + d * np.cos(phase)
+        grid['Y Displacement'] = d[:, 1] * np.cos(phase)
         plotter.write_frame()
 
     # close the plotter when complete
@@ -412,8 +412,7 @@ You can also render the beam as a wire-frame object:
 
    # Animate plot as a wire-frame
    plotter = pv.Plotter(window_size=(800, 600))
-   plotter.add_mesh(grid, scalars=d[:, 1],
-                    scalar_bar_args={'title': 'Y Displacement'},
+   plotter.add_mesh(grid, scalars='Y Displacement',
                     show_edges=True,
                     rng=[-d.max(), d.max()], interpolate_before_map=True,
                     style='wireframe')
@@ -422,9 +421,8 @@ You can also render the beam as a wire-frame object:
 
    plotter.open_gif('beam_wireframe.gif')
    for phase in np.linspace(0, 2*np.pi, 20):
-       plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
-       plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
-       plotter.render()
+       grid.points = pts + d * np.cos(phase)
+       grid['Y Displacement'] = d[:, 1] * np.cos(phase)
        plotter.write_frame()
 
    # close the plotter when complete

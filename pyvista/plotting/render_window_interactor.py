@@ -42,7 +42,7 @@ class Timer:
         self.id = None
         self.callback = callback
 
-    def execute(self, obj, event):  # pragma: no cover # numpydoc ignore=PR01,RT01
+    def execute(self, obj, _event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
         while self.step < self.max_steps:
             self.callback(self.step)
@@ -184,7 +184,7 @@ class RenderWindowInteractor:
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    def add_observer(self, event, call):
+    def add_observer(self, event, call, interactor_style_fallback=True):
         """Add an observer for the given event.
 
         Parameters
@@ -195,6 +195,10 @@ class RenderWindowInteractor:
 
         call : callable
             Callback to be called when the event is invoked.
+
+        interactor_style_fallback : bool
+            If ``True``, the observer will be added to the interactor style
+            in cases known to be problematic.
 
         Returns
         -------
@@ -214,8 +218,17 @@ class RenderWindowInteractor:
         """
         call = partial(try_callback, call)
         event = self._get_event_str(event)
-        observer = self.interactor.AddObserver(event, call)
-        self._observers[observer] = event
+        if interactor_style_fallback and event in [
+            'LeftButtonReleaseEvent',
+            'RightButtonReleaseEvent',
+        ]:
+            # Release events are swallowed by the interactor, but registering
+            # on the interactor style seems to work.
+            # See https://github.com/pyvista/pyvista/issues/4976
+            observer = self.style.add_observer(event, call)
+        else:
+            observer = self.interactor.AddObserver(event, call)
+            self._observers[observer] = event
         return observer
 
     def remove_observer(self, observer):
@@ -321,7 +334,7 @@ class RenderWindowInteractor:
         else:
             raise TypeError(f"Side ({side}) not supported. Try `left` or `right`.")
 
-    def _click_event(self, obj, event):
+    def _click_event(self, _obj, event):
         t = time.time()
         dt = t - self._click_time
         last_pos = self._plotter.click_position or (0, 0)
@@ -399,7 +412,7 @@ class RenderWindowInteractor:
         """Clear key event callbacks."""
         self._key_press_event_callbacks.clear()
 
-    def key_press_event(self, obj, event):
+    def key_press_event(self, *args):
         """Listen for key press event."""
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
@@ -416,6 +429,20 @@ class RenderWindowInteractor:
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
+
+    @property
+    def style(self):
+        """Return the current interactor style.
+
+        Returns
+        -------
+        vtkInteractorStyle
+            The current interactor style.
+
+        """
+        if self._style_class is None:
+            self.update_style()
+        return self._style_class
 
     def _toggle_chart_interaction(self, mouse_pos):
         """Toggle interaction with indicated charts.
@@ -752,7 +779,7 @@ class RenderWindowInteractor:
 
         if mouse_wheel_zooms:
 
-            def wheel_zoom_callback(obj, event):  # pragma: no cover
+            def wheel_zoom_callback(_obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
@@ -770,7 +797,7 @@ class RenderWindowInteractor:
 
         if shift_pans:
 
-            def pan_on_shift_callback(obj, event):  # pragma: no cover
+            def pan_on_shift_callback(_obj, event):  # pragma: no cover
                 """Trigger left mouse panning if shift is pressed."""
                 if event == 'LeftButtonPressEvent':
                     if self.interactor.GetShiftKey():
@@ -1237,7 +1264,7 @@ def _style_factory(klass):
                     self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
                 )
 
-            def _press(self, obj, event):
+            def _press(self, *args):
                 # Figure out which renderer has the event and disable the
                 # others
                 super().OnLeftButtonDown()
@@ -1248,7 +1275,7 @@ def _style_factory(klass):
                         interact = renderer.IsInViewport(*click_pos)
                         renderer.SetInteractive(interact)
 
-            def _release(self, obj, event):
+            def _release(self, *args):
                 super().OnLeftButtonUp()
                 parent = self._parent()
                 if len(parent._plotter.renderers) > 1:
