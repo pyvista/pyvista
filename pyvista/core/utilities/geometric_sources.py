@@ -593,6 +593,11 @@ class Text3DSource(vtkVectorText):
     string : str, default: ""
         Text string of the source.
 
+    depth : float, optional
+        Depth of the text. If ``None``, the depth is set to half
+        the :attr:`height` by default. Set to ``0.0`` for planar
+        text.
+
     width : float, optional
         Width of the text. If ``None``, the width is scaled
         proportional to :attr:`height`.
@@ -600,11 +605,6 @@ class Text3DSource(vtkVectorText):
     height : float, optional
         Height of the text. If ``None``, the height is scaled
         proportional to :attr:`width`.
-
-    depth : float, optional
-        Depth of the text. If ``None``, the depth is set to half
-        the :attr:`height` by default. Set to ``0.0`` for planar
-        text.
 
     center : Sequence[float], default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
@@ -638,9 +638,9 @@ class Text3DSource(vtkVectorText):
     def __init__(
         self,
         string=None,
+        depth=None,
         width=None,
         height=None,
-        depth=None,
         center=(0, 0, 0),
         normal=(0, 0, 1),
         process_empty_string=True,
@@ -729,7 +729,7 @@ class Text3DSource(vtkVectorText):
 
     @center.setter
     def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
-        self._center = center
+        self._center = float(center[0]), float(center[1]), float(center[2])
 
     @property
     def normal(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -743,7 +743,7 @@ class Text3DSource(vtkVectorText):
 
     @normal.setter
     def normal(self, normal: Sequence[float]):  # numpydoc ignore=GL08
-        self._normal = normal
+        self._normal = float(normal[0]), float(normal[1]), float(normal[2])
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01

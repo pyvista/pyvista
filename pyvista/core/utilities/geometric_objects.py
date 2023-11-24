@@ -1396,7 +1396,7 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     return surf
 
 
-def Text3D(string, width=None, height=None, depth=None, center=(0, 0, 0), normal=(0, 0, 1)):
+def Text3D(string, depth=None, width=None, height=None, center=(0, 0, 0), normal=(0, 0, 1)):
     """Create 3D text from a string.
 
     The text may be configured to have a specified width, height or depth.
@@ -1405,6 +1405,17 @@ def Text3D(string, width=None, height=None, depth=None, center=(0, 0, 0), normal
     ----------
     string : str
         String to generate 3D text from.
+
+    depth : float, optional
+        Depth of the text. If ``None``, the depth is set to half
+        the :attr:`height` by default. Set to ``0.0`` for planar
+        text.
+
+        .. versionchanged:: 0.43
+
+            The default depth is now calculated dynamically as
+            half the height. Previously, the default depth had
+            a fixed value of ``0.5``.
 
     width : float, optional
         Width of the text. If ``None``, the width is scaled
@@ -1417,17 +1428,6 @@ def Text3D(string, width=None, height=None, depth=None, center=(0, 0, 0), normal
         proportional to :attr:`width`.
 
         .. versionadded:: 0.43
-
-    depth : float, optional
-        Depth of the text. If ``None``, the depth is set to half
-        the :attr:`height` by default. Set to ``0.0`` for planar
-        text.
-
-        .. versionchanged:: 0.43
-
-            The default depth is now calculated dynamcically as
-            half the height. Previously, the default depth had
-            a fixed value of ``0.5``.
 
     center : Sequence[float], default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
