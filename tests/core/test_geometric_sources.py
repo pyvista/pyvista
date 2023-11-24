@@ -98,7 +98,6 @@ def test_text3d_source_string():
 @pytest.mark.parametrize('depth', [None, 0, 1, 2])
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
-    # Init without normal
     src = pv.Text3DSource(
         string=string, center=center, height=height, width=width, depth=depth, normal=normal
     )

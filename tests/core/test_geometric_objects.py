@@ -480,9 +480,20 @@ def test_superquadric():
 
 
 def test_text_3d():
-    mesh = pv.Text3D("foo")
+    mesh = pv.Text3D("foo", 0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
     assert mesh.n_points
     assert mesh.n_cells
+
+    bnds = mesh.bounds
+    actual_width, actual_height, actual_depth = (
+        bnds[1] - bnds[0],
+        bnds[3] - bnds[2],
+        bnds[5] - bnds[4],
+    )
+    assert actual_width == 2
+    assert actual_height == 3
+    assert actual_depth == 0.5
+    assert mesh.center == [1.0, 2.0, 3.0]
 
 
 def test_wavelet():
