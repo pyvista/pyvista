@@ -495,6 +495,11 @@ def test_text_3d():
     assert actual_depth == 0.5
     assert mesh.center == [1.0, 2.0, 3.0]
 
+    # Test setting empty string returns empty mesh with zeros as bounds
+    mesh = pv.Text3D(string="")
+    assert mesh.n_points == 1
+    assert mesh.bounds == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
 
 def test_wavelet():
     mesh = pv.Wavelet()

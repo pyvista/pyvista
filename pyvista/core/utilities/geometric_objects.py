@@ -1404,7 +1404,8 @@ def Text3D(string, depth=None, width=None, height=None, center=(0, 0, 0), normal
     Parameters
     ----------
     string : str
-        String to generate 3D text from.
+        String to generate 3D text from. If ``None`` or an empty string,
+        the output mesh will have a single point at :attr:`center`.
 
     depth : float, optional
         Depth of the text. If ``None``, the depth is set to half
@@ -1455,7 +1456,13 @@ def Text3D(string, depth=None, width=None, height=None, center=(0, 0, 0), normal
     >>> text_mesh.plot(cpos='xy')
     """
     return Text3DSource(
-        string, width=width, height=height, depth=depth, center=center, normal=normal
+        string,
+        width=width,
+        height=height,
+        depth=depth,
+        center=center,
+        normal=normal,
+        process_empty_string=True,
     ).output
 
 

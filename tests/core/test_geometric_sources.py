@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -76,15 +77,23 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 2], points_out[:, 2])
 
 
-def test_text3d_source_string():
+def test_text3d_source_empty_string():
+    # Test empty string is processed to have a single point
     src = pv.Text3DSource(process_empty_string=True)
+    assert src.process_empty_string
     out = src.output
     assert out.n_points == 1
 
-    src = pv.Text3DSource(process_empty_string=False)
+    # Test setting an empty string is processed to have a single point
+    src.process_empty_string = False
+    assert not src.process_empty_string
     out = src.output
     assert out.n_points == 0
+    mx, mn = vtk.VTK_DOUBLE_MAX, vtk.VTK_DOUBLE_MIN
+    assert out.bounds == (mx, mn, mx, mn, mx, mn)
 
+
+def test_text3d_source():
     src = pv.Text3DSource(string='Text')
     assert src.string == 'Text'
     out = src.output
@@ -157,11 +166,6 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
 
         points_center = np.mean(out.points, axis=0)
         assert np.allclose(points_center, center, atol=1e-4)
-
-
-@pytest.fixture
-def text3d_source():
-    return pv.Text3DSource()
 
 
 @pytest.fixture

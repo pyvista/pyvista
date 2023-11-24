@@ -791,8 +791,7 @@ class Text3DSource(vtkVectorText):
                 out = self._tri_filter.GetOutput()
 
             # Modify output object
-            self._output.SetPoints(out.GetPoints())
-            self._output.SetPolys(out.GetPolys())
+            self._output.copy_from(out)
 
             # For empty strings, the bounds are either default values (+/- 1) initially or
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
