@@ -737,7 +737,6 @@ class Text3DSource(vtkVectorText):
 
         The normal direction is parallel to the :attr:`depth` of the text, and
         points away from the front surface of the text.
-
         """
         return self._normal
 
