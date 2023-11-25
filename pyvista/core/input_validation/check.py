@@ -11,12 +11,11 @@ A ``check`` function typically:
 """
 from collections.abc import Iterable, Sequence
 from numbers import Number
-from typing import Sized, Tuple, Union, cast, get_args, get_origin
+from typing import Tuple, Union, cast, get_args, get_origin
 
 import numpy as np
-from numpy.typing import ArrayLike, DTypeLike, NDArray
+from numpy.typing import ArrayLike, DTypeLike
 
-from pyvista.core._typing_core import NumpyNumArray
 from pyvista.core.utilities.arrays import cast_to_ndarray
 
 
