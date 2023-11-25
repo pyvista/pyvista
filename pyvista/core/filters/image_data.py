@@ -896,5 +896,10 @@ class ImageDataFilters(DataSetFilters):
             alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
         else:
             alg.SmoothingOff()
+        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
