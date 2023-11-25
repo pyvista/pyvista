@@ -211,6 +211,7 @@ def test_text3d_source_output(text3d_source_with_text):
     assert out1.n_points == 0
 
     # Test getting output triggers an update
+    assert text3d_source_with_text._modified
     out2 = text3d_source_with_text.output
     assert not text3d_source_with_text._modified
 
