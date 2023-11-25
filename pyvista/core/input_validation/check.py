@@ -20,8 +20,8 @@ from pyvista.core.utilities.arrays import cast_to_ndarray
 
 
 def check_is_subdtype(
-    input_obj: Union[DTypeLike | ArrayLike],
-    parent_dtype: DTypeLike | list[DTypeLike],
+    input_obj: Union[DTypeLike, ArrayLike],
+    parent_dtype: Union[DTypeLike, list[DTypeLike]],
     /,
     *,
     name: str = 'Input',
