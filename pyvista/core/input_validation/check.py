@@ -11,7 +11,7 @@ A ``check`` function typically:
 """
 from collections.abc import Iterable, Sequence
 from numbers import Number
-from typing import Tuple, Union, cast, get_args, get_origin
+from typing import List, Tuple, Union, cast, get_args, get_origin
 
 import numpy as np
 from numpy.typing import ArrayLike, DTypeLike
@@ -21,7 +21,7 @@ from pyvista.core.utilities.arrays import cast_to_ndarray
 
 def check_is_subdtype(
     input_obj: Union[DTypeLike, ArrayLike],
-    parent_dtype: Union[DTypeLike, list[DTypeLike]],
+    parent_dtype: Union[DTypeLike, List[DTypeLike]],
     /,
     *,
     name: str = 'Input',
