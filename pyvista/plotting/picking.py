@@ -1,6 +1,6 @@
 """Module managing picking events."""
 from functools import partial, wraps
-from typing import Tuple
+from typing import Tuple, cast
 import warnings
 import weakref
 
@@ -71,7 +71,7 @@ class RectangleSelection:
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
         frustum_source.Update()
-        return pyvista.wrap(frustum_source.GetOutput())
+        return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
 
     @property
     def viewport(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
