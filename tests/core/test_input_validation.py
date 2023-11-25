@@ -8,7 +8,7 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.input_validation.check import (  # check_is_arraylike,; check_is_dtypelike,
+from pyvista.core.input_validation.check import (
     _validate_shape_value,
     check_has_length,
     check_has_shape,
@@ -41,7 +41,6 @@ from pyvista.core.input_validation.validate import (
     validate_arrayNx3,
     validate_axes,
     validate_data_range,
-    validate_dtype,
     validate_number,
     validate_transform3x3,
     validate_transform4x4,
@@ -110,15 +109,6 @@ def test_check_is_subdtype():
         check_is_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
-def test_validate_dtype():
-    dtype = validate_dtype('single')
-    assert isinstance(dtype, np.dtype)
-    assert dtype.type is np.float32
-
-    with pytest.raises(TypeError):
-        validate_dtype('cat')
-
-
 def test_check_is_subdtype_changes_type():
     # test coercing some types (e.g. np.number) can lead to unexpected
     # failed `np.issubtype` checks due to an implicit change of type
@@ -126,17 +116,11 @@ def test_check_is_subdtype_changes_type():
     dtype_expected = np.number
     check_is_subdtype(int_array, dtype_expected)  # int is subtype of np.number
 
-    dtype_coerced = validate_dtype(dtype_expected)
+    dtype_coerced = np.dtype(dtype_expected)
     assert dtype_coerced.type is np.float64  # np.number is coerced (by NumPy) as a float
     with pytest.raises(TypeError):
         # this check will now fail since int is not subtype of float
         check_is_subdtype(int_array, dtype_coerced)
-
-
-# def test_check_is_dtypelike():
-#     check_is_dtypelike(np.number)
-#     with pytest.raises(TypeError):
-#         check_is_dtypelike('cat')
 
 
 def test_validate_number():
@@ -518,7 +502,7 @@ def test_validate_array(
             if (
                 not copy
                 and isinstance(array_in, np.ndarray)
-                and validate_dtype(dtype_out) is array_in.dtype
+                and np.dtype(dtype_out) is array_in.dtype
             ):
                 assert array_out is array_in
             else:
@@ -616,13 +600,6 @@ def test_check_is_string():
     check_is_string(str_subclass(), allow_subclass=True)
     with pytest.raises(TypeError, match="Object must have type <class 'str'>."):
         check_is_string(str_subclass(), allow_subclass=False)
-
-
-# def test_check_is_arraylike():
-#     check_is_arraylike([1, 2])
-#     msg = "Input cannot be cast as <class 'numpy.ndarray'>."
-#     with pytest.raises(ValueError, match=msg):
-#         check_is_arraylike([[1, 2], 3])
 
 
 def test_check_is_less_than():

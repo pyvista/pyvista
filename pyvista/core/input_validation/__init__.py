@@ -1,5 +1,5 @@
 """Input validation functions."""
-from .check import (  # noqa: 401; check_is_arraylike,; check_is_dtypelike,
+from .check import (  # noqa: 401
     check_has_length,
     check_has_shape,
     check_is_finite,
@@ -30,7 +30,6 @@ from .validate import (  # noqa: 401
     validate_arrayNx3,
     validate_axes,
     validate_data_range,
-    validate_dtype,
     validate_number,
     validate_transform3x3,
     validate_transform4x4,

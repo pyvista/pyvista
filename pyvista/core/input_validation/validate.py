@@ -323,7 +323,7 @@ def validate_array(
 
     # Process output
     if dtype_out is not None:
-        dtype_out = validate_dtype(dtype_out)
+        dtype_out = np.dtype(dtype_out)
         # Copy was done earlier, so don't do it again here
         arr_out = arr_out.astype(dtype_out, copy=False)
     if to_tuple:
@@ -552,40 +552,6 @@ def validate_transform3x3(transform, /, *, name="Transform"):
                 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
             )
     return arr
-
-
-def validate_dtype(dtype_like):
-    """Validate dtype-like input and return it as a dtype object.
-
-    .. warning::
-
-        Validating a type can result in a dtype object whose type
-        differs from the specified input. E.g., the type ``np.number``
-        is validated as a dtype object with type ``np.float64``, not
-        ``np.number``. To only check if an input is dtype-like
-        without converting it to a dtype object, use :func:`~check_is_dtypelike`
-        instead.
-
-    Parameters
-    ----------
-    dtype_like : dtype-like
-        Data type to validate.
-
-    Returns
-    -------
-    np.dtype
-        Data type object.
-
-    See Also
-    --------
-    validate_array
-        Generic array validation function.
-
-    """
-    try:
-        return np.dtype(dtype_like)
-    except TypeError as e:
-        raise TypeError(f"'{dtype_like}' is not a valid NumPy data type.") from e
 
 
 def validate_number(num, /, *, reshape=True, **kwargs):
