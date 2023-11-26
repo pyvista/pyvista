@@ -1567,6 +1567,7 @@ class Theme(_ThemeConfig):
         '_opacity',
         '_before_close_callback',
         '_logo_file',
+        '_edge_opacity',
     ]
 
     def __init__(self):
@@ -1650,6 +1651,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+        self._edge_opacity = 1.0
 
         self._logo_file = None
 
@@ -1754,6 +1756,28 @@ class Theme(_ThemeConfig):
     def opacity(self, opacity: float):  # numpydoc ignore=GL08
         _check_range(opacity, (0, 1), 'opacity')
         self._opacity = float(opacity)
+
+    @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edges opacity.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.edge_opacity = 0.5
+
+        """
+        return self._edge_opacity
+
+    @edge_opacity.setter
+    def edge_opacity(self, edge_opacity: float):  # numpydoc ignore=GL08
+        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        self._edge_opacity = float(edge_opacity)
 
     @property
     def above_range_color(self) -> Color:  # numpydoc ignore=RT01
