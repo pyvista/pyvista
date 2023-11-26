@@ -37,6 +37,8 @@ REPR_VOLUME_MAX_CELLS = 1e6
 # Set where figures are saved
 FIGURE_PATH = os.environ.get("PYVISTA_FIGURE_PATH", None)
 
+ON_SCREENSHOT = os.environ.get("PYVISTA_ON_SCREENSHOT", "false").lower() == "true"
+
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 

@@ -48,7 +48,7 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 
-def _set_plot_theme_from_env():
+def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
@@ -60,6 +60,7 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
+    return None
 
 
 def load_theme(filename):
@@ -1566,6 +1567,7 @@ class Theme(_ThemeConfig):
         '_opacity',
         '_before_close_callback',
         '_logo_file',
+        '_edge_opacity',
     ]
 
     def __init__(self):
@@ -1649,6 +1651,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+        self._edge_opacity = 1.0
 
         self._logo_file = None
 
@@ -1755,6 +1758,28 @@ class Theme(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edges opacity.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.edge_opacity = 0.5
+
+        """
+        return self._edge_opacity
+
+    @edge_opacity.setter
+    def edge_opacity(self, edge_opacity: float):  # numpydoc ignore=GL08
+        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        self._edge_opacity = float(edge_opacity)
+
+    @property
     def above_range_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default above range color.
 
@@ -1825,7 +1850,7 @@ class Theme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: ColorLike):  # numpydoc ignore=GL08
+    def background(self, new_background: ColorLike) -> None:  # numpydoc ignore=GL08
         self._background = Color(new_background)
 
     @property
@@ -2831,7 +2856,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme):
+    def load_theme(self, theme: Union[str, 'Theme']) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -2875,8 +2900,9 @@ class Theme(_ThemeConfig):
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
+        return None
 
-    def save(self, filename):
+    def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
 
         ``before_close_callback`` is non-serializable and is omitted.
@@ -2902,6 +2928,8 @@ class Theme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
+
+        return None
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01

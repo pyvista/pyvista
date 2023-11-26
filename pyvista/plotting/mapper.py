@@ -1,6 +1,6 @@
 """An internal module for wrapping the use of mappers."""
 import sys
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import numpy as np
 
@@ -398,7 +398,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     @property
     def dataset(self) -> Optional['pyvista.core.dataset.DataSet']:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return wrap(self.GetInputAsDataSet())
+        return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))
 
     @dataset.setter
     def dataset(
