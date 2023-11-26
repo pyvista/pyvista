@@ -455,10 +455,6 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         raise PointSetCellOperationError
 
 
-_USE_STRICT_N_FACES = False
-_WARNED_DEPRECATED_NONSTRICT_N_FACES = False
-
-
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
@@ -593,6 +589,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     See :ref:`create_poly` for more examples.
 
     """
+
+    _USE_STRICT_N_FACES = False
+    _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS = {
         '.ply': _vtk.vtkPLYWriter,
@@ -1079,8 +1078,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             will return the same thing as :attr:`n_faces_strict <pyvista.PolyData.n_faces_strict>`.
 
         """
-        global _USE_STRICT_N_FACES
-        _USE_STRICT_N_FACES = mode
+        PolyData._USE_STRICT_N_FACES = mode
 
     @property
     def n_faces(self) -> int:  # numpydoc ignore=RT01
@@ -1107,13 +1105,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         4
 
         """
-        if _USE_STRICT_N_FACES:
+        if PolyData._USE_STRICT_N_FACES:
             return self.n_faces_strict
 
         # Only issue the deprecated n_faces warning the first time it's used
-        global _WARNED_DEPRECATED_NONSTRICT_N_FACES
-        if not _WARNED_DEPRECATED_NONSTRICT_N_FACES:
-            _WARNED_DEPRECATED_NONSTRICT_N_FACES = True
+        if not PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES:
+            PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = True
 
             # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
             warnings.warn(
