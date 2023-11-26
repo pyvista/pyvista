@@ -1087,17 +1087,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the number of cells.
 
         .. deprecated:: 0.43.0
-        The current (deprecated) behavior of this property is to
-        return the total number of cells, i.e. the sum of the number of
-        vertices, lines, triangle strips, and polygonal faces.
-        In the future, this will change to return only the number of
-        polygonal faces, i.e. those cells represented in the
-        `pv.PolyData.faces` array. If you want the total number of cells,
-        use `pv.PolyData.n_cells`. If you want only the number of polygonal faces,
-        use `pv.PolyData.n_faces_strict`. Alternatively, you can opt into the
-        future behavior globally by calling `pv.PolyData.use_strict_n_faces(True)`,
-        in which case `pv.PolyData.n_faces` will return the same thing as
-        `pv.PolyData.n_faces_strict`.
+            The current (deprecated) behavior of this property is to
+            return the total number of cells, i.e. the sum of the number of
+            vertices, lines, triangle strips, and polygonal faces.
+            In the future, this will change to return only the number of
+            polygonal faces, i.e. those cells represented in the
+            `pv.PolyData.faces` array. If you want the total number of cells,
+            use `pv.PolyData.n_cells`. If you want only the number of polygonal faces,
+            use `pv.PolyData.n_faces_strict`. Alternatively, you can opt into the
+            future behavior globally by calling `pv.PolyData.use_strict_n_faces(True)`,
+            in which case `pv.PolyData.n_faces` will return the same thing as
+            `pv.PolyData.n_faces_strict`.
 
         Examples
         --------
