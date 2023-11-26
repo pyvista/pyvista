@@ -140,6 +140,7 @@ def _warn_xserver():  # pragma: no cover
         # finally, check if using a backend that doesn't require an xserver
         if pyvista.global_theme.jupyter_backend in [
             'client',
+            'html',
         ]:
             return
 
@@ -6577,6 +6578,7 @@ class Plotter(BasePlotter):
             * ``'none'`` : Do not display in the notebook.
             * ``'static'`` : Display a static figure.
             * ``'trame'`` : Display a dynamic figure with Trame.
+            * ``'html'`` : Use an ebeddable HTML scene.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.

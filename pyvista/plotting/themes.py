@@ -1882,6 +1882,8 @@ class Theme(_ThemeConfig):
           ``'server'`` and ``'client'`` into one backend. This requires a
           virtual frame buffer.
 
+        * ``'html'``: The ``'client'`` backend, but able to be embedded.
+
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
