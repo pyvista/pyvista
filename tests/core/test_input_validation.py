@@ -826,10 +826,7 @@ def test_check_is_number():
 def test_check_is_scalar():
     check_is_scalar(1)
     check_is_scalar(np.array(0))
-
-    msg = "Got <class 'complex'> instead."
-    with pytest.raises(TypeError, match=msg):
-        check_is_scalar(1 + 2j)
+    check_is_scalar(np.array(1 + 2j))
 
     msg = "Got <class 'list'> instead."
     with pytest.raises(TypeError, match=msg):
@@ -837,7 +834,7 @@ def test_check_is_scalar():
 
     msg = "Scalar must be a 0-dimensional array, got `ndim=1` instead."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_is_scalar(np.array([1, 2]))
+        check_is_scalar(np.array([1]))
 
 
 def test_check_is_string_in_iterable():

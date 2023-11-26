@@ -5,10 +5,11 @@ from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import ArrayLike, DTypeLike
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyFltArray, TransformLike, Vector
+from pyvista.core._typing_core import Matrix, NumpyFltArray, NumpyNumArray, TransformLike, Vector
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -810,12 +811,12 @@ def cast_to_list_array(arr):
     return cast_to_ndarray(arr).tolist()
 
 
-def cast_to_tuple_array(arr):
+def cast_to_tuple_array(arr: ArrayLike) -> tuple:
     """Cast an array to a nested tuple.
 
     Parameters
     ----------
-    arr : array_like
+    arr : ArrayLike
         Array to cast.
 
     Returns
@@ -831,19 +832,21 @@ def cast_to_tuple_array(arr):
     return _to_tuple(arr)
 
 
-def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
+def cast_to_ndarray(
+    arr: ArrayLike, /, *, as_any: bool = True, dtype: Optional[DTypeLike] = None, copy: bool = False
+) -> NumpyNumArray:
     """Cast array to a NumPy ndarray.
 
     Parameters
     ----------
-    arr : array_like
+    arr : ArrayLike
         Array to cast.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
         making a copy.
 
-    dtype : dtype_like
+    dtype : DTypeLike, optional
         The data-type of the returned array.
 
     copy : bool, default: False
