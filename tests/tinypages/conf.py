@@ -26,7 +26,6 @@ pygments_style = 'sphinx'
 
 extensions = [
     "numpydoc",
-    "jupyter_sphinx",
     "pyvista.ext.plot_directive",
     "sphinx.ext.autosummary",
 ]

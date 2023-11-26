@@ -9,7 +9,6 @@ imageio<2.32.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
 ipywidgets<9.0.0
-jupyter_sphinx<0.5.0
 meshio<5.4.0
 nest_asyncio<1.5.9
 numpydoc==1.6.0
