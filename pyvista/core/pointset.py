@@ -1097,13 +1097,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             in which case `pv.PolyData.n_faces` will return the same thing as
             `pv.PolyData.n_faces_strict`.
 
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
-        >>> plane.n_faces
-        4
-
         """
         if PolyData._USE_STRICT_N_FACES:
             return self.n_faces_strict
