@@ -2153,15 +2153,15 @@ def test_extract_surface():
 
     # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface(progress_bar=True)
-    assert surf.n_faces == 36
+    assert surf.n_faces_strict == 36
 
     # expect each face to be divided several more times than the linear extraction
     surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=True)
-    assert surf_subdivided.n_faces > surf.n_faces
+    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
 
     # No subdivision, expect one face per cell
     surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=True)
-    assert surf_no_subdivide.n_faces == 6
+    assert surf_no_subdivide.n_faces_strict == 6
 
 
 def test_merge_general(uniform):
@@ -2980,11 +2980,11 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces
+    orig_n_faces = sphere.n_faces_strict
     sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
-    assert sub.n_faces > orig_n_faces
+    assert sub.n_faces_strict > orig_n_faces
     if inplace:
-        assert sphere.n_faces == sub.n_faces
+        assert sphere.n_faces_strict == sub.n_faces_strict
 
 
 def test_invalid_subdivide_adaptive(cube):

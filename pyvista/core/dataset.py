@@ -1644,8 +1644,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
-        in :class:`pyvista.PolyData`.
+        This returns the total number of cells -- for :class:`pyvista.PolyData`
+        this includes vertices, lines, triangle strips and polygonal faces.
 
         Examples
         --------
