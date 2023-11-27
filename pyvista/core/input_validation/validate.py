@@ -13,12 +13,12 @@ A ``validate`` function typically:
 
 """
 import inspect
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 from numpy.typing import ArrayLike
 
-from pyvista.core._typing_core import NumpyFltArray
+from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.input_validation.check import (
     check_has_length,
@@ -34,6 +34,8 @@ from pyvista.core.input_validation.check import (
     check_is_subdtype,
 )
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
+
+from .check import ShapeLike
 
 
 def validate_array(
@@ -61,7 +63,7 @@ def validate_array(
     to_list=False,
     to_tuple=False,
     name="Array",
-) -> ArrayLike:
+):
     """Check and validate a numeric array meets specific requirements.
 
     Validate an array to ensure it is numeric, has a specific shape,
@@ -95,7 +97,7 @@ def validate_array(
         a :class:`np.ndarray`. This includes lists, lists of tuples, tuples,
         tuples of tuples, tuples of lists and ndarrays.
 
-    must_have_shape : None , optional
+    must_have_shape : ShapeLike | list[ShapeLike], optional
         :func:`Check <pyvista.core.input_validation.check.check_has_shape>`
         if the array has a specific shape. Specify a single shape
         or a ``list`` of any allowable shapes. If an integer, the array must
@@ -107,11 +109,11 @@ def validate_array(
     must_have_dtype : DTypeLike | Sequence[DTypeLike], optional
         :func:`Check <pyvista.core.input_validation.check.check_is_subdtype>`
         if the array's data-type has the given dtype. Specify a
-        :class:`np.dtype` object or dtype-like base class which the
-        array's data must be a subtype of. If a ``list``, the array's data
+        :class:`numpy.dtype` object or dtype-like base class which the
+        array's data must be a subtype of. If a sequence, the array's data
         must be a subtype of at least one of the specified dtypes.
 
-    must_have_length : int | Sequence[int], optional
+    must_have_length : int | IntVector, optional
         :func:`Check <pyvista.core.input_validation.check.check_has_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
@@ -119,18 +121,20 @@ def validate_array(
         .. note ::
 
             The array's length is determined after reshaping the array
-            (if ``reshape`` is not ``None``) and after broadcasting (if
-            ``broadcast_to`` is not ``None``). Therefore, the values of
-            `length`` should take the array's new shape into
-            consideration if applicable.
+            (if ``reshape_to`` is not ``None``) and after broadcasting (if
+            ``broadcast_to`` is not ``None``). Therefore, the specified length
+            values should take the array's new shape into consideration if
+            applicable.
 
     must_have_min_length : int, optional
         :func:`Check <pyvista.core.input_validation.check.check_has_length>`
-        if the array's length is this value or greater.
+        if the array's length is this value or greater. See note in
+        ``must_have_length`` for details.
 
     must_have_max_length : int, optional
         :func:`Check <pyvista.core.input_validation.check.check_has_length>`
-        if the array' length is this value or less.
+        if the array' length is this value or less. See note in
+        ``must_have_length`` for details.
 
     must_be_nonnegative : bool, default: False
         :func:`Check <pyvista.core.input_validation.check.check_is_nonnegative>`
@@ -160,14 +164,14 @@ def validate_array(
         * ``strict=False``: sequential elements with the same value are allowed
         * ``axis=-1``: the sorting is checked along the array's last axis
 
-        To check for descending order, enforce strict ordering, or to check along
+        To check for descending order, enforce strict ordering, or to check
         along a different axis, use a ``dict`` with keyword arguments that
-        will be passed to ``check_is_sorted``.
+        will be passed to :func:`Check <pyvista.core.input_validation.check.check_is_sorted>`.
 
-    must_be_in_range : ArrayLike[float, float], optional
+    must_be_in_range : FloatVector, optional
         :func:`Check <pyvista.core.input_validation.check.check_is_in_range>`
         if the array's values are all within a specific range. Range
-        must be array-like with two elements specifying the minimum and
+        must be a vector with two elements specifying the minimum and
         maximum data values allowed, respectively. By default, the range
         endpoints are inclusive, i.e. values must be >= minimum and <=
         maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
@@ -175,12 +179,13 @@ def validate_array(
 
         ..note ::
 
-            Use ``np.inf`` to check for open intervals, e.g.:
+            Use infinity (``np.inf`` or ``float('inf')``) to check for open
+            intervals, e.g.:
 
-            * ``[-np.inf, upper_bound]`` to check if values are less
-              than (or equal to)  ``upper_bound``
-            * ``[lower_bound, np.inf]`` to check if values are greater
-              than (or equal to) ``lower_bound``
+            * ``[-np.inf, upper]`` to check if values are less
+              than (or equal to) ``upper``
+            * ``[lower, np.inf]`` to check if values are greater
+              than (or equal to) ``lower``
 
     strict_lower_bound : bool, default: False
         Enforce a strict lower bound for the range specified by
@@ -193,13 +198,13 @@ def validate_array(
         than the specified maximum.
 
     reshape_to : int | tuple[int, ...], optional
-        Reshape the output array to a new shape with :func:`np.reshape`.
+        Reshape the output array to a new shape with :func:`numpy.reshape`.
         The shape should be compatible with the original shape. If an
         integer, then the result will be a 1-D array of that length. One
         shape dimension can be -1.
 
     broadcast_to : int | tuple[int, ...], optional
-        Broadcast the array with :func:`np.broadcast_to` to a
+        Broadcast the array with :func:`numpy.broadcast_to` to a
         read-only view with the specified shape. Broadcasting is done
         after reshaping (if ``reshape_to`` is not ``None``).
 
@@ -336,8 +341,12 @@ def validate_array(
 
 
 def validate_axes(
-    *axes, normalize=True, must_be_orthogonal=True, must_have_orientation='right', name="Axes"
-):
+    *axes: Union[FloatMatrix, FloatVector],
+    normalize: bool = True,
+    must_be_orthogonal: bool = True,
+    must_have_orientation: Optional[str] = 'right',
+    name: str = "Axes",
+) -> NumpyFltArray:
     """Validate 3D axes vectors.
 
     By default, the axes are normalized and checked to ensure they are orthogonal and
@@ -413,14 +422,19 @@ def validate_axes(
         raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
 
     # Validate axes array
+    axes_array: np.ndarray
     if len(axes) == 1:
-        axes_array = validate_array(axes[0], must_have_shape=(3, 3), name=name)
+        ax = cast(FloatMatrix, axes[0])
+        axes_array = validate_array(ax, must_have_shape=(3, 3), name=name)  # type: ignore[arg-type]
     else:
+        ax0 = cast(FloatVector, axes[0])
+        ax1 = cast(FloatVector, axes[1])
         axes_array = np.zeros((3, 3))
-        axes_array[0] = validate_array3(axes[0], name=f"{name} Vector[0]")
-        axes_array[1] = validate_array3(axes[1], name=f"{name} Vector[1]")
+        axes_array[0] = validate_array3(ax0, name=f"{name} Vector[0]")
+        axes_array[1] = validate_array3(ax1, name=f"{name} Vector[1]")
         if len(axes) == 3:
-            axes_array[2] = validate_array3(axes[2], name=f"{name} Vector[2]")
+            ax2 = cast(FloatVector, axes[2])
+            axes_array[2] = validate_array3(ax2, name=f"{name} Vector[2]")
         else:  # len(axes) == 2
             if must_have_orientation == 'right':
                 axes_array[2] = np.cross(axes_array[0], axes_array[1])
@@ -613,11 +627,12 @@ def validate_number(num, /, *, reshape=True, **kwargs) -> Union[int, float, Nump
     kwargs.setdefault('must_be_finite', True)
     kwargs.setdefault('must_be_real', True)
 
+    shape: Union[ShapeLike, List[ShapeLike]]
     if reshape:
         shape = [(), (1,)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
     else:
-        shape = ()  # type: ignore
+        shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
     return validate_array(num, **kwargs)  # type: ignore
@@ -733,11 +748,12 @@ def validate_arrayNx3(arr: ArrayLike, /, *, reshape=True, **kwargs):
            [4, 5, 6]])
 
     """
+    shape: Union[ShapeLike, List[ShapeLike]]
     if reshape:
         shape = [3, (-1, 3)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
     else:
-        shape = (-1, 3)  # type: ignore
+        shape = (-1, 3)
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
     return validate_array(arr, **kwargs)
@@ -807,11 +823,12 @@ def validate_arrayN(arr: ArrayLike, /, *, reshape=True, **kwargs):
     array([1, 2, 3])
 
     """
+    shape: Union[ShapeLike, List[ShapeLike]]
     if reshape:
         shape = [(), (-1), (1, -1)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     else:
-        shape = -1  # type: ignore
+        shape = -1
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
     return validate_array(arr, **kwargs)
 

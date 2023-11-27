@@ -11,21 +11,22 @@ A ``check`` function typically:
 """
 from collections.abc import Iterable, Sequence
 from numbers import Number
-from typing import Any, List, Optional, Tuple, Union, cast, get_args, get_origin
+from typing import Any, List, Optional, Sized, Tuple, Union, cast, get_args, get_origin
 
 import numpy as np
 from numpy.typing import ArrayLike, DTypeLike
 
 ShapeLike = Union[int, Tuple[()], Tuple[int, ...]]
 Shape = Union[Tuple[()], Tuple[int, ...]]
+# AnyArrayLike = Union[ArrayLike, Sequence[ArrayLike]]
 
-from pyvista.core._typing_core import NumpyNumArray
+from pyvista.core._typing_core import FloatVector, IntVector, NumpyNumArray
 from pyvista.core.utilities.arrays import cast_to_ndarray
 
 
 def check_is_subdtype(
     input_obj: Union[DTypeLike, ArrayLike],
-    parent_dtype: Union[DTypeLike, List[DTypeLike]],
+    parent_dtype: Union[DTypeLike, Sequence[DTypeLike]],
     /,
     *,
     name: str = 'Input',
@@ -40,8 +41,8 @@ def check_is_subdtype(
 
     parent_dtype : DTypeLike | list[DTypeLike]
         ``dtype``-like object or a list of ``dtype``-like objects. The ``input_obj``
-        must be a subtype of this value. If a list, ``input_obj`` must be a subtype
-        of at least one of the specified dtypes.
+        must be a subtype of this value. If a sequence, ``input_obj`` must be a
+        subtype of at least one of the specified dtypes.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -464,10 +465,10 @@ def check_is_less_than(
 def check_is_in_range(
     arr: ArrayLike,
     /,
-    rng: ArrayLike,
+    rng: FloatVector,
     *,
-    strict_lower=False,
-    strict_upper=False,
+    strict_lower: bool = False,
+    strict_upper: bool = False,
     name: str = "Array",
 ):
     """Check if an array's values are all within a specific range.
@@ -477,8 +478,8 @@ def check_is_in_range(
     arr : ArrayLike
         Array to check.
 
-    rng : ArrayLike, optional
-        Array-like with two elements ``[min, max]`` specifying the minimum
+    rng : FloatVector, optional
+        Vector with two elements ``[min, max]`` specifying the minimum
         and maximum data values allowed, respectively. By default, the
         range endpoints are inclusive, i.e. values must be >= min
         and <= max. Use ``strict_lower`` and/or ``strict_upper``
@@ -514,14 +515,14 @@ def check_is_in_range(
     >>> valid.check_is_in_range([0, 0.5, 1], rng=[0, 1])
 
     """
-    rng = cast_to_ndarray(rng)
-    check_has_shape(rng, 2, name="Range")
-    check_is_sorted(rng, name="Range")
+    rng_ = cast_to_ndarray(rng)
+    check_has_shape(rng_, 2, name="Range")
+    check_is_sorted(rng_, name="Range")
 
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     try:
-        check_is_greater_than(arr, rng[0], strict=strict_lower, name=name)
-        check_is_less_than(arr, rng[1], strict=strict_upper, name=name)
+        check_is_greater_than(arr, rng_[0], strict=strict_lower, name=name)
+        check_is_less_than(arr, rng_[1], strict=strict_upper, name=name)
     except ValueError:
         raise
 
@@ -1054,10 +1055,10 @@ def check_is_string_in_iterable(
 
 
 def check_has_length(
-    arr: ArrayLike,
+    arr: Union[ArrayLike, Sized],
     /,
     *,
-    exact_length: Union[int, ArrayLike, None] = None,
+    exact_length: Union[int, IntVector, None] = None,
     min_length: Optional[int] = None,
     max_length: Optional[int] = None,
     must_be_1d: bool = False,
@@ -1078,7 +1079,7 @@ def check_has_length(
     arr : ArrayLike
         Array to check.
 
-    exact_length : int | ArrayLike, optional
+    exact_length : int | IntVector, optional
         Check if the array has the given length. If multiple
         numbers are given, the array's length must match one of the
         numbers.
@@ -1136,12 +1137,12 @@ def check_has_length(
     check_is_instance(arr, (Sequence, np.ndarray), name=name)
 
     if must_be_1d:
-        check_has_shape(arr, shape=(-1))
+        check_has_shape(arr, shape=(-1))  # type: ignore[arg-type]
 
-    arr_len = len(arr)  # type: ignore
+    arr_len = len(cast(Sized, arr))
 
     if exact_length is not None:
-        exact_length = cast_to_ndarray(exact_length)
+        exact_length = cast(np.ndarray, cast_to_ndarray(exact_length))
         check_is_integerlike(exact_length, name="'exact_length'")
         if arr_len not in exact_length:
             raise ValueError(

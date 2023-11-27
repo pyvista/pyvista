@@ -833,7 +833,12 @@ def cast_to_tuple_array(arr: ArrayLike) -> tuple:
 
 
 def cast_to_ndarray(
-    arr: ArrayLike, /, *, as_any: bool = True, dtype: Optional[DTypeLike] = None, copy: bool = False
+    arr: ArrayLike,
+    /,
+    *,
+    as_any: bool = True,
+    dtype: Optional[DTypeLike] = None,
+    copy: bool = False,
 ) -> NumpyNumArray:
     """Cast array to a NumPy ndarray.
 
