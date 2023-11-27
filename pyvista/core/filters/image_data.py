@@ -849,6 +849,14 @@ class ImageDataFilters(DataSetFilters):
         --------
         See :ref:`contouring_example` for a full example using this filter.
 
+        See Also
+        --------
+        pyvista.DataSetFilters.contour
+            Generalized contouring method which uses MarchingCubes or FlyingEdges.
+
+        pyvista.DataSetFilters.pack_labels
+            Function used internally by SurfaceNets to generate contiguous label data.
+
         """
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
