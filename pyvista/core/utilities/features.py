@@ -201,13 +201,8 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     # Create new element of grid where all cells _within_ mesh boundary are
     # given new name 'MeshCells' and a discrete value of 1
-    voi['MeshCells'] = np.zeros(voi.n_cells)
-    voi['MeshCells'][cell_ids] = 1
-
-    # Create new element of grid where background cells
-    # given a new name 'BackgroundCells' and a discrete value of 0
-    voi['BackgroundCells'] = np.zeros(voi.n_cells)
-    voi['BackgroundCells'][0] = 0
+    voi['InsideMesh'] = np.zeros(voi.n_cells)
+    voi['InsideMesh'][cell_ids] = 1
 
     return voi
 
