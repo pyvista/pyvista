@@ -323,6 +323,16 @@ def test_cell_cast_to_unstructured_grid(cell):
     grid = cell.cast_to_unstructured_grid()
     assert grid.n_cells == 1
     assert grid.get_cell(0) == cell
+    assert grid.get_cell(0).type == cell.type
+
+
+@pytest.mark.parametrize("cell", cells)
+def test_cell_cast_to_polydata(cell):
+    if cell.dimension != 3:
+        poly = cell.cast_to_polydata()
+        assert poly.n_cells == 1
+        assert poly.get_cell(0) == cell
+        assert poly.get_cell(0).type == cell.type
 
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]

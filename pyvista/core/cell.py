@@ -163,6 +163,46 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
 
+    def cast_to_polydata(self) -> pyvista.PolyData:
+        """Cast this cell to PolyData.
+
+        Can only be used for 0D, 1D, or 2D cells.
+
+        Returns
+        -------
+        pyvista.PolyData
+            This cell cast to a :class:`pyvista.PolyData`.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_sphere()
+        >>> cell = mesh.get_cell(0)
+        >>> grid = cell.cast_to_polydata()
+        >>> grid  # doctest: +SKIP
+        PolyData (0x7f09ae437b80)
+          N Cells:    1
+          N Points:   3
+          N Strips:   0
+           X Bounds:   0.000e+00, 1.000e+01
+          Y Bounds:   0.000e+00, 2.500e+01
+          Z Bounds:   -1.270e+02, -1.250e+02
+          N Arrays:   0
+
+        """
+        if self.dimension == 0:
+            return pyvista.PolyData(self.points.copy())
+        if self.dimension == 1:
+            return pyvista.PolyData(
+                self.points.copy(), lines=[len(self.point_ids)] + list(range(len(self.point_ids)))
+            )
+        if self.dimension == 2:
+            return pyvista.PolyData(
+                self.points.copy(), faces=[len(self.point_ids)] + list(range(len(self.point_ids)))
+            )
+        else:
+            raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
+
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
 
