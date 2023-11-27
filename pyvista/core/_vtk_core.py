@@ -424,6 +424,6 @@ except ImportError:  # pragma: no cover
 
 # 9.3+ imports
 try:
-    from vtkmodules.vtkFiltersCore import vtkSurfaceNets3D
+    from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
 except ImportError:  # pragma: no cover
     pass
