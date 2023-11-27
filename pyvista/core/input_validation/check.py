@@ -770,7 +770,7 @@ def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
 def check_is_instance(
     obj: Any,
     /,
-    classinfo: Union[type, tuple[type, ...]],
+    classinfo: Union[type, Tuple[type, ...]],
     *,
     allow_subclass: bool = True,
     name: str = 'Object',
@@ -858,7 +858,7 @@ def check_is_instance(
         raise TypeError(msg)
 
 
-def check_is_type(obj: Any, /, classinfo: Union[type, tuple[type, ...]], *, name: str = 'Object'):
+def check_is_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: str = 'Object'):
     """Check if an object is one of the given type or types.
 
     Notes
@@ -905,7 +905,7 @@ def check_is_type(obj: Any, /, classinfo: Union[type, tuple[type, ...]], *, name
 def check_is_iterable_of_some_type(
     iterable_obj: Iterable,
     /,
-    some_type: Union[type, tuple[type, ...]],
+    some_type: Union[type, Tuple[type, ...]],
     *,
     allow_subclass: bool = True,
     name: str = 'Iterable',
