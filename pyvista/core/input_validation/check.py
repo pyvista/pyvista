@@ -29,7 +29,7 @@ from pyvista.core.utilities.arrays import cast_to_ndarray
 
 def check_is_subdtype(
     input_obj: Union[npt.DTypeLike, npt.ArrayLike],
-    parent_dtype: Union[npt.DTypeLike, Sequence[npt.DTypeLike]],
+    base_dtype: Union[npt.DTypeLike, Sequence[npt.DTypeLike]],
     /,
     *,
     name: str = 'Input',
@@ -42,7 +42,7 @@ def check_is_subdtype(
         ``dtype`` object (or object coercible to one) or an array-like object.
         If array-like, the dtype of the array is used.
 
-    parent_dtype : numpy.typing.DTypeLike | list[numpy.typing.DTypeLike]
+    base_dtype : numpy.typing.DTypeLike | list[numpy.typing.DTypeLike]
         ``dtype``-like object or a list of ``dtype``-like objects. The ``input_obj``
         must be a subtype of this value. If a sequence, ``input_obj`` must be a
         subtype of at least one of the specified dtypes.
@@ -53,7 +53,7 @@ def check_is_subdtype(
     Raises
     ------
     TypeError
-        If ``input_obj`` is not a subtype of ``parent_dtype``.
+        If ``input_obj`` is not a subtype of ``base_dtype``.
 
     See Also
     --------
@@ -78,21 +78,21 @@ def check_is_subdtype(
     >>> valid.check_is_subdtype(arr, np.integer)
 
     """
-    _check_is_subdtype(input_obj, parent_dtype, name)
+    _check_is_subdtype(input_obj, base_dtype, name)
 
 
 def _check_is_subdtype_legacy(
     input_obj: Union[npt.DTypeLike, npt.ArrayLike],
-    parent_dtype: Union[npt.DTypeLike, Sequence],
+    base_dtype: Union[npt.DTypeLike, Sequence],
     /,
     *,
     name: str = 'Input',
 ):
     # Use a simpler function signature to support python 3.8 or older
-    _check_is_subdtype(input_obj, parent_dtype, name)
+    _check_is_subdtype(input_obj, base_dtype, name)
 
 
-def _check_is_subdtype(input_obj, parent_dtype, name):
+def _check_is_subdtype(input_obj, base_dtype, name):
     if isinstance(input_obj, np.dtype):
         pass
     elif isinstance(input_obj, np.ndarray):
@@ -101,16 +101,16 @@ def _check_is_subdtype(input_obj, parent_dtype, name):
         input_obj = np.dtype(cast(npt.DTypeLike, input_obj))
     input_obj = cast(np.dtype, input_obj)
 
-    if not isinstance(parent_dtype, (list, tuple)):
-        parent_dtype = [parent_dtype]
-    for d in parent_dtype:
+    if not isinstance(base_dtype, (list, tuple)):
+        base_dtype = [base_dtype]
+    for d in base_dtype:
         if np.issubdtype(input_obj, d):
             return
     msg = f"{name} has incorrect dtype of '{input_obj}'. "
-    if len(parent_dtype) == 1:
-        msg += f"The dtype must be a subtype of {parent_dtype[0]}."
+    if len(base_dtype) == 1:
+        msg += f"The dtype must be a subtype of {base_dtype[0]}."
     else:
-        msg += f"The dtype must be a subtype of at least one of \n{parent_dtype}."
+        msg += f"The dtype must be a subtype of at least one of \n{base_dtype}."
     raise TypeError(msg)
 
 
