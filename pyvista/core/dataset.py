@@ -14,6 +14,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Sequence,
     Tuple,
     Union,
     cast,
@@ -25,7 +26,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, Number, NumericArray, Vector, VectorArray
+from ._typing_core import BoundsLike, Matrix, Number, Vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning, VTKVersionError
@@ -67,7 +68,7 @@ class ActiveArrayInfo:
         self.association = association
         self.name = name
 
-    def copy(self):
+    def copy(self) -> ActiveArrayInfo:
         """Return a copy of this object.
 
         Returns
@@ -494,14 +495,12 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(
-        self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]
-    ):  # numpydoc ignore=GL08
+    def points(self, points: Union[Matrix, _vtk.vtkPoints]):  # numpydoc ignore=GL08
         """Set a reference to the points as a numpy object.
 
         Parameters
         ----------
-        points : Union[VectorArray, NumericArray, _vtk.vtkPoints]
+        points : Union[Matrix, _vtk.vtkPoints]
             Points as a array object.
 
         """
@@ -556,15 +555,15 @@ class DataSet(DataSetFilters, DataObject):
         >>> arrows.plot(show_scalar_bar=False)
 
         """
-        vectors_name = self.active_vectors_name
-        if vectors_name is None:
-            return
+        vectors, vectors_name = self.active_vectors, self.active_vectors_name
+        if vectors is None or vectors_name is None:
+            return None
 
-        if self.active_vectors.ndim != 2:  # type: ignore
+        if vectors.ndim != 2:
             raise ValueError('Active vectors are not vectors.')
 
         scale_name = f'{vectors_name} Magnitude'
-        scale = np.linalg.norm(self.active_vectors, axis=1)  # type: ignore
+        scale = np.linalg.norm(vectors, axis=1)
         self.point_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
@@ -599,7 +598,9 @@ class DataSet(DataSetFilters, DataObject):
         )
         self.active_texture_coordinates = t_coords  # type: ignore
 
-    def set_active_scalars(self, name: Optional[str], preference='cell'):
+    def set_active_scalars(
+        self, name: Optional[str], preference='cell'
+    ) -> Tuple[FieldAssociation, Optional[np.ndarray]]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -621,7 +622,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.core.utilities.arrays.FieldAssociation
             Association of the scalars matching ``name``.
 
-        numpy.ndarray
+        pyvista_ndarray
             An array from the dataset matching ``name``.
 
         """
@@ -657,7 +658,7 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
-    def set_active_vectors(self, name: Optional[str], preference='point'):
+    def set_active_vectors(self, name: Optional[str], preference: str = 'point') -> None:
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -693,8 +694,9 @@ class DataSet(DataSetFilters, DataObject):
                 )
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
+        return None
 
-    def set_active_tensors(self, name: Optional[str], preference='point'):
+    def set_active_tensors(self, name: Optional[str], preference: str = 'point') -> None:
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -730,8 +732,9 @@ class DataSet(DataSetFilters, DataObject):
                 )
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
+        return None
 
-    def rename_array(self, old_name: str, new_name: str, preference='cell'):
+    def rename_array(self, old_name: str, new_name: str, preference='cell') -> None:
         """Change array name by searching for the array then renaming it.
 
         Parameters
@@ -777,6 +780,7 @@ class DataSet(DataSetFilters, DataObject):
             raise KeyError(f'Array with name {old_name} not found.')
         if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
+        return None
 
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
@@ -834,8 +838,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_data_range(
         self, arr_var: Optional[Union[str, np.ndarray]] = None, preference='cell'
-    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
-        """Get the non-NaN min and max of a named array.
+    ) -> Tuple[float, float]:
+        """Get the min and max of a named array.
 
         Parameters
         ----------
@@ -874,7 +878,11 @@ class DataSet(DataSetFilters, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
     def rotate_x(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
+        self,
+        angle: float,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about the x-axis.
 
@@ -888,7 +896,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : sequence[float], default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -928,7 +936,11 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def rotate_y(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
+        self,
+        angle: float,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about the y-axis.
 
@@ -942,7 +954,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : sequence[float], default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -981,7 +993,11 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def rotate_z(
-        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
+        self,
+        angle: float,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about the z-axis.
 
@@ -995,7 +1011,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : sequence[float], default: (0.0, 0.0, 0.0)
+        point : Vector, default: (0.0, 0.0, 0.0)
             Point to rotate about.  Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1036,11 +1052,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_vector(
         self,
-        vector: Iterable[float],
+        vector: Vector,
         angle: float,
-        point=(0.0, 0.0, 0.0),
-        transform_all_input_vectors=False,
-        inplace=False,
+        point: Vector = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Rotate mesh about a vector.
 
@@ -1051,14 +1067,14 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        vector : sequence[float]
-            Axis to rotate about.
+        vector : Vector
+            Vector to rotate about.
 
         angle : float
-            Angle in degrees to rotate about the vector.
+            Angle to rotate.
 
-        point : sequence[float], default: (0.0, 0.0, 0.0)
-            Point to rotate about.  Defaults to origin.
+        point : Vector, default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -1098,7 +1114,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def translate(
-        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+        self, xyz: Vector, transform_all_input_vectors: bool = False, inplace: bool = False
     ):
         """Translate the mesh.
 
@@ -1109,8 +1125,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : sequence[float]
-            Length 3 sequence of floats.
+        xyz : Vector
+            A vector of three floats.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -1139,16 +1155,16 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = _vtk.vtkTransform()
-        transform.Translate(xyz)
+        transform.Translate(cast(Sequence[float], xyz))
         return self.transform(
             transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
     def scale(
         self,
-        xyz: Union[Number, list, tuple, np.ndarray],
-        transform_all_input_vectors=False,
-        inplace=False,
+        xyz: Union[Number, Vector],
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Scale the mesh.
 
@@ -1159,10 +1175,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : float | sequence[float]
-            A scalar or length 3 sequence defining the scale factors along x,
-            y, and z. If a scalar, the same uniform scale is used along all
-            three axes.
+        xyz : Number | Vector
+            A vector sequence defining the scale factors along x, y, and z. If
+            a scalar, the same uniform scale is used along all three axes.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
@@ -1198,12 +1213,17 @@ class DataSet(DataSetFilters, DataObject):
             xyz = [xyz] * 3
 
         transform = _vtk.vtkTransform()
-        transform.Scale(xyz)
+        transform.Scale(xyz)  # type: ignore
         return self.transform(
             transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_x(
+        self,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
         """Flip mesh about the x-axis.
 
         .. note::
@@ -1254,7 +1274,12 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_y(
+        self,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
         """Flip mesh about the y-axis.
 
         .. note::
@@ -1305,7 +1330,12 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_z(
+        self,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
         """Flip mesh about the z-axis.
 
         .. note::
@@ -1315,16 +1345,16 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : list, optional
+        point : Vector, optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
-        transform_all_input_vectors : bool, optional
+        transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -1357,7 +1387,11 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def flip_normal(
-        self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False
+        self,
+        normal: Vector,
+        point: Optional[Vector] = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Flip mesh about the normal.
 
@@ -1368,7 +1402,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        normal : tuple
+        normal : sequence[float]
            Normal vector to flip about.
 
         point : sequence[float]
@@ -1413,7 +1447,7 @@ class DataSet(DataSetFilters, DataObject):
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
-    def copy_meta_from(self, ido: DataSet, deep: bool = True):
+    def copy_meta_from(self, ido: DataSet, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1438,6 +1472,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
+        return None
 
     @property
     def point_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -1484,7 +1519,7 @@ class DataSet(DataSetFilters, DataObject):
             self.GetPointData(), dataset=self, association=FieldAssociation.POINT
         )
 
-    def clear_point_data(self):
+    def clear_point_data(self) -> None:
         """Remove all point arrays.
 
         Examples
@@ -1502,12 +1537,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.point_data.clear()
+        return None
 
-    def clear_cell_data(self):
+    def clear_cell_data(self) -> None:
         """Remove all cell arrays."""
         self.cell_data.clear()
+        return None
 
-    def clear_data(self):
+    def clear_data(self) -> None:
         """Remove all arrays from point/cell/field data.
 
         Examples
@@ -1527,6 +1564,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
+        return None
 
     @property
     def cell_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -1606,8 +1644,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
-        in :class:`pyvista.PolyData`.
+        This returns the total number of cells -- for :class:`pyvista.PolyData`
+        this includes vertices, lines, triangle strips and polygonal faces.
 
         Examples
         --------
@@ -1674,7 +1712,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        float :
+        float
             Length of the diagonal of the bounding box.
 
         Examples
@@ -1697,7 +1735,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        Vector :
+        Vector
             Center of the bounding box.
 
         Examples
@@ -2063,7 +2101,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self, mesh: _vtk.vtkDataSet, deep: bool = True):
+    def copy_from(self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -2099,6 +2137,7 @@ class DataSet(DataSetFilters, DataObject):
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
+        return None
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2286,14 +2325,14 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_closest_cell(
         self,
-        point: Union[VectorArray, NumericArray],
+        point: Union[Vector, Matrix],
         return_closest_point: bool = False,
     ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
         ----------
-        point : array_like[float]
+        point : Vector | Matrix
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2417,14 +2456,12 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(
-        self, point: Union[VectorArray, NumericArray]
-    ) -> Union[int, np.ndarray]:
+    def find_containing_cell(self, point: Union[Vector, Matrix]) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
         ----------
-        point : array_like[float]
+        point : Vector, Matrix
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2484,9 +2521,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_along_line(
         self,
-        pointa: Iterable[float],
-        pointb: Iterable[float],
-        tolerance=0.0,
+        pointa: Vector,
+        pointb: Vector,
+        tolerance: float = 0.0,
     ) -> np.ndarray:
         """Find the index of cells whose bounds intersect a line.
 
@@ -2494,10 +2531,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : Vector
             Length 3 coordinate of the start of the line.
 
-        pointb : sequence[float]
+        pointb : Vector
             Length 3 coordinate of the end of the line.
 
         tolerance : float, default: 0.0
@@ -2540,14 +2577,19 @@ class DataSet(DataSetFilters, DataObject):
         locator.SetDataSet(self)
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
-        locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
+        locator.FindCellsAlongLine(
+            cast(Sequence[float], pointa),
+            cast(Sequence[float], pointb),
+            tolerance,
+            id_list,
+        )
         return vtk_id_list_to_array(id_list)
 
     def find_cells_intersecting_line(
         self,
-        pointa: Iterable[float],
-        pointb: Iterable[float],
-        tolerance=0.0,
+        pointa: Vector,
+        pointb: Vector,
+        tolerance: float = 0.0,
     ) -> np.ndarray:
         """Find the index of cells that intersect a line.
 
@@ -2595,15 +2637,22 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             raise TypeError("Point B must be a length three tuple of floats.")
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         cell = _vtk.vtkGenericCell()
-        locator.IntersectWithLine(pointa, pointb, tolerance, points, id_list, cell)
+        locator.IntersectWithLine(
+            cast(Sequence[float], pointa),
+            cast(Sequence[float], pointb),
+            tolerance,
+            points,
+            id_list,
+            cell,
+        )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds: Iterable[float]) -> np.ndarray:
+    def find_cells_within_bounds(self, bounds: BoundsLike) -> np.ndarray:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
@@ -2634,9 +2683,9 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if np.array(bounds).size != 6:
-            raise TypeError("Bounds must be a length three tuple of floats.")
+            raise TypeError("Bounds must be a length six tuple of floats.")
         locator = _vtk.vtkCellTreeLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsWithinBounds(list(bounds), id_list)
@@ -3208,9 +3257,7 @@ class DataSet(DataSetFilters, DataObject):
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
-    def point_is_inside_cell(
-        self, ind: int, point: Union[VectorArray, NumericArray]
-    ) -> Union[int, np.ndarray]:
+    def point_is_inside_cell(self, ind: int, point: Vector | Matrix) -> Union[int, np.ndarray]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
@@ -3220,14 +3267,13 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : array_like[float]
-            Coordinates of point to query (length 3) or a
-            :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
+        point : Matrix
+            Point or points to query if are inside a cell.
 
         Returns
         -------
         bool or numpy.ndarray
-            Whether point(s) is/are inside cell. A scalar bool is only returned if
+            Whether point(s) is/are inside cell. A single bool is only returned if
             the input point has shape ``(3,)``.
 
         Examples

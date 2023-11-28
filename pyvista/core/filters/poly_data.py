@@ -2273,8 +2273,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        faces_as_array = self.faces.reshape((self.n_faces, 4))[:, 1:]
-        tmesh = trimesh.Trimesh(self.points, faces_as_array)
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins, directions, multiple_hits=not first_point
         )

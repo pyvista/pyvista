@@ -76,7 +76,8 @@ repos:
     additional_dependencies: [
     "mypy-extensions==1.0.0",
     "toml==0.10.2",
-  ]
+    "numpy",
+    ]
 
 - repo: https://github.com/asottile/pyupgrade
   rev: v3.15.0
