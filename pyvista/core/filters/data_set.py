@@ -2830,7 +2830,7 @@ class DataSetFilters:
         more examples using this filter.
 
         .. seealso::
-            :func:`pyvista.DataSetFilter.connectivity`
+            :func:`pyvista.DataSetFilters.connectivity`
 
         """
         return DataSetFilters.connectivity(
@@ -6256,7 +6256,7 @@ class DataSetFilters:
         I.e., the largest label will have a value of ``0`` and the smallest
         label will have a value of ``N-1``.
 
-        The filter is a convenience method for :func:`pyvista.DatasetFilter.pack_labels`
+        The filter is a convenience method for :func:`pyvista.DataSetFilters.pack_labels`
         with ``sort=True``.
 
         Parameters
