@@ -684,21 +684,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if faces is None and lines is None and strips is None and verts is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
-
-        if n_verts is None:
             n_verts = self.n_points
 
+        # here we use CellArray since we must specify deep and n_faces, etc.
         if verts is not None:
             self.verts = CellArray(verts, n_verts, deep)  # type: ignore
-        elif strips is not None:
+        if strips is not None:
             self.strips = CellArray(strips, n_strips, deep)  # type: ignore
-        elif faces is not None:
-            # here we use CellArray since we must specify deep and n_faces
+        if faces is not None:
             self.faces = CellArray(faces, n_faces, deep)  # type: ignore
-
-        # can always set lines
         if lines is not None:
-            # here we use CellArray since we must specify deep and n_lines
             self.lines = CellArray(lines, n_lines, deep)  # type: ignore
 
     def _post_file_load_processing(self) -> None:

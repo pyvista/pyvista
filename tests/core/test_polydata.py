@@ -218,6 +218,18 @@ def test_verts():
     assert mesh.get_cell(1).type == pv.CellType.VERTEX
 
 
+def test_mixed_cell_polydata():
+    points = np.zeros((10, 3))
+    points[:, 0] = np.linspace(0, 9, 10)
+    a = pv.PolyData(
+        points, verts=[1, 0], lines=[2, 1, 2], faces=[3, 3, 4, 5], strips=[4, 6, 7, 8, 9]
+    )
+    assert np.array_equal(a.verts, [1, 0])
+    assert np.array_equal(a.lines, [2, 1, 2])
+    assert np.array_equal(a.faces, [3, 3, 4, 5])
+    assert np.array_equal(a.strips, [4, 6, 7, 8, 9])
+
+
 def test_polydata_repr_str():
     pd = pv.PolyData()
     assert repr(pd) == str(pd)
