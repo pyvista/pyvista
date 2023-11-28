@@ -1,14 +1,5 @@
 """Input validation functions."""
 
-import sys
-
-if sys.version_info >= (3, 9):
-    from .check import check_is_subdtype  # noqa: 401
-else:
-    # handle TypeError: 'ABCMeta' object is not subscriptable
-    # for type Sequence[DTypeLike]
-    from .check import _check_is_subdtype_legacy as check_is_subdtype  # noqa: 401
-
 from .check import (  # noqa: 401
     check_has_length,
     check_has_shape,
@@ -29,6 +20,7 @@ from .check import (  # noqa: 401
     check_is_sorted,
     check_is_string,
     check_is_string_in_iterable,
+    check_is_subdtype,
     check_is_type,
 )
 from .validate import (  # noqa: 401

@@ -29,7 +29,7 @@ from pyvista.core.utilities.arrays import cast_to_ndarray
 
 def check_is_subdtype(
     input_obj: Union[npt.DTypeLike, npt.ArrayLike],
-    base_dtype: Union[npt.DTypeLike, Sequence[npt.DTypeLike]],
+    base_dtype: Union[npt.DTypeLike, Sequence],
     /,
     *,
     name: str = 'Input',
@@ -78,21 +78,6 @@ def check_is_subdtype(
     >>> valid.check_is_subdtype(arr, np.integer)
 
     """
-    _check_is_subdtype(input_obj, base_dtype, name)
-
-
-def _check_is_subdtype_legacy(
-    input_obj: Union[npt.DTypeLike, npt.ArrayLike],
-    base_dtype: Union[npt.DTypeLike, Sequence],
-    /,
-    *,
-    name: str = 'Input',
-):
-    # Use a simpler function signature to support python 3.8 or older
-    _check_is_subdtype(input_obj, base_dtype, name)
-
-
-def _check_is_subdtype(input_obj, base_dtype, name):
     if isinstance(input_obj, np.dtype):
         pass
     elif isinstance(input_obj, np.ndarray):
