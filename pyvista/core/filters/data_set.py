@@ -6397,11 +6397,13 @@ class DataSetFilters:
         Pack segmented image labels.
 
         Load non-contiguous image labels
+
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.download_frog_tissue()
 
         Show range of labels
+
         >>> image_labels.get_data_range()
         (0, 29)
 
