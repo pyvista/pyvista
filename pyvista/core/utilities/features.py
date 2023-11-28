@@ -103,7 +103,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
-    within the volume that intersect and are contained within the input mesh.
+    within the volume that intersect or are contained within the input mesh.
     ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
 
     Parameters
