@@ -6,9 +6,9 @@ import numpy.typing as npt
 
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
-NumpyNumArray = npt.NDArray[np.number]
 NumpyFltArray = npt.NDArray[np.floating]
 NumpyIntArray = npt.NDArray[np.integer]
+NumpyNumArray = Union[NumpyFltArray, NumpyIntArray]
 NumpyBoolArray = npt.NDArray[np.bool_]
 NumpyUINT8Array = npt.NDArray[np.uint8]
 
