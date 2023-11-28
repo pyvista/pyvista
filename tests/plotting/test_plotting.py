@@ -3802,4 +3802,4 @@ def test_voxelize_volume():
 
     # Create a voxel volume from unequal density dimensions and plot result.
     vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
-    vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
