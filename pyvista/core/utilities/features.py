@@ -160,7 +160,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
     >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
-    Slice the unequal density voxel volume to view ``MeshCells``.
+    Slice the unequal density voxel volume to view ``InsideMesh``.
 
     >>> slices = vox.slice_orthogonal()
     >>> slices.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
