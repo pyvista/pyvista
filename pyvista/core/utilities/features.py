@@ -163,7 +163,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     Slice the unequal density voxel volume to view ``InsideMesh``.
 
     >>> slices = vox.slice_orthogonal()
-    >>> slices.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
+    >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
     """
     mesh = wrap(mesh)
