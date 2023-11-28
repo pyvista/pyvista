@@ -83,3 +83,6 @@ def test_tinypages(tmpdir):
 
     assert b'you should not be reading this right now' not in html_contents
     assert b'should be printed: include-source with no args' in html_contents
+
+    # check that caption with tabs works
+    assert html_contents.count(b'Plot __ uses the caption option with tabbed UI.') == 1

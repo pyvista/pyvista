@@ -86,6 +86,7 @@ Plot 8 gets a caption specified by the :caption: option:
    pyvista.Disc().plot()
 
 
+
 Plot __ uses an external file with the plot commands and a caption
 using the :caption: option:
 
@@ -151,3 +152,11 @@ Forces a static image instead of an interactive scene:
 
    >>> pyvista.Sphere().plot(color='red',
    ...                       cpos='xy')
+
+Plot __ uses caption with tabbed UI.
+
+.. pyvista-plot::
+   :caption: Plot __ uses the caption option with tabbed UI.
+
+   import pyvista
+   pyvista.Disc().plot()

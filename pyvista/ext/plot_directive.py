@@ -284,19 +284,19 @@ TEMPLATE = """
               {{ option }}
               {% endfor %}
 
-              {{ caption }}  {# appropriate leading whitespace added beforehand #}
 
        .. tab-item:: Interactive Scene
 
            .. offlineviewer:: {{ build_dir }}/{{ img.stem }}.vtksz
 
+   {{ caption }}  {# appropriate leading whitespace added beforehand #}
    {% else %}
    .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
       {{ option }}
       {% endfor %}
 
-      {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {{ caption }}  {# appropriate leading whitespace added beforehand #}
    {% endif %}
    {% endfor %}
 
@@ -579,7 +579,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         errors = [sm]
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('      ' + line.strip() for line in caption.split('\n'))
+    caption = '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
 
     # generate output restructuredtext
     total_lines = []
