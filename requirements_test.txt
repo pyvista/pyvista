@@ -1,7 +1,6 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
-aiohttp==3.9.0 ; python_version=="3.12"  # needed until aiohttp 3.9.0 is released
 cmocean<3.1
 colorcet<3.1.0
 hypothesis<6.88.2
