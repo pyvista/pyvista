@@ -889,9 +889,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
         ... )
         >>> actor.mapper.scale_array = 'radius'
         >>> pl.show()
-
         """
-        self.scale_factor = 1.0
         return self.GetScaleArray()
 
     @scale_array.setter
@@ -904,6 +902,8 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
                 f'Point array "{name}" does not exist. '
                 f'Available point arrays are: {available_arrays}'
             )
+
+        self.scale_factor = 1.0
         return self.SetScaleArray(name)
 
     def use_circular_splat(self, opacity: float = 1.0):
