@@ -213,6 +213,12 @@ def _contains_doctest(text):
     return bool(m)
 
 
+def _contains_pyvista_plot(text):
+    if ".. pyvista-plot::" in text:
+        return True
+    return False
+
+
 def _strip_comments(code):
     """Remove comments from a line of python code."""
     return re.sub(r'(?m)^ *#.*\n?', '', code)
@@ -340,13 +346,19 @@ class PlotError(RuntimeError):
 
 
 def _run_code(code, code_path, ns=None, function_name=None):
-    """Run a docstring example if it does not contain ``'doctest:+SKIP'``.
+    """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
+    ```pyvista-plot::`` directive.  In the later case the doctest parser will
+    present the code-block once again with the ```pyvista-plot::`` directive
+    and its options removed.
 
     Import a Python module from a path, and run the function given by
     name, if function_name is not None.
     """
     # do not execute code containing any SKIP directives
     if 'doctest:+SKIP' in code:
+        return ns
+
+    if 'pyvista-plot::' in code:
         return ns
 
     try:
@@ -375,8 +387,16 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
     """
-    # Try to determine if all images already exist
-    is_doctest, code_pieces = _split_code_at_show(code)
+
+    # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
+    # The docset parser will present the code-block once again with the ```pyvista-plot::`` directive
+    # and its options properly parsed.
+    if _contains_pyvista_plot(code):
+        is_doctest = True
+        code_pieces = [code]
+    else:
+        # Try to determine if all images already exist
+        is_doctest, code_pieces = _split_code_at_show(code)
 
     # Otherwise, we didn't find the files, so build them
     results = []
