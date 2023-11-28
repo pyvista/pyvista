@@ -31,6 +31,7 @@ pyvista.
 """
 
 from enum import Enum
+from itertools import chain
 import json
 import os
 import pathlib
@@ -47,7 +48,7 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 
-def _set_plot_theme_from_env():
+def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
@@ -59,6 +60,7 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
+    return None
 
 
 def load_theme(filename):
@@ -134,7 +136,18 @@ def set_plot_theme(theme):
         )
 
 
-class _ThemeConfig:
+# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
+class _ForceSlots(type):
+    """Metaclass to force classes and subclasses to have __slots__."""
+
+    @classmethod
+    def __prepare__(metaclass, name, bases, **kwargs):
+        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
+        super_prepared['__slots__'] = tuple()
+        return super_prepared
+
+
+class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -162,7 +175,7 @@ class _ThemeConfig:
         """
         # remove the first underscore in each entry
         dict_ = {}
-        for key in self.__slots__:
+        for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
@@ -175,7 +188,7 @@ class _ThemeConfig:
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other.__slots__:
+        for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -200,6 +213,12 @@ class _ThemeConfig:
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+    @classmethod
+    def _all__slots__(cls):
+        """Get all slots including parent classes."""
+        mro = cls.mro()
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
@@ -1546,7 +1565,9 @@ class Theme(_ThemeConfig):
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
         '_logo_file',
+        '_edge_opacity',
     ]
 
     def __init__(self):
@@ -1630,6 +1651,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+        self._edge_opacity = 1.0
 
         self._logo_file = None
 
@@ -1736,6 +1758,28 @@ class Theme(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edges opacity.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.edge_opacity = 0.5
+
+        """
+        return self._edge_opacity
+
+    @edge_opacity.setter
+    def edge_opacity(self, edge_opacity: float):  # numpydoc ignore=GL08
+        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        self._edge_opacity = float(edge_opacity)
+
+    @property
     def above_range_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default above range color.
 
@@ -1806,7 +1850,7 @@ class Theme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: ColorLike):  # numpydoc ignore=GL08
+    def background(self, new_background: ColorLike) -> None:  # numpydoc ignore=GL08
         self._background = Color(new_background)
 
     @property
@@ -1837,6 +1881,8 @@ class Theme(_ThemeConfig):
         * ``'trame'``: The full Trame-based backend that combines both
           ``'server'`` and ``'client'`` into one backend. This requires a
           virtual frame buffer.
+
+        * ``'html'``: The ``'client'`` backend, but able to be embedded.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
@@ -2810,7 +2856,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme):
+    def load_theme(self, theme: Union[str, 'Theme']) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -2852,10 +2898,11 @@ class Theme(_ThemeConfig):
                 '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
             )
 
-        for attr_name in theme.__slots__:
+        for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
+        return None
 
-    def save(self, filename):
+    def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
 
         ``before_close_callback`` is non-serializable and is omitted.
@@ -2881,6 +2928,8 @@ class Theme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
+
+        return None
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01

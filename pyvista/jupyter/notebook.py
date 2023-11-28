@@ -6,6 +6,7 @@ Includes:
 * ``trame``
 * ``client``
 * ``server``
+* ``html``
 
 """
 import warnings
@@ -24,7 +25,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
         screenshot = None
 
     try:
-        if backend in ['server', 'client', 'trame']:
+        if backend in ['server', 'client', 'trame', 'html']:
             from pyvista.trame.jupyter import show_trame
 
             return show_trame(plotter, mode=backend, **kwargs)

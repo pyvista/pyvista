@@ -2,6 +2,7 @@
 from typing import Union
 
 import pyvista
+from pyvista import vtk_version_info
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
@@ -107,6 +108,16 @@ class Property(_vtk.vtkProperty):
         * ``"front"`` - Enable frontface culling
         * ``'none'`` - Disable both backface and frontface culling
 
+    edge_opacity : float, default: :attr:`pyvista.plotting.themes.Theme.edge_opacity`
+        Edge opacity of the mesh. A single float value that will be applied globally
+        edge opacity of the mesh and uniformly applied everywhere - should be
+        between 0 and 1.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
     Examples
     --------
     Create a :class:`pyvista.Actor` and assign properties to it.
@@ -166,6 +177,7 @@ class Property(_vtk.vtkProperty):
         lighting=None,
         line_width=None,
         culling=None,
+        edge_opacity=None,
     ):
         """Initialize this property."""
         self._theme = pyvista.themes.Theme()
@@ -230,6 +242,16 @@ class Property(_vtk.vtkProperty):
         self.line_width = line_width
         if culling is not None:
             self.culling = culling
+        if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
+            import warnings
+
+            warnings.warn(
+                '`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+                UserWarning,
+            )
+        if edge_opacity is None:
+            edge_opacity = self._theme.edge_opacity
+        self.edge_opacity = edge_opacity
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01
@@ -397,6 +419,51 @@ class Property(_vtk.vtkProperty):
     def opacity(self, value: float):  # numpydoc ignore=GL08
         _check_range(value, (0, 1), 'opacity')
         self.SetOpacity(value)
+
+    @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edge opacity of this property.
+
+        Edge opacity of the mesh. A single float value that will be applied globally
+        edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
+        Examples
+        --------
+        Set edge opacity to ``0.5``.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.show_edges = True
+        >>> prop.edge_opacity = 0.5
+        >>> prop.edge_opacity
+        0.5
+
+        Visualize default edge opacity of ``1.0``.
+
+        >>> prop.edge_opacity = 1.0
+        >>> prop.plot()
+
+        Visualize edge opacity of ``0.1``.
+
+        >>> prop.edge_opacity = 0.1
+        >>> prop.plot()
+
+        """
+        if vtk_version_info < (9, 3):
+            return 1.0
+        else:
+            return self.GetEdgeOpacity()
+
+    @edge_opacity.setter
+    def edge_opacity(self, value: float):  # numpydoc ignore=GL08
+        _check_range(value, (0, 1), 'edge_opacity')
+        if vtk_version_info >= (9, 3):
+            self.SetEdgeOpacity(value)
 
     @property
     def show_edges(self) -> bool:  # numpydoc ignore=RT01

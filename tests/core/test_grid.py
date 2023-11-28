@@ -1344,6 +1344,9 @@ def test_ExplicitStructuredGrid_cell_coords():
 def test_ExplicitStructuredGrid_neighbors():
     grid = examples.load_explicit_structured()
 
+    with pytest.raises(ValueError, match="Invalid value for `rel`"):
+        indices = grid.neighbors(0, rel='foo')
+
     indices = grid.neighbors(0, rel='topological')
     assert isinstance(indices, list)
     assert all(np.issubdtype(ind, np.integer) for ind in indices)

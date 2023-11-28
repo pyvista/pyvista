@@ -1,6 +1,16 @@
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|Contributor Covenant|
+|codetriage|
+
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
 important to note that the PyVista software package is maintained on a
@@ -35,6 +45,13 @@ running:
 
 Quick Start Development with Codespaces
 ---------------------------------------
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
+|Open in GitHub Codespaces|
+
 A dev container is provided to quickly get started. The default container
 comes with the repository code checked out on a branch of your choice
 and all pyvista dependencies including test dependencies pre-installed.
@@ -370,6 +387,9 @@ directive.
 
 .. code:: python
 
+    import warnings
+    from pyvista.core.errors import PyVistaDeprecationWarning
+
     def addition(a, b):
         """Add two numbers.
 
@@ -391,8 +411,9 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        PyVistaDeprecationWarning(
-            '`addition` has been deprecated. Use pyvista.add instead'
+        warnings.warn(
+            '`addition` has been deprecated. Use pyvista.add instead',
+            PyVistaDeprecationWarning
         )
         add(a, b)
 
@@ -436,6 +457,63 @@ encouraged to use the ``.. versionadded`` sphinx directive. For example:
 
             .. versionadded:: 0.33.0
         """
+
+
+Input Validation
+^^^^^^^^^^^^^^^^
+Validating user input is an essential part of software development to ensure
+algorithms perform as expected. This is especially the case in Python when
+working with multiple array-like object types (e.g. ``Sequence`` and
+``numpy.ndarray``) which may lack support for explicit typing and type
+hints for cases where arrays with a certain shape, dimensionality, and/or
+data type (e.g. ``float``, ``int``) may be required. Therefore it is imperative
+to validate all user input and raise any errors as appropriate.
+
+However, manually writing input validation routines and associated test cases
+can be time consuming and error prone. Therefore, it is recommended to make
+use of existing validation methods in ``pyvista.core.input_validation``.
+
+For example, a typical validation routine for some function may look like:
+
+.. code:: python
+
+    def some_function(points_array, method):
+        """Apply a method to an Nx3 points array.
+
+        Parameters
+        ----------
+        points_array : array_like
+            Array-like input of points with shape Nx3.
+
+        method : str
+            Method to apply. Must be one of:
+                * ``'method_a'``
+                * ``'method_b'``
+
+        """
+        import pyvista.core.input_validation as valid
+
+        # Validate input array. There is no need to check for
+        # type (e.g. Sequence or np.ndarray) or array shape.
+        # An error is automatically raised for bad input.
+        arr = valid.validate_arrayNx3(points_array)
+
+        # Validate input method. An error is automatically
+        # raised if the method is not valid.
+        possible_methods = ["method_a", "method_b"]
+        check_is_string_in_iterable(method, possible_methods)
+
+        # Start of implementation code...
+
+When using the array validation methods, consider setting the input
+type in the docstring to ``array_like`` (if appropriate), as the validation
+methods are very general and can operate on any array-like input.
+
+Note: ``array_like`` is a `NumPy glossary term <https://numpy.org/doc/stable/glossary.html#term-array_like>`_,
+not an actual type. Nevertheless, it's use is common in NumPy and
+PyVista documentation. A formal ``ArrayLike`` type was `introduced
+in NumPy 1.20 <https://numpy.org/devdocs/reference/typing.html#numpy.typing.ArrayLike>`_,
+but its use is not currently supported in PyVista.
 
 
 Branch Naming Conventions

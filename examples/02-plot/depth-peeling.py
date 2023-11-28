@@ -27,7 +27,7 @@ for i, c in enumerate(centers):
 ###############################################################################
 dargs = dict(opacity=0.5, color="red", smooth_shading=True)
 
-p = pv.Plotter(shape=(1, 2), multi_samples=8)
+p = pv.Plotter(shape=(1, 2))
 
 p.add_mesh(spheres, **dargs)
 p.enable_depth_peeling(10)
@@ -72,7 +72,7 @@ p.show()
 mesh = examples.download_brain().contour(5)
 cmap = "viridis_r"
 
-p = pv.Plotter(shape=(1, 2), multi_samples=4)
+p = pv.Plotter(shape=(1, 2))
 
 p.add_mesh(mesh, opacity=0.5, cmap=cmap)
 p.enable_depth_peeling(10)
