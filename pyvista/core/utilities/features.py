@@ -158,7 +158,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     Create a voxel volume from unequal density dimensions and plot result.
 
     >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
-    >>> vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
     Slice the unequal density voxel volume to view ``MeshCells``.
 
