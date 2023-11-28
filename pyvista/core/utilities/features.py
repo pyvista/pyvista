@@ -148,7 +148,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     >>> vox = pv.voxelize_volume(mesh, density=0.15)
     >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
-    >>> vox.plot(scalars='MeshCells', show_edges=True, cpos=cpos)
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
     Slice the voxel volume to view ``InsideMesh``.
 
