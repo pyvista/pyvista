@@ -14,19 +14,22 @@ from numbers import Number
 from typing import Any, List, Optional, Sized, Tuple, Union, cast, get_args, get_origin
 
 import numpy as np
-from numpy.typing import ArrayLike, DTypeLike
+import numpy.typing as npt
 
+# Similar definitions to numpy._typing._shape but with modifications:
+#  - explicit support for empty tuples `()`
+#  - strictly uses tuples for indexing
+#  - ShapeLike includes single integers (numpy does not)
 ShapeLike = Union[int, Tuple[()], Tuple[int, ...]]
 Shape = Union[Tuple[()], Tuple[int, ...]]
-# AnyArrayLike = Union[ArrayLike, Sequence[ArrayLike]]
 
 from pyvista.core._typing_core import FloatVector, IntVector, NumpyNumArray
 from pyvista.core.utilities.arrays import cast_to_ndarray
 
 
 def check_is_subdtype(
-    input_obj: Union[DTypeLike, ArrayLike],
-    parent_dtype: Union[DTypeLike, Sequence[DTypeLike]],
+    input_obj: Union[npt.DTypeLike, npt.ArrayLike],
+    parent_dtype: Union[npt.DTypeLike, Sequence[npt.DTypeLike]],
     /,
     *,
     name: str = 'Input',
@@ -35,11 +38,11 @@ def check_is_subdtype(
 
     Parameters
     ----------
-    input_obj : DTypeLike | ArrayLike
+    input_obj : numpy.typing.DTypeLike | numpy.typing.ArrayLike
         ``dtype`` object (or object coercible to one) or an array-like object.
         If array-like, the dtype of the array is used.
 
-    parent_dtype : DTypeLike | list[DTypeLike]
+    parent_dtype : numpy.typing.DTypeLike | list[numpy.typing.DTypeLike]
         ``dtype``-like object or a list of ``dtype``-like objects. The ``input_obj``
         must be a subtype of this value. If a sequence, ``input_obj`` must be a
         subtype of at least one of the specified dtypes.
@@ -80,7 +83,7 @@ def check_is_subdtype(
     elif isinstance(input_obj, np.ndarray):
         input_obj = input_obj.dtype
     else:
-        input_obj = np.dtype(cast(DTypeLike, input_obj))
+        input_obj = np.dtype(cast(npt.DTypeLike, input_obj))
     input_obj = cast(np.dtype, input_obj)
 
     if not isinstance(parent_dtype, (list, tuple)):
@@ -96,7 +99,7 @@ def check_is_subdtype(
     raise TypeError(msg)
 
 
-def check_is_real(arr: ArrayLike, /, *, name: str = "Array"):
+def check_is_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
@@ -107,7 +110,7 @@ def check_is_real(arr: ArrayLike, /, *, name: str = "Array"):
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     name : str, default: "Array"
@@ -145,7 +148,7 @@ def check_is_real(arr: ArrayLike, /, *, name: str = "Array"):
 
 
 def check_is_sorted(
-    arr: ArrayLike,
+    arr: npt.ArrayLike,
     /,
     *,
     ascending: bool = True,
@@ -157,7 +160,7 @@ def check_is_sorted(
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     ascending : bool, default: True
@@ -249,12 +252,12 @@ def check_is_sorted(
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
-def check_is_finite(arr: ArrayLike, /, *, name: str = "Array"):
+def check_is_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     name : str, default: "Array"
@@ -282,12 +285,12 @@ def check_is_finite(arr: ArrayLike, /, *, name: str = "Array"):
         raise ValueError(f"{name} must have finite values.")
 
 
-def check_is_integerlike(arr: ArrayLike, /, *, strict: bool = False, name: str = "Array"):
+def check_is_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: str = "Array"):
     """Check if an array has integer or integer-like float values.
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     strict : bool, default: False
@@ -328,12 +331,12 @@ def check_is_integerlike(arr: ArrayLike, /, *, strict: bool = False, name: str =
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_is_nonnegative(arr: ArrayLike, /, *, name: str = "Array"):
+def check_is_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     name : str, default: "Array"
@@ -364,13 +367,13 @@ def check_is_nonnegative(arr: ArrayLike, /, *, name: str = "Array"):
 
 
 def check_is_greater_than(
-    arr: ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
+    arr: npt.ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
 ):
     """Check if an array's elements are all greater than some value.
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     value : float
@@ -413,13 +416,13 @@ def check_is_greater_than(
 
 
 def check_is_less_than(
-    arr: ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
+    arr: npt.ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
 ):
     """Check if an array's elements are all less than some value.
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     value : float
@@ -463,7 +466,7 @@ def check_is_less_than(
 
 
 def check_is_in_range(
-    arr: ArrayLike,
+    arr: npt.ArrayLike,
     /,
     rng: FloatVector,
     *,
@@ -475,7 +478,7 @@ def check_is_in_range(
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     rng : FloatVector, optional
@@ -528,7 +531,7 @@ def check_is_in_range(
 
 
 def check_has_shape(
-    arr: ArrayLike,
+    arr: npt.ArrayLike,
     /,
     shape: Union[ShapeLike, List[ShapeLike]],
     *,
@@ -538,7 +541,7 @@ def check_has_shape(
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     shape : ShapeLike | list[ShapeLike], optional
@@ -1055,7 +1058,7 @@ def check_is_string_in_iterable(
 
 
 def check_has_length(
-    arr: Union[ArrayLike, Sized],
+    arr: Union[npt.ArrayLike, Sized],
     /,
     *,
     exact_length: Union[int, IntVector, None] = None,
@@ -1076,7 +1079,7 @@ def check_has_length(
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to check.
 
     exact_length : int | IntVector, optional

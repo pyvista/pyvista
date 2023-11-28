@@ -16,7 +16,7 @@ import inspect
 from typing import Any, List, Optional, Union, cast
 
 import numpy as np
-from numpy.typing import ArrayLike
+import numpy.typing as npt
 
 from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
@@ -39,7 +39,7 @@ from .check import ShapeLike
 
 
 def validate_array(
-    arr: ArrayLike,
+    arr: npt.ArrayLike,
     /,
     *,
     must_have_shape=None,
@@ -92,7 +92,7 @@ def validate_array(
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy._typing.ArrayLike
         Array to be validated, in any form that can be converted to
         a :class:`np.ndarray`. This includes lists, lists of tuples, tuples,
         tuples of tuples, tuples of lists and ndarrays.
@@ -106,7 +106,7 @@ def validate_array(
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
 
-    must_have_dtype : DTypeLike | Sequence[DTypeLike], optional
+    must_have_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike], optional
         :func:`Check <pyvista.core.input_validation.check.check_is_subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`numpy.dtype` object or dtype-like base class which the
@@ -208,7 +208,7 @@ def validate_array(
         read-only view with the specified shape. Broadcasting is done
         after reshaping (if ``reshape_to`` is not ``None``).
 
-    dtype_out : DTypeLike, optional
+    dtype_out : numpy.typing.DTypeLike, optional
         Set the data-type of the returned array. By default, the
         dtype is inferred from the input data.
 
@@ -240,7 +240,7 @@ def validate_array(
 
     Returns
     -------
-    ArrayLike
+    numpy.typing.ArrayLike
         Validated array. Returned object is:
 
         * an instance of ``np.ndarray`` (default), or
@@ -354,7 +354,7 @@ def validate_axes(
 
     Parameters
     ----------
-    *axes : ArrayLike
+    *axes : numpy.typing.ArrayLike
         Axes to be validated. Axes may be specified as a single argument of a 3x3
         array of row vectors or as separate arguments for each 3-element axis vector.
         If only two vectors are given and ``must_have_orientation`` is not ``None``,
@@ -478,7 +478,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
 
     Parameters
     ----------
-    transform : ArrayLike | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
+    transform : numpy.typing.ArrayLike | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
 
@@ -535,7 +535,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
 
     Parameters
     ----------
-    transform : ArrayLike | vtkMatrix3x3
+    transform : numpy.typing.ArrayLike | vtkMatrix3x3
         Transformation matrix as a 3x3 array or vtkMatrix3x3.
 
     name : str, default: "Transform"
@@ -581,7 +581,7 @@ def validate_number(num, /, *, reshape=True, **kwargs) -> Union[int, float, Nump
 
     Parameters
     ----------
-    num : int | float | ArrayLike
+    num : int | float | numpy.typing.ArrayLike
         Number to validate.
 
     reshape : bool, default: True
@@ -649,7 +649,7 @@ def validate_data_range(rng, /, **kwargs):
 
     Parameters
     ----------
-    rng : ArrayLike[float, float]
+    rng : numpy.typing.ArrayLike[float, float]
         Range to validate in the form ``(lower_bound, upper_bound)``.
 
     **kwargs : dict, optional
@@ -687,7 +687,7 @@ def validate_data_range(rng, /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr: ArrayLike, /, *, reshape=True, **kwargs):
+def validate_arrayNx3(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -701,7 +701,7 @@ def validate_arrayNx3(arr: ArrayLike, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : numpy.typing.ArrayLike
         Array to validate.
 
     reshape : bool, default: True
@@ -759,7 +759,7 @@ def validate_arrayNx3(arr: ArrayLike, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr: ArrayLike, /, *, reshape=True, **kwargs):
+def validate_arrayN(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -773,7 +773,7 @@ def validate_arrayN(arr: ArrayLike, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : ArrayLike[float, ...]
+    arr : numpy.typing.ArrayLike[float, ...]
         Array to validate.
 
     reshape : bool, default: True
@@ -833,7 +833,7 @@ def validate_arrayN(arr: ArrayLike, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_uintlike(arr: ArrayLike, /, *, reshape=True, **kwargs):
+def validate_arrayN_uintlike(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -849,7 +849,7 @@ def validate_arrayN_uintlike(arr: ArrayLike, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : ArrayLike[float, ...] | ArrayLike[int, ...]
+    arr : numpy.typing.ArrayLike[float, ...] | numpy.typing.ArrayLike[int, ...]
         Array to validate.
 
     reshape : bool, default: True
@@ -918,7 +918,7 @@ def validate_arrayN_uintlike(arr: ArrayLike, /, *, reshape=True, **kwargs):
     return validate_arrayN(arr, reshape=reshape, **kwargs)
 
 
-def validate_array3(arr: ArrayLike, /, *, reshape=True, broadcast=False, **kwargs):
+def validate_array3(arr: npt.ArrayLike, /, *, reshape=True, broadcast=False, **kwargs):
     """Validate a numeric 1D array with 3 elements.
 
     The array is checked to ensure its input values:
@@ -930,7 +930,7 @@ def validate_array3(arr: ArrayLike, /, *, reshape=True, broadcast=False, **kwarg
 
     Parameters
     ----------
-    arr : ArrayLike[float, float, float]
+    arr : numpy.typing.ArrayLike[float, float, float]
         Array to validate.
 
     reshape : bool, default: True
