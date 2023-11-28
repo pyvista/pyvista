@@ -130,6 +130,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     See Also
     --------
     pyvista.voxelize
+    pyvista.DataSetFilters.select_enclosed_points
 
     Examples
     --------
