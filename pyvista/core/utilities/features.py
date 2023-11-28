@@ -104,7 +104,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
     within the volume that intersect and are contained within the input mesh.
-    All discretized cells are named ``MeshCells``. All other cells are named ``BackgroundCells``.
+    ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
 
     Parameters
     ----------
