@@ -78,6 +78,21 @@ def check_is_subdtype(
     >>> valid.check_is_subdtype(arr, np.integer)
 
     """
+    _check_is_subdtype(input_obj, parent_dtype, name)
+
+
+def _check_is_subdtype_legacy(
+    input_obj: Union[npt.DTypeLike, npt.ArrayLike],
+    parent_dtype: Union[npt.DTypeLike, Sequence],
+    /,
+    *,
+    name: str = 'Input',
+):
+    # Use a simpler function signature to support python 3.8 or older
+    _check_is_subdtype(input_obj, parent_dtype, name)
+
+
+def _check_is_subdtype(input_obj, parent_dtype, name):
     if isinstance(input_obj, np.dtype):
         pass
     elif isinstance(input_obj, np.ndarray):
