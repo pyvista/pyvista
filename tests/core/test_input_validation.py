@@ -861,6 +861,11 @@ def test_validate_axes(name):
     assert np.array_equal(axes, axes_right)
     axes = validate_axes([1, 0, 0], [[0, 1, 0]], (0, 0, 1))
     assert np.array_equal(axes, axes_right)
+    assert np.issubdtype(axes.dtype, np.floating)
+
+    axes = validate_axes(np.eye(3).astype(int))
+    assert np.array_equal(axes, axes_right)
+    assert np.issubdtype(axes.dtype, np.floating)
 
     # test bad input
     with pytest.raises(ValueError, match=f"{name} cannot be parallel."):

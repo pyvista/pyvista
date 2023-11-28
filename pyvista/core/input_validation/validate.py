@@ -425,7 +425,7 @@ def validate_axes(
     axes_array: np.ndarray
     if len(axes) == 1:
         ax = cast(FloatMatrix, axes[0])
-        axes_array = validate_array(ax, must_have_shape=(3, 3), name=name)  # type: ignore[arg-type]
+        axes_array = validate_array(ax, must_have_shape=(3, 3), name=name, dtype_out=np.floating)  # type: ignore[arg-type]
     else:
         ax0 = cast(FloatVector, axes[0])
         ax1 = cast(FloatVector, axes[1])
