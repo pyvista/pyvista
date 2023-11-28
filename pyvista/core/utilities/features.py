@@ -152,7 +152,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     Slice the voxel volume to view ``MeshCells``.
 
     >>> slices = vox.slice_orthogonal()
-    >>> slices.plot(scalars='MeshCells', show_edges=True)
+    >>> slices.plot(scalars='InsideMesh', show_edges=True)
 
     Create a voxel volume from unequal density dimensions and plot result.
 
