@@ -3068,7 +3068,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "chart_name": "2D chart",
         "chart_args": "",
         "chart_init": """
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
         "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
@@ -4498,7 +4498,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_name": "matplotlib chart",
         "chart_args": "",
         "chart_init": """
-        >>> plots = chart.figure.axes[0].plot([0, 1, 2], [2, 1, 3])""",
+           >>> plots = chart.figure.axes[0].plot([0, 1, 2], [2, 1, 3])""",
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
