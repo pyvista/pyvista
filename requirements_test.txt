@@ -13,6 +13,7 @@ meshio<5.4.0
 nest_asyncio<1.5.9
 numpydoc==1.6.0
 param<2.1.0
+pydata-sphinx-theme==0.14.3
 pytest<7.5.0
 pytest-cov<4.2.0
 pytest-memprof<0.3.0
@@ -20,6 +21,7 @@ pytest-xdist<3.4.0
 pytest_pyvista==0.1.8
 Sphinx<7.2.0
 sphinx-gallery<0.15.0
+sphinx_design==0.5.0
 sympy<1.13.0
 tqdm<4.67.0
 trame>=2.5.2,<3.4
