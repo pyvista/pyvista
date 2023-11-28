@@ -2830,7 +2830,7 @@ class DataSetFilters:
         more examples using this filter.
 
         .. seealso::
-            :func:`pyvista.DataSetFilter.connectivity`
+            :func:`pyvista.DataSetFilters.connectivity`
 
         """
         return DataSetFilters.connectivity(
@@ -6256,7 +6256,7 @@ class DataSetFilters:
         I.e., the largest label will have a value of ``0`` and the smallest
         label will have a value of ``N-1``.
 
-        The filter is a convenience method for :func:`pyvista.DatasetFilter.pack_labels`
+        The filter is a convenience method for :func:`pyvista.DataSetFilters.pack_labels`
         with ``sort=True``.
 
         Parameters
@@ -6290,11 +6290,13 @@ class DataSetFilters:
         Sort segmented image labels.
 
         Load image labels
+
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.download_frog_tissue()
 
         Show label info for first four labels
+
         >>> label_number, label_size = np.unique(
         ...     image_labels['MetaImage'], return_counts=True
         ... )
@@ -6304,10 +6306,12 @@ class DataSetFilters:
         array([30805713,    35279,    19172,    38129])
 
         Sort labels
+
         >>> sorted_labels = image_labels.sort_labels()
 
         Show sorted label info for the four largest labels. Note
         the difference in label size after sorting.
+
         >>> sorted_label_number, sorted_label_size = np.unique(
         ...     sorted_labels["packed_labels"], return_counts=True
         ... )
@@ -6393,15 +6397,18 @@ class DataSetFilters:
         Pack segmented image labels.
 
         Load non-contiguous image labels
+
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.download_frog_tissue()
 
         Show range of labels
+
         >>> image_labels.get_data_range()
         (0, 29)
 
         Find 'gaps' in the labels
+
         >>> label_numbers = np.unique(image_labels.active_scalars)
         >>> label_max = np.max(label_numbers)
         >>> missing_labels = set(range(label_max)) - set(label_numbers)
@@ -6409,9 +6416,11 @@ class DataSetFilters:
         4
 
         Pack labels to remove gaps
+
         >>> packed_labels = image_labels.pack_labels()
 
         Show range of packed labels
+
         >>> packed_labels.get_data_range()
         (0, 25)
 
