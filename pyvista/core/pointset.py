@@ -478,7 +478,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         or ``'C:/Users/user/my_mesh.ply'``.
 
         Otherwise, this must be a points array or list containing one
-        or more points.  Each point must have 3 dimensions.
+        or more points.  Each point must have 3 dimensions.  If ``faces``,
+        ``lines``, ``strips``, and ``verts`` are all ``None``, then the
+        ``PolyData`` object will be created with vertex cells with
+        ``n_verts`` equal to the number of ``points``.
 
     faces : sequence, optional
         Face connectivity array.  Faces must contain padding
@@ -539,6 +542,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
+    verts : sequence, optional
+        The verts connectivity array.  Like ``faces``, this array
+        requires padding indicating the number of vertices in each cell.
+        For example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
+        each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
+        polyvertex cells each with two points.
+
+    n_verts : int, optional
+        Number of verts in the ``verts`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
 
     See Also
     --------
@@ -612,6 +626,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         deep: bool = False,
         force_ext: Optional[str] = None,
         force_float: Optional[bool] = True,
+        verts: Optional[IntVector] = None,
+        n_verts: Optional[int] = None,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -665,10 +681,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None and strips is None:
+        if faces is None and lines is None and strips is None and verts is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
-            self.verts = CellArray(verts, self.n_points, deep)  # type: ignore
+
+        if n_verts is None:
+            n_verts = self.n_points
+
+        if verts is not None:
+            self.verts = CellArray(verts, n_verts, deep)  # type: ignore
         elif strips is not None:
             self.strips = CellArray(strips, n_strips, deep)  # type: ignore
         elif faces is not None:
