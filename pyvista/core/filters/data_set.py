@@ -6408,6 +6408,7 @@ class DataSetFilters:
         (0, 29)
 
         Find 'gaps' in the labels
+
         >>> label_numbers = np.unique(image_labels.active_scalars)
         >>> label_max = np.max(label_numbers)
         >>> missing_labels = set(range(label_max)) - set(label_numbers)
@@ -6415,9 +6416,11 @@ class DataSetFilters:
         4
 
         Pack labels to remove gaps
+
         >>> packed_labels = image_labels.pack_labels()
 
         Show range of packed labels
+
         >>> packed_labels.get_data_range()
         (0, 25)
 
