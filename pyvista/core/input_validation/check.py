@@ -10,8 +10,8 @@ A ``check`` function typically:
 
 """
 from collections.abc import Iterable, Sequence
-from numbers import Number
-from typing import Any, List, Optional, Sized, Tuple, Union, cast, get_args, get_origin
+from numbers import Number, Real
+from typing import Any, List, Literal, Optional, Sized, Tuple, Union, cast, get_args, get_origin
 
 import numpy as np
 import numpy.typing as npt
@@ -19,11 +19,11 @@ import numpy.typing as npt
 # Similar definitions to numpy._typing._shape but with modifications:
 #  - explicit support for empty tuples `()`
 #  - strictly uses tuples for indexing
-#  - ShapeLike includes single integers (numpy does not)
+#  - our ShapeLike definition includes single integers (numpy's does not)
 ShapeLike = Union[int, Tuple[()], Tuple[int, ...]]
 Shape = Union[Tuple[()], Tuple[int, ...]]
 
-from pyvista.core._typing_core import FloatVector, IntVector, NumpyNumArray
+from pyvista.core._typing_core import FloatVector, IntVector
 from pyvista.core.utilities.arrays import cast_to_ndarray
 
 
@@ -42,8 +42,8 @@ def check_is_subdtype(
         ``dtype`` object (or object coercible to one) or an array-like object.
         If array-like, the dtype of the array is used.
 
-    base_dtype : numpy.typing.DTypeLike | list[numpy.typing.DTypeLike]
-        ``dtype``-like object or a list of ``dtype``-like objects. The ``input_obj``
+    base_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike]
+        ``dtype``-like object or a sequence of ``dtype``-like objects. The ``input_obj``
         must be a subtype of this value. If a sequence, ``input_obj`` must be a
         subtype of at least one of the specified dtypes.
 
@@ -99,6 +99,52 @@ def check_is_subdtype(
     raise TypeError(msg)
 
 
+def check_is_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
+    """Check if an array is float, integer, or complex type.
+
+    Notes
+    -----
+    Arrays with ``infinity`` or ``NaN`` values are numeric  and
+    will not raise an error. Use :func:`check_is_finite` to check for
+    finite values.
+
+    Parameters
+    ----------
+    arr : numpy.typing.ArrayLike
+        Array to check.
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If the array is not numeric.
+
+    See Also
+    --------
+    check_is_real
+    check_is_finite
+
+    Examples
+    --------
+    Check if an array is numeric.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> valid.check_is_numeric([1, 2.0, 3 + 3j])
+
+    """
+    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+
+    # Return early for common cases
+    if arr.dtype.type in [np.int32, np.int64, np.float32, np.float64, np.complex_]:
+        return
+    try:
+        check_is_subdtype(arr, np.number, name=name)
+    except TypeError as e:
+        raise TypeError(f"{name} must be numeric.") from e
+
+
 def check_is_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
@@ -123,6 +169,10 @@ def check_is_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     See Also
     --------
+    check_is_numeric
+        Similar function which allows complex numbers.
+    check_is_scalar
+        Similar function for a single number or 0-dimensional ndarrays.
     check_is_finite
 
     Examples
@@ -609,23 +659,61 @@ def check_has_shape(
     raise ValueError(msg)
 
 
-def check_is_number(num: Union[int, float, complex], /, *, name: str = 'Object'):
-    """Check if an object is an instance of ``Number``.
+def check_is_number(
+    num: Union[float, int, complex, np.number, Number],
+    /,
+    *,
+    definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
+    must_be_real=True,
+    name: str = 'Object',
+):
+    """Check if an object is a number.
 
-    A number is any instance of ``numbers.Number``, e.g.  ``int``,
-    ``float``, and ``complex``.
+    By default, the number must be an instance of the abstract base class :class:`numbers.Real`.
+    Optionally, the number can also be complex. The definition can also be restricted
+    to strictly check if the number is a built-in numeric type (e.g. ``int``, ``float``)
+    or numpy numeric data types (e.g. ``np.floating``, ``np.integer``).
 
     Notes
     -----
-    - A NumPy array is not an instance of ``Number``. Use :func:`check_is_scalar`
+    - This check fails for instances of :class:`numpy.ndarray`. Use :func:`check_is_scalar`
       instead to also allow for 0-dimensional arrays.
     - Values such as ``float('inf')`` and ``float('NaN')`` are valid numbers and
       will not raise an error. Use :func:`check_is_finite` to check for finite values.
 
+    .. warning::
+
+        - Some NumPy numeric data types are subclasses of the built-in types whereas other are
+          not. For example, ``numpy.float_`` is a subclass of ``float`` and ``numpy.complex_``
+          is a subclass ``complex``. However, ``numpy.int_`` is not a subclass of ``int`` and
+          ``numpy.bool_`` is not a subclass of ``bool``.
+        - The built-in ``bool`` type is a subclass of ``int`` whereas NumPy's``.bool_`` type
+          is not a subclass of ``np.int_`` (``np.bool_`` is not a numeric type).
+
+        This can lead to unexpected results:
+
+        - This check will always fail for ``np.bool_`` types.
+        - This check will pass for ``np.float_`` or ``np.complex_``, even if
+          ``definition='builtin'``.
+
     Parameters
     ----------
-    num : Number
+    num : float | int | complex | numpy.number | Number
         Number to check.
+
+    definition : str, default: 'abstract'
+        Control the base class(es) to use when checking the number's type. Must be
+        one of:
+
+        - ``'abstract'`` : number must be an instance of one of the abstract types
+          in :py:mod:`numbers`.
+        - ``'builtin'`` : number must be an instance of one of the built-in numeric
+          types.
+        - ``'numpy'`` : number must be an instance of NumPy's data types.
+
+    must_be_real : bool, default: True
+        If ``True``, the number must be real, i.e. an integer or
+        floating type. Set to ``False`` to allow complex numbers.
 
     name : str, default: "Object"
         Variable name to use in the error messages if any are raised.
@@ -633,24 +721,58 @@ def check_is_number(num: Union[int, float, complex], /, *, name: str = 'Object')
     Raises
     ------
     TypeError
-        If input is not an instance of ``Number``.
+        If input is not an instance of a numeric type.
 
     See Also
     --------
     check_is_scalar
-    check_is_finite
+        Similar function which allows 0-dimensional ndarrays.
+    check_is_numeric
+        Similar function for any dimensional array of numbers.
     check_is_real
+        Similar function for any dimensional array of real numbers.
+    check_is_finite
+
 
     Examples
     --------
-    Check if a complex number is an instance of ``Number``.
-
+    Check if a float is a number.
     >>> import pyvista.core.input_validation as valid
-    >>> valid.check_is_number(1 + 2j)
+    >>> num = 42.0
+    >>> type(num)
+    <class 'float'>
+    >>> valid.check_is_number(num)
+
+    Check if an element of a NumPy array is a number.
+
+    >>> import numpy as np
+    >>> num_array = np.array([1, 2, 3])
+    >>> num = num_array[0]
+    >>> type(num)
+    <class 'numpy.int64'>
+    >>> valid.check_is_number(num)
+
+    Check if a complex number is a number.
+    >>> num = 1 + 2j
+    >>> type(num)
+    <class 'complex'>
+    >>> valid.check_is_number(num, must_be_real=False)
 
     """
+    check_is_string_in_iterable(definition, ['abstract', 'builtin', 'numpy'])
+
+    valid_type: Any
+    if definition == 'abstract':
+        valid_type = Real if must_be_real else Number
+    elif definition == 'builtin':
+        valid_type = (float, int) if must_be_real else (float, int, complex)
+    elif definition == 'numpy':
+        valid_type = (np.floating, np.integer) if must_be_real else np.number
+    else:
+        raise NotImplementedError  # pragma: no cover
+
     try:
-        check_is_instance(num, Number, allow_subclass=True, name=name)
+        check_is_instance(num, valid_type, allow_subclass=True, name=name)
     except TypeError:
         raise
 
@@ -830,7 +952,7 @@ def check_is_instance(
         classinfo = get_args(classinfo)
 
     # Count num classes
-    if isinstance(classinfo, tuple):
+    if isinstance(classinfo, tuple) and all(map(lambda cls: isinstance(cls, type), classinfo)):
         num_classes = len(classinfo)
     else:
         num_classes = 1
@@ -959,6 +1081,8 @@ def check_is_iterable_of_some_type(
     """
     check_is_iterable(iterable_obj, name=name)
     try:
+        # TODO: add bool return to check functions and convert this statement
+        # to a generator with all()
         [
             check_is_instance(
                 item, some_type, allow_subclass=allow_subclass, name=f"All items of {name}"
@@ -1212,12 +1336,20 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
     raise RuntimeError("This line should not be reachable.")  # pragma: no cover
 
 
-def check_is_scalar(scalar: Union[int, float, complex, NumpyNumArray], /, *, name: str = "Scalar"):
+def check_is_scalar(
+    scalar: Union[float, int, complex, Number, np.number, np.ndarray],
+    /,
+    *,
+    must_be_real: bool = True,
+    name: str = "Scalar",
+):
     """Check if an object is a scalar number.
 
-    This check is similar to :func:`check_is_number` but whereas that
-    check will fail for NumPy arrays, this check considers 0-dimensional
-    arrays which are a subdtype of ``np.number`` to be valid.
+    By default, the number must be real, or a 0-dimensional :class:`numpy.ndarray`
+    of a real number. Optionally, the scalar can also be a complex
+
+    This check is similar to :func:`check_is_number` but also allows 0-dimensional
+    arrays.
 
     Notes
     -----
@@ -1226,8 +1358,12 @@ def check_is_scalar(scalar: Union[int, float, complex, NumpyNumArray], /, *, nam
 
     Parameters
     ----------
-    scalar : Number | NumpyNumArray
-        Number as an ``int``, ``float``, ``complex``, or 0-dimensional array.
+    scalar : float | int | complex | Number | numpy.number | numpy.ndarray
+        Number or 0-dimensional numeric array.
+
+    must_be_real : bool, default: True
+        If ``True``, the scalar must be a real number, i.e. an integer or
+        floating type. Set to ``False`` to allow complex numbers.
 
     name : str, default: "Scalar"
         Variable name to use in the error messages if any are raised.
@@ -1235,14 +1371,17 @@ def check_is_scalar(scalar: Union[int, float, complex, NumpyNumArray], /, *, nam
     Raises
     ------
     TypeError
-        If input is not an instance of ``Number`` or a 0-dimensional number
-        array.
+        If input is not a number or a 0-dimensional number array.
 
     See Also
     --------
     check_is_number
-    check_is_finite
+        Similar function which does not allow 0-dimensional ndarrays.
+    check_is_numeric
+        Similar function for any dimensional array of numbers.
     check_is_real
+        Similar function for any dimensional array of real numbers.
+    check_is_finite
 
     Examples
     --------
@@ -1252,13 +1391,20 @@ def check_is_scalar(scalar: Union[int, float, complex, NumpyNumArray], /, *, nam
     >>> import pyvista.core.input_validation as valid
     >>> valid.check_is_scalar(0.0)
     >>> valid.check_is_scalar(np.array(1))
+    >>> valid.check_is_scalar(np.array(1 + 2j), must_be_real=False)
 
     """
-    check_is_instance(scalar, (Number, np.ndarray), name=name)
-    if isinstance(scalar, np.ndarray):
-        if scalar.ndim > 0:
-            raise ValueError(
-                f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
+    try:
+        if isinstance(scalar, np.ndarray):
+            # TODO: check_has_ndim(scalar, 0)
+            if scalar.ndim > 0:
+                raise ValueError(
+                    f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
+                )
+            check_is_real(scalar, name=name) if must_be_real else check_is_numeric(
+                scalar, name=name
             )
         else:
-            check_is_subdtype(scalar, np.number)
+            check_is_number(scalar, must_be_real=must_be_real)
+    except TypeError:
+        raise

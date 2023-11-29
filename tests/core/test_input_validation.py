@@ -1,4 +1,5 @@
 from collections import namedtuple
+from numbers import Real
 from re import escape
 import sys
 from typing import Union, get_args, get_origin
@@ -23,6 +24,7 @@ from pyvista.core.input_validation.check import (
     check_is_less_than,
     check_is_nonnegative,
     check_is_number,
+    check_is_numeric,
     check_is_real,
     check_is_scalar,
     check_is_sequence,
@@ -636,6 +638,18 @@ def test_check_is_real():
         check_is_real(1 + 1j, name="_input")
 
 
+def test_check_is_numeric():
+    check_is_numeric(1)
+    check_is_numeric(-2.0)
+    check_is_numeric(np.array(-2.0, dtype="uint8"))
+    msg = 'Array must be numeric.'
+    with pytest.raises(TypeError, match=msg):
+        check_is_numeric('abc')
+    msg = '_input must be numeric.'
+    with pytest.raises(TypeError, match=msg):
+        check_is_numeric(tuple('s'), name="_input")
+
+
 def test_check_is_finite():
     check_is_finite(0)
     msg = '_input must have finite values.'
@@ -812,21 +826,55 @@ def test_check_is_iterable_of_some_type():
         check_is_iterable_of_some_type(["abc", 1], str, name="_input")
 
 
-def test_check_is_number():
-    check_is_number(1)
-    check_is_number(1 + 1j)
-    msg = "_input must be an instance of <class 'numbers.Number'>. Got <class 'numpy.ndarray'> instead."
+@pytest.mark.parametrize('number', [1, 1.0, True, 1 + 1j])
+@pytest.mark.parametrize('definition', ['builtin', 'numpy'])
+@pytest.mark.parametrize('must_be_real', [True, False])
+def test_check_is_number(number, definition, must_be_real):
+    if definition == 'numpy':
+        number = np.array([number])[0]
+
+    if isinstance(number, np.bool_) or (not isinstance(number, Real) and must_be_real):
+        # Test bool types always raise an error
+        # Test complex types raise an error when `must_be_real` is True
+        with pytest.raises(TypeError):
+            check_is_number(number, must_be_real=must_be_real)
+    else:
+        # All other cases should succeed
+        check_is_number(number, must_be_real=must_be_real)
+
+    if definition == 'numpy':
+        # Test numpy types raise an error when definition is 'builtin'
+        if isinstance(number, float) or (isinstance(number, complex) and not must_be_real):
+            # np.float_ and np.complex_ subclass float and complex, respectively,
+            # so no error is raised
+            check_is_number(number, must_be_real=must_be_real, definition='builtin')
+        else:
+            with pytest.raises(TypeError):
+                check_is_number(number, must_be_real=must_be_real, definition='builtin')
+    elif definition == 'builtin':
+        # Test builtin types raise an error when definition is 'numpy'
+        with pytest.raises(TypeError):
+            check_is_number(number, must_be_real=must_be_real, definition='numpy')
+
+
+def test_check_is_number_raises():
+    msg = (
+        "_input must be an instance of <class 'numbers.Real'>. Got <class 'numpy.ndarray'> instead."
+    )
     with pytest.raises(TypeError, match=msg):
         check_is_number(np.array(0), name='_input')
     msg = "Object must be"
     with pytest.raises(TypeError, match=msg):
         check_is_number(np.array(0))
+    msg = "Object must be"
+    with pytest.raises(TypeError, match=msg):
+        check_is_number(1 + 1j, must_be_real=True)
 
 
 def test_check_is_scalar():
     check_is_scalar(1)
     check_is_scalar(np.array(0))
-    check_is_scalar(np.array(1 + 2j))
+    check_is_scalar(np.array(1 + 2j), must_be_real=False)
 
     msg = "Got <class 'list'> instead."
     with pytest.raises(TypeError, match=msg):

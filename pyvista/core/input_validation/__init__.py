@@ -14,6 +14,7 @@ from .check import (  # noqa: 401
     check_is_less_than,
     check_is_nonnegative,
     check_is_number,
+    check_is_numeric,
     check_is_real,
     check_is_scalar,
     check_is_sequence,
