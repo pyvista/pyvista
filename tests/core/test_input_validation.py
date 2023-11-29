@@ -10,32 +10,23 @@ from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
-from pyvista.core.validate.checkers import (
-    _validate_shape_value,
+from pyvista.core.validate import (
     check_has_length,
     check_has_shape,
     check_is_finite,
     check_is_greater_than,
     check_is_in_range,
-    check_is_instance,
     check_is_integerlike,
-    check_is_iterable,
-    check_is_iterable_of_some_type,
-    check_is_iterable_of_strings,
     check_is_less_than,
     check_is_nonnegative,
-    check_is_number,
     check_is_numeric,
     check_is_real,
     check_is_scalar,
-    check_is_sequence,
     check_is_sorted,
-    check_is_string,
-    check_is_string_in_iterable,
     check_is_subdtype,
-    check_is_type,
 )
-from pyvista.core.validate.validators import (
+from pyvista.core.validate.array_checkers import _validate_shape_value
+from pyvista.core.validate.array_validators import (
     _set_default_kwarg_mandatory,
     validate_array,
     validate_array3,
@@ -47,6 +38,17 @@ from pyvista.core.validate.validators import (
     validate_number,
     validate_transform3x3,
     validate_transform4x4,
+)
+from pyvista.core.validate.type_checkers import (
+    check_is_instance,
+    check_is_iterable,
+    check_is_iterable_of_some_type,
+    check_is_iterable_of_strings,
+    check_is_number,
+    check_is_sequence,
+    check_is_string,
+    check_is_string_in_iterable,
+    check_is_type,
 )
 
 

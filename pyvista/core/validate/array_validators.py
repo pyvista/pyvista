@@ -21,8 +21,7 @@ import numpy.typing as npt
 from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
-from pyvista.core.validate.checkers import (
-    ShapeLike,
+from pyvista.core.validate import (
     check_has_length,
     check_has_shape,
     check_is_finite,
@@ -31,10 +30,10 @@ from pyvista.core.validate.checkers import (
     check_is_nonnegative,
     check_is_real,
     check_is_sorted,
-    check_is_string,
-    check_is_string_in_iterable,
     check_is_subdtype,
 )
+from pyvista.core.validate.array_checkers import ShapeLike
+from pyvista.core.validate.type_checkers import check_is_string, check_is_string_in_iterable
 
 
 def validate_array(
