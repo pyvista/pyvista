@@ -1,6 +1,6 @@
 """Input validation functions."""
 
-from .check import (  # noqa: 401
+from .checkers import (  # noqa: 401
     check_has_length,
     check_has_shape,
     check_is_finite,
@@ -24,7 +24,7 @@ from .check import (  # noqa: 401
     check_is_subdtype,
     check_is_type,
 )
-from .validate import (  # noqa: 401
+from .validators import (  # noqa: 401
     validate_array,
     validate_array3,
     validate_arrayN,
