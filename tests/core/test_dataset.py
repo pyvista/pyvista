@@ -649,31 +649,37 @@ def test_set_active_scalars_name(grid):
 def test_rename_array_point(grid):
     point_keys = list(grid.point_data.keys())
     old_name = point_keys[0]
+    orig_vals = grid[old_name].copy()
     new_name = 'point changed'
     grid.set_active_scalars(old_name, preference='point')
     grid.rename_array(old_name, new_name, preference='point')
     assert new_name in grid.point_data
     assert old_name not in grid.point_data
     assert new_name == grid.active_scalars_name
+    assert np.array_equal(orig_vals, grid[new_name])
 
 
 def test_rename_array_cell(grid):
     cell_keys = list(grid.cell_data.keys())
     old_name = cell_keys[0]
+    orig_vals = grid[old_name].copy()
     new_name = 'cell changed'
     grid.rename_array(old_name, new_name)
     assert new_name in grid.cell_data
     assert old_name not in grid.cell_data
+    assert np.array_equal(orig_vals, grid[new_name])
 
 
 def test_rename_array_field(grid):
     grid.field_data['fieldfoo'] = np.array([8, 6, 7])
     field_keys = list(grid.field_data.keys())
     old_name = field_keys[0]
+    orig_vals = grid[old_name].copy()
     new_name = 'cell changed'
     grid.rename_array(old_name, new_name)
     assert new_name in grid.field_data
     assert old_name not in grid.field_data
+    assert np.array_equal(orig_vals, grid[new_name])
 
 
 def test_change_name_fail(grid):
