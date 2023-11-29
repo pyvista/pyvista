@@ -685,7 +685,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None and strips is None and verts is None:
+        if faces is lines is strips is verts is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
             n_verts = self.n_points
