@@ -682,6 +682,19 @@ def test_rename_array_field(grid):
     assert np.array_equal(orig_vals, grid[new_name])
 
 
+def test_rename_array_dangling(grid):
+    # Regression test for issue #5244
+    def make_mesh():
+        m = pv.Sphere()
+        m.point_data['orig'] = np.ones(m.n_points)
+        return m
+
+    for _ in range(20):  # Depends on garbage collection
+        mesh = make_mesh()
+        mesh.rename_array('orig', 'renamed')
+        assert (mesh['renamed'] == 1).all()
+
+
 def test_change_name_fail(grid):
     with pytest.raises(KeyError):
         grid.rename_array('not a key', '')
