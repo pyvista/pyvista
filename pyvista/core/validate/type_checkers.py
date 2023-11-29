@@ -10,131 +10,10 @@ A ``check`` function typically:
 
 """
 from collections.abc import Iterable, Sequence
-from numbers import Number, Real
-from typing import Any, Literal, Tuple, Union, get_args, get_origin
-
-import numpy as np
+from typing import Any, Tuple, Union, get_args, get_origin
 
 
-def check_is_number(
-    num: Union[float, int, complex, np.number, Number],
-    /,
-    *,
-    definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
-    must_be_real=True,
-    name: str = 'Object',
-):
-    """Check if an object is a number.
-
-    By default, the number must be an instance of the abstract base class :class:`numbers.Real`.
-    Optionally, the number can also be complex. The definition can also be restricted
-    to strictly check if the number is a built-in numeric type (e.g. ``int``, ``float``)
-    or numpy numeric data types (e.g. ``np.floating``, ``np.integer``).
-
-    Notes
-    -----
-    - This check fails for instances of :class:`numpy.ndarray`. Use :func:`check_is_scalar`
-      instead to also allow for 0-dimensional arrays.
-    - Values such as ``float('inf')`` and ``float('NaN')`` are valid numbers and
-      will not raise an error. Use :func:`check_is_finite` to check for finite values.
-
-    .. warning::
-
-        - Some NumPy numeric data types are subclasses of the built-in types whereas other are
-          not. For example, ``numpy.float_`` is a subclass of ``float`` and ``numpy.complex_``
-          is a subclass ``complex``. However, ``numpy.int_`` is not a subclass of ``int`` and
-          ``numpy.bool_`` is not a subclass of ``bool``.
-        - The built-in ``bool`` type is a subclass of ``int`` whereas NumPy's``.bool_`` type
-          is not a subclass of ``np.int_`` (``np.bool_`` is not a numeric type).
-
-        This can lead to unexpected results:
-
-        - This check will always fail for ``np.bool_`` types.
-        - This check will pass for ``np.float_`` or ``np.complex_``, even if
-          ``definition='builtin'``.
-
-    Parameters
-    ----------
-    num : float | int | complex | numpy.number | Number
-        Number to check.
-
-    definition : str, default: 'abstract'
-        Control the base class(es) to use when checking the number's type. Must be
-        one of:
-
-        - ``'abstract'`` : number must be an instance of one of the abstract types
-          in :py:mod:`numbers`.
-        - ``'builtin'`` : number must be an instance of one of the built-in numeric
-          types.
-        - ``'numpy'`` : number must be an instance of NumPy's data types.
-
-    must_be_real : bool, default: True
-        If ``True``, the number must be real, i.e. an integer or
-        floating type. Set to ``False`` to allow complex numbers.
-
-    name : str, default: "Object"
-        Variable name to use in the error messages if any are raised.
-
-    Raises
-    ------
-    TypeError
-        If input is not an instance of a numeric type.
-
-    See Also
-    --------
-    check_is_scalar
-        Similar function which allows 0-dimensional ndarrays.
-    check_is_numeric
-        Similar function for any dimensional array of numbers.
-    check_is_real
-        Similar function for any dimensional array of real numbers.
-    check_is_finite
-
-
-    Examples
-    --------
-    Check if a float is a number.
-    >>> from pyvista.core import validate
-    >>> num = 42.0
-    >>> type(num)
-    <class 'float'>
-    >>> validate.check_is_number(num)
-
-    Check if an element of a NumPy array is a number.
-
-    >>> import numpy as np
-    >>> num_array = np.array([1, 2, 3])
-    >>> num = num_array[0]
-    >>> type(num)
-    <class 'numpy.int64'>
-    >>> validate.check_is_number(num)
-
-    Check if a complex number is a number.
-    >>> num = 1 + 2j
-    >>> type(num)
-    <class 'complex'>
-    >>> validate.check_is_number(num, must_be_real=False)
-
-    """
-    check_is_string_in_iterable(definition, ['abstract', 'builtin', 'numpy'])
-
-    valid_type: Any
-    if definition == 'abstract':
-        valid_type = Real if must_be_real else Number
-    elif definition == 'builtin':
-        valid_type = (float, int) if must_be_real else (float, int, complex)
-    elif definition == 'numpy':
-        valid_type = (np.floating, np.integer) if must_be_real else np.number
-    else:
-        raise NotImplementedError  # pragma: no cover
-
-    try:
-        check_is_instance(num, valid_type, allow_subclass=True, name=name)
-    except TypeError:
-        raise
-
-
-def check_is_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object'):
+def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object'):
     """Check if an object is an instance of ``str``.
 
     Parameters
@@ -166,16 +45,16 @@ def check_is_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Ob
     Check if an object is a string.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_string("eggs")
+    >>> validate.check_string("eggs")
 
     """
     try:
-        check_is_instance(obj, str, allow_subclass=allow_subclass, name=name)
+        check_instance(obj, str, allow_subclass=allow_subclass, name=name)
     except TypeError:
         raise
 
 
-def check_is_sequence(obj: Sequence, /, *, name: str = 'Object'):
+def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -202,17 +81,17 @@ def check_is_sequence(obj: Sequence, /, *, name: str = 'Object'):
 
     >>> import numpy as np
     >>> from pyvista.core import validate
-    >>> validate.check_is_sequence([1, 2, 3])
-    >>> validate.check_is_sequence("A")
+    >>> validate.check_sequence([1, 2, 3])
+    >>> validate.check_sequence("A")
 
     """
     try:
-        check_is_instance(obj, Sequence, allow_subclass=True, name=name)
+        check_instance(obj, Sequence, allow_subclass=True, name=name)
     except TypeError:
         raise
 
 
-def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
+def check_iterable(obj: Iterable, /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -240,17 +119,17 @@ def check_is_iterable(obj: Iterable, /, *, name: str = 'Object'):
 
     >>> import numpy as np
     >>> from pyvista.core import validate
-    >>> validate.check_is_iterable([1, 2, 3])
-    >>> validate.check_is_iterable(np.array((4, 5, 6)))
+    >>> validate.check_iterable([1, 2, 3])
+    >>> validate.check_iterable(np.array((4, 5, 6)))
 
     """
     try:
-        check_is_instance(obj, Iterable, allow_subclass=True, name=name)
+        check_instance(obj, Iterable, allow_subclass=True, name=name)
     except TypeError:
         raise
 
 
-def check_is_instance(
+def check_instance(
     obj: Any,
     /,
     classinfo: Union[type, Tuple[type, ...]],
@@ -294,11 +173,11 @@ def check_is_instance(
     Check if an object is an instance of ``complex``.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_instance(1 + 2j, complex)
+    >>> validate.check_instance(1 + 2j, complex)
 
     Check if an object is an instance of one of several types.
 
-    >>> validate.check_is_instance("eggs", (int, str))
+    >>> validate.check_instance("eggs", (int, str))
 
     """
     if not isinstance(name, str):
@@ -341,7 +220,7 @@ def check_is_instance(
         raise TypeError(msg)
 
 
-def check_is_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: str = 'Object'):
+def check_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: str = 'Object'):
     """Check if an object is one of the given type or types.
 
     Notes
@@ -376,19 +255,19 @@ def check_is_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name
     Check if an object is type ``dict`` or ``set``.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_type({'spam': "eggs"}, (dict, set))
+    >>> validate.check_type({'spam': "eggs"}, (dict, set))
 
     """
     try:
-        check_is_instance(obj, classinfo, allow_subclass=False, name=name)
+        check_instance(obj, classinfo, allow_subclass=False, name=name)
     except TypeError:
         raise
 
 
-def check_is_iterable_of_some_type(
+def check_iterable_item_type(
     iterable_obj: Iterable,
     /,
-    some_type: Union[type, Tuple[type, ...]],
+    item_type: Union[type, Tuple[type, ...]],
     *,
     allow_subclass: bool = True,
     name: str = 'Iterable',
@@ -400,7 +279,7 @@ def check_is_iterable_of_some_type(
     iterable_obj : Iterable
         Iterable to check.
 
-    some_type : type | tuple[type, ...]
+    item_type : type | tuple[type, ...]
         Class type(s) to check for. Each element of the sequence must
         have the type or one of the types specified.
 
@@ -428,21 +307,21 @@ def check_is_iterable_of_some_type(
     Check if a ``tuple`` only has ``int`` or ``float`` elements.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_iterable_of_some_type((1, 2, 3.0), (int, float))
+    >>> validate.check_iterable_item_type((1, 2, 3.0), (int, float))
 
     Check if a ``list`` only has ``list`` elements.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_iterable_of_some_type([[1], [2], [3]], list)
+    >>> validate.check_iterable_item_type([[1], [2], [3]], list)
 
     """
-    check_is_iterable(iterable_obj, name=name)
+    check_iterable(iterable_obj, name=name)
     try:
         # TODO: add bool return to check functions and convert this statement
         # to a generator with all()
         [
-            check_is_instance(
-                item, some_type, allow_subclass=allow_subclass, name=f"All items of {name}"
+            check_instance(
+                item, item_type, allow_subclass=allow_subclass, name=f"All items of {name}"
             )
             for item in iterable_obj
         ]
@@ -451,7 +330,7 @@ def check_is_iterable_of_some_type(
         raise
 
 
-def check_is_iterable_of_strings(
+def check_iterable_of_strings(
     iterable_obj: Iterable, /, *, allow_subclass: bool = True, name: str = 'String Iterable'
 ):
     """Check if an iterable's items are all strings.
@@ -485,18 +364,16 @@ def check_is_iterable_of_strings(
     Check if a ``tuple`` only has ``str`` elements.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_iterable_of_strings(("cat", "dog"))
+    >>> validate.check_iterable_of_strings(("cat", "dog"))
 
     """
     try:
-        check_is_iterable_of_some_type(iterable_obj, str, allow_subclass=allow_subclass, name=name)
+        check_iterable_item_type(iterable_obj, str, allow_subclass=allow_subclass, name=name)
     except TypeError:
         raise
 
 
-def check_is_string_in_iterable(
-    string_in: str, /, string_iterable: Iterable, *, name: str = 'String'
-):
+def check_contains_string(string_in: str, /, string_iterable: Iterable, *, name: str = 'String'):
     """Check if a given string is in an iterable of strings.
 
     Parameters
@@ -526,11 +403,11 @@ def check_is_string_in_iterable(
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_string_in_iterable("A", ["A", "B", "C"])
+    >>> check_contains_string("A", ["A", "B", "C"])
 
     """
-    check_is_string(string_in, name=name)
-    check_is_iterable_of_strings(string_iterable)
+    check_string(string_in, name=name)
+    check_iterable_of_strings(string_iterable)
     if string_in not in string_iterable:
         raise ValueError(
             f"{name} '{string_in}' is not in the iterable. "

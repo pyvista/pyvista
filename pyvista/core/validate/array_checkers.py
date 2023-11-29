@@ -9,8 +9,8 @@ A ``check`` function typically:
 * Does not modify input or return anything.
 
 """
-from numbers import Number
-from typing import List, Optional, Sequence, Sized, Tuple, Union, cast
+from numbers import Number, Real
+from typing import Any, List, Literal, Optional, Sequence, Sized, Tuple, Union, cast
 
 import numpy
 import numpy as np
@@ -18,7 +18,11 @@ from numpy import typing as npt
 
 from pyvista.core._typing_core import FloatVector, IntVector
 from pyvista.core.utilities.arrays import cast_to_ndarray
-from pyvista.core.validate import check_is_instance, check_is_iterable_of_some_type, check_is_number
+from pyvista.core.validate.type_checkers import (
+    check_contains_string,
+    check_instance,
+    check_iterable_item_type,
+)
 
 # Similar definitions to numpy._typing._shape but with modifications:
 #  - explicit support for empty tuples `()`
@@ -28,7 +32,7 @@ ShapeLike = Union[int, Tuple[()], Tuple[int, ...]]
 Shape = Union[Tuple[()], Tuple[int, ...]]
 
 
-def check_is_subdtype(
+def check_subdtype(
     input_obj: Union[npt.DTypeLike, npt.ArrayLike],
     base_dtype: Union[npt.DTypeLike, Sequence],
     /,
@@ -67,16 +71,16 @@ def check_is_subdtype(
 
     >>> import numpy as np
     >>> from pyvista.core import validate
-    >>> validate.check_is_subdtype(float, np.floating)
+    >>> validate.check_subdtype(float, np.floating)
 
     Check from multiple allowable dtypes.
 
-    >>> validate.check_is_subdtype(int, [np.integer, np.floating])
+    >>> validate.check_subdtype(int, [np.integer, np.floating])
 
     Check an array's dtype.
 
     >>> arr = np.array([1, 2, 3], dtype='uint8')
-    >>> validate.check_is_subdtype(arr, np.integer)
+    >>> validate.check_subdtype(arr, np.integer)
 
     """
     if isinstance(input_obj, np.dtype):
@@ -100,7 +104,7 @@ def check_is_subdtype(
     raise TypeError(msg)
 
 
-def check_is_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array is float, integer, or complex type.
 
     Notes
@@ -132,7 +136,7 @@ def check_is_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
     Check if an array is numeric.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_numeric([1, 2.0, 3 + 3j])
+    >>> validate.check_numeric([1, 2.0, 3 + 3j])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -141,12 +145,12 @@ def check_is_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
     if arr.dtype.type in [np.int32, np.int64, np.float32, np.float64, np.complex_]:
         return
     try:
-        check_is_subdtype(arr, np.number, name=name)
+        check_subdtype(arr, np.number, name=name)
     except TypeError as e:
         raise TypeError(f"{name} must be numeric.") from e
 
 
-def check_is_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
@@ -181,7 +185,7 @@ def check_is_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
     Check if an array has real numbers.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_real([1, 2, 3])
+    >>> validate.check_real([1, 2, 3])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -193,12 +197,12 @@ def check_is_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
     # Do not use np.isreal as it will fail in some cases (e.g. scalars).
     # Check dtype directly instead
     try:
-        check_is_subdtype(arr, (np.floating, np.integer), name=name)
+        check_subdtype(arr, (np.floating, np.integer), name=name)
     except TypeError as e:
         raise TypeError(f"{name} must have real numbers.") from e
 
 
-def check_is_sorted(
+def check_sorted(
     arr: npt.ArrayLike,
     /,
     *,
@@ -246,7 +250,7 @@ def check_is_sorted(
     Check if an array's values are sorted,
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_sorted([1, 2, 3])
+    >>> validate.check_sorted([1, 2, 3])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -263,11 +267,11 @@ def check_is_sorted(
     else:
         if not axis == -1:
             # Validate axis
-            check_is_number(axis, name="Axis")
-            check_is_integerlike(axis, name="Axis")
+            check_number(axis, name="Axis")
+            check_integerlike(axis, name="Axis")
             axis = int(axis)
             try:
-                check_is_in_range(axis, rng=[-arr.ndim, arr.ndim - 1], name="Axis")
+                check_range(axis, rng=[-arr.ndim, arr.ndim - 1], name="Axis")
             except ValueError:
                 raise ValueError(f"Axis {axis} is out of bounds for ndim {arr.ndim}.")
         if axis < 0:
@@ -303,7 +307,7 @@ def check_is_sorted(
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
-def check_is_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
@@ -328,7 +332,7 @@ def check_is_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
     Check if an array's values are finite.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_finite([1, 2, 3])
+    >>> validate.check_finite([1, 2, 3])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
@@ -336,7 +340,7 @@ def check_is_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
         raise ValueError(f"{name} must have finite values.")
 
 
-def check_is_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: str = "Array"):
+def check_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: str = "Array"):
     """Check if an array has integer or integer-like float values.
 
     Parameters
@@ -369,20 +373,20 @@ def check_is_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: s
     Check if an array has integer-like values.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_integerlike([1.0, 2.0])
+    >>> validate.check_integerlike([1.0, 2.0])
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     if strict:
         try:
-            check_is_subdtype(arr, np.integer)
+            check_subdtype(arr, np.integer)
         except TypeError:
             raise
     elif not np.array_equal(arr, np.floor(arr)):
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_is_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -408,16 +412,16 @@ def check_is_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
     Check if an array's values are non-negative.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_nonnegative([1, 2, 3])
+    >>> validate.check_nonnegative([1, 2, 3])
 
     """
     try:
-        check_is_greater_than(arr, 0, strict=False, name=name)
+        check_greater_than(arr, 0, strict=False, name=name)
     except ValueError:
         raise
 
 
-def check_is_greater_than(
+def check_greater_than(
     arr: npt.ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
 ):
     """Check if an array's elements are all greater than some value.
@@ -454,19 +458,19 @@ def check_is_greater_than(
     Check if an array's values are greater than 0.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_greater_than([1, 2, 3], value=0)
+    >>> validate.check_greater_than([1, 2, 3], value=0)
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
-    check_is_number(value)
-    check_is_real(value)
+    check_number(value)
+    check_real(value)
     if strict and not np.all(arr > value):
         raise ValueError(f"{name} values must all be greater than {value}.")
     elif not np.all(arr >= value):
         raise ValueError(f"{name} values must all be greater than or equal to {value}.")
 
 
-def check_is_less_than(
+def check_less_than(
     arr: npt.ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
 ):
     """Check if an array's elements are all less than some value.
@@ -504,19 +508,19 @@ def check_is_less_than(
     Check if an array's values are less than 0.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_less_than([-1, -2, -3], value=0)
+    >>> validate.check_less_than([-1, -2, -3], value=0)
 
     """
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
-    check_is_number(value)
-    check_is_real(value)
+    check_number(value)
+    check_real(value)
     if strict and not np.all(arr < value):
         raise ValueError(f"{name} values must all be less than {value}.")
     elif not np.all(arr <= value):
         raise ValueError(f"{name} values must all be less than or equal to {value}.")
 
 
-def check_is_in_range(
+def check_range(
     arr: npt.ArrayLike,
     /,
     rng: FloatVector,
@@ -566,22 +570,22 @@ def check_is_in_range(
     Check if `an array's values are in the range ``[0, 1]``.
 
     >>> from pyvista.core import validate
-    >>> validate.check_is_in_range([0, 0.5, 1], rng=[0, 1])
+    >>> validate.check_range([0, 0.5, 1], rng=[0, 1])
 
     """
     rng_ = cast_to_ndarray(rng)
-    check_has_shape(rng_, 2, name="Range")
-    check_is_sorted(rng_, name="Range")
+    check_shape(rng_, 2, name="Range")
+    check_sorted(rng_, name="Range")
 
     arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
     try:
-        check_is_greater_than(arr, rng_[0], strict=strict_lower, name=name)
-        check_is_less_than(arr, rng_[1], strict=strict_upper, name=name)
+        check_greater_than(arr, rng_[0], strict=strict_lower, name=name)
+        check_less_than(arr, rng_[1], strict=strict_upper, name=name)
     except ValueError:
         raise
 
 
-def check_has_shape(
+def check_shape(
     arr: npt.ArrayLike,
     /,
     shape: Union[ShapeLike, List[ShapeLike]],
@@ -621,15 +625,15 @@ def check_has_shape(
 
     >>> import numpy as np
     >>> from pyvista.core import validate
-    >>> validate.check_has_shape([1, 2, 3], shape=(-1))
+    >>> validate.check_shape([1, 2, 3], shape=(-1))
 
     Check if an array is one-dimensional or a scalar.
 
-    >>> validate.check_has_shape(1, shape=[(), (-1)])
+    >>> validate.check_shape(1, shape=[(), (-1)])
 
     Check if an array is 3x3 or 4x4.
 
-    >>> validate.check_has_shape(np.eye(3), shape=[(3, 3), (4, 4)])
+    >>> validate.check_shape(np.eye(3), shape=[(3, 3), (4, 4)])
 
     """
 
@@ -660,7 +664,7 @@ def check_has_shape(
     raise ValueError(msg)
 
 
-def check_has_length(
+def check_length(
     arr: Union[npt.ArrayLike, Sized],
     /,
     *,
@@ -722,15 +726,15 @@ def check_has_length(
     Check if an array has a length of 2 or 3.
 
     >>> from pyvista.core import validate
-    >>> validate.check_has_length([1, 2], exact_length=[2, 3])
+    >>> validate.check_length([1, 2], exact_length=[2, 3])
 
     Check if an array has a minimum length of 3.
 
-    >>> validate.check_has_length((1, 2, 3), min_length=3)
+    >>> validate.check_length((1, 2, 3), min_length=3)
 
     Check if a multidimensional array has a maximum length of 2.
 
-    >>> validate.check_has_length([[1, 2, 3], [4, 5, 6]], max_length=2)
+    >>> validate.check_length([[1, 2, 3], [4, 5, 6]], max_length=2)
 
     """
     if allow_scalar:
@@ -740,16 +744,16 @@ def check_has_length(
         elif isinstance(arr, np.ndarray) and arr.ndim == 0:
             arr = arr.reshape((1,))
 
-    check_is_instance(arr, (Sequence, np.ndarray), name=name)
+    check_instance(arr, (Sequence, np.ndarray), name=name)
 
     if must_be_1d:
-        check_has_shape(arr, shape=(-1))  # type: ignore[arg-type]
+        check_shape(arr, shape=(-1))  # type: ignore[arg-type]
 
     arr_len = len(cast(Sized, arr))
 
     if exact_length is not None:
         exact_length = cast(np.ndarray, cast_to_ndarray(exact_length))
-        check_is_integerlike(exact_length, name="'exact_length'")
+        check_integerlike(exact_length, name="'exact_length'")
         if arr_len not in exact_length:
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
@@ -760,13 +764,13 @@ def check_has_length(
     if min_length is not None:
         min_length = cast_to_ndarray(min_length)  # type: ignore
         check_is_scalar(min_length, name="Min length")
-        check_is_real(min_length, name="Min length")
+        check_real(min_length, name="Min length")
     if max_length is not None:
         max_length = cast_to_ndarray(max_length)  # type: ignore
         check_is_scalar(max_length, name="Max length")
-        check_is_real(max_length, name="Max length")
+        check_real(max_length, name="Max length")
     if min_length is not None and max_length is not None:
-        check_is_sorted((min_length, max_length), name="Range")
+        check_sorted((min_length, max_length), name="Range")
 
     if min_length is not None:
         if arr_len < min_length:
@@ -806,13 +810,131 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error
-    check_is_instance(shape, (int, tuple), name='Shape')
+    check_instance(shape, (int, tuple), name='Shape')
     if isinstance(shape, int):
         shape = (shape,)
     else:
-        check_is_iterable_of_some_type(shape, int, name='Shape')
-    check_is_greater_than(shape, -1, name="Shape", strict=False)
+        check_iterable_item_type(shape, int, name='Shape')
+    check_greater_than(shape, -1, name="Shape", strict=False)
     raise RuntimeError("This line should not be reachable.")  # pragma: no cover
+
+
+def check_number(
+    num: Union[float, int, complex, np.number, Number],
+    /,
+    *,
+    definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
+    must_be_real=True,
+    name: str = 'Object',
+):
+    """Check if an object is a number.
+
+    By default, the number must be an instance of the abstract base class :class:`numbers.Real`.
+    Optionally, the number can also be complex. The definition can also be restricted
+    to strictly check if the number is a built-in numeric type (e.g. ``int``, ``float``)
+    or numpy numeric data types (e.g. ``np.floating``, ``np.integer``).
+
+    Notes
+    -----
+    - This check fails for instances of :class:`numpy.ndarray`. Use :func:`check_is_scalar`
+      instead to also allow for 0-dimensional arrays.
+    - Values such as ``float('inf')`` and ``float('NaN')`` are valid numbers and
+      will not raise an error. Use :func:`check_is_finite` to check for finite values.
+
+    .. warning::
+
+        - Some NumPy numeric data types are subclasses of the built-in types whereas other are
+          not. For example, ``numpy.float_`` is a subclass of ``float`` and ``numpy.complex_``
+          is a subclass ``complex``. However, ``numpy.int_`` is not a subclass of ``int`` and
+          ``numpy.bool_`` is not a subclass of ``bool``.
+        - The built-in ``bool`` type is a subclass of ``int`` whereas NumPy's``.bool_`` type
+          is not a subclass of ``np.int_`` (``np.bool_`` is not a numeric type).
+
+        This can lead to unexpected results:
+
+        - This check will always fail for ``np.bool_`` types.
+        - This check will pass for ``np.float_`` or ``np.complex_``, even if
+          ``definition='builtin'``.
+
+    Parameters
+    ----------
+    num : float | int | complex | numpy.number | Number
+        Number to check.
+
+    definition : str, default: 'abstract'
+        Control the base class(es) to use when checking the number's type. Must be
+        one of:
+
+        - ``'abstract'`` : number must be an instance of one of the abstract types
+          in :py:mod:`numbers`.
+        - ``'builtin'`` : number must be an instance of one of the built-in numeric
+          types.
+        - ``'numpy'`` : number must be an instance of NumPy's data types.
+
+    must_be_real : bool, default: True
+        If ``True``, the number must be real, i.e. an integer or
+        floating type. Set to ``False`` to allow complex numbers.
+
+    name : str, default: "Object"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not an instance of a numeric type.
+
+    See Also
+    --------
+    check_is_scalar
+        Similar function which allows 0-dimensional ndarrays.
+    check_is_numeric
+        Similar function for any dimensional array of numbers.
+    check_is_real
+        Similar function for any dimensional array of real numbers.
+    check_is_finite
+
+
+    Examples
+    --------
+    Check if a float is a number.
+    >>> from pyvista.core import validate
+    >>> num = 42.0
+    >>> type(num)
+    <class 'float'>
+    >>> validate.check_number(num)
+
+    Check if an element of a NumPy array is a number.
+
+    >>> import numpy as np
+    >>> num_array = np.array([1, 2, 3])
+    >>> num = num_array[0]
+    >>> type(num)
+    <class 'numpy.int64'>
+    >>> validate.check_number(num)
+
+    Check if a complex number is a number.
+    >>> num = 1 + 2j
+    >>> type(num)
+    <class 'complex'>
+    >>> validate.check_number(num, must_be_real=False)
+
+    """
+    check_contains_string(definition, ['abstract', 'builtin', 'numpy'])
+
+    valid_type: Any
+    if definition == 'abstract':
+        valid_type = Real if must_be_real else Number
+    elif definition == 'builtin':
+        valid_type = (float, int) if must_be_real else (float, int, complex)
+    elif definition == 'numpy':
+        valid_type = (np.floating, np.integer) if must_be_real else np.number
+    else:
+        raise NotImplementedError  # pragma: no cover
+
+    try:
+        check_instance(num, valid_type, allow_subclass=True, name=name)
+    except TypeError:
+        raise
 
 
 def check_is_scalar(
@@ -880,10 +1002,8 @@ def check_is_scalar(
                 raise ValueError(
                     f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
                 )
-            check_is_real(scalar, name=name) if must_be_real else check_is_numeric(
-                scalar, name=name
-            )
+            check_real(scalar, name=name) if must_be_real else check_numeric(scalar, name=name)
         else:
-            check_is_number(scalar, must_be_real=must_be_real)
+            check_number(scalar, must_be_real=must_be_real)
     except TypeError:
         raise

@@ -22,18 +22,18 @@ from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 from pyvista.core.validate import (
-    check_has_length,
-    check_has_shape,
-    check_is_finite,
-    check_is_in_range,
-    check_is_integerlike,
-    check_is_nonnegative,
-    check_is_real,
-    check_is_sorted,
-    check_is_subdtype,
+    check_finite,
+    check_integerlike,
+    check_length,
+    check_nonnegative,
+    check_range,
+    check_real,
+    check_shape,
+    check_sorted,
+    check_subdtype,
 )
 from pyvista.core.validate.array_checkers import ShapeLike
-from pyvista.core.validate.type_checkers import check_is_string, check_is_string_in_iterable
+from pyvista.core.validate.type_checkers import check_contains_string, check_string
 
 
 def validate_array(
@@ -269,19 +269,19 @@ def validate_array(
 
     # Check type
     if must_be_real:
-        check_is_real(arr_out, name=name)
+        check_real(arr_out, name=name)
     else:
         try:
-            check_is_subdtype(arr_out, np.number, name=name)
+            check_subdtype(arr_out, np.number, name=name)
         except TypeError as e:
             raise TypeError(f"{name} must be numeric.") from e
 
     if must_have_dtype is not None:
-        check_is_subdtype(arr_out, must_have_dtype, name=name)
+        check_subdtype(arr_out, must_have_dtype, name=name)
 
     # Check shape
     if must_have_shape is not None:
-        check_has_shape(arr_out, must_have_shape, name=name)
+        check_shape(arr_out, must_have_shape, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
     if reshape_to is not None and arr_out.shape != reshape_to:
@@ -296,7 +296,7 @@ def validate_array(
         or must_have_min_length is not None
         or must_have_max_length is not None
     ):
-        check_has_length(
+        check_length(
             arr,
             exact_length=must_have_length,
             min_length=must_have_min_length,
@@ -307,13 +307,13 @@ def validate_array(
 
     # Check data values
     if must_be_nonnegative:
-        check_is_nonnegative(arr_out, name=name)
+        check_nonnegative(arr_out, name=name)
     if must_be_finite:
-        check_is_finite(arr_out, name=name)
+        check_finite(arr_out, name=name)
     if must_be_integer_like:
-        check_is_integerlike(arr_out, strict=False, name=name)
+        check_integerlike(arr_out, strict=False, name=name)
     if must_be_in_range is not None:
-        check_is_in_range(
+        check_range(
             arr_out,
             must_be_in_range,
             strict_lower=strict_lower_bound,
@@ -322,9 +322,9 @@ def validate_array(
         )
     if must_be_sorted:
         if isinstance(must_be_sorted, dict):
-            check_is_sorted(arr_out, **must_be_sorted, name=name)
+            check_sorted(arr_out, **must_be_sorted, name=name)
         else:
-            check_is_sorted(arr_out, name=name)
+            check_sorted(arr_out, name=name)
 
     # Process output
     if dtype_out is not None:
@@ -411,11 +411,9 @@ def validate_axes(
 
     """
     # Validate number of args
-    check_has_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
+    check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
-        check_is_string_in_iterable(
-            must_have_orientation, ['right', 'left'], name=f"{name} orientation"
-        )
+        check_contains_string(must_have_orientation, ['right', 'left'], name=f"{name} orientation")
     elif must_have_orientation is None and len(axes) == 2:
         raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
 
@@ -438,7 +436,7 @@ def validate_axes(
                 axes_array[2] = np.cross(axes_array[0], axes_array[1])
             else:
                 axes_array[2] = np.cross(axes_array[1], axes_array[0])
-    check_is_finite(axes_array, name=name)
+    check_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
         np.dot(axes_array[0], axes_array[2]), 1
@@ -498,7 +496,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
         Generic array validation function.
 
     """
-    check_is_string(name, name="Name")
+    check_string(name, name="Name")
     arr = np.eye(4)  # initialize
     if isinstance(transform, vtkMatrix4x4):
         arr = array_from_vtkmatrix(transform)
@@ -554,7 +552,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         Generic array validation function.
 
     """
-    check_is_string(name, name="Name")
+    check_string(name, name="Name")
     arr = np.eye(3)  # initialize
     if isinstance(transform, vtkMatrix3x3):
         arr[:3, :3] = array_from_vtkmatrix(transform)
@@ -910,7 +908,7 @@ def validate_arrayN_uintlike(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     # is also integral
     kwargs.setdefault('dtype_out', int)
     if kwargs['dtype_out'] is not int:
-        check_is_subdtype(kwargs['dtype_out'], np.integer)
+        check_subdtype(kwargs['dtype_out'], np.integer)
 
     _set_default_kwarg_mandatory(kwargs, 'must_be_integer_like', True)
     _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)

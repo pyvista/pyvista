@@ -11,23 +11,28 @@ from vtk import vtkTransform
 from pyvista.core import pyvista_ndarray
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 from pyvista.core.validate import (
-    check_has_length,
-    check_has_shape,
-    check_is_finite,
-    check_is_greater_than,
-    check_is_in_range,
-    check_is_integerlike,
-    check_is_less_than,
-    check_is_nonnegative,
-    check_is_numeric,
-    check_is_real,
+    check_contains_string,
+    check_finite,
+    check_greater_than,
+    check_instance,
+    check_integerlike,
     check_is_scalar,
-    check_is_sorted,
-    check_is_subdtype,
-)
-from pyvista.core.validate.array_checkers import _validate_shape_value
-from pyvista.core.validate.array_validators import (
-    _set_default_kwarg_mandatory,
+    check_iterable,
+    check_iterable_item_type,
+    check_iterable_of_strings,
+    check_length,
+    check_less_than,
+    check_nonnegative,
+    check_number,
+    check_numeric,
+    check_range,
+    check_real,
+    check_sequence,
+    check_shape,
+    check_sorted,
+    check_string,
+    check_subdtype,
+    check_type,
     validate_array,
     validate_array3,
     validate_arrayN,
@@ -39,17 +44,8 @@ from pyvista.core.validate.array_validators import (
     validate_transform3x3,
     validate_transform4x4,
 )
-from pyvista.core.validate.type_checkers import (
-    check_is_instance,
-    check_is_iterable,
-    check_is_iterable_of_some_type,
-    check_is_iterable_of_strings,
-    check_is_number,
-    check_is_sequence,
-    check_is_string,
-    check_is_string_in_iterable,
-    check_is_type,
-)
+from pyvista.core.validate.array_checkers import _validate_shape_value
+from pyvista.core.validate.array_validators import _set_default_kwarg_mandatory
 
 
 @pytest.mark.parametrize(
@@ -99,18 +95,18 @@ def test_validate_transform_as_array3x3_raises():
 
 
 def test_check_is_subdtype():
-    check_is_subdtype(int, np.integer)
-    check_is_subdtype(np.dtype(int), np.integer)
-    check_is_subdtype(np.array([1, 2, 3]), np.integer)
-    check_is_subdtype(np.array([1.0, 2, 3]), float)
-    check_is_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
-    check_is_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
+    check_subdtype(int, np.integer)
+    check_subdtype(np.dtype(int), np.integer)
+    check_subdtype(np.array([1, 2, 3]), np.integer)
+    check_subdtype(np.array([1.0, 2, 3]), float)
+    check_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
+    check_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
     msg = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
     with pytest.raises(TypeError, match=msg):
-        check_is_subdtype(np.array([1, 2, 3]).astype('int32'), float)
+        check_subdtype(np.array([1, 2, 3]).astype('int32'), float)
     msg = "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
+        check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
 def test_check_is_subdtype_changes_type():
@@ -118,13 +114,13 @@ def test_check_is_subdtype_changes_type():
     # failed `np.issubtype` checks due to an implicit change of type
     int_array = np.array([1, 2, 3])
     dtype_expected = np.number
-    check_is_subdtype(int_array, dtype_expected)  # int is subtype of np.number
+    check_subdtype(int_array, dtype_expected)  # int is subtype of np.number
 
     dtype_coerced = np.dtype(dtype_expected)
     assert dtype_coerced.type is np.float64  # np.number is coerced (by NumPy) as a float
     with pytest.raises(TypeError):
         # this check will now fail since int is not subtype of float
-        check_is_subdtype(int_array, dtype_coerced)
+        check_subdtype(int_array, dtype_coerced)
 
 
 def test_validate_number():
@@ -195,19 +191,19 @@ def test_set_default_kwarg_mandatory():
 
 
 def test_check_has_shape():
-    check_has_shape(0, ())
-    check_has_shape(0, [(), 2])
-    check_has_shape((1, 2, 3), [(), 3])
-    check_has_shape((1, 2, 3), [-1])
-    check_has_shape((1, 2, 3), -1)
+    check_shape(0, ())
+    check_shape(0, [(), 2])
+    check_shape((1, 2, 3), [(), 3])
+    check_shape((1, 2, 3), [-1])
+    check_shape((1, 2, 3), -1)
 
     msg = 'Input has shape (3,) which is not allowed. Shape must be 0.'
     with pytest.raises(ValueError, match=escape(msg)):
-        check_has_shape((1, 2, 3), 0, name="Input")
+        check_shape((1, 2, 3), 0, name="Input")
 
     msg = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
     with pytest.raises(ValueError, match=escape(msg)):
-        check_has_shape((1, 2, 3), [(), (4, 5)])
+        check_shape((1, 2, 3), [(), (4, 5)])
 
 
 def test_validate_shape_value():
@@ -371,24 +367,24 @@ def test_validate_array3(reshape):
 
 
 def test_check_is_in_range():
-    check_is_in_range((1, 2, 3), [1, 3])
+    check_range((1, 2, 3), [1, 3])
 
     msg = "Array values must all be less than or equal to 2."
     with pytest.raises(ValueError, match=msg):
-        check_is_in_range((1, 2, 3), [1, 2])
+        check_range((1, 2, 3), [1, 2])
 
     msg = "Input values must all be greater than or equal to 2."
     with pytest.raises(ValueError, match=msg):
-        check_is_in_range((1, 2, 3), [2, 3], name='Input')
+        check_range((1, 2, 3), [2, 3], name='Input')
 
     # Test strict bounds
     msg = "Array values must all be less than 3."
     with pytest.raises(ValueError, match=msg):
-        check_is_in_range((1, 2, 3), [1, 3], strict_upper=True)
+        check_range((1, 2, 3), [1, 3], strict_upper=True)
 
     msg = "Array values must all be greater than 1."
     with pytest.raises(ValueError, match=msg):
-        check_is_in_range((1, 2, 3), [1, 3], strict_lower=True)
+        check_range((1, 2, 3), [1, 3], strict_lower=True)
 
 
 def numeric_array_test_cases():
@@ -525,200 +521,200 @@ def test_validate_array(
 def test_check_is_instance(obj, classinfo, allow_subclass, name):
     if isinstance(classinfo, list):
         with pytest.raises(TypeError):
-            check_is_instance(obj, classinfo)
+            check_instance(obj, classinfo)
         return
 
     if allow_subclass:
         if isinstance(obj, classinfo):
-            check_is_instance(obj, classinfo)
+            check_instance(obj, classinfo)
         else:
             with pytest.raises(TypeError, match='Object must be an instance of'):
-                check_is_instance(obj, classinfo)
+                check_instance(obj, classinfo)
             with pytest.raises(TypeError, match=f'{name} must be an instance of'):
-                check_is_instance(obj, classinfo, name=name)
+                check_instance(obj, classinfo, name=name)
 
     else:
         if type(classinfo) is tuple:
             if type(obj) in classinfo:
-                check_is_type(obj, classinfo)
+                check_type(obj, classinfo)
             else:
                 with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_is_type(obj, classinfo, name=name)
+                    check_type(obj, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_is_type(obj, classinfo)
+                    check_type(obj, classinfo)
         elif get_origin(classinfo) is Union:
             if type(obj) in get_args(classinfo):
-                check_is_type(obj, classinfo)
+                check_type(obj, classinfo)
             else:
                 with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_is_type(obj, classinfo, name=name)
+                    check_type(obj, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_is_type(obj, classinfo)
+                    check_type(obj, classinfo)
         else:
             if type(obj) is classinfo:
-                check_is_type(obj, classinfo)
+                check_type(obj, classinfo)
             else:
                 with pytest.raises(TypeError, match=f'{name} must have type'):
-                    check_is_type(obj, classinfo, name=name)
+                    check_type(obj, classinfo, name=name)
                 with pytest.raises(TypeError, match='Object must have type'):
-                    check_is_type(obj, classinfo)
+                    check_type(obj, classinfo)
 
     msg = "Name must be a string, got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):
-        check_is_instance(0, int, name=0)
+        check_instance(0, int, name=0)
 
 
 def test_check_is_type():
-    check_is_type(0, int, name='abc')
-    check_is_type(0, Union[int])
+    check_type(0, int, name='abc')
+    check_type(0, Union[int])
     with pytest.raises(TypeError):
-        check_is_type("str", int)
+        check_type("str", int)
     with pytest.raises(TypeError):
-        check_is_type(0, int, name=1)
-        check_is_type(0, Union[int, float])
+        check_type(0, int, name=1)
+        check_type(0, Union[int, float])
 
 
 @pytest.mark.skipif(
     sys.version_info < (3, 10), reason="Union type input requires python3.10 or higher"
 )
 def test_check_is_type_union():
-    check_is_type(0, Union[int, float])
+    check_type(0, Union[int, float])
 
 
 def test_check_is_string():
-    check_is_string("abc")
-    check_is_string("abc", name='123')
+    check_string("abc")
+    check_string("abc", name='123')
     msg = "Value must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):
-        check_is_string(0, name='Value')
+        check_string(0, name='Value')
     msg = "Object must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):
-        check_is_string(0)
+        check_string(0)
     msg = "Name must be a string, got <class 'float'> instead."
     with pytest.raises(TypeError, match=msg):
-        check_is_string("abc", name=0.0)
+        check_string("abc", name=0.0)
 
     class str_subclass(str):
         pass
 
-    check_is_string(str_subclass(), allow_subclass=True)
+    check_string(str_subclass(), allow_subclass=True)
     with pytest.raises(TypeError, match="Object must have type <class 'str'>."):
-        check_is_string(str_subclass(), allow_subclass=False)
+        check_string(str_subclass(), allow_subclass=False)
 
 
 def test_check_is_less_than():
-    check_is_less_than([0], 1)
-    check_is_less_than(np.eye(3), 1, strict=False)
+    check_less_than([0], 1)
+    check_less_than(np.eye(3), 1, strict=False)
     msg = "Array values must all be less than 0."
     with pytest.raises(ValueError, match=msg):
-        check_is_less_than(0, 0, strict=True)
+        check_less_than(0, 0, strict=True)
     msg = "_input values must all be less than or equal to 0."
     with pytest.raises(ValueError, match=msg):
-        check_is_less_than(1, 0, strict=False, name="_input")
+        check_less_than(1, 0, strict=False, name="_input")
 
 
 def test_check_is_greater_than():
-    check_is_greater_than([1], 0)
-    check_is_greater_than(np.eye(3), 0, strict=False)
+    check_greater_than([1], 0)
+    check_greater_than(np.eye(3), 0, strict=False)
     msg = "Array values must all be greater than 0."
     with pytest.raises(ValueError, match=msg):
-        check_is_greater_than(0, 0, strict=True)
+        check_greater_than(0, 0, strict=True)
     msg = "_input values must all be greater than or equal to 0."
     with pytest.raises(ValueError, match=msg):
-        check_is_greater_than(-1, 0, strict=False, name="_input")
+        check_greater_than(-1, 0, strict=False, name="_input")
 
 
 def test_check_is_real():
-    check_is_real(1)
-    check_is_real(-2.0)
-    check_is_real(np.array(-2.0, dtype="uint8"))
+    check_real(1)
+    check_real(-2.0)
+    check_real(np.array(-2.0, dtype="uint8"))
     msg = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=msg):
-        check_is_real(1 + 1j)
+        check_real(1 + 1j)
     msg = '_input must have real numbers.'
     with pytest.raises(TypeError, match=msg):
-        check_is_real(1 + 1j, name="_input")
+        check_real(1 + 1j, name="_input")
 
 
 def test_check_is_numeric():
-    check_is_numeric(1)
-    check_is_numeric(-2.0)
-    check_is_numeric(np.array(-2.0, dtype="uint8"))
+    check_numeric(1)
+    check_numeric(-2.0)
+    check_numeric(np.array(-2.0, dtype="uint8"))
     msg = 'Array must be numeric.'
     with pytest.raises(TypeError, match=msg):
-        check_is_numeric('abc')
+        check_numeric('abc')
     msg = '_input must be numeric.'
     with pytest.raises(TypeError, match=msg):
-        check_is_numeric(tuple('s'), name="_input")
+        check_numeric(tuple('s'), name="_input")
 
 
 def test_check_is_finite():
-    check_is_finite(0)
+    check_finite(0)
     msg = '_input must have finite values.'
     with pytest.raises(ValueError, match=msg):
-        check_is_finite(np.nan, name="_input")
+        check_finite(np.nan, name="_input")
 
 
 def test_check_is_integerlike():
-    check_is_integerlike(1)
-    check_is_integerlike([2, 3.0])
+    check_integerlike(1)
+    check_integerlike([2, 3.0])
     msg = "Input has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'numpy.integer'>."
     with pytest.raises(TypeError, match=msg):
-        check_is_integerlike([2, 3.0], strict=True, name="_input")
+        check_integerlike([2, 3.0], strict=True, name="_input")
     msg = "_input must have integer-like values."
     with pytest.raises(ValueError, match=msg):
-        check_is_integerlike([2, 3.4], strict=False, name="_input")
+        check_integerlike([2, 3.4], strict=False, name="_input")
 
 
 def test_check_is_sequence():
-    check_is_sequence((1,), name='abc')
-    check_is_sequence(range(3))
-    check_is_sequence("abc")
+    check_sequence((1,), name='abc')
+    check_sequence(range(3))
+    check_sequence("abc")
     with pytest.raises(TypeError, match="_input"):
-        check_is_sequence(np.array(1), name="_input")
+        check_sequence(np.array(1), name="_input")
 
 
 def test_check_is_iterable():
-    check_is_iterable((1,), name='abc')
-    check_is_iterable(range(3))
-    check_is_iterable("abc")
-    check_is_iterable(np.array(1))
+    check_iterable((1,), name='abc')
+    check_iterable(range(3))
+    check_iterable("abc")
+    check_iterable(np.array(1))
     with pytest.raises(TypeError, match="_input"):
-        check_is_iterable(1, name="_input")
+        check_iterable(1, name="_input")
 
 
 def test_check_has_length():
-    check_has_length((1,))
-    check_has_length(
+    check_length((1,))
+    check_length(
         [
             1,
         ]
     )
-    check_has_length(np.ndarray((1,)))
-    check_has_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
-    check_has_length((1,), exact_length=[1, 2.0])
+    check_length(np.ndarray((1,)))
+    check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
+    check_length((1,), exact_length=[1, 2.0])
 
     with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
-        check_has_length((1,), exact_length=(1, 2.4), name="_input")
+        check_length((1,), exact_length=(1, 2.4), name="_input")
 
     msg = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=msg):
-        check_has_length((1, 2), exact_length=1, name="_input")
+        check_length((1, 2), exact_length=1, name="_input")
     msg = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(msg)):
-        check_has_length((1, 2), exact_length=[3, 4], name="_input")
+        check_length((1, 2), exact_length=[3, 4], name="_input")
 
     msg = "_input must have a maximum length of 1. Got length 2 instead."
     with pytest.raises(ValueError, match=msg):
-        check_has_length((1, 2), max_length=1, name="_input")
+        check_length((1, 2), max_length=1, name="_input")
 
     msg = "_input must have a minimum length of 2. Got length 1 instead."
     with pytest.raises(ValueError, match=msg):
-        check_has_length((1,), min_length=2, name="_input")
+        check_length((1,), min_length=2, name="_input")
 
     msg = "Range [4 2] must be sorted in ascending order."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_has_length(
+        check_length(
             (
                 1,
                 2,
@@ -730,15 +726,15 @@ def test_check_has_length():
 
     msg = "Shape must be -1."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_has_length(((1, 2), (3, 4)), must_be_1d=True)
+        check_length(((1, 2), (3, 4)), must_be_1d=True)
 
 
 def test_check_is_nonnegative():
-    check_is_nonnegative(0)
-    check_is_nonnegative(np.eye(3))
+    check_nonnegative(0)
+    check_nonnegative(np.eye(3))
     msg = "Array values must all be greater than or equal to 0."
     with pytest.raises(ValueError, match=msg):
-        check_is_nonnegative(-1)
+        check_nonnegative(-1)
 
 
 @pytest.mark.parametrize('shape', [(), (8,), (4, 6), (2, 3, 4)])
@@ -747,7 +743,7 @@ def test_check_is_nonnegative():
 @pytest.mark.parametrize('strict', [True, False])
 def test_check_is_sorted(shape, axis, ascending, strict):
     def _check_is_sorted_params(arr):
-        check_is_sorted(arr, axis=axis, strict=strict, ascending=ascending)
+        check_sorted(arr, axis=axis, strict=strict, ascending=ascending)
 
     if shape == ():
         # test always succeeds with scalar
@@ -806,26 +802,26 @@ def test_check_is_sorted(shape, axis, ascending, strict):
 
 
 def test_check_is_iterable_of_strings():
-    check_is_iterable_of_strings(["abc", "123"])
-    check_is_iterable_of_strings("abc")
+    check_iterable_of_strings(["abc", "123"])
+    check_iterable_of_strings("abc")
     msg = "All items of String Iterable must be an instance of <class 'str'>. Got <class 'list'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_iterable_of_strings(["abc", ["123"]])
+        check_iterable_of_strings(["abc", ["123"]])
     msg = "String Iterable must be an instance of <class 'collections.abc.Iterable'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_iterable_of_strings(0)
+        check_iterable_of_strings(0)
 
 
 def test_check_is_iterable_of_some_type():
-    check_is_iterable_of_some_type([1, 2, 3], int)
-    check_is_iterable_of_some_type(("a", "b", "c"), str)
-    check_is_iterable_of_some_type("abc", str)
-    check_is_iterable_of_some_type(range(10), int)
+    check_iterable_item_type([1, 2, 3], int)
+    check_iterable_item_type(("a", "b", "c"), str)
+    check_iterable_item_type("abc", str)
+    check_iterable_item_type(range(10), int)
     msg = "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_iterable_of_some_type(["abc", 1], str)
+        check_iterable_item_type(["abc", 1], str)
     with pytest.raises(TypeError, match="All items of _input"):
-        check_is_iterable_of_some_type(["abc", 1], str, name="_input")
+        check_iterable_item_type(["abc", 1], str, name="_input")
 
 
 @pytest.mark.parametrize('number', [1, 1.0, True, 1 + 1j])
@@ -839,24 +835,24 @@ def test_check_is_number(number, definition, must_be_real):
         # Test bool types always raise an error
         # Test complex types raise an error when `must_be_real` is True
         with pytest.raises(TypeError):
-            check_is_number(number, must_be_real=must_be_real)
+            check_number(number, must_be_real=must_be_real)
     else:
         # All other cases should succeed
-        check_is_number(number, must_be_real=must_be_real)
+        check_number(number, must_be_real=must_be_real)
 
     if definition == 'numpy':
         # Test numpy types raise an error when definition is 'builtin'
         if isinstance(number, float) or (isinstance(number, complex) and not must_be_real):
             # np.float_ and np.complex_ subclass float and complex, respectively,
             # so no error is raised
-            check_is_number(number, must_be_real=must_be_real, definition='builtin')
+            check_number(number, must_be_real=must_be_real, definition='builtin')
         else:
             with pytest.raises(TypeError):
-                check_is_number(number, must_be_real=must_be_real, definition='builtin')
+                check_number(number, must_be_real=must_be_real, definition='builtin')
     elif definition == 'builtin':
         # Test builtin types raise an error when definition is 'numpy'
         with pytest.raises(TypeError):
-            check_is_number(number, must_be_real=must_be_real, definition='numpy')
+            check_number(number, must_be_real=must_be_real, definition='numpy')
 
 
 def test_check_is_number_raises():
@@ -864,13 +860,13 @@ def test_check_is_number_raises():
         "_input must be an instance of <class 'numbers.Real'>. Got <class 'numpy.ndarray'> instead."
     )
     with pytest.raises(TypeError, match=msg):
-        check_is_number(np.array(0), name='_input')
+        check_number(np.array(0), name='_input')
     msg = "Object must be"
     with pytest.raises(TypeError, match=msg):
-        check_is_number(np.array(0))
+        check_number(np.array(0))
     msg = "Object must be"
     with pytest.raises(TypeError, match=msg):
-        check_is_number(1 + 1j, must_be_real=True)
+        check_number(1 + 1j, must_be_real=True)
 
 
 def test_check_is_scalar():
@@ -888,13 +884,13 @@ def test_check_is_scalar():
 
 
 def test_check_is_string_in_iterable():
-    check_is_string_in_iterable("foo", ["foo", "bar"])
+    check_contains_string("foo", ["foo", "bar"])
     msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
-        check_is_string_in_iterable("foo", ["cat", "bar"])
+        check_contains_string("foo", ["cat", "bar"])
     msg = "_input must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_is_string_in_iterable(1, 2, name="_input")
+        check_contains_string(1, 2, name="_input")
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])
