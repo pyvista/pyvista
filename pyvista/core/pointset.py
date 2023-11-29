@@ -1127,6 +1127,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Examples
         --------
         Create a mesh with one face and one line
+
         >>> import pyvista as pv
         >>> mesh = pv.PolyData(
         ...     [(0.0, 0, 0), (1, 0, 0), (0, 1, 0)],
@@ -1135,7 +1136,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ... )
         >>> mesh.n_cells, mesh.n_faces_strict
         (2, 1)
-
         """
         return self.GetNumberOfPolys()
 
@@ -2530,6 +2530,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """
         if len(dims) != 3:
             raise ValueError("Expected dimensions to be length 3.")
+
         shape0 = np.asanyarray(dims) - 1
         shape1 = 2 * shape0
         ncells = np.prod(shape0)
@@ -2616,6 +2617,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         binary : bool, default: True
             If ``True``, write as binary, else ASCII.
+
         texture : np.ndarray, str, None
             Ignored argument. Kept to maintain compatibility with supertype.
 
@@ -3007,6 +3009,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         if isinstance(ind, int):
             ind = [ind]
+
         rel_map = {
             'connectivity': connectivity,
             'geometric': geometric,
@@ -3018,6 +3021,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                 f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}'
             )
         rel_func = rel_map[rel]
+
         indices = set()
         for i in ind:
             indices.update(rel_func(i))
