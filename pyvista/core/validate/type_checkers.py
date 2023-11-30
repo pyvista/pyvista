@@ -35,8 +35,8 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
 
     See Also
     --------
-    check_string_in_iterable
-    check_iterable_of_strings
+    check_contains
+    check_iterable_items
     check_sequence
     check_instance
 
@@ -111,7 +111,7 @@ def check_iterable(obj: Iterable, /, *, name: str = 'Object'):
     --------
     check_sequence
     check_instance
-    check_iterable_of_some_type
+    check_iterable_items
 
     Examples
     --------
@@ -300,7 +300,7 @@ def check_iterable_items(
     --------
     check_instance
     check_iterable
-    check_iterable_of_strings
+    check_iterable_items
 
     Examples
     --------
@@ -317,14 +317,12 @@ def check_iterable_items(
     """
     check_iterable(iterable_obj, name=name)
     try:
-        # TODO: add bool return to check functions and convert this statement
-        # to a generator with all()
-        [
+        any(
             check_instance(
                 item, item_type, allow_subclass=allow_subclass, name=f"All items of {name}"
             )
             for item in iterable_obj
-        ]
+        )
 
     except TypeError:
         raise
@@ -352,8 +350,7 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
     See Also
     --------
     check_iterable
-    check_string
-    check_iterable_of_strings
+    check_iterable_items
 
     Examples
     --------
