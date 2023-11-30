@@ -190,16 +190,15 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:   0
 
         """
+        cells = [len(self.point_ids)] + list(range(len(self.point_ids)))
         if self.dimension == 0:
-            return pyvista.PolyData(self.points.copy())
+            return pyvista.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
-            return pyvista.PolyData(
-                self.points.copy(), lines=[len(self.point_ids)] + list(range(len(self.point_ids)))
-            )
+            return pyvista.PolyData(self.points.copy(), lines=cells)
         if self.dimension == 2:
-            return pyvista.PolyData(
-                self.points.copy(), faces=[len(self.point_ids)] + list(range(len(self.point_ids)))
-            )
+            if self.type == CellType.TRIANGLE_STRIP:
+                return pyvista.PolyData(self.points.copy(), strips=cells)
+            return pyvista.PolyData(self.points.copy(), faces=cells)
         else:
             raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
 
