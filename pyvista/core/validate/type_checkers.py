@@ -330,49 +330,6 @@ def check_iterable_items(
         raise
 
 
-def check_iterable_of_strings(
-    iterable_obj: Iterable, /, *, allow_subclass: bool = True, name: str = 'String Iterable'
-):
-    """Check if an iterable's items are all strings.
-
-    Parameters
-    ----------
-    iterable_obj : Iterable
-        Iterable of strings to check.
-
-    allow_subclass : bool, default: True
-        If ``True``, the type of the iterable's items must be any of the
-        given types or a subclass thereof. Otherwise, subclasses are not
-        allowed.
-
-    name : str, default: "String Iterable"
-        Variable name to use in the error messages if any are raised.
-
-    Raises
-    ------
-    TypeError
-        If any of the elements have an incorrect type.
-
-    See Also
-    --------
-    check_iterable
-    check_string
-    check_string_in_iterable
-
-    Examples
-    --------
-    Check if a ``tuple`` only has ``str`` elements.
-
-    >>> from pyvista.core import validate
-    >>> validate.check_iterable_of_strings(("cat", "dog"))
-
-    """
-    try:
-        check_iterable_items(iterable_obj, str, allow_subclass=allow_subclass, name=name)
-    except TypeError:
-        raise
-
-
 def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
     """Check if an object is in a container.
 

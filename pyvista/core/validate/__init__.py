@@ -33,7 +33,6 @@ from .type_checkers import (  # noqa: 401
     check_instance,
     check_iterable,
     check_iterable_items,
-    check_iterable_of_strings,
     check_sequence,
     check_string,
     check_type,

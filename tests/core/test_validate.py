@@ -18,7 +18,6 @@ from pyvista.core.validate import (
     check_integerlike,
     check_iterable,
     check_iterable_items,
-    check_iterable_of_strings,
     check_length,
     check_less_than,
     check_nonnegative,
@@ -799,17 +798,6 @@ def test_check_is_sorted(shape, axis, ascending, strict):
         for a in [arr_ascending, arr_strict_ascending]:
             with pytest.raises(ValueError, match="must be sorted in descending order"):
                 _check_is_sorted_params(a)
-
-
-def test_check_is_iterable_of_strings():
-    check_iterable_of_strings(["abc", "123"])
-    check_iterable_of_strings("abc")
-    msg = "All items of String Iterable must be an instance of <class 'str'>. Got <class 'list'> instead."
-    with pytest.raises(TypeError, match=escape(msg)):
-        check_iterable_of_strings(["abc", ["123"]])
-    msg = "String Iterable must be an instance of <class 'collections.abc.Iterable'>. Got <class 'int'> instead."
-    with pytest.raises(TypeError, match=escape(msg)):
-        check_iterable_of_strings(0)
 
 
 def test_check_is_iterable_of_some_type():
