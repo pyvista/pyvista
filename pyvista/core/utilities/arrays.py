@@ -5,7 +5,7 @@ from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import ArrayLike, DTypeLike
+import numpy.typing as npt
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -811,7 +811,7 @@ def cast_to_list_array(arr):
     return cast_to_ndarray(arr).tolist()
 
 
-def cast_to_tuple_array(arr: ArrayLike) -> tuple:
+def cast_to_tuple_array(arr: npt.ArrayLike) -> tuple:
     """Cast an array to a nested tuple.
 
     Parameters
@@ -833,11 +833,11 @@ def cast_to_tuple_array(arr: ArrayLike) -> tuple:
 
 
 def cast_to_ndarray(
-    arr: ArrayLike,
+    arr: npt.ArrayLike,
     /,
     *,
     as_any: bool = True,
-    dtype: Optional[DTypeLike] = None,
+    dtype: Optional[npt.DTypeLike] = None,
     copy: bool = False,
 ) -> NumpyNumArray:
     """Cast array to a NumPy ndarray.
