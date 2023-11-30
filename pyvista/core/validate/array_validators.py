@@ -18,8 +18,8 @@ from typing import Any, List, Optional, Union, cast
 import numpy as np
 import numpy.typing as npt
 
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
-from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 from pyvista.core.validate.array_checkers import (
     ShapeLike,
@@ -498,11 +498,11 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     """
     check_string(name, name="Name")
     arr = np.eye(4)  # initialize
-    if isinstance(transform, vtkMatrix4x4):
+    if isinstance(transform, _vtk.vtkMatrix4x4):
         arr = array_from_vtkmatrix(transform)
-    elif isinstance(transform, vtkMatrix3x3):
+    elif isinstance(transform, _vtk.vtkMatrix3x3):
         arr[:3, :3] = array_from_vtkmatrix(transform)
-    elif isinstance(transform, vtkTransform):
+    elif isinstance(transform, _vtk.vtkTransform):
         arr = array_from_vtkmatrix(transform.GetMatrix())
     else:
         try:
@@ -554,7 +554,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     """
     check_string(name, name="Name")
     arr = np.eye(3)  # initialize
-    if isinstance(transform, vtkMatrix3x3):
+    if isinstance(transform, _vtk.vtkMatrix3x3):
         arr[:3, :3] = array_from_vtkmatrix(transform)
     else:
         try:
