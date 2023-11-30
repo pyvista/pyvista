@@ -328,7 +328,12 @@ def test_cell_cast_to_unstructured_grid(cell):
 
 @pytest.mark.parametrize("cell", cells)
 def test_cell_cast_to_polydata(cell):
-    if cell.dimension != 3:
+    if cell.dimension == 3:
+        with pytest.raises(
+            ValueError, match=f"3D cells cannot be cast to PolyData: got cell type {cell.type}"
+        ):
+            cell.cast_to_polydata()
+    else:
         poly = cell.cast_to_polydata()
         assert poly.n_cells == 1
         assert poly.get_cell(0) == cell
