@@ -497,7 +497,7 @@ For example, a typical validation routine for some function may look like:
         # Validate input method. An error is automatically
         # raised if the method is not valid.
         possible_methods = ["method_a", "method_b"]
-        check_contains(method, possible_methods)
+        validate.check_contains(method, possible_methods)
 
         # Start of implementation code...
 
