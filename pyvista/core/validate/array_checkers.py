@@ -2,9 +2,9 @@
 
 .. versionadded:: 0.44.0
 
-A ``check`` function typically:
+An array checker function typically:
 
-* Performs a simple validation on a single input variable.
+* Checks the type and/or value of a single input variable.
 * Raises an error if the check fails due to invalid input.
 * Does not modify input or return anything.
 

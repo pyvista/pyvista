@@ -2,10 +2,10 @@
 
 .. versionadded:: 0.44.0
 
-A ``validate`` function typically:
+An array validator function typically:
 
-* Uses :py:mod:`~pyvista.core.validate.check` functions to
-  check the type and/or value of input arguments.
+* Uses array or type checkers to check the type and/or value of
+  input arguments.
 * Applies (optional) constraints, e.g. input or output must have a
   specific length, shape, type, data-type, etc.
 * Accepts many different input types or values and standardizes the
@@ -21,7 +21,8 @@ import numpy.typing as npt
 from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
-from pyvista.core.validate import (
+from pyvista.core.validate.array_checkers import (
+    ShapeLike,
     check_finite,
     check_integerlike,
     check_length,
@@ -32,7 +33,6 @@ from pyvista.core.validate import (
     check_sorted,
     check_subdtype,
 )
-from pyvista.core.validate.array_checkers import ShapeLike
 from pyvista.core.validate.type_checkers import check_contains, check_string
 
 
@@ -244,7 +244,7 @@ def validate_array(
         * an instance of ``np.ndarray`` (default), or
         * a nested ``list`` (if ``to_list=True``), or
         * a nested ``tuple`` (if ``to_tuple=True``), or
-        * a ``Number`` (i.e. ``int`` or ``float``) if the input is a scalar.
+        * a number (e.g. ``int`` or ``float``) if the input is a scalar.
 
     Examples
     --------
