@@ -93,7 +93,7 @@ def test_validate_transform_as_array3x3_raises():
         validate_transform3x3("abc")
 
 
-def test_check_is_subdtype():
+def test_check_subdtype():
     check_subdtype(int, np.integer)
     check_subdtype(np.dtype(int), np.integer)
     check_subdtype(np.array([1, 2, 3]), np.integer)
@@ -108,7 +108,7 @@ def test_check_is_subdtype():
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
-def test_check_is_subdtype_changes_type():
+def test_check_subdtype_changes_type():
     # test coercing some types (e.g. np.number) can lead to unexpected
     # failed `np.issubtype` checks due to an implicit change of type
     int_array = np.array([1, 2, 3])
@@ -189,7 +189,7 @@ def test_set_default_kwarg_mandatory():
         _set_default_kwarg_mandatory(kwargs, default_key, default_value)
 
 
-def test_check_has_shape():
+def test_check_shape():
     check_shape(0, ())
     check_shape(0, [(), 2])
     check_shape((1, 2, 3), [(), 3])
@@ -365,7 +365,7 @@ def test_validate_array3(reshape):
         validate_array3((1, 2, 3), must_have_shape=3)
 
 
-def test_check_is_in_range():
+def test_check_range():
     check_range((1, 2, 3), [1, 3])
 
     msg = "Array values must all be less than or equal to 2."
@@ -517,7 +517,7 @@ def test_validate_array(
 @pytest.mark.parametrize('classinfo', [int, (int, float), [int, float]])
 @pytest.mark.parametrize('allow_subclass', [True, False])
 @pytest.mark.parametrize('name', ["_input", "_object"])
-def test_check_is_instance(obj, classinfo, allow_subclass, name):
+def test_check_instance(obj, classinfo, allow_subclass, name):
     if isinstance(classinfo, list):
         with pytest.raises(TypeError):
             check_instance(obj, classinfo)
@@ -563,7 +563,7 @@ def test_check_is_instance(obj, classinfo, allow_subclass, name):
         check_instance(0, int, name=0)
 
 
-def test_check_is_type():
+def test_check_type():
     check_type(0, int, name='abc')
     check_type(0, Union[int])
     with pytest.raises(TypeError):
@@ -576,11 +576,11 @@ def test_check_is_type():
 @pytest.mark.skipif(
     sys.version_info < (3, 10), reason="Union type input requires python3.10 or higher"
 )
-def test_check_is_type_union():
+def test_check_type_union():
     check_type(0, Union[int, float])
 
 
-def test_check_is_string():
+def test_check_string():
     check_string("abc")
     check_string("abc", name='123')
     msg = "Value must be an instance of <class 'str'>. Got <class 'int'> instead."
@@ -601,7 +601,7 @@ def test_check_is_string():
         check_string(str_subclass(), allow_subclass=False)
 
 
-def test_check_is_less_than():
+def test_check_less_than():
     check_less_than([0], 1)
     check_less_than(np.eye(3), 1, strict=False)
     msg = "Array values must all be less than 0."
@@ -612,7 +612,7 @@ def test_check_is_less_than():
         check_less_than(1, 0, strict=False, name="_input")
 
 
-def test_check_is_greater_than():
+def test_check_greater_than():
     check_greater_than([1], 0)
     check_greater_than(np.eye(3), 0, strict=False)
     msg = "Array values must all be greater than 0."
@@ -623,7 +623,7 @@ def test_check_is_greater_than():
         check_greater_than(-1, 0, strict=False, name="_input")
 
 
-def test_check_is_real():
+def test_check_real():
     check_real(1)
     check_real(-2.0)
     check_real(np.array(-2.0, dtype="uint8"))
@@ -635,7 +635,7 @@ def test_check_is_real():
         check_real(1 + 1j, name="_input")
 
 
-def test_check_is_numeric():
+def test_check_numeric():
     check_numeric(1)
     check_numeric(-2.0)
     check_numeric(np.array(-2.0, dtype="uint8"))
@@ -647,14 +647,14 @@ def test_check_is_numeric():
         check_numeric(tuple('s'), name="_input")
 
 
-def test_check_is_finite():
+def test_check_finite():
     check_finite(0)
     msg = '_input must have finite values.'
     with pytest.raises(ValueError, match=msg):
         check_finite(np.nan, name="_input")
 
 
-def test_check_is_integerlike():
+def test_check_integerlike():
     check_integerlike(1)
     check_integerlike([2, 3.0])
     msg = "Input has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'numpy.integer'>."
@@ -665,7 +665,7 @@ def test_check_is_integerlike():
         check_integerlike([2, 3.4], strict=False, name="_input")
 
 
-def test_check_is_sequence():
+def test_check_sequence():
     check_sequence((1,), name='abc')
     check_sequence(range(3))
     check_sequence("abc")
@@ -673,7 +673,7 @@ def test_check_is_sequence():
         check_sequence(np.array(1), name="_input")
 
 
-def test_check_is_iterable():
+def test_check_iterable():
     check_iterable((1,), name='abc')
     check_iterable(range(3))
     check_iterable("abc")
@@ -682,7 +682,7 @@ def test_check_is_iterable():
         check_iterable(1, name="_input")
 
 
-def test_check_has_length():
+def test_check_length():
     check_length((1,))
     check_length(
         [
@@ -728,7 +728,7 @@ def test_check_has_length():
         check_length(((1, 2), (3, 4)), must_be_1d=True)
 
 
-def test_check_is_nonnegative():
+def test_check_nonnegative():
     check_nonnegative(0)
     check_nonnegative(np.eye(3))
     msg = "Array values must all be greater than or equal to 0."
@@ -740,13 +740,13 @@ def test_check_is_nonnegative():
 @pytest.mark.parametrize('axis', [None, -1, -2, -3, 0, 1, 2, 3])
 @pytest.mark.parametrize('ascending', [True, False])
 @pytest.mark.parametrize('strict', [True, False])
-def test_check_is_sorted(shape, axis, ascending, strict):
-    def _check_is_sorted_params(arr):
+def test_check_sorted(shape, axis, ascending, strict):
+    def _check_sorted_params(arr):
         check_sorted(arr, axis=axis, strict=strict, ascending=ascending)
 
     if shape == ():
         # test always succeeds with scalar
-        _check_is_sorted_params(0)
+        _check_sorted_params(0)
         return
 
     # Create ascending array with unique values
@@ -764,43 +764,43 @@ def test_check_is_sorted(shape, axis, ascending, strict):
         with pytest.raises(
             ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'
         ):
-            _check_is_sorted_params(arr_strict_ascending)
+            _check_sorted_params(arr_strict_ascending)
         return
 
     if axis is None and arr_ascending.ndim > 1:
         # test that axis=None will flatten array and cause it not to be sorted for higher dimension arrays
         with pytest.raises(ValueError):
-            _check_is_sorted_params(arr_ascending)
+            _check_sorted_params(arr_ascending)
         return
 
     if strict and ascending:
-        _check_is_sorted_params(arr_strict_ascending)
+        _check_sorted_params(arr_strict_ascending)
         for a in [arr_ascending, arr_descending, arr_strict_descending]:
             with pytest.raises(ValueError, match="must be sorted in strict ascending order"):
-                _check_is_sorted_params(a)
+                _check_sorted_params(a)
 
     elif not strict and ascending:
-        _check_is_sorted_params(arr_ascending)
-        _check_is_sorted_params(arr_strict_ascending)
+        _check_sorted_params(arr_ascending)
+        _check_sorted_params(arr_strict_ascending)
         for a in [arr_descending, arr_strict_descending]:
             with pytest.raises(ValueError, match="must be sorted in ascending order"):
-                _check_is_sorted_params(a)
+                _check_sorted_params(a)
 
     elif strict and not ascending:
-        _check_is_sorted_params(arr_strict_descending)
+        _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending, arr_descending]:
             with pytest.raises(ValueError, match="must be sorted in strict descending order"):
-                _check_is_sorted_params(a)
+                _check_sorted_params(a)
 
     elif not strict and not ascending:
-        _check_is_sorted_params(arr_descending)
-        _check_is_sorted_params(arr_strict_descending)
+        _check_sorted_params(arr_descending)
+        _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending]:
             with pytest.raises(ValueError, match="must be sorted in descending order"):
-                _check_is_sorted_params(a)
+                _check_sorted_params(a)
 
 
-def test_check_is_iterable_of_some_type():
+def test_check_iterable_items():
     check_iterable_items([1, 2, 3], int)
     check_iterable_items(("a", "b", "c"), str)
     check_iterable_items("abc", str)
@@ -815,7 +815,7 @@ def test_check_is_iterable_of_some_type():
 @pytest.mark.parametrize('number', [1, 1.0, True, 1 + 1j])
 @pytest.mark.parametrize('definition', ['builtin', 'numpy'])
 @pytest.mark.parametrize('must_be_real', [True, False])
-def test_check_is_number(number, definition, must_be_real):
+def test_check_number(number, definition, must_be_real):
     if definition == 'numpy':
         number = np.array([number])[0]
 
@@ -843,7 +843,7 @@ def test_check_is_number(number, definition, must_be_real):
             check_number(number, must_be_real=must_be_real, definition='numpy')
 
 
-def test_check_is_number_raises():
+def test_check_number_raises():
     msg = (
         "_input must be an instance of <class 'numbers.Real'>. Got <class 'numpy.ndarray'> instead."
     )
@@ -857,7 +857,7 @@ def test_check_is_number_raises():
         check_number(1 + 1j, must_be_real=True)
 
 
-def test_check_is_scalar():
+def test_check_scalar():
     check_scalar(1)
     check_scalar(np.array(0))
     check_scalar(np.array(1 + 2j), must_be_real=False)
