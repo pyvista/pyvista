@@ -59,13 +59,13 @@ from pyvista.core.validate.array_validators import _set_default_kwarg_mandatory
         vtkTransform(),
     ],
 )
-def test_validate_transform_as_array4x4(transform_like):
+def test_validate_transform4x4(transform_like):
     result = validate_transform4x4(transform_like)
     assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(4))
 
 
-def test_validate_transform_as_array4x4_raises():
+def test_validate_transform4x4_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
         validate_transform4x4(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must have real numbers"):
@@ -80,13 +80,13 @@ def test_validate_transform_as_array4x4_raises():
         vtkmatrix_from_array(np.eye(3)),
     ],
 )
-def test_validate_transform_as_array3x3(transform_like):
+def test_validate_transform3x3(transform_like):
     result = validate_transform3x3(transform_like)
     assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(3))
 
 
-def test_validate_transform_as_array3x3_raises():
+def test_validate_transform3x3_raises():
     with pytest.raises(TypeError, match=escape("Input transform must be one of")):
         validate_transform3x3(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match="must have real numbers."):
