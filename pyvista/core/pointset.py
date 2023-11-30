@@ -6,6 +6,7 @@ import os
 import pathlib
 from textwrap import dedent
 from typing import Optional, Tuple, Union, cast
+import warnings
 
 import numpy as np
 
@@ -30,6 +31,7 @@ from .errors import (
     PointSetCellOperationError,
     PointSetDimensionReductionError,
     PointSetNotSupported,
+    PyVistaDeprecationWarning,
     VTKVersionError,
 )
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
@@ -588,6 +590,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     """
 
+    _USE_STRICT_N_FACES = False
+    _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
+
     _WRITERS = {
         '.ply': _vtk.vtkPLYWriter,
         '.vtp': _vtk.vtkXMLPolyDataWriter,
@@ -971,7 +976,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         """
         # Need to make sure there are only face cells and no lines/verts
-        if not self.n_faces or self.n_lines or self.n_verts:
+        if not self.n_faces_strict or self.n_lines or self.n_verts:
             return False
 
         # early return if not all triangular
@@ -1062,21 +1067,77 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """
         return self.GetNumberOfStrips()
 
+    @staticmethod
+    def use_strict_n_faces(mode: bool) -> None:
+        """Global opt-in to strict n_faces.
+
+        Parameters
+        ----------
+        mode : bool
+            If true, all future calls to :attr:`n_faces <pyvista.PolyData.n_faces>`
+            will return the same thing as :attr:`n_faces_strict <pyvista.PolyData.n_faces_strict>`.
+
+        """
+        PolyData._USE_STRICT_N_FACES = mode
+
     @property
     def n_faces(self) -> int:  # numpydoc ignore=RT01
         """Return the number of cells.
 
-        Alias for ``n_cells``.
+        .. deprecated:: 0.43.0
+            The current (deprecated) behavior of this property is to
+            return the total number of cells, i.e. the sum of the number of
+            vertices, lines, triangle strips, and polygonal faces.
+            In the future, this will change to return only the number of
+            polygonal faces, i.e. those cells represented in the
+            `pv.PolyData.faces` array. If you want the total number of cells,
+            use `pv.PolyData.n_cells`. If you want only the number of polygonal faces,
+            use `pv.PolyData.n_faces_strict`. Alternatively, you can opt into the
+            future behavior globally by calling `pv.PolyData.use_strict_n_faces(True)`,
+            in which case `pv.PolyData.n_faces` will return the same thing as
+            `pv.PolyData.n_faces_strict`.
+
+        """
+        if PolyData._USE_STRICT_N_FACES:
+            return self.n_faces_strict
+
+        # Only issue the deprecated n_faces warning the first time it's used
+        if not PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES:
+            PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = True
+
+            # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
+            warnings.warn(
+                """The current behavior of `pv.PolyData.n_faces` has been deprecated.
+                Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead.
+                See the documentation in '`pv.PolyData.n_faces` for more information.""",
+                PyVistaDeprecationWarning,
+            )
+
+        return self.n_cells
+
+    @property
+    def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of polygonal faces.
+
+        Returns
+        -------
+        int :
+             Number of faces represented in the :attr:`n_faces <pyvista.PolyData.n_faces>` array.
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
-        >>> plane.n_faces
-        4
+        Create a mesh with one face and one line
 
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData(
+        ...     [(0.0, 0, 0), (1, 0, 0), (0, 1, 0)],
+        ...     faces=[3, 0, 1, 2],
+        ...     lines=[2, 0, 1],
+        ... )
+        >>> mesh.n_cells, mesh.n_faces_strict
+        (2, 1)
         """
-        return self.n_cells
+        return self.GetNumberOfPolys()
 
     def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.
