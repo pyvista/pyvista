@@ -11,7 +11,7 @@ from vtk import vtkTransform
 from pyvista.core import pyvista_ndarray
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 from pyvista.core.validate import (
-    check_contains_string,
+    check_contains,
     check_finite,
     check_greater_than,
     check_instance,
@@ -883,14 +883,14 @@ def test_check_is_scalar():
         check_is_scalar(np.array([1]))
 
 
-def test_check_is_string_in_iterable():
-    check_contains_string("foo", ["foo", "bar"])
-    msg = "String 'foo' is not in the iterable. String must be one of: \n\t['cat', 'bar']"
+def test_check_contains():
+    check_contains("foo", ["foo", "bar"])
+    msg = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
-        check_contains_string("foo", ["cat", "bar"])
-    msg = "_input must be an instance of <class 'str'>. Got <class 'int'> instead."
-    with pytest.raises(TypeError, match=escape(msg)):
-        check_contains_string(1, 2, name="_input")
+        check_contains("foo", ["cat", "bar"])
+    msg = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_contains(5, range(4), name="_input")
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])

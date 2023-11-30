@@ -19,7 +19,7 @@ from numpy import typing as npt
 from pyvista.core._typing_core import FloatVector, IntVector
 from pyvista.core.utilities.arrays import cast_to_ndarray
 from pyvista.core.validate.type_checkers import (
-    check_contains_string,
+    check_contains,
     check_instance,
     check_iterable_item_type,
 )
@@ -919,7 +919,7 @@ def check_number(
     >>> validate.check_number(num, must_be_real=False)
 
     """
-    check_contains_string(definition, ['abstract', 'builtin', 'numpy'])
+    check_contains(definition, ['abstract', 'builtin', 'numpy'])
 
     valid_type: Any
     if definition == 'abstract':

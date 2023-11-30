@@ -373,18 +373,18 @@ def check_iterable_of_strings(
         raise
 
 
-def check_contains_string(string_in: str, /, string_iterable: Iterable, *, name: str = 'String'):
-    """Check if a given string is in an iterable of strings.
+def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
+    """Check if an object is in a container.
 
     Parameters
     ----------
-    string_in : str
-        String to check.
+    obj : Any
+        Object to check.
 
-    string_iterable : Iterable
-        Iterable containing only strings.
+    container : Any
+        Container the object is expected to be in.
 
-    name : str, default: "String"
+    name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
 
     Raises
@@ -403,13 +403,13 @@ def check_contains_string(string_in: str, /, string_iterable: Iterable, *, name:
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista.core import validate
-    >>> check_contains_string("A", ["A", "B", "C"])
+    >>> check_contains("A", ["A", "B", "C"])
 
     """
-    check_string(string_in, name=name)
-    check_iterable_of_strings(string_iterable)
-    if string_in not in string_iterable:
-        raise ValueError(
-            f"{name} '{string_in}' is not in the iterable. "
-            f"{name} must be one of: \n\t" + str(string_iterable)
-        )
+    if obj not in container:
+        if isinstance(container, (list, tuple)):
+            qualifier = "one of"
+        else:
+            qualifier = "in"
+        msg = f"{name} '{obj}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        raise ValueError(msg)

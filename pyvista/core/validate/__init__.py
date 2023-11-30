@@ -29,7 +29,7 @@ from .array_validators import (  # noqa: 401
     validate_transform4x4,
 )
 from .type_checkers import (  # noqa: 401
-    check_contains_string,
+    check_contains,
     check_instance,
     check_iterable,
     check_iterable_item_type,
