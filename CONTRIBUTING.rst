@@ -476,26 +476,34 @@ use of existing validation methods in ``pyvista.core.validate``.
 For example, a typical validation routine for some function may look like:
 
 .. code:: python
+
     def some_function(points_array, method):
         """Apply a method to an Nx3 points array.
+
         Parameters
         ----------
         points_array : array_like
             Array-like input of points with shape Nx3.
+
         method : str
             Method to apply. Must be one of:
                 * ``'method_a'``
                 * ``'method_b'``
+
         """
+        # Import the `validate` package
+        ## It is preferred to give the package its own namespace rather
+        ## than importing individual package functions
         from pyvista.core import validate
 
-        # Validate input array. There is no need to check for
-        # type (e.g. Sequence or np.ndarray) or array shape.
-        # An error is automatically raised for bad input.
+        # Validate the input array.
+        ## There is no need to check for type (e.g. Sequence or
+        ## np.ndarray) or array shape. An error is automatically raised
+        ## for bad input.
         arr = validate.validate_arrayNx3(points_array)
 
-        # Validate input method. An error is automatically
-        # raised if the method is not valid.
+        # Validate the input method.
+        ## An error is automatically raised if the method is not valid.
         possible_methods = ["method_a", "method_b"]
         validate.check_contains(method, possible_methods)
 
