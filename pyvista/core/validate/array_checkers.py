@@ -1,6 +1,6 @@
 """Functions that check the type and/or value of numeric array-like objects.
 
-.. versionadded:: 0.43.0
+.. versionadded:: 0.44.0
 
 A ``check`` function typically:
 

@@ -1,6 +1,6 @@
 """Functions that check object types.
 
-.. versionadded:: 0.43.0
+.. versionadded:: 0.44.0
 
 A ``check`` function typically:
 

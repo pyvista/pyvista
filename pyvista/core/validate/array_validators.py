@@ -1,6 +1,6 @@
 """Functions that validate input and return a standard representation.
 
-.. versionadded:: 0.43.0
+.. versionadded:: 0.44.0
 
 A ``validate`` function typically:
 
