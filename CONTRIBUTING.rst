@@ -471,7 +471,7 @@ to validate all user input and raise any errors as appropriate.
 
 However, manually writing input validation routines and associated test cases
 can be time consuming and error prone. Therefore, it is recommended to make
-use of existing validation methods in ``pyvista.core.input_validation``.
+use of existing validation methods in ``pyvista.core.validate``.
 
 For example, a typical validation routine for some function may look like:
 
@@ -487,16 +487,20 @@ For example, a typical validation routine for some function may look like:
                 * ``'method_a'``
                 * ``'method_b'``
         """
-        import pyvista.core.input_validation as valid
+        from pyvista.core import validate
+
         # Validate input array. There is no need to check for
         # type (e.g. Sequence or np.ndarray) or array shape.
         # An error is automatically raised for bad input.
-        arr = valid.validate_arrayNx3(points_array)
+        arr = validate.validate_arrayNx3(points_array)
+
         # Validate input method. An error is automatically
         # raised if the method is not valid.
         possible_methods = ["method_a", "method_b"]
-        check_is_string_in_iterable(method, possible_methods)
+        check_contains(method, possible_methods)
+
         # Start of implementation code...
+
 When using the array validation methods, consider setting the input
 type in the docstring to ``array_like`` (if appropriate), as the validation
 methods are very general and can operate on any array-like input.
