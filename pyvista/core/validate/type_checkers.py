@@ -35,10 +35,10 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
 
     See Also
     --------
-    check_is_string_in_iterable
-    check_is_iterable_of_strings
-    check_is_sequence
-    check_is_instance
+    check_string_in_iterable
+    check_iterable_of_strings
+    check_sequence
+    check_instance
 
     Examples
     --------
@@ -72,8 +72,8 @@ def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
 
     See Also
     --------
-    check_is_iterable
-    check_is_instance
+    check_iterable
+    check_instance
 
     Examples
     --------
@@ -109,9 +109,9 @@ def check_iterable(obj: Iterable, /, *, name: str = 'Object'):
 
     See Also
     --------
-    check_is_sequence
-    check_is_instance
-    check_is_iterable_of_some_type
+    check_sequence
+    check_instance
+    check_iterable_of_some_type
 
     Examples
     --------
@@ -162,11 +162,11 @@ def check_instance(
 
     See Also
     --------
-    check_is_type
-    check_is_number
-    check_is_string
-    check_is_iterable
-    check_is_sequence
+    check_type
+    check_number
+    check_string
+    check_iterable
+    check_sequence
 
     Examples
     --------
@@ -225,8 +225,8 @@ def check_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: s
 
     Notes
     -----
-    The use of :func:`check_is_instance` is generally preferred as it
-    allows subclasses. Use :func:`check_is_type` only for cases where
+    The use of :func:`check_instance` is generally preferred as it
+    allows subclasses. Use :func:`check_type` only for cases where
     exact types are necessary.
 
     Parameters
@@ -248,7 +248,7 @@ def check_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: s
 
     See Also
     --------
-    check_is_instance
+    check_instance
 
     Examples
     --------
@@ -264,7 +264,7 @@ def check_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: s
         raise
 
 
-def check_iterable_item_type(
+def check_iterable_items(
     iterable_obj: Iterable,
     /,
     item_type: Union[type, Tuple[type, ...]],
@@ -298,21 +298,21 @@ def check_iterable_item_type(
 
     See Also
     --------
-    check_is_instance
-    check_is_iterable
-    check_is_iterable_of_strings
+    check_instance
+    check_iterable
+    check_iterable_of_strings
 
     Examples
     --------
     Check if a ``tuple`` only has ``int`` or ``float`` elements.
 
     >>> from pyvista.core import validate
-    >>> validate.check_iterable_item_type((1, 2, 3.0), (int, float))
+    >>> validate.check_iterable_items((1, 2, 3.0), (int, float))
 
     Check if a ``list`` only has ``list`` elements.
 
     >>> from pyvista.core import validate
-    >>> validate.check_iterable_item_type([[1], [2], [3]], list)
+    >>> validate.check_iterable_items([[1], [2], [3]], list)
 
     """
     check_iterable(iterable_obj, name=name)
@@ -355,9 +355,9 @@ def check_iterable_of_strings(
 
     See Also
     --------
-    check_is_iterable
-    check_is_string
-    check_is_string_in_iterable
+    check_iterable
+    check_string
+    check_string_in_iterable
 
     Examples
     --------
@@ -368,7 +368,7 @@ def check_iterable_of_strings(
 
     """
     try:
-        check_iterable_item_type(iterable_obj, str, allow_subclass=allow_subclass, name=name)
+        check_iterable_items(iterable_obj, str, allow_subclass=allow_subclass, name=name)
     except TypeError:
         raise
 
@@ -394,9 +394,9 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
 
     See Also
     --------
-    check_is_iterable
-    check_is_string
-    check_is_iterable_of_strings
+    check_iterable
+    check_string
+    check_iterable_of_strings
 
     Examples
     --------

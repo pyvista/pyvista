@@ -16,9 +16,8 @@ from pyvista.core.validate import (
     check_greater_than,
     check_instance,
     check_integerlike,
-    check_is_scalar,
     check_iterable,
-    check_iterable_item_type,
+    check_iterable_items,
     check_iterable_of_strings,
     check_length,
     check_less_than,
@@ -27,6 +26,7 @@ from pyvista.core.validate import (
     check_numeric,
     check_range,
     check_real,
+    check_scalar,
     check_sequence,
     check_shape,
     check_sorted,
@@ -813,15 +813,15 @@ def test_check_is_iterable_of_strings():
 
 
 def test_check_is_iterable_of_some_type():
-    check_iterable_item_type([1, 2, 3], int)
-    check_iterable_item_type(("a", "b", "c"), str)
-    check_iterable_item_type("abc", str)
-    check_iterable_item_type(range(10), int)
+    check_iterable_items([1, 2, 3], int)
+    check_iterable_items(("a", "b", "c"), str)
+    check_iterable_items("abc", str)
+    check_iterable_items(range(10), int)
     msg = "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(msg)):
-        check_iterable_item_type(["abc", 1], str)
+        check_iterable_items(["abc", 1], str)
     with pytest.raises(TypeError, match="All items of _input"):
-        check_iterable_item_type(["abc", 1], str, name="_input")
+        check_iterable_items(["abc", 1], str, name="_input")
 
 
 @pytest.mark.parametrize('number', [1, 1.0, True, 1 + 1j])
@@ -870,17 +870,17 @@ def test_check_is_number_raises():
 
 
 def test_check_is_scalar():
-    check_is_scalar(1)
-    check_is_scalar(np.array(0))
-    check_is_scalar(np.array(1 + 2j), must_be_real=False)
+    check_scalar(1)
+    check_scalar(np.array(0))
+    check_scalar(np.array(1 + 2j), must_be_real=False)
 
     msg = "Got <class 'list'> instead."
     with pytest.raises(TypeError, match=msg):
-        check_is_scalar([1, 2])
+        check_scalar([1, 2])
 
     msg = "Scalar must be a 0-dimensional array, got `ndim=1` instead."
     with pytest.raises(ValueError, match=escape(msg)):
-        check_is_scalar(np.array([1]))
+        check_scalar(np.array([1]))
 
 
 def test_check_contains():

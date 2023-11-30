@@ -18,11 +18,7 @@ from numpy import typing as npt
 
 from pyvista.core._typing_core import FloatVector, IntVector
 from pyvista.core.utilities.arrays import cast_to_ndarray
-from pyvista.core.validate.type_checkers import (
-    check_contains,
-    check_instance,
-    check_iterable_item_type,
-)
+from pyvista.core.validate.type_checkers import check_contains, check_instance, check_iterable_items
 
 # Similar definitions to numpy._typing._shape but with modifications:
 #  - explicit support for empty tuples `()`
@@ -62,8 +58,8 @@ def check_subdtype(
 
     See Also
     --------
-    check_is_real
-    check_is_number
+    check_real
+    check_number
 
     Examples
     --------
@@ -110,7 +106,7 @@ def check_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
     Notes
     -----
     Arrays with ``infinity`` or ``NaN`` values are numeric  and
-    will not raise an error. Use :func:`check_is_finite` to check for
+    will not raise an error. Use :func:`check_finite` to check for
     finite values.
 
     Parameters
@@ -128,8 +124,8 @@ def check_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     See Also
     --------
-    check_is_real
-    check_is_finite
+    check_real
+    check_finite
 
     Examples
     --------
@@ -156,7 +152,7 @@ def check_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
     Notes
     -----
     Arrays with ``infinity`` or ``NaN`` values are considered real and
-    will not raise an error. Use :func:`check_is_finite` to check for
+    will not raise an error. Use :func:`check_finite` to check for
     finite values.
 
     Parameters
@@ -174,11 +170,11 @@ def check_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     See Also
     --------
-    check_is_numeric
+    check_numeric
         Similar function which allows complex numbers.
-    check_is_scalar
+    check_scalar
         Similar function for a single number or 0-dimensional ndarrays.
-    check_is_finite
+    check_finite
 
     Examples
     --------
@@ -243,7 +239,7 @@ def check_sorted(
 
     See Also
     --------
-    check_is_in_range
+    check_range
 
     Examples
     --------
@@ -325,7 +321,7 @@ def check_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     See Also
     --------
-    check_is_real
+    check_real
 
     Examples
     --------
@@ -365,8 +361,8 @@ def check_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: str 
 
     See Also
     --------
-    check_is_nonnegative
-    check_is_subdtype
+    check_nonnegative
+    check_subdtype
 
     Examples
     --------
@@ -404,8 +400,8 @@ def check_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     See Also
     --------
-    check_is_greater_than
-    check_is_less_than
+    check_greater_than
+    check_less_than
 
     Examples
     --------
@@ -449,9 +445,9 @@ def check_greater_than(
 
     See Also
     --------
-    check_is_less_than
-    check_is_in_range
-    check_is_nonnegative
+    check_less_than
+    check_range
+    check_nonnegative
 
     Examples
     --------
@@ -499,9 +495,9 @@ def check_less_than(
 
     See Also
     --------
-    check_is_greater_than
-    check_is_in_range
-    check_is_nonnegative
+    check_greater_than
+    check_range
+    check_nonnegative
 
     Examples
     --------
@@ -562,8 +558,8 @@ def check_range(
 
     See Also
     --------
-    check_is_less_than
-    check_is_greater_than
+    check_less_than
+    check_greater_than
 
     Examples
     --------
@@ -617,7 +613,7 @@ def check_shape(
 
     See Also
     --------
-    check_has_length
+    check_length
 
     Examples
     --------
@@ -719,7 +715,7 @@ def check_length(
 
     See Also
     --------
-    check_has_shape
+    check_shape
 
     Examples
     --------
@@ -763,11 +759,11 @@ def check_length(
     # Validate min/max length
     if min_length is not None:
         min_length = cast_to_ndarray(min_length)  # type: ignore
-        check_is_scalar(min_length, name="Min length")
+        check_scalar(min_length, name="Min length")
         check_real(min_length, name="Min length")
     if max_length is not None:
         max_length = cast_to_ndarray(max_length)  # type: ignore
-        check_is_scalar(max_length, name="Max length")
+        check_scalar(max_length, name="Max length")
         check_real(max_length, name="Max length")
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
@@ -814,7 +810,7 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
     if isinstance(shape, int):
         shape = (shape,)
     else:
-        check_iterable_item_type(shape, int, name='Shape')
+        check_iterable_items(shape, int, name='Shape')
     check_greater_than(shape, -1, name="Shape", strict=False)
     raise RuntimeError("This line should not be reachable.")  # pragma: no cover
 
@@ -836,10 +832,10 @@ def check_number(
 
     Notes
     -----
-    - This check fails for instances of :class:`numpy.ndarray`. Use :func:`check_is_scalar`
+    - This check fails for instances of :class:`numpy.ndarray`. Use :func:`check_scalar`
       instead to also allow for 0-dimensional arrays.
     - Values such as ``float('inf')`` and ``float('NaN')`` are valid numbers and
-      will not raise an error. Use :func:`check_is_finite` to check for finite values.
+      will not raise an error. Use :func:`check_finite` to check for finite values.
 
     .. warning::
 
@@ -885,13 +881,13 @@ def check_number(
 
     See Also
     --------
-    check_is_scalar
+    check_scalar
         Similar function which allows 0-dimensional ndarrays.
-    check_is_numeric
+    check_numeric
         Similar function for any dimensional array of numbers.
-    check_is_real
+    check_real
         Similar function for any dimensional array of real numbers.
-    check_is_finite
+    check_finite
 
 
     Examples
@@ -937,7 +933,7 @@ def check_number(
         raise
 
 
-def check_is_scalar(
+def check_scalar(
     scalar: Union[float, int, complex, Number, np.number, np.ndarray],
     /,
     *,
@@ -949,13 +945,13 @@ def check_is_scalar(
     By default, the number must be real, or a 0-dimensional :class:`numpy.ndarray`
     of a real number. Optionally, the scalar can also be a complex
 
-    This check is similar to :func:`check_is_number` but also allows 0-dimensional
+    This check is similar to :func:`check_number` but also allows 0-dimensional
     arrays.
 
     Notes
     -----
     Values such as ``infinity`` and ``NaN`` are valid scalars and will not
-    raise an error. Use :func:`check_is_finite` to check for finite values.
+    raise an error. Use :func:`check_finite` to check for finite values.
 
     Parameters
     ----------
@@ -976,13 +972,13 @@ def check_is_scalar(
 
     See Also
     --------
-    check_is_number
+    check_number
         Similar function which does not allow 0-dimensional ndarrays.
-    check_is_numeric
+    check_numeric
         Similar function for any dimensional array of numbers.
-    check_is_real
+    check_real
         Similar function for any dimensional array of real numbers.
-    check_is_finite
+    check_finite
 
     Examples
     --------
@@ -990,14 +986,14 @@ def check_is_scalar(
 
     >>> import numpy as np
     >>> from pyvista.core import validate
-    >>> validate.check_is_scalar(0.0)
-    >>> validate.check_is_scalar(np.array(1))
-    >>> validate.check_is_scalar(np.array(1 + 2j), must_be_real=False)
+    >>> validate.check_scalar(0.0)
+    >>> validate.check_scalar(np.array(1))
+    >>> validate.check_scalar(np.array(1 + 2j), must_be_real=False)
 
     """
     try:
         if isinstance(scalar, np.ndarray):
-            # TODO: check_has_ndim(scalar, 0)
+            # TODO: check_ndim(scalar, 0)
             if scalar.ndim > 0:
                 raise ValueError(
                     f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
