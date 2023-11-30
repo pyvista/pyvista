@@ -682,17 +682,26 @@ def test_rename_array_field(grid):
     assert np.array_equal(orig_vals, grid[new_name])
 
 
-def test_rename_array_dangling(grid):
+def test_rename_array_doesnt_delete():
     # Regression test for issue #5244
     def make_mesh():
         m = pv.Sphere()
         m.point_data['orig'] = np.ones(m.n_points)
         return m
 
-    for _ in range(20):  # Depends on garbage collection
-        mesh = make_mesh()
-        mesh.rename_array('orig', 'renamed')
-        assert (mesh['renamed'] == 1).all()
+    mesh = make_mesh()
+    was_deleted = [False]
+
+    def on_delete(*_):
+        # Would be easier to throw an exception here but even though the exception gets printed to stderr
+        # pytest reports the test passing -- I guess because of how it's thrown inside the VTK callback?
+        was_deleted[0] = True
+
+    mesh.point_data['orig'].VTKObject.AddObserver('DeleteEvent', on_delete)
+    mesh.rename_array('orig', 'renamed')
+    assert not was_deleted[0]
+    mesh.point_data['renamed'].VTKObject.RemoveAllObservers()
+    assert (mesh.point_data['renamed'] == 1).all()
 
 
 def test_change_name_fail(grid):
