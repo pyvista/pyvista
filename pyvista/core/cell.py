@@ -198,7 +198,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         if self.dimension == 2:
             if self.type == CellType.TRIANGLE_STRIP:
                 return pyvista.PolyData(self.points.copy(), strips=cells)
-            return pyvista.PolyData(self.points.copy(), faces=cells)
+            else:
+                return pyvista.PolyData(self.points.copy(), faces=cells)
         else:
             raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
 
