@@ -741,7 +741,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         # remove any picking text
         if hasattr(self, 'renderers'):
             for renderer in self.renderers:
-                renderer.remove_actor(self._picking_text, render=False)
+                renderer.remove_actor(self._picking_text, render=False, reset_camera=False)
         self._picking_text = None
 
     def enable_surface_point_picking(
