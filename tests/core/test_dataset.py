@@ -694,7 +694,7 @@ def test_rename_array_doesnt_delete():
 
     def on_delete(*_):
         # Would be easier to throw an exception here but even though the exception gets printed to stderr
-        # pytest reports the test passing -- I guess because of how it's thrown inside the VTK callback?
+        # pytest reports the test passing. See #5246 .
         was_deleted[0] = True
 
     mesh.point_data['orig'].VTKObject.AddObserver('DeleteEvent', on_delete)
