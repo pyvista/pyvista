@@ -11,7 +11,7 @@ from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.trame.ui import get_or_create_viewer
+from pyvista.trame.ui import get_viewer
 
 pv.OFF_SCREEN = True
 
@@ -38,7 +38,7 @@ def update_cmap(cmap="viridis", **kwargs):
 # GUI
 # -----------------------------------------------------------------------------
 
-viewer = get_or_create_viewer(plotter)
+viewer = get_viewer(plotter)
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
