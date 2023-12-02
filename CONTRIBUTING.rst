@@ -836,6 +836,21 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you make Pull Request from the pyvista organization repository, it
+automatically triggers deploying the Preview Documentation. Please check
+the documentation that is deployed by your Pull Request before merging.
+
+If you make Pull Request from the forked repository. You can comment
+`github-actions preview` on a pull request to preview documentation.
+But this command is only available for
+`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ .
+In this situation, kindly request to comment command. This process is
+essential to safeguard the deployment site against potentially harmful
+commits.
+
 Branching Model
 ~~~~~~~~~~~~~~~
 
