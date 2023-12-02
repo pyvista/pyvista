@@ -270,17 +270,6 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
-def test_trame_views():
-    server = get_server('foo')
-
-    pl = pv.Plotter(notebook=True)
-    pl.add_mesh(pv.Cone())
-
-    assert PyVistaRemoteLocalView(pl, trame_server=server)
-    assert PyVistaRemoteView(pl, trame_server=server)
-    assert PyVistaLocalView(pl, trame_server=server)
-
-
 def test_trame_jupyter_custom_size():
     w, h = 200, 150
     plotter = pv.Plotter(notebook=True, window_size=(w, h))
@@ -417,3 +406,14 @@ def test_embeddable_widget(skip_check_gc):
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
+
+
+def test_trame_views():
+    server = get_server('foo')
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+
+    assert PyVistaRemoteLocalView(pl, trame_server=server)
+    assert PyVistaRemoteView(pl, trame_server=server)
+    assert PyVistaLocalView(pl, trame_server=server)
