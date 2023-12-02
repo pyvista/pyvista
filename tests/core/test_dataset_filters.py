@@ -2153,15 +2153,15 @@ def test_extract_surface():
 
     # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface(progress_bar=True)
-    assert surf.n_faces == 36
+    assert surf.n_faces_strict == 36
 
     # expect each face to be divided several more times than the linear extraction
     surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=True)
-    assert surf_subdivided.n_faces > surf.n_faces
+    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
 
     # No subdivision, expect one face per cell
     surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=True)
-    assert surf_no_subdivide.n_faces == 6
+    assert surf_no_subdivide.n_faces_strict == 6
 
 
 def test_merge_general(uniform):
@@ -2980,11 +2980,11 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces
+    orig_n_faces = sphere.n_faces_strict
     sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
-    assert sub.n_faces > orig_n_faces
+    assert sub.n_faces_strict > orig_n_faces
     if inplace:
-        assert sphere.n_faces == sub.n_faces
+        assert sphere.n_faces_strict == sub.n_faces_strict
 
 
 def test_invalid_subdivide_adaptive(cube):
@@ -3110,3 +3110,73 @@ def test_merge_points():
     assert (
         pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
     )
+
+
+@pytest.fixture
+def labeled_image():
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
+    return image
+
+
+def test_sort_labels(labeled_image):
+    sorted_ = labeled_image.sort_labels()
+    assert np.array_equal(sorted_['packed_labels'], [2, 0, 0, 0, 0, 2, 1, 1])
+
+    # test no data
+    with pytest.raises(ValueError):
+        pv.ImageData(dimensions=(2, 2, 2)).sort_labels()
+
+    # test single label
+    labeled_image['labels'] = [0, 0, 0, 0, 0, 0, 0, 0]
+    sorted_ = labeled_image.sort_labels(scalars='labels')
+    assert np.array_equal(sorted_['packed_labels'], [0, 0, 0, 0, 0, 0, 0, 0])
+
+
+def test_pack_labels(labeled_image):
+    labeled_image["misc"] = [0, 0, 0, 0, 0, 0, 0, 0]
+    packed = labeled_image.pack_labels(progress_bar=True)
+    assert np.array_equal(packed['packed_labels'], [0, 2, 2, 2, 2, 0, 1, 1])
+    assert 'labels' in packed.array_names
+    assert 'packed_labels' in packed.array_names
+
+
+def test_pack_labels_inplace(uniform):
+    assert uniform.pack_labels() is not uniform  # default False
+    assert uniform.pack_labels(inplace=False) is not uniform
+    assert uniform.pack_labels(inplace=True) is uniform
+
+
+def test_pack_labels_output_scalars(labeled_image):
+    packed = labeled_image.pack_labels(output_scalars='foo')
+    assert np.array_equal(packed['foo'], [0, 2, 2, 2, 2, 0, 1, 1])
+    assert 'labels' in packed.array_names
+    assert packed.active_scalars_name == 'foo'
+
+    with pytest.raises(TypeError):
+        labeled_image.pack_labels(output_scalars=1)
+
+
+def test_pack_labels_preference(uniform):
+    uniform.rename_array('Spatial Point Data', 'labels_in')
+    uniform.rename_array('Spatial Cell Data', 'labels_in')
+
+    mesh = uniform.copy()
+    packed = mesh.pack_labels(preference='point')
+    expected_shape = mesh.point_data['labels_in'].shape
+    actual_shape = packed.point_data['packed_labels'].shape
+    assert np.array_equal(actual_shape, expected_shape)
+
+    mesh = uniform.copy()
+    packed = mesh.pack_labels(preference='cell')
+    expected_shape = mesh.cell_data['labels_in'].shape
+    actual_shape = packed.cell_data['packed_labels'].shape
+    assert np.array_equal(actual_shape, expected_shape)
+
+    # test point preference without point data
+    mesh = uniform.copy()
+    mesh.point_data.remove('labels_in')
+    packed = mesh.pack_labels(preference='point')
+    expected_shape = mesh.cell_data['labels_in'].shape
+    actual_shape = packed.cell_data['packed_labels'].shape
+    assert np.array_equal(actual_shape, expected_shape)

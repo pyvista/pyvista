@@ -339,6 +339,28 @@ def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
 
+def test_rotate_90_degrees_four_times_should_return_original_geometry():
+    sphere = pv.Sphere()
+    sphere.rotate_y(90, inplace=True)
+    sphere.rotate_y(90, inplace=True)
+    sphere.rotate_y(90, inplace=True)
+    sphere.rotate_y(90, inplace=True)
+    assert np.all(sphere.points == pv.Sphere().points)
+
+
+def test_rotate_180_degrees_two_times_should_return_original_geometry():
+    sphere = pv.Sphere()
+    sphere.rotate_x(180, inplace=True)
+    sphere.rotate_x(180, inplace=True)
+    assert np.all(sphere.points == pv.Sphere().points)
+
+
+def test_rotate_vector_90_degrees_should_not_distort_geometry():
+    cylinder = pv.Cylinder()
+    rotated = cylinder.rotate_vector(vector=(1, 1, 0), angle=90)
+    assert np.isclose(cylinder.volume, rotated.volume)
+
+
 def test_make_points_double(grid):
     grid.points = grid.points.astype(np.float32)
     assert grid.points.dtype == np.float32
@@ -854,12 +876,12 @@ def test_find_closest_cell():
 def test_find_closest_cells():
     mesh = pv.Sphere()
     # simply get the face centers, ordered by cell Id
-    fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
+    fcent = mesh.points[mesh.regular_faces].mean(1)
     fcent_copy = fcent.copy()
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
-    assert np.allclose(indices, np.arange(mesh.n_faces))
+    assert np.allclose(indices, np.arange(mesh.n_faces_strict))
 
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)
