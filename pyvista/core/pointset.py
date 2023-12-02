@@ -6,6 +6,7 @@ import os
 import pathlib
 from textwrap import dedent
 from typing import Optional, Tuple, Union, cast
+import warnings
 
 import numpy as np
 
@@ -30,6 +31,7 @@ from .errors import (
     PointSetCellOperationError,
     PointSetDimensionReductionError,
     PointSetNotSupported,
+    PyVistaDeprecationWarning,
     VTKVersionError,
 )
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
@@ -476,7 +478,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         or ``'C:/Users/user/my_mesh.ply'``.
 
         Otherwise, this must be a points array or list containing one
-        or more points.  Each point must have 3 dimensions.
+        or more points.  Each point must have 3 dimensions.  If ``faces``,
+        ``lines``, ``strips``, and ``verts`` are all ``None``, then the
+        ``PolyData`` object will be created with vertex cells with
+        ``n_verts`` equal to the number of ``points``.
 
     faces : sequence, optional
         Face connectivity array.  Faces must contain padding
@@ -537,6 +542,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
+    verts : sequence, optional
+        The verts connectivity array.  Like ``faces``, this array
+        requires padding indicating the number of vertices in each cell.
+        For example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
+        each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
+        polyvertex cells each with two points.
+
+    n_verts : int, optional
+        Number of verts in the ``verts`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
 
     See Also
     --------
@@ -558,27 +574,31 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> vtkobj = vtk.vtkPolyData()
     >>> mesh = pv.PolyData(vtkobj)
 
-    Initialize from just vertices.
+    Initialize from just points, creating vertices
 
-    >>> vertices = np.array(
-    ...     [[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]]
-    ... )
-    >>> mesh = pv.PolyData(vertices)
+    >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    >>> mesh = pv.PolyData(points)
 
-    Initialize from vertices and faces.
+    Initialize from points and faces, creating polygonal faces.
 
     >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]])
-    >>> mesh = pv.PolyData(vertices, faces)
+    >>> mesh = pv.PolyData(points, faces)
 
-    Initialize from vertices and lines.
+    Initialize from points and lines.
 
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
-    >>> mesh = pv.PolyData(vertices, lines=lines)
+    >>> mesh = pv.PolyData(points, lines=lines)
 
-    Initialize from vertices and triangle strips.
+    Initialize from points and triangle strips.
 
     >>> strips = np.hstack([[4, 0, 1, 3, 2]])
-    >>> mesh = pv.PolyData(vertices, strips=strips)
+    >>> mesh = pv.PolyData(points, strips=strips)
+
+    It is also possible to create with multiple cell types.
+
+    >>> verts = [1, 0]
+    >>> lines = [2, 1, 2]
+    >>> mesh = pv.PolyData(points, verts=verts, lines=lines)
 
     Initialize from a filename.
 
@@ -587,6 +607,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     See :ref:`create_poly` for more examples.
 
     """
+
+    _USE_STRICT_N_FACES = False
+    _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS = {
         '.ply': _vtk.vtkPLYWriter,
@@ -607,6 +630,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         deep: bool = False,
         force_ext: Optional[str] = None,
         force_float: Optional[bool] = True,
+        verts: Optional[IntVector] = None,
+        n_verts: Optional[int] = None,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -660,19 +685,19 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
-        if faces is None and lines is None and strips is None:
+        if faces is lines is strips is verts is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
-            self.verts = CellArray(verts, self.n_points, deep)  # type: ignore
-        elif strips is not None:
-            self.strips = CellArray(strips, n_strips, deep)  # type: ignore
-        elif faces is not None:
-            # here we use CellArray since we must specify deep and n_faces
-            self.faces = CellArray(faces, n_faces, deep)  # type: ignore
+            n_verts = self.n_points
 
-        # can always set lines
+        # here we use CellArray since we must specify deep and n_faces, etc.
+        if verts is not None:
+            self.verts = CellArray(verts, n_verts, deep)  # type: ignore
+        if strips is not None:
+            self.strips = CellArray(strips, n_strips, deep)  # type: ignore
+        if faces is not None:
+            self.faces = CellArray(faces, n_faces, deep)  # type: ignore
         if lines is not None:
-            # here we use CellArray since we must specify deep and n_lines
             self.lines = CellArray(lines, n_lines, deep)  # type: ignore
 
     def _post_file_load_processing(self) -> None:
@@ -971,7 +996,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         """
         # Need to make sure there are only face cells and no lines/verts
-        if not self.n_faces or self.n_lines or self.n_verts:
+        if not self.n_faces_strict or self.n_lines or self.n_verts:
             return False
 
         # early return if not all triangular
@@ -1062,21 +1087,77 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """
         return self.GetNumberOfStrips()
 
+    @staticmethod
+    def use_strict_n_faces(mode: bool) -> None:
+        """Global opt-in to strict n_faces.
+
+        Parameters
+        ----------
+        mode : bool
+            If true, all future calls to :attr:`n_faces <pyvista.PolyData.n_faces>`
+            will return the same thing as :attr:`n_faces_strict <pyvista.PolyData.n_faces_strict>`.
+
+        """
+        PolyData._USE_STRICT_N_FACES = mode
+
     @property
     def n_faces(self) -> int:  # numpydoc ignore=RT01
         """Return the number of cells.
 
-        Alias for ``n_cells``.
+        .. deprecated:: 0.43.0
+            The current (deprecated) behavior of this property is to
+            return the total number of cells, i.e. the sum of the number of
+            vertices, lines, triangle strips, and polygonal faces.
+            In the future, this will change to return only the number of
+            polygonal faces, i.e. those cells represented in the
+            `pv.PolyData.faces` array. If you want the total number of cells,
+            use `pv.PolyData.n_cells`. If you want only the number of polygonal faces,
+            use `pv.PolyData.n_faces_strict`. Alternatively, you can opt into the
+            future behavior globally by calling `pv.PolyData.use_strict_n_faces(True)`,
+            in which case `pv.PolyData.n_faces` will return the same thing as
+            `pv.PolyData.n_faces_strict`.
+
+        """
+        if PolyData._USE_STRICT_N_FACES:
+            return self.n_faces_strict
+
+        # Only issue the deprecated n_faces warning the first time it's used
+        if not PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES:
+            PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = True
+
+            # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
+            warnings.warn(
+                """The current behavior of `pv.PolyData.n_faces` has been deprecated.
+                Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead.
+                See the documentation in '`pv.PolyData.n_faces` for more information.""",
+                PyVistaDeprecationWarning,
+            )
+
+        return self.n_cells
+
+    @property
+    def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of polygonal faces.
+
+        Returns
+        -------
+        int :
+             Number of faces represented in the :attr:`n_faces <pyvista.PolyData.n_faces>` array.
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
-        >>> plane.n_faces
-        4
+        Create a mesh with one face and one line
 
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData(
+        ...     [(0.0, 0, 0), (1, 0, 0), (0, 1, 0)],
+        ...     faces=[3, 0, 1, 2],
+        ...     lines=[2, 0, 1],
+        ... )
+        >>> mesh.n_cells, mesh.n_faces_strict
+        (2, 1)
         """
-        return self.n_cells
+        return self.GetNumberOfPolys()
 
     def save(self, filename, binary=True, texture=None, recompute_normals=True):
         """Write a surface mesh to disk.

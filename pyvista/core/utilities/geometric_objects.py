@@ -13,6 +13,7 @@ vtkRegularPolygonSource
 vtkPyramid
 vtkPlatonicSolidSource
 vtkSuperquadricSource
+Text3DSource
 
 as well as some pure-python helpers.
 
@@ -25,7 +26,13 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
-from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource, translate
+from .geometric_sources import (
+    ConeSource,
+    CylinderSource,
+    MultipleLinesSource,
+    Text3DSource,
+    translate,
+)
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -1407,16 +1414,53 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     return surf
 
 
-def Text3D(string, depth=0.5):
+def Text3D(string, depth=None, width=None, height=None, center=(0, 0, 0), normal=(0, 0, 1)):
     """Create 3D text from a string.
+
+    The text may be configured to have a specified width, height or depth.
 
     Parameters
     ----------
     string : str
-        String to generate 3D text from.
+        String to generate 3D text from. If ``None`` or an empty string,
+        the output mesh will have a single point at :attr:`center`.
 
-    depth : float, default: 0.5
-        Depth of the text.
+    depth : float, optional
+        Depth of the text. If ``None``, the depth is set to half
+        the :attr:`height` by default. Set to ``0.0`` for planar
+        text.
+
+        .. versionchanged:: 0.43
+
+            The default depth is now calculated dynamically as
+            half the height. Previously, the default depth had
+            a fixed value of ``0.5``.
+
+    width : float, optional
+        Width of the text. If ``None``, the width is scaled
+        proportional to :attr:`height`.
+
+        .. versionadded:: 0.43
+
+    height : float, optional
+        Height of the text. If ``None``, the height is scaled
+        proportional to :attr:`width`.
+
+        .. versionadded:: 0.43
+
+    center : Sequence[float], default: (0.0, 0.0, 0.0)
+        Center of the text, defined as the middle of the axis-aligned
+        bounding box of the text.
+
+        .. versionadded:: 0.43
+
+    normal : Sequence[float], default: (0.0, 0.0, 1.0)
+        Normal direction of the text. The direction is parallel to the
+        :attr:`depth` of the text and points away from the front surface
+        of the text.
+
+        .. versionadded:: 0.43
+
 
     Returns
     -------
@@ -1429,21 +1473,15 @@ def Text3D(string, depth=0.5):
     >>> text_mesh = pv.Text3D('PyVista')
     >>> text_mesh.plot(cpos='xy')
     """
-    from vtkmodules.vtkRenderingFreeType import vtkVectorText
-
-    vec_text = vtkVectorText()
-    vec_text.SetText(string)
-
-    extrude = _vtk.vtkLinearExtrusionFilter()
-    extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion()
-    extrude.SetVector(0, 0, 1)
-    extrude.SetScaleFactor(depth)
-
-    tri_filter = _vtk.vtkTriangleFilter()
-    tri_filter.SetInputConnection(extrude.GetOutputPort())
-    tri_filter.Update()
-    return wrap(tri_filter.GetOutput())
+    return Text3DSource(
+        string,
+        width=width,
+        height=height,
+        depth=depth,
+        center=center,
+        normal=normal,
+        process_empty_string=True,
+    ).output
 
 
 def Wavelet(
