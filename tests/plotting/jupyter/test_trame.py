@@ -409,6 +409,7 @@ def test_embeddable_widget(skip_check_gc):
 
 
 def test_trame_views():
+    # This function needs to be the end of the code because it affects other functions (#5262).
     server = get_server('foo')
 
     pl = pv.Plotter(notebook=True)
