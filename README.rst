@@ -7,8 +7,8 @@ PyVista
    :alt: pyvista
 
 
-.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
-   :target: https://zenodo.org/badge/latestdoi/92974124
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
+   :target: https://zenodo.org/records/8415866
 
 .. |joss| image:: http://joss.theoj.org/papers/10.21105/joss.01450/status.svg
    :target: https://doi.org/10.21105/joss.01450
@@ -22,17 +22,17 @@ PyVista
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
-.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pyvista/pyvista
+.. |codecov| image:: https://app.codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
+   :target: https://app.codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
-   :target: https://www.codacy.com/gh/pyvista/pyvista/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pyvista/pyvista&amp;utm_campaign=Badge_Grade
+   :target: https://app.codacy.com/gh/pyvista/pyvista/dashboard
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/licenses/MIT
+   :target: https://opensource.org/license/mit/
 
 .. |slack| image:: https://img.shields.io/badge/Slack-pyvista-green.svg?logo=slack
-   :target: http://slack.pyvista.org
+   :target: https://communityinviter.com/apps/pyvista/pyvista
 
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/pyvista/
@@ -106,10 +106,10 @@ Python modules; see Connections for a list of projects that leverage
 PyVista.
 
 
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
+.. |post| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
+   :target: https://twitter.com/i/flow/login?redirect_after_login=%2Fintent%2Ftweet%3Ftext%3DCheck%2520out%2520this%2520project%2520for%25203D%2520visualization%2520in%2520Python%26url%3Dhttps%3A%2F%2Fgithub.com%2Fpyvista%2Fpyvista%26hashtags%3D3D%2Cvisualization%2CPython%2Cvtk%2Cmesh%2Cplotting%2CPyVista
 
-Share this project on X: |tweet|
+Share this project on X: |post|
 
 
 PyVista is a NumFOCUS affiliated project
@@ -166,7 +166,7 @@ where the community can collectively address your questions. You are also
 welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
-.. _Slack: http://slack.pyvista.org
+.. _Slack: https://communityinviter.com/apps/pyvista/pyvista
 
 
 Installation

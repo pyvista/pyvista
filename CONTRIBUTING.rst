@@ -71,7 +71,7 @@ software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
 
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+You are also welcome to join us on `Slack <https://communityinviter.com/apps/pyvista/pyvista>`_,
 but Slack should be reserved for ad hoc conversations and community engagement
 rather than technical discussions.
 
