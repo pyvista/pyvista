@@ -609,3 +609,12 @@ def test_logo_widget(verify_image_cache):
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
         pl.add_logo_widget(logo=0)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_widget_orientation_rotate():
+    p = pv.Plotter()
+    p.add_orientation_rotate_widget()
+    assert p.orientation_rotate_widgets
+    p.close()
+    assert not p.orientation_rotate_widgets
