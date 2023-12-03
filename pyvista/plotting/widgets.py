@@ -2718,6 +2718,9 @@ class WidgetHelper:
         show_arrows: bool = False,
         arrow_distance: float = 0.0,
         arrow_length: float = 0.05,
+        arrow_tip_length: float = 1.0,
+        arrow_tip_radius: float = 0.03,
+        arrow_shaft_radius: float = 0.001,
     ):
         """Add rotate_orientation_widget.
 
@@ -2752,6 +2755,18 @@ class WidgetHelper:
             Note that double arrows are two arrows next to each other.
             Clamped between [0.01, 0.5].
 
+        arrow_tip_length : float, optional, default: 1.0
+            The length of the arrow tip.
+            Factor of arrow length, equals if set to 1.
+            Note that double arrows are two arrows next to each other.
+            Clamped between [0.0, 1.0].
+
+        arrow_tip_radius : float, optional, default: 0.03
+            The radius of the arrow tip. Clamped between [0.001, 0.5].
+
+        arrow_shaft_radius : float, optional, default: 0.001
+            The radius of the arrow shaft. Clamped between [0.001, 0.5].
+
         Returns
         -------
         vtkOrientationWidget
@@ -2784,6 +2799,9 @@ class WidgetHelper:
         representation.SetShowArrows(show_arrows)
         representation.SetArrowDistance(arrow_distance)
         representation.SetArrowLength(arrow_length)
+        representation.SetArrowTipLength(arrow_tip_length)
+        representation.SetArrowTipRadius(arrow_tip_radius)
+        representation.SetArrowShaftRadius(arrow_shaft_radius)
         widget = _vtk.vtkOrientationWidget()
         widget.SetInteractor(self.iren.interactor)  # type: ignore
         widget.SetCurrentRenderer(self.renderer)  # type: ignore
