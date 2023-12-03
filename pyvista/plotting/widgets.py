@@ -2708,8 +2708,21 @@ class WidgetHelper:
         """Remove all of the logo widgets."""
         self.logo_widgets.clear()
 
-    def add_rotate_orientation_widget(self):
+    def add_rotate_orientation_widget(
+        self, orientation_x: float = 0.0, orientation_y: float = 0.0, orientation_z: float = 0.0
+    ):
         """Add rotate_orientation_widget.
+
+        Parameters
+        ----------
+        orientation_x : float, optional
+            Orientation x values. Angles are in interval [-180, 180] degrees.
+
+        orientation_y : float, optional
+            Orientation y values. Angles are in interval [-180, 180] degrees.
+
+        orientation_z : float, optional
+            Orientation z values. Angles are in interval [-180, 180] degrees.
 
         Returns
         -------
@@ -2735,9 +2748,12 @@ class WidgetHelper:
                 "`add_rotate_orientation_widget` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
             )
         representation = _vtk.vtkOrientationRepresentation()
+        representation.SetOrientationX(orientation_x)
+        representation.SetOrientationY(orientation_y)
+        representation.SetOrientationZ(orientation_z)
         widget = _vtk.vtkOrientationWidget()
-        widget.SetInteractor(self.iren.interactor)
-        widget.SetCurrentRenderer(self.renderer)
+        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetCurrentRenderer(self.renderer)  # type: ignore
         widget.SetRepresentation(representation)
         widget.On()
         self.rotate_orientation_widgets.append(widget)
