@@ -1,10 +1,10 @@
 """
-.. _orientation_widget_example:
+.. _orientation_rotate_widget_example:
 
-Orientation Widget
-~~~~~~~~~~~~~~~~~~
+Orientation Rotate Widget
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use a orientation widget.
+Use an orientation rotate widget.
 
 """
 
