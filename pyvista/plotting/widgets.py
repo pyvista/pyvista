@@ -2715,6 +2715,9 @@ class WidgetHelper:
         orientation_z: float = 0.0,
         torus_length: float = 7.5,
         torus_thickness: float = 0.005,
+        show_arrows: bool = False,
+        arrow_distance: float = 0.0,
+        arrow_length: float = 0.05,
     ):
         """Add rotate_orientation_widget.
 
@@ -2737,6 +2740,17 @@ class WidgetHelper:
             The thickness of the torus.
             Thickness handles width in every axes. This means Length depends on it.
             Clamped between [0.001, 0.1].
+
+        show_arrows : bool, optional, default: False
+            Whether to show arrows.
+
+        arrow_distance : float, optional, default: 0.0
+            The distance between arrows and torus. Clamped between [0.0, 0.5].
+
+        arrow_length : float, optional, default: 0.05
+            The arrow length. This includes shaft+tip.
+            Note that double arrows are two arrows next to each other.
+            Clamped between [0.01, 0.5].
 
         Returns
         -------
@@ -2767,6 +2781,9 @@ class WidgetHelper:
         representation.SetOrientationZ(orientation_z)
         representation.SetTorusLength(torus_length)
         representation.SetTorusThickness(torus_thickness)
+        representation.SetShowArrows(show_arrows)
+        representation.SetArrowDistance(arrow_distance)
+        representation.SetArrowLength(arrow_length)
         widget = _vtk.vtkOrientationWidget()
         widget.SetInteractor(self.iren.interactor)  # type: ignore
         widget.SetCurrentRenderer(self.renderer)  # type: ignore
