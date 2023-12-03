@@ -771,13 +771,21 @@ class DataSet(DataSetFilters, DataObject):
         if self.active_scalars_name == old_name:
             was_active = True
         if field == FieldAssociation.POINT:
-            self.point_data[new_name] = self.point_data.pop(old_name)
+            data = self.point_data
         elif field == FieldAssociation.CELL:
-            self.cell_data[new_name] = self.cell_data.pop(old_name)
+            data = self.cell_data
         elif field == FieldAssociation.NONE:
-            self.field_data[new_name] = self.field_data.pop(old_name)
+            data = self.field_data
         else:
             raise KeyError(f'Array with name {old_name} not found.')
+
+        arr = data.pop(old_name)
+        # Update the array's name before reassigning. This prevents taking a copy of the array
+        # in `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
+        # See issue #5244.
+        arr.VTKObject.SetName(new_name)
+        data[new_name] = arr
+
         if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
         return None
@@ -1644,8 +1652,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
-        in :class:`pyvista.PolyData`.
+        This returns the total number of cells -- for :class:`pyvista.PolyData`
+        this includes vertices, lines, triangle strips and polygonal faces.
 
         Examples
         --------

@@ -13,7 +13,7 @@ try:
     from trame.ui.vuetify3 import VAppLayout as vue3_VAppLayout
     from trame.ui.vuetify import VAppLayout as vue2_VAppLayout
 
-    from pyvista.trame.jupyter import Widget, build_url
+    from pyvista.trame.jupyter import EmbeddableWidget, Widget, build_url
     from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
     from pyvista.trame.ui.vuetify2 import (
         divider as vue2_divider,
@@ -409,3 +409,11 @@ def test_export_color(tmpdir, skip_check_gc):
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}')
+
+
+def test_embeddable_widget(skip_check_gc):
+    plotter = pv.Plotter(notebook=True)
+    plotter.add_mesh(pv.Sphere())
+    widget = plotter.show(jupyter_backend='html', return_viewer=True)
+    # Basically just assert that it didn't error out
+    assert isinstance(widget, EmbeddableWidget)

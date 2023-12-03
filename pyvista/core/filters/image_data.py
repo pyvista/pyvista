@@ -849,6 +849,14 @@ class ImageDataFilters(DataSetFilters):
         --------
         See :ref:`contouring_example` for a full example using this filter.
 
+        See Also
+        --------
+        pyvista.DataSetFilters.contour
+            Generalized contouring method which uses MarchingCubes or FlyingEdges.
+
+        pyvista.DataSetFilters.pack_labels
+            Function used internally by SurfaceNets to generate contiguous label data.
+
         """
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
@@ -896,5 +904,10 @@ class ImageDataFilters(DataSetFilters):
             alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
         else:
             alg.SmoothingOff()
+        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
