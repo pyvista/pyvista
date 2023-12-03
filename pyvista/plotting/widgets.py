@@ -2709,20 +2709,34 @@ class WidgetHelper:
         self.logo_widgets.clear()
 
     def add_rotate_orientation_widget(
-        self, orientation_x: float = 0.0, orientation_y: float = 0.0, orientation_z: float = 0.0
+        self,
+        orientation_x: float = 0.0,
+        orientation_y: float = 0.0,
+        orientation_z: float = 0.0,
+        torus_length: float = 7.5,
+        torus_thickness: float = 0.005,
     ):
         """Add rotate_orientation_widget.
 
         Parameters
         ----------
-        orientation_x : float, optional
+        orientation_x : float, optional, default: 0.0
             Orientation x values. Angles are in interval [-180, 180] degrees.
 
-        orientation_y : float, optional
+        orientation_y : float, optional, default: 0.0
             Orientation y values. Angles are in interval [-180, 180] degrees.
 
-        orientation_z : float, optional
+        orientation_z : float, optional, default: 0.0
             Orientation z values. Angles are in interval [-180, 180] degrees.
+
+        torus_length : float, optional, default: 7.5
+            The length (Z scale) of the torus.
+            This is a factor of Thickness parameter. Clamped between [0.01, 100.0].
+
+        torus_thickness : float, optional, default: 0.005
+            The thickness of the torus.
+            Thickness handles width in every axes. This means Length depends on it.
+            Clamped between [0.001, 0.1].
 
         Returns
         -------
@@ -2751,6 +2765,8 @@ class WidgetHelper:
         representation.SetOrientationX(orientation_x)
         representation.SetOrientationY(orientation_y)
         representation.SetOrientationZ(orientation_z)
+        representation.SetTorusLength(torus_length)
+        representation.SetTorusThickness(torus_thickness)
         widget = _vtk.vtkOrientationWidget()
         widget.SetInteractor(self.iren.interactor)  # type: ignore
         widget.SetCurrentRenderer(self.renderer)  # type: ignore
