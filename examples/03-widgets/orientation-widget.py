@@ -8,8 +8,9 @@ Use a orientation widget.
 
 """
 
-import pyvista as pv
 import vtk
+
+import pyvista as pv
 
 mesh = pv.Cube(x_length=0.5, y_length=0.5, z_length=0.5)
 p = pv.Plotter()
