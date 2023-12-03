@@ -6,6 +6,7 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
+from pyvista import vtk_version_info
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -87,6 +88,7 @@ class WidgetHelper:
         self.button_widgets = []
         self.distance_widgets = []
         self.logo_widgets = []
+        self.rotate_orientation_widgets = []
 
     def add_box_widget(
         self,
@@ -2706,6 +2708,33 @@ class WidgetHelper:
         """Remove all of the logo widgets."""
         self.logo_widgets.clear()
 
+    def add_rotate_orientation_widget(self):
+        """Add rotate_orientation_widget.
+
+        Returns
+        -------
+        vtkOrientationWidget
+            3D Widget for manipulating a vtkCamera.
+        """
+        if vtk_version_info < (9, 3):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                "`add_rotate_orientation_widget` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+            )
+        representation = _vtk.vtkOrientationRepresentation()
+        widget = _vtk.vtkOrientationWidget()
+        widget.SetInteractor(self.iren.interactor)
+        widget.SetCurrentRenderer(self.renderer)
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.rotate_orientation_widgets.append(widget)
+        return widget
+
+    def clear_rotate_orientation_widget(self):
+        """Remove all of the rotate orientation widget."""
+        self.rotate_orientation_widgets.clear()
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -2718,3 +2747,4 @@ class WidgetHelper:
         self.clear_camera_widgets()
         self.clear_measure_widgets()
         self.clear_logo_widgets()
+        self.clear_rotate_orientation_widget()

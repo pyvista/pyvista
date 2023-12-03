@@ -612,9 +612,9 @@ def test_logo_widget(verify_image_cache):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_widget_orientation_rotate():
+def test_widget_rotate_orientation():
     p = pv.Plotter()
-    p.add_orientation_rotate_widget()
-    assert p.orientation_rotate_widgets
+    p.add_rotate_orientation_widget()
+    assert p.rotate_orientation_widgets
     p.close()
-    assert not p.orientation_rotate_widgets
+    assert not p.rotate_orientation_widgets
