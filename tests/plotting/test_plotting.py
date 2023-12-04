@@ -3804,3 +3804,17 @@ def test_no_empty_meshes():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Empty meshes'):
         pl.add_mesh(pv.PolyData())
+
+
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing fatal exception: access violation")
+def test_voxelize_volume():
+    mesh = examples.download_cow()
+    cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+
+    # Create an equal density voxel volume and plot the result.
+    vox = pv.voxelize_volume(mesh, density=0.15)
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    # Create a voxel volume from unequal density dimensions and plot result.
+    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
