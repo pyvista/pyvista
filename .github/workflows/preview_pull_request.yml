@@ -21,7 +21,7 @@ jobs:
       ALLOW_PLOTTING: true
       SHELLOPTS: 'errexit:pipefail'
     steps:
-      - uses: sushichop/action-repository-permission@v1
+      - uses: sushichop/action-repository-permission@v2
         with:
           required-permission: write
           reaction-permitted: rocket
