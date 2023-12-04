@@ -3518,6 +3518,7 @@ class DataSetFilters:
         locator=None,
         pass_field_data=True,
         mark_blank=True,
+        snap_to_closest_point=False,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3574,6 +3575,10 @@ class DataSetFilters:
 
         mark_blank : bool, default: True
             Whether to mark blank points and cells in "vtkGhostType".
+
+        snap_to_closest_point : bool, default: False
+            Whether to snap to cell with closest point if no cell is found. Useful
+            when sampling from data with vertex cells. Requires vtk >=9.3.0.
 
         Returns
         -------
@@ -3641,6 +3646,11 @@ class DataSetFilters:
                     ) from err
             alg.SetCellLocatorPrototype(locator)
 
+        if snap_to_closest_point:
+            try:
+                alg.SnapToCellWithClosestPointOn()
+            except AttributeError:
+                raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
