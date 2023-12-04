@@ -3580,6 +3580,8 @@ class DataSetFilters:
             Whether to snap to cell with closest point if no cell is found. Useful
             when sampling from data with vertex cells. Requires vtk >=9.3.0.
 
+            .. versionadded:: 0.43
+
         Returns
         -------
         pyvista.DataSet
