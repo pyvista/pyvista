@@ -119,6 +119,16 @@ class DynamicScraper:
 
     Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
 
+    If the boolean variable ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True/False`` is set as a global
+    variable in the document then its value will be used as default for the
+    force_static argument of the pyvista-plot command. see also the notes at :func:plot_directive
+
+    To alter the global value behaviour just for some plots you may set the
+    boolean variable ``PYVISTA_GALLERY_FORCE_STATIC = True``/
+    ``PYVISTA_GALLERY_FORCE_STATIC = False`` just before the appropriate ``plot`` command.
+
+    The default behavior  of this scraper is to create interactive plots.
+
     """
 
     def __call__(self, block, block_vars, gallery_conf):  # pragma: no cover
