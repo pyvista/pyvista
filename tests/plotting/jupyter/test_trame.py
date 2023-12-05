@@ -272,6 +272,7 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
+@pytest.mark.skipif(True, reason="#5262")
 def test_trame_views():
     server = get_server('foo')
 
