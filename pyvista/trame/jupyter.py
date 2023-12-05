@@ -124,7 +124,7 @@ class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
         self._src = src
 
 
-def launch_server(server=None, port=None, host=None, backend=None, **kwargs):
+def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwargs):
     """Launch a trame server for use with Jupyter.
 
     Parameters
@@ -145,9 +145,9 @@ def launch_server(server=None, port=None, host=None, backend=None, **kwargs):
         The host name to bind the server to on launch. Server will bind to
         ``127.0.0.1`` by default unless user sets the environment variable ``TRAME_DEFAULT_HOST``.
 
-    backend : str, optional
+    wslink_backend : str, optional
         The the wslink backend that the server should use
-        ``aiohttp`` by default, ``jupyter`` if the trame_jupyter_extension is used.
+        ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
 
     **kwargs : dict, optional
         Any additional keyword arguments to pass to ``pyvista.trame.views.get_server``.
@@ -168,8 +168,8 @@ def launch_server(server=None, port=None, host=None, backend=None, **kwargs):
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
-    if backend is None and pyvista.global_theme.trame.jupyter_extension_enabled:
-        backend = "jupyter"
+    if wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled:
+        wslink_backend = "jupyter"
 
     # Must enable all used modules
     html_widgets.initialize(server)
@@ -193,7 +193,7 @@ def launch_server(server=None, port=None, host=None, backend=None, **kwargs):
             show_connection_info=False,
             disable_logging=True,
             timeout=0,
-            backend=backend,
+            backend=wslink_backend,
         )
     # else, server is already running or launching
     return server
@@ -237,10 +237,8 @@ def initialize(
         suppress_rendering=mode == 'client',
     )
 
-    layout = None
-
-    with viewer.make_layout(server, template_name=plotter._id_name) as _layout:
-        layout = _layout
+    with viewer.make_layout(server, template_name=plotter._id_name) as layout:
+        viewer.layout = layout
         viewer.ui(
             mode=mode,
             default_server_rendering=default_server_rendering,
@@ -248,7 +246,7 @@ def initialize(
             **kwargs,
         )
 
-    return viewer, layout
+    return viewer
 
 
 def show_trame(
@@ -375,14 +373,14 @@ def show_trame(
         if jupyter_extension_enabled:
             wslink_backend = "jupyter"
 
-        elegantly_launch(server, backend=wslink_backend)
+        elegantly_launch(server, wslink_backend=wslink_backend)
         if not server.running:
             raise TrameJupyterServerDownError()
     elif not server.running:
         raise TrameServerDownError(name)
 
     # Initialize app
-    viewer, layout = initialize(
+    viewer = initialize(
         server,
         plotter,
         mode=mode,
@@ -395,7 +393,7 @@ def show_trame(
     if jupyter_extension_enabled:
         from trame_client.ui.core import iframe_url_builder_jupyter_extension
 
-        iframe_attrs = iframe_url_builder_jupyter_extension(layout)
+        iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
         src = iframe_attrs["src"]
     else:
         # TODO: The build_url function could possibly be replaced by

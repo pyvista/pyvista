@@ -1498,7 +1498,7 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_enabled.setter
     def jupyter_extension_enabled(self, enabled: bool):  # numpydoc ignore=GL08
         if enabled and not self.jupyter_extension_available:
-            raise Exception("The trame_jupyter_extension is not available")
+            raise ValueError("The trame_jupyter_extension is not available")
 
         if enabled and self.server_proxy_enabled:
             warnings.warn("Enabling jupyter_extension will disable server_proxy")
