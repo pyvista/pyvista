@@ -418,4 +418,3 @@ def test_embeddable_widget(skip_check_gc):
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
-
