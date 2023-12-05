@@ -168,7 +168,9 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
-    if wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled:  # pragma: no cover
+    if (
+        wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled
+    ):  # pragma: no cover
         wslink_backend = "jupyter"
 
     # Must enable all used modules
@@ -370,7 +372,7 @@ def show_trame(
         server = get_server(name=name)
     if name is None and not server.running:
         wslink_backend = "aiohttp"
-        if jupyter_extension_enabled: # pragma: no cover
+        if jupyter_extension_enabled:  # pragma: no cover
             wslink_backend = "jupyter"
 
         elegantly_launch(server, wslink_backend=wslink_backend)
