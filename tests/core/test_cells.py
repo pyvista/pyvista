@@ -31,28 +31,113 @@ grids = [
 ids = [str(type(grid)) for grid in grids]
 
 cells = [
-    example_cells.Hexahedron().get_cell(0),
+    # 0D cells
+    example_cells.Vertex().get_cell(0),
+    example_cells.PolyVertex().get_cell(0),
+    # 1D cells
+    example_cells.Line().get_cell(0),
+    example_cells.PolyLine().get_cell(0),
+    # 2D cells
     example_cells.Triangle().get_cell(0),
-    example_cells.Voxel().get_cell(0),
     example_cells.Quadrilateral().get_cell(0),
-    example_cells.Tetrahedron().get_cell(0),
+    example_cells.Polygon().get_cell(0),
+    example_cells.TriangleStrip().get_cell(0),
+    # 3D cells
+    example_cells.Hexahedron().get_cell(0),
     example_cells.Voxel().get_cell(0),
+    example_cells.Tetrahedron().get_cell(0),
     example_cells.Polyhedron().get_cell(0),
 ]
 types = [
-    CellType.HEXAHEDRON,
+    # 0D cells
+    CellType.VERTEX,
+    CellType.POLY_VERTEX,
+    # 1D cells
+    CellType.LINE,
+    CellType.POLY_LINE,
+    # 2D cells
     CellType.TRIANGLE,
-    CellType.VOXEL,
     CellType.QUAD,
-    CellType.TETRA,
+    CellType.POLYGON,
+    CellType.TRIANGLE_STRIP,
+    # 3D cells
+    CellType.HEXAHEDRON,
     CellType.VOXEL,
+    CellType.TETRA,
     CellType.POLYHEDRON,
 ]
-
-dims = [3, 2, 3, 2, 3, 3, 3]
-npoints = [8, 3, 8, 4, 4, 8, 4]
-nfaces = [6, 0, 6, 0, 4, 6, 4]
-nedges = [12, 3, 12, 4, 6, 12, 6]
+dims = [
+    # 0D cells
+    0,
+    0,
+    # 1D cells
+    1,
+    1,
+    # 2D cells
+    2,
+    2,
+    2,
+    2,
+    # 3D cells
+    3,
+    3,
+    3,
+    3,
+]
+npoints = [
+    # 0D cells
+    1,
+    6,
+    # 1D cells
+    2,
+    4,
+    # 2D cells
+    3,
+    4,
+    6,
+    8,
+    # 3D cells
+    8,
+    8,
+    4,
+    4,
+]
+nfaces = [
+    # 0D cells
+    0,
+    0,
+    # 1D cells
+    0,
+    0,
+    # 2D cells
+    0,
+    0,
+    0,
+    0,
+    # 3D cells
+    6,
+    6,
+    4,
+    4,
+]
+nedges = [
+    # 0D cells
+    0,
+    0,
+    # 1D cells
+    0,
+    0,
+    # 2D cells
+    3,
+    4,
+    6,
+    8,
+    # 3D cells
+    12,
+    12,
+    6,
+    6,
+]
 cell_ids = list(map(repr, types))
 
 
@@ -144,17 +229,17 @@ def test_cell_copy_generic(cell):
     cell = cell.copy()
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
-    cell_copy.points[:] = 0
+    cell_copy.points[:] = 1000
     assert cell_copy != cell
 
     cell_copy = cell.copy(deep=False)
     assert cell_copy == cell
-    cell_copy.points[:] = 0
+    cell_copy.points[:] = 1000
     assert cell_copy == cell
 
 
 def test_cell_copy():
-    cell = cells[0].get_face(0)
+    cell = example_cells.Hexahedron().get_cell(0).get_face(0)
     assert isinstance(cell, pv.Cell)
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
@@ -238,6 +323,21 @@ def test_cell_cast_to_unstructured_grid(cell):
     grid = cell.cast_to_unstructured_grid()
     assert grid.n_cells == 1
     assert grid.get_cell(0) == cell
+    assert grid.get_cell(0).type == cell.type
+
+
+@pytest.mark.parametrize("cell", cells)
+def test_cell_cast_to_polydata(cell):
+    if cell.dimension == 3:
+        with pytest.raises(
+            ValueError, match=f"3D cells cannot be cast to PolyData: got cell type {cell.type}"
+        ):
+            cell.cast_to_polydata()
+    else:
+        poly = cell.cast_to_polydata()
+        assert poly.n_cells == 1
+        assert poly.get_cell(0) == cell
+        assert poly.get_cell(0).type == cell.type
 
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
