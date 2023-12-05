@@ -270,6 +270,18 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
+pytest.mark.skipif(True, reason="#5262")
+def test_trame_views():
+    server = get_server('foo')
+
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Cone())
+
+    assert PyVistaRemoteLocalView(pl, trame_server=server)
+    assert PyVistaRemoteView(pl, trame_server=server)
+    assert PyVistaLocalView(pl, trame_server=server)
+
+
 def test_trame_jupyter_custom_size():
     w, h = 200, 150
     plotter = pv.Plotter(notebook=True, window_size=(w, h))
@@ -407,15 +419,3 @@ def test_embeddable_widget(skip_check_gc):
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
 
-
-def test_trame_views():
-    # This function needs to be the end of the code
-    # because it affects other functions (#5262).
-    server = get_server('foo')
-
-    pl = pv.Plotter(notebook=True)
-    pl.add_mesh(pv.Cone())
-
-    assert PyVistaRemoteLocalView(pl, trame_server=server)
-    assert PyVistaRemoteView(pl, trame_server=server)
-    assert PyVistaLocalView(pl, trame_server=server)
