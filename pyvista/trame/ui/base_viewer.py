@@ -261,7 +261,7 @@ class BaseViewer:
         raise NotImplementedError()
 
     def make_layout(self, *args, **kwargs) -> AbstractLayout:  # pragma: no cover
-        """Create instance of an AbstractLayout which is appropriate for a concrete viewer.
+        """Create an instance of an AbstractLayout which is appropriate for a concrete viewer.
 
         Parameters
         ----------
