@@ -368,9 +368,9 @@ def show_trame(
         server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
-    if name is None and not server.running:  # pragma: no cover
+    if name is None and not server.running:
         wslink_backend = "aiohttp"
-        if jupyter_extension_enabled:
+        if jupyter_extension_enabled: # pragma: no cover
             wslink_backend = "jupyter"
 
         elegantly_launch(server, wslink_backend=wslink_backend)
