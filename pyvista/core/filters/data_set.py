@@ -3651,7 +3651,7 @@ class DataSetFilters:
         if snap_to_closest_point:
             try:
                 alg.SnapToCellWithClosestPointOn()
-            except AttributeError:
+            except AttributeError:  # pragma: no cover
                 raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
