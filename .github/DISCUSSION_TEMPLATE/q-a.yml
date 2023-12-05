@@ -6,6 +6,7 @@ body:
   - type: checkboxes
     id: checks
     attributes:
+      label: First check
       options:
         - label: I added a very descriptive title here.
           required: true
@@ -27,24 +28,29 @@ body:
           * I already hit the "watch" button in this repository to receive notifications and I commit to help at least 2 people that ask questions in the future.
       options:
         - label: I commit to help with one of those options.
+          required: true
   - type: textarea
+    id: sample
     attributes:
+      label: Sample Code
+        What is the problem, question, or error?
+
+        Write a short description telling me what you are doing, what you expect to happen, and what is currently happening.
+      placeholder: Provide some code for us to reproduce your question
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
         What is the problem, question, or error?
 
         Write a short description telling me what you are doing, what you expect to happen, and what is currently happening.
       placeholder: |
-        * [How do I ask a good question?](https://stackoverflow.com/help/how-to-ask)
-    validations:
-      required: true
-  - type: textarea
-    id: reproduce
-    attributes:
-      label: Steps to reproduce the question.
-      description: |
-        Please add a self-contained, [minimal, reproducible, example](https://stackoverflow.com/help/minimal-reproducible-example) with your use case.
-        If we can copy it, run it, and see it right away, there's a much higher chance we will be able to help you.
-      placeholder: Provide some code for us to reproduce your question
-      value: "```python\nInsert code here\n```"
+        * It returns ...
+        * But I expected it to ...
     validations:
       required: true
   - type: textarea
