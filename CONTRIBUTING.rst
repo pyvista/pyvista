@@ -1,6 +1,16 @@
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|Contributor Covenant|
+|codetriage|
+
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
 important to note that the PyVista software package is maintained on a
@@ -32,6 +42,26 @@ running:
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
    python -m pip install -e .
+
+Quick Start Development with Codespaces
+---------------------------------------
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
+|Open in GitHub Codespaces|
+
+A dev container is provided to quickly get started. The default container
+comes with the repository code checked out on a branch of your choice
+and all pyvista dependencies including test dependencies pre-installed.
+In addition, it uses the
+`desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
+to provide live interaction windows.  Follow directions
+`Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+to use the live interaction.
+
+Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
 
 Questions
 ---------
@@ -357,6 +387,9 @@ directive.
 
 .. code:: python
 
+    import warnings
+    from pyvista.core.errors import PyVistaDeprecationWarning
+
     def addition(a, b):
         """Add two numbers.
 
@@ -378,8 +411,9 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        PyVistaDeprecationWarning(
-            '`addition` has been deprecated. Use pyvista.add instead'
+        warnings.warn(
+            '`addition` has been deprecated. Use pyvista.add instead',
+            PyVistaDeprecationWarning
         )
         add(a, b)
 
@@ -464,21 +498,6 @@ dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 Then, if you have everything installed, you can run the various test
 suites.
-
-Using Gitpod Workspace
-~~~~~~~~~~~~~~~~~~~~~~
-
-A gitpod workspace is available for a quick start development
-environment. To start a workspace from the main branch of pyvista, go
-to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
-`Gitpod Getting Started
-<https://www.gitpod.io/docs/getting-started>`_ for more details.
-
-The workspace has vnc capability through the browser for
-interactive plotting. The workspace also has the ability to view the
-documentation with a live-viewer. Hit the ``Go Live`` button
-and browse to ``doc/_build/html``. The workspace also preloads
-pre-commit environments and installs requirements.
 
 Unit Testing
 ~~~~~~~~~~~~
@@ -759,6 +778,22 @@ delete the PR branch.
 Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
+
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once you have make a Pull Request from the pyvista organization repository branch.
+This will automatically deploy the Preview Documentation.
+Please check the documentation that is deployed by your Pull Request
+before merging.
+
+Once you have make a Pull Request from the forked repository. You can comment
+`github-actions preview` on a pull request to preview documentation.
+Since this command is only available for
+`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
+new contributors kindly request them to comment command.
+This is essential to safeguard the deployment site against
+potentially harmful commits.
 
 Branching Model
 ~~~~~~~~~~~~~~~

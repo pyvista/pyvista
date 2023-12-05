@@ -11,11 +11,14 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples as ex
+from pyvista import examples as ex, pyvista_ndarray
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     _coerce_transformlike_arg,
+    cast_to_list_array,
+    cast_to_ndarray,
+    cast_to_tuple_array,
     copy_vtk_array,
     get_array,
     has_duplicates,
@@ -285,6 +288,22 @@ def test_voxelize_throws_point_cloud(hexbeam):
         pv.voxelize(mesh)
 
 
+def test_voxelize_volume_default_density(uniform):
+    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
+    actual = pv.voxelize_volume(uniform).n_cells
+    assert actual == expected
+
+
+def test_voxelize_volume_invalid_density(rectilinear):
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_volume_no_face_mesh(rectilinear):
+    with pytest.raises(ValueError, match='must have faces'):
+        pv.voxelize_volume(pv.PolyData())
+
+
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
@@ -427,7 +446,8 @@ def test_observer():
     assert ret[3] == "ALERT"
     for kind in ["WARNING", "ERROR"]:
         obs.log_message(kind, "foo")
-    obs(obj=None, event=None, message=msg)
+    # Pass positionally as that's what VTK will do
+    obs(None, None, msg)
     assert obs.has_event_occurred()
     assert obs.get_message() == "ALERT"
     assert obs.get_message(etc=True) == msg
@@ -899,3 +919,48 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     with pytest.raises(TypeError, match="must be one of"):
         _coerce_transformlike_arg("abc")
+
+
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('dtype', [None, float])
+def test_cast_to_ndarray(as_any, copy, dtype):
+    array_in = pyvista_ndarray([1, 2])
+    array_out = cast_to_ndarray(array_in, copy=copy, as_any=as_any, dtype=dtype)
+    assert np.array_equal(array_out, array_in)
+    if as_any:
+        assert type(array_out) is pyvista_ndarray
+    else:
+        assert type(array_out) is np.ndarray
+
+    if copy:
+        assert array_out is not array_in
+
+    if dtype is None:
+        assert array_out.dtype.type is array_in.dtype.type
+    else:
+        assert array_out.dtype.type is np.dtype(dtype).type
+
+
+def test_cast_to_ndarray_raises():
+    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(ValueError, match=msg):
+        cast_to_ndarray([[1], [2, 3]])
+
+
+def test_cast_to_tuple_array():
+    array_in = np.zeros(shape=(2, 2, 3))
+    array_tuple = cast_to_tuple_array(array_in)
+    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    array_list = array_in.tolist()
+    assert np.array_equal(array_tuple, array_list)
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1, [2, 3]]])
+
+
+def test_cast_to_list_array():
+    array_in = np.zeros(shape=(3, 4, 5))
+    array_list = cast_to_list_array(array_in)
+    assert np.array_equal(array_in, array_list)
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1, [2, 3]]])

@@ -6,7 +6,7 @@ import vtk
 import pyvista as pv
 from pyvista import colors
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
+from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -389,6 +389,20 @@ def test_theme_slots(default_theme):
     with pytest.raises(AttributeError, match='has no attribute'):
         default_theme.new_attr = 1
 
+    # verify we can't create an arbitrary attribute on an attribute
+    assert default_theme.lighting_params
+    with pytest.raises(AttributeError, match='has no attribute'):
+        default_theme.lighting_params.new_attr = 1
+
+    # subclasses should also prevent arbitrary attributes
+    theme = DarkTheme()
+    with pytest.raises(AttributeError, match='has no attribute'):
+        theme.new_attr = 1
+
+    assert theme.lighting_params
+    with pytest.raises(AttributeError, match='has no attribute'):
+        theme.lighting_params.new_attr = 1
+
 
 def test_theme_eq():
     defa_theme0 = pv.plotting.themes.Theme()
@@ -571,3 +585,36 @@ def test_set_plot_theme_from_env():
             _set_plot_theme_from_env()
     finally:
         os.environ.pop('PYVISTA_PLOT_THEME', None)
+
+
+def test_trame_config():
+    trame_config = pv.plotting.themes._TrameConfig()
+
+    # Enabling extension when extension is not available should raise exception
+    assert not trame_config.jupyter_extension_available
+    with pytest.raises(Exception):
+        trame_config.jupyter_extension_enabled = True
+
+    # Pretend the extension is available
+    trame_config._jupyter_extension_available = True
+    assert trame_config.jupyter_extension_available
+
+    # Enabling server proxy should disable extension and vice-versa
+    assert not trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = True
+    assert trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.server_proxy_enabled = True
+    assert not trame_config.jupyter_extension_enabled
+    assert trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = True
+    assert trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = False
+    assert not trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled

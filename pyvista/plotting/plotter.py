@@ -14,6 +14,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import Dict, Optional
+import uuid
 import warnings
 import weakref
 
@@ -139,6 +140,7 @@ def _warn_xserver():  # pragma: no cover
         # finally, check if using a backend that doesn't require an xserver
         if pyvista.global_theme.jupyter_backend in [
             'client',
+            'html',
         ]:
             return
 
@@ -2091,7 +2093,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.key_press_event."""
         self.iren.key_press_event(*args, **kwargs)
 
-    def left_button_down(self, obj, event_type):
+    def left_button_down(self, *args):
         """Register the event for a left button down click."""
         if hasattr(self.render_window, 'GetOffScreenFramebuffer'):
             if not self.render_window.GetOffScreenFramebuffer().GetFBOIndex():
@@ -2322,6 +2324,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color_missing_with_nan=False,
         copy_mesh=False,
         show_vertices=None,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2586,6 +2589,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2709,6 +2722,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             line_width=line_width,
             opacity=opacity,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
         actor.SetProperty(prop)
 
@@ -2846,6 +2860,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         copy_mesh=False,
         backface_params=None,
         show_vertices=None,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3178,6 +3193,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_color`` - The color of the vertices
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
+
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -4580,6 +4605,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
 
+        .. deprecated:: 0.43.0
+            This method is deprecated and will be removed in a future version of
+            PyVista. It is functionally equivalent to directly modifying the
+            scalars of a mesh in-place.
+
+            .. code:: python
+
+                # Modify the points in place
+                mesh["my scalars"] = values
+                # Explicitly call render if needed
+                plotter.render()
+
         Parameters
         ----------
         scalars : sequence
@@ -4592,6 +4629,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
         """
+        # Deprecated on 0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            "This method is deprecated and will be removed in a future version of "
+            "PyVista. Directly modify the scalars of a mesh in-place instead.",
+            PyVistaDeprecationWarning,
+        )
+
         if mesh is None:
             mesh = self.mesh
 
@@ -4639,6 +4683,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def update_coordinates(self, points, mesh=None, render=True):
         """Update the points of an object in the plotter.
 
+        .. deprecated:: 0.43.0
+            This method is deprecated and will be removed in a future version of
+            PyVista. It is functionally equivalent to directly modifying the
+            points of a mesh in-place.
+
+            .. code:: python
+
+                # Modify the points in place
+                mesh.points = points
+                # Explicitly call render if needed
+                plotter.render()
+
         Parameters
         ----------
         points : np.ndarray
@@ -4651,6 +4707,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
         """
+        # Deprecated on 0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            "This method is deprecated and will be removed in a future version of "
+            "PyVista. Directly modify the points of a mesh in-place instead.",
+            PyVistaDeprecationWarning,
+        )
         if mesh is None:
             mesh = self.mesh
 
@@ -4670,15 +4732,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.Finalize()
             del self.ren_win
 
-    def close(self, render=False):
-        """Close the render window.
-
-        Parameters
-        ----------
-        render : bool
-            Unused argument.
-
-        """
+    def close(self):
+        """Close the render window."""
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)
@@ -6281,11 +6336,6 @@ class Plotter(BasePlotter):
         set differently in the relevant theme's ``window_size``
         property.
 
-    multi_samples : int, optional
-        The number of multi-samples used to mitigate aliasing. 4 is a
-        good default but 8 will have better results with a potential
-        impact on performance.
-
     line_smoothing : bool, default: False
         If ``True``, enable line smoothing.
 
@@ -6337,7 +6387,6 @@ class Plotter(BasePlotter):
         border_color='k',
         border_width=2.0,
         window_size=None,
-        multi_samples=None,
         line_smoothing=False,
         point_smoothing=False,
         polygon_smoothing=False,
@@ -6380,7 +6429,7 @@ class Plotter(BasePlotter):
                 notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
-        if self.notebook:
+        if self.notebook or pyvista.ON_SCREENSHOT:
             off_screen = True
         self.off_screen = off_screen
 
@@ -6529,6 +6578,7 @@ class Plotter(BasePlotter):
             * ``'none'`` : Do not display in the notebook.
             * ``'static'`` : Display a static figure.
             * ``'trame'`` : Display a dynamic figure with Trame.
+            * ``'html'`` : Use an ebeddable HTML scene.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
@@ -6736,7 +6786,11 @@ class Plotter(BasePlotter):
                     "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
                 )
         if _is_current:
-            self.last_image = self.screenshot(screenshot, return_img=True)
+            if pyvista.ON_SCREENSHOT:
+                filename = uuid.uuid4().hex
+                self.last_image = self.screenshot(filename, return_img=True)
+            else:
+                self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the

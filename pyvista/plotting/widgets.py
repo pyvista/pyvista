@@ -193,7 +193,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        def _the_callback(box_widget, event_id):
+        def _the_callback(box_widget, _event):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
@@ -514,7 +514,7 @@ class WidgetHelper:
         if assign_to_axis:
             normal_rotation = False
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
@@ -1222,7 +1222,7 @@ class WidgetHelper:
 
         color = Color(color, default_color=pyvista.global_theme.font.color)
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
             if callable(callback):
@@ -1351,7 +1351,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, event):  # numpydoc ignore=GL08
+        def title_callback(widget, _event):  # numpydoc ignore=GL08
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1542,7 +1542,7 @@ class WidgetHelper:
         if tube_width is not None:
             slider_rep.SetTubeWidth(tube_width)
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, _event):
             value = widget.GetRepresentation().GetValue()
             if callable(callback):
                 if pass_widget:
@@ -1974,7 +1974,7 @@ class WidgetHelper:
 
         ribbon = pyvista.PolyData()
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
@@ -2321,7 +2321,7 @@ class WidgetHelper:
         else:
             colors = [color] * num
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
@@ -2568,7 +2568,7 @@ class WidgetHelper:
         button_widget.SetCurrentRenderer(self.renderer)
         button_widget.On()
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, _event):
             state = widget.GetRepresentation().GetState()
             if callable(callback):
                 try_callback(callback, bool(state))
