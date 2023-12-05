@@ -1,0 +1,12 @@
+contact_links:
+  - name: Ideas
+    url: https://github.com/pyvista/pyvista/discussions/new?category=ideas
+    about: Share ideas for new features
+contact_links:
+  - name: Questions
+    url: https://github.com/pyvista/pyvista/discussions/new?category=q-a
+    about: Ask the community for help
+contact_links: Show and tell
+  - name: Questions and Discussions
+    url: https://github.com/pyvista/pyvista/discussions/new?category=show-and-tell
+    about: Show off something you've made
