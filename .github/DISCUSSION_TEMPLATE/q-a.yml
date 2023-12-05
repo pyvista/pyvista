@@ -18,6 +18,8 @@ body:
           required: true
         - label: I already read and followed all the tutorial in the docs and didn't find an answer.
           required: true
+        - label: I will NOT make duplicate discussions or issues in the future.
+          required: true
   - type: checkboxes
     id: help
     attributes:
