@@ -168,7 +168,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
-    if wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled:
+    if wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled:  # pragma: no cover
         wslink_backend = "jupyter"
 
     # Must enable all used modules
@@ -368,7 +368,7 @@ def show_trame(
         server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
-    if name is None and not server.running:
+    if name is None and not server.running:  # pragma: no cover
         wslink_backend = "aiohttp"
         if jupyter_extension_enabled:
             wslink_backend = "jupyter"
@@ -390,7 +390,7 @@ def show_trame(
         add_menu_items=add_menu_items,
     )
 
-    if jupyter_extension_enabled:
+    if jupyter_extension_enabled:  # pragma: no cover
         from trame_client.ui.core import iframe_url_builder_jupyter_extension
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
