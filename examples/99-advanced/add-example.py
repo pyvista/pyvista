@@ -43,7 +43,9 @@ typically set up your imports.
 
 
    ``# sphinx_gallery_start_ignore``
+
    ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True``
+
    ``# sphinx_gallery_end_ignore``
 
    If you want to use static images only for some of your plots. Define
