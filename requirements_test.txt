@@ -26,3 +26,5 @@ trame-vtk>=2.5.8,<2.7
 trame-vuetify>=2.3.1,<2.4
 trimesh<4.1.0
 qtpy
+PyQt6!=6.6.1
+PyQt6-Qt6!=6.6.1
