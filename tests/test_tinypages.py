@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from subprocess import PIPE, Popen
 import sys
+from matplotlib.pyplot import imread
 
 import pytest
 
@@ -83,3 +84,6 @@ def test_tinypages(tmpdir):
 
     assert b'you should not be reading this right now' not in html_contents
     assert b'should be printed: include-source with no args' in html_contents
+
+    # test that the plot has the camera position updated with a checksum
+    assert imread(plot_file(14, 0, 0)).sum() == 2207465.5
