@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from subprocess import PIPE, Popen
 import sys
-from matplotlib.pyplot import imread
 
+from matplotlib.pyplot import imread
 import pytest
 
 from pyvista.plotting import system_supports_plotting
