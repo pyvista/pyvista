@@ -48,6 +48,7 @@ io = [
 ]
 jupyter = [
     'ipywidgets',
+    'nest_asyncio',
     'trame>=2.5.2',
     'trame-client>=2.12.7',
     'trame-jupyter-extension>=2.0.1',
