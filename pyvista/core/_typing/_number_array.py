@@ -21,13 +21,11 @@ from typing import Any, Sequence, TypeVar, Union
 
 import numpy as np
 
-from ._generic_number import _GenericNumber, _NumberType
+from ._generic_number import _DType, _DTypeScalar
 
 # Similar definition to numpy.NDArray, but here we use a specialized TypeVar
 # and helper class to support using generics with builtin types (e.g. int, float)
-_NumberNDArray = np.ndarray[Any, np.dtype[_GenericNumber[_NumberType]]]
-
-# TypeDict, Callable, Protocol, Generic, TypeGuard, ParamSpec, overload, dtype-subclassing
+_NumberNDArray = np.ndarray[Any, np.dtype[_DType[_DTypeScalar]]]
 
 _T = TypeVar("_T")
 _FiniteNestedSequence = Union[  # Note: scalar types are excluded
@@ -38,28 +36,28 @@ _FiniteNestedSequence = Union[  # Note: scalar types are excluded
 ]
 
 _NumberArray = Union[
-    _NumberNDArray[_NumberType],
-    _FiniteNestedSequence[_NumberType],
-    _FiniteNestedSequence[_NumberNDArray[_NumberType]],
+    _NumberNDArray[_DTypeScalar],
+    _FiniteNestedSequence[_DTypeScalar],
+    _FiniteNestedSequence[_NumberNDArray[_DTypeScalar]],
 ]
 
 _NumberArray1D = Union[
-    _NumberNDArray[_NumberType],
-    Sequence[_NumberType],
-    Sequence[np.ndarray[Any, np.dtype[_GenericNumber[_NumberType]]]],
+    _NumberNDArray[_DTypeScalar],
+    Sequence[_DTypeScalar],
+    Sequence[_NumberNDArray[_DTypeScalar]],
 ]
 _NumberArray2D = Union[
-    _NumberNDArray[_NumberType],
-    Sequence[Sequence[_NumberType]],
-    Sequence[Sequence[np.ndarray[Any, np.dtype[_GenericNumber[_NumberType]]]]],
+    _NumberNDArray[_DTypeScalar],
+    Sequence[Sequence[_DTypeScalar]],
+    Sequence[Sequence[_NumberNDArray[_DTypeScalar]]],
 ]
 _NumberArray3D = Union[
-    _NumberNDArray[_NumberType],
-    Sequence[Sequence[Sequence[_NumberType]]],
-    Sequence[Sequence[Sequence[_NumberNDArray[_NumberType]]]],
+    _NumberNDArray[_DTypeScalar],
+    Sequence[Sequence[Sequence[_DTypeScalar]]],
+    Sequence[Sequence[Sequence[_NumberNDArray[_DTypeScalar]]]],
 ]
 _NumberArray4D = Union[
-    _NumberNDArray[_NumberType],
-    Sequence[Sequence[Sequence[Sequence[_NumberType]]]],
-    Sequence[Sequence[Sequence[Sequence[_NumberNDArray[_NumberType]]]]],
+    _NumberNDArray[_DTypeScalar],
+    Sequence[Sequence[Sequence[Sequence[_DTypeScalar]]]],
+    Sequence[Sequence[Sequence[Sequence[_NumberNDArray[_DTypeScalar]]]]],
 ]

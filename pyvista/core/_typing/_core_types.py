@@ -4,7 +4,7 @@ from typing import Tuple, Union
 
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
-from ._generic_number import _NumberType
+from ._generic_number import _DTypeScalar
 
 # flake8: noqa: F401
 from ._number_array import (
@@ -17,10 +17,10 @@ from ._number_array import (
 
 Number_ = Union[int, float]
 
-Vector = _NumberArray1D[_NumberType]
-Matrix = _NumberArray2D[_NumberType]
+Vector = _NumberArray1D[_DTypeScalar]
+Matrix = _NumberArray2D[_DTypeScalar]
 DimensionalArray = Union[
-    _NumberArray2D[_NumberType], _NumberArray3D[_NumberType], _NumberArray4D[_NumberType]
+    _NumberArray2D[_DTypeScalar], _NumberArray3D[_DTypeScalar], _NumberArray4D[_DTypeScalar]
 ]
 
 TransformLike = Union[Matrix[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
