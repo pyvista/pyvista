@@ -5,6 +5,7 @@ imageio-ffmpeg
 ipywidgets<9.0.0
 jupyterlab<5.0.0
 meshio
+nest_asyncio
 trame>=2.5.2
 trame_client>=2.12.7
 trame_jupyter_extension>=2.0.1
