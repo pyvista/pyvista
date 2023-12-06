@@ -212,6 +212,8 @@ class Report(scooby.Report):
             'trame_vuetify',
             'jupyter_server_proxy',
             'nest_asyncio',
+            'aiohttp',
+            'wslink',
         ]
 
         # Information about the GPU - bare except in case there is a rendering
