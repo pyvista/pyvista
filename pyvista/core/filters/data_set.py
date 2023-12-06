@@ -6416,7 +6416,7 @@ class DataSetFilters:
 
         Show range of labels
 
-        >>> image_labels.get_data_range()  # doctest:+SKIP # https://github.com/pyvista/pyvista/pull/5290
+        >>> image_labels.get_data_range()  # doctest:+SKIP
         (0, 29)
 
         Find 'gaps' in the labels
@@ -6433,8 +6433,9 @@ class DataSetFilters:
 
         Show range of packed labels
 
-        >>> packed_labels.get_data_range()  # doctest:+SKIP # https://github.com/pyvista/pyvista/pull/5290
+        >>> packed_labels.get_data_range()  # doctest:+SKIP
         (0, 25)
+
 
         """
         # Set a input scalars
