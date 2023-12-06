@@ -29,7 +29,7 @@ jobs:
       MNE_LOGGING_LEVEL: 'info'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
@@ -91,7 +91,7 @@ jobs:
           packages: libgl1-mesa-glx xvfb
           version: 3.0
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
