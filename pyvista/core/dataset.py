@@ -3092,7 +3092,7 @@ class DataSet(DataSetFilters, DataObject):
 
         n_levels : int, default: 1
             Number of levels to search for cell neighbors.
-            When equal to 1, it is equivalent to :func:`pyvista.DataSet.point_neighbors`.
+            When equal to 1, it is equivalent to :func:`pyvista.DataSet.cell_neighbors`.
 
         Returns
         -------
