@@ -83,7 +83,7 @@ Remote Jupyter Host
 
 When using PyVista in Jupyter that is hosted remotely (docker, cloud JupyterHub,
 binder, or otherwise), you will need to pair the Trame backend with either
-``jupyter-server-proxy`` or ``trame-jupyter-extension``.
+``jupyter_server_proxy`` or ``trame_jupyter_extension``.
 
 
 Jupyter Server Proxy

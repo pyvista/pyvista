@@ -295,7 +295,7 @@ def show_trame(
         ``jupyter-server-proxy``, often set to ``proxy/``.
 
     jupyter_extension_enabled : bool, default: False
-        Build a relative URL for use with ``trame-jupyter-extension``.
+        Build a relative URL for use with ``trame_jupyter_extension``.
 
     collapse_menu : bool, default: False
         Collapse the UI menu (camera controls, etc.) on start.
