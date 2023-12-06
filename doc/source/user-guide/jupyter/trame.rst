@@ -148,7 +148,7 @@ On MyBinder, the ``JUPYTERHUB_SERVICE_PREFIX`` string often needs to prefix
 In PyVista, we automatically check for the presence of this variable and
 prepend it to the ``server_proxy_prefix``.
 
-You may also need to install ``nest_asyncio`` to seemlessly use launch the
+You may also need to install ``nest_asyncio`` to seamlessly use launch the
 Trame server in the background.
 
 
