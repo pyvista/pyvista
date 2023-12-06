@@ -135,17 +135,3 @@ lines, even in two sections.
 
     >>> pyvista.Sphere().plot(color='red',
     ...                       cpos='xy')
-
-Plot 14 should create a plot and change the camera view and have that
-updated upon rendering (compared to the camera not being changed in
-the second plot).
-
-.. pyvista-plot::
-
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> pl.add_mesh(pv.Cone())
-    >>> pl.camera_position = 'xy'
-
-    >>> pl = pv.Plotter()
-    >>> pl.add_mesh(pv.Cone())

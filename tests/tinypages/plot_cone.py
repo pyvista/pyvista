@@ -1,3 +1,11 @@
-import pyvista
+import pyvista as pv
+from qtpy.QtWidgets import QApplication
 
-pyvista.Cone().plot()
+pl = pv.Plotter()
+pl.iren.initialize()
+pl.app = QApplication.instance()
+pl.add_mesh(pv.Cone())
+pl.camera_position = 'xy'
+
+pl = pv.Plotter()
+pl.add_mesh(pv.Cone())

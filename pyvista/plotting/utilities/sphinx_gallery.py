@@ -84,7 +84,7 @@ class Scraper:
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
-        for _, plotter in figures.items():
+        for plotter in figures.values():
             if plotter.iren is not None and plotter.iren.initialized:
                 plotter.update()
                 if hasattr(plotter, "app"):
