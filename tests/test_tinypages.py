@@ -85,7 +85,7 @@ def test_tinypages(tmpdir):
     assert b'you should not be reading this right now' not in html_contents
     assert b'should be printed: include-source with no args' in html_contents
 
-    # test that the plot has the camera position updated with a checksum
+    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
     assert (
         imread(html_dir / 'plot_cone_00_00.png').sum()
         != imread(html_dir / 'plot_cone_00_01.png').sum()
