@@ -86,4 +86,4 @@ def test_tinypages(tmpdir):
     assert b'should be printed: include-source with no args' in html_contents
 
     # test that the plot has the camera position updated with a checksum
-    assert imread(plot_file(14, 0, 0)).sum() == 2207465.5
+    assert imread(plot_file(14, 0, 0)).sum() != imread(plot_file(14, 0, 1)).sum()

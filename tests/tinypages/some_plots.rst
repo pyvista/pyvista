@@ -137,7 +137,8 @@ lines, even in two sections.
     ...                       cpos='xy')
 
 Plot 14 should create a plot and change the camera view and have that
-updated upon rendering.
+updated upon rendering (compared to the camera not being changed in
+the second plot).
 
 .. pyvista-plot::
 
@@ -145,3 +146,6 @@ updated upon rendering.
     >>> pl = pv.Plotter()
     >>> pl.add_mesh(pv.Cone())
     >>> pl.camera_position = 'xy'
+
+    >>> pl = pv.Plotter()
+    >>> pl.add_mesh(pv.Cone())
