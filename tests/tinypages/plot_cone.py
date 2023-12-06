@@ -1,5 +1,6 @@
-import pyvista as pv
 from qtpy.QtWidgets import QApplication
+
+import pyvista as pv
 
 pl = pv.Plotter()
 pl.iren.initialize()
