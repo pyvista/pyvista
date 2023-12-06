@@ -87,6 +87,6 @@ def test_tinypages(tmpdir):
 
     # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
     assert (
-        imread(html_dir / 'plot_cone_00_00.png').sum()
-        != imread(html_dir / 'plot_cone_00_01.png').sum()
+        imread(html_dir / 'plot_cone_00_01.png').sum()
+        != imread(html_dir / 'plot_cone_00_02.png').sum()
     )
