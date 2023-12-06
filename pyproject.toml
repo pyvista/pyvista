@@ -56,6 +56,9 @@ jupyter = [
     'trame-vtk>=2.5.8',
     'trame-vuetify>=2.3.1',
 ]
+tests = [
+    'qtpy'
+]
 
 [project.urls]
 Documentation = 'https://docs.pyvista.org/'
