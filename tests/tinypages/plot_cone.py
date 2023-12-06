@@ -2,6 +2,8 @@ from qtpy.QtWidgets import QApplication
 
 import pyvista as pv
 
+pv.Cone().plot()
+
 pl = pv.Plotter()
 pl.iren.initialize()
 pl.app = QApplication.instance()
