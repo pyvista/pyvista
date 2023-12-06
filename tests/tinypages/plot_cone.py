@@ -8,5 +8,5 @@ pl.app = QApplication.instance()
 pl.add_mesh(pv.Cone())
 pl.camera_position = 'xy'
 
-pl = pv.Plotter()
-pl.add_mesh(pv.Cone())
+pl2 = pv.Plotter()
+pl2.add_mesh(pv.Cone())
