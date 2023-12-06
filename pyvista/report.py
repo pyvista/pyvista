@@ -206,6 +206,7 @@ class Report(scooby.Report):
             'pytest_pyvista',
             'trame',
             'trame_client',
+            'trame_jupyter_extension',
             'trame_server',
             'trame_vtk',
             'trame_vuetify',

@@ -48,10 +48,10 @@ io = [
 ]
 jupyter = [
     'ipywidgets',
-    'jupyter-server-proxy',
     'nest_asyncio',
     'trame>=2.5.2',
     'trame-client>=2.12.7',
+    'trame-jupyter-extension>=2.0.1',
     'trame-server>=2.11.7',
     'trame-vtk>=2.5.8',
     'trame-vuetify>=2.3.1',
