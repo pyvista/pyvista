@@ -6436,7 +6436,6 @@ class DataSetFilters:
         >>> packed_labels.get_data_range()  # doctest:+SKIP
         (0, 25)
 
-
         """
         # Set a input scalars
         if scalars is None:
