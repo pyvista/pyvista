@@ -1,14 +1,12 @@
 import os
 import os.path as op
 
+from matplotlib.pyplot import imread
 import pytest
-
 from qtpy.QtWidgets import QApplication
 
 import pyvista as pv
 from pyvista.plotting.utilities.sphinx_gallery import Scraper
-
-from matplotlib.pyplot import imread
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
