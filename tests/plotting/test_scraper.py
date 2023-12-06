@@ -3,8 +3,12 @@ import os.path as op
 
 import pytest
 
+from qtpy.QtWidgets import QApplication
+
 import pyvista as pv
 from pyvista.plotting.utilities.sphinx_gallery import Scraper
+
+from matplotlib.pyplot import imread
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -16,6 +20,15 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
     plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
+    if n_win == 2:
+        # add cone, change view to test that it takes effect
+        plotters[0].iren.initialize()
+        plotters[0].app = QApplication.instance()
+        plotters[0].add_mesh(pv.Cone())
+        plotters[0].camera_position = 'xy'
+
+        plotters[1].add_mesh(pv.Cone())
+
     plotter_gif = pv.Plotter()
 
     scraper = Scraper()
@@ -54,6 +67,11 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
         assert os.path.isfile(img_fname)
+
+    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
+    if n_win == 2:
+        assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
+
     for plotter in plotters:
         plotter.close()
 

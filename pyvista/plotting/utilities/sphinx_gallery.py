@@ -87,7 +87,7 @@ class Scraper:
         for plotter in figures.values():
             if plotter.iren is not None and plotter.iren.initialized:
                 plotter.update()
-                if hasattr(plotter, "app"):
+                if hasattr(plotter, "app") and plotter.app is not None:
                     plotter.app.processEvents()
             fname = next(image_path_iterator)
             if hasattr(plotter, "_gif_filename"):
@@ -126,7 +126,11 @@ class DynamicScraper:
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
-        for _, plotter in figures.items():
+        for plotter in figures.values():
+            if plotter.iren is not None and plotter.iren.initialized:
+                plotter.update()
+                if hasattr(plotter, "app") and plotter.app is not None:
+                    plotter.app.processEvents()
             fname = next(image_path_iterator)
             # if hasattr(plotter, '_gif_filename'):
             #     raise RuntimeError('GIFs are not supported with DynamicScraper.')

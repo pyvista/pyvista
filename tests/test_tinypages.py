@@ -5,7 +5,6 @@ from pathlib import Path
 from subprocess import PIPE, Popen
 import sys
 
-from matplotlib.pyplot import imread
 import pytest
 
 from pyvista.plotting import system_supports_plotting
@@ -84,9 +83,3 @@ def test_tinypages(tmpdir):
 
     assert b'you should not be reading this right now' not in html_contents
     assert b'should be printed: include-source with no args' in html_contents
-
-    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
-    assert (
-        imread(html_dir / 'plot_cone_01_00.png').sum()
-        != imread(html_dir / 'plot_cone_01_01.png').sum()
-    )
