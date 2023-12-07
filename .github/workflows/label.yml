@@ -8,11 +8,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Label based on changed files
-      uses: actions/labeler@v4
+      uses: actions/labeler@v5
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        # https://github.com/actions/labeler/issues/112#issuecomment-1000491676
-        sync-labels: ''
 
     # Label based on branch name
     - uses: actions-ecosystem/action-add-labels@v1
