@@ -136,7 +136,7 @@ class DynamicScraper:
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for plotter in figures.values():
-            _process_events_before_scraping(plotter)
+            _process_events_before_scraping(plotter)  # pragma: no cover
             fname = next(image_path_iterator)
             # if hasattr(plotter, '_gif_filename'):
             #     raise RuntimeError('GIFs are not supported with DynamicScraper.')
