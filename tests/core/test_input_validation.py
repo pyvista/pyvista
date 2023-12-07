@@ -65,7 +65,7 @@ from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_ar
 )
 def test_validate_transform_as_array4x4(transform_like):
     result = validate_transform4x4(transform_like)
-    assert isinstance(result, np.ndarray)
+    assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(4))
 
 
@@ -86,7 +86,7 @@ def test_validate_transform_as_array4x4_raises():
 )
 def test_validate_transform_as_array3x3(transform_like):
     result = validate_transform3x3(transform_like)
-    assert isinstance(result, np.ndarray)
+    assert type(result) is np.ndarray
     assert np.array_equal(result, np.eye(3))
 
 
@@ -149,7 +149,7 @@ def test_validate_number():
 
     num = validate_number(2.0, to_list=False, must_have_shape=(), reshape=False)
     assert num == 2.0
-    assert isinstance(num, np.ndarray)
+    assert type(num) is np.ndarray
     assert num.dtype.type is np.float64
 
     msg = (
@@ -168,7 +168,7 @@ def test_validate_data_range():
     assert rng == [0.0, 2.5]
 
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
-    assert isinstance(rng, np.ndarray)
+    assert type(rng) is np.ndarray
 
     msg = "Data Range [1 0] must be sorted in ascending order."
     with pytest.raises(ValueError, match=escape(msg)):
@@ -506,7 +506,7 @@ def test_validate_array(
         # test scalar input results in scalar output
         assert isinstance(array_out, float) or isinstance(array_out, int)
     elif to_tuple:
-        assert isinstance(array_out, tuple)
+        assert type(array_out) is tuple
     elif to_list:
         assert isinstance(array_out, list)
     else:
@@ -514,9 +514,9 @@ def test_validate_array(
         assert array_out.dtype.type is dtype_out
         if as_any:
             if input_type is pyvista_ndarray:
-                assert isinstance(array_out, pyvista_ndarray)
+                assert type(array_out) is pyvista_ndarray
             elif input_type is np.ndarray:
-                assert isinstance(array_out, np.ndarray)
+                assert type(array_out) is np.ndarray
             if (
                 not copy
                 and isinstance(array_in, np.ndarray)
@@ -526,7 +526,7 @@ def test_validate_array(
             else:
                 assert array_out is not array_in
         else:
-            assert isinstance(array_out, np.ndarray)
+            assert type(array_out) is np.ndarray
 
     if copy:
         assert array_out is not array_in
@@ -552,7 +552,7 @@ def test_check_is_instance(obj, classinfo, allow_subclass, name):
                 check_is_instance(obj, classinfo, name=name)
 
     else:
-        if isinstance(classinfo, tuple):
+        if type(classinfo) is tuple:
             if type(obj) in classinfo:
                 check_is_type(obj, classinfo)
             else:
