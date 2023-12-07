@@ -1,11 +1,4 @@
 """Type aliases for type hints."""
 # flake8: noqa: F401
-from ._core_types import (
-    BoundsLike,
-    DimensionalArray,
-    Matrix,
-    Number_,
-    NumpyArray,
-    TransformLike,
-    Vector,
-)
+from ._arrays import NumpyArray
+from ._core import Array, BoundsLike, Matrix, Number, TransformLike, Vector

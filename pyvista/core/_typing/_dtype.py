@@ -7,7 +7,7 @@ or `numpy.ndarray[Any, numpy.dtype[int]]`.
 
 """
 
-import abc
+from abc import ABCMeta
 from typing import Generic, TypeVar
 
 import numpy as np
@@ -44,6 +44,6 @@ _DTypeScalar = TypeVar(
 )
 
 
-class _DType(np.generic, Generic[_DTypeScalar], metaclass=abc.ABCMeta):
+class _DType(np.generic, Generic[_DTypeScalar], metaclass=ABCMeta):
     def __new__(cls, dtype: type[_DTypeScalar]) -> np.dtype[_DTypeScalar]:  # type: ignore[misc, type-var]
         raise NotImplementedError

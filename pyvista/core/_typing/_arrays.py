@@ -21,11 +21,11 @@ from typing import Any, Sequence, TypeVar, Union
 
 import numpy as np
 
-from ._generic_number import _DType, _DTypeScalar
+from ._dtype import _DType, _DTypeScalar
 
 # Similar definition to numpy.NDArray, but here we use a specialized TypeVar
 # and helper class to support using generics with builtin types (e.g. int, float)
-_NumberNDArray = np.ndarray[Any, np.dtype[_DType[_DTypeScalar]]]
+NumpyArray = np.ndarray[Any, np.dtype[_DType[_DTypeScalar]]]
 
 _T = TypeVar("_T")
 _FiniteNestedSequence = Union[  # Note: scalar types are excluded
@@ -35,29 +35,29 @@ _FiniteNestedSequence = Union[  # Note: scalar types are excluded
     Sequence[Sequence[Sequence[Sequence[_T]]]],
 ]
 
-_NumberArray = Union[
-    _NumberNDArray[_DTypeScalar],
+_ArrayLike = Union[
+    NumpyArray[_DTypeScalar],
     _FiniteNestedSequence[_DTypeScalar],
-    _FiniteNestedSequence[_NumberNDArray[_DTypeScalar]],
+    _FiniteNestedSequence[NumpyArray[_DTypeScalar]],
 ]
 
-_NumberArray1D = Union[
-    _NumberNDArray[_DTypeScalar],
+_ArrayLike1D = Union[
+    NumpyArray[_DTypeScalar],
     Sequence[_DTypeScalar],
-    Sequence[_NumberNDArray[_DTypeScalar]],
+    Sequence[NumpyArray[_DTypeScalar]],
 ]
-_NumberArray2D = Union[
-    _NumberNDArray[_DTypeScalar],
+_ArrayLike2D = Union[
+    NumpyArray[_DTypeScalar],
     Sequence[Sequence[_DTypeScalar]],
-    Sequence[Sequence[_NumberNDArray[_DTypeScalar]]],
+    Sequence[Sequence[NumpyArray[_DTypeScalar]]],
 ]
-_NumberArray3D = Union[
-    _NumberNDArray[_DTypeScalar],
+_ArrayLike3D = Union[
+    NumpyArray[_DTypeScalar],
     Sequence[Sequence[Sequence[_DTypeScalar]]],
-    Sequence[Sequence[Sequence[_NumberNDArray[_DTypeScalar]]]],
+    Sequence[Sequence[Sequence[NumpyArray[_DTypeScalar]]]],
 ]
-_NumberArray4D = Union[
-    _NumberNDArray[_DTypeScalar],
+_ArrayLike4D = Union[
+    NumpyArray[_DTypeScalar],
     Sequence[Sequence[Sequence[Sequence[_DTypeScalar]]]],
-    Sequence[Sequence[Sequence[Sequence[_NumberNDArray[_DTypeScalar]]]]],
+    Sequence[Sequence[Sequence[Sequence[NumpyArray[_DTypeScalar]]]]],
 ]
