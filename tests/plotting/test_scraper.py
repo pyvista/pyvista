@@ -66,7 +66,6 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
     plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
-
     plotter_gif = pv.Plotter()
 
     scraper = Scraper()
@@ -105,7 +104,6 @@ def test_scraper(tmpdir, monkeypatch, n_win):
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
         assert os.path.isfile(img_fname)
-
     for plotter in plotters:
         plotter.close()
 
