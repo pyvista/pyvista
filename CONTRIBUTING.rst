@@ -877,10 +877,11 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the tag.
+8.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
+       git push origin HEAD
        git push origin --tags
 
 9.  Create a list of all changes for the release. It is often helpful to
