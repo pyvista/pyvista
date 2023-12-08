@@ -166,6 +166,11 @@ jobs:
           restore-keys: |
             Examples-1-
 
+      - name: Setup xvfb dependencies
+        run: |
+          git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
+          ./mne-python/tools/setup_xvfb.sh
+
       - name: Build wheel and install pyvista
         run: |
           pip install build
