@@ -49,12 +49,7 @@ def _update_alg(
 
 
 def _get_output(
-    algorithm,
-    iport=0,
-    iconnection=0,
-    oport=0,
-    active_scalars=None,
-    active_scalars_field='point',
+    algorithm, iport=0, iconnection=0, oport=0, active_scalars=None, active_scalars_field='point'
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = wrap(algorithm.GetInputDataObject(iport, iconnection))
