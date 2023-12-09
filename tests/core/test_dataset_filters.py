@@ -1,14 +1,14 @@
 import itertools
 import os
 import platform
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core import _vtk_core
+from pyvista.core import _vtk_core, filters
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import (
     MissingDataError,
@@ -66,6 +66,26 @@ def uniform_vec():
     mesh = pv.ImageData(dimensions=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
     mesh['vectors'] = mesh.points
     return mesh
+
+
+@pytest.fixture
+def algo_hook():
+    def func(algo):
+        algo.SetTest(True)
+
+    return func
+
+
+@pytest.mark.parametrize("with_algo_hook", [True, False])
+def test_update_alg(algo_hook, with_algo_hook: bool):
+    algo = MagicMock(_vtk_core.vtkAlgorithm)()
+
+    filters._update_alg(algo, algo_hook=algo_hook if with_algo_hook else None)
+
+    algo.Update.assert_called_once_with()
+
+    if with_algo_hook:
+        algo.SetTest.assert_called_once_with(True)
 
 
 def test_datasetfilters_init():
