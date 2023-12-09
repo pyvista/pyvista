@@ -6,7 +6,7 @@ on:
 
 env:
   # sintax: ("tkoyama010" "author2")
-  ALLOWED_AUTHORS: ("tkoyama010", "banesullivan", "akaszynski")
+  ALLOWED_AUTHORS: ("tkoyama010" "banesullivan" "akaszynski")
 
 jobs:
   autoapprove:
