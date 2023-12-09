@@ -5,7 +5,9 @@ This class, derived from `pyvista.trame.ui.base_viewer`,
 is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
+from trame.ui.vuetify2 import VAppLayout
 from trame.widgets import html, vuetify as vuetify
+from trame_client.ui.core import AbstractLayout
 
 from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
 
@@ -74,6 +76,24 @@ class Viewer(BaseViewer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def make_layout(self, *args, **kwargs) -> AbstractLayout:
+        """Create instance of an AbstractLayout which is appropriate for this viewer.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments.
+
+        **kwargs : dict, optional
+            Keyword arguments.
+
+        Returns
+        -------
+        VAppLayout (vue2)
+            A layout this viewer can be embedded in.
+        """
+        return VAppLayout(*args, **kwargs)
 
     def ui_controls(self, mode=None, default_server_rendering=True, v_show=None):
         """Create a VRow for the UI controls.
