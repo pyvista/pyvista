@@ -25,12 +25,22 @@ Examples
 # flake8: noqa: F401
 
 import pyvista
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import VTKAlgorithmHook
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 
-def _update_alg(alg, progress_bar=False, message=''):
+def _update_alg(
+    alg: _vtk.vtkAlgorithm,
+    progress_bar=False,
+    message='',
+    algo_hook: VTKAlgorithmHook = None,
+):
     """Update an algorithm with or without a progress bar."""
+    if algo_hook is not None:
+        algo_hook(alg)
+
     if progress_bar:
         with ProgressMonitor(alg, message=message):
             alg.Update()
@@ -39,7 +49,12 @@ def _update_alg(alg, progress_bar=False, message=''):
 
 
 def _get_output(
-    algorithm, iport=0, iconnection=0, oport=0, active_scalars=None, active_scalars_field='point'
+    algorithm,
+    iport=0,
+    iconnection=0,
+    oport=0,
+    active_scalars=None,
+    active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = wrap(algorithm.GetInputDataObject(iport, iconnection))

@@ -28,6 +28,8 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
+from .._typing_core import VTKAlgorithmHook
+
 
 @abstract_class
 class DataSetFilters:
@@ -2099,7 +2101,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Sizes')
         return _get_output(alg)
 
-    def cell_centers(self, vertex=True, progress_bar=False):
+    def cell_centers(self, vertex=True, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Generate points at the center of the cells in this dataset.
 
         These points can be used for placing glyphs or vectors.
@@ -2111,6 +2113,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        algo_hook : VTKAlgorithmHook, optional
+            Hook used to modify the underlying vtkAlgorithm
+            before update.
 
         Returns
         -------
@@ -2140,7 +2146,9 @@ class DataSetFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(self)
         alg.SetVertexCells(vertex)
-        _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
+        _update_alg(
+            alg, progress_bar, 'Generating Points at the Center of the Cells', algo_hook=algo_hook
+        )
         return _get_output(alg)
 
     def glyph(
