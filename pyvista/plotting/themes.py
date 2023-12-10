@@ -1458,6 +1458,8 @@ class _TrameConfig(_ThemeConfig):
         '_server_proxy_enabled',
         '_server_proxy_prefix',
         '_default_mode',
+        '_jupyter_extension_available',
+        '_jupyter_extension_enabled',
     ]
 
     def __init__(self):
@@ -1474,6 +1476,10 @@ class _TrameConfig(_ThemeConfig):
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
+        self._jupyter_extension_available = 'TRAME_JUPYTER_WWW' in os.environ
+        self._jupyter_extension_enabled = (
+            self._jupyter_extension_available and not self._server_proxy_enabled
+        )
         self._default_mode = 'trame'
 
     @property
@@ -1542,6 +1548,10 @@ class _TrameConfig(_ThemeConfig):
 
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):  # numpydoc ignore=GL08
+        if enabled and self.jupyter_extension_enabled:
+            warnings.warn("Enabling server_proxy will disable jupyter_extension")
+            self._jupyter_extension_enabled = False
+
         self._server_proxy_enabled = bool(enabled)
 
     @property
@@ -1552,6 +1562,33 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_prefix.setter
     def server_proxy_prefix(self, prefix: str):  # numpydoc ignore=GL08
         self._server_proxy_prefix = prefix
+
+    @property
+    def jupyter_extension_available(self) -> bool:  # numpydoc ignore=RT01
+        """Return whether the trame_jupyter_extension is detected."""
+        return self._jupyter_extension_available
+
+    @jupyter_extension_available.setter
+    def jupyter_extension_available(self, _available: bool):  # numpydoc ignore=GL08
+        warnings.warn(
+            "The jupyter_extension_available flag is read only and is automatically detected."
+        )
+
+    @property
+    def jupyter_extension_enabled(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to use the trame_jupyter_extension to communicate with clients."""
+        return self._jupyter_extension_enabled
+
+    @jupyter_extension_enabled.setter
+    def jupyter_extension_enabled(self, enabled: bool):  # numpydoc ignore=GL08
+        if enabled and not self.jupyter_extension_available:
+            raise ValueError("The trame_jupyter_extension is not available")
+
+        if enabled and self.server_proxy_enabled:
+            warnings.warn("Enabling jupyter_extension will disable server_proxy")
+            self._server_proxy_enabled = False
+
+        self._jupyter_extension_enabled = bool(enabled)
 
     @property
     def default_mode(self):  # numpydoc ignore=RT01
@@ -1651,6 +1688,7 @@ class Theme(_ThemeConfig):
         '_opacity',
         '_before_close_callback',
         '_logo_file',
+        '_edge_opacity',
     ]
 
     def __init__(self):
@@ -1734,6 +1772,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+        self._edge_opacity = 1.0
 
         self._logo_file = None
 
@@ -1840,6 +1879,28 @@ class Theme(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edges opacity.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.edge_opacity = 0.5
+
+        """
+        return self._edge_opacity
+
+    @edge_opacity.setter
+    def edge_opacity(self, edge_opacity: float):  # numpydoc ignore=GL08
+        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        self._edge_opacity = float(edge_opacity)
+
+    @property
     def above_range_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default above range color.
 
@@ -1941,6 +2002,8 @@ class Theme(_ThemeConfig):
         * ``'trame'``: The full Trame-based backend that combines both
           ``'server'`` and ``'client'`` into one backend. This requires a
           virtual frame buffer.
+
+        * ``'html'``: The ``'client'`` backend, but able to be embedded.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This

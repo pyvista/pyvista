@@ -459,63 +459,6 @@ encouraged to use the ``.. versionadded`` sphinx directive. For example:
         """
 
 
-Input Validation
-^^^^^^^^^^^^^^^^
-Validating user input is an essential part of software development to ensure
-algorithms perform as expected. This is especially the case in Python when
-working with multiple array-like object types (e.g. ``Sequence`` and
-``numpy.ndarray``) which may lack support for explicit typing and type
-hints for cases where arrays with a certain shape, dimensionality, and/or
-data type (e.g. ``float``, ``int``) may be required. Therefore it is imperative
-to validate all user input and raise any errors as appropriate.
-
-However, manually writing input validation routines and associated test cases
-can be time consuming and error prone. Therefore, it is recommended to make
-use of existing validation methods in ``pyvista.core.input_validation``.
-
-For example, a typical validation routine for some function may look like:
-
-.. code:: python
-
-    def some_function(points_array, method):
-        """Apply a method to an Nx3 points array.
-
-        Parameters
-        ----------
-        points_array : array_like
-            Array-like input of points with shape Nx3.
-
-        method : str
-            Method to apply. Must be one of:
-                * ``'method_a'``
-                * ``'method_b'``
-
-        """
-        import pyvista.core.input_validation as valid
-
-        # Validate input array. There is no need to check for
-        # type (e.g. Sequence or np.ndarray) or array shape.
-        # An error is automatically raised for bad input.
-        arr = valid.validate_arrayNx3(points_array)
-
-        # Validate input method. An error is automatically
-        # raised if the method is not valid.
-        possible_methods = ["method_a", "method_b"]
-        check_is_string_in_iterable(method, possible_methods)
-
-        # Start of implementation code...
-
-When using the array validation methods, consider setting the input
-type in the docstring to ``array_like`` (if appropriate), as the validation
-methods are very general and can operate on any array-like input.
-
-Note: ``array_like`` is a `NumPy glossary term <https://numpy.org/doc/stable/glossary.html#term-array_like>`_,
-not an actual type. Nevertheless, it's use is common in NumPy and
-PyVista documentation. A formal ``ArrayLike`` type was `introduced
-in NumPy 1.20 <https://numpy.org/devdocs/reference/typing.html#numpy.typing.ArrayLike>`_,
-but its use is not currently supported in PyVista.
-
-
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -836,6 +779,22 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once you have make a Pull Request from the pyvista organization repository branch.
+This will automatically deploy the Preview Documentation.
+Please check the documentation that is deployed by your Pull Request
+before merging.
+
+Once you have make a Pull Request from the forked repository. You can comment
+`github-actions preview` on a pull request to preview documentation.
+Since this command is only available for
+`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
+new contributors kindly request them to comment command.
+This is essential to safeguard the deployment site against
+potentially harmful commits.
+
 Branching Model
 ~~~~~~~~~~~~~~~
 
@@ -918,10 +877,11 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the tag.
+8.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
+       git push origin HEAD
        git push origin --tags
 
 9.  Create a list of all changes for the release. It is often helpful to

@@ -618,3 +618,36 @@ def test_set_plot_theme_from_env():
             _set_plot_theme_from_env()
     finally:
         os.environ.pop('PYVISTA_PLOT_THEME', None)
+
+
+def test_trame_config():
+    trame_config = pv.plotting.themes._TrameConfig()
+
+    # Enabling extension when extension is not available should raise exception
+    assert not trame_config.jupyter_extension_available
+    with pytest.raises(Exception):
+        trame_config.jupyter_extension_enabled = True
+
+    # Pretend the extension is available
+    trame_config._jupyter_extension_available = True
+    assert trame_config.jupyter_extension_available
+
+    # Enabling server proxy should disable extension and vice-versa
+    assert not trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = True
+    assert trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.server_proxy_enabled = True
+    assert not trame_config.jupyter_extension_enabled
+    assert trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = True
+    assert trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = False
+    assert not trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled

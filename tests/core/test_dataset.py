@@ -649,31 +649,59 @@ def test_set_active_scalars_name(grid):
 def test_rename_array_point(grid):
     point_keys = list(grid.point_data.keys())
     old_name = point_keys[0]
+    orig_vals = grid[old_name].copy()
     new_name = 'point changed'
     grid.set_active_scalars(old_name, preference='point')
     grid.rename_array(old_name, new_name, preference='point')
     assert new_name in grid.point_data
     assert old_name not in grid.point_data
     assert new_name == grid.active_scalars_name
+    assert np.array_equal(orig_vals, grid[new_name])
 
 
 def test_rename_array_cell(grid):
     cell_keys = list(grid.cell_data.keys())
     old_name = cell_keys[0]
+    orig_vals = grid[old_name].copy()
     new_name = 'cell changed'
     grid.rename_array(old_name, new_name)
     assert new_name in grid.cell_data
     assert old_name not in grid.cell_data
+    assert np.array_equal(orig_vals, grid[new_name])
 
 
 def test_rename_array_field(grid):
     grid.field_data['fieldfoo'] = np.array([8, 6, 7])
     field_keys = list(grid.field_data.keys())
     old_name = field_keys[0]
+    orig_vals = grid[old_name].copy()
     new_name = 'cell changed'
     grid.rename_array(old_name, new_name)
     assert new_name in grid.field_data
     assert old_name not in grid.field_data
+    assert np.array_equal(orig_vals, grid[new_name])
+
+
+def test_rename_array_doesnt_delete():
+    # Regression test for issue #5244
+    def make_mesh():
+        m = pv.Sphere()
+        m.point_data['orig'] = np.ones(m.n_points)
+        return m
+
+    mesh = make_mesh()
+    was_deleted = [False]
+
+    def on_delete(*_):
+        # Would be easier to throw an exception here but even though the exception gets printed to stderr
+        # pytest reports the test passing. See #5246 .
+        was_deleted[0] = True
+
+    mesh.point_data['orig'].VTKObject.AddObserver('DeleteEvent', on_delete)
+    mesh.rename_array('orig', 'renamed')
+    assert not was_deleted[0]
+    mesh.point_data['renamed'].VTKObject.RemoveAllObservers()
+    assert (mesh.point_data['renamed'] == 1).all()
 
 
 def test_change_name_fail(grid):
@@ -876,12 +904,12 @@ def test_find_closest_cell():
 def test_find_closest_cells():
     mesh = pv.Sphere()
     # simply get the face centers, ordered by cell Id
-    fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
+    fcent = mesh.points[mesh.regular_faces].mean(1)
     fcent_copy = fcent.copy()
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
-    assert np.allclose(indices, np.arange(mesh.n_faces))
+    assert np.allclose(indices, np.arange(mesh.n_faces_strict))
 
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)

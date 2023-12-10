@@ -140,6 +140,7 @@ def _warn_xserver():  # pragma: no cover
         # finally, check if using a backend that doesn't require an xserver
         if pyvista.global_theme.jupyter_backend in [
             'client',
+            'html',
         ]:
             return
 
@@ -2328,6 +2329,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color_missing_with_nan=False,
         copy_mesh=False,
         show_vertices=None,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2592,6 +2594,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2715,6 +2727,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             line_width=line_width,
             opacity=opacity,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
         actor.SetProperty(prop)
 
@@ -2852,6 +2865,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         copy_mesh=False,
         backface_params=None,
         show_vertices=None,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3184,6 +3198,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_color`` - The color of the vertices
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
+
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
 
         **kwargs : dict, optional
             Optional keyword arguments.
@@ -6568,6 +6592,7 @@ class Plotter(BasePlotter):
             * ``'none'`` : Do not display in the notebook.
             * ``'static'`` : Display a static figure.
             * ``'trame'`` : Display a dynamic figure with Trame.
+            * ``'html'`` : Use an ebeddable HTML scene.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.

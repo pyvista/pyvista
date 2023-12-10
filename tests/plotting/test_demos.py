@@ -25,7 +25,7 @@ def test_atomized():
 
 def test_logo_basic():
     pd = demos.logo_basic()
-    assert pd.n_faces
+    assert pd.n_cells
 
 
 def test_logo_voxel():

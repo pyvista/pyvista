@@ -953,7 +953,7 @@ def check_is_iterable_of_some_type(
         have the type or one of the types specified.
 
     allow_subclass : bool, default: True
-        If ``True``, the type of the iterable's items must be any of the
+        If ``True``, the type of the iterable items must be any of the
         given types or a subclass thereof. Otherwise, subclasses are not
         allowed.
 
