@@ -3,8 +3,8 @@ from typing import Union
 import warnings
 
 import pyvista
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista import vtk_version_info
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 from pyvista.plotting import _vtk
 from pyvista.plotting.colors import Color
