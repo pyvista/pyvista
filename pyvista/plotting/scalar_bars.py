@@ -559,7 +559,8 @@ class ScalarBars:
         else:
             scalar_bar.SetDrawFrame(False)
 
-        scalar_bar.SetUnconstrainedFontSize(unconstrained_font_size)
+        if unconstrained_font_size:
+            scalar_bar.UnconstrainedFontSizeOn()
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
