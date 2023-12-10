@@ -311,6 +311,8 @@ class ScalarBars:
             When it is not, the size of the font will always be respected.
             Using custom labels will force this mode to be on.
 
+            .. versionadded:: 0.44.0
+
         Returns
         -------
         vtk.vtkScalarBarActor
