@@ -307,13 +307,9 @@ ymaxs = [1.0, 1.0]
 
 camera = None
 
-has_cow = False
-if pv.vtk_version_info >= (9, 0, 20210718):
-    cam_orient_manipulator = vtkCameraOrientationWidget()
-    has_cow = True
+cam_orient_manipulator = vtkCameraOrientationWidget()
 
 curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
-idx = 0
 curvature_name = curvature_types[0]
 plotter = pv.Plotter()
 curvature_title = curvature_name.replace('_', '\n')
@@ -363,17 +359,12 @@ renderer.add_actor(scalar_bar)
 
 ren_win.AddRenderer(renderer)
 
-if idx == 0:
-    if has_cow:
-        cam_orient_manipulator.SetParentRenderer(renderer)
-    camera = renderer.camera
-    camera.elevation = 60
-else:
-    renderer.camera = camera
-renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
+cam_orient_manipulator.SetParentRenderer(renderer)
+camera = renderer.camera
+camera.elevation = 60
+renderer.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 renderer.reset_camera()
 
-idx = 1
 curvature_name = curvature_types[1]
 plotter = pv.Plotter()
 curvature_title = curvature_name.replace('_', '\n')
@@ -423,19 +414,11 @@ renderer.add_actor(scalar_bar)
 
 ren_win.AddRenderer(renderer)
 
-if idx == 0:
-    if has_cow:
-        cam_orient_manipulator.SetParentRenderer(renderer)
-    camera = renderer.camera
-    camera.elevation = 60
-else:
-    renderer.camera = camera
-renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
+renderer.camera = camera
+renderer.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
 renderer.reset_camera()
 
-if has_cow:
-    # Enable the widget.
-    cam_orient_manipulator.On()
+cam_orient_manipulator.On()
 
 ren_win.Render()
 ren_win.SetWindowName('CurvaturesAdjustEdges')
