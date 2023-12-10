@@ -14,7 +14,6 @@ from vtkmodules.vtkCommonCore import VTK_DOUBLE
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
 from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
-from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingCore import (
     vtkActor2D,
@@ -307,8 +306,6 @@ ymaxs = [1.0, 1.0]
 
 camera = None
 
-cam_orient_manipulator = vtkCameraOrientationWidget()
-
 curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
 curvature_name = curvature_types[0]
 plotter = pv.Plotter(shape=(1, 2))
@@ -360,7 +357,6 @@ renderer.add_actor(scalar_bar)
 
 ren_win.AddRenderer(renderer)
 
-cam_orient_manipulator.SetParentRenderer(renderer)
 camera = renderer.camera
 camera.elevation = 60
 renderer.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
@@ -419,7 +415,7 @@ renderer.camera = camera
 renderer.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
 renderer.reset_camera()
 
-cam_orient_manipulator.On()
+plotter.add_camera_orientation_widget()
 
 ren_win.Render()
 ren_win.SetWindowName('CurvaturesAdjustEdges')
