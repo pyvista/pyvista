@@ -542,8 +542,7 @@ class ScalarBars:
                 rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
             self._scalar_bar_widgets[title] = scalar_widget
 
-        if use_opacity:
-            scalar_bar.SetUseOpacity(True)
+        scalar_bar.SetUseOpacity(use_opacity)
 
         if outline:
             scalar_bar.SetDrawFrame(True)
