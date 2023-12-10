@@ -311,7 +311,8 @@ cam_orient_manipulator = vtkCameraOrientationWidget()
 
 curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
 curvature_name = curvature_types[0]
-plotter = pv.Plotter()
+plotter = pv.Plotter(shape=(1, 2))
+plotter.subplot(0, 0)
 curvature_title = curvature_name.replace('_', '\n')
 
 source.GetPointData().SetActiveScalars(curvature_name)
@@ -366,7 +367,7 @@ renderer.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 renderer.reset_camera()
 
 curvature_name = curvature_types[1]
-plotter = pv.Plotter()
+plotter.subplot(0, 1)
 curvature_title = curvature_name.replace('_', '\n')
 
 source.GetPointData().SetActiveScalars(curvature_name)
@@ -406,7 +407,7 @@ text_actor = vtkActor2D()
 text_actor.SetMapper(text_mapper)
 text_actor.SetPosition(250, 16)
 
-renderer = plotter.renderers[0]
+renderer = plotter.renderers[1]
 renderer.set_background([82, 87, 110])
 renderer.add_actor(actor)
 renderer.add_actor(text_actor)
