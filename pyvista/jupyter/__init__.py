@@ -109,10 +109,3 @@ def set_jupyter_backend(backend, name=None, **kwargs):
 
     """
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
-    if backend in ['server', 'client', 'trame', 'html']:
-        # Launch the trame server
-        from pyvista.trame.jupyter import elegantly_launch
-
-        if not name:
-            name = pyvista.global_theme.trame.jupyter_server_name
-        elegantly_launch(name, **kwargs)
