@@ -1,7 +1,7 @@
 import itertools
 import os
 import platform
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pytest
@@ -85,7 +85,11 @@ def test_update_alg(algo_hook, with_algo_hook: bool):
     algo.Update.assert_called_once_with()
 
     if with_algo_hook:
-        algo.SetTest.assert_called_once_with(True)
+        # Test that the hook is called before the update
+        expected_calls = [call.SetTest(True), call.Update()]
+        algo.assert_has_calls(expected_calls, any_order=False)
+    else:
+        algo.SetTest.assert_not_called()
 
 
 def test_datasetfilters_init():
