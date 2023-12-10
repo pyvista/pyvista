@@ -313,64 +313,125 @@ if pv.vtk_version_info >= (9, 0, 20210718):
     has_cow = True
 
 curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
-for idx, curvature_name in enumerate(curvature_types):
-    plotter = pv.Plotter()
-    curvature_title = curvature_name.replace('_', '\n')
+idx = 0
+curvature_name = curvature_types[0]
+plotter = pv.Plotter()
+curvature_title = curvature_name.replace('_', '\n')
 
-    source.GetPointData().SetActiveScalars(curvature_name)
-    scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
+source.GetPointData().SetActiveScalars(curvature_name)
+scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
 
-    bands = get_bands(scalar_range, 10)
-    freq = get_frequencies(bands, source)
-    bands, freq = adjust_ranges(bands, freq)
-    print(curvature_name)
-    print_bands_frequencies(bands, freq)
+bands = get_bands(scalar_range, 10)
+freq = get_frequencies(bands, source)
+bands, freq = adjust_ranges(bands, freq)
+print(curvature_name)
+print_bands_frequencies(bands, freq)
 
-    mapper = vtkPolyDataMapper()
-    mapper.SetInputData(source)
-    mapper.SetScalarModeToUsePointFieldData()
-    mapper.SelectColorArray(curvature_name)
-    mapper.SetScalarRange(scalar_range)
-    mapper.SetLookupTable(lut)
+mapper = vtkPolyDataMapper()
+mapper.SetInputData(source)
+mapper.SetScalarModeToUsePointFieldData()
+mapper.SelectColorArray(curvature_name)
+mapper.SetScalarRange(scalar_range)
+mapper.SetLookupTable(lut)
 
-    actor = pv.Actor(mapper=mapper)
+actor = pv.Actor(mapper=mapper)
 
-    # Create a scalar bar
-    scalar_bar = vtkScalarBarActor()
-    scalar_bar.SetLookupTable(mapper.GetLookupTable())
-    scalar_bar.SetTitle(curvature_title)
-    scalar_bar.UnconstrainedFontSizeOn()
-    scalar_bar.SetNumberOfLabels(min(5, len(freq)))
-    scalar_bar.SetMaximumWidthInPixels(window_width // 8)
-    scalar_bar.SetMaximumHeightInPixels(window_height // 3)
-    scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
-    scalar_bar.SetPosition(0.85, 0.1)
+# Create a scalar bar
+scalar_bar = vtkScalarBarActor()
+scalar_bar.SetLookupTable(mapper.GetLookupTable())
+scalar_bar.SetTitle(curvature_title)
+scalar_bar.UnconstrainedFontSizeOn()
+scalar_bar.SetNumberOfLabels(min(5, len(freq)))
+scalar_bar.SetMaximumWidthInPixels(window_width // 8)
+scalar_bar.SetMaximumHeightInPixels(window_height // 3)
+scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
+scalar_bar.SetPosition(0.85, 0.1)
 
-    text_mapper = vtkTextMapper()
-    text_mapper.SetInput(curvature_title)
-    text_mapper.SetTextProperty(text_property)
+text_mapper = vtkTextMapper()
+text_mapper.SetInput(curvature_title)
+text_mapper.SetTextProperty(text_property)
 
-    text_actor = vtkActor2D()
-    text_actor.SetMapper(text_mapper)
-    text_actor.SetPosition(250, 16)
+text_actor = vtkActor2D()
+text_actor.SetMapper(text_mapper)
+text_actor.SetPosition(250, 16)
 
-    renderer = plotter.renderers[0]
-    renderer.set_background([82, 87, 110])
-    renderer.add_actor(actor)
-    renderer.add_actor(text_actor)
-    renderer.add_actor(scalar_bar)
+renderer = plotter.renderers[0]
+renderer.set_background([82, 87, 110])
+renderer.add_actor(actor)
+renderer.add_actor(text_actor)
+renderer.add_actor(scalar_bar)
 
-    ren_win.AddRenderer(renderer)
+ren_win.AddRenderer(renderer)
 
-    if idx == 0:
-        if has_cow:
-            cam_orient_manipulator.SetParentRenderer(renderer)
-        camera = renderer.camera
-        camera.elevation = 60
-    else:
-        renderer.camera = camera
-    renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
-    renderer.reset_camera()
+if idx == 0:
+    if has_cow:
+        cam_orient_manipulator.SetParentRenderer(renderer)
+    camera = renderer.camera
+    camera.elevation = 60
+else:
+    renderer.camera = camera
+renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
+renderer.reset_camera()
+
+idx = 1
+curvature_name = curvature_types[1]
+plotter = pv.Plotter()
+curvature_title = curvature_name.replace('_', '\n')
+
+source.GetPointData().SetActiveScalars(curvature_name)
+scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
+
+bands = get_bands(scalar_range, 10)
+freq = get_frequencies(bands, source)
+bands, freq = adjust_ranges(bands, freq)
+print(curvature_name)
+print_bands_frequencies(bands, freq)
+
+mapper = vtkPolyDataMapper()
+mapper.SetInputData(source)
+mapper.SetScalarModeToUsePointFieldData()
+mapper.SelectColorArray(curvature_name)
+mapper.SetScalarRange(scalar_range)
+mapper.SetLookupTable(lut)
+
+actor = pv.Actor(mapper=mapper)
+
+# Create a scalar bar
+scalar_bar = vtkScalarBarActor()
+scalar_bar.SetLookupTable(mapper.GetLookupTable())
+scalar_bar.SetTitle(curvature_title)
+scalar_bar.UnconstrainedFontSizeOn()
+scalar_bar.SetNumberOfLabels(min(5, len(freq)))
+scalar_bar.SetMaximumWidthInPixels(window_width // 8)
+scalar_bar.SetMaximumHeightInPixels(window_height // 3)
+scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
+scalar_bar.SetPosition(0.85, 0.1)
+
+text_mapper = vtkTextMapper()
+text_mapper.SetInput(curvature_title)
+text_mapper.SetTextProperty(text_property)
+
+text_actor = vtkActor2D()
+text_actor.SetMapper(text_mapper)
+text_actor.SetPosition(250, 16)
+
+renderer = plotter.renderers[0]
+renderer.set_background([82, 87, 110])
+renderer.add_actor(actor)
+renderer.add_actor(text_actor)
+renderer.add_actor(scalar_bar)
+
+ren_win.AddRenderer(renderer)
+
+if idx == 0:
+    if has_cow:
+        cam_orient_manipulator.SetParentRenderer(renderer)
+    camera = renderer.camera
+    camera.elevation = 60
+else:
+    renderer.camera = camera
+renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
+renderer.reset_camera()
 
 if has_cow:
     # Enable the widget.
