@@ -5,6 +5,7 @@ curvatures Adjust Edges
 ~~~~~~~~~~~~~~~~~~~~~~~
 """
 import math
+import sys
 
 import numpy as np
 from vtk.util import numpy_support
@@ -24,132 +25,6 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 import pyvista as pv
-
-
-def main(argv):
-    desired_surface = 'RandomHills'
-    source = get_source(desired_surface)
-    if not source:
-        print('The surface is not available.')
-        return
-
-    gc = vtkCurvatures()
-    gc.SetInputData(source)
-    gc.SetCurvatureTypeToGaussian()
-    gc.Update()
-    if desired_surface in ['RandomHills']:
-        adjust_edge_curvatures(gc.GetOutput(), 'Gauss_Curvature')
-    source.GetPointData().AddArray(
-        gc.GetOutput().GetPointData().GetAbstractArray('Gauss_Curvature')
-    )
-
-    mc = vtkCurvatures()
-    mc.SetInputData(source)
-    mc.SetCurvatureTypeToMean()
-    mc.Update()
-    if desired_surface in ['RandomHills']:
-        adjust_edge_curvatures(mc.GetOutput(), 'Mean_Curvature')
-    source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('Mean_Curvature'))
-
-    # Let's visualise what we have done.
-
-    window_width = 1024
-    window_height = 512
-
-    ren_win = vtkRenderWindow()
-    ren_win.SetSize(window_width, window_height)
-    iren = vtkRenderWindowInteractor()
-    iren.SetRenderWindow(ren_win)
-    style = vtkInteractorStyleTrackballCamera()
-    iren.SetInteractorStyle(style)
-
-    # Create a common text property.
-    text_property = pv.TextProperty()
-    text_property.font_size = 24
-    text_property.justification_horizontal = "center"
-
-    lut = pv.LookupTable('coolwarm', n_values=256)
-
-    # Define viewport ranges
-    xmins = [0, 0.5]
-    xmaxs = [0.5, 1]
-    ymins = [0, 0]
-    ymaxs = [1.0, 1.0]
-
-    camera = None
-
-    has_cow = False
-    if pv.vtk_version_info >= (9, 0, 20210718):
-        cam_orient_manipulator = vtkCameraOrientationWidget()
-        has_cow = True
-
-    curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
-    for idx, curvature_name in enumerate(curvature_types):
-        plotter = pv.Plotter()
-        curvature_title = curvature_name.replace('_', '\n')
-
-        source.GetPointData().SetActiveScalars(curvature_name)
-        scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
-
-        bands = get_bands(scalar_range, 10)
-        freq = get_frequencies(bands, source)
-        bands, freq = adjust_ranges(bands, freq)
-        print(curvature_name)
-        print_bands_frequencies(bands, freq)
-
-        mapper = vtkPolyDataMapper()
-        mapper.SetInputData(source)
-        mapper.SetScalarModeToUsePointFieldData()
-        mapper.SelectColorArray(curvature_name)
-        mapper.SetScalarRange(scalar_range)
-        mapper.SetLookupTable(lut)
-
-        actor = pv.Actor(mapper=mapper)
-
-        # Create a scalar bar
-        scalar_bar = vtkScalarBarActor()
-        scalar_bar.SetLookupTable(mapper.GetLookupTable())
-        scalar_bar.SetTitle(curvature_title)
-        scalar_bar.UnconstrainedFontSizeOn()
-        scalar_bar.SetNumberOfLabels(min(5, len(freq)))
-        scalar_bar.SetMaximumWidthInPixels(window_width // 8)
-        scalar_bar.SetMaximumHeightInPixels(window_height // 3)
-        scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
-        scalar_bar.SetPosition(0.85, 0.1)
-
-        text_mapper = vtkTextMapper()
-        text_mapper.SetInput(curvature_title)
-        text_mapper.SetTextProperty(text_property)
-
-        text_actor = vtkActor2D()
-        text_actor.SetMapper(text_mapper)
-        text_actor.SetPosition(250, 16)
-
-        renderer = plotter.renderers[0]
-        renderer.set_background([82, 87, 110])
-        renderer.add_actor(actor)
-        renderer.add_actor(text_actor)
-        renderer.add_actor(scalar_bar)
-
-        ren_win.AddRenderer(renderer)
-
-        if idx == 0:
-            if has_cow:
-                cam_orient_manipulator.SetParentRenderer(renderer)
-            camera = renderer.camera
-            camera.elevation = 60
-        else:
-            renderer.camera = camera
-        renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
-        renderer.reset_camera()
-
-    if has_cow:
-        # Enable the widget.
-        cam_orient_manipulator.On()
-
-    ren_win.Render()
-    ren_win.SetWindowName('CurvaturesAdjustEdges')
-    iren.Start()
 
 
 def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
@@ -383,7 +258,124 @@ def print_bands_frequencies(bands, freq, precision=2):
     print(s)
 
 
-if __name__ == '__main__':
-    import sys
+desired_surface = 'RandomHills'
+source = get_source(desired_surface)
+if not source:
+    print('The surface is not available.')
+    sys.exit()
 
-    main(sys.argv)
+gc = vtkCurvatures()
+gc.SetInputData(source)
+gc.SetCurvatureTypeToGaussian()
+gc.Update()
+if desired_surface in ['RandomHills']:
+    adjust_edge_curvatures(gc.GetOutput(), 'Gauss_Curvature')
+source.GetPointData().AddArray(gc.GetOutput().GetPointData().GetAbstractArray('Gauss_Curvature'))
+
+mc = vtkCurvatures()
+mc.SetInputData(source)
+mc.SetCurvatureTypeToMean()
+mc.Update()
+if desired_surface in ['RandomHills']:
+    adjust_edge_curvatures(mc.GetOutput(), 'Mean_Curvature')
+source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('Mean_Curvature'))
+
+# Let's visualise what we have done.
+
+window_width = 1024
+window_height = 512
+
+ren_win = vtkRenderWindow()
+ren_win.SetSize(window_width, window_height)
+iren = vtkRenderWindowInteractor()
+iren.SetRenderWindow(ren_win)
+style = vtkInteractorStyleTrackballCamera()
+iren.SetInteractorStyle(style)
+
+# Create a common text property.
+text_property = pv.TextProperty()
+text_property.font_size = 24
+text_property.justification_horizontal = "center"
+
+lut = pv.LookupTable('coolwarm', n_values=256)
+
+# Define viewport ranges
+xmins = [0, 0.5]
+xmaxs = [0.5, 1]
+ymins = [0, 0]
+ymaxs = [1.0, 1.0]
+
+camera = None
+
+has_cow = False
+if pv.vtk_version_info >= (9, 0, 20210718):
+    cam_orient_manipulator = vtkCameraOrientationWidget()
+    has_cow = True
+
+curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
+for idx, curvature_name in enumerate(curvature_types):
+    plotter = pv.Plotter()
+    curvature_title = curvature_name.replace('_', '\n')
+
+    source.GetPointData().SetActiveScalars(curvature_name)
+    scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
+
+    bands = get_bands(scalar_range, 10)
+    freq = get_frequencies(bands, source)
+    bands, freq = adjust_ranges(bands, freq)
+    print(curvature_name)
+    print_bands_frequencies(bands, freq)
+
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputData(source)
+    mapper.SetScalarModeToUsePointFieldData()
+    mapper.SelectColorArray(curvature_name)
+    mapper.SetScalarRange(scalar_range)
+    mapper.SetLookupTable(lut)
+
+    actor = pv.Actor(mapper=mapper)
+
+    # Create a scalar bar
+    scalar_bar = vtkScalarBarActor()
+    scalar_bar.SetLookupTable(mapper.GetLookupTable())
+    scalar_bar.SetTitle(curvature_title)
+    scalar_bar.UnconstrainedFontSizeOn()
+    scalar_bar.SetNumberOfLabels(min(5, len(freq)))
+    scalar_bar.SetMaximumWidthInPixels(window_width // 8)
+    scalar_bar.SetMaximumHeightInPixels(window_height // 3)
+    scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
+    scalar_bar.SetPosition(0.85, 0.1)
+
+    text_mapper = vtkTextMapper()
+    text_mapper.SetInput(curvature_title)
+    text_mapper.SetTextProperty(text_property)
+
+    text_actor = vtkActor2D()
+    text_actor.SetMapper(text_mapper)
+    text_actor.SetPosition(250, 16)
+
+    renderer = plotter.renderers[0]
+    renderer.set_background([82, 87, 110])
+    renderer.add_actor(actor)
+    renderer.add_actor(text_actor)
+    renderer.add_actor(scalar_bar)
+
+    ren_win.AddRenderer(renderer)
+
+    if idx == 0:
+        if has_cow:
+            cam_orient_manipulator.SetParentRenderer(renderer)
+        camera = renderer.camera
+        camera.elevation = 60
+    else:
+        renderer.camera = camera
+    renderer.SetViewport(xmins[idx], ymins[idx], xmaxs[idx], ymaxs[idx])
+    renderer.reset_camera()
+
+if has_cow:
+    # Enable the widget.
+    cam_orient_manipulator.On()
+
+ren_win.Render()
+ren_win.SetWindowName('CurvaturesAdjustEdges')
+iren.Start()
