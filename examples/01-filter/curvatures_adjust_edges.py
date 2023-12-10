@@ -306,8 +306,7 @@ ymaxs = [1.0, 1.0]
 
 camera = None
 
-curvature_types = ['Gauss_Curvature', 'Mean_Curvature']
-curvature_name = curvature_types[0]
+curvature_name = 'Gauss_Curvature'
 plotter = pv.Plotter(shape=(1, 2))
 plotter.subplot(0, 0)
 curvature_title = curvature_name.replace('_', '\n')
@@ -362,7 +361,7 @@ camera.elevation = 60
 renderer.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 renderer.reset_camera()
 
-curvature_name = curvature_types[1]
+curvature_name = 'Mean_Curvature'
 plotter.subplot(0, 1)
 curvature_title = curvature_name.replace('_', '\n')
 
