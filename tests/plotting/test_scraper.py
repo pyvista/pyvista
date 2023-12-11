@@ -3,13 +3,21 @@ import os.path as op
 
 from matplotlib.pyplot import imread
 import pytest
-from qtpy.QtWidgets import QApplication
 
 import pyvista as pv
 from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
+
+
+class QApplication:
+
+    def __init__(self, *args):
+        pass
+
+    def processEvents(self):
+        pass
 
 
 def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
@@ -23,7 +31,7 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
 
     # add cone, change view to test that it takes effect
     plotters[0].iren.initialize()
-    plotters[0].app = QApplication([])
+    plotters[0].app = QApplication([])  # fake QApplication
     plotters[0].add_mesh(pv.Cone())
     plotters[0].camera_position = 'xy'
 
