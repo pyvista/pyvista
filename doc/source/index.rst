@@ -205,10 +205,10 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 6. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
 7. Translation is backed up in `pyvista-doc-translations`_.
 
-Details can be found here: https://docs.transifex.com/getting-started-1/translators
+Details can be found here: https://help.transifex.com/en/
 
-.. _`pyvista translation page`: https://app.transifex.com/tkoyama010/pyvista-doc/
-.. _Transifex: https://app.transifex.com/
+.. _`pyvista translation page`: https://app.transifex.com/signin/?next=/tkoyama010/pyvista-doc/
+.. _Transifex: https://app.transifex.com/signin/?next=/home/
 .. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
 .. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
@@ -227,10 +227,10 @@ Status
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pyvista/pyvista
+   :target: https://app.codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
-   :target: https://www.codacy.com/gh/pyvista/pyvista/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pyvista/pyvista&amp;utm_campaign=Badge_Grade
+   :target: https://app.codacy.com/gh/pyvista/pyvista/dashboard
 
 .. |contributors| image:: https://img.shields.io/github/contributors/pyvista/pyvista.svg?logo=github&logoColor=white
    :target: https://github.com/pyvista/pyvista/graphs/contributors/
@@ -239,17 +239,17 @@ Status
    :target: https://github.com/pyvista/pyvista
    :alt: GitHub
 
-.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
-   :target: https://zenodo.org/badge/latestdoi/92974124
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
+   :target: https://zenodo.org/records/8415866
 
 .. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/licenses/MIT
+   :target: https://opensource.org/license/mit/
 
 .. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
-   :target: http://slack.pyvista.org
+   :target: https://communityinviter.com/apps/pyvista/pyvista
 
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/pyvista/
