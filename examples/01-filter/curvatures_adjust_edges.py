@@ -302,8 +302,6 @@ xmaxs = [0.5, 1]
 ymins = [0, 0]
 ymaxs = [1.0, 1.0]
 
-camera = None
-
 curvature_name = 'Gauss_Curvature'
 plotter = pv.Plotter(shape=(1, 2))
 plotter.subplot(0, 0)
