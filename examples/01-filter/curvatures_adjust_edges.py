@@ -16,7 +16,6 @@ from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 
 # from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 import pyvista as pv
 
@@ -279,11 +278,7 @@ source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('M
 window_width = 1024
 window_height = 512
 
-plotter = pv.Plotter(shape=(1, 2))
-ren_win = vtkRenderWindow()
-ren_win.SetSize(window_width, window_height)
-iren = pv.plotting.render_window_interactor.RenderWindowInteractor(plotter)
-iren.set_render_window(ren_win)
+plotter = pv.Plotter(shape=(1, 2), window_size=(window_width, window_height))
 # style = vtkInteractorStyleTrackballCamera()
 # iren.SetInteractorStyle(style)
 
