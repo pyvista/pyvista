@@ -226,7 +226,7 @@ Status
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
-.. |codecov| image:: https://app.codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
    :target: https://app.codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
