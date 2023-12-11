@@ -13,9 +13,10 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
 from vtkmodules.vtkFiltersGeneral import vtkCurvatures
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
+
+# from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderWindowInteractor
+from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 import pyvista as pv
 
@@ -278,12 +279,13 @@ source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('M
 window_width = 1024
 window_height = 512
 
+plotter = pv.Plotter(shape=(1, 2))
 ren_win = vtkRenderWindow()
 ren_win.SetSize(window_width, window_height)
-iren = vtkRenderWindowInteractor()
-iren.SetRenderWindow(ren_win)
-style = vtkInteractorStyleTrackballCamera()
-iren.SetInteractorStyle(style)
+iren = pv.plotting.render_window_interactor.RenderWindowInteractor(plotter)
+iren.set_render_window(ren_win)
+# style = vtkInteractorStyleTrackballCamera()
+# iren.SetInteractorStyle(style)
 
 # Create a common text property.
 text_property = pv.TextProperty()
@@ -299,7 +301,6 @@ ymins = [0, 0]
 ymaxs = [1.0, 1.0]
 
 curvature_name = 'Gauss_Curvature'
-plotter = pv.Plotter(shape=(1, 2))
 plotter.subplot(0, 0)
 curvature_title = curvature_name.replace('_', '\n')
 
@@ -401,4 +402,4 @@ plotter.add_camera_orientation_widget()
 
 ren_win.Render()
 ren_win.SetWindowName('CurvaturesAdjustEdges')
-iren.Start()
+iren.start()
