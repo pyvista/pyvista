@@ -15,11 +15,7 @@ from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
 from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-from vtkmodules.vtkRenderingCore import (
-    vtkPolyDataMapper,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
-)
+from vtkmodules.vtkRenderingCore import vtkDataSetMapper, vtkRenderWindow, vtkRenderWindowInteractor
 
 import pyvista as pv
 
@@ -316,7 +312,7 @@ bands, freq = adjust_ranges(bands, freq)
 print(curvature_name)
 print_bands_frequencies(bands, freq)
 
-mapper = vtkPolyDataMapper()
+mapper = vtkDataSetMapper()
 mapper.SetInputData(source)
 mapper.SetScalarModeToUsePointFieldData()
 mapper.SelectColorArray(curvature_name)
@@ -365,7 +361,7 @@ bands, freq = adjust_ranges(bands, freq)
 print(curvature_name)
 print_bands_frequencies(bands, freq)
 
-mapper = vtkPolyDataMapper()
+mapper = vtkDataSetMapper()
 mapper.SetInputData(source)
 mapper.SetScalarModeToUsePointFieldData()
 mapper.SelectColorArray(curvature_name)
