@@ -309,7 +309,7 @@ class ScalarBars:
             Whether the font size of title and labels is unconstrained.
             When it is constrained, the size of the scalar bar will constrain the font size.
             When it is not, the size of the font will always be respected.
-            Using custom labels will force this mode to be on.
+            Using custom labels will force this to be ``True``.
 
             .. versionadded:: 0.44.0
 
