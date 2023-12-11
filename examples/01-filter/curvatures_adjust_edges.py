@@ -16,11 +16,9 @@ from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingCore import (
-    vtkActor2D,
     vtkPolyDataMapper,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
-    vtkTextMapper,
 )
 
 import pyvista as pv
@@ -340,13 +338,9 @@ scalar_bar.SetMaximumHeightInPixels(window_height // 3)
 scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
 scalar_bar.SetPosition(0.85, 0.1)
 
-text_mapper = vtkTextMapper()
-text_mapper.SetInput(curvature_title)
-text_mapper.SetTextProperty(text_property)
-
-text_actor = vtkActor2D()
-text_actor.SetMapper(text_mapper)
-text_actor.SetPosition(250, 16)
+text_actor = pv.Text(text=curvature_title)
+text_actor.prop = text_property
+text_actor.position = (250, 16)
 
 renderer = plotter.renderers[0]
 renderer.set_background([82, 87, 110])
@@ -394,13 +388,9 @@ scalar_bar.SetMaximumHeightInPixels(window_height // 3)
 scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
 scalar_bar.SetPosition(0.85, 0.1)
 
-text_mapper = vtkTextMapper()
-text_mapper.SetInput(curvature_title)
-text_mapper.SetTextProperty(text_property)
-
-text_actor = vtkActor2D()
-text_actor.SetMapper(text_mapper)
-text_actor.SetPosition(250, 16)
+text_actor = pv.Text(text=curvature_title)
+text_actor.prop = text_property
+text_actor.position = (250, 16)
 
 renderer = plotter.renderers[1]
 renderer.set_background([82, 87, 110])
