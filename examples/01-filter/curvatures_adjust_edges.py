@@ -343,11 +343,10 @@ text_actor.prop = text_property
 text_actor.position = (250, 16)
 
 plotter.add_actor(actor)
+plotter.set_background([82, 87, 110])
+plotter.add_actor(text_actor)
+plotter.add_actor(scalar_bar)
 renderer = plotter.renderers[0]
-renderer.set_background([82, 87, 110])
-renderer.add_actor(text_actor)
-renderer.add_actor(scalar_bar)
-
 ren_win.AddRenderer(renderer)
 
 camera = renderer.camera
@@ -393,10 +392,10 @@ text_actor.prop = text_property
 text_actor.position = (250, 16)
 
 plotter.add_actor(actor)
+plotter.set_background([82, 87, 110])
+plotter.add_actor(text_actor)
+plotter.add_actor(scalar_bar)
 renderer = plotter.renderers[1]
-renderer.set_background([82, 87, 110])
-renderer.add_actor(text_actor)
-renderer.add_actor(scalar_bar)
 
 ren_win.AddRenderer(renderer)
 
