@@ -342,7 +342,6 @@ plotter.set_background([82, 87, 110])
 plotter.add_actor(text_actor)
 plotter.add_actor(scalar_bar)
 renderer = plotter.renderers[0]
-ren_win.AddRenderer(renderer)
 
 camera = renderer.camera
 camera.elevation = 60
@@ -392,14 +391,10 @@ plotter.add_actor(text_actor)
 plotter.add_actor(scalar_bar)
 renderer = plotter.renderers[1]
 
-ren_win.AddRenderer(renderer)
 
 renderer.camera = camera
 renderer.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
 renderer.reset_camera()
 
 plotter.add_camera_orientation_widget()
-
-ren_win.Render()
-ren_win.SetWindowName('CurvaturesAdjustEdges')
-iren.start()
+plotter.show()
