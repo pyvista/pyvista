@@ -12,7 +12,6 @@ pytestmark = pytest.mark.skip_plotting
 
 
 class QApplication:
-
     def __init__(self, *args):
         pass
 
