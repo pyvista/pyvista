@@ -342,9 +342,9 @@ text_actor = pv.Text(text=curvature_title)
 text_actor.prop = text_property
 text_actor.position = (250, 16)
 
+plotter.add_actor(actor)
 renderer = plotter.renderers[0]
 renderer.set_background([82, 87, 110])
-renderer.add_actor(actor)
 renderer.add_actor(text_actor)
 renderer.add_actor(scalar_bar)
 
@@ -392,9 +392,9 @@ text_actor = pv.Text(text=curvature_title)
 text_actor.prop = text_property
 text_actor.position = (250, 16)
 
+plotter.add_actor(actor)
 renderer = plotter.renderers[1]
 renderer.set_background([82, 87, 110])
-renderer.add_actor(actor)
 renderer.add_actor(text_actor)
 renderer.add_actor(scalar_bar)
 
