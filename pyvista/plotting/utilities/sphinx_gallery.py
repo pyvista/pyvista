@@ -56,9 +56,9 @@ def html_rst(
 def _process_events_before_scraping(plotter):
     """Process events such as changing the camera or object before scraping."""
     if plotter.iren is not None and plotter.iren.initialized:
-        plotter.update()
         if hasattr(plotter, "app") and plotter.app is not None:
             plotter.app.processEvents()
+        plotter.update()
 
 
 class Scraper:
