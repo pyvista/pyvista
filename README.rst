@@ -106,10 +106,10 @@ Python modules; see Connections for a list of projects that leverage
 PyVista.
 
 
-.. |post| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/i/flow/login?redirect_after_login=%2Fintent%2Ftweet%3Ftext%3DCheck%2520out%2520this%2520project%2520for%25203D%2520visualization%2520in%2520Python%26url%3Dhttps%3A%2F%2Fgithub.com%2Fpyvista%2Fpyvista%26hashtags%3D3D%2Cvisualization%2CPython%2Cvtk%2Cmesh%2Cplotting%2CPyVista
+.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
+   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
-Share this project on X: |post|
+Share this project on X: |tweet|
 
 
 PyVista is a NumFOCUS affiliated project
