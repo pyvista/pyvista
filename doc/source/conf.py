@@ -450,7 +450,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "Slack Community",
-            "url": "http://slack.pyvista.org",
+            "url": "https://communityinviter.com/apps/pyvista/pyvista",
             "icon": "fab fa-slack",
         },
         {
