@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 import numpy as np
 
 import pyvista
+from pyvista.core import _vtk_core as _vtk
 
 from .fileio import _get_ext_force, _process_filename
 from .helpers import wrap
@@ -2448,6 +2449,18 @@ class XdmfReader(BaseReader, PointCellDataSelection):
 
     def set_active_time_value(self, time_value):  # noqa: D102
         self.reader.UpdateTimeStep(time_value)
+
+    @property
+    def time_values(self):  # numpydoc ignore=RT01
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+
+        """
+        info = self.reader.GetOutputInformation(0)
+        return list(info.Get(_vtk.vtkCompositeDataPipeline.TIME_STEPS()))
 
 
 CLASS_READERS = {
