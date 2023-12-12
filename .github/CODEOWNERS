@@ -1,3 +1,6 @@
+/LICENSE                                            @pyvista/admin
+/AUTHORS.rst                                        @pyvista/admin
+/joss/                                              @pyvista/admin
 .github/workflows/testing-and-deployment.yml        @banesullivan
 .github/workflows/docs.yml                          @banesullivan
 .github/workflows/docker-package.yml                @banesullivan
