@@ -123,11 +123,11 @@ class DynamicScraper:
     variable in the document then its value will be used as default for the
     force_static argument of the pyvista-plot command. see also the notes at :func:plot_directive
 
-    To alter the global value behaviour just for some plots you may set the
+    To alter the global value behavior just for some plots you may set the
     boolean variable ``PYVISTA_GALLERY_FORCE_STATIC = True``/
     ``PYVISTA_GALLERY_FORCE_STATIC = False`` just before the appropriate ``plot`` command.
 
-    The default behavior  of this scraper is to create interactive plots.
+    The default behavior of this scraper is to create interactive plots.
 
     """
 

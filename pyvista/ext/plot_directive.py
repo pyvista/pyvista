@@ -59,13 +59,13 @@ The ``pyvista-plot`` directive supports the following options:
         If specified, the code block will be run, but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
-    force_static : bool
-        If specified, static images will be used instead of an interactive scene.
-
     caption : str
         If specified, the option's argument will be used as a caption for the
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
+
+    force_static : bool
+        If specified, static images will be used instead of an interactive scene.
 
 Additionally, this directive supports all of the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
@@ -335,7 +335,7 @@ class ImageFile:
         """Return the basename without the suffix."""
         return Path(self.basename).stem
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma no cover
         return self.filename
 
 
@@ -347,8 +347,8 @@ class PlotError(RuntimeError):
 
 def _run_code(code, code_path, ns=None, function_name=None):
     """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
-    ```pyvista-plot::`` directive.  In the later case the doctest parser will
-    present the code-block once again with the ```pyvista-plot::`` directive
+    ```pyvista-plot::`` directive.  In the later case, the doctest parser will
+    present the code-block again with the ```pyvista-plot::`` directive
     and its options removed.
 
     Import a Python module from a path, and run the function given by
@@ -389,7 +389,7 @@ def render_figures(
     """
 
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
-    # The docset parser will present the code-block once again with the ```pyvista-plot::`` directive
+    # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
     # and its options properly parsed.
     if _contains_pyvista_plot(code):
         is_doctest = True

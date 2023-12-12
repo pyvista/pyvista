@@ -37,7 +37,7 @@ After this preamble is complete, the first code block begins. This is where you
 typically set up your imports.
 
 .. note::
-   By default the documentation scrapper will generate both a static image and
+   By default, the documentation scrapper will generate both a static image and
    an interactive widget for each plot. If you want to turn this feature off
    define at the top of your file:
 
@@ -57,6 +57,7 @@ typically set up your imports.
        ...
        pl.show()  # this will be interactive plot
 
+       # sphinx_gallery_start_ignore
        PYVISTA_GALLERY_FORCE_STATIC = True
        # sphinx_gallery_end_ignore
        ...

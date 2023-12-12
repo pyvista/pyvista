@@ -21,7 +21,7 @@ def make_sphere():
 def make_sphere_second():
     """Make a sphere.
 
-    Test that the pyvista-plot directive works correctly when it is part of the docset.
+    Test that the pyvista-plot directive works correctly when it is part of the doctest.
 
     Examples
     --------
