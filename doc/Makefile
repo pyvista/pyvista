@@ -82,4 +82,4 @@ linkcheck-grep:
 # Spin up a local http server to view the rendered documentation.
 # This is required for interactive examples to work.
 serve-html:
-	python -m http.server 0 --directory "$(BUILDDIR)"/html
+	python -m http.server 11000 --directory "$(BUILDDIR)"/html
