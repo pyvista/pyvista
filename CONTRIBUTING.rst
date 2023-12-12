@@ -71,7 +71,7 @@ software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
 
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+You are also welcome to join us on `Slack <https://communityinviter.com/apps/pyvista/pyvista>`_,
 but Slack should be reserved for ad hoc conversations and community engagement
 rather than technical discussions.
 
@@ -782,12 +782,7 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once you have make a Pull Request from the pyvista organization repository branch.
-This will automatically deploy the Preview Documentation.
-Please check the documentation that is deployed by your Pull Request
-before merging.
-
-Once you have make a Pull Request from the forked repository. You can comment
+Once you have make a Pull Request. You can comment
 `github-actions preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
