@@ -8,7 +8,6 @@ See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived
 import io
 
 from trame.app import get_server
-from trame.widgets import html
 from trame_client.ui.core import AbstractLayout
 
 import pyvista
