@@ -2,6 +2,7 @@
 /AUTHORS.rst                                        @pyvista/admin
 /joss/                                              @pyvista/admin
 /CODE_OF_CONDUCT.md                                 @pyvista/admin
+/CODEOWNERS                                         @pyvista/admin
 /.github/workflows/auto-approve.yml                 @pyvista/admin
 /.github/workflows/testing-and-deployment.yml       @banesullivan
 /.github/workflows/docs.yml                         @banesullivan
