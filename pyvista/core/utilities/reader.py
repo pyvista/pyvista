@@ -2407,7 +2407,7 @@ class GIFReader(BaseReader):
     _class_reader = _GIFReader
 
 
-class XdmfReader(BaseReader, PointCellDataSelection):
+class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
 
     Notes
@@ -2451,16 +2451,19 @@ class XdmfReader(BaseReader, PointCellDataSelection):
         self.reader.UpdateTimeStep(time_value)
 
     @property
-    def time_values(self):  # numpydoc ignore=RT01
-        """All time or iteration values.
+    def number_time_points(self):  # noqa: D102
+        return len(self.time_values)
 
-        Returns
-        -------
-        list[float]
+    def time_point_value(self, time_point):  # noqa: D102
+        return self.time_values[0]
 
-        """
+    @property
+    def time_values(self):  # noqa: D102
         info = self.reader.GetOutputInformation(0)
         return list(info.Get(_vtk.vtkCompositeDataPipeline.TIME_STEPS()))
+
+    def set_active_time_point(self, time_point):  # noqa: D102
+        self.set_active_time_value(self.time_values[time_point])
 
 
 CLASS_READERS = {
