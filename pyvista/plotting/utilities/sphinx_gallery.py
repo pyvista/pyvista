@@ -64,6 +64,16 @@ def html_rst(
     return images_rst
 
 
+def _process_events_before_scraping(plotter):
+    """Process events such as changing the camera or an object before scraping."""
+    if plotter.iren is not None and plotter.iren.initialized:
+        # check for pyvistaqt app which can be specifically bound to pyvista plotter
+        # objects in order to interact with qt, then process the events from qt
+        if hasattr(plotter, "app") and plotter.app is not None:
+            plotter.app.processEvents()
+        plotter.update()
+
+
 class Scraper:
     """
     Save ``pyvista.Plotter`` objects.
@@ -95,7 +105,8 @@ class Scraper:
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
-        for _, plotter in figures.items():
+        for plotter in figures.values():
+            _process_events_before_scraping(plotter)
             fname = next(image_path_iterator)
             if hasattr(plotter, "_gif_filename"):
                 # move gif to fname
@@ -108,7 +119,7 @@ class Scraper:
         return figure_rst(image_names, gallery_conf["src_dir"])
 
 
-class DynamicScraper:
+class DynamicScraper:  # pragma: no cover
     """
     Save ``pyvista.Plotter`` objects dynamically.
 
@@ -131,6 +142,10 @@ class DynamicScraper:
 
     """
 
+    def __repr__(self):
+        """Return a stable representation of the class instance."""
+        return f"<{type(self).__name__} object>"
+
     def __call__(self, block, block_vars, gallery_conf):  # pragma: no cover
         """Save the figures generated after running example code.
 
@@ -152,7 +167,8 @@ class DynamicScraper:
             force_static = True
         elif "PYVISTA_GALLERY_FORCE_STATIC = False" in block[1].split('\n'):
             force_static = False
-        for _, plotter in figures.items():
+        for plotter in figures.values():
+            _process_events_before_scraping(plotter)
             fname = next(image_path_iterator)
             if hasattr(plotter, '_gif_filename'):
                 fname = fname[:-3] + "gif"
