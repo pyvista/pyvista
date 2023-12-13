@@ -2435,6 +2435,11 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     _vtk_module_name = "vtkIOXdmf2"
     _vtk_class_name = "vtkXdmfReader"
 
+    def __init__(self, path):
+        super().__init__(path)
+        self._active_time_value = 0.0
+        self.set_active_time_value(self._active_time_value)
+
     @property
     def number_grids(self):  # numpydoc ignore=RT01
         """Return the number of grids that can be read by the reader.
@@ -2461,6 +2466,10 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     def time_values(self):  # noqa: D102
         info = self.reader.GetOutputInformation(0)
         return list(info.Get(_vtk.vtkCompositeDataPipeline.TIME_STEPS()))
+
+    @property
+    def active_time_value(self):  # noqa: D102
+        return self._active_time_value
 
     def set_active_time_point(self, time_point):  # noqa: D102
         self.set_active_time_value(self.time_values[time_point])
