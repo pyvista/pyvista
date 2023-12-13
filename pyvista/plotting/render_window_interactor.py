@@ -547,6 +547,109 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
+    def enable_paraview_2D_style(self):
+        """Set the interactive style to Paraview-like 2D style.
+
+        For a 3-button mouse, the left button pans, the
+        right button dollys, the middle button spins, and the wheel
+        dollys.
+        ctrl + left button spins, shift + left button zooms,
+        ctrl + middle button pans, shift + middle button dollys,
+        ctrl + right button rotates in 3D, and shift + right button
+        dollys.
+
+        Shift + right currently varies from Paraview and may be changed
+        in the future.
+
+        To get a view most like Paraview 2D style, also use
+        :func:`pyvista.Plotter.enable_parallel_projection`.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the
+        Paraview-like 2D style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.enable_paraview_2D_style()
+        >>> plotter.show()  # doctest:+SKIP
+        """
+        self._style = 'TrackballCamera'
+        self._style_class = None
+        self.update_style()
+
+        def _left_button_press_callback(_obj, event):  # pragma: no cover
+            """Left button press behavior."""
+            if self.interactor.GetControlKey():
+                self._style_class.StartSpin()
+            elif self.interactor.GetShiftKey():
+                self._style_class.StartDolly()
+            else:
+                self._style_class.StartPan()
+            self._style_class.OnLeftButtonDown()
+
+        def _left_button_release_callback(_obj, event):  # pragma: no cover
+            """Turn off all left button behavior."""
+            self._style_class.EndSpin()
+            self._style_class.EndPan()
+            self._style_class.EndDolly()
+            self._style_class.OnLeftButtonUp()
+
+        def _middle_button_press_callback(_obj, event):  # pragma: no cover
+            """Middle button press behavior."""
+            if self.interactor.GetControlKey():
+                self._style_class.StartPan()
+            elif self.interactor.GetShiftKey():
+                self._style_class.StartDolly()
+            else:
+                self._style_class.StartSpin()
+            self._style_class.OnMiddleButtonDown()
+
+        def _middle_button_release_callback(_obj, event):  # pragma: no cover
+            """Turn off all middle button behavior."""
+            self._style_class.EndSpin()
+            self._style_class.EndPan()
+            self._style_class.EndDolly()
+            self._style_class.OnMiddleButtonUp()
+
+        def _right_button_press_callback(_obj, event):  # pragma: no cover
+            """Right button press behavior."""
+            if self.interactor.GetControlKey():
+                self._style_class.StartRotate()
+            elif self.interactor.GetShiftKey():
+                self._style_class.StartDolly()  # Paraview does a different type of zooming
+                self._style_class.StartDolly()
+            self._style_class.OnRightButtonDown()
+
+        def _right_button_release_callback(_obj, event):  # pragma: no cover
+            """Turn off all right button behavior."""
+            self._style_class.EndRotate()
+            self._style_class.EndUniformScale()
+            self._style_class.EndDolly()
+            self._style_class.OnRightButtonUp()
+
+        callback = partial(try_callback, _left_button_press_callback)
+        self._style_class.add_observer('LeftButtonPressEvent', callback)
+
+        callback = partial(try_callback, _left_button_release_callback)
+        self._style_class.add_observer('LeftButtonReleaseEvent', callback)
+
+        callback = partial(try_callback, _middle_button_press_callback)
+        self._style_class.add_observer('MiddleButtonPressEvent', callback)
+
+        callback = partial(try_callback, _middle_button_release_callback)
+        self._style_class.add_observer('MiddleButtonReleaseEvent', callback)
+
+        callback = partial(try_callback, _right_button_press_callback)
+        self._style_class.add_observer('RightButtonPressEvent', callback)
+
+        callback = partial(try_callback, _right_button_release_callback)
+        self._style_class.add_observer('RightButtonReleaseEvent', callback)
+
     def enable_trackball_actor_style(self):
         """Set the interactive style to Trackball Actor.
 
