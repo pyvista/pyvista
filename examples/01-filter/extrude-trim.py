@@ -15,7 +15,7 @@ import pyvista as pv
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Create surface and plane
-mesh = pv.ParametricRandomHills(randomseed=2)
+mesh = pv.ParametricRandomHills(random_seed=2)
 plane = pv.Plane(
     center=(mesh.center[0], mesh.center[1], -5),
     direction=(0, 0, -1),
@@ -67,8 +67,8 @@ plane = pv.Plane(
 # extrude with and without the all_edges option
 extruded_disc = disc.extrude_trim((0, 0, -1.0), plane)
 extruded_disc_all = disc.extrude_trim((0, 0, -1.0), plane, extrusion='all_edges')
-print(f'Extrusion has {extruded_disc.n_faces} faces with default boundary_edges')
-print(f'Extrusion has {extruded_disc_all.n_faces} faces with all_edges')
+print(f'Extrusion has {extruded_disc.n_faces_strict} faces with default boundary_edges')
+print(f'Extrusion has {extruded_disc_all.n_faces_strict} faces with all_edges')
 
 
 ###############################################################################

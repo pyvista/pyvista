@@ -11,10 +11,10 @@ jobs:
   docstringcheck:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
           cache: 'pip'
@@ -53,7 +53,7 @@ jobs:
     name: Vale
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     # this is equivalent to
     # vale --config doc/.vale.ini doc pyvista examples
     - name: "Run Vale"
@@ -65,5 +65,6 @@ jobs:
         level: error
         filter_mode: nofilter
         fail_on_error: true
+        version: 2.29.5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

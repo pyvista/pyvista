@@ -11,16 +11,20 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples as ex
-from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista import examples as ex, pyvista_ndarray
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
+    _coerce_transformlike_arg,
+    cast_to_list_array,
+    cast_to_ndarray,
+    cast_to_tuple_array,
     copy_vtk_array,
     get_array,
     has_duplicates,
     raise_has_duplicates,
     vtk_id_list_to_array,
+    vtkmatrix_from_array,
 )
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
@@ -97,12 +101,6 @@ def test_read(tmpdir, use_pathlib):
     for i, filename in enumerate(fnames):
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
-    # Now test the standard_reader_routine
-    for i, filename in enumerate(fnames):
-        # Pass attrs to for the standard_reader_routine to be used
-        with pytest.warns(PyVistaDeprecationWarning):
-            obj = fileio.read(filename, attrs={'DebugOn': None})
-        assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.rand(10, 10)
@@ -148,20 +146,6 @@ def test_read_force_ext(tmpdir):
 
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
-def test_read_attrs(mock_reader, mock_read):
-    """Test passing attrs in read."""
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read(ex.antfile, attrs={'test': 'test_arg'})
-    mock_reader.test.assert_called_once_with('test_arg')
-
-    mock_reader.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read(ex.antfile, attrs={'test': ['test_arg1', 'test_arg2']})
-    mock_reader.test.assert_called_once_with('test_arg1', 'test_arg2')
-
-
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
     """Test passing attrs in read."""
@@ -194,13 +178,6 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.core.utilities.fileio.read')
-def test_read_legacy(read_mock):
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read_legacy(ex.globefile, progress_bar=False)
-    read_mock.assert_called_once_with(ex.globefile, progress_bar=False)
-
-
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
@@ -209,22 +186,6 @@ def test_pyvista_read_exodus(read_exodus_mock):
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == ex.globefile
-
-
-@pytest.mark.parametrize('auto_detect', (True, False))
-@mock.patch('pyvista.core.utilities.reader.BaseReader.read')
-@mock.patch('pyvista.core.utilities.reader.BaseReader.path')
-def test_read_plot3d(path_mock, read_mock, auto_detect):
-    # with grid only
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read_plot3d(filename='grid.in', auto_detect=auto_detect)
-    read_mock.assert_called_once()
-
-    # with grid and q
-    read_mock.reset_mock()
-    with pytest.warns(PyVistaDeprecationWarning):
-        pv.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
-    read_mock.assert_called_once()
 
 
 def test_get_array_cell(hexbeam):
@@ -325,6 +286,22 @@ def test_voxelize_throws_point_cloud(hexbeam):
     with pytest.raises(ValueError, match='must have faces'):
         mesh = pv.PolyData(hexbeam.points)
         pv.voxelize(mesh)
+
+
+def test_voxelize_volume_default_density(uniform):
+    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
+    actual = pv.voxelize_volume(uniform).n_cells
+    assert actual == expected
+
+
+def test_voxelize_volume_invalid_density(rectilinear):
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_volume_no_face_mesh(rectilinear):
+    with pytest.raises(ValueError, match='must have faces'):
+        pv.voxelize_volume(pv.PolyData())
 
 
 def test_report():
@@ -469,7 +446,8 @@ def test_observer():
     assert ret[3] == "ALERT"
     for kind in ["WARNING", "ERROR"]:
         obs.log_message(kind, "foo")
-    obs(obj=None, event=None, message=msg)
+    # Pass positionally as that's what VTK will do
+    obs(None, None, msg)
     assert obs.has_event_occurred()
     assert obs.get_message() == "ALERT"
     assert obs.get_message(etc=True) == msg
@@ -747,15 +725,22 @@ def test_copy_vtk_array():
 
 
 def test_cartesian_to_spherical():
-    def polar2cart(r, theta, phi):
+    def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi), r * np.cos(theta))
+            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi))
         ).T
 
     points = np.random.random((1000, 3))
     x, y, z = points.T
-    r, theta, phi = pv.cartesian_to_spherical(x, y, z)
-    assert np.allclose(polar2cart(r, theta, phi), points)
+    r, phi, theta = pv.cartesian_to_spherical(x, y, z)
+    assert np.allclose(polar2cart(r, phi, theta), points)
+
+
+def test_spherical_to_cartesian():
+    points = np.random.random((1000, 3))
+    r, phi, theta = points.T
+    x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+    assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
 
 
 def test_set_pickle_format():
@@ -910,3 +895,72 @@ def test_fit_plane_to_points():
             157.70724487304688,
         ],
     )
+
+
+@pytest.mark.parametrize(
+    'transform_like',
+    [
+        np.array(np.eye(3)),
+        np.array(np.eye(4)),
+        vtkmatrix_from_array(np.eye(3)),
+        vtkmatrix_from_array(np.eye(4)),
+        vtk.vtkTransform(),
+    ],
+)
+def test_coerce_transformlike_arg(transform_like):
+    result = _coerce_transformlike_arg(transform_like)
+    assert np.array_equal(result, np.eye(4))
+
+
+def test_coerce_transformlike_arg_raises():
+    with pytest.raises(ValueError, match="must be 3x3 or 4x4"):
+        _coerce_transformlike_arg(np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match="must be one of"):
+        _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    with pytest.raises(TypeError, match="must be one of"):
+        _coerce_transformlike_arg("abc")
+
+
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('dtype', [None, float])
+def test_cast_to_ndarray(as_any, copy, dtype):
+    array_in = pyvista_ndarray([1, 2])
+    array_out = cast_to_ndarray(array_in, copy=copy, as_any=as_any, dtype=dtype)
+    assert np.array_equal(array_out, array_in)
+    if as_any:
+        assert type(array_out) is pyvista_ndarray
+    else:
+        assert type(array_out) is np.ndarray
+
+    if copy:
+        assert array_out is not array_in
+
+    if dtype is None:
+        assert array_out.dtype.type is array_in.dtype.type
+    else:
+        assert array_out.dtype.type is np.dtype(dtype).type
+
+
+def test_cast_to_ndarray_raises():
+    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(ValueError, match=msg):
+        cast_to_ndarray([[1], [2, 3]])
+
+
+def test_cast_to_tuple_array():
+    array_in = np.zeros(shape=(2, 2, 3))
+    array_tuple = cast_to_tuple_array(array_in)
+    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    array_list = array_in.tolist()
+    assert np.array_equal(array_tuple, array_list)
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1, [2, 3]]])
+
+
+def test_cast_to_list_array():
+    array_in = np.zeros(shape=(3, 4, 5))
+    array_list = cast_to_list_array(array_in)
+    assert np.array_equal(array_in, array_list)
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1, [2, 3]]])

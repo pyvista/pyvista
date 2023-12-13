@@ -53,6 +53,16 @@ def html_rst(
     return images_rst
 
 
+def _process_events_before_scraping(plotter):
+    """Process events such as changing the camera or an object before scraping."""
+    if plotter.iren is not None and plotter.iren.initialized:
+        # check for pyvistaqt app which can be specifically bound to pyvista plotter
+        # objects in order to interact with qt, then process the events from qt
+        if hasattr(plotter, "app") and plotter.app is not None:
+            plotter.app.processEvents()
+        plotter.update()
+
+
 class Scraper:
     """
     Save ``pyvista.Plotter`` objects.
@@ -65,6 +75,10 @@ class Scraper:
     Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
 
     """
+
+    def __repr__(self):
+        """Return a stable representation of the class instance."""
+        return f"<{type(self).__name__} object>"
 
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
@@ -80,7 +94,8 @@ class Scraper:
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
-        for _, plotter in figures.items():
+        for plotter in figures.values():
+            _process_events_before_scraping(plotter)
             fname = next(image_path_iterator)
             if hasattr(plotter, "_gif_filename"):
                 # move gif to fname
@@ -93,7 +108,7 @@ class Scraper:
         return figure_rst(image_names, gallery_conf["src_dir"])
 
 
-class DynamicScraper:
+class DynamicScraper:  # pragma: no cover
     """
     Save ``pyvista.Plotter`` objects dynamically.
 
@@ -105,6 +120,10 @@ class DynamicScraper:
     Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
 
     """
+
+    def __repr__(self):
+        """Return a stable representation of the class instance."""
+        return f"<{type(self).__name__} object>"
 
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
@@ -118,7 +137,8 @@ class DynamicScraper:
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
-        for _, plotter in figures.items():
+        for plotter in figures.values():
+            _process_events_before_scraping(plotter)
             fname = next(image_path_iterator)
             # if hasattr(plotter, '_gif_filename'):
             #     raise RuntimeError('GIFs are not supported with DynamicScraper.')

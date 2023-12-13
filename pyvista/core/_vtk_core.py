@@ -383,7 +383,11 @@ from vtkmodules.vtkImagingCore import (
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
-from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+
+try:
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+except ImportError:  # pragma: no cover
+    pass
 
 try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
@@ -410,5 +414,16 @@ from vtkmodules.vtkImagingFourier import (
 # 9.1+ imports
 try:
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
+except ImportError:  # pragma: no cover
+    pass
+
+try:  # Introduced prior to VTK 9.3
+    from vtkmodules.vtkRenderingCore import vtkViewport
+except ImportError:  # pragma: no cover
+    pass
+
+# 9.3+ imports
+try:
+    from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
 except ImportError:  # pragma: no cover
     pass

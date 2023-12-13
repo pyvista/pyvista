@@ -2,7 +2,7 @@ Geometry
 --------
 PyVista includes several functions to generate simple geometric
 objects. The API reference for these functions is on this page. For
-additional details see :ref:`ref_geometric_example` example.
+additional details see :ref:`geometric_example` example.
 
 PyVista provides both geometric objects and geometric sources. These two types
 serve similar but distinct purposes. Both allow you to create various types of
@@ -55,6 +55,8 @@ Geometric Objects
    Polygon
    Pyramid
    Rectangle
+   SolidSphere
+   SolidSphereGeneric
    Sphere
    Spline
    Superquadric
@@ -83,3 +85,5 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    :toctree: _autosummary
 
    ConeSource
+   CylinderSource
+   MultipleLinesSource

@@ -1,5 +1,5 @@
 """
-.. _ref_attenuation_example:
+.. _attenuation_example:
 
 Attenuation
 ~~~~~~~~~~~

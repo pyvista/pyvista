@@ -31,14 +31,15 @@ pyvista.
 """
 
 from enum import Enum
+from itertools import chain
 import json
 import os
+import pathlib
 from typing import Callable, List, Optional, Union
 import warnings
 
 import pyvista
 from pyvista.core._typing_core import Number
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
 
 from ._typing import ColorLike
@@ -47,7 +48,7 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 
-def _set_plot_theme_from_env():
+def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
         try:
@@ -59,6 +60,7 @@ def _set_plot_theme_from_env():
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
+    return None
 
 
 def load_theme(filename):
@@ -134,7 +136,18 @@ def set_plot_theme(theme):
         )
 
 
-class _ThemeConfig:
+# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
+class _ForceSlots(type):
+    """Metaclass to force classes and subclasses to have __slots__."""
+
+    @classmethod
+    def __prepare__(metaclass, name, bases, **kwargs):
+        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
+        super_prepared['__slots__'] = tuple()
+        return super_prepared
+
+
+class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -162,7 +175,7 @@ class _ThemeConfig:
         """
         # remove the first underscore in each entry
         dict_ = {}
-        for key in self.__slots__:
+        for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
@@ -175,7 +188,7 @@ class _ThemeConfig:
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other.__slots__:
+        for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
@@ -200,6 +213,12 @@ class _ThemeConfig:
         Implemented here for backwards compatibility.
         """
         setattr(self, key, value)
+
+    @classmethod
+    def _all__slots__(cls):
+        """Get all slots including parent classes."""
+        mro = cls.mro()
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
@@ -1355,6 +1374,8 @@ class _TrameConfig(_ThemeConfig):
         '_server_proxy_enabled',
         '_server_proxy_prefix',
         '_default_mode',
+        '_jupyter_extension_available',
+        '_jupyter_extension_enabled',
     ]
 
     def __init__(self):
@@ -1371,6 +1392,10 @@ class _TrameConfig(_ThemeConfig):
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
+        self._jupyter_extension_available = 'TRAME_JUPYTER_WWW' in os.environ
+        self._jupyter_extension_enabled = (
+            self._jupyter_extension_available and not self._server_proxy_enabled
+        )
         self._default_mode = 'trame'
 
     @property
@@ -1439,6 +1464,10 @@ class _TrameConfig(_ThemeConfig):
 
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):  # numpydoc ignore=GL08
+        if enabled and self.jupyter_extension_enabled:
+            warnings.warn("Enabling server_proxy will disable jupyter_extension")
+            self._jupyter_extension_enabled = False
+
         self._server_proxy_enabled = bool(enabled)
 
     @property
@@ -1449,6 +1478,33 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_prefix.setter
     def server_proxy_prefix(self, prefix: str):  # numpydoc ignore=GL08
         self._server_proxy_prefix = prefix
+
+    @property
+    def jupyter_extension_available(self) -> bool:  # numpydoc ignore=RT01
+        """Return whether the trame_jupyter_extension is detected."""
+        return self._jupyter_extension_available
+
+    @jupyter_extension_available.setter
+    def jupyter_extension_available(self, _available: bool):  # numpydoc ignore=GL08
+        warnings.warn(
+            "The jupyter_extension_available flag is read only and is automatically detected."
+        )
+
+    @property
+    def jupyter_extension_enabled(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to use the trame_jupyter_extension to communicate with clients."""
+        return self._jupyter_extension_enabled
+
+    @jupyter_extension_enabled.setter
+    def jupyter_extension_enabled(self, enabled: bool):  # numpydoc ignore=GL08
+        if enabled and not self.jupyter_extension_available:
+            raise ValueError("The trame_jupyter_extension is not available")
+
+        if enabled and self.server_proxy_enabled:
+            warnings.warn("Enabling jupyter_extension will disable server_proxy")
+            self._server_proxy_enabled = False
+
+        self._jupyter_extension_enabled = bool(enabled)
 
     @property
     def default_mode(self):  # numpydoc ignore=RT01
@@ -1542,9 +1598,13 @@ class Theme(_ThemeConfig):
         '_split_sharp_edges',
         '_sharp_edges_feature_angle',
         '_before_close_callback',
+        '_allow_empty_mesh',
         '_lighting_params',
         '_interpolate_before_map',
         '_opacity',
+        '_before_close_callback',
+        '_logo_file',
+        '_edge_opacity',
     ]
 
     def __init__(self):
@@ -1599,6 +1659,7 @@ class Theme(_ThemeConfig):
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
         self._before_close_callback = None
+        self._allow_empty_mesh = False
 
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
@@ -1627,6 +1688,9 @@ class Theme(_ThemeConfig):
         self._lighting_params = _LightingConfig()
         self._interpolate_before_map = True
         self._opacity = 1.0
+        self._edge_opacity = 1.0
+
+        self._logo_file = None
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -1731,6 +1795,28 @@ class Theme(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
+    def edge_opacity(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the edges opacity.
+
+        .. note::
+            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+            available, `edge_opacity` is set to 1.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.edge_opacity = 0.5
+
+        """
+        return self._edge_opacity
+
+    @edge_opacity.setter
+    def edge_opacity(self, edge_opacity: float):  # numpydoc ignore=GL08
+        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        self._edge_opacity = float(edge_opacity)
+
+    @property
     def above_range_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default above range color.
 
@@ -1801,7 +1887,7 @@ class Theme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background: ColorLike):  # numpydoc ignore=GL08
+    def background(self, new_background: ColorLike) -> None:  # numpydoc ignore=GL08
         self._background = Color(new_background)
 
     @property
@@ -1832,6 +1918,8 @@ class Theme(_ThemeConfig):
         * ``'trame'``: The full Trame-based backend that combines both
           ``'server'`` and ``'client'`` into one backend. This requires a
           virtual frame buffer.
+
+        * ``'html'``: The ``'client'`` backend, but able to be embedded.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
@@ -2710,6 +2798,30 @@ class Theme(_ThemeConfig):
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
+    @property
+    def allow_empty_mesh(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to allow plotting empty meshes.
+
+        Examples
+        --------
+        Enable plotting of empty meshes.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.allow_empty_mesh = True
+
+        Now add an empty mesh to a plotter
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.PolyData())
+        >>> pl.show()  # doctest: +SKIP
+
+        """
+        return self._allow_empty_mesh
+
+    @allow_empty_mesh.setter
+    def allow_empty_mesh(self, allow_empty_mesh: bool):  # numpydoc ignore=GL08
+        self._allow_empty_mesh = bool(allow_empty_mesh)
+
     def restore_defaults(self):  # numpydoc ignore=GL08
         """Restore the theme defaults.
 
@@ -2781,7 +2893,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme):
+    def load_theme(self, theme: Union[str, 'Theme']) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -2823,10 +2935,11 @@ class Theme(_ThemeConfig):
                 '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
             )
 
-        for attr_name in theme.__slots__:
+        for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
+        return None
 
-    def save(self, filename):
+    def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
 
         ``before_close_callback`` is non-serializable and is omitted.
@@ -2852,6 +2965,8 @@ class Theme(_ThemeConfig):
         del data["before_close_callback"]
         with open(filename, 'w') as f:
             json.dump(data, f)
+
+        return None
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01
@@ -2915,22 +3030,43 @@ class Theme(_ThemeConfig):
             raise TypeError('Configuration type must be `_LightingConfig`.')
         self._lighting_params = config
 
+    @property
+    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
+        """Return or set the logo file.
 
-class DefaultTheme(Theme):
-    """Deprecated default theme.
+        .. note::
 
-    .. deprecated:: 0.40.0
-        Deprecated and renamed to ``Theme``. No longer the default.
+            :func:`pyvista.Plotter.add_logo_widget` will default to
+            PyVista's logo if this is unset.
 
-    """
+        Example
+        -------
+        Set the logo file to a custom logo.
 
-    def __init__(self):
-        """Initialize the theme."""
-        super().__init__()
-        warnings.warn(
-            '`DefaultTheme` has been deprecated and renamed `Theme`. Further, `DocumentTheme` is now the PyVista default theme.',
-            PyVistaDeprecationWarning,
-        )
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> logo_file = examples.download_file('vtk.png')
+        >>> pv.global_theme.logo_file = logo_file
+
+        Now the logo will be used by default for :func:`pyvista.Plotter.add_logo_widget`.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        return self._logo_file
+
+    @logo_file.setter
+    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
+        if logo_file is None:
+            path = None
+        else:
+            if not pathlib.Path(logo_file).exists():
+                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+            path = str(logo_file)
+        self._logo_file = path
 
 
 class DarkTheme(Theme):

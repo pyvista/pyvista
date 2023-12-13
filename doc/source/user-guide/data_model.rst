@@ -4,7 +4,7 @@ PyVista Data Model
 ==================
 This section of the user guide explains in detail how to construct
 meshes from scratch and to utilize the underlying VTK data model but
-using the PyVista framework. Many of our :ref:`ref_examples` simply
+using the PyVista framework. Many of our :ref:`examples` simply
 load data from files, but don't explain how to construct meshes or
 place data within datasets.
 
@@ -50,7 +50,7 @@ will help improve your understanding of why data sets are structured
 the way they are in libraries like VTK.
 
 At the most fundamental level, all PyVista geometry classes inherit
-from the :ref:`ref_dataset` class. A dataset has geometry, topology,
+from the :ref:`dataset` class. A dataset has geometry, topology,
 and attributes describing that geometry in the form of point, cell, or
 field arrays.
 
@@ -98,7 +98,7 @@ floats can describe the shape, so it takes the least amount of memory
 to store.
 
 This is because in |PolyData| or
-|UnstructuredGrid|, points and cells must be explicitly
+|UnstructuredGrid|, points, and cells must be explicitly
 defined. In other data types, such as |ImageData|,
 the cells (and even points) are defined as an emergent property based
 on the dimensionality of the grid.
@@ -688,7 +688,7 @@ Active Texture Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :attr:`active_t_coords
 <pyvista.DataSet.active_t_coords>` array is used for
-rendering textures. See :ref:`ref_texture_example` for examples using
+rendering textures. See :ref:`texture_example` for examples using
 this array.
 
 

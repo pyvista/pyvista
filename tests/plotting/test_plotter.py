@@ -4,11 +4,13 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+import os
+
 import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import DeprecationError, MissingDataError
+from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -366,16 +368,6 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
         pl.add_volume(sphere)
 
 
-def test_deprecated_store_image():
-    """Test to make sure store_image is deprecated."""
-    pl = pv.Plotter()
-    with pytest.raises(DeprecationError):
-        assert isinstance(pl.store_image, bool)
-
-    with pytest.raises(DeprecationError):
-        pl.store_image = True
-
-
 def test_plotter_add_volume_clim(uniform: pv.ImageData):
     """Verify clim is set correctly for volume."""
     arr = uniform.x.astype(np.uint8)
@@ -404,6 +396,34 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_multi_block_color_cycler():
+    """Test passing a custom color cycler"""
+    plotter = pv.Plotter()
+    data = {
+        "sphere1": pv.Sphere(center=(1, 0, 0)),
+        "sphere2": pv.Sphere(center=(2, 0, 0)),
+        "sphere3": pv.Sphere(center=(3, 0, 0)),
+        "sphere4": pv.Sphere(center=(4, 0, 0)),
+    }
+    spheres = pv.MultiBlock(data)
+    actor, mapper = plotter.add_composite(spheres)
+
+    # pass custom cycler
+    mapper.set_unique_colors(['red', 'green', 'blue'])
+
+    assert mapper.block_attr[0].color.name == 'red'
+    assert mapper.block_attr[1].color.name == 'green'
+    assert mapper.block_attr[2].color.name == 'blue'
+    assert mapper.block_attr[3].color.name == 'red'
+
+    # test wrong args
+    with pytest.raises(ValueError):
+        mapper.set_unique_colors('foo')
+
+    with pytest.raises(TypeError):
+        mapper.set_unique_colors(5)
+
+
 @pytest.mark.parametrize(
     'face, normal',
     [
@@ -425,3 +445,47 @@ def test_plotter_add_floor_raise_error():
     pl = pv.Plotter()
     with pytest.raises(NotImplementedError, match='not implemented'):
         pl.add_floor(face='invalid')
+
+
+def test_plotter_zoom_camera():
+    pl = pv.Plotter()
+    pl.zoom_camera(1.05)
+
+
+def test_plotter_reset_key_events():
+    pl = pv.Plotter()
+    pl.reset_key_events()
+
+
+def test_plotter_update_coordinates(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.update_coordinates(sphere.points * 2.0)
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
+
+
+def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
+    pv.FIGURE_PATH = str(tmpdir)
+    pv.ON_SCREENSHOT = True
+
+    entries = os.listdir(pv.FIGURE_PATH)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show()
+    entries_after = os.listdir(pv.FIGURE_PATH)
+    assert len(entries) + 1 == len(entries_after)
+
+    res_file = list(set(entries_after) - set(entries))[0]
+    pv.ON_SCREENSHOT = False
+    sphere_screenshot = "sphere_screenshot.png"
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(screenshot=sphere_screenshot)
+    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
+    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    error = pv.compare_images(sphere_path, res_path)
+    assert error < 100

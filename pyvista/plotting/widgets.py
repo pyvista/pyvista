@@ -1,5 +1,8 @@
 """Module dedicated to widgets."""
 
+import pathlib
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 
 import pyvista
@@ -83,6 +86,7 @@ class WidgetHelper:
         self.sphere_widgets = []
         self.button_widgets = []
         self.distance_widgets = []
+        self.logo_widgets = []
 
     def add_box_widget(
         self,
@@ -155,15 +159,33 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows an interactive clip box.
+        Shows an interactive box that is used to resize and relocate a sphere.
 
         >>> import pyvista as pv
-        >>> mesh = pv.ParametricConicSpiral()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
-        >>> pl.show()
-
-        For a full example see :ref:`box_widget_example`.
+        >>> import numpy as np
+        >>> plotter = pv.Plotter()
+        >>> def simulate(widget):
+        ...     bounds = widget.bounds
+        ...     new_center = np.array(
+        ...         [
+        ...             (bounds[0] + bounds[1]) / 2,
+        ...             (bounds[2] + bounds[3]) / 2,
+        ...             (bounds[4] + bounds[5]) / 2,
+        ...         ]
+        ...     )
+        ...     new_radius = (
+        ...         min(
+        ...             (bounds[1] - bounds[0]) / 2,
+        ...             (bounds[3] - bounds[2]) / 2,
+        ...             (bounds[5] - bounds[4]) / 2,
+        ...         )
+        ...         - 0.3
+        ...     )
+        ...     sphere = pv.Sphere(new_radius, new_center)
+        ...     _ = plotter.add_mesh(sphere, name="Sphere")
+        ...
+        >>> _ = plotter.add_box_widget(callback=simulate)
+        >>> plotter.show()
 
         """
         interaction_event = _parse_interaction_event(interaction_event)
@@ -171,7 +193,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        def _the_callback(box_widget, event_id):
+        def _the_callback(box_widget, _event):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
@@ -278,6 +300,18 @@ class WidgetHelper:
         -------
         vtk.vtkActor
             VTK actor of the mesh.
+
+        Examples
+        --------
+        Shows an interactive clip box.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ParametricConicSpiral()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_box(mesh, color='white')
+        >>> pl.show()
+
+        For a full example see :ref:`box_widget_example`.
 
         """
         from pyvista.core.filters import _get_output  # avoids circular import
@@ -437,6 +471,33 @@ class WidgetHelper:
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
             Plane widget.
 
+        Examples
+        --------
+        Shows an interactive plane moving along the x-axis in the random-hill example, which is used to mark the max altitude
+        at a particular distance x.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_random_hills()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> def callback(normal, origin):
+        ...     slc = mesh.slice(normal=normal, origin=origin)
+        ...     origin = list(origin)
+        ...     origin[2] = slc.bounds[5]
+        ...     peak_plane = pv.Plane(
+        ...         center=origin,
+        ...         direction=[0, 0, 1],
+        ...         i_size=20,
+        ...         j_size=20,
+        ...     )
+        ...     _ = pl.add_mesh(
+        ...         peak_plane, name="Peak", color='red', opacity=0.4
+        ...     )
+        ...
+        >>> _ = pl.add_plane_widget(callback, normal_rotation=False)
+        >>> pl.show()
+
         """
         interaction_event = _parse_interaction_event(interaction_event)
 
@@ -453,7 +514,7 @@ class WidgetHelper:
         if assign_to_axis:
             normal_rotation = False
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
@@ -652,6 +713,20 @@ class WidgetHelper:
         -------
         vtk.vtkActor
             VTK actor of the mesh.
+
+        Examples
+        --------
+        Shows an interactive plane used to clip the mesh and store it.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> vol = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh_clip_plane(vol, normal=[0, -1, 0])
+        >>> pl.show(cpos=[-2.1, 0.6, 1.5])
+        >>> pl.plane_clipped_meshes  # doctest:+SKIP
+
+        For a full example see :ref:`plane_widget_example`.
 
         """
         from pyvista.core.filters import _get_output  # avoids circular import
@@ -924,6 +999,20 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive plane used specifically for slicing.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_channels()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
+        >>> pl.show()
+
+        For a full example see :ref:`plane_widget_example`.
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -1019,6 +1108,17 @@ class WidgetHelper:
         list
             List of vtk.vtkActor(s).
 
+        Examples
+        --------
+        Shows an interactive plane sliced along each cartesian axis of the mesh.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Wavelet()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice_orthogonal(mesh)
+        >>> pl.show()
+
         """
         actors = []
         name = kwargs.pop("name", None)
@@ -1096,13 +1196,33 @@ class WidgetHelper:
         vtk.vtkLineWidget
             Created line widget.
 
+        Examples
+        --------
+        Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> model = examples.load_channels()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(model, opacity=0.4)
+        >>> def move_center(pointa, pointb):
+        ...     center = (np.array(pointa) + np.array(pointb)) / 2
+        ...     normal = np.array(pointa) - np.array(pointb)
+        ...     single_slc = model.slice(normal=normal, origin=center)
+        ...
+        ...     _ = pl.add_mesh(single_slc, name="slc")
+        ...
+        >>> _ = pl.add_line_widget(callback=move_center, use_vertices=True)
+        >>> pl.show()
+
         """
         if bounds is None:
             bounds = self.bounds
 
         color = Color(color, default_color=pyvista.global_theme.font.color)
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
             if callable(callback):
@@ -1144,7 +1264,6 @@ class WidgetHelper:
         color=None,
         interaction_event='end',
         style=None,
-        **kwargs,
     ):
         """Add a text slider bar widget.
 
@@ -1191,12 +1310,6 @@ class WidgetHelper:
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
 
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
@@ -1238,7 +1351,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, event):  # numpydoc ignore=GL08
+        def title_callback(widget, _event):  # numpydoc ignore=GL08
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1268,7 +1381,6 @@ class WidgetHelper:
         fmt=None,
         slider_width=None,
         tube_width=None,
-        **kwargs,
     ):
         """Add a slider bar widget.
 
@@ -1345,13 +1457,6 @@ class WidgetHelper:
 
         tube_width : float, optional
             Normalized width of the tube. Defaults to the theme's tube width.
-
-        **kwargs : dict, optional
-            Deprecated keyword arguments.
-
-            .. deprecated:: 0.38.0
-               Keyword argument ``event_type`` deprecated in favor of
-               ``interaction_event``.
 
         Returns
         -------
@@ -1437,7 +1542,7 @@ class WidgetHelper:
         if tube_width is not None:
             slider_rep.SetTubeWidth(tube_width)
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, _event):
             value = widget.GetRepresentation().GetValue()
             if callable(callback):
                 if pass_widget:
@@ -1708,6 +1813,18 @@ class WidgetHelper:
         vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive slider controlling the altitude of the contours.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_random_hills()
+        >>> _ = pl.add_mesh(mesh, opacity=0.4)
+        >>> _ = pl.add_mesh_isovalue(mesh)
+        >>> pl.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.PointSet):
@@ -1857,7 +1974,7 @@ class WidgetHelper:
 
         ribbon = pyvista.PolyData()
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
@@ -2204,7 +2321,7 @@ class WidgetHelper:
         else:
             colors = [color] * num
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
@@ -2291,7 +2408,7 @@ class WidgetHelper:
             the widget geometry to be hidden by other actors in the plotter.
         axes_colors : tuple[ColorLike], optional
             Uses the theme by default. Configure the individual axis colors by
-            modifying either the theme with ``pv.global_theme.axes.x_color =
+            modifying either the theme with ``pyvista.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
         axes : numpy.ndarray, optional
             ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default
@@ -2451,7 +2568,7 @@ class WidgetHelper:
         button_widget.SetCurrentRenderer(self.renderer)
         button_widget.On()
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, _event):
             state = widget.GetRepresentation().GetState()
             if callable(callback):
                 try_callback(callback, bool(state))
@@ -2483,9 +2600,9 @@ class WidgetHelper:
         --------
         Add a camera orientation widget to the scene.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     mesh, scalars=range(6), show_scalar_bar=False
         ... )
@@ -2516,6 +2633,79 @@ class WidgetHelper:
         """Remove all of the button widgets."""
         self.button_widgets.clear()
 
+    def add_logo_widget(
+        self,
+        logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
+        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
+        opacity: float = 1.0,
+    ):
+        """Add a logo widget to the top of the viewport.
+
+        If no logo is passed, the PyVista logo will be used.
+
+        Parameters
+        ----------
+        logo : pyvista.ImageData or pathlib.Path, optional
+            The logo to display. If a pathlike is passed, it is assumed to be a
+            file path to an image.
+
+        position : tuple(float), optional
+            The position of the logo in the viewport. The first value is the
+            horizontal position and the second value is the vertical position.
+            Both values must be between 0 and 1.
+
+        size : tuple(float), optional
+            The size of the logo in the viewport. The first value is the
+            horizontal size and the second value is the vertical size. Both
+            values must be between 0 and 1.
+
+        opacity : float, optional
+            The opacity of the logo. Must be between 0 and 1.
+
+        Returns
+        -------
+        vtkLogoWidget
+            The logo widget.
+
+        Examples
+        --------
+        Add a logo widget to the scene.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        if logo is None:
+            logo = pyvista.global_theme.logo_file
+        if logo is None:
+            # Fallback to PyVista logo
+            from pyvista import examples
+
+            logo = examples.logofile
+        if isinstance(logo, (str, pathlib.Path)):
+            logo = pyvista.read(logo)
+        if not isinstance(logo, pyvista.ImageData):
+            raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+        representation = _vtk.vtkLogoRepresentation()
+        representation.SetImage(logo)
+        representation.SetPosition(position)
+        representation.SetPosition2(size)
+        representation.GetImageProperty().SetOpacity(opacity)
+        widget = _vtk.vtkLogoWidget()
+        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.logo_widgets.append(widget)
+        return widget
+
+    def clear_logo_widgets(self):
+        """Remove all of the logo widgets."""
+        self.logo_widgets.clear()
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -2527,3 +2717,4 @@ class WidgetHelper:
         self.clear_button_widgets()
         self.clear_camera_widgets()
         self.clear_measure_widgets()
+        self.clear_logo_widgets()

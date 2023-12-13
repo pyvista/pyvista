@@ -25,6 +25,7 @@ rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
+logofile = os.path.join(dir_path, 'pyvista_logo.png')
 
 
 def load_ant():
@@ -245,14 +246,14 @@ def load_spline():
     .. code:: python
 
        >>> import numpy as np
-       >>> import pyvista
+       >>> import pyvista as pv
        >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
        >>> z = np.linspace(-2, 2, 100)
        >>> r = z**2 + 1
        >>> x = r * np.sin(theta)
        >>> y = r * np.cos(theta)
        >>> points = np.column_stack((x, y, z))
-       >>> mesh = pyvista.Spline(points, 1000)
+       >>> mesh = pv.Spline(points, 1000)
 
     Returns
     -------
@@ -285,7 +286,7 @@ def load_random_hills():
 
     .. code:: python
 
-       >>> mesh = pyvista.ParametricRandomHills()  # doctest:+SKIP
+       >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
        >>> mesh = mesh.elevation()  # doctest:+SKIP
 
     Returns
@@ -507,3 +508,21 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     grid['real_wf'] = np.real(wfc.ravel())
     grid['wf'] = wfc.ravel()
     return grid
+
+
+def load_logo():
+    """Load the PyVista logo as a :class:`pyvista.ImageData`.
+
+    Returns
+    -------
+    pyvista.ImageData
+        ImageData of the PyVista logo.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> logo = examples.load_logo()
+    >>> logo.plot()
+
+    """
+    return pyvista.read(logofile)

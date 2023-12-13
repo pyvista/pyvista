@@ -78,6 +78,9 @@ skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason="Flaky on 9
 skip_lesser_9_0_X = pytest.mark.skipif(
     pv.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
 )
+skip_lesser_9_3_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X"
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -620,10 +623,18 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
         plotter.update_scalars(np.arange(5))
-    with pytest.raises(ValueError):
-        plotter.update_scalars(np.arange(sphere.n_faces))
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
+        plotter.update_scalars(np.arange(sphere.n_faces_strict))
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
 
 
 def test_plot_show_bounds(sphere):
@@ -704,12 +715,6 @@ def test_plot_silhouette_method(tri_cylinder):
     assert props.line_width == pv.global_theme.silhouette.line_width
     plotter.show()
 
-    params = {'line_width': 5, 'opacity': 0.5}
-    with pytest.warns(PyVistaDeprecationWarning, match='`params` is deprecated'):
-        actor = plotter.add_silhouette(tri_cylinder, params=params)
-    assert actor.prop.line_width == params['line_width']
-    assert actor.prop.opacity == params['opacity']
-
 
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
@@ -760,6 +765,14 @@ def test_plot_invalid_add_scalar_bar():
         plotter.add_scalar_bar()
 
 
+def test_add_scalar_bar_with_unconstrained_font_size(sphere):
+    sphere['test_scalars'] = sphere.points[:, 2]
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    actor = plotter.add_scalar_bar(unconstrained_font_size=True)
+    assert actor.GetUnconstrainedFontSize()
+
+
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)
@@ -789,11 +802,13 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
+    movie_sphere["scalars"] = np.random.random(movie_sphere.n_faces_strict)
+
     plotter = pv.Plotter()
     plotter.open_movie(filename)
     actor = plotter.add_axes_at_origin()
     plotter.remove_actor(actor, reset_camera=False, render=True)
-    plotter.add_mesh(movie_sphere, scalars=np.random.random(movie_sphere.n_faces))
+    plotter.add_mesh(movie_sphere, scalars="scalars")
     plotter.show(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
     for _ in range(3):  # limiting number of frames to write for speed
@@ -801,8 +816,8 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
         random_points = np.random.random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
-        scalars = np.random.random(movie_sphere.n_faces)
-        plotter.update_scalars(scalars)
+        scalars = np.random.random(movie_sphere.n_faces_strict)
+        movie_sphere["scalars"] = scalars
 
     # remove file
     plotter.close()
@@ -947,6 +962,13 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.show()
 
 
+@pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
+def test_add_point_labels_shape(shape, verify_image_cache):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
+    plotter.show()
+
+
 def test_set_background():
     plotter = pv.Plotter()
     plotter.set_background('k')
@@ -1018,13 +1040,13 @@ def test_show_axes():
 def test_plot_cell_data(sphere, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     plotter = pv.Plotter()
-    scalars = np.arange(sphere.n_faces)
+    scalars = np.arange(sphere.n_faces_strict)
     plotter.add_mesh(
         sphere,
         interpolate_before_map=True,
         scalars=scalars,
         n_colors=10,
-        rng=sphere.n_faces,
+        rng=sphere.n_faces_strict,
         show_scalar_bar=False,
     )
     plotter.show()
@@ -1032,7 +1054,7 @@ def test_plot_cell_data(sphere, verify_image_cache):
 
 def test_plot_clim(sphere):
     plotter = pv.Plotter()
-    scalars = np.arange(sphere.n_faces)
+    scalars = np.arange(sphere.n_faces_strict)
     plotter.add_mesh(
         sphere,
         interpolate_before_map=True,
@@ -2091,6 +2113,18 @@ def test_add_background_image_subplots(airplane):
     pl.show()
 
 
+@pytest.mark.parametrize(
+    'face',
+    ['-Z', '-Y', '-X', '+Z', '+Y', '+X'],
+)
+def test_add_floor(face):
+    box = pv.Box((-100.0, -90.0, 20.0, 40.0, 100, 105)).outline()
+    pl = pv.Plotter()
+    pl.add_mesh(box, color='k')
+    pl.add_floor(face=face, color='red', opacity=1.0)
+    pl.show()
+
+
 def test_add_remove_floor(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -2776,16 +2810,6 @@ def test_plot_composite_raise(sphere, multiblock_poly):
         pl.add_composite(sphere)
     with pytest.raises(TypeError, match='must be a string for'):
         pl.add_composite(multiblock_poly, scalars=range(10))
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        with pytest.raises(TypeError, match='must be an int'):
-            pl.add_composite(multiblock_poly, categories='abc')
-
-
-def test_plot_composite_categories(multiblock_poly):
-    pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='categories'):
-        pl.add_composite(multiblock_poly, scalars='data_b', categories=5)
-    pl.show()
 
 
 def test_plot_composite_lookup_table(multiblock_poly, verify_image_cache):
@@ -3597,6 +3621,7 @@ def test_plot_texture_flip_y(texture):
 
 @pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
+@pytest.mark.skipif(pv.vtk_version_info >= (9, 3), reason="This is broken on VTK 9.3")
 def test_plot_cubemap_alone(cubemap):
     """Test plotting directly from the Texture class."""
     cubemap.plot()
@@ -3747,3 +3772,42 @@ def test_show_bounds_n_labels():
     )
     plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
     plotter.show()
+
+
+@skip_lesser_9_3_X
+def test_radial_gradient_background():
+    plotter = pv.Plotter()
+    plotter.set_background('white', right='black')
+    plotter.show()
+
+    plotter = pv.Plotter()
+    plotter.set_background('white', side='black')
+    plotter.show()
+
+    plotter = pv.Plotter()
+    plotter.set_background('white', corner='black')
+    plotter.show()
+
+    with pytest.raises(ValueError):
+        plotter = pv.Plotter()
+        plotter.set_background('white', top='black', right='black')
+
+
+def test_no_empty_meshes():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Empty meshes'):
+        pl.add_mesh(pv.PolyData())
+
+
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing fatal exception: access violation")
+def test_voxelize_volume():
+    mesh = examples.download_cow()
+    cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+
+    # Create an equal density voxel volume and plot the result.
+    vox = pv.voxelize_volume(mesh, density=0.15)
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    # Create a voxel volume from unequal density dimensions and plot result.
+    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)

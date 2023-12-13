@@ -206,7 +206,10 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', (None, '../intersphinx/python-objects.inv')),
+    'python': (
+        'https://docs.python.org/3.11',
+        (None, '../intersphinx/python-objects.inv'),
+    ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, '../intersphinx/scipy-objects.inv'),
@@ -226,7 +229,7 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
@@ -253,7 +256,7 @@ autosummary_context = {
 source_suffix = ".rst"
 
 # The main toctree document.
-master_doc = "index"
+root_doc = "index"
 
 
 # General information about the project.
@@ -356,9 +359,7 @@ sphinx_gallery_conf = {
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
     "image_scrapers": ("pyvista", "matplotlib"),
-    "first_notebook_cell": (
-        "%matplotlib inline\n" "from pyvista import set_plot_theme\n" "set_plot_theme('document')\n"
-    ),
+    "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }
@@ -449,7 +450,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "Slack Community",
-            "url": "http://slack.pyvista.org",
+            "url": "https://communityinviter.com/apps/pyvista/pyvista",
             "icon": "fab fa-slack",
         },
         {
@@ -516,7 +517,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
+    (root_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
 ]
 
 # -- Options for gettext output -------------------------------------------
@@ -528,7 +529,7 @@ gettext_additional_targets = ["raw"]
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
+man_pages = [(root_doc, "pyvista", "pyvista Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -538,7 +539,7 @@ man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        root_doc,
         "pyvista",
         "pyvista Documentation",
         author,

@@ -5,6 +5,7 @@ from typing import Union
 import numpy as np
 
 from . import _vtk_core as _vtk
+from ._typing_core import Array
 from .utilities.arrays import FieldAssociation, convert_array
 
 
@@ -15,7 +16,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     Parameters
     ----------
-    array : Iterable or vtk.vtkAbstractArray
+    array : Array or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet
@@ -44,7 +45,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Iterable, _vtk.vtkAbstractArray],
+        array: Union[Array, _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -73,7 +74,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
         #
-        # the VTKArray class uses attributes called `DataSet` and `Assocation`
+        # the VTKArray class uses attributes called `DataSet` and `Association`
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class

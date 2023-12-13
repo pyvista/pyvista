@@ -76,12 +76,12 @@ the `Anaconda Distribution <https://www.anaconda.com/>`_.
 .. grid::
 
    .. grid-item-card:: In-depth instructions?
-      :link: install_ref
+      :link: install
       :link-type: ref
       :class-title: pyvista-card-title
 
       Installing a specific version? Installing from source? Check the
-      :ref:`install_ref` page.
+      :ref:`install` page.
 
 
 First Steps
@@ -137,7 +137,7 @@ through a range of examples and tutorials.
 
 
    .. grid-item-card:: Authors & Citation
-      :link: authors_ref
+      :link: authors
       :link-type: ref
       :class-title: pyvista-card-title
 
@@ -166,7 +166,7 @@ where the community can collectively address your questions. You are also
 welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
-.. _Slack: http://slack.pyvista.org
+.. _Slack: https://communityinviter.com/apps/pyvista/pyvista
 .. _info@pyvista.org: mailto:info@pyvista.org
 
 
@@ -176,7 +176,7 @@ Citing PyVista
 There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_.
 
 If you are using PyVista in your scientific research, please help our scientific
-visibility by citing our work. Head over to :ref:`citation_ref` to learn more
+visibility by citing our work. Head over to :ref:`citation` to learn more
 about citing PyVista.
 
 .. _JOSS Publication: https://joss.theoj.org/papers/10.21105/joss.01450
