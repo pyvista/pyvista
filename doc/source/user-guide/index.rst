@@ -45,6 +45,9 @@ identically locally.
     >>> mesh['scalars'] = mesh.points[:, 1]
     >>> mesh.plot(cpos='xy', cmap='plasma')
 
+.. note::
+   This example (and many others) is interactive.
+
 With just a few lines of code we downloaded a sample mesh from the
 web, added scalars to it based on the points of the mesh, and plotted
 it while controlling the orientation, color, and data presented in the
