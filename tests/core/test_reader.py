@@ -916,27 +916,42 @@ def test_xdmf_reader():
     assert isinstance(reader, pv.XdmfReader)
     assert reader.path == filename
 
+    assert reader.number_time_points == 5
+    assert reader.time_values == [0.0, 0.25, 0.5, 0.75, 1.0]
+    assert reader.time_point_value(0) == 0.0
+    assert reader.time_point_value(1) == 0.25
+
     assert reader.number_grids == 6
     assert reader.number_point_arrays == 2
 
     assert reader.point_array_names == ['phi', 'u']
     assert reader.cell_array_names == ['a']
-    assert reader.time_values == [0.0, 0.25, 0.5, 0.75, 1.0]
 
     blocks = reader.read()
+    assert reader.active_time_value == 0.0
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
     reader.set_active_time_value(0.25)
+    assert reader.active_time_value == 0.25
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.25, 0.25, 0.25, 0.25]))
     reader.set_active_time_value(0.5)
+    assert reader.active_time_value == 0.5
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.5, 0.5, 0.5, 0.5]))
     reader.set_active_time_value(0.75)
+    assert reader.active_time_value == 0.75
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.75, 0.75, 0.75, 0.75]))
     reader.set_active_time_value(1.0)
+    assert reader.active_time_value == 1.0
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))
+
+    reader.set_active_time_point(0)
+    assert reader.active_time_value == 0.0
+
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
 
 
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")

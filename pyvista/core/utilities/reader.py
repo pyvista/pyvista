@@ -2453,6 +2453,11 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
         return self.reader.GetNumberOfGrids()
 
     def set_active_time_value(self, time_value):  # noqa: D102
+        if time_value not in self.time_values:
+            raise ValueError(
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
+            )
+        self._active_time_value = time_value
         self.reader.UpdateTimeStep(time_value)
 
     @property
@@ -2460,7 +2465,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
         return len(self.time_values)
 
     def time_point_value(self, time_point):  # noqa: D102
-        return self.time_values[0]
+        return self.time_values[time_point]
 
     @property
     def time_values(self):  # noqa: D102
