@@ -622,7 +622,7 @@ class RenderWindowInteractor:
                 self._style_class.StartRotate()
             elif self.interactor.GetShiftKey():
                 # https://github.com/pyvista/pyvista/pull/5336#discussion_r1426060132
-                self._style_class.StartDolly() # ParaView does a different type of zooming
+                self._style_class.StartDolly()  # ParaView does a different type of zooming
             else:
                 self._style_class.StartDolly()
             self._style_class.OnRightButtonDown()
@@ -1015,6 +1015,32 @@ class RenderWindowInteractor:
         for _ in range(count):
             self._mouse_left_button_press(x, y)
             self._mouse_left_button_release()
+
+    def _mouse_middle_button_press(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Simulate a middle mouse button press.
+
+        If ``x`` and ``y`` are entered then simulates a movement to
+        that position.
+
+        """
+        if x is not None and y is not None:
+            self._mouse_move(x, y)
+        self.interactor.MiddleButtonPressEvent()
+
+    def _mouse_middle_button_release(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Simulate a middle mouse button release."""
+        if x is not None and y is not None:
+            self._mouse_move(x, y)
+        self.interactor.MiddleButtonReleaseEvent()
+
+    def _mouse_middle_button_click(self, x=None, y=None, count=1):
+        for _ in range(count):
+            self._mouse_middle_button_press(x, y)
+            self._mouse_middle_button_release()
 
     def _mouse_right_button_press(
         self, x=None, y=None

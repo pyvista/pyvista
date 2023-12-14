@@ -3811,3 +3811,39 @@ def test_voxelize_volume():
     # Create a voxel volume from unequal density dimensions and plot result.
     vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+
+def test_paraview_2d_style():
+    def setup_plot():
+        mesh = pv.Cube()
+        mesh["face_id"] = np.arange(6)
+        pl = pv.Plotter()
+        pl.enable_paraview_2D_style()
+        pl.enable_parallel_projection()
+        pl.add_mesh(mesh, scalars="face_id")
+        return pl
+
+    # baseline image
+    pl = setup_plot()
+    pl.show()
+
+    # left click pans
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_left_button_press(100, 100)
+    pl.iren._mouse_left_button_release(150, 150)
+    pl.close()
+
+    # middle click spins
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_middle_button_press(100, 100)
+    pl.iren._mouse_middle_button_release(100, 150)
+    pl.close()
+
+    # right click dollys
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_right_button_press(100, 100)
+    pl.iren._mouse_right_button_release(100, 50)
+    pl.close()
