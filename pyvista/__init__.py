@@ -90,7 +90,7 @@ def __getattr__(name):
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
-    except AttributeError as e:
+    except AttributeError:
         raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 
     return feature

@@ -240,6 +240,12 @@ plotter.close()
 # Looking at the still image of the middle state with ``t = 0``, we see a nice
 # symmetric configuration where two "inside" and two "outside" lobes of the
 # sphere are visible.
+
+# sphinx_gallery_start_ignore
+# lighting does not work for this interactive plot
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 t = q = 0
 xi = p = 1
 eta = eta_final
