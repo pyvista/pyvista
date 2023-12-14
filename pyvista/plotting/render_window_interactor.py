@@ -548,7 +548,7 @@ class RenderWindowInteractor:
         self.update_style()
 
     def enable_paraview_2D_style(self):
-        """Set the interactive style to Paraview-like 2D style.
+        """Set the interactive style to ParaView-like 2D style.
 
         For a 3-button mouse, the left button pans, the
         right button dollys, the middle button spins, and the wheel
@@ -558,16 +558,16 @@ class RenderWindowInteractor:
         ctrl + right button rotates in 3D, and shift + right button
         dollys.
 
-        Shift + right currently varies from Paraview and may be changed
+        Shift + right currently varies from ParaView and may be changed
         in the future.
 
-        To get a view most like Paraview 2D style, also use
+        To get a view most like ParaView 2D style, also use
         :func:`pyvista.Plotter.enable_parallel_projection`.
 
         Examples
         --------
         Create a simple scene with a plotter that has the
-        Paraview-like 2D style:
+        ParaView-like 2D style:
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
@@ -621,7 +621,7 @@ class RenderWindowInteractor:
             if self.interactor.GetControlKey():
                 self._style_class.StartRotate()
             elif self.interactor.GetShiftKey():
-                self._style_class.StartDolly()  # Paraview does a different type of zooming
+                self._style_class.StartDolly()  # ParaView does a different type of zooming
                 self._style_class.StartDolly()
             self._style_class.OnRightButtonDown()
 
