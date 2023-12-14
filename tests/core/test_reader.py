@@ -928,6 +928,7 @@ def test_xdmf_reader():
     assert reader.cell_array_names == ['a']
 
     blocks = reader.read()
+    assert reader.active_time_value == 0.0
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
     reader.set_active_time_value(0.25)
     assert reader.active_time_value == 0.25
