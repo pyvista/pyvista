@@ -13,6 +13,11 @@ how a user can customize scalar bars.
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# setting scalar bar position does not work in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # By default, when plotting a dataset with a scalar array, a scalar bar for that
 # array is added. To turn off this behavior, a user could specify

@@ -3,16 +3,12 @@ import os
 import re
 import sys
 
-from packaging.version import parse as parse_version
-import sphinx
-
 import pyvista
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 # -- General configuration ------------------------------------------------
 
-extensions = ['pyvista.ext.plot_directive']
 templates_path = ['_templates']
 source_suffix = '.rst'
 root_doc = 'index'
@@ -27,7 +23,9 @@ pygments_style = 'sphinx'
 extensions = [
     "numpydoc",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.viewer_directive",
     "sphinx.ext.autosummary",
+    "sphinx_design",
 ]
 
 # -- Plot directive specific configuration --------------------------------
@@ -35,10 +33,7 @@ plot_setup = plot_cleanup = 'import pyvista'
 
 # -- Options for HTML output ----------------------------------------------
 
-if parse_version(sphinx.__version__) >= parse_version('1.3'):
-    html_theme = 'classic'
-else:
-    html_theme = 'default'
+html_theme = 'pydata_sphinx_theme'
 
 html_static_path = ['_static']
 
