@@ -66,6 +66,7 @@ Plot 7 uses ``include-source``:
 Plot _ uses an external file with the plot commands and a caption:
 
 .. pyvista-plot:: plot_cone.py
+   :force_static:
 
    This is the caption for plot 8.
 
@@ -78,16 +79,19 @@ Plot _ uses a specific function in a file with plot commands:
 Plot 8 gets a caption specified by the :caption: option:
 
 .. pyvista-plot::
+   :force_static:
    :caption: Plot 10 uses the caption option.
 
    import pyvista
    pyvista.Disc().plot()
 
 
+
 Plot __ uses an external file with the plot commands and a caption
 using the :caption: option:
 
 .. pyvista-plot:: plot_cone.py
+   :force_static:
    :caption: This is the caption for plot 11.
 
 
@@ -95,6 +99,7 @@ Plot 9 shows that the default template correctly prints the multi-image
 scenario:
 
 .. pyvista-plot::
+   :force_static:
    :caption: This caption applies to both plots.
 
    import pyvista
@@ -135,3 +140,23 @@ lines, even in two sections.
 
     >>> pyvista.Sphere().plot(color='red',
     ...                       cpos='xy')
+
+Forces a static image instead of an interactive scene:
+
+.. pyvista-plot::
+   :force_static:
+
+   >>> import pyvista
+   >>> pyvista.Sphere().plot(color='blue',
+   ...                       cpos='xy')
+
+   >>> pyvista.Sphere().plot(color='red',
+   ...                       cpos='xy')
+
+Plot __ uses caption with tabbed UI.
+
+.. pyvista-plot::
+   :caption: Plot __ uses the caption option with tabbed UI.
+
+   import pyvista
+   pyvista.Disc().plot()

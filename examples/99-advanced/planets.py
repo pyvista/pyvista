@@ -22,6 +22,11 @@ This example is inspired by `planet3D-MATLAB
 import pyvista
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# background images do not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Plot the Solar System with Stars in the Background
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
