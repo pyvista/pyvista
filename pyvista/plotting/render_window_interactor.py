@@ -622,13 +622,13 @@ class RenderWindowInteractor:
                 self._style_class.StartRotate()
             elif self.interactor.GetShiftKey():
                 self._style_class.StartDolly()  # ParaView does a different type of zooming
+            else:
                 self._style_class.StartDolly()
             self._style_class.OnRightButtonDown()
 
         def _right_button_release_callback(_obj, event):  # pragma: no cover
             """Turn off all right button behavior."""
             self._style_class.EndRotate()
-            self._style_class.EndUniformScale()
             self._style_class.EndDolly()
             self._style_class.OnRightButtonUp()
 
