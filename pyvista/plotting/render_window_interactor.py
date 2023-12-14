@@ -621,7 +621,8 @@ class RenderWindowInteractor:
             if self.interactor.GetControlKey():
                 self._style_class.StartRotate()
             elif self.interactor.GetShiftKey():
-                self._style_class.StartDolly()  # ParaView does a different type of zooming
+                # https://github.com/pyvista/pyvista/pull/5336#discussion_r1426060132
+                self._style_class.StartDolly() # ParaView does a different type of zooming
             else:
                 self._style_class.StartDolly()
             self._style_class.OnRightButtonDown()
