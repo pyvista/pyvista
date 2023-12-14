@@ -12,6 +12,11 @@ structure of the dataset.
 
 """
 
+# sphinx_gallery_start_ignore
+# widgets do not work in interactive examples
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Create the Dataset
 # ~~~~~~~~~~~~~~~~~~

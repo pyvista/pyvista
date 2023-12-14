@@ -17,6 +17,11 @@ See `Kitware: Screen-Space Ambient Occlusion
 """
 # sphinx_gallery_thumbnail_number = 3
 
+# sphinx_gallery_start_ignore
+# the different options of ssao are more clear in static images
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # First, let's create several cubes nearby each other
 
 import pyvista as pv
