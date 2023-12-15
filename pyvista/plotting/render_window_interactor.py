@@ -547,7 +547,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def enable_paraview_2D_style(self):
+    def enable_paraview_2d_style(self):
         """Set the interactive style to ParaView-like 2D style.
 
         For a 3-button mouse, the left button pans, the
@@ -575,7 +575,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
         >>> plotter.enable_parallel_projection()
-        >>> plotter.enable_paraview_2D_style()
+        >>> plotter.enable_paraview_2d_style()
         >>> plotter.show()  # doctest:+SKIP
         """
         self._style = 'TrackballCamera'

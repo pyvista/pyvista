@@ -2154,10 +2154,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
 
-    @wraps(RenderWindowInteractor.enable_paraview_2D_style)
-    def enable_paraview_2D_style(self):  # numpydoc ignore=PR01,RT01
-        """Wrap RenderWindowInteractor.enable_paraview_2D_style."""
-        self.iren.enable_paraview_2D_style()
+    @wraps(RenderWindowInteractor.enable_paraview_2d_style)
+    def enable_paraview_2d_style(self):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_paraview_2d_style."""
+        self.iren.enable_paraview_2d_style()
 
     def enable_stereo_render(self):
         """Enable anaglyph stereo rendering.
