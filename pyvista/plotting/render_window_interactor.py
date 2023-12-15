@@ -553,7 +553,7 @@ class RenderWindowInteractor:
         For a 3-button mouse, the left button pans, the
         right button dollys, the middle button spins, and the wheel
         dollys.
-        ctrl + left button spins, shift + left button zooms,
+        ctrl + left button spins, shift + left button dollys,
         ctrl + middle button pans, shift + middle button dollys,
         ctrl + right button rotates in 3D, and shift + right button
         dollys.
@@ -997,6 +997,14 @@ class RenderWindowInteractor:
     def _control_key_release(self):
         """Simulate a control keypress."""
         self.interactor.SetControlKey(0)
+
+    def _shift_key_press(self):
+        """Simulate a shift keypress."""
+        self.interactor.SetShiftKey(1)
+
+    def _shift_key_release(self):
+        """Simulate a shift keypress."""
+        self.interactor.SetShiftKey(0)
 
     def _mouse_left_button_press(
         self, x=None, y=None

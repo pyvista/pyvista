@@ -3823,37 +3823,86 @@ def test_paraview_2d_style():
         pl.add_mesh(mesh, scalars="face_id")
         return pl
 
-    # baseline image
+    # baseline, image
     pl = setup_plot()
     pl.show()
 
-    # left click pans
+    start = (100, 100)
+    pan = rotate = (150, 150)
+    spin = (100, 150)
+    dolly = (100, 50)
+
+    # left click pans, image 1
     pl = setup_plot()
     pl.show(auto_close=False)
-    pl.iren._mouse_left_button_press(100, 100)
-    pl.iren._mouse_left_button_release(150, 150)
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*pan)
     pl.close()
 
-    # middle click spins
+    # middle click spins, image 2
     pl = setup_plot()
     pl.show(auto_close=False)
-    pl.iren._mouse_middle_button_press(100, 100)
-    pl.iren._mouse_middle_button_release(100, 150)
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*spin)
     pl.close()
 
-    # right click dollys
+    # right click dollys, image 3
     pl = setup_plot()
     pl.show(auto_close=False)
-    pl.iren._mouse_right_button_press(100, 100)
-    pl.iren._mouse_right_button_release(100, 50)
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*dolly)
     pl.close()
 
-    # ctrl left click spins
+    # ctrl left click spins, image 4
     pl = setup_plot()
     pl.show(auto_close=False)
-    pl.iren._mouse_left_button_click(100, 100)
     pl.iren._control_key_press()
-    pl.iren._mouse_left_button_press(100, 100)
-    pl.iren._mouse_left_button_release(100, 150)
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*spin)
     pl.iren._control_key_release()
+    pl.close()  # image 4
+
+    # shift left click dollys, image 5
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
+
+    # ctrl middle click pans, image 6
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*pan)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift middle click dollys, image 7
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
+
+    # ctrl right click rotates, image 8
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*rotate)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift right click dollys, image 9
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*dolly)
+    pl.iren._shift_key_release()
     pl.close()
