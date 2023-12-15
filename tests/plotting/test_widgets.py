@@ -583,6 +583,9 @@ def test_affine_widget(sphere):
     assert not widget._circles
     assert not widget._arrows
 
+    interact_calls = []
+    release_calls = []
+
 
 def test_logo_widget(verify_image_cache):
     pl = pv.Plotter()
