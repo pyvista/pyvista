@@ -12,6 +12,11 @@ import numpy as np
 
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# chart background images do not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 rng = np.random.default_rng(1)  # Seeded random number generator for consistent data generation
 
 ###############################################################################

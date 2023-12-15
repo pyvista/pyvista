@@ -113,6 +113,11 @@ pl.show()
 # Note that backfaces are automatically culled when physically based rendering
 # is enabled, regardless of the settings of backface parameters.
 
+# sphinx_gallery_start_ignore
+# materials have issues in interactive examples
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 sphere = pv.Sphere()
 clipped_sphere = sphere.clip(normal='z', value=0.4)
 
