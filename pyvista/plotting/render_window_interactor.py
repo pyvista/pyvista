@@ -990,6 +990,14 @@ class RenderWindowInteractor:
         self.interactor.SetKeyCode(key)
         self.interactor.CharEvent()
 
+    def _control_key_press(self):
+        """Simulate a control keypress."""
+        self.interactor.SetControlKey(1)
+
+    def _control_key_release(self):
+        """Simulate a control keypress."""
+        self.interactor.SetControlKey(0)
+
     def _mouse_left_button_press(
         self, x=None, y=None
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
@@ -1070,7 +1078,7 @@ class RenderWindowInteractor:
 
     def _mouse_move(self, x, y):  # pragma:
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
-        self.interactor.SetEventInformation(x, y)
+        self.interactor.SetEventPosition(x, y)
         self.interactor.MouseMoveEvent()
 
     def get_event_position(self):

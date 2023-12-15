@@ -3847,3 +3847,13 @@ def test_paraview_2d_style():
     pl.iren._mouse_right_button_press(100, 100)
     pl.iren._mouse_right_button_release(100, 50)
     pl.close()
+
+    # ctrl left click spins
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_left_button_click(100, 100)
+    pl.iren._control_key_press()
+    pl.iren._mouse_left_button_press(100, 100)
+    pl.iren._mouse_left_button_release(100, 150)
+    pl.iren._control_key_release()
+    pl.close()
