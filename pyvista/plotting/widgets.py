@@ -556,7 +556,7 @@ class WidgetHelper:
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
 
-            plane_widget.GetOutlineProperty().SetOpacity(outline_opacity)
+            plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
 
         else:
             # Position of the small plane
