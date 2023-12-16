@@ -41,7 +41,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     curvature_name : str
         The name of the curvature, 'Gauss_Curvature' or 'Mean_Curvature'.
 
-    epsilon : float
+    epsilon : float, default: 1.0e-08
         Absolute curvature values less than this will be set to zero.
 
     Returns
