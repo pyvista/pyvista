@@ -5,7 +5,6 @@ curvatures Adjust Edges
 ~~~~~~~~~~~~~~~~~~~~~~~
 """
 import math
-import sys
 
 import numpy as np
 from vtk.util import numpy_support
@@ -111,21 +110,6 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
         source.GetPointData().RemoveArray(curvature_name)
         source.GetPointData().AddArray(curv)
         source.GetPointData().SetActiveScalars(curvature_name)
-
-
-def get_source(source):
-    surface = source.lower()
-    available_surfaces = [
-        'randomhills',
-    ]
-    if surface not in available_surfaces:
-        return None
-    if surface == 'randomhills':
-        source = pv.ParametricRandomHills(
-            random_seed=1, number_of_hills=30, u_res=51, v_res=51, texture_coordinates=True
-        )
-        return source.translate((0.0, 5.0, 15.0)).rotate_x(-90.0)
-    return None
 
 
 def get_frequencies(bands, src):
@@ -248,26 +232,26 @@ def print_bands_frequencies(bands, freq, precision=2):
     print(s)
 
 
-desired_surface = 'RandomHills'
-source = get_source(desired_surface)
-if not source:
-    print('The surface is not available.')
-    sys.exit()
+source = (
+    pv.ParametricRandomHills(
+        random_seed=1, number_of_hills=30, u_res=51, v_res=51, texture_coordinates=True
+    )
+    .translate((0.0, 5.0, 15.0))
+    .rotate_x(-90.0)
+)
 
 gc = vtkCurvatures()
 gc.SetInputData(source)
 gc.SetCurvatureTypeToGaussian()
 gc.Update()
-if desired_surface in ['RandomHills']:
-    adjust_edge_curvatures(gc.GetOutput(), 'Gauss_Curvature')
+adjust_edge_curvatures(gc.GetOutput(), 'Gauss_Curvature')
 source.GetPointData().AddArray(gc.GetOutput().GetPointData().GetAbstractArray('Gauss_Curvature'))
 
 mc = vtkCurvatures()
 mc.SetInputData(source)
 mc.SetCurvatureTypeToMean()
 mc.Update()
-if desired_surface in ['RandomHills']:
-    adjust_edge_curvatures(mc.GetOutput(), 'Mean_Curvature')
+adjust_edge_curvatures(mc.GetOutput(), 'Mean_Curvature')
 source.GetPointData().AddArray(mc.GetOutput().GetPointData().GetAbstractArray('Mean_Curvature'))
 
 # Let's visualise what we have done.
