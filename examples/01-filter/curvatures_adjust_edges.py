@@ -14,10 +14,9 @@ from vtkmodules.vtkCommonCore import VTK_DOUBLE
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
 from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 
-# from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
-from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-
 import pyvista as pv
+
+# from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 
 
 def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
@@ -286,6 +285,7 @@ plotter = pv.Plotter(shape=(1, 2), window_size=(window_width, window_height))
 text_property = pv.TextProperty()
 text_property.font_size = 24
 text_property.justification_horizontal = "center"
+text_property.color = "white"
 
 lut = pv.LookupTable('coolwarm', n_values=256)
 
@@ -317,17 +317,6 @@ mapper.SetLookupTable(lut)
 
 actor = pv.Actor(mapper=mapper)
 
-# Create a scalar bar
-scalar_bar = vtkScalarBarActor()
-scalar_bar.SetLookupTable(mapper.GetLookupTable())
-scalar_bar.SetTitle(curvature_title)
-scalar_bar.UnconstrainedFontSizeOn()
-scalar_bar.SetNumberOfLabels(min(5, len(freq)))
-scalar_bar.SetMaximumWidthInPixels(window_width // 8)
-scalar_bar.SetMaximumHeightInPixels(window_height // 3)
-scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
-scalar_bar.SetPosition(0.85, 0.1)
-
 text_actor = pv.Text(text=curvature_title)
 text_actor.prop = text_property
 text_actor.position = (250, 16)
@@ -335,7 +324,16 @@ text_actor.position = (250, 16)
 plotter.add_actor(actor)
 plotter.set_background([82, 87, 110])
 plotter.add_actor(text_actor)
-plotter.add_actor(scalar_bar)
+plotter.add_scalar_bar(
+    title=curvature_title,
+    unconstrained_font_size=True,
+    mapper=mapper,
+    n_labels=min(5, len(freq)),
+    position_x=0.85,
+    position_y=0.1,
+    vertical=True,
+    color='white',
+)
 renderer = plotter.renderers[0]
 
 camera = renderer.camera
@@ -365,17 +363,6 @@ mapper.SetLookupTable(lut)
 
 actor = pv.Actor(mapper=mapper)
 
-# Create a scalar bar
-scalar_bar = vtkScalarBarActor()
-scalar_bar.SetLookupTable(mapper.GetLookupTable())
-scalar_bar.SetTitle(curvature_title)
-scalar_bar.UnconstrainedFontSizeOn()
-scalar_bar.SetNumberOfLabels(min(5, len(freq)))
-scalar_bar.SetMaximumWidthInPixels(window_width // 8)
-scalar_bar.SetMaximumHeightInPixels(window_height // 3)
-scalar_bar.SetBarRatio(scalar_bar.GetBarRatio() * 0.5)
-scalar_bar.SetPosition(0.85, 0.1)
-
 text_actor = pv.Text(text=curvature_title)
 text_actor.prop = text_property
 text_actor.position = (250, 16)
@@ -383,7 +370,16 @@ text_actor.position = (250, 16)
 plotter.add_actor(actor)
 plotter.set_background([82, 87, 110])
 plotter.add_actor(text_actor)
-plotter.add_actor(scalar_bar)
+plotter.add_scalar_bar(
+    title=curvature_title,
+    unconstrained_font_size=True,
+    mapper=mapper,
+    n_labels=min(5, len(freq)),
+    position_x=0.85,
+    position_y=0.1,
+    vertical=True,
+    color='white',
+)
 renderer = plotter.renderers[1]
 
 
