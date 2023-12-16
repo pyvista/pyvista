@@ -18,7 +18,13 @@ from pyvista.core.errors import (
 )
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import set_default_active_scalars, vtk_id_list_to_array
+from pyvista.core.utilities.arrays import (
+    FieldAssociation,
+    get_array,
+    get_array_association,
+    set_default_active_scalars,
+    vtk_id_list_to_array,
+)
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
