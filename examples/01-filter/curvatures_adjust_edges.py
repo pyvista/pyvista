@@ -16,8 +16,6 @@ from vtkmodules.vtkFiltersGeneral import vtkCurvatures
 
 import pyvista as pv
 
-# from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
-
 
 def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     """
@@ -278,8 +276,6 @@ window_width = 1024
 window_height = 512
 
 plotter = pv.Plotter(shape=(1, 2), window_size=(window_width, window_height))
-# style = vtkInteractorStyleTrackballCamera()
-# iren.SetInteractorStyle(style)
 
 # Create a common text property.
 text_property = pv.TextProperty()
