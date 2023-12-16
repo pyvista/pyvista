@@ -3,7 +3,6 @@ import collections.abc
 import warnings
 
 import numpy as np
-from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
 
@@ -123,9 +122,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     if epsilon != 0.0:
         curvatures = np.where(abs(curvatures) < epsilon, 0, curvatures)
         # Curvatures is now an ndarray
-        curv = numpy_support.numpy_to_vtk(
-            num_array=curvatures.ravel(), deep=True, array_type=VTK_DOUBLE
-        )
+        curv = _vtk.numpy_to_vtk(num_array=curvatures.ravel(), deep=True, array_type=VTK_DOUBLE)
         curv.SetName(curvature_name)
         source.GetPointData().RemoveArray(curvature_name)
         source.GetPointData().AddArray(curv)
