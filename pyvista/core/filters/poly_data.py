@@ -18,13 +18,7 @@ from pyvista.core.errors import (
 )
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtk_id_list_to_array,
-)
+from pyvista.core.utilities.arrays import set_default_active_scalars, vtk_id_list_to_array
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
@@ -2943,7 +2937,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = get_array_association(self, scalars, preference=preference)
+            field = _vtk.get_array_association(self, scalars, preference=preference)
         if width is None:
             width = self.length * 0.1
         alg = _vtk.vtkRibbonFilter()
@@ -3709,11 +3703,11 @@ class PolyDataFilters(DataSetFilters):
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
-        arr = get_array(self, scalars, preference='point', err=False)
+        arr = _vtk.get_array(self, scalars, preference='point', err=False)
         if arr is None:
             raise ValueError('No arrays present to contour.')
-        field = get_array_association(self, scalars, preference='point')
-        if field != FieldAssociation.POINT:
+        field = _vtk.get_array_association(self, scalars, preference='point')
+        if field != _vtk.FieldAssociation.POINT:
             raise ValueError('Only point data can be contoured.')
 
         if rng is None:
