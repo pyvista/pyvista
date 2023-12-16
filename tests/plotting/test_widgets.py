@@ -125,15 +125,6 @@ def test_widget_plane(uniform):
     p.close()
 
 
-def test_widget_plane_outline_visible(uniform):
-    p = pv.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
-    p.add_mesh(uniform)
-    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_visible=False)
-    assert plane_widget.GetOutlineProperty().GetOpacity() == 0.0
-    p.close()
-
-
 def test_widget_line(uniform):
     p = pv.Plotter()
     func = lambda line: line  # Does nothing
@@ -618,3 +609,13 @@ def test_logo_widget(verify_image_cache):
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
         pl.add_logo_widget(logo=0)
+
+
+@pytest.mark.parametrize('outline_visible,opacity', [(True, 1.0), (False, 0.0)])
+def test_widget_outline_visible(uniform, outline_visible, opacity):
+    p = pv.Plotter()
+    func = lambda normal, origin: normal  # Does nothing
+    p.add_mesh(uniform)
+    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_visible=outline_visible)
+    assert plane_widget.GetOutlineProperty().GetOpacity() == opacity
+    p.close()
