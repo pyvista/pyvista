@@ -391,6 +391,7 @@ class WidgetHelper:
         test_callback=True,
         normal_rotation=True,
         interaction_event='end',
+        outline_visible=True,
     ):
         """Add a plane widget to the scene.
 
@@ -465,6 +466,12 @@ class WidgetHelper:
 
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
+
+        outline_visible : bool, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane.
+
+            .. versionchanged:: 0.44.0
 
         Returns
         -------
@@ -548,6 +555,9 @@ class WidgetHelper:
 
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
+
+            if not outline_visible:
+                plane_widget.GetOutlineProperty().SetOpacity(0)
 
         else:
             # Position of the small plane

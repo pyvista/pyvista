@@ -125,6 +125,15 @@ def test_widget_plane(uniform):
     p.close()
 
 
+def test_widget_plane_outline_visible(uniform):
+    p = pv.Plotter()
+    func = lambda normal, origin: normal  # Does nothing
+    p.add_mesh(uniform)
+    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_visible=False)
+    assert plane_widget.GetOutlineProperty().GetOpacity() == 0.0
+    p.close()
+
+
 def test_widget_line(uniform):
     p = pv.Plotter()
     func = lambda line: line  # Does nothing
