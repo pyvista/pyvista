@@ -6,7 +6,7 @@ import numpy as np
 from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
-from vtkmodules.vtkFiltersCore import vtkFeatureEdges, vtkIdFilter
+from vtkmodules.vtkFiltersCore import vtkIdFilter
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -73,7 +73,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     id_filter.SetCellIdsArrayName(array_name)
     id_filter.Update()
 
-    edges = vtkFeatureEdges()
+    edges = _vtk.vtkFeatureEdges()
     edges.SetInputConnection(id_filter.GetOutputPort())
     edges.BoundaryEdgesOn()
     edges.ManifoldEdgesOff()
