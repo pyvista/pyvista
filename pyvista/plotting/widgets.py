@@ -643,6 +643,7 @@ class WidgetHelper:
         crinkle=False,
         interaction_event='end',
         origin=None,
+        outline_visible=True,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -713,6 +714,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_visible : bool, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane.
+
+            .. versionchanged:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -796,6 +803,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_visible=outline_visible,
         )
 
         if crinkle:
@@ -817,6 +825,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event='end',
         origin=None,
+        outline_visible=True,
         **kwargs,
     ):
         """Clip a volume using a plane widget.
@@ -875,6 +884,12 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        outline_visible : bool, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane.
+
+            .. versionchanged:: 0.44.0
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
@@ -919,6 +934,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_visible=outline_visible,
         )
         widget.GetPlane(plane)
         volume.mapper.AddClippingPlane(plane)
@@ -940,6 +956,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
+        outline_visible=True,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -998,6 +1015,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_visible : bool, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane.
+
+            .. versionchanged:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1064,6 +1087,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_visible=outline_visible,
         )
 
         return self.add_mesh(alg, **kwargs)
