@@ -612,7 +612,7 @@ def test_logo_widget(verify_image_cache):
 
 
 @pytest.mark.parametrize('outline_visible,opacity', [(True, 1.0), (False, 0.0)])
-def test_widget_outline_visible(uniform, outline_visible, opacity):
+def test_outline_visible(uniform, outline_visible, opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
