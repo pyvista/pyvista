@@ -16,7 +16,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      groups:
+    groups:
       dependencies:
         patterns:
           - "*"
