@@ -313,7 +313,7 @@ class ScalarBars:
 
             .. versionadded:: 0.44.0
 
-        Return
+        Returns
         -------
         vtk.vtkScalarBarActor
             Scalar bar actor.
