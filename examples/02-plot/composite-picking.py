@@ -42,6 +42,11 @@ blocks.plot()
 # the block color to red when the block is clicked and unset the color if the
 # color has already been set for the block.
 
+# sphinx_gallery_start_ignore
+# physically based rendering does not work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 actor, mapper = pl.add_composite(blocks, color="w", pbr=True, metallic=True)
 

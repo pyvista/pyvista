@@ -13,6 +13,12 @@ meshes, we have included two helper methods for doing those tasks.
 
 Let's use a plane to clip a mesh:
 """
+
+# sphinx_gallery_start_ignore
+# widgets do not work in interactive examples
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
