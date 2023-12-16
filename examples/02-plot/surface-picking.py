@@ -12,6 +12,11 @@ This allows you to pick points on the surface of a mesh.
 
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# picking does not work on interactive examples
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Create a mesh and enable picking using the default settings.
 

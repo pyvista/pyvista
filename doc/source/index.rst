@@ -72,8 +72,10 @@ Here are some brief interactive examples that demonstrate how you
 might want to use PyVista:
 
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :include-source: false
+   :force_static:
 
    import pyvista
    pyvista.set_jupyter_backend('static')
@@ -88,7 +90,8 @@ Maps and Geoscience
 ~~~~~~~~~~~~~~~~~~~
 Download the surface elevation map of Mount St. Helens and plot it.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     from pyvista import examples
     mesh = examples.download_st_helens()
@@ -102,7 +105,9 @@ Finite Element Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~
 Plot the 'X' component of elastic stress of a 3D notch specimen.
 
-.. jupyter-execute::
+
+.. pyvista-plot::
+   :context:
 
    from pyvista import examples
    mesh = examples.download_notch_stress()
@@ -115,7 +120,9 @@ Easily integrate with NumPy and create a variety of geometries and plot
 them. You could use any geometry to create your glyphs, or even plot
 the points directly.
 
-.. jupyter-execute::
+
+.. pyvista-plot::
+    :context:
 
     import numpy as np
     import pyvista
@@ -134,7 +141,8 @@ Plot a Spline
 ~~~~~~~~~~~~~
 Generate a spline from an array of NumPy points.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import numpy as np
     import pyvista
@@ -155,7 +163,8 @@ Boolean Operations on Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Subtract a sphere from a cube mesh.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista
     import numpy as np
@@ -183,7 +192,9 @@ Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
 .. note::
    This example requires `sympy <https://www.sympy.org/>`_.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
+    :force_static:
 
     from pyvista import examples
     grid = examples.load_hydrogen_orbital(3, 2, -2)
