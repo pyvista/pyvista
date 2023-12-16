@@ -6,7 +6,6 @@ import numpy as np
 from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
-from vtkmodules.vtkFiltersCore import vtkIdFilter
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -65,7 +64,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
 
     #  Get the boundary point IDs.
     array_name = 'ids'
-    id_filter = vtkIdFilter()
+    id_filter = _vtk.vtkIdFilter()
     id_filter.SetInputData(source)
     id_filter.SetPointIds(True)
     id_filter.SetCellIds(False)
