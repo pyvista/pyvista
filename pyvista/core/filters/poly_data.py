@@ -3,7 +3,6 @@ import collections.abc
 import warnings
 
 import numpy as np
-from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import VTK_DOUBLE
 
 import pyvista
@@ -64,7 +63,7 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
 
     # Get the active scalars
     source.GetPointData().SetActiveScalars(curvature_name)
-    np_source = dsa.WrapDataObject(source)
+    np_source = _vtk.WrapDataObject(source)
     curvatures = np_source.PointData[curvature_name]
 
     #  Get the boundary point IDs.
