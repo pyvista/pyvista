@@ -2943,7 +2943,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = _vtk.get_array_association(self, scalars, preference=preference)
+            field = get_array_association(self, scalars, preference=preference)
         if width is None:
             width = self.length * 0.1
         alg = _vtk.vtkRibbonFilter()
@@ -3709,11 +3709,11 @@ class PolyDataFilters(DataSetFilters):
             if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
-        arr = _vtk.get_array(self, scalars, preference='point', err=False)
+        arr = get_array(self, scalars, preference='point', err=False)
         if arr is None:
             raise ValueError('No arrays present to contour.')
-        field = _vtk.get_array_association(self, scalars, preference='point')
-        if field != _vtk.FieldAssociation.POINT:
+        field = get_array_association(self, scalars, preference='point')
+        if field != FieldAssociation.POINT:
             raise ValueError('Only point data can be contoured.')
 
         if rng is None:
