@@ -611,11 +611,11 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.parametrize('outline_visible,opacity', [(True, 1.0), (False, 0.0)])
-def test_outline_visible(uniform, outline_visible, opacity):
+def test_outline_opacity(uniform):
+    outline_opacity = np.random.random_sample()
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_visible=outline_visible)
-    assert plane_widget.GetOutlineProperty().GetOpacity() == opacity
+    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_opacity=outline_opacity)
+    assert plane_widget.GetOutlineProperty().GetOpacity() == outline_opacity
     p.close()
