@@ -3,7 +3,6 @@ import collections.abc
 import warnings
 
 import numpy as np
-from vtkmodules.vtkCommonCore import VTK_DOUBLE
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -121,7 +120,9 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     if epsilon != 0.0:
         curvatures = np.where(abs(curvatures) < epsilon, 0, curvatures)
         # Curvatures is now an ndarray
-        curv = _vtk.numpy_to_vtk(num_array=curvatures.ravel(), deep=True, array_type=VTK_DOUBLE)
+        curv = _vtk.numpy_to_vtk(
+            num_array=curvatures.ravel(), deep=True, array_type=_vtk.VTK_DOUBLE
+        )
         curv.SetName(curvature_name)
         source.GetPointData().RemoveArray(curvature_name)
         source.GetPointData().AddArray(curv)
