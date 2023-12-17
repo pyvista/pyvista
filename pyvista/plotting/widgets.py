@@ -467,11 +467,11 @@ class WidgetHelper:
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
 
-        outline_opacity : bool or float, optional
+        outline_opacity : bool or float, default: True
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a string or float.
+            an implicit plane. Either a bool or float.
 
-            .. versionchanged:: 0.44.0
+            .. versionadded:: 0.44.0
 
         Returns
         -------
@@ -714,11 +714,11 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
-        outline_opacity : bool or float, optional
+        outline_opacity : bool or float, default=True
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a string or float.
+            an implicit plane. Either a bool or float.
 
-            .. versionchanged:: 0.44.0
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -885,9 +885,9 @@ class WidgetHelper:
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a string or float.
+            an implicit plane. Either a bool or float.
 
-            .. versionchanged:: 0.44.0
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1015,11 +1015,11 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
-        outline_opacity : bool or float, optional
+        outline_opacity : bool or float, default: True
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a string or float.
+            an implicit plane. Either a bool or float.
 
-            .. versionchanged:: 0.44.0
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
