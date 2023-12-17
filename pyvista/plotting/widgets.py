@@ -467,7 +467,7 @@ class WidgetHelper:
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
 
-        outline_opacity : bool or float, default: True
+        outline_opacity : bool or float
             Set the visible of outline. Only valid when using
             an implicit plane. Either a bool or float.
 
