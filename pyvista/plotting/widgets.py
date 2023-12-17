@@ -391,7 +391,7 @@ class WidgetHelper:
         test_callback=True,
         normal_rotation=True,
         interaction_event='end',
-        outline_opacity=True,
+        outline_opacity=None,
     ):
         """Add a plane widget to the scene.
 
@@ -556,7 +556,8 @@ class WidgetHelper:
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
 
-            plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
+            if outline_opacity is not None:
+                plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
 
         else:
             # Position of the small plane
@@ -642,7 +643,7 @@ class WidgetHelper:
         crinkle=False,
         interaction_event='end',
         origin=None,
-        outline_opacity=True,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -824,7 +825,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event='end',
         origin=None,
-        outline_opacity=True,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a volume using a plane widget.
@@ -955,7 +956,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
-        outline_opacity=True,
+        outline_opacity=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
