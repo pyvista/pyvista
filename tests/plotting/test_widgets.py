@@ -609,3 +609,12 @@ def test_logo_widget(verify_image_cache):
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
         pl.add_logo_widget(logo=0)
+
+
+def test_clear_plane_widget(verify_image_cache):
+    mesh = examples.download_doorman()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_plane_widget(None)
+    pl.clear_plane_widgets()
+    pl.show(cpos='xy')
