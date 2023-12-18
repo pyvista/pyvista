@@ -130,7 +130,7 @@ jobs:
         # if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
         uses: nwtgck/actions-netlify@v2.1
         with:
-          publish-dir: doc/_build/html/
+          publish-dir: .
           production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
