@@ -467,7 +467,7 @@ class WidgetHelper:
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
 
-        outline_opacity : bool or float
+        outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
             an implicit plane. Either a bool or float.
 
@@ -715,7 +715,7 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
-        outline_opacity : bool or float, default=True
+        outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
             an implicit plane. Either a bool or float.
 
@@ -1016,7 +1016,7 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
-        outline_opacity : bool or float, default: True
+        outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
             an implicit plane. Either a bool or float.
 
