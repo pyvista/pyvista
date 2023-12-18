@@ -115,37 +115,37 @@ jobs:
           name: pyvista-notebooks
           path: _notebooks
 
-  deploy:
-    name: Publish Documentation
-    runs-on: ubuntu-20.04
-    needs: doc
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
-        with:
-          name: docs-build
-          path: .
+  # deploy:
+  #   name: Publish Documentation
+  #   runs-on: ubuntu-20.04
+  #   needs: doc
+  #   if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: docs-build
+  #         path: .
 
-      - name: Deploy Dev Docs
-        if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
-        uses: ansys/actions/doc-deploy-dev@v4
-        with:
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          decompress-artifact: false
-          repository: 'pyvista/pyvista-docs'
-          doc-artifact-name: docs-build
-          cname: ${{ env.DOCUMENTATION_CNAME }}
+  #     - name: Deploy Dev Docs
+  #       if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
+  #       uses: ansys/actions/doc-deploy-dev@v4
+  #       with:
+  #         token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+  #         decompress-artifact: false
+  #         repository: 'pyvista/pyvista-docs'
+  #         doc-artifact-name: docs-build
+  #         cname: ${{ env.DOCUMENTATION_CNAME }}
 
-      - name: Deploy Stable Docs
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-        uses: ansys/actions/doc-deploy-stable@v4
-        with:
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          decompress-artifact: false
-          repository: 'pyvista/pyvista-docs'
-          doc-artifact-name: docs-build
-          cname: ${{ env.DOCUMENTATION_CNAME }}
+  #     - name: Deploy Stable Docs
+  #       if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+  #       uses: ansys/actions/doc-deploy-stable@v4
+  #       with:
+  #         token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+  #         decompress-artifact: false
+  #         repository: 'pyvista/pyvista-docs'
+  #         doc-artifact-name: docs-build
+  #         cname: ${{ env.DOCUMENTATION_CNAME }}
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
