@@ -626,5 +626,5 @@ def test_clear_logo_widget(verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_rotate_orientation_widget()
-    pl.clear_rotate_orientation()
+    pl.clear_rotate_orientation_widget()
     pl.show(cpos='xy')
