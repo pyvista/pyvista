@@ -674,6 +674,7 @@ def test_clear_sphere_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
+@pytest.mark.needs_vtk_version(9, 1)
 def test_clear_camera_widget(verify_image_cache):
     mesh = examples.download_doorman()
     pl = pv.Plotter()
