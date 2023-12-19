@@ -3860,7 +3860,7 @@ def test_paraview_2d_style():
     pl.iren._mouse_left_button_press(*start)
     pl.iren._mouse_left_button_release(*spin)
     pl.iren._control_key_release()
-    pl.close()  # image 4
+    pl.close()
 
     # shift left click dollys, image 5
     pl = setup_plot()
