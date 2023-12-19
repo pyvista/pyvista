@@ -2812,6 +2812,8 @@ class WidgetHelper:
 
     def clear_rotate_orientation_widget(self):
         """Remove all of the rotate orientation widget."""
+        for rotate_orientation_widget in self.rotate_orientation_widgets:
+            rotate_orientation_widget.Off()
         self.rotate_orientation_widgets.clear()
 
     def close(self):
