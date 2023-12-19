@@ -3830,7 +3830,13 @@ def test_paraview_2d_style():
     start = (100, 100)
     pan = rotate = (150, 150)
     spin = (100, 150)
-    dolly = (100, 50)
+    dolly = (100, 25)
+
+    # Compare all images to baseline
+    #   Panning moves up and left
+    #   Spinning rotates while fixing the view direction
+    #   Dollying zooms out
+    #   Rotating rotates freely without fixing view direction
 
     # left click pans, image 1
     pl = setup_plot()
