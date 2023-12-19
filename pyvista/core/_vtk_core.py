@@ -66,7 +66,6 @@ from vtkmodules.vtkCommonComputationalGeometry import (
 from vtkmodules.vtkCommonCore import (
     VTK_ARIAL,
     VTK_COURIER,
-    VTK_DOUBLE,
     VTK_FONT_FILE,
     VTK_TIMES,
     VTK_UNSIGNED_CHAR,

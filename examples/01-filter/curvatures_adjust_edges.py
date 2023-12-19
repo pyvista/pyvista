@@ -3,6 +3,8 @@
 
 curvatures Adjust Edges
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+This example is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
 """
 
 import pyvista as pv

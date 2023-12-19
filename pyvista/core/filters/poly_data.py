@@ -51,8 +51,8 @@ def _adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     the value with the average value of the curvatures of points in the neighborhood.
     Remember to update the vtkCurvatures object before calling this.
 
+    This function is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
     """
-    source = pyvista.wrap(source)
 
     def compute_distance(pt_id_a, pt_id_b):  # numpydoc ignore=PR01,RT01
         """Compute the distance between two points given their ids."""
