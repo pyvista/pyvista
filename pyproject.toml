@@ -51,7 +51,7 @@ jupyter = [
     'jupyter-server-proxy',
     'nest_asyncio',
     'trame>=2.5.2',
-    'trame-client>=2.10.0',
+    'trame-client>=2.12.7',
     'trame-server>=2.11.7',
     'trame-vtk>=2.5.8',
     'trame-vuetify>=2.3.1',
@@ -271,3 +271,45 @@ exclude = [  # don't report on objects that match any of these regex
     '\.PyVistaRemoteLocalView(\.|$)',
     '\.Texture(\.|$)',  # awaiting Texture refactor
 ]
+
+[tool.ruff]
+exclude = [
+    '.git',
+    'pycache__',
+    'build',
+    'dist',
+    'doc/examples',
+    'doc/_build',
+]
+line-length = 100
+indent-width = 4
+target-version = 'py39'
+
+[tool.ruff.lint]
+ignore = [
+    # whitespace before ':'
+    "E203",
+    # line break before binary operator
+    # "W503",
+    # line length too long
+    "E501",
+    # do not assign a lambda expression, use a def
+    "E731",
+    # too many leading '#' for block comment
+    "E266",
+    # ambiguous variable name
+    "E741",
+    # module level import not at top of file
+    "E402",
+    # Quotes (temporary)
+    "Q0",
+    # bare excepts (temporary)
+    # "B001", "E722",
+    "E722",
+    # we already check black
+    # "BLK100",
+    # 'from module import *' used; unable to detect undefined names
+    "F403",
+]
+fixable = ["ALL"]
+unfixable = []

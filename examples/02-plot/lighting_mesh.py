@@ -29,6 +29,12 @@ mesh.plot(lighting=False, cpos=cpos, show_scalar_bar=False)
 
 ###############################################################################
 # Demonstration of the specular property
+
+# sphinx_gallery_start_ignore
+# specular does not seem to work correctly
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 p = pv.Plotter(shape=(1, 2), window_size=[1500, 500])
 
 p.subplot(0, 0)
@@ -46,14 +52,32 @@ p.show(cpos=cpos)
 
 ###############################################################################
 # Just specular
+
+# sphinx_gallery_start_ignore
+# specular does not seem to work correctly
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 mesh.plot(specular=0.5, cpos=cpos, show_scalar_bar=False)
 
 ###############################################################################
 # Specular power
+
+# sphinx_gallery_start_ignore
+# specular does not seem to work correctly
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 mesh.plot(specular=0.5, specular_power=15, cpos=cpos, show_scalar_bar=False)
 
 ###############################################################################
 # Demonstration of all three in use
+
+# sphinx_gallery_start_ignore
+# specular does not seem to work correctly
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 mesh.plot(diffuse=0.5, specular=0.5, ambient=0.5, cpos=cpos, show_scalar_bar=False)
 
 ###############################################################################
