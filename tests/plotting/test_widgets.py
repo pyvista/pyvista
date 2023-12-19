@@ -620,6 +620,7 @@ def test_widget_rotate_orientation():
     assert not p.rotate_orientation_widgets
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_clear_logo_widget(verify_image_cache):
     mesh = examples.download_doorman()
     pl = pv.Plotter()
