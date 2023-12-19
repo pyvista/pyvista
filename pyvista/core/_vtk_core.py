@@ -28,7 +28,6 @@ except ImportError:
 from vtkmodules.numpy_interface.dataset_adapter import (
     VTKArray,
     VTKObjectWrapper,
-    WrapDataObject,
     numpyTovtkDataArray,
 )
 from vtkmodules.util.numpy_support import (
