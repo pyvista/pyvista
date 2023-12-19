@@ -2231,8 +2231,8 @@ class WidgetHelper:
 
     def clear_measure_widgets(self):
         """Remove all of the measurement widgets."""
-        for measure_widget in self.measure_widgets:
-            measure_widget.Off()
+        for measure_widget in self.distance_widgets:
+            distance_widgets.Off()
         self.distance_widgets.clear()
 
     def add_sphere_widget(
