@@ -232,7 +232,6 @@ from vtkmodules.vtkFiltersCore import (
     vtkFeatureEdges,
     vtkFlyingEdges3D,
     vtkGlyph3D,
-    vtkIdFilter,
     vtkImplicitPolyDataDistance,
     vtkMarchingCubes,
     vtkMassProperties,
