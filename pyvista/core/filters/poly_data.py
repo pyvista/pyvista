@@ -61,32 +61,17 @@ def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
         return np.linalg.norm(pt_a - pt_b)
 
     # Get the active scalars
-    source.GetPointData().SetActiveScalars(curvature_name)
-    np_source = _vtk.WrapDataObject(source)
-    curvatures = np_source.PointData[curvature_name]
+    curvatures = source[curvature_name]
 
     #  Get the boundary point IDs.
     array_name = 'ids'
-    id_filter = _vtk.vtkIdFilter()
-    id_filter.SetInputData(source)
-    id_filter.SetPointIds(True)
-    id_filter.SetCellIds(False)
-    id_filter.SetPointIdsArrayName(array_name)
-    id_filter.SetCellIdsArrayName(array_name)
-    id_filter.Update()
+    source[array_name] = range(source.n_points)
 
-    edges = _vtk.vtkFeatureEdges()
-    edges.SetInputConnection(id_filter.GetOutputPort())
-    edges.BoundaryEdgesOn()
-    edges.ManifoldEdgesOff()
-    edges.NonManifoldEdgesOff()
-    edges.FeatureEdgesOff()
-    edges.Update()
+    edges = source.extract_feature_edges(
+        boundary_edges=True, manifold_edges=False, non_manifold_edges=False, feature_edges=False
+    )
 
-    edge_array = edges.GetOutput().GetPointData().GetArray(array_name)
-    boundary_ids = []
-    for i in range(edges.GetOutput().GetNumberOfPoints()):
-        boundary_ids.append(edge_array.GetValue(i))
+    boundary_ids = edges[array_name]
     # Remove duplicate Ids.
     p_ids_set = set(boundary_ids)
 
