@@ -612,7 +612,7 @@ def test_logo_widget(verify_image_cache):
 
 
 def test_clear_box_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_box_widget(None)
@@ -621,7 +621,7 @@ def test_clear_box_widget(verify_image_cache):
 
 
 def test_clear_plane_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_plane_widget(None)
@@ -630,7 +630,7 @@ def test_clear_plane_widget(verify_image_cache):
 
 
 def test_clear_line_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_line_widget(None)
@@ -639,7 +639,7 @@ def test_clear_line_widget(verify_image_cache):
 
 
 def test_clear_slider_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_slider_widget(None, [0, 1])
@@ -648,7 +648,7 @@ def test_clear_slider_widget(verify_image_cache):
 
 
 def test_clear_spline_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_spline_widget(None)
@@ -657,7 +657,7 @@ def test_clear_spline_widget(verify_image_cache):
 
 
 def test_clear_measure_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_measurement_widget(None)
@@ -666,7 +666,7 @@ def test_clear_measure_widget(verify_image_cache):
 
 
 def test_clear_sphere_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_sphere_widget(None)
@@ -676,7 +676,7 @@ def test_clear_sphere_widget(verify_image_cache):
 
 @pytest.mark.needs_vtk_version(9, 1)
 def test_clear_camera_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_camera_orientation_widget()
@@ -685,7 +685,7 @@ def test_clear_camera_widget(verify_image_cache):
 
 
 def test_clear_button_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_checkbox_button_widget(None)
@@ -694,7 +694,7 @@ def test_clear_button_widget(verify_image_cache):
 
 
 def test_clear_logo_widget(verify_image_cache):
-    mesh = examples.download_doorman()
+    mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.add_logo_widget(None)
