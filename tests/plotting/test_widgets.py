@@ -618,3 +618,12 @@ def test_widget_rotate_orientation():
     assert p.rotate_orientation_widgets
     p.close()
     assert not p.rotate_orientation_widgets
+
+
+def test_clear_logo_widget(verify_image_cache):
+    mesh = examples.download_doorman()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_rotate_orientation_widget()
+    pl.clear_rotate_orientation()
+    pl.show(cpos='xy')
