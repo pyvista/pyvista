@@ -101,17 +101,8 @@ def _adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
         # Set the new curvature value.
         curvatures[p_id] = new_curv
 
-    #  Set small values to zero.
     if epsilon != 0.0:
-        curvatures = np.where(abs(curvatures) < epsilon, 0, curvatures)
-        # Curvatures is now an ndarray
-        curv = _vtk.numpy_to_vtk(
-            num_array=curvatures.ravel(), deep=True, array_type=_vtk.VTK_DOUBLE
-        )
-        curv.SetName(curvature_name)
-        source.GetPointData().RemoveArray(curvature_name)
-        source.GetPointData().AddArray(curv)
-        source.GetPointData().SetActiveScalars(curvature_name)
+        source[curvature_name] = np.where(abs(curvatures) < epsilon, 0, curvatures)
 
 
 @abstract_class
@@ -721,7 +712,7 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection, first, second
 
-    def curvature(self, curv_type='mean', progress_bar=False, adjust_edges=False):
+    def curvature(self, curv_type='mean', progress_bar=False, adjust_edges=False, epsilon=1.0e-08):
         """Return the pointwise curvature of a mesh.
 
         See :ref:`connectivity_example` for more examples using this
@@ -744,6 +735,9 @@ class PolyDataFilters(DataSetFilters):
             Adjusts curvatures along the edges of the surface by replacing
             the value with the average value of the curvatures of points
             in the neighborhood.
+
+        epsilon : float, default: 1.0e-08
+            Absolute curvature values less than this will be set to zero.
 
         Returns
         -------
@@ -787,9 +781,9 @@ class PolyDataFilters(DataSetFilters):
         # Compute and return curvature
         curv = _get_output(curvefilter)
         if adjust_edges and curv_type == 'mean':
-            _adjust_edge_curvatures(curv, 'Mean_Curvature')
+            _adjust_edge_curvatures(curv, 'Mean_Curvature', epsilon=epsilon)
         if adjust_edges and curv_type == 'gaussian':
-            _adjust_edge_curvatures(curv, 'Gauss_Curvature')
+            _adjust_edge_curvatures(curv, 'Gauss_Curvature', epsilon=epsilon)
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
     def plot_curvature(self, curv_type='mean', **kwargs):
