@@ -26,7 +26,7 @@ from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
-def adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
+def _adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
     """Adjust curvatures along the edges of the surface.
 
     Parameters
@@ -787,9 +787,9 @@ class PolyDataFilters(DataSetFilters):
         # Compute and return curvature
         curv = _get_output(curvefilter)
         if adjust_edges and curv_type == 'mean':
-            adjust_edge_curvatures(curv, 'Mean_Curvature')
+            _adjust_edge_curvatures(curv, 'Mean_Curvature')
         if adjust_edges and curv_type == 'gaussian':
-            adjust_edge_curvatures(curv, 'Gauss_Curvature')
+            _adjust_edge_curvatures(curv, 'Gauss_Curvature')
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
     def plot_curvature(self, curv_type='mean', **kwargs):
