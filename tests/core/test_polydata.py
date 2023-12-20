@@ -286,6 +286,13 @@ def test_ray_trace(sphere):
     assert np.any(ind)
 
 
+def test_ray_trace_origin():
+    # Regression test for issue #5372
+    plane = pv.Plane(i_resolution=1, j_resolution=1)
+    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    assert len(cells) == 1 and cells[0] == 0
+
+
 def test_multi_ray_trace(sphere):
     pytest.importorskip('rtree')
     pytest.importorskip('pyembree')
