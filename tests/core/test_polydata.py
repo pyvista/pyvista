@@ -1116,7 +1116,7 @@ def _assert_irregular_faces_equal(faces, expected):
 
 def test_irregular_faces():
     points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
-    faces: tuple[int, ...] = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
     expected_faces = [4, 0, 1, 2, 3, 3, 0, 3, 4, 3, 0, 4, 1, 3, 3, 2, 4, 3, 2, 1, 4]
     mesh = pv.PolyData.from_irregular_faces(points, faces)
     assert np.array_equal(mesh.faces, expected_faces)

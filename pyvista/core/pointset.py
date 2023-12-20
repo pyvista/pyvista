@@ -978,11 +978,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_irregular_cells(self.GetPolys())
 
     @irregular_faces.setter
-    def irregular_faces(self, faces: Sequence[NumpyIntArray]):
+    def irregular_faces(self, faces: Sequence[IntVector]):
         self.faces = CellArray.from_irregular_cells(faces)
 
     @classmethod
-    def from_irregular_faces(cls, points: Matrix, faces: Sequence[IntMatrix]):
+    def from_irregular_faces(cls, points: Matrix, faces: Sequence[IntVector]):
         """Alternate `pyvista.PolyData` convenience constructor from point and ragged face arrays.
 
         Parameters
