@@ -565,19 +565,25 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     # Get cells
     cells = []
     c = 0
-    for offset, cell_type in zip(vtk_offset, vtk_cell_type):
-        numnodes = vtk_cells[offset + c]
-        cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
-        c += 1
-        cell = (
-            cell
-            if cell_type not in pixel_voxel
-            else cell[[0, 1, 3, 2]]
-            if cell_type == 8
-            else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
-        )
-        cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
-        cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else f"polygon{numnodes}"
+    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
+        if cell_type == 42:
+            faces = mesh.get_cell(i).faces 
+            cell = [face.point_ids for face in faces]
+            cell_type = f"polyhedron{len(faces)}"
+
+        else:
+            numnodes = vtk_cells[offset + c]
+            cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
+            c += 1
+            cell = (
+                cell
+                if cell_type not in pixel_voxel
+                else cell[[0, 1, 3, 2]]
+                if cell_type == 8
+                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+            )
+            cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
+            cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else f"polygon{numnodes}"
 
         if len(cells) > 0 and cells[-1][0] == cell_type:
             cells[-1][1].append(cell)
@@ -585,7 +591,8 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             cells.append((cell_type, [cell]))
 
     for k, c in enumerate(cells):
-        cells[k] = (c[0], np.array(c[1]))
+        if not c[0].startswith("polyhedron"):
+            cells[k] = (c[0], np.array(c[1]))
 
     # Get point data
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_data.items()}
