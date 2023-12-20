@@ -567,9 +567,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     c = 0
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         if cell_type == 42:
-            faces = mesh.get_cell(i).faces 
-            cell = [face.point_ids for face in faces]
-            cell_type = f"polyhedron{len(faces)}"
+            cell_ = mesh.get_cell(i)
+            cell = [face.point_ids for face in cell_.faces]
+            cell_type = f"polyhedron{cell_.n_points}"
 
         else:
             numnodes = vtk_cells[offset + c]
