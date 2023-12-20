@@ -439,7 +439,7 @@ def from_meshio(mesh):
             numnodes = vtk_type_to_numnodes[vtk_type]
             fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
             cells.append(np.hstack((fill_values, c.data)).ravel())
-        
+
         cell_type += [vtk_type] * len(c.data)
 
     # Extract cell data from meshio.Mesh object
