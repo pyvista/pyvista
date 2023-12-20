@@ -1452,6 +1452,48 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """
         return self.n_open_edges == 0
 
+    @classmethod
+    def from_irregular_faces(cls, points: Matrix, faces: IntMatrix):
+        """Alternate `pyvista.PolyData` convenience constructor from point and irregular face arrays.
+
+        Parameters
+        ----------
+        points : Matrix
+            A (n_points, 3) array of points.
+
+        faces : IntMatrix
+            A (n_faces, face_size) array of face indices.
+            ``face_size`` can take different number for each faces.
+
+        Returns
+        -------
+        pyvista.PolyData
+            The newly constructed mesh.
+
+        Examples
+        --------
+        Construct a mesh from two tetragons and one triangle.
+
+        >>> import pyvista as pv
+        >>> points = [
+        ...     [0.0, 0.0, 0.0],
+        ...     [1.0, 0.0, 0.0],
+        ...     [1.0, 1.0, 0.0],
+        ...     [0.0, 1.0, 0.0],
+        ...     [2.0, 0.0, 0.0],
+        ...     [2.5, 0.0, 0.0],
+        ...     [2.0, 1.0, 0.0],
+        ... ]
+        >>> faces = [[0, 1, 2, 3], [1, 4, 6, 2], [4, 5, 6]]
+        >>> mesh = pv.PolyData.from_irregular_faces(points, faces)
+        >>> mesh.plot(show_edges=True, cpos="xy")
+        """
+        faces_ = []
+        for face in faces:
+            faces_.append(len(face))
+            faces_ += face
+        return cls(points, faces=faces_)
+
     def __del__(self):
         """Delete the object."""
         if hasattr(self, '_obbTree'):

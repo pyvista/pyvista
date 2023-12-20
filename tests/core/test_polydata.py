@@ -1107,3 +1107,19 @@ def test_regular_faces_mutable():
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
+
+
+def test_irregular_faces():
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [2.5, 0.0, 0.0],
+        [2.0, 1.0, 0.0],
+    ]
+    faces = [[0, 1, 2, 3], [1, 4, 6, 2], [4, 5, 6]]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    expected_faces = np.array([4, 0, 1, 2, 3, 4, 1, 4, 6, 2, 3, 4, 5, 6])
+    assert np.array_equal(mesh.faces, expected_faces)
