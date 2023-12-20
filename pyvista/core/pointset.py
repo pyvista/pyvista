@@ -5,7 +5,7 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import Optional, Tuple, Union, cast
+from typing import Optional, Tuple, Union, cast, Sequence
 import warnings
 
 import numpy as np
@@ -24,7 +24,7 @@ from ._typing_core import (
     NumpyUINT8Array,
     Vector,
 )
-from .cell import CellArray, _get_connectivity_array, _get_offset_array, _get_regular_cells
+from .cell import CellArray, _get_connectivity_array, _get_offset_array, _get_regular_cells, _get_irregular_cells
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -927,6 +927,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         pyvista.PolyData
             The newly constructed mesh.
 
+        See Also
+        --------
+        pyvista.PolyData.from_irregular_faces
+
         Examples
         --------
         Construct a tetrahedron from four triangles
@@ -935,10 +939,82 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
         >>> faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
         >>> tetra = pv.PolyData.from_regular_faces(points, faces)
+        >>> tetra.plot()
         """
         p = cls()
         p.points = points  # type: ignore
         p.faces = CellArray.from_regular_cells(faces, deep=deep)  # type: ignore
+        return p
+
+    @property
+    def irregular_faces(self) -> Tuple[NumpyIntArray]:  # numpydoc ignore=PR01
+        """Return a tuple of face arrays.
+
+        Returns
+        -------
+        tuple[numpy.ndarray]
+            Tuple of length n_faces where each element is an array of point
+            indices for points in that face.
+
+        See Also
+        --------
+        pyvista.PolyData.faces
+        pyvista.PolyData.regular_faces
+
+        Examples
+        --------
+        Get the face arrays of the five faces of a pyramid.
+
+        >>> import pyvista as pv
+        >>> pyramid = pv.Pyramid().extract_surface()
+        >>> pyramid.irregular_faces
+        ((0, 1, 2, 3),
+         (0, 3, 4),
+         (0, 4, 1),
+         (3, 2, 4),
+         (2, 1, 4))
+
+        """
+        return _get_irregular_cells(self.GetPolys())
+
+    @irregular_faces.setter
+    def irregular_faces(self, faces: Sequence[NumpyIntArray]):
+        self.faces = CellArray.from_irregular_cells(faces)
+
+    @classmethod
+    def from_irregular_faces(cls, points: Matrix, faces: Sequence[IntMatrix]):
+        """Alternate `pyvista.PolyData` convenience constructor from point and ragged face arrays.
+
+        Parameters
+        ----------
+        points : Matrix
+            A (n_points, 3) array of points.
+
+        faces : Sequence[IntVector]
+            A sequence of face vectors containing point indices
+
+        Returns
+        -------
+        pyvista.PolyData
+            The newly constructed mesh.
+
+        See Also
+        --------
+        pyvista.PolyData.from_regular_faces
+
+        Examples
+        --------
+        Construct a pyramid from five points and five faces
+
+        >>> import pyvista as pv
+        >>> points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+        >>> faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+        >>> pyramid = pv.PolyData.from_irregular_faces(points, faces)
+        >>> pyramid.plot()
+        """
+        p = cls()
+        p.points = points  # type: ignore
+        p.faces = CellArray.from_irregular_cells(faces)  # type: ignore
         return p
 
     @property

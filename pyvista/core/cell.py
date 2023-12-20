@@ -1,7 +1,7 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast, Sequence
 
 import numpy as np
 
@@ -725,23 +725,6 @@ class CellArray(_vtk.vtkCellArray):
         cellarr._set_data(offsets, connectivity, deep=deep)
         return cellarr
 
-    @property
-    def regular_cells(self) -> NumpyIntArray:  # numpydoc ignore=RT01
-        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of face indices of shape (n_cells, cell_size).
-
-        Notes
-        -----
-        This property does not validate that the cells are all
-        actually the same size. If they're not, this property may either
-        raise a `ValueError` or silently return an incorrect array.
-        """
-        return _get_regular_cells(self)
-
     @classmethod
     def from_regular_cells(cls, cells: IntMatrix, deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
@@ -765,6 +748,28 @@ class CellArray(_vtk.vtkCellArray):
         cellarr = cls()
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
+
+    @classmethod
+    def from_irregular_cells(cls, cells: Sequence[IntMatrix]) -> pyvista.CellArray:
+        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+
+        Parameters
+        ----------
+        cells : numpy.ndarray or list[list[int]]
+            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+
+        deep : bool, default: False
+            Whether to deep copy the cell array data into the vtk connectivity array.
+
+        Returns
+        -------
+        pyvista.CellArray
+            Constructed ``CellArray``.
+        """
+        offsets = np.cumsum([len(c) for c in cells])
+        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        return cls.from_arrays(offsets, connectivity)
 
 
 # The following methods would be much nicer bound to CellArray,
@@ -792,3 +797,13 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
     offsets = _get_offset_array(cellarr)
     cell_size = offsets[1] - offsets[0]
     return cells.reshape(-1, cell_size)
+
+
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> Tuple[NumpyIntArray, ...]:
+    """Return a tuple of length n_cells of each cell's point indices."""
+    cells = _get_connectivity_array(cellarr)
+    if len(cells) == 0:
+        return ()
+
+    offsets = _get_offset_array(cellarr)
+    return tuple(np.split(cells, offsets[1:-1]))
