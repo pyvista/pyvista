@@ -423,10 +423,23 @@ def from_meshio(mesh):
     cells = []
     cell_type = []
     for c in mesh.cells:
-        vtk_type = meshio_to_vtk_type[c.type]
-        numnodes = vtk_type_to_numnodes[vtk_type]
-        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
-        cells.append(np.hstack((fill_values, c.data)).ravel())
+        if c.type.startswith("polyhedron"):
+            vtk_type = meshio_to_vtk_type["polyhedron"]
+
+            for cell in c.data:
+                connectivity = [len(cell)]
+                for face in cell:
+                    connectivity += [len(face), *face]
+
+                connectivity.insert(0, len(connectivity))
+                cells.append(connectivity)
+
+        else:
+            vtk_type = meshio_to_vtk_type[c.type]
+            numnodes = vtk_type_to_numnodes[vtk_type]
+            fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+            cells.append(np.hstack((fill_values, c.data)).ravel())
+        
         cell_type += [vtk_type] * len(c.data)
 
     # Extract cell data from meshio.Mesh object
@@ -435,7 +448,7 @@ def from_meshio(mesh):
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
 
-    # convert to 3D if points are 2D
+    # Convert to 3D if points are 2D
     if points.shape[1] == 2:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
