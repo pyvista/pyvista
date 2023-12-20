@@ -287,7 +287,7 @@ def test_ray_trace(sphere):
 
 
 def test_ray_trace_origin():
-    # Regression test for issue #5372
+    # https://github.com/pyvista/pyvista/issues/5372
     plane = pv.Plane(i_resolution=1, j_resolution=1)
     pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
     assert len(cells) == 1 and cells[0] == 0
