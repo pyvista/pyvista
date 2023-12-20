@@ -286,6 +286,7 @@ indent-width = 4
 target-version = 'py39'
 
 [tool.ruff.lint]
+select = ["E", "F", "ARG"]
 ignore = [
     # whitespace before ':'
     "E203",
