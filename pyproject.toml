@@ -280,6 +280,7 @@ exclude = [
     'dist',
     'doc/examples',
     'doc/_build',
+    # https://github.com/pyvista/pyvista/pull/5374/files#r1433366947
     'examples',
     'tests',
 ]
