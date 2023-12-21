@@ -23,6 +23,7 @@ from .check import (  # noqa: F401
     check_is_string_in_iterable,
     check_is_subdtype,
     check_is_type,
+    check_padding,
 )
 from .validate import (  # noqa: F401
     validate_array,

@@ -1267,3 +1267,65 @@ def check_is_scalar(scalar, /, *, name="Scalar"):
             raise ValueError(
                 f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
             )
+
+
+def check_padding(arr, /, *, name="Array"):
+    """Check if an array's length is compatible with padding.
+
+    An array with a padding structure is designed to store a sequence of
+    chunks of integers with a variable size. The first element of the array
+    is the first offset (length of the first chunk of integers), then the
+    following elements are the integers of the first chunk, then the second
+    offset, then the integers of the second chunk, and so on.
+
+    This function checks if the array's length is compatible with this
+    padding structure and raise an error if it's not.
+
+    For example the array ``[3, 1, 2, 3, 2, 4, 5]`` is a valid padding array, it
+    represents two chunks of integers: ``[1, 2, 3]`` and ``[4, 5]``.
+
+    An example of an invalid padding array is ``[3, 1, 2]``. The first chunk of
+    integers is of size 3, but the array only contains 2 integers.
+
+    Parameters
+    ----------
+    arr : array_like[int]
+        Array to check.
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    ValueError
+        If the array's length is not compatible with padding.
+
+    Examples
+    --------
+    Check if an array is a valid padding array.
+
+    >>> import pyvista.core.input_validation as valid
+    >>> import numpy as np
+    >>> valid.check_padding(
+    ...     np.array([3, 1, 2, 3, 2, 4, 5])
+    ... )  # Valid padding
+
+    """
+    if len(arr) == 0:
+        # Empty array is always valid
+        pass
+    else:
+        # Offset (size of the next chunk of integers) is the first element of
+        # the array
+        offset = arr[0]
+
+        # Check that the array is long enough to contain the chunk
+        # else, it's not valid
+        if len(arr) < offset + 1:
+            raise ValueError(
+                f"{name} has invalid padding, the last chunk is expected to "
+                "be of size {offset}. Only {len(arr)-1} elements can be read."
+            )
+
+        # Jump to the next chunk and check again until the end of the array
+        check_padding(arr[offset + 1 :])
