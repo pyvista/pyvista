@@ -3377,6 +3377,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 roughness=roughness,
                 render=render,
                 show_vertices=show_vertices,
+                edge_opacity=edge_opacity,
                 **kwargs,
             )
             return actor
@@ -3594,6 +3595,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting=lighting,
             line_width=line_width,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
 
         if isinstance(opacity, (float, int)):
@@ -3651,6 +3653,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 lighting=lighting,
                 render=False,
                 show_vertices=False,
+                edge_opacity=edge_opacity,
             )
 
         self.add_actor(

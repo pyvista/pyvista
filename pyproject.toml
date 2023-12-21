@@ -280,13 +280,14 @@ exclude = [
     'dist',
     'doc/examples',
     'doc/_build',
+    'examples',
+    'tests',
 ]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
 
 [tool.ruff.lint]
-select = ["E", "F", "ARG"]
 ignore = [
     # whitespace before ':'
     "E203",
@@ -314,6 +315,9 @@ ignore = [
 ]
 fixable = ["ALL"]
 unfixable = []
+extend-select = [
+    "ARG",
+]
 
 [tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true

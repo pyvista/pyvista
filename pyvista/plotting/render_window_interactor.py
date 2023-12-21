@@ -381,7 +381,7 @@ class RenderWindowInteractor:
         add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
         if callback is None and add_observer:
             # No observers for this event yet and custom callback not given => insert dummy callback
-            callback = lambda obs, event: None
+            callback = lambda obs, event: None  # noqa: ARG005
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:

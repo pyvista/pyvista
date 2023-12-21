@@ -345,14 +345,11 @@ class PlotError(RuntimeError):
     pass
 
 
-def _run_code(code, code_path, ns=None, function_name=None):
+def _run_code(code, ns=None):
     """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
     ```pyvista-plot::`` directive.  In the later case, the doctest parser will
     present the code-block again with the ```pyvista-plot::`` directive
     and its options removed.
-
-    Import a Python module from a path, and run the function given by
-    name, if function_name is not None.
     """
     # do not execute code containing any SKIP directives
     if 'doctest:+SKIP' in code:
@@ -407,16 +404,14 @@ def render_figures(
     code_cleanup = config.plot_cleanup
 
     if code_setup:
-        _run_code(code_setup, code_path, ns, function_name)
+        _run_code(code_setup, ns)
 
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
             _run_code(
                 doctest.script_from_examples(code_piece) if is_doctest else code_piece,
-                code_path,
                 ns,
-                function_name,
             )
 
             images = []

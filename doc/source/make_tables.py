@@ -110,7 +110,7 @@ class LineStyleTable(DocTable):
         return [{"style": ls, **data} for (ls, data) in pv.charts.Pen.LINE_STYLES.items()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, data):  # noqa: ARG003
         return cls.header
 
     @classmethod
@@ -176,7 +176,7 @@ class MarkerStyleTable(DocTable):
         ]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, data):  # noqa: ARG003
         return cls.header
 
     @classmethod
@@ -242,7 +242,7 @@ class ColorSchemeTable(DocTable):
         return [{"scheme": cs, **data} for (cs, data) in pv.colors.COLOR_SCHEMES.items()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, data):  # noqa: ARG003
         return cls.header
 
     @classmethod
@@ -324,11 +324,11 @@ class ColorTable(DocTable):
         return colors.values()
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, data):  # noqa: ARG003
         return cls.header
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, i, row_data):  # noqa: ARG003
         name_template = '``"{}"``'
         names = [row_data["name"]] + row_data["synonyms"]
         name = " or ".join(name_template.format(n) for n in names)
