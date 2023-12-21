@@ -314,3 +314,6 @@ ignore = [
 ]
 fixable = ["ALL"]
 unfixable = []
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
