@@ -21,13 +21,19 @@ with numpy's mypy plugin:
 
 """
 from time import time
-from typing import Any, Callable, Dict, Final, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, Final, Optional, Tuple, Type
 
-from mypy.build import PRI_MED
-from mypy.nodes import MypyFile
-from mypy.plugin import ClassDefContext, Plugin, ReportConfigContext
-from mypy.types import Instance
 import numpy as np
+
+try:
+    from mypy.build import PRI_MED, MypyFile
+    from mypy.plugin import AnalyzeTypeContext, ClassDefContext, Plugin, ReportConfigContext
+    from mypy.types import Instance
+
+    MYPY_EXCEPTION: None | ModuleNotFoundError = None
+except ModuleNotFoundError as ex:
+    MYPY_EXCEPTION = ex
+
 
 __all__: list[str] = []
 
@@ -82,73 +88,79 @@ def _add_dependency(module: str) -> Tuple[int, str, int]:
     return priority, module, line_number
 
 
-class _PyvistaPlugin(Plugin):
-    """Mypy plugin to enable generic use of builtin types with numpy's NDArray."""
+if TYPE_CHECKING or MYPY_EXCEPTION is None:
 
-    def get_customize_class_mro_hook(
-        self, fullname: str
-    ) -> Optional[Callable[[ClassDefContext], None]]:
-        """Customize MRO for given classes.
+    class _PyvistaPlugin(Plugin):
+        """Mypy plugin to enable generic use of builtin types with numpy's NDArray."""
 
-        The plugin can modify the class MRO (or other properties) _in place_.
-        This method is called with the class full name before its body is
-        semantically analyzed.
-        """
-        # Customize numpy data type definitions
-        if fullname == NUMPY_FLOATING_TYPE_FULLNAME:
-            return _promote_float
-        elif fullname == NUMPY_INTEGER_TYPE_FULLNAME:
-            return _promote_int
-        return None
+        def get_customize_class_mro_hook(
+            self, fullname: str
+        ) -> Optional[Callable[[ClassDefContext], None]]:
+            """Customize MRO for given classes.
 
-    def get_additional_deps(self, file: MypyFile) -> list[tuple[int, str, int]]:
-        """Customize dependencies for a module.
-
-        This hook allows adding in new dependencies for a module. It
-        is called after parsing a file but before analysis. This can
-        be useful if a library has dependencies that are dynamic based
-        on configuration information, for example.
-        """
-        # Add numpy numeric types for import so that their class definitions
-        # can be customized (e.g. add type promotions).
-        return [
-            _add_dependency(NUMPY_FLOATING_TYPE_FULLNAME),
-            _add_dependency(NUMPY_INTEGER_TYPE_FULLNAME),
-            _add_dependency(NUMPY_NUMBER_TYPE_FULLNAME),
-        ]
-
-    def report_config_data(self, ctx: ReportConfigContext) -> Optional[Dict[str, Any]]:
-        """Get representation of configuration data for a module.
-
-        The data must be encodable as JSON and will be stored in the
-        cache metadata for the module. A mismatch between the cached
-        values and the returned will result in that module's cache
-        being invalidated and the module being rechecked.
-
-        This can be called twice for each module, once after loading
-        the cache to check if it is valid and once while writing new
-        cache information.
-
-        If is_check in the context is true, then the return of this
-        call will be checked against the cached version. Otherwise the
-        call is being made to determine what to put in the cache. This
-        can be used to allow consulting extra cache files in certain
-        complex situations.
-
-        This can be used to incorporate external configuration information
-        that might require changes to typechecking.
-        """
-        # Always invalidate cached dtype configurations so that it is always
-        # re-checked. This ensures type promotions of 'float' or 'int' as a
-        # subtype of 'numpy.number' are reflected in the config and prevents
-        # the type-var error: "dtype" must be a subtype of "generic" from occurring
-        if NUMPY_DTYPE_TYPE_FULLNAME in ctx.id:
-            # Return dict with a unique value to invalidate mypy cache.
-            return {'': time()}
-        else:
+            The plugin can modify the class MRO (or other properties) _in place_.
+            This method is called with the class full name before its body is
+            semantically analyzed.
+            """
+            # Customize numpy data type definitions
+            if fullname == NUMPY_FLOATING_TYPE_FULLNAME:
+                return _promote_float
+            elif fullname == NUMPY_INTEGER_TYPE_FULLNAME:
+                return _promote_int
             return None
 
+        def get_additional_deps(self, file: MypyFile) -> list[tuple[int, str, int]]:
+            """Customize dependencies for a module.
 
-def plugin(version: str) -> Type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
-    """Entry-point for mypy."""
-    return _PyvistaPlugin
+            This hook allows adding in new dependencies for a module. It
+            is called after parsing a file but before analysis. This can
+            be useful if a library has dependencies that are dynamic based
+            on configuration information, for example.
+            """
+            # Add numpy numeric types for import so that their class definitions
+            # can be customized (e.g. add type promotions).
+            return [
+                _add_dependency(NUMPY_FLOATING_TYPE_FULLNAME),
+                _add_dependency(NUMPY_INTEGER_TYPE_FULLNAME),
+                _add_dependency(NUMPY_NUMBER_TYPE_FULLNAME),
+            ]
+
+        def report_config_data(self, ctx: ReportConfigContext) -> Optional[Dict[str, Any]]:
+            """Get representation of configuration data for a module.
+
+            The data must be encodable as JSON and will be stored in the
+            cache metadata for the module. A mismatch between the cached
+            values and the returned will result in that module's cache
+            being invalidated and the module being rechecked.
+
+            This can be called twice for each module, once after loading
+            the cache to check if it is valid and once while writing new
+            cache information.
+
+            If is_check in the context is true, then the return of this
+            call will be checked against the cached version. Otherwise the
+            call is being made to determine what to put in the cache. This
+            can be used to allow consulting extra cache files in certain
+            complex situations.
+
+            This can be used to incorporate external configuration information
+            that might require changes to typechecking.
+            """
+            # Always invalidate cached dtype configurations so that it is always
+            # re-checked. This ensures type promotions of 'float' or 'int' as a
+            # subtype of 'numpy.number' are reflected in the config and prevents
+            # the type-var error: "dtype" must be a subtype of "generic" from occurring
+            if NUMPY_DTYPE_TYPE_FULLNAME in ctx.id:
+                # Return dict with a unique value to invalidate mypy cache.
+                return {'': time()}
+            else:
+                return None
+
+    def plugin(version: str) -> Type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
+        """Entry-point for mypy."""
+        return _PyvistaPlugin
+
+else:
+    def plugin(version: str) -> Type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
+        """Entry-point for mypy."""
+        raise MYPY_EXCEPTION
