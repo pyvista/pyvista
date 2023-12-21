@@ -27,10 +27,10 @@ import numpy as np
 
 try:
     from mypy.build import PRI_MED, MypyFile
-    from mypy.plugin import AnalyzeTypeContext, ClassDefContext, Plugin, ReportConfigContext
+    from mypy.plugin import ClassDefContext, Plugin, ReportConfigContext
     from mypy.types import Instance
 
-    MYPY_EXCEPTION: None | ModuleNotFoundError = None
+    MYPY_EXCEPTION: Optional[ModuleNotFoundError] = None
 except ModuleNotFoundError as ex:
     MYPY_EXCEPTION = ex
 
@@ -49,46 +49,43 @@ NUMPY_FLOATING_TYPE_FULLNAME: Final = _get_type_fullname(np.floating)
 NUMPY_DTYPE_TYPE_FULLNAME: Final = _get_type_fullname(np.dtype)
 
 
-def _promote_int(ctx: ClassDefContext) -> None:
-    """Enable generic use of numpy.dtype[int]."""
-    assert ctx.cls.fullname == NUMPY_INTEGER_TYPE_FULLNAME
-
-    # Promote `numpy.integer` as a subtype of `int`
-    int_inst: Instance = ctx.api.named_type('builtins.int')
-    ctx.cls.info._promote.append(int_inst)
-
-    # Promote `int` as a subtype of `numpy.number`
-    number_inst: Instance = ctx.api.named_type(NUMPY_NUMBER_TYPE_FULLNAME)
-    int_inst.type._promote.append(number_inst)
-
-
-def _promote_float(ctx: ClassDefContext) -> None:
-    """Enable generic use of numpy.dtype[float]."""
-    assert ctx.cls.fullname == NUMPY_FLOATING_TYPE_FULLNAME
-
-    # Promote `numpy.floating` as a subtype of `float`
-    float_inst: Instance = ctx.api.named_type('builtins.float')
-    ctx.cls.info._promote.append(float_inst)
-
-    # Promote `float` as a subtype of `numpy.number`
-    number_inst: Instance = ctx.api.named_type(NUMPY_NUMBER_TYPE_FULLNAME)
-    float_inst.type._promote.append(number_inst)
-
-
-def _add_dependency(module: str) -> Tuple[int, str, int]:
-    """Return a (priority, module name, line number) tuple.
-
-    The line number can be -1 when there is not a known real line number.
-
-    Priorities are defined in mypy.build. 10 (PRI_MED) is a good choice
-    for priority.
-    """
-    priority = PRI_MED
-    line_number = -1
-    return priority, module, line_number
-
-
 if TYPE_CHECKING or MYPY_EXCEPTION is None:
+
+    def _promote_int(ctx: ClassDefContext) -> None:
+        """Enable generic use of numpy.dtype[int]."""
+        assert ctx.cls.fullname == NUMPY_INTEGER_TYPE_FULLNAME
+
+        # Promote `numpy.integer` as a subtype of `int`
+        int_inst: Instance = ctx.api.named_type('builtins.int')
+        ctx.cls.info._promote.append(int_inst)
+
+        # Promote `int` as a subtype of `numpy.number`
+        number_inst: Instance = ctx.api.named_type(NUMPY_NUMBER_TYPE_FULLNAME)
+        int_inst.type._promote.append(number_inst)
+
+    def _promote_float(ctx: ClassDefContext) -> None:
+        """Enable generic use of numpy.dtype[float]."""
+        assert ctx.cls.fullname == NUMPY_FLOATING_TYPE_FULLNAME
+
+        # Promote `numpy.floating` as a subtype of `float`
+        float_inst: Instance = ctx.api.named_type('builtins.float')
+        ctx.cls.info._promote.append(float_inst)
+
+        # Promote `float` as a subtype of `numpy.number`
+        number_inst: Instance = ctx.api.named_type(NUMPY_NUMBER_TYPE_FULLNAME)
+        float_inst.type._promote.append(number_inst)
+
+    def _add_dependency(module: str) -> Tuple[int, str, int]:
+        """Return a (priority, module name, line number) tuple.
+
+        The line number can be -1 when there is not a known real line number.
+
+        Priorities are defined in mypy.build. 10 (PRI_MED) is a good choice
+        for priority.
+        """
+        priority = PRI_MED
+        line_number = -1
+        return priority, module, line_number
 
     class _PyvistaPlugin(Plugin):
         """Mypy plugin to enable generic use of builtin types with numpy's NDArray."""
@@ -161,6 +158,7 @@ if TYPE_CHECKING or MYPY_EXCEPTION is None:
         return _PyvistaPlugin
 
 else:
-    def plugin(version: str) -> Type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
+
+    def plugin(version: str) -> Any:  # numpydoc ignore=PR01,RT01
         """Entry-point for mypy."""
         raise MYPY_EXCEPTION
