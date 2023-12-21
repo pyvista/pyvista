@@ -33,6 +33,7 @@ from pyvista.core.input_validation.check import (
     check_is_string_in_iterable,
     check_is_subdtype,
     check_is_type,
+    check_padding,
 )
 from pyvista.core.input_validation.validate import (
     _set_default_kwarg_mandatory,
@@ -949,3 +950,12 @@ def test_validate_axes_orthogonal(bias_index):
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=msg):
         validate_axes(axes_left, must_be_orthogonal=True)
+
+
+def test_check_padding():
+    valid_padding = [3, 0, 1, 2, 2, 1, 2, 4, 1, 2, 3, 8]
+    check_padding(valid_padding)
+
+    invalid_padding = [8, 0, 1, 2, 3, 4]
+    with pytest.raises(ValueError):
+        check_padding(invalid_padding)
