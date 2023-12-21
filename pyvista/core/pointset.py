@@ -5,7 +5,7 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import Optional, Tuple, Union, cast, Sequence
+from typing import Optional, Sequence, Tuple, Union, cast
 import warnings
 
 import numpy as np
@@ -24,7 +24,13 @@ from ._typing_core import (
     NumpyUINT8Array,
     Vector,
 )
-from .cell import CellArray, _get_connectivity_array, _get_offset_array, _get_regular_cells, _get_irregular_cells
+from .cell import (
+    CellArray,
+    _get_connectivity_array,
+    _get_irregular_cells,
+    _get_offset_array,
+    _get_regular_cells,
+)
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import (
@@ -947,7 +953,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return p
 
     @property
-    def irregular_faces(self) -> Tuple[NumpyIntArray]:  # numpydoc ignore=PR01
+    def irregular_faces(self) -> Tuple[NumpyIntArray, ...]:  # numpydoc ignore=RT01
         """Return a tuple of face arrays.
 
         Returns
@@ -978,7 +984,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_irregular_cells(self.GetPolys())
 
     @irregular_faces.setter
-    def irregular_faces(self, faces: Sequence[IntVector]):
+    def irregular_faces(self, faces: Sequence[IntVector]):  # numpydoc ignore=PR01
+        """Set the faces from a sequence of face arrays."""
         self.faces = CellArray.from_irregular_cells(faces)
 
     @classmethod
@@ -991,7 +998,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             A (n_points, 3) array of points.
 
         faces : Sequence[IntVector]
-            A sequence of face vectors containing point indices
+            A sequence of face vectors containing point indices.
 
         Returns
         -------
@@ -1007,8 +1014,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Construct a pyramid from five points and five faces
 
         >>> import pyvista as pv
-        >>> points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
-        >>> faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+        >>> points = [
+        ...     (1, 1, 0),
+        ...     (-1, 1, 0),
+        ...     (-1, -1, 0),
+        ...     (1, -1, 0),
+        ...     (0, 0, 1.61),
+        ... ]
+        >>> faces = [
+        ...     (0, 1, 2, 3),
+        ...     (0, 3, 4),
+        ...     (0, 4, 1),
+        ...     (3, 2, 4),
+        ...     (2, 1, 4),
+        ... ]
         >>> pyramid = pv.PolyData.from_irregular_faces(points, faces)
         >>> pyramid.plot()
         """

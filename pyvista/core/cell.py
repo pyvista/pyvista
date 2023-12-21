@@ -1,7 +1,7 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Union, cast, Sequence
+from typing import List, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 
@@ -750,16 +750,13 @@ class CellArray(_vtk.vtkCellArray):
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls, cells: Sequence[IntMatrix]) -> pyvista.CellArray:
+    def from_irregular_cells(cls, cells: Sequence[IntVector]) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
             Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
-
-        deep : bool, default: False
-            Whether to deep copy the cell array data into the vtk connectivity array.
 
         Returns
         -------
