@@ -16,45 +16,48 @@ Some key differences include:
 - The npt._array_like definitions include scalar types (e.g. float, int).
   Here they are excluded (i.e. scalars are not considered to be arrays).
 
+- The npt._array_like TypeVar is bound to np.generic. Here, the
+  TypeVar is bound to a subset of numeric types only.
+
 """
-from typing import Any, Sequence, TypeVar, Union, TypeAlias
+from typing import Any, Sequence, TypeAlias, TypeVar, Union
 
 import numpy as np
 
-# Create alias of npt.NDArray
-_T = TypeVar("_T")
-NumpyArray: TypeAlias = np.ndarray[Any, np.dtype[_T]]
+# Create alias of npt.NDArray bound to numeric types only
+_NumType = TypeVar('_NumType', bool, int, float, np.bool_, np.int_, np.float_, np.uint8)
+NumpyArray: TypeAlias = np.ndarray[Any, np.dtype[_NumType]]
 
 _FiniteNestedSequence = Union[  # Note: scalar types are excluded
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
+    Sequence[_NumType],
+    Sequence[Sequence[_NumType]],
+    Sequence[Sequence[Sequence[_NumType]]],
+    Sequence[Sequence[Sequence[Sequence[_NumType]]]],
 ]
 
 _ArrayLike = Union[
-    NumpyArray[_T],
-    _FiniteNestedSequence[_T],
-    _FiniteNestedSequence[NumpyArray[_T]],
+    NumpyArray[_NumType],
+    _FiniteNestedSequence[_NumType],
+    _FiniteNestedSequence[NumpyArray[_NumType]],
 ]
 
 _ArrayLike1D = Union[
-    NumpyArray[_T],
-    Sequence[_T],
-    Sequence[NumpyArray[_T]],
+    NumpyArray[_NumType],
+    Sequence[_NumType],
+    Sequence[NumpyArray[_NumType]],
 ]
 _ArrayLike2D = Union[
-    NumpyArray[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[NumpyArray[_T]]],
+    NumpyArray[_NumType],
+    Sequence[Sequence[_NumType]],
+    Sequence[Sequence[NumpyArray[_NumType]]],
 ]
 _ArrayLike3D = Union[
-    NumpyArray[_T],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[NumpyArray[_T]]]],
+    NumpyArray[_NumType],
+    Sequence[Sequence[Sequence[_NumType]]],
+    Sequence[Sequence[Sequence[NumpyArray[_NumType]]]],
 ]
 _ArrayLike4D = Union[
-    NumpyArray[_T],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[_T]]]]],
+    NumpyArray[_NumType],
+    Sequence[Sequence[Sequence[Sequence[_NumType]]]],
+    Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumType]]]]],
 ]
