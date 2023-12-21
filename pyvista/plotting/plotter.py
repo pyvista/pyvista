@@ -2791,6 +2791,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                show_vertices=False,
             )
 
         self.add_actor(
