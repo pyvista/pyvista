@@ -62,6 +62,11 @@ pl.show()
 # Show the plot while enabling depth of field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# sphinx_gallery_start_ignore
+# depth field modification does not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
