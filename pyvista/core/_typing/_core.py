@@ -1,18 +1,15 @@
 """Core type aliases."""
-
 from typing import Tuple, Union
 
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
-# flake8: noqa: F401
-from ._arrays import _ArrayLike1D, _ArrayLike2D, _ArrayLike3D, _ArrayLike4D
-from ._dtype import _DTypeScalar
+from ._array_like import _ArrayLike1D, _ArrayLike2D, _ArrayLike3D, _ArrayLike4D, _NumType
 
 Number = Union[int, float]
 
-Vector = _ArrayLike1D[_DTypeScalar]
-Matrix = _ArrayLike2D[_DTypeScalar]
-Array = Union[_ArrayLike2D[_DTypeScalar], _ArrayLike3D[_DTypeScalar], _ArrayLike4D[_DTypeScalar]]
+Vector = _ArrayLike1D[_NumType]
+Matrix = _ArrayLike2D[_NumType]
+Array = Union[_ArrayLike2D[_NumType], _ArrayLike3D[_NumType], _ArrayLike4D[_NumType]]
 
 TransformLike = Union[Matrix[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
 BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
