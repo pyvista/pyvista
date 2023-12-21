@@ -8,7 +8,7 @@ This plugin adds type promotions for `int` and `float` types so that
 
 Examples
 --------
-To enable the plugin, it must add it to the mypy configuration file along
+To enable the plugin, it must be added to the mypy configuration file along
 with numpy's mypy plugin:
 
 .. code-block::
@@ -21,20 +21,26 @@ with numpy's mypy plugin:
 
 """
 from time import time
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Final, Optional, Tuple, Type
 
 from mypy.build import PRI_MED
 from mypy.nodes import MypyFile
 from mypy.plugin import ClassDefContext, Plugin, ReportConfigContext
 from mypy.types import Instance
+import numpy as np
 
 __all__: list[str] = []
 
-NUMPY_NUMBER_TYPE_FULLNAME = 'numpy.number'
-NUMPY_BOOL_TYPE_FULLNAME = 'numpy.bool_'
-NUMPY_INTEGER_TYPE_FULLNAME = 'numpy.integer'
-NUMPY_FLOATING_TYPE_FULLNAME = 'numpy.floating'
-NUMPY_DTYPE_TYPE_FULLNAME = 'numpy.dtype'
+
+def _get_type_fullname(typ: Any) -> str:
+    return f"{typ.__module__}.{typ.__qualname__}"
+
+
+NUMPY_NUMBER_TYPE_FULLNAME: Final = _get_type_fullname(np.number)
+NUMPY_BOOL_TYPE_FULLNAME: Final = _get_type_fullname(np.bool_)
+NUMPY_INTEGER_TYPE_FULLNAME: Final = _get_type_fullname(np.integer)
+NUMPY_FLOATING_TYPE_FULLNAME: Final = _get_type_fullname(np.floating)
+NUMPY_DTYPE_TYPE_FULLNAME: Final = _get_type_fullname(np.dtype)
 
 
 def _promote_int(ctx: ClassDefContext) -> None:
@@ -81,7 +87,7 @@ class _PyvistaPlugin(Plugin):
 
     def get_customize_class_mro_hook(
         self, fullname: str
-    ) -> Callable[[ClassDefContext], None] | None:
+    ) -> Optional[Callable[[ClassDefContext], None]]:
         """Customize MRO for given classes.
 
         The plugin can modify the class MRO (or other properties) _in place_.
@@ -111,7 +117,7 @@ class _PyvistaPlugin(Plugin):
             _add_dependency(NUMPY_NUMBER_TYPE_FULLNAME),
         ]
 
-    def report_config_data(self, ctx: ReportConfigContext) -> Union[Dict[str, Any], None]:
+    def report_config_data(self, ctx: ReportConfigContext) -> Optional[Dict[str, Any]]:
         """Get representation of configuration data for a module.
 
         The data must be encodable as JSON and will be stored in the
@@ -143,6 +149,6 @@ class _PyvistaPlugin(Plugin):
             return None
 
 
-def plugin(version: str) -> type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
+def plugin(version: str) -> Type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
     """Entry-point for mypy."""
     return _PyvistaPlugin
