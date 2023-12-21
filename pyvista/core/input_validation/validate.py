@@ -30,6 +30,7 @@ from pyvista.core.input_validation.check import (
     check_is_string,
     check_is_string_in_iterable,
     check_is_subdtype,
+    check_padding,
 )
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 
@@ -49,6 +50,7 @@ def validate_array(
     must_be_integer_like=False,
     must_be_sorted=False,
     must_be_in_range=None,
+    must_be_padding=False,
     strict_lower_bound=False,
     strict_upper_bound=False,
     reshape_to=None,
@@ -179,6 +181,16 @@ def validate_array(
               than (or equal to)  ``upper_bound``
             * ``[lower_bound, np.inf]`` to check if values are greater
               than (or equal to) ``lower_bound``
+
+    must_be_padding : bool, default: False
+        :func:`Check <pyvista.core.input_validation.check.check_padding>`
+        if the array is a padded array. If ``True``, the array must be
+        padded.
+
+        .. note ::
+            This check also ensures that the array is integer-like with
+            nonnegative values, using :func:`check_is_integerlike` and
+            :func:`check_is_nonnegative`.
 
     strict_lower_bound : bool, default: False
         Enforce a strict lower bound for the range specified by
@@ -320,6 +332,14 @@ def validate_array(
             check_is_sorted(arr_out, **must_be_sorted, name=name)
         else:
             check_is_sorted(arr_out, name=name)
+
+    if must_be_padding:
+        # check that the array is integer-like and nonnegative
+        check_is_integerlike(arr_out, strict=True, name=name)
+        check_is_nonnegative(arr_out, name=name)
+
+        # check the validity of the padding
+        check_padding(arr_out, name=name)
 
     # Process output
     if dtype_out is not None:
