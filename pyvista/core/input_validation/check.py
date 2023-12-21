@@ -1324,7 +1324,7 @@ def check_padding(arr, /, *, name="Array"):
         if len(arr) < offset + 1:
             raise ValueError(
                 f"{name} has invalid padding, the last chunk is expected to "
-                "be of size {offset}. Only {len(arr)-1} elements can be read."
+                f"be of size {offset}. Only {len(arr)-1} elements can be read."
             )
 
         # Jump to the next chunk and check again until the end of the array
