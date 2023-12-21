@@ -10,7 +10,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import NumpyUINT8Array
+from ._typing_core import NumpyArray
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
 from .utilities.fileio import read, set_vtkwriter_mode
@@ -94,7 +94,7 @@ class DataObject:
         self,
         filename: Union[Path, str],
         binary: bool = True,
-        texture: Optional[Union[NumpyUINT8Array, str]] = None,
+        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
     ) -> None:
         """Save this vtk object to file.
 
