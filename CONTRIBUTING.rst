@@ -71,7 +71,7 @@ software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
 
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+You are also welcome to join us on `Slack <https://communityinviter.com/apps/pyvista/pyvista>`_,
 but Slack should be reserved for ad hoc conversations and community engagement
 rather than technical discussions.
 
@@ -671,6 +671,12 @@ The first time you build the documentation locally will take a while as all the
 examples need to be built. After the first build, the documentation should take
 a fraction of the time.
 
+To test this locally you need to run a http server in the html directory with:
+
+.. code:: bash
+
+   make serve-html
+
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -782,12 +788,7 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once you have make a Pull Request from the pyvista organization repository branch.
-This will automatically deploy the Preview Documentation.
-Please check the documentation that is deployed by your Pull Request
-before merging.
-
-Once you have make a Pull Request from the forked repository. You can comment
+Once you have make a Pull Request. You can comment
 `github-actions preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
@@ -877,10 +878,11 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the tag.
+8.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
+       git push origin HEAD
        git push origin --tags
 
 9.  Create a list of all changes for the release. It is often helpful to

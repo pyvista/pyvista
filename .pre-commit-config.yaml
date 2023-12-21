@@ -107,3 +107,9 @@ repos:
   rev: 0.27.2
   hooks:
     - id: check-github-workflows
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.7
+  hooks:
+    - id: ruff
+      args: [ --fix ]

@@ -8,6 +8,11 @@ import numpy as np
 
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# labels are not currently supported by vtk-js
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # sphinx_gallery_thumbnail_number = 3
 from pyvista import examples
 
