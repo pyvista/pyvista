@@ -1311,21 +1311,18 @@ def check_padding(arr, /, *, name="Array"):
     ... )  # Valid padding
 
     """
-    if len(arr) == 0:
-        # Empty array is always valid
-        pass
-    else:
-        # Offset (size of the next chunk of integers) is the first element of
-        # the array
-        offset = arr[0]
+    # Start from the beginning of the array
+    position = 0
 
-        # Check that the array is long enough to contain the chunk
-        # else, it's not valid
-        if len(arr) < offset + 1:
+    # While there remains elements to read
+    while len(arr) > position:
+        # Read the size of the next chunk of integers
+        offset = arr[position]
+        # Check is there are enough elements to read the chunk
+        if position + offset >= len(arr):
             raise ValueError(
                 f"{name} has invalid padding, the last chunk is expected to "
-                f"be of size {offset}. Only {len(arr)-1} elements can be read."
+                f"be of size {offset}. Only {len(arr)-position} elements can be read."
             )
-
-        # Jump to the next chunk and check again until the end of the array
-        check_padding(arr[offset + 1 :])
+        # Move to the next chunk
+        position += offset + 1
