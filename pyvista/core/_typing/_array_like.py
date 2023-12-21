@@ -20,19 +20,21 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
-from typing import Any, Sequence, TypeAlias, TypeVar, Union
+from typing import Any, Sequence, TypeVar, Union
 
 import numpy as np
 
 # Create alias of npt.NDArray bound to numeric types only
 _NumType = TypeVar('_NumType', bool, int, float, np.bool_, np.int_, np.float_, np.uint8)
-NumpyArray: TypeAlias = np.ndarray[Any, np.dtype[_NumType]]
+NumpyArray = np.ndarray[Any, np.dtype[_NumType]]
 
+# Define generic nested sequence
+_T = TypeVar('_T')
 _FiniteNestedSequence = Union[  # Note: scalar types are excluded
-    Sequence[_NumType],
-    Sequence[Sequence[_NumType]],
-    Sequence[Sequence[Sequence[_NumType]]],
-    Sequence[Sequence[Sequence[Sequence[_NumType]]]],
+    Sequence[_T],
+    Sequence[Sequence[_T]],
+    Sequence[Sequence[Sequence[_T]]],
+    Sequence[Sequence[Sequence[Sequence[_T]]]],
 ]
 
 _ArrayLike = Union[
