@@ -334,11 +334,9 @@ def validate_array(
             check_is_sorted(arr_out, name=name)
 
     if must_be_padding:
-        # check that the array is integer-like and nonnegative
         check_is_integerlike(arr_out, strict=True, name=name)
         check_is_nonnegative(arr_out, name=name)
 
-        # check the validity of the padding
         check_padding(arr_out, name=name)
 
     # Process output
