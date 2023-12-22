@@ -2868,7 +2868,7 @@ class DataSet(DataSetFilters, DataObject):
         >>>
         >>> for i, connection in enumerate(["points", "edges"]):
         ...     pl.subplot(0, i)
-        ...     pl.view_yx()
+        ...     pl.view_xy()
         ...     _ = pl.add_title(
         ...         f"{connection.capitalize()} neighbors",
         ...         color="red",
@@ -2987,7 +2987,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     text_color="red",
         ...     font_size=40,
         ... )
-        >>> pl.camera_position = "yx"
+        >>> pl.camera_position = "xy"
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 
@@ -3068,7 +3068,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     )
         ...
         >>>
-        >>> pl.view_yx()
+        >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
         >>> pl.show()
         """
@@ -3168,7 +3168,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cells = mesh.extract_cells(other_ids, invert=True)
         >>> _ = pl.add_mesh(cells, color="white", show_edges=True)
         >>>
-        >>> pl.view_yx()
+        >>> pl.view_xy()
         >>> pl.camera.zoom(6.0)
         >>> pl.show()
         """

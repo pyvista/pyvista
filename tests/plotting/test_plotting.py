@@ -765,6 +765,14 @@ def test_plot_invalid_add_scalar_bar():
         plotter.add_scalar_bar()
 
 
+def test_add_scalar_bar_with_unconstrained_font_size(sphere):
+    sphere['test_scalars'] = sphere.points[:, 2]
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    actor = plotter.add_scalar_bar(unconstrained_font_size=True)
+    assert actor.GetUnconstrainedFontSize()
+
+
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)

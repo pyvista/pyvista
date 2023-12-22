@@ -89,6 +89,9 @@ pl.show()
 # There is not a method to add labels to cells.
 # If you want to label it, you need to extract the position to label it.
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 grid = pv.ImageData(dimensions=(10, 10, 1))
 points = grid.cell_centers().points
 
