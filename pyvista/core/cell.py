@@ -728,10 +728,12 @@ class CellArray(_vtk.vtkCellArray):
     @property
     def regular_cells(self) -> NumpyIntArray:  # numpydoc ignore=RT01
         """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
+
         Returns
         -------
         numpy.ndarray
             Array of face indices of shape (n_cells, cell_size).
+
         Notes
         -----
         This property does not validate that the cells are all
