@@ -1135,6 +1135,7 @@ def test_init_with_invalid_padding(arr, value):
     ],
 )
 def test_set_with_invalid_padding(arr, value):
+    points = np.random.rand(10, 3)
     mesh = pv.PolyData(points)
     with pytest.raises(ValueError):
         setattr(mesh, arr, value)
