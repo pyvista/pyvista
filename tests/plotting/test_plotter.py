@@ -491,6 +491,7 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     assert error < 100
 
 
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
 def test_edge_opacity(sphere):
     edge_opacity = np.random.random_sample()
     pl = pv.Plotter(sphere)
