@@ -1122,7 +1122,7 @@ def test_init_with_invalid_padding(arr, value):
     points = np.random.rand(10, 3)
     with pytest.raises(ValueError):
         kwargs = {arr: value}
-        mesh = pv.PolyData(points, **kwargs)
+        _ = pv.PolyData(points, **kwargs)
 
 
 @pytest.mark.parametrize(
