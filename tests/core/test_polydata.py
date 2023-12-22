@@ -1110,7 +1110,7 @@ def test_regular_faces_mutable():
 
 
 @pytest.mark.parametrize(
-    "attribute,value",
+    "arr,value",
     [
         ("faces", [3, 1, 2, 3, 3, 0, 1]),
         ("strips", np.array([5, 4, 3, 2, 0])),
@@ -1118,15 +1118,15 @@ def test_regular_faces_mutable():
         ("verts", [1, 0, 1]),
     ],
 )
-def test_init_with_invalid_padding(attribute,value):
+def test_init_with_invalid_padding(arr, value):
     points = np.random.rand(10, 3)
     with pytest.raises(ValueError):
-        kwargs = {attribute: value}
+        kwargs = {arr: value}
         mesh = pv.PolyData(points, **kwargs)
 
 
 @pytest.mark.parametrize(
-    "attribute,value",
+    "arr,value",
     [
         ("faces", [3, 1, 2, 3, 3, 0, 1]),
         ("strips", np.array([5, 4, 3, 2, 0])),
@@ -1134,7 +1134,7 @@ def test_init_with_invalid_padding(attribute,value):
         ("verts", [1, 0, 1]),
     ],
 )
-def test_set_with_invalid_padding(attribute,value):
+def test_set_with_invalid_padding(arr, value):
     mesh = pv.PolyData(points)
     with pytest.raises(ValueError):
-        setattr(mesh, attribute, value)
+        setattr(mesh, arr, value)
