@@ -692,7 +692,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             n_verts = self.n_points
         elif verts is not None:
             verts = np.asarray(verts)
-            validate_array(verts.flatten(), must_be_padding=True)
+            validate_array(verts.flatten(), must_be_padded=True)
 
         # here we use CellArray since we must specify deep and n_faces, etc.
         if verts is not None:
@@ -700,17 +700,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if strips is not None:
             if not isinstance(strips, CellArray):
                 strips = np.asarray(strips)
-                validate_array(strips.flatten(), must_be_padding=True)
+                validate_array(strips.flatten(), must_be_padded=True)
             self.strips = CellArray(strips, n_strips, deep)  # type: ignore
         if faces is not None:
             if not isinstance(faces, CellArray):
                 faces = np.asarray(faces)
-                validate_array(faces.flatten(), must_be_padding=True)
+                validate_array(faces.flatten(), must_be_padded=True)
             self.faces = CellArray(faces, n_faces, deep)  # type: ignore
         if lines is not None:
             if not isinstance(lines, CellArray):
                 lines = np.asarray(lines)
-                validate_array(lines.flatten(), must_be_padding=True)
+                validate_array(lines.flatten(), must_be_padded=True)
             self.lines = CellArray(lines, n_lines, deep)  # type: ignore
 
     def _post_file_load_processing(self) -> None:
@@ -782,7 +782,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetVerts(verts)
         else:
             verts = np.asarray(verts)
-            validate_array(verts.flatten(), must_be_padding=True)
+            validate_array(verts.flatten(), must_be_padded=True)
             self.SetVerts(CellArray(verts))
 
     @property
@@ -809,7 +809,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetLines(lines)
         else:
             lines = np.asarray(lines)
-            validate_array(lines.flatten(), must_be_padding=True)
+            validate_array(lines.flatten(), must_be_padded=True)
             self.SetLines(CellArray(lines))
 
     @property
@@ -882,7 +882,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetPolys(faces)
         else:
             faces = np.asarray(faces)
-            validate_array(faces.flatten(), must_be_padding=True)
+            validate_array(faces.flatten(), must_be_padded=True)
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
 
@@ -985,7 +985,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetStrips(strips)
         else:
             strips = np.asarray(strips)
-            validate_array(strips.flatten(), must_be_padding=True)
+            validate_array(strips.flatten(), must_be_padded=True)
             self.SetStrips(CellArray(strips))
 
     @property
