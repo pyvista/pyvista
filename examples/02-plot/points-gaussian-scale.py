@@ -1,9 +1,9 @@
 """.. _plot_spheres_example:
 
-Plot Scaled Gaussian Points
----------------------------
+Scaled Gaussian Points
+----------------------
 This example demonstrates how to plot spheres using the ``'points_gaussian'``
-style and scale them by radius.
+style and scale them by a dynamic radius.
 
 """
 
