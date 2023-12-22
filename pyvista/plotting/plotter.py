@@ -3434,7 +3434,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
-        if edge_opacity is None:
+        if edge_opacity is None and pyvista.vtk_version_info >= (9, 3):
             edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
