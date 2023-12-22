@@ -1109,7 +1109,8 @@ def test_regular_faces_mutable():
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
 
 
-def test_init_with_invalid_padding():
+@pytest.mark.parametrize("arr", ["faces", "strips", "lines", "verts"])
+def test_init_with_invalid_padding(arr):
     """This test checks that an error is raised when the padding is invalid.
 
     More precisely, if a PointSet is created with ``verts``, ``lines``, ``faces``
@@ -1126,13 +1127,12 @@ def test_init_with_invalid_padding():
     verts = [1, 0, 1]  # noqa F841
     lines = [4, 0, 1, 2, 2, 3, 4]  # noqa F841
 
-    for arr in ("faces", "strips", "lines", "verts"):
-        # Try to create the mesh with the invalid array
-        with pytest.raises(ValueError):
-            kwargs = {arr: eval(arr)}
-            mesh = pv.PolyData(points, **kwargs)
+    # Try to create the mesh with the invalid array
+    with pytest.raises(ValueError):
+        kwargs = {arr: eval(arr)}
+        mesh = pv.PolyData(points, **kwargs)
 
-        # Try to set the invalid array after the mesh has been created
-        mesh = pv.PolyData(points)
-        with pytest.raises(ValueError):
-            setattr(mesh, arr, eval(arr))
+    # Try to set the invalid array after the mesh has been created
+    mesh = pv.PolyData(points)
+    with pytest.raises(ValueError):
+        setattr(mesh, arr, eval(arr))
