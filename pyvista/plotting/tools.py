@@ -260,9 +260,7 @@ def create_axes_marker(
 
 
 def create_axes_orientation_box(
-    line_width=1,
     text_scale=0.366667,
-    edge_color='black',
     x_color=None,
     y_color=None,
     z_color=None,
@@ -281,14 +279,8 @@ def create_axes_orientation_box(
 
     Parameters
     ----------
-    line_width : float, optional
-        The width of the marker lines.
-
     text_scale : float, optional
         Size of the text relative to the faces.
-
-    edge_color : ColorLike, optional
-        Color of the edges.
 
     x_color : ColorLike, optional
         Color of the x axis text.
@@ -343,9 +335,7 @@ def create_axes_orientation_box(
 
     >>> import pyvista as pv
     >>> actor = pv.create_axes_orientation_box(
-    ...     line_width=1,
     ...     text_scale=0.53,
-    ...     edge_color='black',
     ...     x_color='k',
     ...     y_color=None,
     ...     z_color=None,
@@ -364,7 +354,6 @@ def create_axes_orientation_box(
     x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
     y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
     z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
-    edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
     x_face_color = Color(x_face_color)
     y_face_color = Color(y_face_color)
     z_face_color = Color(z_face_color)
@@ -381,8 +370,6 @@ def create_axes_orientation_box(
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
-    # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
-    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
@@ -391,7 +378,6 @@ def create_axes_orientation_box(
     axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
