@@ -1119,14 +1119,6 @@ def test_regular_faces_mutable():
     ],
 )
 def test_init_with_invalid_padding(arr):
-    """This test checks that an error is raised when the padding is invalid.
-
-    More precisely, if a PointSet is created with ``verts``, ``lines``, ``faces``
-    or ``strips`` we are expecting a ValueError to be raised if the array length
-    is not compatible with the padding structure.
-
-    """
-
     points = np.random.rand(10, 3)
 
     # Try to create the mesh with the invalid array
