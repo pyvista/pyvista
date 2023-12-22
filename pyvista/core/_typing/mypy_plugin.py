@@ -1,4 +1,4 @@
-"""Mypy plugin to enable generic use of builtin types with numpy's NDArray.
+"""Mypy plugin to enable type annotations of NumPy arrays with builtin types.
 
 This plugin adds type promotions for `int` and `float` types so that
 `NDArray[float]` and `NDArray[int]` can be used as a valid type annotations.
@@ -20,14 +20,12 @@ with numpy's mypy plugin:
     ]
 
 """
-from time import time
-from typing import TYPE_CHECKING, Any, Callable, Dict, Final, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Callable, Final, Optional, Type
 
 import numpy as np
 
 try:
-    from mypy.build import PRI_MED, MypyFile
-    from mypy.plugin import ClassDefContext, Plugin, ReportConfigContext
+    from mypy.plugin import ClassDefContext, Plugin
     from mypy.types import Instance
 
     MYPY_EXCEPTION: Optional[ModuleNotFoundError] = None
@@ -42,116 +40,57 @@ def _get_type_fullname(typ: Any) -> str:
     return f"{typ.__module__}.{typ.__qualname__}"
 
 
-NUMPY_NUMBER_TYPE_FULLNAME: Final = _get_type_fullname(np.number)
-NUMPY_BOOL_TYPE_FULLNAME: Final = _get_type_fullname(np.bool_)
-NUMPY_INTEGER_TYPE_FULLNAME: Final = _get_type_fullname(np.integer)
+NUMPY_SIGNED_INTEGER_TYPE_FULLNAME: Final = _get_type_fullname(np.signedinteger)
 NUMPY_FLOATING_TYPE_FULLNAME: Final = _get_type_fullname(np.floating)
-NUMPY_DTYPE_TYPE_FULLNAME: Final = _get_type_fullname(np.dtype)
-
+# TODO: Add type promotion for `bool` and `numpy.bool_`(only if/when mypy complains?)
+# NUMPY_BOOL_TYPE_FULLNAME: Final = _get_type_fullname(np.bool_)
 
 if TYPE_CHECKING or MYPY_EXCEPTION is None:
 
-    def _promote_int(ctx: ClassDefContext) -> None:
-        """Enable generic use of numpy.dtype[int]."""
-        assert ctx.cls.fullname == NUMPY_INTEGER_TYPE_FULLNAME
+    def _promote_int_callback(ctx: ClassDefContext) -> None:
+        """Add two-way type promotion between `int` and `numpy.signedinteger`.
 
-        # Promote `numpy.integer` as a subtype of `int`
-        int_inst: Instance = ctx.api.named_type('builtins.int')
-        ctx.cls.info._promote.append(int_inst)
+        This promotion allows for use of NumPy typing annotations with `int`,
+        e.g. npt.NDArray[int].
 
-        # Promote `int` as a subtype of `numpy.number`
-        number_inst: Instance = ctx.api.named_type(NUMPY_NUMBER_TYPE_FULLNAME)
-        int_inst.type._promote.append(number_inst)
-
-    def _promote_float(ctx: ClassDefContext) -> None:
-        """Enable generic use of numpy.dtype[float]."""
-        assert ctx.cls.fullname == NUMPY_FLOATING_TYPE_FULLNAME
-
-        # Promote `numpy.floating` as a subtype of `float`
-        float_inst: Instance = ctx.api.named_type('builtins.float')
-        ctx.cls.info._promote.append(float_inst)
-
-        # Promote `float` as a subtype of `numpy.number`
-        number_inst: Instance = ctx.api.named_type(NUMPY_NUMBER_TYPE_FULLNAME)
-        float_inst.type._promote.append(number_inst)
-
-    def _add_dependency(module: str) -> Tuple[int, str, int]:
-        """Return a (priority, module name, line number) tuple.
-
-        The line number can be -1 when there is not a known real line number.
-
-        Priorities are defined in mypy.build. 10 (PRI_MED) is a good choice
-        for priority.
+        See mypy.semanal_classprop.add_type_promotion for a similar promotion
+        between `int` and `i64` types.
         """
-        priority = PRI_MED
-        line_number = -1
-        return priority, module, line_number
+        assert ctx.cls.fullname == NUMPY_SIGNED_INTEGER_TYPE_FULLNAME
+        numpy_signed_integer: Instance = ctx.api.named_type(NUMPY_SIGNED_INTEGER_TYPE_FULLNAME)
+        builtin_int: Instance = ctx.api.named_type('builtins.int')
+
+        builtin_int.type._promote.append(numpy_signed_integer)
+        numpy_signed_integer.type.alt_promote = builtin_int
+
+    def _promote_float_callback(ctx: ClassDefContext) -> None:
+        """Add two-way type promotion between `float` and `numpy.floating`.
+
+        This promotion allows for use of NumPy typing annotations with `float`,
+        e.g. npt.NDArray[float].
+
+        See mypy.semanal_classprop.add_type_promotion for a similar promotion
+        between `int` and `i64` types.
+        """
+        assert ctx.cls.fullname == NUMPY_FLOATING_TYPE_FULLNAME
+        numpy_floating: Instance = ctx.api.named_type(NUMPY_FLOATING_TYPE_FULLNAME)
+        builtin_float: Instance = ctx.api.named_type('builtins.float')
+
+        builtin_float.type._promote.append(numpy_floating)
+        numpy_floating.type.alt_promote = builtin_float
 
     class _PyvistaPlugin(Plugin):
-        """Mypy plugin to enable generic use of builtin types with numpy's NDArray."""
+        """Mypy plugin to enable type annotations of NumPy arrays with builtin types."""
 
         def get_customize_class_mro_hook(
             self, fullname: str
         ) -> Optional[Callable[[ClassDefContext], None]]:
-            """Customize MRO for given classes.
-
-            The plugin can modify the class MRO (or other properties) _in place_.
-            This method is called with the class full name before its body is
-            semantically analyzed.
-            """
-            # Customize numpy data type definitions
+            """Customize class definitions before semantic analysis."""
             if fullname == NUMPY_FLOATING_TYPE_FULLNAME:
-                return _promote_float
-            elif fullname == NUMPY_INTEGER_TYPE_FULLNAME:
-                return _promote_int
+                return _promote_float_callback
+            elif fullname == NUMPY_SIGNED_INTEGER_TYPE_FULLNAME:
+                return _promote_int_callback
             return None
-
-        def get_additional_deps(self, file: MypyFile) -> list[tuple[int, str, int]]:
-            """Customize dependencies for a module.
-
-            This hook allows adding in new dependencies for a module. It
-            is called after parsing a file but before analysis. This can
-            be useful if a library has dependencies that are dynamic based
-            on configuration information, for example.
-            """
-            # Add numpy numeric types for import so that their class definitions
-            # can be customized (e.g. add type promotions).
-            return [
-                _add_dependency(NUMPY_FLOATING_TYPE_FULLNAME),
-                _add_dependency(NUMPY_INTEGER_TYPE_FULLNAME),
-                _add_dependency(NUMPY_NUMBER_TYPE_FULLNAME),
-            ]
-
-        def report_config_data(self, ctx: ReportConfigContext) -> Optional[Dict[str, Any]]:
-            """Get representation of configuration data for a module.
-
-            The data must be encodable as JSON and will be stored in the
-            cache metadata for the module. A mismatch between the cached
-            values and the returned will result in that module's cache
-            being invalidated and the module being rechecked.
-
-            This can be called twice for each module, once after loading
-            the cache to check if it is valid and once while writing new
-            cache information.
-
-            If is_check in the context is true, then the return of this
-            call will be checked against the cached version. Otherwise the
-            call is being made to determine what to put in the cache. This
-            can be used to allow consulting extra cache files in certain
-            complex situations.
-
-            This can be used to incorporate external configuration information
-            that might require changes to typechecking.
-            """
-            # Always invalidate cached dtype configurations so that it is always
-            # re-checked. This ensures type promotions of 'float' or 'int' as a
-            # subtype of 'numpy.number' are reflected in the config and prevents
-            # the type-var error: "dtype" must be a subtype of "generic" from occurring
-            if NUMPY_DTYPE_TYPE_FULLNAME in ctx.id:
-                # Return dict with a unique value to invalidate mypy cache.
-                return {'': time()}
-            else:
-                return None
 
     def plugin(version: str) -> Type[_PyvistaPlugin]:  # numpydoc ignore=PR01,RT01
         """Entry-point for mypy."""
