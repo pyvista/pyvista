@@ -691,13 +691,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             verts = self._make_vertex_cells(self.n_points)
             n_verts = self.n_points
         elif verts is not None:
-            # If verts are specified, then we check the padding
             verts = np.asarray(verts)
             validate_array(verts.flatten(), must_be_padding=True)
 
         # here we use CellArray since we must specify deep and n_faces, etc.
         if verts is not None:
-            # do not check padding here since we already did it above
             self.verts = CellArray(verts, n_verts, deep)  # type: ignore
         if strips is not None:
             if not isinstance(strips, CellArray):
