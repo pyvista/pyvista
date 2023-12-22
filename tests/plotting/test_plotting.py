@@ -3330,15 +3330,17 @@ def test_plot_points_gaussian_as_spheres(sphere):
 
 @skip_windows
 def test_plot_points_gaussian_scale(sphere):
-    sphere["z"] = sphere.points[:, 2] * 0.010
+    sphere["z"] = sphere.points[:, 2] * 0.1
     pl = pv.Plotter()
     actor = pl.add_mesh(
         sphere,
         style='points_gaussian',
         render_points_as_spheres=True,
         emissive=False,
+        show_scalar_bar=False,
     )
     actor.mapper.scale_array = 'z'
+    pl.view_xz()
     pl.show()
 
 
