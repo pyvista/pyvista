@@ -50,7 +50,7 @@ def validate_array(
     must_be_integer_like=False,
     must_be_sorted=False,
     must_be_in_range=None,
-    must_be_padding=False,
+    must_be_padded=False,
     strict_lower_bound=False,
     strict_upper_bound=False,
     reshape_to=None,
