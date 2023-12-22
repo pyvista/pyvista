@@ -725,6 +725,21 @@ class CellArray(_vtk.vtkCellArray):
         cellarr._set_data(offsets, connectivity, deep=deep)
         return cellarr
 
+    @property
+    def regular_cells(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
+        Returns
+        -------
+        numpy.ndarray
+            Array of face indices of shape (n_cells, cell_size).
+        Notes
+        -----
+        This property does not validate that the cells are all
+        actually the same size. If they're not, this property may either
+        raise a `ValueError` or silently return an incorrect array.
+        """
+        return _get_regular_cells(self)
+
     @classmethod
     def from_regular_cells(cls, cells: IntMatrix, deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
