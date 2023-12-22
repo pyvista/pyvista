@@ -361,7 +361,7 @@ def test_multi_block_io(
 @skip_mac  # fails due to download examples
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, tetbeam):
+def test_ensight_multi_block_io(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file

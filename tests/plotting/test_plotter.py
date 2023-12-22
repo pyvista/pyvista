@@ -264,7 +264,7 @@ def test_deep_clean(cube):
     assert cube == cube_orig
 
 
-def test_disable_depth_of_field(sphere):
+def test_disable_depth_of_field():
     pl = pv.Plotter()
     pl.enable_depth_of_field()
     assert pl.renderer.GetPass() is not None
@@ -272,7 +272,7 @@ def test_disable_depth_of_field(sphere):
     assert pl.renderer.GetPass() is None
 
 
-def test_remove_blurring(sphere):
+def test_remove_blurring():
     pl = pv.Plotter()
     pl.add_blurring()
     assert pl.renderer.GetPass() is not None
@@ -304,7 +304,7 @@ def test_clear_actors(cube, sphere):
     assert len(pl.renderer.actors) == 0
 
 
-def test_anti_aliasing_multiplot(sphere):
+def test_anti_aliasing_multiplot():
     pl = pv.Plotter(shape=(1, 2))
     pl.enable_anti_aliasing('ssaa', all_renderers=False)
     assert 'vtkSSAAPass' in pl.renderers[0]._render_passes._passes
@@ -468,7 +468,7 @@ def test_plotter_update_coordinates(sphere):
             raise RuntimeError("Remove this method")
 
 
-def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
+def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):  # noqa: ARG001
     pv.FIGURE_PATH = str(tmpdir)
     pv.ON_SCREENSHOT = True
 

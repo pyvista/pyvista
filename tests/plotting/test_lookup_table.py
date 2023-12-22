@@ -196,7 +196,7 @@ def test_table_cmap_list(lut):
     assert lut.n_values == 3
 
 
-def test_table_values_update(lut, skip_check_gc):
+def test_table_values_update(lut, skip_check_gc):  # noqa: ARG001
     lut.cmap = 'Greens'
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
     assert lut.values.max() == 255
@@ -221,7 +221,7 @@ def test_call(lut):
     assert lut.map_value(0.5) == lut.map_value(0.5)
 
 
-def test_custom_opacity(lut, skip_check_gc):
+def test_custom_opacity(lut, skip_check_gc):  # noqa: ARG001
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
     assert not np.array_equiv(lut.values[:, -1], 255)

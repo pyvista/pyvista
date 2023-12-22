@@ -252,7 +252,7 @@ def test_ensightreader_timepoints():
         reader.set_active_time_value(1000.0)
 
 
-def test_dcmreader(tmpdir):
+def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pv.DICOMReader(directory)  # ``get_reader`` doesn't support directories

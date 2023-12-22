@@ -1030,7 +1030,7 @@ def default_n_faces():
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
-def test_n_faces(default_n_faces):
+def test_n_faces(default_n_faces):  # noqa: ARG001
     if pv._version.version_info >= (0, 46):
         raise RuntimeError("Convert non-strict n_faces use to error")
 
@@ -1054,7 +1054,7 @@ def test_n_faces(default_n_faces):
     assert nf1 == nf
 
 
-def test_opt_in_n_faces_strict(default_n_faces):
+def test_opt_in_n_faces_strict(default_n_faces):  # noqa: ARG001
     pv.PolyData.use_strict_n_faces(True)
     mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
     assert mesh.n_faces == mesh.n_faces_strict
