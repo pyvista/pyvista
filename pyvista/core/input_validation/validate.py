@@ -182,7 +182,7 @@ def validate_array(
             * ``[lower_bound, np.inf]`` to check if values are greater
               than (or equal to) ``lower_bound``
 
-    must_be_padding : bool, default: False
+    must_be_padded : bool, default: False
         :func:`Check <pyvista.core.input_validation.check.check_padding>`
         if the array is a padded array. If ``True``, the array must be
         padded.
