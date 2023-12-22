@@ -952,8 +952,6 @@ def test_validate_axes_orthogonal(bias_index):
         validate_axes(axes_left, must_be_orthogonal=True)
 
 
-
-
 @pytest.mark.parametrize("padding", [[3, 0, 1, 2, 2, 1, 2, 4, 1, 2, 3, 8], [], [1, 0]])
 def test_check_valid_padding(padding):
     check_padding(padding)
