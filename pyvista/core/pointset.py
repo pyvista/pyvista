@@ -5,7 +5,7 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import Optional, Tuple, Union, cast
+from typing import Optional, Sequence, Tuple, Union, cast
 import warnings
 
 import numpy as np
@@ -2384,7 +2384,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())
         return self
 
-    def hide_points(self, ind: Union[Vector, Vector]) -> None:
+    def hide_points(self, ind: Union[Vector[bool], Vector[int]]) -> None:
         """Hide points without deleting them.
 
         Hides points by setting the ghost_points array to ``HIDDEN_CELL``.
@@ -2808,7 +2808,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return self.bounds
 
-    def cell_id(self, coords: Array[int]) -> Union[int, np.ndarray, None]:
+    def cell_id(self, coords: Union[Vector[int], Array[int]]) -> Union[int, np.ndarray, None]:
         """Return the cell ID.
 
         Parameters
@@ -2840,11 +2840,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         # `vtk.vtkExplicitStructuredGrid.ComputeCellId` is not used
         # here because this method returns invalid cell IDs when
         # `coords` is outside the grid extent.
-        if isinstance(coords, list):
+        if isinstance(coords, Sequence):
             coords = np.asarray(coords)
         if isinstance(coords, np.ndarray) and coords.ndim == 2:
             ncol = coords.shape[1]
-            coords = [[coords[:, c] for c in range(ncol)]]
+            coords = [coords[:, c] for c in range(ncol)]
+            coords = tuple(coords)
         dims = self._dimensions()
         try:
             ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore

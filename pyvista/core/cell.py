@@ -613,7 +613,7 @@ class CellArray(_vtk.vtkCellArray):
 
     def __init__(
         self,
-        cells: Optional[Union[Matrix, Vector]] = None,
+        cells: Optional[Union[Matrix[int], Vector[int]]] = None,
         n_cells: Optional[int] = None,
         deep: bool = False,
     ):
