@@ -376,7 +376,6 @@ def create_axes_orientation_box(
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
-    # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
