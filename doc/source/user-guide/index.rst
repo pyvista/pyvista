@@ -18,8 +18,10 @@ This basic example demonstrates three key features of PyVista:
 .. _numpy: https://numpy.org/
 .. _matplotlib: https://matplotlib.org/
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :include-source: false
+   :nofigs:
+   :context:
 
    import pyvista
    pyvista.set_jupyter_backend('static')
@@ -35,13 +37,16 @@ Here, we download the `Stanford dragon mesh
 to height, and plot it using a web-viewer. This same example will run
 identically locally.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     >>> from pyvista import examples
     >>> mesh = examples.download_dragon()
     >>> mesh['scalars'] = mesh.points[:, 1]
-    >>> mesh.plot(cpos='xy', cmap='plasma', pbr=True, metallic=1.0, roughness=0.6,
-    ...           zoom=1.7)
+    >>> mesh.plot(cpos='xy', cmap='plasma')
+
+.. note::
+   This example (and many others) is interactive.
 
 With just a few lines of code we downloaded a sample mesh from the
 web, added scalars to it based on the points of the mesh, and plotted

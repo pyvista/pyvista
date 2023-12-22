@@ -39,20 +39,22 @@ Let's start with a point cloud; this is a mesh type that only has vertices.
 You can create one by defining a 2D array of Cartesian coordinates like so:
 
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+    :nofigs:
+    :context:
 
-   # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+    # must have this here as our global backend may not be static
+    import pyvista
+    pyvista.set_plot_theme('document')
+    pyvista.set_jupyter_backend('static')
+    pyvista.global_theme.window_size = [600, 400]
+    pyvista.global_theme.axes.show = False
+    pyvista.global_theme.anti_aliasing = 'fxaa'
+    pyvista.global_theme.show_scalar_bar = False
 
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import numpy as np
     import pyvista as pv
@@ -64,7 +66,8 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
 But it's important to note that most meshes have some sort of
 connectivity between points such as this gridded mesh:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     from pyvista import examples
 
@@ -82,7 +85,8 @@ connectivity between points such as this gridded mesh:
 
 Or this triangulated surface:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh = examples.download_bunny_coarse()
 
@@ -105,7 +109,8 @@ lines (edges colored in black) connecting points (colored in red).
 For example, a cell in the beam example is a voxel defined by the region
 between eight points in that mesh:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh = examples.load_hexbeam()
 
@@ -149,7 +154,8 @@ corresponds to a point in the mesh. Let's create some point
 data for the beam mesh. When plotting, the values between points are
 interpolated across the cells.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh.point_data['my point values'] = np.arange(mesh.n_points)
     mesh.plot(scalars='my point values', cpos=cpos, show_edges=True)
@@ -160,7 +166,8 @@ Cell data refers to arrays of values (scalars, vectors, etc.) that
 live throughout each cell of the mesh. That is the entire cell (2D
 face or 3D volume) is assigned the value of that attribute.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh.cell_data['my cell values'] = np.arange(mesh.n_cells)
     mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
@@ -173,6 +180,7 @@ data which has a single value across the cell's domain:
    Making this dynamic breaks the plots on this page.
 
 .. pyvista-plot::
+   :context:
 
    import pyvista as pv
    from pyvista import examples
@@ -203,7 +211,8 @@ generate cube containing 6 faces and assign each face an integer from
 
 Note how this varies from assigning scalars to each point
 
-.. jupyter-execute::
+.. pyvista-plot::
+   :context:
 
    cube = pv.Cube()
    cube.cell_data['myscalars'] = range(6)
