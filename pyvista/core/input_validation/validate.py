@@ -336,7 +336,6 @@ def validate_array(
     if must_be_padding:
         check_is_integerlike(arr_out, strict=True, name=name)
         check_is_nonnegative(arr_out, name=name)
-
         check_padding(arr_out, name=name)
 
     # Process output
