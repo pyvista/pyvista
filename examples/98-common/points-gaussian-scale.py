@@ -11,6 +11,11 @@ import numpy as np
 
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# gaussian does not work in VTK.js
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # First, generate the sphere positions and radii randomly on the edge of a
 # torus.
