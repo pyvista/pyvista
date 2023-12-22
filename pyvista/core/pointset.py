@@ -974,11 +974,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import pyvista as pv
         >>> pyramid = pv.Pyramid().extract_surface()
         >>> pyramid.irregular_faces
-        ((0, 1, 2, 3),
-         (0, 3, 4),
-         (0, 4, 1),
-         (3, 2, 4),
-         (2, 1, 4))
+        (array([0, 1, 2, 3]), array([0, 3, 4]), array([0, 4, 1]), array([3, 2, 4]), array([2, 1, 4]))
 
         """
         return _get_irregular_cells(self.GetPolys())
