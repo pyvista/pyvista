@@ -2208,6 +2208,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         The camera will have a parallel projection. Parallel projection is
         often useful when viewing images or 2D datasets.
 
+        See Also
+        --------
+        pyvista.Plotter.enable_2d_style
+
         Examples
         --------
         >>> import pyvista as pv
