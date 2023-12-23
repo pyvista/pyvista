@@ -3813,14 +3813,14 @@ def test_voxelize_volume():
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
-def test_paraview_2d_style():
+def test_enable_2d_style():
     def setup_plot():
         mesh = pv.Cube()
         mesh["face_id"] = np.arange(6)
         pl = pv.Plotter()
         pl.enable_2d_style()
         pl.enable_parallel_projection()
-        pl.add_mesh(mesh, scalars="face_id")
+        pl.add_mesh(mesh, scalars="face_id", show_scalar_bar=False)
         return pl
 
     # baseline, image
