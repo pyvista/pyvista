@@ -3743,7 +3743,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.default_rng().seed(7)
+        >>> np.random.default_rng(7)
         >>> point_cloud = np.random.default_rng().random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
@@ -4343,7 +4343,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.default_rng().seed(12)
+        >>> np.random.default_rng(12)
         >>> point_cloud = np.random.default_rng().random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
@@ -4498,7 +4498,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.default_rng().seed(12)
+        >>> np.random.default_rng(12)
         >>> point_cloud = np.random.default_rng().random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
