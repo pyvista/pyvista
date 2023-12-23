@@ -88,7 +88,7 @@ point_cloud.plot(render_points_as_spheres=True)
 # This time, we're going to create a totally new, random point cloud.
 
 # Create random XYZ points
-points = np.random.default_rng().random(100, 3)
+points = np.random.default_rng().random((100, 3))
 # Make PolyData
 point_cloud = pv.PolyData(points)
 
