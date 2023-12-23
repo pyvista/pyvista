@@ -2154,6 +2154,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
 
+    @wraps(RenderWindowInteractor.enable_2d_style)
+    def enable_2d_style(self):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_2d_style."""
+        self.iren.enable_2d_style()
+
     def enable_stereo_render(self):
         """Enable anaglyph stereo rendering.
 
@@ -3297,6 +3302,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     point_size=10,
         ...     render_points_as_spheres=False,
         ...     show_scalar_bar=False,
+        ... )
+
+        Plot spheres using `points_gaussian` style and scale them by radius.
+
+        >>> N_SPHERES = 1_000_000
+        >>> pos = np.random.random((N_SPHERES, 3))
+        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> pdata = pv.PolyData(pos)
+        >>> pdata['radius'] = rad
+        >>> pdata.plot(
+        ...     style='points_gaussian',
+        ...     emissive=False,
+        ...     render_points_as_spheres=True,
         ... )
 
         """
