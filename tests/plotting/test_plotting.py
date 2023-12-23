@@ -765,6 +765,14 @@ def test_plot_invalid_add_scalar_bar():
         plotter.add_scalar_bar()
 
 
+def test_add_scalar_bar_with_unconstrained_font_size(sphere):
+    sphere['test_scalars'] = sphere.points[:, 2]
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    actor = plotter.add_scalar_bar(unconstrained_font_size=True)
+    assert actor.GetUnconstrainedFontSize()
+
+
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)
@@ -3314,9 +3322,26 @@ def test_plot_points_gaussian_as_spheres(sphere):
         color='b',
         style='points_gaussian',
         render_points_as_spheres=True,
+        emissive=True,
         point_size=20,
         opacity=0.5,
     )
+
+
+@skip_windows
+def test_plot_points_gaussian_scale(sphere):
+    sphere["z"] = sphere.points[:, 2] * 0.1
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        style='points_gaussian',
+        render_points_as_spheres=True,
+        emissive=False,
+        show_scalar_bar=False,
+    )
+    actor.mapper.scale_array = 'z'
+    pl.view_xz()
+    pl.show()
 
 
 @skip_windows_mesa  # due to opacity

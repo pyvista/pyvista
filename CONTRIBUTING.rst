@@ -671,6 +671,12 @@ The first time you build the documentation locally will take a while as all the
 examples need to be built. After the first build, the documentation should take
 a fraction of the time.
 
+To test this locally you need to run a http server in the html directory with:
+
+.. code:: bash
+
+   make serve-html
+
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -782,12 +788,7 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once you have make a Pull Request from the pyvista organization repository branch.
-This will automatically deploy the Preview Documentation.
-Please check the documentation that is deployed by your Pull Request
-before merging.
-
-Once you have make a Pull Request from the forked repository. You can comment
+Once you have make a Pull Request. You can comment
 `github-actions preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,

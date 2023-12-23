@@ -454,7 +454,7 @@ def test_length_should_be_0_on_clear(insert_arange_narray):
 def test_keys_should_be_strings(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for name in dsa.keys():
-        assert type(name) is str
+        assert isinstance(name, str)
 
 
 def test_key_should_exist(insert_arange_narray):

@@ -9,6 +9,12 @@ Subplotting: having multiple scenes in a single window
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# labels are not supported in vtk-js
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+
 ###############################################################################
 # This example shows how to create a multi-window plotter by specifying the
 # ``shape`` parameter.  The window generated is a two by two window by setting
