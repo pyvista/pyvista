@@ -3299,6 +3299,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     show_scalar_bar=False,
         ... )
 
+        Plot spheres using `points_gaussian` style and scale them by radius.
+
+        >>> N_SPHERES = 1_000_000
+        >>> pos = np.random.random((N_SPHERES, 3))
+        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> pdata = pv.PolyData(pos)
+        >>> pdata['radius'] = rad
+        >>> pdata.plot(
+        ...     style='points_gaussian',
+        ...     emissive=False,
+        ...     render_points_as_spheres=True,
+        ... )
+
         """
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
