@@ -2210,7 +2210,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         See Also
         --------
-        pyvista.Plotter.enable_paraview_2d_style
+        pyvista.Plotter.enable_2d_style
 
         Examples
         --------

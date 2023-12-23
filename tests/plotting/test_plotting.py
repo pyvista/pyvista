@@ -3818,7 +3818,7 @@ def test_paraview_2d_style():
         mesh = pv.Cube()
         mesh["face_id"] = np.arange(6)
         pl = pv.Plotter()
-        pl.enable_paraview_2d_style()
+        pl.enable_2d_style()
         pl.enable_parallel_projection()
         pl.add_mesh(mesh, scalars="face_id")
         return pl
