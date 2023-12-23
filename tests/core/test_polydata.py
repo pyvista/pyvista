@@ -176,7 +176,7 @@ def test_invalid_file():
 
 def test_lines_on_init():
     lines = [2, 0, 1, 3, 2, 3, 4]
-    points = np.random.random((5, 3))
+    points = np.random.default_rng().random((5, 3))
     pd = pv.PolyData(points, lines=lines)
     assert not pd.faces.size
     assert np.array_equal(pd.lines, lines)
@@ -809,7 +809,7 @@ def test_remove_points_fail(sphere, plane):
 
 
 def test_vertice_cells_on_read(tmpdir):
-    point_cloud = pv.PolyData(np.random.rand(100, 3))
+    point_cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
     point_cloud.save(filename)
     recovered = pv.read(filename)
@@ -820,9 +820,9 @@ def test_vertice_cells_on_read(tmpdir):
 
 def test_center_of_mass(sphere):
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
-    cloud = pv.PolyData(np.random.rand(100, 3))
+    cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     assert len(cloud.center_of_mass()) == 3
-    cloud['weights'] = np.random.rand(cloud.n_points)
+    cloud['weights'] = np.random.default_rng().random(cloud.n_points)
     center = cloud.center_of_mass(True)
     assert len(center) == 3
 
@@ -830,8 +830,8 @@ def test_center_of_mass(sphere):
 def test_project_points_to_plane():
     # Define a simple Gaussian surface
     n = 20
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -886,8 +886,8 @@ def test_smooth_inplace(sphere):
 
 def test_delaunay_2d():
     n = 20
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))

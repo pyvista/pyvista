@@ -802,7 +802,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
-    movie_sphere["scalars"] = np.random.random(movie_sphere.n_faces_strict)
+    movie_sphere["scalars"] = np.random.default_rng().random(movie_sphere.n_faces_strict)
 
     plotter = pv.Plotter()
     plotter.open_movie(filename)
@@ -813,10 +813,10 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     plotter.set_focus([0, 0, 0])
     for _ in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
-        random_points = np.random.random(movie_sphere.points.shape)
+        random_points = np.random.default_rng().random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
-        scalars = np.random.random(movie_sphere.n_faces_strict)
+        scalars = np.random.default_rng().random(movie_sphere.n_faces_strict)
         movie_sphere["scalars"] = scalars
 
     # remove file
@@ -1235,7 +1235,7 @@ def test_multi_block_plot(verify_image_cache):
     multi = pv.MultiBlock()
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
-    arr = np.random.rand(uni.n_cells)
+    arr = np.random.default_rng().random(uni.n_cells)
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
@@ -2024,7 +2024,7 @@ def test_plot_string_array(verify_image_cache):
 
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
-    table = pv.Table(np.random.rand(50, 3))
+    table = pv.Table(np.random.default_rng().random((50, 3)))
     with pytest.raises(TypeError):
         pv.plot(table)
     with pytest.raises(TypeError):
