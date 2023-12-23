@@ -2165,11 +2165,12 @@ class PolyDataFilters(DataSetFilters):
         self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
-        if first_point and intersection_points.shape[0] >= 1:
+        has_intersection = intersection_points.shape[0] >= 1
+        if first_point and has_intersection:
             intersection_points = intersection_points[0]
 
         intersection_cells = []
-        if intersection_points.any():
+        if has_intersection:
             if first_point:
                 ncells = 1
             else:
