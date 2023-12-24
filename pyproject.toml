@@ -317,4 +317,5 @@ fixable = ["ALL"]
 unfixable = []
 extend-select = [
     "NPY",
+    "PGH004",
 ]

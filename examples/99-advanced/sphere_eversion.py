@@ -130,7 +130,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa
+            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa: E131
     )
     # fmt: on
 
