@@ -227,6 +227,8 @@ class WidgetHelper:
 
     def clear_box_widgets(self):
         """Remove all of the box widgets."""
+        for box_widget in self.box_widgets:
+            box_widget.Off()
         self.box_widgets.clear()
 
     def add_mesh_clip_box(
@@ -615,6 +617,8 @@ class WidgetHelper:
 
     def clear_plane_widgets(self):
         """Remove all of the plane widgets."""
+        for plane_widget in self.plane_widgets:
+            plane_widget.Off()
         self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
@@ -1252,6 +1256,8 @@ class WidgetHelper:
 
     def clear_line_widgets(self):
         """Remove all of the line widgets."""
+        for line_widget in self.line_widgets:
+            line_widget.Off()
         self.line_widgets.clear()
 
     def add_text_slider_widget(
@@ -1569,6 +1575,8 @@ class WidgetHelper:
 
     def clear_slider_widgets(self):
         """Remove all of the slider widgets."""
+        for slider_widget in self.slider_widgets:
+            slider_widget.Off()
         self.slider_widgets.clear()
 
     def add_mesh_threshold(
@@ -2012,6 +2020,8 @@ class WidgetHelper:
 
     def clear_spline_widgets(self):
         """Remove all of the spline widgets."""
+        for spline_widget in self.spline_widgets:
+            spline_widget.Off()
         self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
@@ -2221,6 +2231,8 @@ class WidgetHelper:
 
     def clear_measure_widgets(self):
         """Remove all of the measurement widgets."""
+        for distance_widget in self.distance_widgets:
+            distance_widget.Off()
         self.distance_widgets.clear()
 
     def add_sphere_widget(
@@ -2371,6 +2383,8 @@ class WidgetHelper:
 
     def clear_sphere_widgets(self):
         """Remove all of the sphere widgets."""
+        for sphere_widget in self.sphere_widgets:
+            sphere_widget.Off()
         self.sphere_widgets.clear()
 
     def add_affine_transform_widget(
@@ -2627,10 +2641,14 @@ class WidgetHelper:
 
     def clear_camera_widgets(self):
         """Remove all of the camera widgets."""
+        for camera_widget in self.camera_widgets:
+            camera_widget.Off()
         self.camera_widgets.clear()
 
     def clear_button_widgets(self):
         """Remove all of the button widgets."""
+        for button_widget in self.button_widgets:
+            button_widget.Off()
         self.button_widgets.clear()
 
     def add_logo_widget(
@@ -2704,6 +2722,8 @@ class WidgetHelper:
 
     def clear_logo_widgets(self):
         """Remove all of the logo widgets."""
+        for logo_widget in self.logo_widgets:
+            logo_widget.Off()
         self.logo_widgets.clear()
 
     def close(self):
