@@ -315,3 +315,6 @@ ignore = [
 ]
 fixable = ["ALL"]
 unfixable = []
+extend-select = [
+    "NPY",
+]
