@@ -1270,22 +1270,22 @@ def check_is_scalar(scalar, /, *, name="Scalar"):
 
 
 def check_padding(arr, /, *, name="Array"):
-    """Check if an array's length is compatible with padding.
+    """Check if an array's length is compatible with padding structure.
 
-    An array with a padding structure is designed to store a sequence of
-    chunks of integers with a variable size. The first element of the array
-    is the first offset (length of the first chunk of integers), then the
-    following elements are the integers of the first chunk, then the second
+    An connectivity array with a padding structure is designed to store a
+    sequence of chunks of integers with a variable size. The first element of
+    the array is the first offset (length of the first chunk of integers), then
+    the following elements are the integers of the first chunk, then the second
     offset, then the integers of the second chunk, and so on.
 
     This function checks if the array's length is compatible with this
     padding structure and raise an error if it's not.
 
-    For example the array ``[3, 1, 2, 3, 2, 4, 5]`` is a valid padding array, it
-    represents two chunks of integers: ``[1, 2, 3]`` and ``[4, 5]``.
+    For example the array ``[3, 1, 2, 3, 2, 4, 5]`` is valid, it represents two
+    chunks of integers: ``[1, 2, 3]`` and ``[4, 5]``.
 
-    An example of an invalid padding array is ``[3, 1, 2]``. The first chunk of
-    integers is of size 3, but the array only contains 2 integers.
+    An example of an invalid array is ``[3, 1, 2]``. The first chunk of integers
+    is of size 3, but the array only contains 2 integers.
 
     Parameters
     ----------
@@ -1302,7 +1302,7 @@ def check_padding(arr, /, *, name="Array"):
 
     Examples
     --------
-    Check if an array is a valid padding array.
+    Check if an array is a valid connectivity array.
 
     >>> import pyvista.core.input_validation as valid
     >>> import numpy as np
@@ -1311,19 +1311,30 @@ def check_padding(arr, /, *, name="Array"):
     ... )  # Valid padding
 
     """
-    # Start from the beginning of the array
-    position = 0
-    length = len(arr)
+    try:
+        # This code should not raise any error if the connectivity array is
+        # regular (chunks all have the same size). And as it is fast, worth
+        # trying it first.
+        padding = arr[0]  # Error if the array is empty
+        array_2d = np.asarray(arr).reshape(-1, padding + 1)
+        # Error if the array can not be reshaped
+        assert np.all(array_2d[:, 0] == padding)
+        # Error if the offsets are not the same
 
-    # While there remains elements to read
-    while length > position:
-        # Read the size of the next chunk of integers
-        offset = arr[position]
-        # Check is there are enough elements to read the chunk
-        if position + offset >= length:
-            raise ValueError(
-                f"{name} has invalid padding, the last chunk is expected to "
-                f"be of size {offset}. Only {length-position} elements can be read."
-            )
-        # Move to the next chunk
-        position += offset + 1
+    except Exception:
+        # Start from the beginning of the array
+        position = 0
+        length = len(arr)
+
+        # While there remains elements to read
+        while length > position:
+            # Read the size of the next chunk of integers
+            offset = arr[position]
+            # Check is there are enough elements to read the chunk
+            if position + offset >= length:
+                raise ValueError(
+                    f"{name} has invalid padding, the last chunk is expected to "
+                    f"be of size {offset}. Only {length-position} elements can be read."
+                )
+            # Move to the next chunk
+            position += offset + 1
