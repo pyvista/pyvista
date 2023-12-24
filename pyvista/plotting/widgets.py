@@ -393,6 +393,7 @@ class WidgetHelper:
         test_callback=True,
         normal_rotation=True,
         interaction_event='end',
+        outline_opacity=None,
     ):
         """Add a plane widget to the scene.
 
@@ -467,6 +468,12 @@ class WidgetHelper:
 
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         Returns
         -------
@@ -550,6 +557,9 @@ class WidgetHelper:
 
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
+
+            if outline_opacity is not None:
+                plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
 
         else:
             # Position of the small plane
@@ -637,6 +647,7 @@ class WidgetHelper:
         crinkle=False,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -707,6 +718,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -790,6 +807,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         if crinkle:
@@ -811,6 +829,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a volume using a plane widget.
@@ -869,6 +888,12 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
@@ -913,6 +938,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
         widget.GetPlane(plane)
         volume.mapper.AddClippingPlane(plane)
@@ -934,6 +960,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -992,6 +1019,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1058,6 +1091,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         return self.add_mesh(alg, **kwargs)
