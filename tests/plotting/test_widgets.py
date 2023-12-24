@@ -619,3 +619,94 @@ def test_outline_opacity(uniform, outline_opacity):
     plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_opacity=outline_opacity)
     assert plane_widget.GetOutlineProperty().GetOpacity() == float(outline_opacity)
     p.close()
+
+
+def test_clear_box_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_box_widget(None)
+    pl.clear_box_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_plane_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_plane_widget(None)
+    pl.clear_plane_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_line_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_line_widget(None)
+    pl.clear_line_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_slider_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_slider_widget(None, [0, 1])
+    pl.clear_slider_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_spline_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_spline_widget(None)
+    pl.clear_spline_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_measure_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_measurement_widget(None)
+    pl.clear_measure_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_sphere_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_sphere_widget(None)
+    pl.clear_sphere_widgets()
+    pl.show(cpos='xy')
+
+
+@pytest.mark.needs_vtk_version(9, 1)
+def test_clear_camera_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_camera_orientation_widget()
+    pl.clear_camera_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_button_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_checkbox_button_widget(None)
+    pl.clear_button_widgets()
+    pl.show(cpos='xy')
+
+
+def test_clear_logo_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_logo_widget(None)
+    pl.clear_logo_widgets()
+    pl.show(cpos='xy')
