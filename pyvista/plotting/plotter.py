@@ -65,7 +65,7 @@ from .scalar_bars import ScalarBars
 from .text import CornerAnnotation, Text, TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa
+from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa: F401
 from .utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
