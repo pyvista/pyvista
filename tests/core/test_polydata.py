@@ -286,6 +286,13 @@ def test_ray_trace(sphere):
     assert np.any(ind)
 
 
+def test_ray_trace_origin():
+    # https://github.com/pyvista/pyvista/issues/5372
+    plane = pv.Plane(i_resolution=1, j_resolution=1)
+    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    assert len(cells) == 1 and cells[0] == 0
+
+
 def test_multi_ray_trace(sphere):
     pytest.importorskip('rtree')
     pytest.importorskip('pyembree')
@@ -1107,3 +1114,38 @@ def test_regular_faces_mutable():
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
+
+
+def _assert_irregular_faces_equal(faces, expected):
+    assert len(faces) == len(expected)
+    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+
+
+def test_irregular_faces():
+    points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    expected_faces = [4, 0, 1, 2, 3, 3, 0, 3, 4, 3, 0, 4, 1, 3, 3, 2, 4, 3, 2, 1, 4]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    assert np.array_equal(mesh.faces, expected_faces)
+    _assert_irregular_faces_equal(mesh.irregular_faces, expected=faces)
+
+
+def test_set_irregular_faces():
+    mesh = pv.Pyramid().extract_surface()
+    flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
+    mesh.irregular_faces = flipped_faces
+    _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)
+
+
+def test_empty_irregular_faces():
+    mesh = pv.PolyData()
+    assert mesh.irregular_faces == ()
+
+
+def test_irregular_faces_mutable():
+    points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    mesh.irregular_faces[0][0] = 4
+    expected = [(4, 1, 2, 3), *faces[1:]]
+    _assert_irregular_faces_equal(mesh.irregular_faces, expected)
