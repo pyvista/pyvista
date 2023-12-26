@@ -3291,7 +3291,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face='triangle',
+        face=None,
         font_family='courier',
     ):
         """Add a legend to render window.
