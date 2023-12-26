@@ -167,6 +167,8 @@ checks = [
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
+    "GL06",  # Found unknown section
+    "GL07",  # "Sections are in the wrong order. Correct order is: {correct_sections}",
     "GL09",  # Deprecation warning should precede extended summary (check broken)
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
@@ -313,3 +315,6 @@ ignore = [
 ]
 fixable = ["ALL"]
 unfixable = []
+extend-select = [
+    "PGH004",
+]

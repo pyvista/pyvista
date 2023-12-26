@@ -5,7 +5,7 @@ import pyvista as pv
 
 has_ipython = True
 try:
-    import IPython  # noqa
+    import IPython  # noqa: F401
     from PIL.Image import Image
 except:  # noqa: E722
     has_ipython = False
