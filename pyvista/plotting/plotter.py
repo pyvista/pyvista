@@ -638,7 +638,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point_cloud = np.random.random((100, 3))
+        >>> point_cloud = np.random.default_rng().random((100, 3))
         >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pv.Sphere(radius=0.02)
@@ -5613,7 +5613,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> points = np.random.random((10, 3))
+        >>> points = np.random.default_rng().random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(
         ...     points, render_points_as_spheres=True, point_size=100.0
@@ -5622,7 +5622,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot using the ``'points_gaussian'`` style
 
-        >>> points = np.random.random((10, 3))
+        >>> points = np.random.default_rng().random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(points, style='points_gaussian')
         >>> pl.show()
@@ -5664,8 +5664,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> cent = np.random.random((10, 3))
-        >>> direction = np.random.random((10, 3))
+        >>> cent = np.random.default_rng().random((10, 3))
+        >>> direction = np.random.default_rng().random((10, 3))
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()
