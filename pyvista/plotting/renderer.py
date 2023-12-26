@@ -3292,6 +3292,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         name=None,
         loc='upper right',
         face='triangle',
+        font_family='courier',
     ):
         """Add a legend to render window.
 
@@ -3358,6 +3359,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Passing ``None`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
+
+        font_family : str, optional
+            Font family.  Must be either ``'courier'``, ``'times'``,
+            or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
+            <pyvista.plotting.themes._Font.family>`.
 
         Returns
         -------
@@ -3436,6 +3442,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
+
+        if font_family is None:
+            font_family = self._theme.font.family
+
+        font_family = parse_font_family(font_family)
+        self._legend.GetEntryTextProperty().SetFontFamily(font_family)
 
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend
