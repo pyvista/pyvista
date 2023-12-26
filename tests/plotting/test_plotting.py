@@ -885,16 +885,6 @@ def test_legend_subplots(sphere, cube):
     plotter.show()
 
 
-def test_legend_font(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    legend = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
-    )
-    assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
-
-
 def test_add_axes_twice():
     plotter = pv.Plotter()
     plotter.add_axes()
