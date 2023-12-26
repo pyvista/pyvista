@@ -318,6 +318,5 @@ unfixable = []
 extend-select = [
     "NPY",
     "PGH004",
-    "Q",
     "RSE",
 ]
