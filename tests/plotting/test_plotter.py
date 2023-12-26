@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
