@@ -377,7 +377,7 @@ def show_trame(
 
         elegantly_launch(server, wslink_backend=wslink_backend)
         if not server.running:
-            raise TrameJupyterServerDownError()
+            raise TrameJupyterServerDownError
     elif not server.running:
         raise TrameServerDownError(name)
 
