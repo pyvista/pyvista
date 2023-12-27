@@ -200,13 +200,13 @@ def test_widget_slider(uniform):
 
     func = lambda value: value  # Does nothing
     p = pv.Plotter()
-    title_height = np.random.random()
+    title_height = np.random.default_rng().random()
     s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
     assert s.GetRepresentation().GetTitleHeight() == title_height
     p.close()
 
     p = pv.Plotter()
-    title_opacity = np.random.random()
+    title_opacity = np.random.default_rng().random()
     s = p.add_slider_widget(
         callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity
     )
@@ -570,7 +570,7 @@ def test_affine_widget(sphere):
     assert actor.user_matrix[0, 3] > 0
 
     # test origin
-    origin = np.random.random(3)
+    origin = np.random.default_rng().random(3)
     widget.origin = origin
     assert np.allclose(widget.origin, origin)
 
@@ -611,7 +611,7 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.parametrize("outline_opacity", (True, False, np.random.random_sample()))
+@pytest.mark.parametrize("outline_opacity", (True, False, np.random.default_rng(0).random()))
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing

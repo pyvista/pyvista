@@ -143,7 +143,7 @@ class _ForceSlots(type):
     @classmethod
     def __prepare__(metaclass, name, bases, **kwargs):
         super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
-        super_prepared['__slots__'] = tuple()
+        super_prepared['__slots__'] = ()
         return super_prepared
 
 

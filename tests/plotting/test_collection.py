@@ -24,7 +24,7 @@ def test_pyvistandarray_strides(sphere):
 
 def test_complex_collection(plane):
     name = 'my_data'
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    data = np.random.default_rng().random((plane.n_points, 2)).view(np.complex128).ravel()
     plane.point_data[name] = data
 
     # ensure shallow copy
