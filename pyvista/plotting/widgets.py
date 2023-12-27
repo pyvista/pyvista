@@ -2381,7 +2381,7 @@ class WidgetHelper:
             return
 
         if indices is None:
-            indices = [x for x in range(num)]
+            indices = list(range(num))
 
         for i in range(num):
             if center.ndim > 1:

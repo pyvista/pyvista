@@ -611,7 +611,7 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.parametrize("outline_opacity", (True, False, np.random.default_rng().random()))
+@pytest.mark.parametrize("outline_opacity", (True, False, np.random.default_rng(0).random()))
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
