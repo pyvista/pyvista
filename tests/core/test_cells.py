@@ -149,7 +149,7 @@ def test_bad_init():
 @pytest.mark.parametrize("grid", grids, ids=ids)
 def test_cell_attribute(grid):
     assert isinstance(grid.cell, GeneratorType)
-    assert all([issubclass(type(cell), Cell) for cell in grid.cell])
+    assert all(issubclass(type(cell), Cell) for cell in grid.cell)
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
