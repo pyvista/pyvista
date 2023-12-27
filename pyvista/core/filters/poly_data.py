@@ -523,7 +523,7 @@ class PolyDataFilters(DataSetFilters):
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
                 dataset_has_lines_strips = any(
-                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                    ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset
                 )
             else:
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
@@ -2263,9 +2263,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa
-            import rtree  # noqa
-            import trimesh  # noqa
+            import pyembree  # noqa: F401
+            import rtree  # noqa: F401
+            import trimesh  # noqa: F401
         except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

@@ -50,23 +50,23 @@ def test_version():
 
 
 def test_createvectorpolydata_error():
-    orig = np.random.random((3, 1))
-    vec = np.random.random((3, 1))
+    orig = np.random.default_rng().random((3, 1))
+    vec = np.random.default_rng().random((3, 1))
     with pytest.raises(ValueError):
         vector_poly_data(orig, vec)
 
 
 def test_createvectorpolydata_1D():
-    orig = np.random.random(3)
-    vec = np.random.random(3)
+    orig = np.random.default_rng().random(3)
+    vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
 
 
 def test_createvectorpolydata():
-    orig = np.random.random((100, 3))
-    vec = np.random.random((100, 3))
+    orig = np.random.default_rng().random((100, 3))
+    vec = np.random.default_rng().random((100, 3))
     vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
@@ -103,7 +103,7 @@ def test_read(tmpdir, use_pathlib):
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
-    arr = np.random.rand(10, 10)
+    arr = np.random.default_rng().random((10, 10))
     np.save(filename, arr)
     with pytest.raises(IOError):
         _ = pv.read(filename)
@@ -189,7 +189,7 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 
 def test_get_array_cell(hexbeam):
-    carr = np.random.rand(hexbeam.n_cells)
+    carr = np.random.default_rng().random(hexbeam.n_cells)
     hexbeam.cell_data.set_array(carr, 'test_data')
 
     data = get_array(hexbeam, 'test_data', preference='cell')
@@ -197,13 +197,13 @@ def test_get_array_cell(hexbeam):
 
 
 def test_get_array_point(hexbeam):
-    parr = np.random.rand(hexbeam.n_points)
+    parr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
     data = get_array(hexbeam, 'test_data', preference='point')
     assert np.allclose(parr, data)
 
-    oarr = np.random.rand(hexbeam.n_points)
+    oarr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(oarr, 'other')
 
     data = get_array(hexbeam, 'other')
@@ -213,20 +213,20 @@ def test_get_array_point(hexbeam):
 def test_get_array_field(hexbeam):
     hexbeam.clear_data()
     # no preference
-    farr = np.random.rand(hexbeam.n_points * hexbeam.n_cells)
+    farr = np.random.default_rng().random(hexbeam.n_points * hexbeam.n_cells)
     hexbeam.field_data.set_array(farr, 'data')
     data = get_array(hexbeam, 'data')
     assert np.allclose(farr, data)
 
     # preference and multiple data
-    hexbeam.point_data.set_array(np.random.rand(hexbeam.n_points), 'data')
+    hexbeam.point_data.set_array(np.random.default_rng().random(hexbeam.n_points), 'data')
 
     data = get_array(hexbeam, 'data', preference='field')
     assert np.allclose(farr, data)
 
 
 def test_get_array_error(hexbeam):
-    parr = np.random.rand(hexbeam.n_points)
+    parr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
     # invalid inputs
@@ -730,14 +730,14 @@ def test_cartesian_to_spherical():
             (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi))
         ).T
 
-    points = np.random.random((1000, 3))
+    points = np.random.default_rng().random((1000, 3))
     x, y, z = points.T
     r, phi, theta = pv.cartesian_to_spherical(x, y, z)
     assert np.allclose(polar2cart(r, phi, theta), points)
 
 
 def test_spherical_to_cartesian():
-    points = np.random.random((1000, 3))
+    points = np.random.default_rng().random((1000, 3))
     r, phi, theta = points.T
     x, y, z = pv.spherical_to_cartesian(r, phi, theta)
     assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
@@ -866,7 +866,7 @@ def test_coerce_point_like_arg_errors():
 
 
 def test_coerce_points_like_args_does_not_copy():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     output, _ = _coerce_pointslike_arg(source)  # test that copy=False is default
     output /= 2
     assert np.array_equal(output, source)

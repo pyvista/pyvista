@@ -187,18 +187,18 @@ def test_set_default_kwarg_mandatory():
     default_key = 'k'
 
     # Test parameter unset
-    kwargs = dict()
+    kwargs = {}
     _set_default_kwarg_mandatory(kwargs, default_key, default_value)
     assert kwargs[default_key] == default_value
 
     # Test parameter already set to default
-    kwargs = dict()
+    kwargs = {}
     kwargs[default_key] = default_value
     _set_default_kwarg_mandatory(kwargs, default_key, default_value)
     assert kwargs[default_key] == default_value
 
     # Test parameter set to non-default
-    kwargs = dict()
+    kwargs = {}
     kwargs[default_key] = default_value * 2
     msg = (
         "Parameter 'k' cannot be set for function `test_set_default_kwarg_mandatory`.\n"

@@ -50,7 +50,7 @@ def test_labels(cube_axes_actor):
     # standard format
     cube_axes_actor.z_label_format = '%.1f'
     assert len(cube_axes_actor.z_labels) == 5
-    assert all([len(label) < 5 for label in cube_axes_actor.z_labels])
+    assert all(len(label) < 5 for label in cube_axes_actor.z_labels)
 
 
 def test_tick_location(cube_axes_actor):

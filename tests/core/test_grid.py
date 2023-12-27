@@ -258,7 +258,7 @@ def test_cells_dict_hexbeam_file():
 def test_cells_dict_variable_length():
     cells_poly = np.concatenate([[5], np.arange(5)])
     cells_types = np.array([CellType.POLYGON])
-    points = np.random.normal(size=(5, 3))
+    points = np.random.default_rng().normal(size=(5, 3))
     grid = pv.UnstructuredGrid(cells_poly, cells_types, points)
 
     # Dynamic sizes cell types are currently unsupported
@@ -279,7 +279,7 @@ def test_cells_dict_empty_grid():
 def test_cells_dict_alternating_cells():
     cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])
     cells_types = np.array([CellType.QUAD, CellType.TRIANGLE, CellType.QUAD])
-    points = np.random.normal(size=(3 + 2 * 2, 3))
+    points = np.random.default_rng().normal(size=(3 + 2 * 2, 3))
     grid = pv.UnstructuredGrid(cells, cells_types, points)
 
     cells_dict = grid.cells_dict
@@ -500,7 +500,7 @@ def structured_points():
 
 
 def test_no_copy_polydata_init():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PolyData(source)
     pts = mesh.points
     pts /= 2
@@ -511,7 +511,7 @@ def test_no_copy_polydata_init():
 
 
 def test_no_copy_polydata_points_setter():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PolyData()
     mesh.points = source
     pts = mesh.points
@@ -549,7 +549,7 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
 
 @pointsetmark
 def test_no_copy_pointset_init():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PointSet(source)
     pts = mesh.points
     pts /= 2
@@ -561,7 +561,7 @@ def test_no_copy_pointset_init():
 
 @pointsetmark
 def test_no_copy_pointset_points_setter():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PointSet()
     mesh.points = source
     pts = mesh.points
@@ -573,7 +573,7 @@ def test_no_copy_pointset_points_setter():
 
 
 def test_no_copy_unstructured_grid_points_setter():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.UnstructuredGrid()
     mesh.points = source
     pts = mesh.points

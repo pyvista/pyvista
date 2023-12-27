@@ -547,6 +547,107 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
+    def enable_2d_style(self):
+        """Set the interactive style to 2D.
+
+        For a 3-button mouse, the left button pans, the
+        right button dollys, the middle button spins, and the wheel
+        dollys.
+        ctrl + left button spins, shift + left button dollys,
+        ctrl + middle button pans, shift + middle button dollys,
+        ctrl + right button rotates in 3D, and shift + right button
+        dollys.
+
+        Recommended to use with
+        :func:`pyvista.Plotter.enable_parallel_projection`.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the
+        ParaView-like 2D style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.enable_2d_style()
+        >>> plotter.show()  # doctest:+SKIP
+        """
+        self._style = 'TrackballCamera'
+        self._style_class = None
+        self.update_style()
+
+        def _left_button_press_callback(_obj, event):  # pragma: no cover
+            """Left button press behavior."""
+            if self.interactor.GetControlKey():
+                self._style_class.StartSpin()
+            elif self.interactor.GetShiftKey():
+                self._style_class.StartDolly()
+            else:
+                self._style_class.StartPan()
+            self._style_class.OnLeftButtonDown()
+
+        def _left_button_release_callback(_obj, event):  # pragma: no cover
+            """Turn off all left button behavior."""
+            self._style_class.EndSpin()
+            self._style_class.EndPan()
+            self._style_class.EndDolly()
+            self._style_class.OnLeftButtonUp()
+
+        def _middle_button_press_callback(_obj, event):  # pragma: no cover
+            """Middle button press behavior."""
+            if self.interactor.GetControlKey():
+                self._style_class.StartPan()
+            elif self.interactor.GetShiftKey():
+                self._style_class.StartDolly()
+            else:
+                self._style_class.StartSpin()
+            self._style_class.OnMiddleButtonDown()
+
+        def _middle_button_release_callback(_obj, event):  # pragma: no cover
+            """Turn off all middle button behavior."""
+            self._style_class.EndSpin()
+            self._style_class.EndPan()
+            self._style_class.EndDolly()
+            self._style_class.OnMiddleButtonUp()
+
+        def _right_button_press_callback(_obj, event):  # pragma: no cover
+            """Right button press behavior."""
+            if self.interactor.GetControlKey():
+                self._style_class.StartRotate()
+            elif self.interactor.GetShiftKey():
+                # https://github.com/pyvista/pyvista/pull/5336#discussion_r1426060132
+                self._style_class.StartDolly()  # ParaView does a different type of zooming
+            else:
+                self._style_class.StartDolly()
+            self._style_class.OnRightButtonDown()
+
+        def _right_button_release_callback(_obj, event):  # pragma: no cover
+            """Turn off all right button behavior."""
+            self._style_class.EndRotate()
+            self._style_class.EndDolly()
+            self._style_class.OnRightButtonUp()
+
+        callback = partial(try_callback, _left_button_press_callback)
+        self._style_class.add_observer('LeftButtonPressEvent', callback)
+
+        callback = partial(try_callback, _left_button_release_callback)
+        self._style_class.add_observer('LeftButtonReleaseEvent', callback)
+
+        callback = partial(try_callback, _middle_button_press_callback)
+        self._style_class.add_observer('MiddleButtonPressEvent', callback)
+
+        callback = partial(try_callback, _middle_button_release_callback)
+        self._style_class.add_observer('MiddleButtonReleaseEvent', callback)
+
+        callback = partial(try_callback, _right_button_press_callback)
+        self._style_class.add_observer('RightButtonPressEvent', callback)
+
+        callback = partial(try_callback, _right_button_release_callback)
+        self._style_class.add_observer('RightButtonReleaseEvent', callback)
+
     def enable_trackball_actor_style(self):
         """Set the interactive style to Trackball Actor.
 
@@ -886,6 +987,22 @@ class RenderWindowInteractor:
         self.interactor.SetKeyCode(key)
         self.interactor.CharEvent()
 
+    def _control_key_press(self):
+        """Simulate a control keypress."""
+        self.interactor.SetControlKey(1)
+
+    def _control_key_release(self):
+        """Simulate a control keypress."""
+        self.interactor.SetControlKey(0)
+
+    def _shift_key_press(self):
+        """Simulate a shift keypress."""
+        self.interactor.SetShiftKey(1)
+
+    def _shift_key_release(self):
+        """Simulate a shift keypress."""
+        self.interactor.SetShiftKey(0)
+
     def _mouse_left_button_press(
         self, x=None, y=None
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
@@ -911,6 +1028,32 @@ class RenderWindowInteractor:
         for _ in range(count):
             self._mouse_left_button_press(x, y)
             self._mouse_left_button_release()
+
+    def _mouse_middle_button_press(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Simulate a middle mouse button press.
+
+        If ``x`` and ``y`` are entered then simulates a movement to
+        that position.
+
+        """
+        if x is not None and y is not None:
+            self._mouse_move(x, y)
+        self.interactor.MiddleButtonPressEvent()
+
+    def _mouse_middle_button_release(
+        self, x=None, y=None
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Simulate a middle mouse button release."""
+        if x is not None and y is not None:
+            self._mouse_move(x, y)
+        self.interactor.MiddleButtonReleaseEvent()
+
+    def _mouse_middle_button_click(self, x=None, y=None, count=1):
+        for _ in range(count):
+            self._mouse_middle_button_press(x, y)
+            self._mouse_middle_button_release()
 
     def _mouse_right_button_press(
         self, x=None, y=None
@@ -940,7 +1083,7 @@ class RenderWindowInteractor:
 
     def _mouse_move(self, x, y):  # pragma:
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
-        self.interactor.SetEventInformation(x, y)
+        self.interactor.SetEventPosition(x, y)
         self.interactor.MouseMoveEvent()
 
     def get_event_position(self):
@@ -1242,7 +1385,7 @@ def _style_factory(klass):
     """Create a subclass with capturing ability, return it."""
     # We have to use a custom subclass for this because the default ones
     # swallow the release events
-    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
+    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html
 
     def _make_class(klass):
         """Make the class."""
