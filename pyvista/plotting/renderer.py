@@ -404,7 +404,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if not isinstance(camera_location, CameraPosition):
                 if not len(camera_location) == 3:
                     raise InvalidCameraError
-                elif any([len(item) != 3 for item in camera_location]):
+                elif any(len(item) != 3 for item in camera_location):
                     raise InvalidCameraError
 
             # everything is set explicitly

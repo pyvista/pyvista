@@ -523,7 +523,7 @@ class PolyDataFilters(DataSetFilters):
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
                 dataset_has_lines_strips = any(
-                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                    ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset
                 )
             else:
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
