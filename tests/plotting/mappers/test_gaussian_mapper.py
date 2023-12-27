@@ -6,6 +6,7 @@ from pyvista.plotting.mapper import PointGaussianMapper
 
 @pytest.fixture()
 def mapper(sphere):
+    sphere['array'] = sphere.points[:, 2]
     pl = pv.Plotter()
     actor = pl.add_points(sphere, style='points_gaussian')
     return actor.mapper
@@ -31,6 +32,17 @@ def test_scale_factor(mapper):
     scale_factor = 2.0
     mapper.scale_factor = scale_factor
     assert mapper.scale_factor == scale_factor
+
+
+def test_scale_array(mapper):
+    assert mapper.scale_array is None
+
+    with pytest.raises(KeyError, match='does not exist'):
+        mapper.scale_array = 'foo'
+
+    scale_array = 'array'
+    mapper.scale_array = scale_array
+    assert mapper.scale_array == scale_array
 
 
 def test_use_circular_splat(mapper):

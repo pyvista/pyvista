@@ -802,7 +802,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
-    movie_sphere["scalars"] = np.random.random(movie_sphere.n_faces_strict)
+    movie_sphere["scalars"] = np.random.default_rng().random(movie_sphere.n_faces_strict)
 
     plotter = pv.Plotter()
     plotter.open_movie(filename)
@@ -813,10 +813,10 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     plotter.set_focus([0, 0, 0])
     for _ in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
-        random_points = np.random.random(movie_sphere.points.shape)
+        random_points = np.random.default_rng().random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
-        scalars = np.random.random(movie_sphere.n_faces_strict)
+        scalars = np.random.default_rng().random(movie_sphere.n_faces_strict)
         movie_sphere["scalars"] = scalars
 
     # remove file
@@ -1235,7 +1235,7 @@ def test_multi_block_plot(verify_image_cache):
     multi = pv.MultiBlock()
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
-    arr = np.random.rand(uni.n_cells)
+    arr = np.random.default_rng().random(uni.n_cells)
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
@@ -2024,7 +2024,7 @@ def test_plot_string_array(verify_image_cache):
 
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
-    table = pv.Table(np.random.rand(50, 3))
+    table = pv.Table(np.random.default_rng().random((50, 3)))
     with pytest.raises(TypeError):
         pv.plot(table)
     with pytest.raises(TypeError):
@@ -3322,9 +3322,26 @@ def test_plot_points_gaussian_as_spheres(sphere):
         color='b',
         style='points_gaussian',
         render_points_as_spheres=True,
+        emissive=True,
         point_size=20,
         opacity=0.5,
     )
+
+
+@skip_windows
+def test_plot_points_gaussian_scale(sphere):
+    sphere["z"] = sphere.points[:, 2] * 0.1
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        style='points_gaussian',
+        render_points_as_spheres=True,
+        emissive=False,
+        show_scalar_bar=False,
+    )
+    actor.mapper.scale_array = 'z'
+    pl.view_xz()
+    pl.show()
 
 
 @skip_windows_mesa  # due to opacity
@@ -3811,3 +3828,104 @@ def test_voxelize_volume():
     # Create a voxel volume from unequal density dimensions and plot result.
     vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+
+def test_enable_2d_style():
+    def setup_plot():
+        mesh = pv.Cube()
+        mesh["face_id"] = np.arange(6)
+        pl = pv.Plotter()
+        pl.enable_2d_style()
+        pl.enable_parallel_projection()
+        pl.add_mesh(mesh, scalars="face_id", show_scalar_bar=False)
+        return pl
+
+    # baseline, image
+    pl = setup_plot()
+    pl.show()
+
+    start = (100, 100)
+    pan = rotate = (150, 150)
+    spin = (100, 150)
+    dolly = (100, 25)
+
+    # Compare all images to baseline
+    # - Panning moves up and left
+    # - Spinning rotates while fixing the view direction
+    # - Dollying zooms out
+    # - Rotating rotates freely without fixing view direction
+
+    # left click pans, image 1
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*pan)
+    pl.close()
+
+    # middle click spins, image 2
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*spin)
+    pl.close()
+
+    # right click dollys, image 3
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*dolly)
+    pl.close()
+
+    # ctrl left click spins, image 4
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*spin)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift left click dollys, image 5
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
+
+    # ctrl middle click pans, image 6
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*pan)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift middle click dollys, image 7
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
+
+    # ctrl right click rotates, image 8
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*rotate)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift right click dollys, image 9
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
