@@ -5582,7 +5582,7 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
     >>> _ = plotter.add_mesh(
     ...     mesh, edge_color='gray', color='white', show_edges=True
     ... )
-    >>> plotter.add_floor('-x', color="black")
+    >>> _ = plotter.add_floor('-x', color="black")
     >>> plotter.enable_parallel_projection()
     >>> plotter.show(cpos="yz")
 
