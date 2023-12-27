@@ -3039,8 +3039,8 @@ class Theme(_ThemeConfig):
             :func:`pyvista.Plotter.add_logo_widget` will default to
             PyVista's logo if this is unset.
 
-        Example
-        -------
+        Examples
+        --------
         Set the logo file to a custom logo.
 
         >>> import pyvista as pv

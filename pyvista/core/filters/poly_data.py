@@ -2165,11 +2165,12 @@ class PolyDataFilters(DataSetFilters):
         self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
-        if first_point and intersection_points.shape[0] >= 1:
+        has_intersection = intersection_points.shape[0] >= 1
+        if first_point and has_intersection:
             intersection_points = intersection_points[0]
 
         intersection_cells = []
-        if intersection_points.any():
+        if has_intersection:
             if first_point:
                 ncells = 1
             else:
@@ -2262,9 +2263,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa
-            import rtree  # noqa
-            import trimesh  # noqa
+            import pyembree  # noqa: F401
+            import rtree  # noqa: F401
+            import trimesh  # noqa: F401
         except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

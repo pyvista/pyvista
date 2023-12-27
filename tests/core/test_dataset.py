@@ -281,15 +281,15 @@ def test_translate_should_fail_given_none(grid):
 
 def test_set_points():
     dataset = pv.UnstructuredGrid()
-    points = np.random.random((10, 3))
+    points = np.random.default_rng().random((10, 3))
     dataset.points = pv.vtk_points(points)
 
 
 def test_translate_should_fail_bad_points_or_transform(grid):
-    points = np.random.random((10, 2))
-    bad_points = np.random.random((10, 2))
-    trans = np.random.random((4, 4))
-    bad_trans = np.random.random((2, 4))
+    points = np.random.default_rng().random((10, 2))
+    bad_points = np.random.default_rng().random((10, 2))
+    trans = np.random.default_rng().random((4, 4))
+    bad_trans = np.random.default_rng().random((2, 4))
     with pytest.raises(ValueError):
         pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
 
@@ -740,7 +740,7 @@ def test_str(grid):
 
 
 def test_set_cell_vectors(grid):
-    arr = np.random.random((grid.n_cells, 3))
+    arr = np.random.default_rng().random((grid.n_cells, 3))
     grid.cell_data['_cell_vectors'] = arr
     grid.set_active_vectors('_cell_vectors')
     assert grid.active_vectors_name == '_cell_vectors'
@@ -772,7 +772,7 @@ def test_bad_instantiation():
 
 
 def test_string_arrays():
-    poly = pv.PolyData(np.random.rand(10, 3))
+    poly = pv.PolyData(np.random.default_rng().random((10, 3)))
     arr = np.array([f'foo{i}' for i in range(10)])
     poly['foo'] = arr
     back = poly['foo']
@@ -784,9 +784,9 @@ def test_clear_data():
     grid = pv.ImageData(dimensions=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
-    grid['foo-p'] = np.random.rand(grid.n_points)
-    grid['foo-c'] = np.random.rand(grid.n_cells)
-    grid.field_data['foo-f'] = np.random.rand(grid.n_points * grid.n_cells)
+    grid['foo-p'] = np.random.default_rng().random(grid.n_points)
+    grid['foo-c'] = np.random.default_rng().random(grid.n_cells)
+    grid.field_data['foo-f'] = np.random.default_rng().random(grid.n_points * grid.n_cells)
     assert grid.n_arrays == 3
     grid.clear_data()
     assert grid.n_arrays == 0
@@ -795,7 +795,10 @@ def test_clear_data():
 def test_scalars_dict_update():
     mesh = examples.load_uniform()
     n = len(mesh.point_data)
-    arrays = {'foo': np.arange(mesh.n_points), 'rand': np.random.random(mesh.n_points)}
+    arrays = {
+        'foo': np.arange(mesh.n_points),
+        'rand': np.random.default_rng().random(mesh.n_points),
+    }
     mesh.point_data.update(arrays)
     assert 'foo' in mesh.array_names
     assert 'rand' in mesh.array_names
@@ -861,7 +864,7 @@ def test_shallow_copy_back_propagation():
     # Case 2
     original = vtk.vtkPolyData()
     wrapped = pv.PolyData(original, deep=False)
-    wrapped.points = np.random.rand(5, 3)
+    wrapped.points = np.random.default_rng().random((5, 3))
     orig_points = vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
 
@@ -1169,9 +1172,9 @@ def test_multiprocessing(datasets, pickle_format):
 def test_rotations_should_match_by_a_360_degree_difference():
     mesh = examples.load_airplane()
 
-    point = np.random.random(3) - 0.5
-    angle = (np.random.random() - 0.5) * 360.0
-    vector = np.random.random(3) - 0.5
+    point = np.random.default_rng().random(3) - 0.5
+    angle = (np.random.default_rng().random() - 0.5) * 360.0
+    vector = np.random.default_rng().random(3) - 0.5
 
     # Rotate about x axis.
     rot1 = mesh.copy()
@@ -1317,7 +1320,7 @@ def test_transform_integers_vtkbug_present():
 def test_scale():
     mesh = examples.load_airplane()
 
-    xyz = np.random.random(3)
+    xyz = np.random.default_rng().random(3)
     scale1 = mesh.copy()
     scale2 = mesh.copy()
     scale1.scale(xyz, inplace=True)

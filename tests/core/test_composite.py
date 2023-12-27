@@ -396,7 +396,7 @@ def test_multi_io_erros(tmpdir):
     bad_ext_name = str(fdir.join('tmp.npy'))
     with pytest.raises(ValueError):
         multi.save(bad_ext_name)
-    arr = np.random.rand(10, 10)
+    arr = np.random.default_rng().random((10, 10))
     np.save(bad_ext_name, arr)
     # Load non existing file
     with pytest.raises(FileNotFoundError):
@@ -525,8 +525,8 @@ def test_multi_block_length(ant, sphere, uniform, airplane):
 
 def test_multi_block_save_lines(tmpdir):
     radius = 1
-    xr = np.random.random(10)
-    yr = np.random.random(10)
+    xr = np.random.default_rng().random(10)
+    yr = np.random.default_rng().random(10)
     x = radius * np.sin(yr) * np.cos(xr)
     y = radius * np.sin(yr) * np.sin(xr)
     z = radius * np.cos(yr)

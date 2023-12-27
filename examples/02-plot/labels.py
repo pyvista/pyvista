@@ -24,7 +24,7 @@ from pyvista import examples
 # labels for each of the nodes.
 
 # Make some random points
-poly = pv.PolyData(np.random.rand(10, 3))
+poly = pv.PolyData(np.random.default_rng().random((10, 3)))
 
 ###############################################################################
 # Add string labels to the point data - this associates a label with every
