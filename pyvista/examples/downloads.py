@@ -5554,3 +5554,37 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
     """
     _ = download_file("meshio/out.h5")
     return _download_and_read("meshio/out.xdmf", load=load)
+
+
+def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
+    """Download Victorian Goblet face illusion.
+
+    This is a replica of a Victorian goblet with an external profile
+    which resembles that of a face.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> mesh = examples.download_victorian_goblet_face_illusion()
+    >>> plotter = pv.Plotter(lighting='none')
+    >>> plotter.add_mesh(
+    ...     mesh, edge_color='gray', color='white', show_edges=True
+    ... )
+    >>> plotter.add_floor('-x', color="black")
+    >>> plotter.enable_parallel_projection()
+    >>> plotter.show(cpos="yz")
+
+    """
+    return _download_and_read('Victorian_Goblet_face_illusion/Vase.stl', load=load)
