@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
@@ -489,3 +490,13 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     res_path = os.path.join(pv.FIGURE_PATH, res_file)
     error = pv.compare_images(sphere_path, res_path)
     assert error < 100
+
+
+def test_legend_font(sphere):
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    legend = plotter.add_legend(
+        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
+    )
+    assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
