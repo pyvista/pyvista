@@ -5579,7 +5579,7 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> mesh = examples.download_victorian_goblet_face_illusion()
     >>> plotter = pv.Plotter(lighting='none')
-    >>> plotter.add_mesh(
+    >>> _ = plotter.add_mesh(
     ...     mesh, edge_color='gray', color='white', show_edges=True
     ... )
     >>> plotter.add_floor('-x', color="black")
