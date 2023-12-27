@@ -2011,7 +2011,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
 
-        if not all([isinstance(actor, _vtk.vtkActor) for actor in actors]):
+        if not all(isinstance(actor, _vtk.vtkActor) for actor in actors):
             raise TypeError(
                 f'Expected a vtkActor instance or a list of vtkActors, got '
                 f'{[type(actor) for actor in actors]} instead.'
