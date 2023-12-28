@@ -95,6 +95,13 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match="must be a numeric type"):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
+    with pytest.raises(ValueError, match="invalid connectivity array"):
+        rnd_generator = np.random.default_rng()
+        points = rnd_generator.random((4, 3))
+        celltypes = [pv.CellType.TETRA]
+        cells = np.array([5, 0, 1, 2, 3])
+        pv.UnstructuredGrid(cells, celltypes, points)
+
     with pytest.raises(TypeError, match="requires the following arrays"):
         pv.UnstructuredGrid(*range(5))
 
