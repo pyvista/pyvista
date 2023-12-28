@@ -42,12 +42,13 @@ class DataSetFilters:
         value=0.0,
         return_clipped=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         crinkle=False,
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
             # Add Cell IDs
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
 
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -61,7 +62,7 @@ class DataSetFilters:
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
-        _update_alg(alg, progress_bar, 'Clipping with Function')
+        _update_alg(alg, progress_bar, 'Clipping with Function', algo_hook=algo_hook)
 
         if return_clipped:
             a = _get_output(alg, oport=0)
@@ -191,6 +192,7 @@ class DataSetFilters:
         inplace=False,
         return_clipped=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         crinkle=False,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
@@ -262,7 +264,7 @@ class DataSetFilters:
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
         if origin is None:
-            origin = self.center
+            origin = self.center  # type: ignore[attr-defined]
         # create the plane for clipping
         function = generate_plane(normal, origin)
         # run the clip
@@ -273,14 +275,15 @@ class DataSetFilters:
             value=value,
             return_clipped=return_clipped,
             progress_bar=progress_bar,
+            algo_hook=algo_hook,
             crinkle=crinkle,
         )
         if inplace:
             if return_clipped:
-                self.copy_from(result[0], deep=False)
+                self.copy_from(result[0], deep=False)  # type: ignore[attr-defined]
                 return self, result[1]
             else:
-                self.copy_from(result, deep=False)
+                self.copy_from(result, deep=False)  # type: ignore[attr-defined]
                 return self
         return result
 
@@ -588,6 +591,7 @@ class DataSetFilters:
         value=0.0,
         compute_distance=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         crinkle=False,
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
@@ -652,7 +656,7 @@ class DataSetFilters:
             points = pyvista.convert_array(self.points)
             dists = _vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            self['implicit_distance'] = pyvista.convert_array(dists)
+            self['implicit_distance'] = pyvista.convert_array(dists)  # type: ignore[index]
         # run the clip
         result = DataSetFilters._clip_with_function(
             self,
@@ -660,6 +664,7 @@ class DataSetFilters:
             invert=invert,
             value=value,
             progress_bar=progress_bar,
+            algo_hook=algo_hook,
             crinkle=crinkle,
         )
         return result
@@ -5812,6 +5817,7 @@ class DataSetFilters:
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Transform this mesh with a 4x4 transform.
 
@@ -5965,7 +5971,7 @@ class DataSetFilters:
         f.SetTransform(t)
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
-        _update_alg(f, progress_bar, 'Transforming')
+        _update_alg(f, progress_bar, 'Transforming', algo_hook=algo_hook)
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again

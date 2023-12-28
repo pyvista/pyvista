@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pytest
-from pytest_cases import case, parametrize, parametrize_with_cases
+from pytest_cases import case, fixture, parametrize, parametrize_with_cases
 from pytest_mock import MockerFixture
 
 import pyvista as pv
@@ -98,6 +98,11 @@ def test_update_alg(algo_hook, with_algo_hook: bool):
         algo.SetTest.assert_not_called()
 
 
+@fixture
+def mock_vtk(mocker: MockerFixture):
+    return mocker.patch.object(filters.data_set, "_vtk")
+
+
 class Cases_update_alg:
     raw_funcs = [
         'cell_centers',
@@ -118,31 +123,59 @@ class Cases_update_alg:
     def _get_callable(self, func: str):
         return getattr(filters.DataSetFilters, func)
 
-    def _get_default_kwargs(self, f: Callable, mocker: MockerFixture):
+    def _get_default_kwargs(self, f: Callable):
         sig = inspect.signature(f)
         return {
-            k: mocker.MagicMock()
+            k: MagicMock()
             for k, v in sig.parameters.items()
             if v.kind not in (v.VAR_KEYWORD, v.VAR_POSITIONAL)
         }
 
     @case
     @parametrize(func=raw_funcs)
+    @pytest.mark.usefixtures("mock_vtk")
     def case_raw(self, func: str, mocker: MockerFixture):
         """Methods that do not require special inputs"""
         f = self._get_callable(func)
-        kwargs = self._get_default_kwargs(f, mocker)
+        kwargs = self._get_default_kwargs(f)
         kwargs["algo_hook"] = mocker.Mock()
 
         return f, kwargs
 
     @case
+    @pytest.mark.usefixtures("mock_vtk")
     def case_sample(self, mocker: MockerFixture):
-        """Sample method"""
         f = self._get_callable("sample")
 
-        kwargs = self._get_default_kwargs(f, mocker)
+        kwargs = self._get_default_kwargs(f)
         kwargs["target"] = mocker.MagicMock(pv.DataSet)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    def case_clip_with_function(self, mocker: MockerFixture, mock_vtk):
+        f = self._get_callable("_clip_with_function")
+
+        kwargs = self._get_default_kwargs(f)
+
+        mock_vtk.vtkPolyData = type(_vtk_core.vtkPolyData)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    def case_transform(self, mocker: MockerFixture):
+        f = self._get_callable("transform")
+
+        kwargs = self._get_default_kwargs(f)
+        mocker.patch.object(filters.data_set._vtk, "vtkTransformFilter")
+        mocker.patch.object(filters, "wrap")
+
+        m = mocker.MagicMock()
+        m.points.dtype = np.float32
+        kwargs["self"] = m
+        kwargs["trans"] = np.full((4, 4), 1)
         kwargs["algo_hook"] = mocker.Mock()
 
         return f, kwargs
@@ -151,7 +184,6 @@ class Cases_update_alg:
 @parametrize_with_cases("f, kwargs", cases=Cases_update_alg)
 def test_update_alg_called(f: Callable, kwargs: dict, mocker: MockerFixture):
     mock = mocker.patch.object(filters.data_set, "_update_alg")
-    _ = mocker.patch.object(filters.data_set, "_vtk")
     _ = mocker.patch.object(filters.data_set, "_get_output")
 
     f(**kwargs)
