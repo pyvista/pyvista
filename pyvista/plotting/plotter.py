@@ -3674,7 +3674,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 lighting=lighting,
                 render=False,
                 show_vertices=False,
-                edge_opacity=edge_opacity,
             )
 
         self.add_actor(
