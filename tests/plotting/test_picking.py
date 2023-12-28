@@ -353,7 +353,7 @@ def test_path_picking():
     pl.add_mesh(sphere)
     pl.enable_path_picking(
         show_message=True,
-        callback=lambda path: None,  # noqa: ARG005
+        callback=lambda path: None,
     )
     # simulate the pick
     renderer = pl.renderer
@@ -375,7 +375,7 @@ def test_geodesic_picking():
     pl.add_mesh(sphere)
     pl.enable_geodesic_picking(
         show_message=True,
-        callback=lambda path: None,  # noqa: ARG005
+        callback=lambda path: None,
         show_path=True,
         keep_order=True,
     )
@@ -402,7 +402,7 @@ def test_horizon_picking():
     pl.add_mesh(sphere)
     pl.enable_horizon_picking(
         show_message=True,
-        callback=lambda path: None,  # noqa: ARG005
+        callback=lambda path: None,
         show_horizon=True,
     )
     # simulate the pick

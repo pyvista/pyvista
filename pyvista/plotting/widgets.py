@@ -545,12 +545,8 @@ class WidgetHelper:
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
 
-            _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(  # noqa: ARG005
-                True
-            )
-            _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(  # noqa: ARG005
-                False
-            )
+            _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
+            _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
 
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)

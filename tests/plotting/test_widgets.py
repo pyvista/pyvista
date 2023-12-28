@@ -51,7 +51,7 @@ def test_widget_box(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda box, widget: box  # noqa: ARG005  # Does nothing
+    func = lambda box, widget: box  # Does nothing
     p.add_mesh(uniform)
     p.add_box_widget(callback=func, pass_widget=True)
     p.close()
@@ -73,37 +73,37 @@ def test_widget_box(uniform):
 
 def test_widget_plane(uniform):
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # noqa: ARG005  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, implicit=True)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin, widget: normal  # noqa: ARG005  # Does nothing
+    func = lambda normal, origin, widget: normal  # Does nothing
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # noqa: ARG005  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, implicit=False)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin, widget: normal  # noqa: ARG005  # Does nothing
+    func = lambda normal, origin, widget: normal  # Does nothing
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # noqa: ARG005  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # noqa: ARG005  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
     p.close()
@@ -133,7 +133,7 @@ def test_widget_line(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda line, widget: line  # noqa: ARG005  # Does nothing
+    func = lambda line, widget: line  # Does nothing
     p.add_mesh(uniform)
     p.add_line_widget(callback=func, pass_widget=True)
     p.close()
@@ -179,7 +179,7 @@ def test_widget_slider(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda value, widget: value  # noqa: ARG005  # Does nothing
+    func = lambda value, widget: value  # Does nothing
     p.add_mesh(uniform)
     p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
@@ -251,7 +251,7 @@ def test_widget_spline(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda spline, widget: spline  # noqa: ARG005  # Does nothing
+    func = lambda spline, widget: spline  # Does nothing
     p.add_mesh(uniform)
     p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
     p.close()
@@ -300,7 +300,7 @@ def test_widget_sphere():
     # pass multiple centers
     nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pv.Plotter()
-    func = lambda center, index: center  # noqa: ARG005  # Does nothing
+    func = lambda center, index: center  # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
     p.close()
 
@@ -621,7 +621,7 @@ def test_outline_opacity(uniform, outline_opacity):
     p.close()
 
 
-def test_clear_box_widget(verify_image_cache):
+def test_clear_box_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -630,7 +630,7 @@ def test_clear_box_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_plane_widget(verify_image_cache):
+def test_clear_plane_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -639,7 +639,7 @@ def test_clear_plane_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_line_widget(verify_image_cache):
+def test_clear_line_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -648,7 +648,7 @@ def test_clear_line_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_slider_widget(verify_image_cache):
+def test_clear_slider_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -657,7 +657,7 @@ def test_clear_slider_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_spline_widget(verify_image_cache):
+def test_clear_spline_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -666,7 +666,7 @@ def test_clear_spline_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_measure_widget(verify_image_cache):
+def test_clear_measure_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -675,7 +675,7 @@ def test_clear_measure_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_sphere_widget(verify_image_cache):
+def test_clear_sphere_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -685,7 +685,7 @@ def test_clear_sphere_widget(verify_image_cache):
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-def test_clear_camera_widget(verify_image_cache):
+def test_clear_camera_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -694,7 +694,7 @@ def test_clear_camera_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_button_widget(verify_image_cache):
+def test_clear_button_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -703,7 +703,7 @@ def test_clear_button_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_logo_widget(verify_image_cache):
+def test_clear_logo_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
