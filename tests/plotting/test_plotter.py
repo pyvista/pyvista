@@ -489,3 +489,11 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     res_path = os.path.join(pv.FIGURE_PATH, res_file)
     error = pv.compare_images(sphere_path, res_path)
     assert error < 100
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
+def test_edge_opacity(sphere):
+    edge_opacity = np.random.default_rng().random()
+    pl = pv.Plotter(sphere)
+    actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
+    assert actor.prop.edge_opacity == edge_opacity
