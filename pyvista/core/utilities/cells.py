@@ -36,7 +36,7 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 
 
 def numpy_to_idarr(
-    ind: Matrix, deep: bool = False, return_ind: bool = False
+    ind: Matrix[int], deep: bool = False, return_ind: bool = False
 ) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
