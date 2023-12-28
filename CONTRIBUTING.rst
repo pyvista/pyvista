@@ -208,17 +208,8 @@ the exception rather than the norm. A uniform code style is enforced
 by `black <https://github.com/psf/black>`_ to prevent energy wasted on
 style disagreements.
 
-As for docstrings, follow the guidelines specified in `PEP 8 Maximum
-Line
-Length <https://www.python.org/dev/peps/pep-0008/#maximum-line-length>`_
-of limiting docstrings to 72 characters per line. This follows the
-directive:
-
-   Some teams strongly prefer a longer line length. For code maintained
-   exclusively or primarily by a team that can reach agreement on this
-   issue, it is okay to increase the line length limit up to 99
-   characters, provided that comments and docstrings are still wrapped
-   at 72 characters.
+As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
+Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
