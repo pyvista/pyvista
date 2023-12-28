@@ -1,10 +1,16 @@
+from __future__ import annotations
+
+import inspect
 import itertools
 import os
 import platform
+from typing import Callable
 from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pytest
+from pytest_cases import case, parametrize, parametrize_with_cases
+from pytest_mock import MockerFixture
 
 import pyvista as pv
 from pyvista import examples
@@ -90,6 +96,55 @@ def test_update_alg(algo_hook, with_algo_hook: bool):
         algo.assert_has_calls(expected_calls, any_order=False)
     else:
         algo.SetTest.assert_not_called()
+
+
+class Cases_update_alg:
+    raw_funcs = [
+        'cell_centers',
+        'cell_data_to_point_data',
+        'compute_cell_sizes',
+        'delaunay_3d',
+        'extract_all_edges',
+        'extract_geometry',
+        'extract_surface',
+        'integrate_data',
+        'point_data_to_cell_data',
+        'sample',
+        'slice_implicit',
+        'texture_map_to_sphere',
+        'triangulate',
+    ]
+
+    def _get_callable(self, func: str):
+        return getattr(filters.DataSetFilters, func)
+
+    def _get_default_kwargs(self, f: Callable, mocker: MockerFixture):
+        sig = inspect.signature(f)
+        return {
+            k: mocker.MagicMock(pv.DataSet)
+            for k, v in sig.parameters.items()
+            if v.kind not in (v.VAR_KEYWORD, v.VAR_POSITIONAL)
+        }
+
+    @case
+    @parametrize(func=raw_funcs)
+    def case_raw(self, func: str, mocker: MockerFixture):
+        f = self._get_callable(func)
+        kwargs = self._get_default_kwargs(f, mocker)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+
+@parametrize_with_cases("f, kwargs", cases=Cases_update_alg)
+def test_update_alg_called(f: Callable, kwargs: dict, mocker: MockerFixture):
+    mock = mocker.patch.object(filters.data_set, "_update_alg")
+    _ = mocker.patch.object(filters.data_set, "_vtk")
+    _ = mocker.patch.object(filters.data_set, "_get_output")
+
+    f(**kwargs)
+
+    mock.assert_called_once_with(*[mocker.ANY] * 3, algo_hook=kwargs["algo_hook"])
 
 
 def test_datasetfilters_init():
