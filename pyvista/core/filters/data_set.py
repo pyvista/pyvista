@@ -665,7 +665,12 @@ class DataSetFilters:
         return result
 
     def slice_implicit(
-        self, implicit_function, generate_triangles=False, contour=False, progress_bar=False
+        self,
+        implicit_function,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Slice a dataset by a VTK implicit function.
 
@@ -715,7 +720,7 @@ class DataSetFilters:
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
         alg.SetGenerateTriangles(generate_triangles)
-        _update_alg(alg, progress_bar, 'Slicing')
+        _update_alg(alg, progress_bar, 'Slicing', algo_hook=algo_hook)
         output = _get_output(alg)
         if contour:
             return output.contour()
@@ -1476,7 +1481,12 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
+    def extract_geometry(
+        self,
+        extent: Optional[Sequence[float]] = None,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1524,10 +1534,16 @@ class DataSetFilters:
         if extent is not None:
             alg.SetExtent(extent)
             alg.SetExtentClipping(True)
-        _update_alg(alg, progress_bar, 'Extracting Geometry')
+        _update_alg(alg, progress_bar, 'Extracting Geometry', algo_hook=algo_hook)
         return _get_output(alg)
 
-    def extract_all_edges(self, use_all_points=False, clear_data=False, progress_bar=False):
+    def extract_all_edges(
+        self,
+        use_all_points=False,
+        clear_data=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -1584,7 +1600,7 @@ class DataSetFilters:
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Extracting All Edges')
+        _update_alg(alg, progress_bar, 'Extracting All Edges', algo_hook=algo_hook)
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         output = _get_output(alg)
@@ -1986,6 +2002,7 @@ class DataSetFilters:
         inplace=False,
         name='Texture Coordinates',
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Texture map this dataset to a user defined sphere.
 
@@ -2038,22 +2055,29 @@ class DataSetFilters:
             alg.SetCenter(center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Mapping texture to sphere')
+        _update_alg(alg, progress_bar, 'Mapping texture to sphere', algo_hook=algo_hook)
         output = _get_output(alg)
         if not inplace:
             return output
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
-        otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(texture_coordinates)
-        self.GetPointData().AddArray(texture_coordinates)
+        otc = self.GetPointData().GetTCoords()  # type: ignore[attr-defined]
+        self.GetPointData().SetTCoords(texture_coordinates)  # type: ignore[attr-defined]
+        self.GetPointData().AddArray(texture_coordinates)  # type: ignore[attr-defined]
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
-            self.GetPointData().AddArray(otc)
+            self.GetPointData().AddArray(otc)  # type: ignore[attr-defined]
         return self
 
-    def compute_cell_sizes(self, length=True, area=True, volume=True, progress_bar=False):
+    def compute_cell_sizes(
+        self,
+        length=True,
+        area=True,
+        volume=True,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Compute sizes for 1D (length), 2D (area) and 3D (volume) cells.
 
         Parameters
@@ -2098,7 +2122,7 @@ class DataSetFilters:
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(False)
-        _update_alg(alg, progress_bar, 'Computing Cell Sizes')
+        _update_alg(alg, progress_bar, 'Computing Cell Sizes', algo_hook=algo_hook)
         return _get_output(alg)
 
     def cell_centers(self, vertex=True, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
@@ -3056,7 +3080,9 @@ class DataSetFilters:
         else:
             return warped_mesh
 
-    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False):
+    def cell_data_to_point_data(
+        self, pass_cell_data=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -3106,7 +3132,9 @@ class DataSetFilters:
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
-        _update_alg(alg, progress_bar, 'Transforming cell data into point data.')
+        _update_alg(
+            alg, progress_bar, 'Transforming cell data into point data.', algo_hook=algo_hook
+        )
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
@@ -3144,7 +3172,9 @@ class DataSetFilters:
             self, pass_cell_data=pass_cell_data, progress_bar=progress_bar, **kwargs
         )
 
-    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
+    def point_data_to_cell_data(
+        self, pass_point_data=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -3193,13 +3223,21 @@ class DataSetFilters:
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
-        _update_alg(alg, progress_bar, 'Transforming point data into cell data')
+        _update_alg(
+            alg, progress_bar, 'Transforming point data into cell data', algo_hook=algo_hook
+        )
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ptc(self, pass_point_data=False, progress_bar=False, **kwargs):
+    def ptc(
+        self,
+        pass_point_data=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+        **kwargs,
+    ):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -3228,10 +3266,14 @@ class DataSetFilters:
 
         """
         return DataSetFilters.point_data_to_cell_data(
-            self, pass_point_data=pass_point_data, progress_bar=progress_bar, **kwargs
+            self,
+            pass_point_data=pass_point_data,
+            progress_bar=progress_bar,
+            algo_hook=algo_hook,
+            **kwargs,
         )
 
-    def triangulate(self, inplace=False, progress_bar=False):
+    def triangulate(self, inplace=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -3266,15 +3308,22 @@ class DataSetFilters:
         """
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Converting to triangle mesh')
+        _update_alg(alg, progress_bar, 'Converting to triangle mesh', algo_hook=algo_hook)
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh, deep=False)
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return self
         return mesh
 
-    def delaunay_3d(self, alpha=0.0, tol=0.001, offset=2.5, progress_bar=False):
+    def delaunay_3d(
+        self,
+        alpha=0.0,
+        tol=0.001,
+        offset=2.5,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This filter can be used to generate a 3D tetrahedral mesh from
@@ -3325,7 +3374,7 @@ class DataSetFilters:
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
-        _update_alg(alg, progress_bar, 'Computing 3D Triangulation')
+        _update_alg(alg, progress_bar, 'Computing 3D Triangulation', algo_hook=algo_hook)
         return _get_output(alg)
 
     def select_enclosed_points(
@@ -3523,6 +3572,7 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         locator=None,
         pass_field_data=True,
         mark_blank=True,
@@ -3661,7 +3711,12 @@ class DataSetFilters:
                 alg.SnapToCellWithClosestPointOn()
             except AttributeError:  # pragma: no cover
                 raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
-        _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
+        _update_alg(
+            alg,
+            progress_bar,
+            'Resampling array Data from a Passed Mesh onto Mesh',
+            algo_hook=algo_hook,
+        )
         return _get_output(alg)
 
     def interpolate(
@@ -5065,7 +5120,12 @@ class DataSetFilters:
         return _get_output(extract_sel)
 
     def extract_surface(
-        self, pass_pointid=True, pass_cellid=True, nonlinear_subdivision=1, progress_bar=False
+        self,
+        pass_pointid=True,
+        pass_cellid=True,
+        nonlinear_subdivision=1,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Extract surface mesh of the grid.
 
@@ -5149,7 +5209,7 @@ class DataSetFilters:
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
-        _update_alg(surf_filter, progress_bar, 'Extracting Surface')
+        _update_alg(surf_filter, progress_bar, 'Extracting Surface', algo_hook=algo_hook)
         return _get_output(surf_filter)
 
     def surface_indices(self, progress_bar=False):
@@ -5982,7 +6042,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def integrate_data(self, progress_bar=False):
+    def integrate_data(self, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Integrate point and cell data.
 
         Area or volume is also provided in point data.
@@ -6028,7 +6088,7 @@ class DataSetFilters:
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
-        _update_alg(alg, progress_bar, 'Integrating Variables')
+        _update_alg(alg, progress_bar, 'Integrating Variables', algo_hook=algo_hook)
         return _get_output(alg)
 
     def partition(self, n_partitions, generate_global_id=False, as_composite=True):
