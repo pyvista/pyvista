@@ -159,6 +159,17 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_clip_box(self, mocker: MockerFixture):
+        f = self._get_callable("clip_box")
+
+        kwargs = self._get_default_kwargs(f)
+        kwargs["bounds"] = [1.0] * 6
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
     def case_clip_with_function(self, mocker: MockerFixture, mock_vtk):
         f = self._get_callable("_clip_with_function")
 

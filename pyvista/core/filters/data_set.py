@@ -293,6 +293,7 @@ class DataSetFilters:
         invert=True,
         factor=0.35,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         merge_points=True,
         crinkle=False,
     ):
@@ -357,7 +358,7 @@ class DataSetFilters:
                 """Get a section of the given range (internal helper)."""
                 return dmax - ((dmax - dmin) * factor)
 
-            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
+            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
             xmin = _get_quarter(xmin, xmax)
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
@@ -380,10 +381,10 @@ class DataSetFilters:
         if len(bounds) not in [3, 6, 12]:
             raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) == 3:
-            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
+            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -395,7 +396,7 @@ class DataSetFilters:
             # invert the clip if needed
             port = 1
             alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
+        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box', algo_hook=algo_hook)
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
