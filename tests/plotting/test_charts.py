@@ -1072,8 +1072,7 @@ def test_charts(pl):
     # Test deep_clean
     pl.add_chart(top_left, bottom_right)
     pl.deep_clean()
-    assert len(pl.renderer._charts) == 0
-    assert pl.renderer._charts._scene is None
+    assert pl.renderer._charts is None
 
     pl.add_chart(top_left, bottom_right)
     pl.clear()  # also calls deep_clean()
