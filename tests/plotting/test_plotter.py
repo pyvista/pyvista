@@ -504,7 +504,7 @@ def test_legend_font(sphere):
 
 @pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
 def test_edge_opacity(sphere):
-    edge_opacity = np.random.random_sample()
+    edge_opacity = random.default_rng().random_sample()
     pl = pv.Plotter(sphere)
     actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
     assert actor.prop.edge_opacity == edge_opacity
