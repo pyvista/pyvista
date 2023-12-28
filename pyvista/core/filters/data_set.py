@@ -1923,6 +1923,7 @@ class DataSetFilters:
         name='Texture Coordinates',
         use_bounds=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Texture map this dataset to a user defined plane.
 
@@ -1973,7 +1974,7 @@ class DataSetFilters:
         """
         if use_bounds:
             if isinstance(use_bounds, (int, bool)):
-                b = self.GetBounds()
+                b = self.GetBounds()  # type: ignore[attr-defined]
             origin = [b[0], b[2], b[4]]  # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
             point_v = [b[0], b[3], b[4]]  # TOP LEFT CORNER
@@ -1985,19 +1986,19 @@ class DataSetFilters:
             alg.SetPoint1(point_u)  # BOTTOM RIGHT CORNER
             alg.SetPoint2(point_v)  # TOP LEFT CORNER
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Texturing Map to Plane')
+        _update_alg(alg, progress_bar, 'Texturing Map to Plane', algo_hook=algo_hook)
         output = _get_output(alg)
         if not inplace:
             return output
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
-        otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(texture_coordinates)
-        self.GetPointData().AddArray(texture_coordinates)
+        otc = self.GetPointData().GetTCoords()  # type: ignore[attr-defined]
+        self.GetPointData().SetTCoords(texture_coordinates)  # type: ignore[attr-defined]
+        self.GetPointData().AddArray(texture_coordinates)  # type: ignore[attr-defined]
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
-            self.GetPointData().AddArray(otc)
+            self.GetPointData().AddArray(otc)  # type: ignore[attr-defined]
         return self
 
     def texture_map_to_sphere(
@@ -4186,6 +4187,7 @@ class DataSetFilters:
         minimum_number_of_loop_points=4,
         compute_vorticity=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Generate evenly spaced streamlines on a 2D dataset.
 
@@ -4298,10 +4300,10 @@ class DataSetFilters:
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
         if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
+            self.set_active_scalars(vectors)  # type: ignore[attr-defined]
+            self.set_active_vectors(vectors)  # type: ignore[attr-defined]
         elif vectors is None:
-            pyvista.set_default_active_vectors(self)
+            pyvista.set_default_active_vectors(self)  # type: ignore[arg-type]
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -4343,7 +4345,12 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
-        _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
+        _update_alg(
+            alg,
+            progress_bar,
+            'Generating Evenly Spaced Streamlines on a 2D Dataset',
+            algo_hook=algo_hook,
+        )
         return _get_output(alg)
 
     def decimate_boundary(self, target_reduction=0.5, progress_bar=False):
@@ -5217,7 +5224,7 @@ class DataSetFilters:
         _update_alg(surf_filter, progress_bar, 'Extracting Surface', algo_hook=algo_hook)
         return _get_output(surf_filter)
 
-    def surface_indices(self, progress_bar=False):
+    def surface_indices(self, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Return the surface indices of a grid.
 
         Parameters
@@ -5241,7 +5248,9 @@ class DataSetFilters:
         pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
 
         """
-        surf = DataSetFilters.extract_surface(self, pass_cellid=True, progress_bar=progress_bar)
+        surf = DataSetFilters.extract_surface(
+            self, pass_cellid=True, progress_bar=progress_bar, algo_hook=algo_hook
+        )
         return surf.point_data['vtkOriginalPointIds']
 
     def extract_feature_edges(
@@ -5336,6 +5345,7 @@ class DataSetFilters:
         inplace=False,
         main_has_priority=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Join one or many other grids to this grid.
 
@@ -5415,11 +5425,11 @@ class DataSetFilters:
         if main_has_priority:
             append_filter.AddInputData(self)
 
-        _update_alg(append_filter, progress_bar, 'Merging')
+        _update_alg(append_filter, progress_bar, 'Merging', algo_hook=algo_hook)
         merged = _get_output(append_filter)
         if inplace:
             if type(self) is type(merged):
-                self.deep_copy(merged)
+                self.deep_copy(merged)  # type: ignore[attr-defined]
                 return self
             else:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
@@ -5448,7 +5458,11 @@ class DataSetFilters:
         return merged
 
     def compute_cell_quality(
-        self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False
+        self,
+        quality_measure='scaled_jacobian',
+        null_value=-1.0,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -5574,7 +5588,7 @@ class DataSetFilters:
             )
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
-        _update_alg(alg, progress_bar, 'Computing Cell Quality')
+        _update_alg(alg, progress_bar, 'Computing Cell Quality', algo_hook=algo_hook)
         return _get_output(alg)
 
     def compute_derivative(

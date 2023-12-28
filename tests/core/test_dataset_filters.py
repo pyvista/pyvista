@@ -105,19 +105,23 @@ def mock_vtk(mocker: MockerFixture):
 
 class Cases_update_alg:
     raw_funcs = [
-        'cell_centers',
-        'cell_data_to_point_data',
-        'compute_cell_sizes',
-        'delaunay_3d',
-        'extract_all_edges',
-        'extract_geometry',
-        'extract_surface',
-        'integrate_data',
-        'point_data_to_cell_data',
+        "cell_centers",
+        "cell_data_to_point_data",
+        "compute_cell_quality",
+        "compute_cell_sizes",
+        "ctp",
+        "delaunay_3d",
+        "extract_all_edges",
+        "extract_geometry",
+        "extract_surface",
+        "integrate_data",
+        "merge",
         "ptc",
-        'slice_implicit',
-        'texture_map_to_sphere',
-        'triangulate',
+        "streamlines_evenly_spaced_2D",
+        "surface_indices",
+        "texture_map_to_plane",
+        "texture_map_to_sphere",
+        "triangulate",
     ]
 
     def _get_callable(self, func: str):
@@ -125,10 +129,11 @@ class Cases_update_alg:
 
     def _get_default_kwargs(self, f: Callable):
         sig = inspect.signature(f)
+
         return {
             k: MagicMock()
             for k, v in sig.parameters.items()
-            if v.kind not in (v.VAR_KEYWORD, v.VAR_POSITIONAL)
+            if (v.kind not in (v.VAR_KEYWORD, v.VAR_POSITIONAL) and v.default is v.empty)
         }
 
     @case
@@ -176,6 +181,7 @@ class Cases_update_alg:
         m.points.dtype = np.float32
         kwargs["self"] = m
         kwargs["trans"] = np.full((4, 4), 1)
+        kwargs["transform_all_input_vectors"] = True
         kwargs["algo_hook"] = mocker.Mock()
 
         return f, kwargs
