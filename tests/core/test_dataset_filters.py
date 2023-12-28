@@ -109,7 +109,7 @@ class Cases_update_alg:
         'extract_surface',
         'integrate_data',
         'point_data_to_cell_data',
-        'sample',
+        "ptc",
         'slice_implicit',
         'texture_map_to_sphere',
         'triangulate',
@@ -121,7 +121,7 @@ class Cases_update_alg:
     def _get_default_kwargs(self, f: Callable, mocker: MockerFixture):
         sig = inspect.signature(f)
         return {
-            k: mocker.MagicMock(pv.DataSet)
+            k: mocker.MagicMock()
             for k, v in sig.parameters.items()
             if v.kind not in (v.VAR_KEYWORD, v.VAR_POSITIONAL)
         }
@@ -129,8 +129,20 @@ class Cases_update_alg:
     @case
     @parametrize(func=raw_funcs)
     def case_raw(self, func: str, mocker: MockerFixture):
+        """Methods that do not require special inputs"""
         f = self._get_callable(func)
         kwargs = self._get_default_kwargs(f, mocker)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    def case_sample(self, mocker: MockerFixture):
+        """Sample method"""
+        f = self._get_callable("sample")
+
+        kwargs = self._get_default_kwargs(f, mocker)
+        kwargs["target"] = mocker.MagicMock(pv.DataSet)
         kwargs["algo_hook"] = mocker.Mock()
 
         return f, kwargs
