@@ -73,13 +73,12 @@ repos:
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
-#    additional_dependencies: [
-#    "mypy-extensions==1.0.0",
-#    "toml==0.10.2",
-#    "numpy>=1.21",
-#    # "pyvista>=0.44"
-#    ]
-    language: system
+    additional_dependencies: [
+      "mypy-extensions==1.0.0",
+      "toml==0.10.2",
+      "numpy>=1.21",
+      "https://github.com/user27182/npt-promote/tarball/main"
+    ]
 
 - repo: https://github.com/asottile/pyupgrade
   rev: v3.15.0
