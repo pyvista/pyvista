@@ -57,6 +57,12 @@ p.show()
 # Volume Rendering
 # ~~~~~~~~~~~~~~~~
 # Now let's see an example on a 3D dataset with volume rendering:
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 data = examples.download_brain()
 
 smoothed_data = data.gaussian_smooth(std_dev=3.0)

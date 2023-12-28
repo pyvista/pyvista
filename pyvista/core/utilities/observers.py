@@ -208,7 +208,7 @@ class ProgressMonitor:
     def __init__(self, algorithm, message=""):
         """Initialize observer."""
         try:
-            from tqdm import tqdm  # noqa
+            from tqdm import tqdm  # noqa: F401
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent

@@ -1,7 +1,7 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 
@@ -162,6 +162,46 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
+
+    def cast_to_polydata(self) -> pyvista.PolyData:
+        """Cast this cell to PolyData.
+
+        Can only be used for 0D, 1D, or 2D cells.
+
+        Returns
+        -------
+        pyvista.PolyData
+            This cell cast to a :class:`pyvista.PolyData`.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_sphere()
+        >>> cell = mesh.get_cell(0)
+        >>> grid = cell.cast_to_polydata()
+        >>> grid  # doctest: +SKIP
+        PolyData (0x7f09ae437b80)
+          N Cells:    1
+          N Points:   3
+          N Strips:   0
+           X Bounds:   0.000e+00, 1.000e+01
+          Y Bounds:   0.000e+00, 2.500e+01
+          Z Bounds:   -1.270e+02, -1.250e+02
+          N Arrays:   0
+
+        """
+        cells = [len(self.point_ids)] + list(range(len(self.point_ids)))
+        if self.dimension == 0:
+            return pyvista.PolyData(self.points.copy(), verts=cells)
+        if self.dimension == 1:
+            return pyvista.PolyData(self.points.copy(), lines=cells)
+        if self.dimension == 2:
+            if self.type == CellType.TRIANGLE_STRIP:
+                return pyvista.PolyData(self.points.copy(), strips=cells)
+            else:
+                return pyvista.PolyData(self.points.copy(), faces=cells)
+        else:
+            raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
@@ -726,6 +766,25 @@ class CellArray(_vtk.vtkCellArray):
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
+    @classmethod
+    def from_irregular_cells(cls, cells: Sequence[IntVector]) -> pyvista.CellArray:
+        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+
+        Parameters
+        ----------
+        cells : numpy.ndarray or list[list[int]]
+            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+
+        Returns
+        -------
+        pyvista.CellArray
+            Constructed ``CellArray``.
+        """
+        offsets = np.cumsum([len(c) for c in cells])
+        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        return cls.from_arrays(offsets, connectivity)
+
 
 # The following methods would be much nicer bound to CellArray,
 # but then they wouldn't be available on bare vtkCellArrays. In the future,
@@ -752,3 +811,13 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
     offsets = _get_offset_array(cellarr)
     cell_size = offsets[1] - offsets[0]
     return cells.reshape(-1, cell_size)
+
+
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> Tuple[NumpyIntArray, ...]:
+    """Return a tuple of length n_cells of each cell's point indices."""
+    cells = _get_connectivity_array(cellarr)
+    if len(cells) == 0:
+        return ()
+
+    offsets = _get_offset_array(cellarr)
+    return tuple(np.split(cells, offsets[1:-1]))

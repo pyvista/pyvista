@@ -176,7 +176,7 @@ def test_invalid_file():
 
 def test_lines_on_init():
     lines = [2, 0, 1, 3, 2, 3, 4]
-    points = np.random.random((5, 3))
+    points = np.random.default_rng().random((5, 3))
     pd = pv.PolyData(points, lines=lines)
     assert not pd.faces.size
     assert np.array_equal(pd.lines, lines)
@@ -284,6 +284,13 @@ def test_ray_trace(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
     assert np.any(points)
     assert np.any(ind)
+
+
+def test_ray_trace_origin():
+    # https://github.com/pyvista/pyvista/issues/5372
+    plane = pv.Plane(i_resolution=1, j_resolution=1)
+    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    assert len(cells) == 1 and cells[0] == 0
 
 
 def test_multi_ray_trace(sphere):
@@ -809,7 +816,7 @@ def test_remove_points_fail(sphere, plane):
 
 
 def test_vertice_cells_on_read(tmpdir):
-    point_cloud = pv.PolyData(np.random.rand(100, 3))
+    point_cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
     point_cloud.save(filename)
     recovered = pv.read(filename)
@@ -820,9 +827,9 @@ def test_vertice_cells_on_read(tmpdir):
 
 def test_center_of_mass(sphere):
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
-    cloud = pv.PolyData(np.random.rand(100, 3))
+    cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     assert len(cloud.center_of_mass()) == 3
-    cloud['weights'] = np.random.rand(cloud.n_points)
+    cloud['weights'] = np.random.default_rng().random(cloud.n_points)
     center = cloud.center_of_mass(True)
     assert len(center) == 3
 
@@ -830,8 +837,8 @@ def test_center_of_mass(sphere):
 def test_project_points_to_plane():
     # Define a simple Gaussian surface
     n = 20
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -886,8 +893,8 @@ def test_smooth_inplace(sphere):
 
 def test_delaunay_2d():
     n = 20
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -1107,3 +1114,38 @@ def test_regular_faces_mutable():
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
+
+
+def _assert_irregular_faces_equal(faces, expected):
+    assert len(faces) == len(expected)
+    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+
+
+def test_irregular_faces():
+    points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    expected_faces = [4, 0, 1, 2, 3, 3, 0, 3, 4, 3, 0, 4, 1, 3, 3, 2, 4, 3, 2, 1, 4]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    assert np.array_equal(mesh.faces, expected_faces)
+    _assert_irregular_faces_equal(mesh.irregular_faces, expected=faces)
+
+
+def test_set_irregular_faces():
+    mesh = pv.Pyramid().extract_surface()
+    flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
+    mesh.irregular_faces = flipped_faces
+    _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)
+
+
+def test_empty_irregular_faces():
+    mesh = pv.PolyData()
+    assert mesh.irregular_faces == ()
+
+
+def test_irregular_faces_mutable():
+    points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    mesh.irregular_faces[0][0] = 4
+    expected = [(4, 1, 2, 3), *faces[1:]]
+    _assert_irregular_faces_equal(mesh.irregular_faces, expected)
