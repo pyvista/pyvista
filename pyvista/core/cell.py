@@ -637,6 +637,18 @@ class CellArray(_vtk.vtkCellArray):
                 n_cells = cells.shape[0]
 
         self.SetCells(n_cells, vtk_idarr)
+
+        # Check that the size of cells array matches expectation.  Errors here
+        # are likely due to an invalid connectivity array. VTK SetCells can
+        # read memory outside of the array bounds if the padding is incorrect.
+        # See https://github.com/pyvista/pyvista/issues/5217
+        if self.cells.size != cells.size:
+            raise ValueError(
+                f"Cells array size ({cells.size}) does not match expected size"
+                f" ({self.cells.size}). This is likely due to an invalid"
+                " connectivity array."
+            )
+
         self.__offsets = self.__connectivity = None
         return None
 
