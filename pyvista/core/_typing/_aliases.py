@@ -12,7 +12,9 @@ Number = Union[int, float]
 #  `Vector[Any]` should not be allowed.
 Vector = _ArrayLike1D[_NumType]
 Matrix = _ArrayLike2D[_NumType]
-Array = Union[_ArrayLike2D[_NumType], _ArrayLike3D[_NumType], _ArrayLike4D[_NumType]]
+Array = Union[
+    _ArrayLike1D[_NumType], _ArrayLike2D[_NumType], _ArrayLike3D[_NumType], _ArrayLike4D[_NumType]
+]
 
 TransformLike = Union[Matrix[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
 BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
