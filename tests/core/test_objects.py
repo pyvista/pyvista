@@ -18,7 +18,7 @@ def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
     nr, nc = 50, 3
-    arrays = np.random.rand(nr, nc)
+    arrays = np.random.default_rng().random((nr, nc))
 
     # Create from 2D array
     table = pv.Table(arrays)
@@ -31,7 +31,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(ValueError):
-        pv.Table(np.random.rand(100, 2, 3))
+        pv.Table(np.random.default_rng().random((100, 2, 3)))
 
     # Create from 1D array
     table = pv.Table(arrays[:, 0])
@@ -103,7 +103,7 @@ def test_table_init(tmpdir):
 
 def test_table_row_arrays():
     nr, nc = 50, 3
-    arrays = np.random.rand(nr, nc)
+    arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table()
     for i in range(nc):
         table[f'foo{i}'] = arrays[:, i]
@@ -176,7 +176,7 @@ def test_table_row_uint8():
 
 def test_table_repr():
     nr, nc = 50, 3
-    arrays = np.random.rand(nr, nc)
+    arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table(arrays)
     text = table._repr_html_()
     assert isinstance(text, str)
@@ -189,7 +189,7 @@ def test_table_repr():
 @pytest.mark.skipif(pd is None, reason="Requires Pandas")
 def test_table_pandas():
     nr, nc = 50, 3
-    arrays = np.random.rand(nr, nc)
+    arrays = np.random.default_rng().random((nr, nc))
     df = pd.DataFrame()
     for i in range(nc):
         df[f'foo{i}'] = arrays[:, i].copy()
@@ -203,7 +203,7 @@ def test_table_pandas():
 
 def test_table_iter():
     nr, nc = 50, 3
-    arrays = np.random.rand(nr, nc)
+    arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table(arrays)
     for i, array in enumerate(table):
         assert np.allclose(array, arrays[:, i])
@@ -211,7 +211,7 @@ def test_table_iter():
 
 def test_get_data_range():
     nr, nc = 50, 3
-    arrays = np.random.rand(nr, nc)
+    arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table(arrays)
     nanmin, nanmax = table.get_data_range()
     assert nanmin == np.nanmin(arrays[:, 0])

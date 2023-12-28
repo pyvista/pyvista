@@ -205,6 +205,7 @@ except ImportError:  # pragma: no cover
 from vtkmodules.vtkCommonExecutionModel import (
     vtkAlgorithm,
     vtkAlgorithmOutput,
+    vtkCompositeDataPipeline,
     vtkImageToStructuredGrid,
 )
 from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4

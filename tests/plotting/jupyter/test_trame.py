@@ -394,7 +394,7 @@ def test_export_texture(tmpdir, skip_check_gc):
 
 def test_export_verts(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
-    data = pv.PolyData(np.random.rand(100, 3))
+    data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
     plotter = pv.Plotter()
     plotter.add_mesh(data)

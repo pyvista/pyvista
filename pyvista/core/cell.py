@@ -1,7 +1,7 @@
 """Contains the pyvista.Cell class."""
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 
@@ -768,6 +768,25 @@ class CellArray(_vtk.vtkCellArray):
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
+    @classmethod
+    def from_irregular_cells(cls, cells: Sequence[IntVector]) -> pyvista.CellArray:
+        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+
+        Parameters
+        ----------
+        cells : numpy.ndarray or list[list[int]]
+            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+
+        Returns
+        -------
+        pyvista.CellArray
+            Constructed ``CellArray``.
+        """
+        offsets = np.cumsum([len(c) for c in cells])
+        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        return cls.from_arrays(offsets, connectivity)
+
 
 # The following methods would be much nicer bound to CellArray,
 # but then they wouldn't be available on bare vtkCellArrays. In the future,
@@ -794,3 +813,13 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     offsets = _get_offset_array(cellarr)
     cell_size = offsets[1] - offsets[0]
     return cells.reshape(-1, cell_size)
+
+
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> Tuple[NumpyIntArray, ...]:
+    """Return a tuple of length n_cells of each cell's point indices."""
+    cells = _get_connectivity_array(cellarr)
+    if len(cells) == 0:
+        return ()
+
+    offsets = _get_offset_array(cellarr)
+    return tuple(np.split(cells, offsets[1:-1]))
