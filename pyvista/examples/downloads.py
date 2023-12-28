@@ -3924,7 +3924,7 @@ def download_osmnx_graph():  # pragma: no cover
     import pickle
 
     try:
-        import osmnx  # noqa
+        import osmnx  # noqa: F401
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
 

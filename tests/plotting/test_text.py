@@ -40,7 +40,7 @@ def test_text_prop(text):
 
 
 def test_text_position(text):
-    position = np.random.random(2)
+    position = np.random.default_rng().random(2)
     text.position = position
     assert np.all(text.position == position)
 

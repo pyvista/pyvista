@@ -26,7 +26,7 @@ def _get_sg_image_scraper():
 
 
 def html_rst(
-    figure_list, sources_dir, fig_titles='', srcsetpaths=None
+    figure_list, sources_dir, srcsetpaths=None
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
@@ -102,7 +102,7 @@ class Scraper:
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
-        image_names = list()
+        image_names = []
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
         for plotter in figures.values():
@@ -155,7 +155,7 @@ class DynamicScraper:  # pragma: no cover
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
-        image_names = list()
+        image_names = []
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting.plotter._ALL_PLOTTERS
         # read global option  if it exists
