@@ -576,7 +576,7 @@ class TextProperty(_vtk.vtkTextProperty):
         Returns
         -------
         bool
-            If italic of the text.
+            If text is italic.
 
         """
         return self.GetItalic()
@@ -592,7 +592,7 @@ class TextProperty(_vtk.vtkTextProperty):
         Returns
         -------
         bool
-            If bold of the text.
+            If text is bold.
 
         """
         return self.GetBold()
