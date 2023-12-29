@@ -11,6 +11,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import IntMatrix, IntVector, NumpyIntArray
 from .celltype import CellType
 from .dataset import DataObject
+from .errors import CellSizeError
 from .utilities.cells import ncells_from_cells, numpy_to_idarr
 
 
@@ -643,10 +644,12 @@ class CellArray(_vtk.vtkCellArray):
         # read memory outside of the array bounds if the padding is incorrect.
         # See https://github.com/pyvista/pyvista/issues/5217
         if self.cells.size != cells.size:
-            raise ValueError(
-                f"Cells array size ({cells.size}) does not match expected size"
-                f" ({self.cells.size}). This is likely due to an invalid"
-                " connectivity array."
+            raise CellSizeError(
+                message=(
+                    f"Cell array size is invalid. Size ({cells.size}) does not"
+                    f" match expected size ({self.cells.size}). This is likely"
+                    " due to invalid connectivity array."
+                )
             )
 
         self.__offsets = self.__connectivity = None

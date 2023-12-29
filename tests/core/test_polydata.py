@@ -8,7 +8,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
 
 radius = 0.5
 
@@ -189,7 +189,7 @@ def test_invalid_connectivity_arrays(arr, value):
     generator = np.random.default_rng(seed=None)
     points = generator.random((10, 3))
     mesh = pv.PolyData(points)
-    with pytest.raises(ValueError, match="invalid connectivity array"):
+    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
         setattr(mesh, arr, value)
 
 
