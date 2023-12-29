@@ -2426,6 +2426,7 @@ class DataSetFilters:
         closest_point=None,
         inplace=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         **kwargs,
     ):
         """Find and label connected regions.
@@ -2773,7 +2774,9 @@ class DataSetFilters:
                 f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
             )
 
-        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
+        _update_alg(
+            alg, progress_bar, 'Finding and Labeling Connected Regions.', algo_hook=algo_hook
+        )
         output = _get_output(alg)
 
         # Process output
@@ -5602,6 +5605,7 @@ class DataSetFilters:
         faster=False,
         preference='point',
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Compute derivative-based quantities of point/cell scalar field.
 
@@ -5677,8 +5681,8 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
@@ -5712,7 +5716,7 @@ class DataSetFilters:
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Derivative')
+        _update_alg(alg, progress_bar, 'Computing Derivative', algo_hook=algo_hook)
         return _get_output(alg)
 
     def shrink(self, shrink_factor=1.0, progress_bar=False):

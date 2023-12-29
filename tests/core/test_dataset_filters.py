@@ -170,6 +170,21 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
+    @pytest.mark.usefixtures("mock_vtk")
+    @parametrize(func=["compute_derivative", "connectivity"])
+    def case_compute_derivative_and_connectivity(self, mocker: MockerFixture, func):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock()
+        m.active_scalars_info = "foo", "bar"
+        kwargs["self"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
     def case_clip_with_function(self, mocker: MockerFixture, mock_vtk):
         f = self._get_callable("_clip_with_function")
 
