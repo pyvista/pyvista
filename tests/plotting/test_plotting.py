@@ -969,6 +969,19 @@ def test_add_point_labels_shape(shape, verify_image_cache):
     plotter.show()
 
 
+@pytest.mark.parametrize('justification_horizontal', ['left', 'center', 'right'])
+@pytest.mark.parametrize('justification_vertical', ['bottom', 'center', 'top'])
+def test_add_point_labels_justification(justification_horizontal, justification_vertical):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        justification_horizontal=justification_horizontal,
+        justification_vertical=justification_vertical,
+    )
+    plotter.show()
+
+
 def test_set_background():
     plotter = pv.Plotter()
     plotter.set_background('k')
