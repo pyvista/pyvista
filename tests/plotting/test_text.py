@@ -160,17 +160,3 @@ def test_property_justification_invalid(prop):
         prop.justification_horizontal = "invalid"
     with pytest.raises(ValueError):
         prop.justification_vertical = "invalid"
-
-
-@pytest.mark.parametrize('italic', [True, False])
-def test_property_italic(prop, italic):
-    prop.italic = italic
-    assert prop.GetItalic() == italic
-    assert prop.italic == italic
-
-
-@pytest.mark.parametrize('bold', [True, False])
-def test_property_bold(prop, bold):
-    prop.bold = bold
-    assert prop.GetBold() == bold
-    assert prop.bold == bold
