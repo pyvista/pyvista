@@ -160,6 +160,21 @@ class Cases_update_alg:
 
     @case
     @pytest.mark.usefixtures("mock_vtk")
+    def case_contour(self, mocker: MockerFixture):
+        f = self._get_callable("contour")
+
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock()
+        m.n_arrays = 1
+        m.active_scalars_info = pv.FieldAssociation.POINT, "bar"
+        kwargs["self"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
     def case_clip_box(self, mocker: MockerFixture):
         f = self._get_callable("clip_box")
 

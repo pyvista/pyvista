@@ -1735,6 +1735,7 @@ class DataSetFilters:
         preference='point',
         method='contour',
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Contour an input self by an array.
 
@@ -1862,7 +1863,7 @@ class DataSetFilters:
             scalars_name = scalars
         elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars
+            self[scalars_name] = scalars  # type: ignore[index]
         elif scalars is not None:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -1870,7 +1871,7 @@ class DataSetFilters:
             )
 
         # Make sure the input has scalars to contour on
-        if self.n_arrays < 1:
+        if self.n_arrays < 1:  # type: ignore[attr-defined]
             raise ValueError('Input dataset for the contour filter must have scalar.')
 
         alg.SetInputDataObject(self)
@@ -1879,8 +1880,8 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars_name = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars_name = self.active_scalars_info  # type: ignore[attr-defined]
         else:
             field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
@@ -1897,7 +1898,7 @@ class DataSetFilters:
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars_name)
+                rng = self.get_data_range(scalars_name)  # type: ignore[attr-defined]
             alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
@@ -1905,7 +1906,7 @@ class DataSetFilters:
                 alg.SetValue(i, val)
         else:
             raise TypeError('isosurfaces not understood.')
-        _update_alg(alg, progress_bar, 'Computing Contour')
+        _update_alg(alg, progress_bar, 'Computing Contour', algo_hook=algo_hook)
         output = _get_output(alg)
 
         # some of these filters fail to correctly name the array
