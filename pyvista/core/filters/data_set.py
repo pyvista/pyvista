@@ -1622,6 +1622,7 @@ class DataSetFilters:
         preference='point',
         set_active=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Generate scalar values on a dataset.
 
@@ -1694,16 +1695,16 @@ class DataSetFilters:
         """
         # Fix the projection line:
         if low_point is None:
-            low_point = list(self.center)
-            low_point[2] = self.bounds[4]
+            low_point = list(self.center)  # type: ignore[attr-defined]
+            low_point[2] = self.bounds[4]  # type: ignore[attr-defined]
         if high_point is None:
-            high_point = list(self.center)
-            high_point[2] = self.bounds[5]
+            high_point = list(self.center)  # type: ignore[attr-defined]
+            high_point[2] = self.bounds[5]  # type: ignore[attr-defined]
         # Fix scalar_range:
         if scalar_range is None:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
-            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)
+            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
         elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
@@ -1716,12 +1717,12 @@ class DataSetFilters:
         alg.SetScalarRange(scalar_range)
         alg.SetLowPoint(low_point)
         alg.SetHighPoint(high_point)
-        _update_alg(alg, progress_bar, 'Computing Elevation')
+        _update_alg(alg, progress_bar, 'Computing Elevation', algo_hook=algo_hook)
         # Decide on updating active scalars array
         output = _get_output(alg)
         if not set_active:
             # 'Elevation' is automatically made active by the VTK filter
-            output.point_data.active_scalars_name = self.point_data.active_scalars_name
+            output.point_data.active_scalars_name = self.point_data.active_scalars_name  # type: ignore[attr-defined]
         return output
 
     def contour(

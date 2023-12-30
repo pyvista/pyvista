@@ -123,6 +123,7 @@ class Cases_update_alg:
         "texture_map_to_plane",
         "texture_map_to_sphere",
         "triangulate",
+        "elevation",
     ]
 
     def _get_callable(self, func: str):
@@ -155,6 +156,18 @@ class Cases_update_alg:
 
         kwargs = self._get_default_kwargs(f)
         kwargs["target"] = mocker.MagicMock(pv.DataSet)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_elevation(self, mocker: MockerFixture):
+        f = self._get_callable("elevation")
+
+        kwargs = self._get_default_kwargs(f)
+        kwargs["low_point"] = [0, 0, 1]
+        kwargs["high_point"] = [0, 0, 1]
         kwargs["algo_hook"] = mocker.Mock()
 
         return f, kwargs
