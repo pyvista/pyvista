@@ -639,10 +639,7 @@ class CellArray(_vtk.vtkCellArray):
 
         self.SetCells(n_cells, vtk_idarr)
 
-        # Check that the size of cells array matches expectation.  Errors here
-        # are likely due to an invalid connectivity array. VTK SetCells can
-        # read memory outside of the array bounds if the padding is incorrect.
-        # See https://github.com/pyvista/pyvista/issues/5217
+        # https://github.com/pyvista/pyvista/pull/5404
         if self.cells.size != cells.size:
             raise CellSizeError(
                 message=(
