@@ -4358,7 +4358,9 @@ class DataSetFilters:
         )
         return _get_output(alg)
 
-    def decimate_boundary(self, target_reduction=0.5, progress_bar=False):
+    def decimate_boundary(
+        self, target_reduction=0.5, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Return a decimated version of a triangulation of the boundary.
 
         Only the outer surface of the input dataset will be considered.
@@ -4385,7 +4387,7 @@ class DataSetFilters:
 
         """
         return (
-            self.extract_geometry(progress_bar=progress_bar)
+            self.extract_geometry(progress_bar=progress_bar, algo_hook=algo_hook)
             .triangulate()
             .decimate(target_reduction)
         )

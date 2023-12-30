@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import inspect
 import itertools
 import os
@@ -168,6 +169,20 @@ class Cases_update_alg:
         m = mocker.MagicMock()
         m.n_arrays = 1
         m.active_scalars_info = pv.FieldAssociation.POINT, "bar"
+        kwargs["self"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_decimate_boundary(self, mocker: MockerFixture):
+        f = self._get_callable("decimate_boundary")
+
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock(filters.DataSetFilters)
+        m.extract_geometry = functools.partial(filters.DataSetFilters.extract_geometry, m)
         kwargs["self"] = m
         kwargs["algo_hook"] = mocker.Mock()
 
