@@ -123,7 +123,6 @@ class Cases_update_alg:
         "texture_map_to_plane",
         "texture_map_to_sphere",
         "triangulate",
-        "elevation",
     ]
 
     def _get_callable(self, func: str):
