@@ -978,6 +978,9 @@ def test_add_point_labels_justification(justification_horizontal, justification_
         ['hello world'],
         justification_horizontal=justification_horizontal,
         justification_vertical=justification_vertical,
+        shape_opacity=0.0,
+        background_color='grey',
+        background_opacity=1.0,
     )
     plotter.show()
 
