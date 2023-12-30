@@ -5411,9 +5411,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Should be either "left", "center" or "right".
 
             .. warning::
-                If the justification is not "left" and "center",
+                If the justification is not default,
                 the shape will be out of alignment with the label.
-                If you use other than "left" and "center",
+                If you use other than default,
                 Please use the background color.
                 See: https://github.com/pyvista/pyvista/pull/5407
 
@@ -5422,9 +5422,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Should be either "bottom", "center" or "top".
 
             .. warning::
-                If the justification is not "left" and "center",
+                If the justification is not default,
                 the shape will be out of alignment with the label.
-                If you use other than "left" and "center",
+                If you use other than default,
                 Please use the background color.
                 See: https://github.com/pyvista/pyvista/pull/5407
 
