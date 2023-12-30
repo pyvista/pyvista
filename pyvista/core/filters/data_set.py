@@ -5075,7 +5075,14 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(self, ind, adjacent_cells=True, include_cells=True, progress_bar=False):
+    def extract_points(
+        self,
+        ind,
+        adjacent_cells=True,
+        include_cells=True,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -5120,9 +5127,9 @@ class DataSetFilters:
             adjacent_cells = True
         if not adjacent_cells:
             # Build array of point indices to be removed.
-            ind_rem = np.ones(self.n_points, dtype='bool')
+            ind_rem = np.ones(self.n_points, dtype='bool')  # type: ignore[attr-defined]
             ind_rem[ind] = False
-            ind = np.arange(self.n_points)[ind_rem]
+            ind = np.arange(self.n_points)[ind_rem]  # type: ignore[attr-defined]
             # Invert selection
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.INVERSE(), 1)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
@@ -5136,7 +5143,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Points')
+        _update_alg(extract_sel, progress_bar, 'Extracting Points', algo_hook=algo_hook)
         return _get_output(extract_sel)
 
     def extract_surface(

@@ -213,6 +213,17 @@ class Cases_update_alg:
 
     @case
     @pytest.mark.usefixtures("mock_vtk")
+    def case_extract_points(self, mocker: MockerFixture):
+        f = self._get_callable("extract_points")
+
+        kwargs = self._get_default_kwargs(f)
+        kwargs["ind"] = [1]
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
     @parametrize(func=["compute_derivative", "connectivity"])
     def case_compute_derivative_and_connectivity(self, mocker: MockerFixture, func):
         f = self._get_callable(func)
