@@ -5511,13 +5511,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         label_mapper.SetBackgroundOpacity(shape_opacity)
         label_mapper.SetMargin(margin)
 
-        textprop = hier.GetTextProperty()
-        textprop.SetItalic(italic)
-        textprop.SetBold(bold)
-        textprop.SetFontSize(font_size)
-        textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).float_rgb)
-        textprop.SetShadow(shadow)
+        text_property = pyvista.TextProperty(
+            italic=italic,
+            bold=bold,
+            font_size=font_size,
+            font_family=font_family,
+            color=text_color,
+            shadow=shadow,
+        )
+        hier.SetTextProperty(text_property)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
         self.remove_actor(f'{name}-labels', reset_camera=False)
