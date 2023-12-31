@@ -123,6 +123,8 @@ class Cases_update_alg:
         "texture_map_to_plane",
         "texture_map_to_sphere",
         "triangulate",
+        "outline_corners",
+        "outline",
     ]
 
     def _get_callable(self, func: str):
@@ -288,6 +290,7 @@ class Cases_update_alg:
 def test_update_alg_called(f: Callable, kwargs: dict, mocker: MockerFixture):
     mock = mocker.patch.object(filters.data_set, "_update_alg")
     _ = mocker.patch.object(filters.data_set, "_get_output")
+    _ = mocker.patch.object(filters.data_set, "wrap")
 
     f(**kwargs)
 

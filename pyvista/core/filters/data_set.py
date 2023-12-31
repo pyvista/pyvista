@@ -1418,7 +1418,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def outline(self, generate_faces=False, progress_bar=False):
+    def outline(self, generate_faces=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Produce an outline of the full extent for the input dataset.
 
         Parameters
@@ -1450,10 +1450,10 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(self)
         alg.SetGenerateFaces(generate_faces)
-        _update_alg(alg, progress_bar, 'Producing an outline')
+        _update_alg(alg, progress_bar, 'Producing an outline', algo_hook=algo_hook)
         return wrap(alg.GetOutputDataObject(0))
 
-    def outline_corners(self, factor=0.2, progress_bar=False):
+    def outline_corners(self, factor=0.2, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Produce an outline of the corners for the input dataset.
 
         Parameters
@@ -1484,7 +1484,7 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(self)
         alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
+        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners', algo_hook=algo_hook)
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(
