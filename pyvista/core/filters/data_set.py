@@ -2196,6 +2196,7 @@ class DataSetFilters:
         clamping=False,
         rng=None,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
 
@@ -2316,8 +2317,8 @@ class DataSetFilters:
         else:
             for index, subgeom in zip(indices, geom):
                 alg.SetSourceData(index, subgeom)
-            if dataset.active_scalars is not None:
-                if dataset.active_scalars.ndim > 1:
+            if dataset.active_scalars is not None:  # type: ignore[attr-defined]
+                if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
                     alg.SetIndexModeToVector()
                 else:
                     alg.SetIndexModeToScalar()
@@ -2325,11 +2326,11 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale, preference='cell')
+            dataset.set_active_scalars(scale, preference='cell')  # type: ignore[attr-defined]
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
-                set_default_active_scalars(self)
+                set_default_active_scalars(self)  # type: ignore[arg-type]
             except MissingDataError:
                 warnings.warn("No data to use for scale. scale will be set to False.")
                 scale = False
@@ -2338,8 +2339,8 @@ class DataSetFilters:
                 scale = False
 
         if scale:
-            if dataset.active_scalars is not None:
-                if dataset.active_scalars.ndim > 1:
+            if dataset.active_scalars is not None:  # type: ignore[attr-defined]
+                if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
                     alg.SetScaleModeToScaleByVector()
                 else:
                     alg.SetScaleModeToScaleByScalar()
@@ -2347,16 +2348,16 @@ class DataSetFilters:
             alg.SetScaleModeToDataScalingOff()
 
         if isinstance(orient, str):
-            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:
+            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:  # type: ignore[attr-defined]
                 prefer = 'cell'
             else:
                 prefer = 'point'
-            dataset.set_active_vectors(orient, preference=prefer)
+            dataset.set_active_vectors(orient, preference=prefer)  # type: ignore[attr-defined]
             orient = True
 
         if orient:
             try:
-                pyvista.set_default_active_vectors(dataset)
+                pyvista.set_default_active_vectors(dataset)  # type: ignore[arg-type]
             except MissingDataError:
                 warnings.warn("No vector-like data to use for orient. orient will be set to False.")
                 orient = False
@@ -2367,14 +2368,14 @@ class DataSetFilters:
                 orient = False
 
         if scale and orient:
-            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
+            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:  # type: ignore[attr-defined]
                 raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
 
         source_data = dataset
         set_actives_on_source_data = False
 
-        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
-            orient and dataset.active_vectors_info.association == FieldAssociation.CELL
+        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (  # type: ignore[attr-defined]
+            orient and dataset.active_vectors_info.association == FieldAssociation.CELL  # type: ignore[attr-defined]
         ):
             source_data = dataset.cell_centers()
             set_actives_on_source_data = True
@@ -2382,7 +2383,7 @@ class DataSetFilters:
         # Clean the points before glyphing
         if tolerance is not None:
             small = pyvista.PolyData(source_data.points)
-            small.point_data.update(source_data.point_data)
+            small.point_data.update(source_data.point_data)  # type: ignore[attr-defined]
             source_data = small.clean(
                 point_merging=True,
                 merge_tol=tolerance,
@@ -2399,9 +2400,9 @@ class DataSetFilters:
         # scalars/vectors, so set them again
         if set_actives_on_source_data:
             if scale:
-                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
+                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')  # type: ignore[attr-defined]
             if orient:
-                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
+                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')  # type: ignore[attr-defined]
 
         if rng is not None:
             alg.SetRange(rng)
@@ -2410,7 +2411,7 @@ class DataSetFilters:
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
-        _update_alg(alg, progress_bar, 'Computing Glyphs')
+        _update_alg(alg, progress_bar, 'Computing Glyphs', algo_hook=algo_hook)
         return _get_output(alg)
 
     def connectivity(

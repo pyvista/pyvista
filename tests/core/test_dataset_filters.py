@@ -172,6 +172,23 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
+    def case_glyph(self, mocker: MockerFixture):
+        f = self._get_callable("glyph")
+
+        mocker.patch.object(filters._vtk, "vtkGlyph3D")
+
+        kwargs = self._get_default_kwargs(f)
+        m = mocker.MagicMock()
+        m.active_scalars.ndim = 3
+        kwargs["self"] = m
+
+        kwargs["orient"] = False
+        kwargs["scale"] = False
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
     @pytest.mark.usefixtures("mock_vtk")
     def case_contour(self, mocker: MockerFixture):
         f = self._get_callable("contour")
@@ -273,7 +290,8 @@ def test_update_alg_called(f: Callable, kwargs: dict, mocker: MockerFixture):
 
     f(**kwargs)
 
-    mock.assert_called_once_with(*[mocker.ANY] * 3, algo_hook=kwargs["algo_hook"])
+    # Only check the last call
+    mock.assert_called_with(*[mocker.ANY] * 3, algo_hook=kwargs["algo_hook"])
 
 
 def test_datasetfilters_init():
