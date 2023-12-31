@@ -150,8 +150,9 @@ class Cases_update_alg:
 
     @case
     @pytest.mark.usefixtures("mock_vtk")
-    def case_sample(self, mocker: MockerFixture):
-        f = self._get_callable("sample")
+    @parametrize(func=["sample", "interpolate"])
+    def case_interpolation(self, mocker: MockerFixture, func: str):
+        f = self._get_callable(func)
 
         kwargs = self._get_default_kwargs(f)
         kwargs["target"] = mocker.MagicMock(pv.DataSet)

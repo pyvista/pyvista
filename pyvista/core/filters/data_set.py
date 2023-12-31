@@ -3743,6 +3743,7 @@ class DataSetFilters:
         pass_cell_data=True,
         pass_point_data=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -3874,7 +3875,7 @@ class DataSetFilters:
             raise ValueError(f'strategy `{strategy}` not supported.')
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
-        _update_alg(interpolator, progress_bar, 'Interpolating')
+        _update_alg(interpolator, progress_bar, 'Interpolating', algo_hook=algo_hook)
         return _get_output(interpolator)
 
     def streamlines(
