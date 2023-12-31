@@ -491,7 +491,14 @@ class DataSetFilters:
         return result
 
     def clip_scalar(
-        self, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False
+        self,
+        scalars=None,
+        invert=True,
+        value=0.0,
+        inplace=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+        both=False,
     ):
         """Clip a dataset by a scalar.
 
@@ -563,18 +570,18 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         alg.SetValue(value)
         if scalars is None:
-            set_default_active_scalars(self)
+            set_default_active_scalars(self)  # type: ignore[arg-type]
         else:
-            self.set_active_scalars(scalars)
+            self.set_active_scalars(scalars)  # type: ignore[attr-defined]
 
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
 
-        _update_alg(alg, progress_bar, 'Clipping by a Scalar')
+        _update_alg(alg, progress_bar, 'Clipping by a Scalar', algo_hook=algo_hook)
         result0 = _get_output(alg)
 
         if inplace:
-            self.copy_from(result0, deep=False)
+            self.copy_from(result0, deep=False)  # type: ignore[attr-defined]
             result0 = self
 
         if both:
