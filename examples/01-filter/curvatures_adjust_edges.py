@@ -20,12 +20,9 @@ source = (
 source['Gauss_Curvature'] = source.curvature("gaussian", adjust_edges=True)
 source['Mean_Curvature'] = source.curvature("mean", adjust_edges=True)
 
-# Let's visualise what we have done.
+# Let's visualize what we have done.
 
-window_width = 1024
-window_height = 512
-
-plotter = pv.Plotter(shape=(1, 2), window_size=(window_width, window_height))
+plotter = pv.Plotter(shape=(1, 2), window_size=(1024, 512))
 
 # Create a common text property.
 text_property = pv.TextProperty()
