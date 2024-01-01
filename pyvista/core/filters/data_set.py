@@ -5021,7 +5021,9 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, invert=False, progress_bar=False):
+    def extract_cells(
+        self, ind, invert=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Return a subset of the grid.
 
         Parameters
@@ -5058,7 +5060,7 @@ class DataSetFilters:
         """
         if invert:
             _, ind = numpy_to_idarr(ind, return_ind=True)
-            ind = [i for i in range(self.n_cells) if i not in ind]
+            ind = [i for i in range(self.n_cells) if i not in ind]  # type: ignore[attr-defined]
 
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
@@ -5073,7 +5075,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Cells')
+        _update_alg(extract_sel, progress_bar, 'Extracting Cells', algo_hook=algo_hook)
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
