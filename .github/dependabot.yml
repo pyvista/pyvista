@@ -6,9 +6,11 @@ updates:
     schedule:
       interval: "monthly"
     groups:
-      dependencies:
+      trame:
         patterns:
-          - "*"
+          - "trame"
+          - "trame-vtk"
+          - "trame-vuetify"
     labels:
       - "maintenance"
       - "dependencies"
@@ -17,9 +19,10 @@ updates:
     schedule:
       interval: "monthly"
     groups:
-      dependencies:
+      artifacts:
         patterns:
-          - "*"
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
     labels:
       - "maintenance"
       - "dependencies"
