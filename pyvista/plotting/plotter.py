@@ -65,7 +65,7 @@ from .scalar_bars import ScalarBars
 from .text import CornerAnnotation, Text, TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa
+from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa: F401
 from .utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
@@ -638,7 +638,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point_cloud = np.random.random((100, 3))
+        >>> point_cloud = np.random.default_rng().random((100, 3))
         >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pv.Sphere(radius=0.02)
@@ -2011,7 +2011,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
 
-        if not all([isinstance(actor, _vtk.vtkActor) for actor in actors]):
+        if not all(isinstance(actor, _vtk.vtkActor) for actor in actors):
             raise TypeError(
                 f'Expected a vtkActor instance or a list of vtkActors, got '
                 f'{[type(actor) for actor in actors]} instead.'
@@ -2153,6 +2153,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def enable_rubber_band_2d_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
+
+    @wraps(RenderWindowInteractor.enable_2d_style)
+    def enable_2d_style(self):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_2d_style."""
+        self.iren.enable_2d_style()
 
     def enable_stereo_render(self):
         """Enable anaglyph stereo rendering.
@@ -3299,6 +3304,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     show_scalar_bar=False,
         ... )
 
+        Plot spheres using `points_gaussian` style and scale them by radius.
+
+        >>> N_SPHERES = 1_000_000
+        >>> pos = np.random.random((N_SPHERES, 3))
+        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> pdata = pv.PolyData(pos)
+        >>> pdata['radius'] = rad
+        >>> pdata.plot(
+        ...     style='points_gaussian',
+        ...     emissive=False,
+        ...     render_points_as_spheres=True,
+        ... )
+
         """
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
@@ -3377,6 +3395,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 roughness=roughness,
                 render=render,
                 show_vertices=show_vertices,
+                edge_opacity=edge_opacity,
                 **kwargs,
             )
             return actor
@@ -3432,6 +3451,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
+
+        if edge_opacity is None and pyvista.vtk_version_info >= (9, 3):
+            edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
             silhouette = self._theme.silhouette.enabled
@@ -3594,6 +3616,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting=lighting,
             line_width=line_width,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
 
         if isinstance(opacity, (float, int)):
@@ -5488,13 +5511,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         label_mapper.SetBackgroundOpacity(shape_opacity)
         label_mapper.SetMargin(margin)
 
-        textprop = hier.GetTextProperty()
-        textprop.SetItalic(italic)
-        textprop.SetBold(bold)
-        textprop.SetFontSize(font_size)
-        textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).float_rgb)
-        textprop.SetShadow(shadow)
+        text_property = pyvista.TextProperty(
+            italic=italic,
+            bold=bold,
+            font_size=font_size,
+            font_family=font_family,
+            color=text_color,
+            shadow=shadow,
+        )
+        hier.SetTextProperty(text_property)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
         self.remove_actor(f'{name}-labels', reset_camera=False)
@@ -5595,7 +5620,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> points = np.random.random((10, 3))
+        >>> points = np.random.default_rng().random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(
         ...     points, render_points_as_spheres=True, point_size=100.0
@@ -5604,7 +5629,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot using the ``'points_gaussian'`` style
 
-        >>> points = np.random.random((10, 3))
+        >>> points = np.random.default_rng().random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(points, style='points_gaussian')
         >>> pl.show()
@@ -5646,8 +5671,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> cent = np.random.random((10, 3))
-        >>> direction = np.random.random((10, 3))
+        >>> cent = np.random.default_rng().random((10, 3))
+        >>> direction = np.random.default_rng().random((10, 3))
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()
