@@ -9,8 +9,7 @@ updates:
       trame:
         patterns:
           - "trame"
-          - "trame-vtk"
-          - "trame-vuetify"
+          - "trame-*"
     labels:
       - "maintenance"
       - "dependencies"
