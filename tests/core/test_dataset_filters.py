@@ -260,19 +260,9 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
-    def case_clip_scalar(self, mocker: MockerFixture, mock_vtk):
-        f = self._get_callable("clip_scalar")
-
-        kwargs = self._get_default_kwargs(f)
-
-        mock_vtk.vtkPolyData = type(_vtk_core.vtkPolyData)
-        kwargs["algo_hook"] = mocker.Mock()
-
-        return f, kwargs
-
-    @case
-    def case_clip_with_function(self, mocker: MockerFixture, mock_vtk):
-        f = self._get_callable("_clip_with_function")
+    @parametrize(func=["clip_scalar", "_clip_with_function", "extract_feature_edges"])
+    def case_clips_feat_edges(self, mocker: MockerFixture, mock_vtk, func: str):
+        f = self._get_callable(func)
 
         kwargs = self._get_default_kwargs(f)
 

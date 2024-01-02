@@ -5288,6 +5288,7 @@ class DataSetFilters:
         manifold_edges=True,
         clear_data=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Extract edges from the surface of the mesh.
 
@@ -5357,7 +5358,7 @@ class DataSetFilters:
         featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
-        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
+        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges', algo_hook=algo_hook)
         output = _get_output(featureEdges)
         if clear_data:
             output.clear_data()
