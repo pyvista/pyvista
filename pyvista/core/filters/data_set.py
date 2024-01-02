@@ -5754,7 +5754,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Derivative', algo_hook=algo_hook)
         return _get_output(alg)
 
-    def shrink(self, shrink_factor=1.0, progress_bar=False):
+    def shrink(self, shrink_factor=1.0, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Shrink the individual faces of a mesh.
 
         This filter shrinks the individual faces of a mesh rather than
@@ -5794,7 +5794,7 @@ class DataSetFilters:
         alg = _vtk.vtkShrinkFilter()
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
-        _update_alg(alg, progress_bar, 'Shrinking Mesh')
+        _update_alg(alg, progress_bar, 'Shrinking Mesh', algo_hook=algo_hook)
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()

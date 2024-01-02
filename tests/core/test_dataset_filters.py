@@ -294,8 +294,8 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
-    @parametrize(func=["clip_scalar", "_clip_with_function", "extract_feature_edges"])
-    def case_clips_feat_edges(self, mocker: MockerFixture, mock_vtk, func: str):
+    @parametrize(func=["clip_scalar", "_clip_with_function", "extract_feature_edges", "shrink"])
+    def case_clips_feat_shrink(self, mocker: MockerFixture, mock_vtk, func: str):
         f = self._get_callable(func)
 
         kwargs = self._get_default_kwargs(f)
