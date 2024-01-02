@@ -284,7 +284,7 @@ class Viewer(BaseViewer):
                 with vuetify.VCard(
                     style='position: absolute; top: 20px; left: 20px; z-index: 1; height: 36px;',
                     classes=(f"{{ 'rounded-circle': !{self.SHOW_UI} }}",),
-                ):
+                ) as self.menu:
                     with vuetify.VRow(classes='pa-0 ma-0'):
                         button(
                             click=f'{self.SHOW_UI}=!{self.SHOW_UI}',
@@ -318,5 +318,6 @@ class Viewer(BaseViewer):
                 view = PyVistaLocalView(self.plotter, **kwargs)
 
             self._html_views.add(view)
+            view.menu = self.menu
 
         return view
