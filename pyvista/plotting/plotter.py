@@ -5306,6 +5306,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera=None,
         always_visible=False,
         render=True,
+        justification_horizontal=None,
+        justification_vertical=None,
+        background_color=None,
+        background_opacity=None,
     ):
         """Create a point actor with one label from list labels assigned to each point.
 
@@ -5401,6 +5405,34 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        justification_horizontal : str, optional
+            Text's horizontal justification.
+            Should be either "left", "center" or "right".
+
+            .. warning::
+                If the justification is not default,
+                the shape will be out of alignment with the label.
+                If you use other than default,
+                Please use the background color.
+                See: https://github.com/pyvista/pyvista/pull/5407
+
+        justification_vertical : str, optional
+            Text's vertical justification.
+            Should be either "bottom", "center" or "top".
+
+            .. warning::
+                If the justification is not default,
+                the shape will be out of alignment with the label.
+                If you use other than default,
+                Please use the background color.
+                See: https://github.com/pyvista/pyvista/pull/5407
+
+        background_color : pyvista.Color, optional
+            Background color of text's property.
+
+        background_opacity : pyvista.Color, optional
+            Background opacity of text's property.
 
         Returns
         -------
@@ -5518,6 +5550,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font_family=font_family,
             color=text_color,
             shadow=shadow,
+            justification_horizontal=justification_horizontal,
+            justification_vertical=justification_vertical,
+            background_color=background_color,
+            background_opacity=background_opacity,
         )
         hier.SetTextProperty(text_property)
 
