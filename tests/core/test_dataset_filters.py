@@ -125,6 +125,7 @@ class Cases_update_alg:
         "triangulate",
         "outline_corners",
         "outline",
+        "point_data_to_cell_data",
     ]
 
     def _get_callable(self, func: str):
@@ -145,6 +146,17 @@ class Cases_update_alg:
     def case_raw(self, func: str, mocker: MockerFixture):
         """Methods that do not require special inputs"""
         f = self._get_callable(func)
+        kwargs = self._get_default_kwargs(f)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @pytest.mark.usefixtures("mock_vtk")
+    @pytest.mark.filterwarnings(
+        "ignore:probe filter is deprecated:pyvista.PyVistaDeprecationWarning"
+    )
+    def case_probe(self, mocker: MockerFixture):
+        f = self._get_callable("probe")
         kwargs = self._get_default_kwargs(f)
         kwargs["algo_hook"] = mocker.Mock()
 

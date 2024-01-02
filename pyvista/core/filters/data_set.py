@@ -3497,6 +3497,7 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         locator=None,
     ):
         """Sample data values at specified point locations.
@@ -3581,7 +3582,12 @@ class DataSetFilters:
         if locator:
             alg.SetCellLocatorPrototype(locator)
 
-        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
+        _update_alg(
+            alg,
+            progress_bar,
+            'Sampling Data Values at Specified Point Locations',
+            algo_hook=algo_hook,
+        )
         return _get_output(alg)
 
     def sample(
