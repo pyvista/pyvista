@@ -274,6 +274,7 @@ class Viewer(BaseViewer):
         with vuetify.VContainer(
             fluid=True,
             classes='pa-0 fill-height',
+            style='position: relative',
             trame_server=self.server,
         ) as container:
             server = container.server
