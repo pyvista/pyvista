@@ -6376,6 +6376,7 @@ class DataSetFilters:
         preference='point',
         output_scalars=None,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         inplace=False,
     ):
         """Sort labeled data by number of points or cells.
@@ -6456,6 +6457,7 @@ class DataSetFilters:
             output_scalars=output_scalars,
             preference=preference,
             progress_bar=progress_bar,
+            algo_hook=algo_hook,
             inplace=inplace,
             sort=True,
         )
@@ -6467,6 +6469,7 @@ class DataSetFilters:
         preference='point',
         output_scalars=None,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         inplace=False,
     ):
         """Renumber labeled data such that labels are contiguous.
@@ -6557,8 +6560,8 @@ class DataSetFilters:
         """
         # Set a input scalars
         if scalars is None:
-            set_default_active_scalars(self)
-            _, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
 
         field = get_array_association(self, scalars, preference=preference)
 
@@ -6581,27 +6584,27 @@ class DataSetFilters:
             alg.PassFieldDataOn()
             alg.PassCellDataOn()
             alg.PassPointDataOn()
-            _update_alg(alg, progress_bar, 'Packing labels')
+            _update_alg(alg, progress_bar, 'Packing labels', algo_hook=algo_hook)
             result = _get_output(alg)
 
             if output_scalars is not scalars:
                 # vtkPackLabels does not pass un-packed labels through to the
                 # output, so add it back here
                 if field == FieldAssociation.POINT:
-                    result.point_data[scalars] = self.point_data[scalars]
+                    result.point_data[scalars] = self.point_data[scalars]  # type: ignore[attr-defined]
                 else:
-                    result.cell_data[scalars] = self.cell_data[scalars]
+                    result.cell_data[scalars] = self.cell_data[scalars]  # type: ignore[attr-defined]
             result.rename_array("PackedLabels", output_scalars)
 
             if inplace:
-                self.copy_from(result, deep=False)
+                self.copy_from(result, deep=False)  # type: ignore[attr-defined]
                 return self
             return result
 
         else:  # Use numpy
             # Get mapping from input ID to output ID
             arr = get_array(self, scalars, preference=preference, err=True)
-            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
+            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)  # type: ignore[call-overload]
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
             label_range_in = np.arange(0, np.max(label_numbers_in))
@@ -6615,7 +6618,7 @@ class DataSetFilters:
             if inplace:
                 result = self
             else:
-                result = self.copy(deep=True)
+                result = self.copy(deep=True)  # type: ignore[attr-defined]
 
             # Add output to mesh
             if field == FieldAssociation.POINT:

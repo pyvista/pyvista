@@ -151,6 +151,28 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
+    @parametrize(func=["sort_labels", "pack_labels"])
+    def case_labels(self, mocker: MockerFixture, func: str, mock_vtk: Mock):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+
+        mock_vtk.vtkPackLabels = mocker.Mock()
+        _ = mocker.patch.object(filters.data_set, "get_array_association")
+
+        m = mocker.Mock()
+        m.active_scalars_info = "foo", "bar"
+        if func == "sort_labels":
+            m.pack_labels = functools.partial(filters.DataSetFilters.pack_labels, m)
+
+        kwargs["self"] = m
+        kwargs["output_scalars"] = "foo"
+        kwargs["scalars"] = kwargs["output_scalars"]
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
     @pytest.mark.usefixtures("mock_vtk")
     @parametrize(func=["sample", "interpolate"])
     def case_interpolation(self, mocker: MockerFixture, func: str):
