@@ -3398,7 +3398,13 @@ class DataSetFilters:
         return _get_output(alg)
 
     def select_enclosed_points(
-        self, surface, tolerance=0.001, inside_out=False, check_surface=True, progress_bar=False
+        self,
+        surface,
+        tolerance=0.001,
+        inside_out=False,
+        check_surface=True,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -3480,9 +3486,9 @@ class DataSetFilters:
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
-        _update_alg(alg, progress_bar, 'Selecting Enclosed Points')
+        _update_alg(alg, progress_bar, 'Selecting Enclosed Points', algo_hook=algo_hook)
         result = _get_output(alg)
-        out = self.copy()
+        out = self.copy()  # type: ignore[attr-defined]
         bools = result['SelectedPoints'].astype(np.uint8)
         if len(bools) < 1:
             bools = np.zeros(out.n_points, dtype=np.uint8)

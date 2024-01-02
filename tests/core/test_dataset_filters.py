@@ -306,6 +306,19 @@ class Cases_update_alg:
         return f, kwargs
 
     @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_select_enclosed_points(self, mocker: MockerFixture):
+        f = self._get_callable("select_enclosed_points")
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock(pv.PolyData)
+        m.n_open_edges = 0
+        kwargs["surface"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
     def case_transform(self, mocker: MockerFixture):
         f = self._get_callable("transform")
 
