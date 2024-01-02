@@ -233,12 +233,13 @@ class Cases_update_alg:
 
     @case
     @pytest.mark.usefixtures("mock_vtk")
-    @parametrize(func=["extract_points", "extract_cells"])
+    @parametrize(func=["extract_points", "extract_cells", "extract_cells_by_type"])
     def case_extracts(self, mocker: MockerFixture, func: str):
         f = self._get_callable(func)
 
         kwargs = self._get_default_kwargs(f)
-        kwargs["ind"] = [1]
+        k = "cell_types" if func == "extract_cells_by_type" else "ind"
+        kwargs[k] = [1]
         kwargs["algo_hook"] = mocker.Mock()
 
         return f, kwargs

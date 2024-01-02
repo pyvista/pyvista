@@ -6294,7 +6294,9 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
-    def extract_cells_by_type(self, cell_types, progress_bar=False):
+    def extract_cells_by_type(
+        self, cell_types, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
@@ -6364,7 +6366,7 @@ class DataSetFilters:
             raise TypeError(
                 f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
             )
-        _update_alg(alg, progress_bar, 'Extracting cell types')
+        _update_alg(alg, progress_bar, 'Extracting cell types', algo_hook=algo_hook)
         return _get_output(alg)
 
     def sort_labels(
