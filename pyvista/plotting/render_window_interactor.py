@@ -547,6 +547,155 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
+    def enable_custom_trackball_style(
+        self,
+        left="rotate",
+        shift_left="pan",
+        control_left="spin",
+        middle="pan",
+        shift_middle="pan",
+        control_middle="pan",
+        right="dolly",
+        shift_right=None,
+        control_right="dolly",
+    ):
+        """Set the interactive style to a custom style based on Trackball Camera.
+
+        For each choice of button, control-button, and shift-button,
+        the behavior when the mouse is moved can be chosen by passing the
+        following strings:
+          - dolly
+          - pan
+          - rotate
+          - spin
+
+        ``None`` can also be passed, which also results in the default behavior.
+
+        Parameters
+        ----------
+        left : str, default: "rotate"
+            Action when left button is clicked and mouse moved.
+        shift_left : str, default: "pan"
+            Action when left button is clicked with shift key and mouse moved.
+        control_left : str, default: "spin"
+            Action when left button is clicked with control key and mouse moved.
+        middle : str, default: "pan"
+            Action when middle button is clicked and mouse moved.
+        shift_middle : str, default: "pan"
+            Action when middle button is clicked with shift key and mouse moved.
+        control_middle : str, default: "pan"
+            Action when middle button is clicked with control key and mouse moved.
+        right : str, default: "dolly"
+            Action when right button is clicked and mouse moved.
+        shift_right : str, default: None
+            Action when right button is clicked with shift key and mouse moved.
+        control_right : str, default: "dolly"
+            Action when right button is clicked with control key and mouse moved.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the left button
+        dolly.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_custom_trackball_style(left="dolly")
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
+        self._style = 'TrackballCamera'
+        self._style_class = None
+        self.update_style()
+
+        def _no_op():
+            """Do nothing."""
+            pass
+
+        start_action_map = {
+            None: _no_op,
+            "rotate": self._style_class.StartRotate,
+            "pan": self._style_class.StartPan,
+            "spin": self._style_class.StartSpin,
+            "dolly": self._style_class.StartDolly,
+        }
+
+        end_action_map = {
+            None: _no_op,
+            "rotate": self._style_class.EndRotate,
+            "pan": self._style_class.EndPan,
+            "spin": self._style_class.EndSpin,
+            "dolly": self._style_class.EndDolly,
+        }
+
+        # TODO: validate strings to ensure errors are meaningful
+
+        button_press_map = {
+            "left": self._style_class.OnLeftButtonDown,
+            "middle": self._style_class.OnMiddleButtonDown,
+            "right": self._style_class.OnRightButtonDown,
+        }
+        button_release_map = {
+            "left": self._style_class.OnLeftButtonUp,
+            "middle": self._style_class.OnMiddleButtonUp,
+            "right": self._style_class.OnRightButtonUp,
+        }
+
+        def _setup_callbacks(button, click, control, shift):
+            button_press = button_press_map[button]
+            button_release = button_release_map[button]
+
+            click_action = start_action_map[click]
+            control_action = start_action_map[control]
+            shift_action = start_action_map[shift]
+
+            click_release_action = end_action_map[click]
+            control_release_action = end_action_map[control]
+            shift_release_action = end_action_map[shift]
+
+            def _press_callback(_obj, event):
+                if self.interactor.GetControlKey():
+                    control_action()
+                elif self.interactor.GetShiftKey():
+                    shift_action()
+                else:
+                    click_action()
+                button_press()
+
+            def _release_callback(_obj, event):
+                click_release_action()
+                control_release_action()
+                shift_release_action()
+                button_release()
+
+            return _press_callback, _release_callback
+
+        _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
+            "left", left, control_left, shift_left
+        )
+        callback = partial(try_callback, _left_button_press_callback)
+        self._style_class.add_observer('LeftButtonPressEvent', callback)
+        callback = partial(try_callback, _left_button_release_callback)
+        self._style_class.add_observer('LeftButtonReleaseEvent', callback)
+
+        _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
+            "middle", middle, control_middle, shift_middle
+        )
+        callback = partial(try_callback, _middle_button_press_callback)
+        self._style_class.add_observer('MiddleButtonPressEvent', callback)
+        callback = partial(try_callback, _middle_button_release_callback)
+        self._style_class.add_observer('MiddleButtonReleaseEvent', callback)
+
+        _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
+            "right", right, control_right, shift_right
+        )
+        callback = partial(try_callback, _right_button_press_callback)
+        self._style_class.add_observer('RightButtonPressEvent', callback)
+        callback = partial(try_callback, _right_button_release_callback)
+        self._style_class.add_observer('RightButtonReleaseEvent', callback)
+
     def enable_2d_style(self):
         """Set the interactive style to 2D.
 
@@ -574,79 +723,19 @@ class RenderWindowInteractor:
         >>> plotter.enable_parallel_projection()
         >>> plotter.enable_2d_style()
         >>> plotter.show()  # doctest:+SKIP
+
         """
-        self._style = 'TrackballCamera'
-        self._style_class = None
-        self.update_style()
-
-        def _left_button_press_callback(_obj, event):  # pragma: no cover
-            """Left button press behavior."""
-            if self.interactor.GetControlKey():
-                self._style_class.StartSpin()
-            elif self.interactor.GetShiftKey():
-                self._style_class.StartDolly()
-            else:
-                self._style_class.StartPan()
-            self._style_class.OnLeftButtonDown()
-
-        def _left_button_release_callback(_obj, event):  # pragma: no cover
-            """Turn off all left button behavior."""
-            self._style_class.EndSpin()
-            self._style_class.EndPan()
-            self._style_class.EndDolly()
-            self._style_class.OnLeftButtonUp()
-
-        def _middle_button_press_callback(_obj, event):  # pragma: no cover
-            """Middle button press behavior."""
-            if self.interactor.GetControlKey():
-                self._style_class.StartPan()
-            elif self.interactor.GetShiftKey():
-                self._style_class.StartDolly()
-            else:
-                self._style_class.StartSpin()
-            self._style_class.OnMiddleButtonDown()
-
-        def _middle_button_release_callback(_obj, event):  # pragma: no cover
-            """Turn off all middle button behavior."""
-            self._style_class.EndSpin()
-            self._style_class.EndPan()
-            self._style_class.EndDolly()
-            self._style_class.OnMiddleButtonUp()
-
-        def _right_button_press_callback(_obj, event):  # pragma: no cover
-            """Right button press behavior."""
-            if self.interactor.GetControlKey():
-                self._style_class.StartRotate()
-            elif self.interactor.GetShiftKey():
-                # https://github.com/pyvista/pyvista/pull/5336#discussion_r1426060132
-                self._style_class.StartDolly()  # ParaView does a different type of zooming
-            else:
-                self._style_class.StartDolly()
-            self._style_class.OnRightButtonDown()
-
-        def _right_button_release_callback(_obj, event):  # pragma: no cover
-            """Turn off all right button behavior."""
-            self._style_class.EndRotate()
-            self._style_class.EndDolly()
-            self._style_class.OnRightButtonUp()
-
-        callback = partial(try_callback, _left_button_press_callback)
-        self._style_class.add_observer('LeftButtonPressEvent', callback)
-
-        callback = partial(try_callback, _left_button_release_callback)
-        self._style_class.add_observer('LeftButtonReleaseEvent', callback)
-
-        callback = partial(try_callback, _middle_button_press_callback)
-        self._style_class.add_observer('MiddleButtonPressEvent', callback)
-
-        callback = partial(try_callback, _middle_button_release_callback)
-        self._style_class.add_observer('MiddleButtonReleaseEvent', callback)
-
-        callback = partial(try_callback, _right_button_press_callback)
-        self._style_class.add_observer('RightButtonPressEvent', callback)
-
-        callback = partial(try_callback, _right_button_release_callback)
-        self._style_class.add_observer('RightButtonReleaseEvent', callback)
+        self.enable_custom_trackball_style(
+            left="pan",
+            shift_left="dolly",
+            control_left="spin",
+            middle="spin",
+            shift_middle="dolly",
+            control_middle="pan",
+            right="dolly",
+            shift_right="dolly",
+            control_right="rotate",
+        )
 
     def enable_trackball_actor_style(self):
         """Set the interactive style to Trackball Actor.
