@@ -556,7 +556,7 @@ class RenderWindowInteractor:
         shift_middle="pan",
         control_middle="pan",
         right="dolly",
-        shift_right=None,
+        shift_right="environment_rotate",
         control_right="dolly",
     ):
         """Set the interactive style to a custom style based on Trackball Camera.
@@ -565,6 +565,7 @@ class RenderWindowInteractor:
         the behavior when the mouse is moved can be chosen by passing the
         following strings:
           - dolly
+          - environment_rotate
           - pan
           - rotate
           - spin
@@ -587,7 +588,7 @@ class RenderWindowInteractor:
             Action when middle button is clicked with control key and mouse moved.
         right : str, default: "dolly"
             Action when right button is clicked and mouse moved.
-        shift_right : str, default: None
+        shift_right : str, default: "environment_rotate"
             Action when right button is clicked with shift key and mouse moved.
         control_right : str, default: "dolly"
             Action when right button is clicked with control key and mouse moved.
@@ -615,7 +616,7 @@ class RenderWindowInteractor:
             pass
 
         start_action_map = {
-            None: _no_op,
+            "environment_rotate": self._style_class.StartEnvironmentRotate,
             "rotate": self._style_class.StartRotate,
             "pan": self._style_class.StartPan,
             "spin": self._style_class.StartSpin,
@@ -623,7 +624,7 @@ class RenderWindowInteractor:
         }
 
         end_action_map = {
-            None: _no_op,
+            "environment_rotate": self._style_class.EndEnvironmentRotate,
             "rotate": self._style_class.EndRotate,
             "pan": self._style_class.EndPan,
             "spin": self._style_class.EndSpin,
