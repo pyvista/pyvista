@@ -611,12 +611,8 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-        def _no_op():
-            """Do nothing."""
-            pass
-
         start_action_map = {
-            "environment_rotate": self._style_class.StartEnvironmentRotate,
+            "environment_rotate": self._style_class.StartEnvRotate,
             "rotate": self._style_class.StartRotate,
             "pan": self._style_class.StartPan,
             "spin": self._style_class.StartSpin,
@@ -624,7 +620,7 @@ class RenderWindowInteractor:
         }
 
         end_action_map = {
-            "environment_rotate": self._style_class.EndEnvironmentRotate,
+            "environment_rotate": self._style_class.EndEnvRotate,
             "rotate": self._style_class.EndRotate,
             "pan": self._style_class.EndPan,
             "spin": self._style_class.EndSpin,
