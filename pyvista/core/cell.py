@@ -11,6 +11,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import Matrix, NumpyArray, Vector
 from .celltype import CellType
 from .dataset import DataObject
+from .errors import CellSizeError
 from .utilities.cells import ncells_from_cells, numpy_to_idarr
 
 
@@ -637,6 +638,17 @@ class CellArray(_vtk.vtkCellArray):
                 n_cells = cells.shape[0]
 
         self.SetCells(n_cells, vtk_idarr)
+
+        # https://github.com/pyvista/pyvista/pull/5404
+        if self.cells.size != cells.size:
+            raise CellSizeError(
+                message=(
+                    f"Cell array size is invalid. Size ({cells.size}) does not"
+                    f" match expected size ({self.cells.size}). This is likely"
+                    " due to invalid connectivity array."
+                )
+            )
+
         self.__offsets = self.__connectivity = None
         return None
 
