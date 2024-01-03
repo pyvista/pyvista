@@ -74,9 +74,10 @@ repos:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
     additional_dependencies: [
-    "mypy-extensions==1.0.0",
-    "toml==0.10.2",
-    "numpy",
+      "mypy-extensions==1.0.0",
+      "toml==0.10.2",
+      "numpy>=1.21",
+      "https://github.com/pyvista/npt-promote/tarball/main"
     ]
 
 - repo: https://github.com/asottile/pyupgrade

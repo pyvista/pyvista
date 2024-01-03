@@ -9,7 +9,7 @@ import numpy.typing as npt
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyFltArray, NumpyNumArray, TransformLike, Vector
+from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -587,7 +587,7 @@ def convert_string_array(arr, name=None):
     ########################################
 
 
-def array_from_vtkmatrix(matrix) -> NumpyFltArray:
+def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -754,7 +754,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
         )
 
 
-def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyFltArray:
+def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
     """Check and coerce transform-like arg to a 4x4 numpy array.
 
     Parameters
@@ -769,7 +769,7 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyFltArray:
         4x4 transformation matrix.
 
     """
-    transform_array: NumpyFltArray = np.eye(4)
+    transform_array: NumpyArray[float] = np.eye(4)
     if isinstance(transform_like, _vtk.vtkMatrix4x4):
         transform_array = array_from_vtkmatrix(transform_like)
     elif isinstance(transform_like, _vtk.vtkMatrix3x3):
@@ -839,7 +839,7 @@ def cast_to_ndarray(
     as_any: bool = True,
     dtype: Optional[npt.DTypeLike] = None,
     copy: bool = False,
-) -> NumpyNumArray:
+) -> NumpyArray:
     """Cast array to a NumPy ndarray.
 
     Parameters
