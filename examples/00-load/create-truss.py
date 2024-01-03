@@ -9,6 +9,10 @@ Plot connections between points in 3D as cylinders, colored by scalars.
 
 """
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 import pyvista

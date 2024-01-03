@@ -3518,6 +3518,7 @@ class DataSetFilters:
         locator=None,
         pass_field_data=True,
         mark_blank=True,
+        snap_to_closest_point=False,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3574,6 +3575,12 @@ class DataSetFilters:
 
         mark_blank : bool, default: True
             Whether to mark blank points and cells in "vtkGhostType".
+
+        snap_to_closest_point : bool, default: False
+            Whether to snap to cell with closest point if no cell is found. Useful
+            when sampling from data with vertex cells. Requires vtk >=9.3.0.
+
+            .. versionadded:: 0.43
 
         Returns
         -------
@@ -3641,6 +3648,11 @@ class DataSetFilters:
                     ) from err
             alg.SetCellLocatorPrototype(locator)
 
+        if snap_to_closest_point:
+            try:
+                alg.SnapToCellWithClosestPointOn()
+            except AttributeError:  # pragma: no cover
+                raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -3731,12 +3743,12 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.seed(7)
-        >>> point_cloud = np.random.random((5, 3))
+        >>> rng = np.random.default_rng(7)
+        >>> point_cloud = rng.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
         >>> pdata = pv.PolyData(point_cloud)
-        >>> pdata['values'] = np.random.random(5)
+        >>> pdata['values'] = rng.random(5)
         >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
@@ -4331,12 +4343,12 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.seed(12)
-        >>> point_cloud = np.random.random((5, 3))
+        >>> rng = np.random.default_rng(12)
+        >>> point_cloud = rng.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
         >>> pdata = pv.PolyData(point_cloud)
-        >>> pdata['values'] = np.random.random(5)
+        >>> pdata['values'] = rng.random(5)
         >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
@@ -4486,12 +4498,12 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.seed(12)
-        >>> point_cloud = np.random.random((5, 3))
+        >>> rng = np.random.default_rng(12)
+        >>> point_cloud = rng.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
         >>> pdata = pv.PolyData(point_cloud)
-        >>> pdata['values'] = np.random.random(5)
+        >>> pdata['values'] = rng.random(5)
         >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)

@@ -42,6 +42,11 @@ pro_decimated.plot(cpos=cpos, **dargs)
 ###############################################################################
 # Side by side comparison:
 
+# sphinx_gallery_start_ignore
+# text missing in interactive
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter(shape=(1, 3))
 pl.add_mesh(mesh, **dargs)
 pl.add_text("Input mesh", font_size=24)

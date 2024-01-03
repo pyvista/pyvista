@@ -126,7 +126,7 @@ def test_validate_number():
     validate_number([2.0])
     num = validate_number(1)
     assert num == 1
-    assert type(num) is int
+    assert isinstance(num, int)
 
     num = validate_number(2.0, to_list=False, must_have_shape=(), reshape=False)
     assert num == 2.0
@@ -168,18 +168,18 @@ def test_set_default_kwarg_mandatory():
     default_key = 'k'
 
     # Test parameter unset
-    kwargs = dict()
+    kwargs = {}
     _set_default_kwarg_mandatory(kwargs, default_key, default_value)
     assert kwargs[default_key] == default_value
 
     # Test parameter already set to default
-    kwargs = dict()
+    kwargs = {}
     kwargs[default_key] = default_value
     _set_default_kwarg_mandatory(kwargs, default_key, default_value)
     assert kwargs[default_key] == default_value
 
     # Test parameter set to non-default
-    kwargs = dict()
+    kwargs = {}
     kwargs[default_key] = default_value * 2
     msg = (
         "Parameter 'k' cannot be set for function `test_set_default_kwarg_mandatory`.\n"
@@ -485,11 +485,11 @@ def test_validate_array(
     # Check output
     if np.array(array_in).ndim == 0 and (to_tuple or to_list):
         # test scalar input results in scalar output
-        assert type(array_out) is float or type(array_out) is int
+        assert isinstance(array_out, float) or isinstance(array_out, int)
     elif to_tuple:
         assert type(array_out) is tuple
     elif to_list:
-        assert type(array_out) is list
+        assert isinstance(array_out, list)
     else:
         assert isinstance(array_out, np.ndarray)
         assert array_out.dtype.type is dtype_out
