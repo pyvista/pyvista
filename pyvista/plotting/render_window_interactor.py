@@ -627,7 +627,19 @@ class RenderWindowInteractor:
             "dolly": self._style_class.EndDolly,
         }
 
-        # TODO: validate strings to ensure errors are meaningful
+        for p in [
+            left,
+            shift_left,
+            control_left,
+            middle,
+            shift_middle,
+            control_middle,
+            right,
+            shift_right,
+            control_right,
+        ]:
+            if p not in start_action_map:
+                raise ValueError(f"Action '{p}' not in the allowed {list(start_action_map.keys())}")
 
         button_press_map = {
             "left": self._style_class.OnLeftButtonDown,
