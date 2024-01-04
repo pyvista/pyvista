@@ -43,7 +43,7 @@ def vtk_points(points, deep=True, force_float=False):
     --------
     >>> import pyvista as pv
     >>> import numpy as np
-    >>> points = np.random.random((10, 3))
+    >>> points = np.random.default_rng().random((10, 3))
     >>> vpoints = pv.vtk_points(points)
     >>> vpoints  # doctest:+SKIP
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
@@ -861,8 +861,7 @@ def fit_plane_to_points(
     >>> import numpy as np
     >>>
     >>> # Create point cloud
-    >>> np.random.seed(42)
-    >>> cloud = np.random.random((10, 3))
+    >>> cloud = np.random.default_rng().random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane

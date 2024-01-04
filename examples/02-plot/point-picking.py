@@ -11,6 +11,11 @@ This example demonstrates how to pick points on meshes using
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# picking not work in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Pick points on a sphere
 # +++++++++++++++++++++++

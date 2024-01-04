@@ -1,13 +1,14 @@
 from math import pi
 import os
 import pathlib
+import warnings
 
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
 
 radius = 0.5
 
@@ -173,13 +174,79 @@ def test_invalid_file():
         pv.PolyData(filename)
 
 
+@pytest.mark.parametrize(
+    "arr,value",
+    [
+        ("faces", [3, 1, 2, 3, 3, 0, 1]),
+        ("strips", np.array([5, 4, 3, 2, 0])),
+        ("lines", [4, 0, 1, 2, 2, 3, 4]),
+        ("verts", [1, 0, 1]),
+        ("faces", [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
+        ("faces", [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
+    ],
+)
+def test_invalid_connectivity_arrays(arr, value):
+    generator = np.random.default_rng(seed=None)
+    points = generator.random((10, 3))
+    mesh = pv.PolyData(points)
+    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+        setattr(mesh, arr, value)
+
+
 def test_lines_on_init():
     lines = [2, 0, 1, 3, 2, 3, 4]
-    points = np.random.random((5, 3))
+    points = np.random.default_rng().random((5, 3))
     pd = pv.PolyData(points, lines=lines)
     assert not pd.faces.size
     assert np.array_equal(pd.lines, lines)
     assert np.array_equal(pd.points, points)
+
+
+def test_verts():
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
+    mesh = pv.PolyData(vertices)
+    assert np.array_equal(mesh.verts, [1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
+    assert mesh.n_verts == 5
+    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+
+    mesh = pv.PolyData(vertices, verts=[1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
+    assert np.array_equal(mesh.verts, [1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
+    assert mesh.n_verts == 5
+    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+
+    mesh = pv.PolyData(vertices, verts=[1, 0, 1, 1, 1, 2, 1, 3, 1, 4], n_verts=5)
+    assert np.array_equal(mesh.verts, [1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
+    assert mesh.n_verts == 5
+    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+
+    mesh = pv.PolyData(
+        vertices,
+        verts=[
+            1,
+            0,
+        ],
+    )
+    assert np.array_equal(mesh.verts, [1, 0])
+    assert mesh.n_verts == 1
+    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+
+    mesh = pv.PolyData(vertices, verts=[2, 0, 1, 1, 2])
+    assert np.array_equal(mesh.verts, [2, 0, 1, 1, 2])
+    assert mesh.n_verts == 2
+    assert mesh.get_cell(0).type == pv.CellType.POLY_VERTEX
+    assert mesh.get_cell(1).type == pv.CellType.VERTEX
+
+
+def test_mixed_cell_polydata():
+    points = np.zeros((10, 3))
+    points[:, 0] = np.linspace(0, 9, 10)
+    a = pv.PolyData(
+        points, verts=[1, 0], lines=[2, 1, 2], faces=[3, 3, 4, 5], strips=[4, 6, 7, 8, 9]
+    )
+    assert np.array_equal(a.verts, [1, 0])
+    assert np.array_equal(a.lines, [2, 1, 2])
+    assert np.array_equal(a.faces, [3, 3, 4, 5])
+    assert np.array_equal(a.strips, [4, 6, 7, 8, 9])
 
 
 def test_polydata_repr_str():
@@ -236,6 +303,13 @@ def test_ray_trace(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
     assert np.any(points)
     assert np.any(ind)
+
+
+def test_ray_trace_origin():
+    # https://github.com/pyvista/pyvista/issues/5372
+    plane = pv.Plane(i_resolution=1, j_resolution=1)
+    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    assert len(cells) == 1 and cells[0] == 0
 
 
 def test_multi_ray_trace(sphere):
@@ -450,7 +524,7 @@ def test_add(sphere, sphere_shifted):
     merged = sphere + sphere_shifted
     assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
-    assert merged.n_faces == sphere.n_cells + sphere_shifted.n_cells
+    assert merged.n_faces_strict == sphere.n_faces_strict + sphere_shifted.n_faces_strict
 
 
 def test_intersection(sphere, sphere_shifted):
@@ -538,12 +612,12 @@ def test_triangulate_filter(plane):
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
     assert mesh.n_points > sphere.n_points
-    assert mesh.n_faces > sphere.n_faces
+    assert mesh.n_faces_strict > sphere.n_faces_strict
 
     mesh = sphere.copy()
     mesh.subdivide(1, subfilter, inplace=True)
     assert mesh.n_points > sphere.n_points
-    assert mesh.n_faces > sphere.n_faces
+    assert mesh.n_faces_strict > sphere.n_faces_strict
 
 
 def test_invalid_subdivision(sphere):
@@ -577,11 +651,11 @@ def test_extract_feature_edges_no_data():
 def test_decimate(sphere):
     mesh = sphere.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces < sphere.n_faces
+    assert mesh.n_faces_strict < sphere.n_faces_strict
 
     mesh.decimate(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces < sphere.n_faces
+    assert mesh.n_faces_strict < sphere.n_faces_strict
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -592,11 +666,11 @@ def test_decimate(sphere):
 def test_decimate_pro(sphere):
     mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces < sphere.n_faces
+    assert mesh.n_faces_strict < sphere.n_faces_strict
 
     mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces < sphere.n_faces
+    assert mesh.n_faces_strict < sphere.n_faces_strict
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -672,7 +746,7 @@ def test_cell_normals(sphere):
 
 
 def test_face_normals(sphere):
-    assert sphere.face_normals.shape[0] == sphere.n_faces
+    assert sphere.face_normals.shape[0] == sphere.n_faces_strict
 
 
 def test_clip_plane(sphere):
@@ -690,10 +764,10 @@ def test_clip_plane(sphere):
 def test_extract_largest(sphere):
     mesh = sphere + pv.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
-    assert largest.n_faces == sphere.n_faces
+    assert largest.n_faces_strict == sphere.n_faces_strict
 
     mesh.extract_largest(inplace=True)
-    assert mesh.n_faces == sphere.n_faces
+    assert mesh.n_faces_strict == sphere.n_faces_strict
 
 
 def test_clean(sphere):
@@ -739,11 +813,11 @@ def test_remove_points_any(sphere):
 
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
+    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces_strict)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
-    assert sphere_copy.n_faces == sphere.n_faces - 1
+    assert sphere_copy.n_faces_strict == sphere.n_faces_strict - 1
 
 
 def test_remove_points_fail(sphere, plane):
@@ -761,7 +835,7 @@ def test_remove_points_fail(sphere, plane):
 
 
 def test_vertice_cells_on_read(tmpdir):
-    point_cloud = pv.PolyData(np.random.rand(100, 3))
+    point_cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
     point_cloud.save(filename)
     recovered = pv.read(filename)
@@ -772,9 +846,9 @@ def test_vertice_cells_on_read(tmpdir):
 
 def test_center_of_mass(sphere):
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
-    cloud = pv.PolyData(np.random.rand(100, 3))
+    cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     assert len(cloud.center_of_mass()) == 3
-    cloud['weights'] = np.random.rand(cloud.n_points)
+    cloud['weights'] = np.random.default_rng().random(cloud.n_points)
     center = cloud.center_of_mass(True)
     assert len(center) == 3
 
@@ -782,8 +856,8 @@ def test_center_of_mass(sphere):
 def test_project_points_to_plane():
     # Define a simple Gaussian surface
     n = 20
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -838,8 +912,8 @@ def test_smooth_inplace(sphere):
 
 def test_delaunay_2d():
     n = 20
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -966,6 +1040,52 @@ def test_n_lines():
     assert mesh.n_lines == 1
 
 
+def test_n_faces_strict():
+    # Mesh with one face and one line
+    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    assert mesh.n_cells == 2  # n_faces + n_lines
+    assert mesh.n_faces_strict == 1
+
+
+@pytest.fixture
+def default_n_faces():
+    pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
+    pv.PolyData._USE_STRICT_N_FACES = False
+    yield
+    pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
+    pv.PolyData._USE_STRICT_N_FACES = False
+
+
+def test_n_faces(default_n_faces):
+    if pv._version.version_info >= (0, 46):
+        raise RuntimeError("Convert non-strict n_faces use to error")
+
+    if pv._version.version_info >= (0, 49):
+        raise RuntimeError("Convert default n_faces behavior to strict")
+
+    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+
+    # Should raise a warning the first time
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        nf = mesh.n_faces
+
+    # Current (deprecated) behavior is that n_faces is aliased to n_cells
+    assert nf == mesh.n_cells
+
+    # Shouldn't raise deprecation warning the second time
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        nf1 = mesh.n_faces
+
+    assert nf1 == nf
+
+
+def test_opt_in_n_faces_strict(default_n_faces):
+    pv.PolyData.use_strict_n_faces(True)
+    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    assert mesh.n_faces == mesh.n_faces_strict
+
+
 def test_geodesic_disconnected(sphere, sphere_shifted):
     # the sphere and sphere_shifted are disconnected - no path between them
     combined = sphere + sphere_shifted
@@ -1013,3 +1133,38 @@ def test_regular_faces_mutable():
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
+
+
+def _assert_irregular_faces_equal(faces, expected):
+    assert len(faces) == len(expected)
+    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+
+
+def test_irregular_faces():
+    points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    expected_faces = [4, 0, 1, 2, 3, 3, 0, 3, 4, 3, 0, 4, 1, 3, 3, 2, 4, 3, 2, 1, 4]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    assert np.array_equal(mesh.faces, expected_faces)
+    _assert_irregular_faces_equal(mesh.irregular_faces, expected=faces)
+
+
+def test_set_irregular_faces():
+    mesh = pv.Pyramid().extract_surface()
+    flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
+    mesh.irregular_faces = flipped_faces
+    _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)
+
+
+def test_empty_irregular_faces():
+    mesh = pv.PolyData()
+    assert mesh.irregular_faces == ()
+
+
+def test_irregular_faces_mutable():
+    points = [(1, 1, 0), (-1, 1, 0), (-1, -1, 0), (1, -1, 0), (0, 0, 1.61)]
+    faces = [(0, 1, 2, 3), (0, 3, 4), (0, 4, 1), (3, 2, 4), (2, 1, 4)]
+    mesh = pv.PolyData.from_irregular_faces(points, faces)
+    mesh.irregular_faces[0][0] = 4
+    expected = [(4, 1, 2, 3), *faces[1:]]
+    _assert_irregular_faces_equal(mesh.irregular_faces, expected)

@@ -3,7 +3,9 @@
 from enum import Enum
 import os
 import platform
+import subprocess
 from subprocess import PIPE, Popen, TimeoutExpired
+import sys
 
 import numpy as np
 
@@ -682,7 +684,13 @@ def check_math_text_support():
         ``True`` if both MathText and LaTeX symbols are supported, ``False``
         otherwise.
     """
-    return (
-        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-        and check_matplotlib_vtk_compatibility()
-    )
+    # Something seriously sketchy is happening with this VTK code
+    # It seems to hijack stdout and stderr?
+    # See https://github.com/pyvista/pyvista/issues/4732
+    # This is a hack to get around that by executing the code in a subprocess
+    # and capturing the output:
+    # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    _cmd = "import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());"
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
+    return math_text_support and check_matplotlib_vtk_compatibility()

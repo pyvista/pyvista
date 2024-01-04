@@ -407,12 +407,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore
-    def dimensions(self, dims):  # numpydoc ignore=GL08
+    def dimensions(self, _dims):  # numpydoc ignore=GL08
         """Set Dimensions.
 
         Parameters
         ----------
-        dims : sequence
+        _dims : sequence
             Ignored dimensions.
 
         """

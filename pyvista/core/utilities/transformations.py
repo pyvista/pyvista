@@ -116,13 +116,17 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     K = np.zeros((3, 3))
     K[[2, 0, 1], [1, 2, 0]] = axis
     K += -K.T
-    R = np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
 
     # the cos and sin functions can introduce some numerical error
     # round the elements to exact values for special cases where we know
     # sin/cos should evaluate exactly to 0 or 1
+    sin_angle = np.sin(angle)
+    cos_angle = np.cos(angle)
     if angle % (np.pi / 2) == 0:
-        R = np.round(R)
+        cos_angle = round(cos_angle)
+        sin_angle = round(sin_angle)
+
+    R = np.eye(3) + sin_angle * K + (1 - cos_angle) * K @ K
 
     augmented = np.eye(4)
     augmented[:-1, :-1] = R

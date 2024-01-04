@@ -21,6 +21,7 @@ from .charts import Charts
 from .colors import Color, get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
+from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 from .utilities.gl_checks import check_depth_peeling, uses_egl
@@ -285,7 +286,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
-        self.__charts = None
+        self._charts = None
 
         self._border_actor = None
         if border:
@@ -355,15 +356,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return next(self._color_cycle)['color']
 
     @property
-    def _charts(self):
-        """Return the charts collection."""
-        # lazy instantiation here to avoid creating the charts object unless needed.
-        if self.__charts is None:
-            self.__charts = Charts(self)
-            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
-        return self.__charts
-
-    @property
     def camera_position(self):  # numpydoc ignore=RT01
         """Return or set the camera position of active render window.
 
@@ -403,7 +395,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if not isinstance(camera_location, CameraPosition):
                 if not len(camera_location) == 3:
                     raise InvalidCameraError
-                elif any([len(item) != 3 for item in camera_location]):
+                elif any(len(item) != 3 for item in camera_location):
                     raise InvalidCameraError
 
             # everything is set explicitly
@@ -692,23 +684,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             raise VTKVersionError(
                 "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
             )
+        # lazy instantiation here to avoid creating the charts object unless needed.
+        if self._charts is None:
+            self._charts = Charts(self)
+            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
         self._charts.add_chart(chart, *charts)
 
     @property
     def has_charts(self):  # numpydoc ignore=RT01
         """Return whether this renderer has charts."""
-        return self.__charts is not None
+        return self._charts is not None and len(self._charts) > 0
 
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
-        # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
 
     @wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
-        # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []
 
     def remove_chart(self, chart_or_index):
@@ -751,7 +745,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        # Make sure we don't create the __charts object if this renderer has no charts yet.
         if self.has_charts:
             self._charts.remove_chart(chart_or_index)
 
@@ -1908,8 +1901,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif face.lower() in '-y':
             center[1] = self.bounds[2] - (ranges[1] * offset)
             normal = (0, 1, 0)
-            i_size = ranges[0]
-            j_size = ranges[2]
+            i_size = ranges[2]
+            j_size = ranges[0]
         elif face.lower() in '-x':
             center[0] = self.bounds[0] - (ranges[0] * offset)
             normal = (1, 0, 0)
@@ -1923,8 +1916,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif face.lower() in '+y':
             center[1] = self.bounds[3] + (ranges[1] * offset)
             normal = (0, -1, 0)
-            i_size = ranges[0]
-            j_size = ranges[2]
+            i_size = ranges[2]
+            j_size = ranges[0]
         elif face.lower() in '+x':
             center[0] = self.bounds[1] + (ranges[0] * offset)
             normal = (-1, 0, 0)
@@ -1946,7 +1939,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             lighting = self._theme.lighting
 
         self.remove_bounding_box()
-        mapper = _vtk.vtkDataSetMapper()
+        mapper = DataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
             mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
@@ -2090,7 +2083,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def clear(self):
         """Remove all actors and properties."""
         self.clear_actors()
-        if self.__charts is not None:
+        if self._charts is not None:
             self._charts.deep_clean()
         self.remove_all_lights()
         self.RemoveAllViewProps()
@@ -2206,6 +2199,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         The camera will have a parallel projection. Parallel projection is
         often useful when viewing images or 2D datasets.
+
+        See Also
+        --------
+        pyvista.Plotter.enable_2d_style
 
         Examples
         --------
@@ -3172,8 +3169,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def on_plotter_render(self):
         """Notify renderer components of explicit plotter render call."""
-        if self.__charts is not None:
-            for chart in self.__charts:
+        if self._charts is not None:
+            for chart in self._charts:
                 # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
 
@@ -3197,9 +3194,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
             self.disable_shadows()
         try:
-            if self.__charts is not None:
-                self.__charts.deep_clean()
-                self.__charts = None
+            if self._charts is not None:
+                self._charts.deep_clean()
+                self._charts = None
         except AttributeError:  # pragma: no cover
             pass
 
@@ -3287,6 +3284,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         name=None,
         loc='upper right',
         face='triangle',
+        font_family=None,
     ):
         """Add a legend to render window.
 
@@ -3353,6 +3351,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Passing ``None`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
+
+        font_family : str, optional
+            Font family.  Must be either ``'courier'``, ``'times'``,
+            or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
+            <pyvista.plotting.themes._Font.family>`.
 
         Returns
         -------
@@ -3431,6 +3434,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
+
+        if font_family is None:
+            font_family = self._theme.font.family
+
+        font_family = parse_font_family(font_family)
+        self._legend.GetEntryTextProperty().SetFontFamily(font_family)
 
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend

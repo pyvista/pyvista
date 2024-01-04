@@ -12,6 +12,12 @@ to highlight part of your plot.
 
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# blurring does not work in interactive examples probably because interactive
+# plot resets some properties of the camera.
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Create several spheres
 # ~~~~~~~~~~~~~~~~~~~~~~

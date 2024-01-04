@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -141,7 +141,9 @@ jobs:
             vtk-version: '9.1'
           - python-version: '3.10'
             vtk-version: '9.2.2'
-          - python-version: '3.11'  # Added with VTK 9.2.5
+          - python-version: '3.11'
+            vtk-version: '9.2.6'
+          - python-version: '3.12'
             vtk-version: 'latest'
     steps:
       - uses: actions/checkout@v4
@@ -149,7 +151,7 @@ jobs:
           fetch-depth: 2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -185,8 +187,8 @@ jobs:
         if: ${{ matrix.vtk-version == '9.0.3' }}
         run: pip install 'numpy<1.24'
 
-      - name: Limit Matplotlib for VTK<=9.2.2
-        if: ${{ matrix.vtk-version != 'latest' && matrix.vtk-version != '9.2.2' }}
+      - name: Limit Matplotlib for VTK<9.2.2
+        if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
         run: pip install 'matplotlib<3.6'
 
       - name: Core Testing (no GL)
@@ -198,12 +200,12 @@ jobs:
           version: 3.0
 
       - name: Plotting Testing (uses GL)
-        run: xvfb-run python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples
+        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples
 
       - name: Software Report
         if: always()
         run: |
-          xvfb-run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
 
@@ -233,12 +235,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'

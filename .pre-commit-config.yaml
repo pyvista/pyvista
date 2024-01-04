@@ -6,19 +6,19 @@ ci:
 
 repos:
 - repo: https://github.com/psf/black
-  rev: 23.9.1
+  rev: 23.12.1
   hooks:
   - id: black
 
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.8
+  rev: v0.3.9
   hooks:
   - id: blackdoc
     files: '\.py$'
     exclude: pyvista/plotting/charts.py
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.12.0
+  rev: 5.13.2
   hooks:
   - id: isort
 
@@ -69,23 +69,24 @@ repos:
     files: ^pyvista/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.5.1
+  rev: v1.8.0
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
     additional_dependencies: [
     "mypy-extensions==1.0.0",
     "toml==0.10.2",
-  ]
+    "numpy",
+    ]
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.14.0
+  rev: v3.15.0
   hooks:
   - id: pyupgrade
     args: [--py38-plus, --keep-runtime-typing]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
   - id: check-merge-conflict
   - id: debug-statements
@@ -93,14 +94,20 @@ repos:
     args: [--branch, main]
   - id: requirements-txt-fixer
   - id: trailing-whitespace
-    exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
+    exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
   - id: check-docstring-first
   - id: end-of-file-fixer
-    exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
+    exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
   - id: mixed-line-ending
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.0
+  rev: 0.27.3
   hooks:
     - id: check-github-workflows
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.9
+  hooks:
+    - id: ruff
+      args: [ --fix ]

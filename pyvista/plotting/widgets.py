@@ -1,5 +1,8 @@
 """Module dedicated to widgets."""
 
+import pathlib
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 
 import pyvista
@@ -83,6 +86,7 @@ class WidgetHelper:
         self.sphere_widgets = []
         self.button_widgets = []
         self.distance_widgets = []
+        self.logo_widgets = []
 
     def add_box_widget(
         self,
@@ -189,7 +193,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        def _the_callback(box_widget, event_id):
+        def _the_callback(box_widget, _event):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
@@ -223,6 +227,8 @@ class WidgetHelper:
 
     def clear_box_widgets(self):
         """Remove all of the box widgets."""
+        for box_widget in self.box_widgets:
+            box_widget.Off()
         self.box_widgets.clear()
 
     def add_mesh_clip_box(
@@ -387,6 +393,7 @@ class WidgetHelper:
         test_callback=True,
         normal_rotation=True,
         interaction_event='end',
+        outline_opacity=None,
     ):
         """Add a plane widget to the scene.
 
@@ -462,6 +469,12 @@ class WidgetHelper:
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         Returns
         -------
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
@@ -510,7 +523,7 @@ class WidgetHelper:
         if assign_to_axis:
             normal_rotation = False
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
@@ -544,6 +557,9 @@ class WidgetHelper:
 
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
+
+            if outline_opacity is not None:
+                plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
 
         else:
             # Position of the small plane
@@ -611,6 +627,8 @@ class WidgetHelper:
 
     def clear_plane_widgets(self):
         """Remove all of the plane widgets."""
+        for plane_widget in self.plane_widgets:
+            plane_widget.Off()
         self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
@@ -629,6 +647,7 @@ class WidgetHelper:
         crinkle=False,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -699,6 +718,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -782,6 +807,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         if crinkle:
@@ -803,6 +829,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a volume using a plane widget.
@@ -861,6 +888,12 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
@@ -905,6 +938,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
         widget.GetPlane(plane)
         volume.mapper.AddClippingPlane(plane)
@@ -926,6 +960,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -984,6 +1019,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1050,6 +1091,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         return self.add_mesh(alg, **kwargs)
@@ -1218,7 +1260,7 @@ class WidgetHelper:
 
         color = Color(color, default_color=pyvista.global_theme.font.color)
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
             if callable(callback):
@@ -1248,6 +1290,8 @@ class WidgetHelper:
 
     def clear_line_widgets(self):
         """Remove all of the line widgets."""
+        for line_widget in self.line_widgets:
+            line_widget.Off()
         self.line_widgets.clear()
 
     def add_text_slider_widget(
@@ -1347,7 +1391,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, event):  # numpydoc ignore=GL08
+        def title_callback(widget, _event):  # numpydoc ignore=GL08
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1538,7 +1582,7 @@ class WidgetHelper:
         if tube_width is not None:
             slider_rep.SetTubeWidth(tube_width)
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, _event):
             value = widget.GetRepresentation().GetValue()
             if callable(callback):
                 if pass_widget:
@@ -1565,6 +1609,8 @@ class WidgetHelper:
 
     def clear_slider_widgets(self):
         """Remove all of the slider widgets."""
+        for slider_widget in self.slider_widgets:
+            slider_widget.Off()
         self.slider_widgets.clear()
 
     def add_mesh_threshold(
@@ -1970,7 +2016,7 @@ class WidgetHelper:
 
         ribbon = pyvista.PolyData()
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
@@ -2008,6 +2054,8 @@ class WidgetHelper:
 
     def clear_spline_widgets(self):
         """Remove all of the spline widgets."""
+        for spline_widget in self.spline_widgets:
+            spline_widget.Off()
         self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
@@ -2217,6 +2265,8 @@ class WidgetHelper:
 
     def clear_measure_widgets(self):
         """Remove all of the measurement widgets."""
+        for distance_widget in self.distance_widgets:
+            distance_widget.Off()
         self.distance_widgets.clear()
 
     def add_sphere_widget(
@@ -2317,7 +2367,7 @@ class WidgetHelper:
         else:
             colors = [color] * num
 
-        def _the_callback(widget, event_id):
+        def _the_callback(widget, _event):
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
@@ -2331,7 +2381,7 @@ class WidgetHelper:
             return
 
         if indices is None:
-            indices = [x for x in range(num)]
+            indices = list(range(num))
 
         for i in range(num):
             if center.ndim > 1:
@@ -2367,6 +2417,8 @@ class WidgetHelper:
 
     def clear_sphere_widgets(self):
         """Remove all of the sphere widgets."""
+        for sphere_widget in self.sphere_widgets:
+            sphere_widget.Off()
         self.sphere_widgets.clear()
 
     def add_affine_transform_widget(
@@ -2564,7 +2616,7 @@ class WidgetHelper:
         button_widget.SetCurrentRenderer(self.renderer)
         button_widget.On()
 
-        def _the_callback(widget, event):
+        def _the_callback(widget, _event):
             state = widget.GetRepresentation().GetState()
             if callable(callback):
                 try_callback(callback, bool(state))
@@ -2623,11 +2675,90 @@ class WidgetHelper:
 
     def clear_camera_widgets(self):
         """Remove all of the camera widgets."""
+        for camera_widget in self.camera_widgets:
+            camera_widget.Off()
         self.camera_widgets.clear()
 
     def clear_button_widgets(self):
         """Remove all of the button widgets."""
+        for button_widget in self.button_widgets:
+            button_widget.Off()
         self.button_widgets.clear()
+
+    def add_logo_widget(
+        self,
+        logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
+        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
+        opacity: float = 1.0,
+    ):
+        """Add a logo widget to the top of the viewport.
+
+        If no logo is passed, the PyVista logo will be used.
+
+        Parameters
+        ----------
+        logo : pyvista.ImageData or pathlib.Path, optional
+            The logo to display. If a pathlike is passed, it is assumed to be a
+            file path to an image.
+
+        position : tuple(float), optional
+            The position of the logo in the viewport. The first value is the
+            horizontal position and the second value is the vertical position.
+            Both values must be between 0 and 1.
+
+        size : tuple(float), optional
+            The size of the logo in the viewport. The first value is the
+            horizontal size and the second value is the vertical size. Both
+            values must be between 0 and 1.
+
+        opacity : float, optional
+            The opacity of the logo. Must be between 0 and 1.
+
+        Returns
+        -------
+        vtkLogoWidget
+            The logo widget.
+
+        Examples
+        --------
+        Add a logo widget to the scene.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_logo_widget()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
+        if logo is None:
+            logo = pyvista.global_theme.logo_file
+        if logo is None:
+            # Fallback to PyVista logo
+            from pyvista import examples
+
+            logo = examples.logofile
+        if isinstance(logo, (str, pathlib.Path)):
+            logo = pyvista.read(logo)
+        if not isinstance(logo, pyvista.ImageData):
+            raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+        representation = _vtk.vtkLogoRepresentation()
+        representation.SetImage(logo)
+        representation.SetPosition(position)
+        representation.SetPosition2(size)
+        representation.GetImageProperty().SetOpacity(opacity)
+        widget = _vtk.vtkLogoWidget()
+        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.logo_widgets.append(widget)
+        return widget
+
+    def clear_logo_widgets(self):
+        """Remove all of the logo widgets."""
+        for logo_widget in self.logo_widgets:
+            logo_widget.Off()
+        self.logo_widgets.clear()
 
     def close(self):
         """Close the widgets."""
@@ -2640,3 +2771,4 @@ class WidgetHelper:
         self.clear_button_widgets()
         self.clear_camera_widgets()
         self.clear_measure_widgets()
+        self.clear_logo_widgets()

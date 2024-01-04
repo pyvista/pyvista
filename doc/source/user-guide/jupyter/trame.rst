@@ -78,23 +78,21 @@ Using pip, you can set up your jupyter environment with:
     pip install 'jupyterlab>=3' ipywidgets 'pyvista[all,trame]'
 
 
-Jupyter-Server-Proxy
-++++++++++++++++++++
+Remote Jupyter Host
++++++++++++++++++++
 
 When using PyVista in Jupyter that is hosted remotely (docker, cloud JupyterHub,
-or otherwise), you will need to pair the Trame backend with ``jupyter-server-proxy``.
+binder, or otherwise), you will need to pair the Trame backend with either
+``jupyter-server-proxy`` or ``trame-jupyter-extension``.
+
+
+Jupyter Server Proxy
+####################
 
 `Jupyter Server Proxy <https://jupyter-server-proxy.readthedocs.io/en/latest/>`_
 lets you access the Trame server hosting the views of the PyVista plotters
 alongside your notebook, and provide authenticated web access to them directly
 through Jupyter.
-
-.. note::
-    In a future version of `wslink <https://github.com/Kitware/wslink>`_
-    (the driving mechanism behind Trame's server), we plan to add support such that
-    the server can communicate via the
-    `Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/stable/comms.html>`_
-    to avoid the need for a secondary web server and thus ``jupyter-server-proxy``.
 
 To configure PyVista and Trame to work with ``jupyter-server-proxy`` in a remote
 environment, you will need to set some options on the global PyVista theme:
@@ -120,6 +118,37 @@ On MyBinder, the ``JUPYTERHUB_SERVICE_PREFIX`` string often needs to prefix
 ``'/proxy/'``. This makes it so the prefix includes the users ID in the URL.
 In PyVista, we automatically check for the presence of this variable and
 prepend it to the ``server_proxy_prefix``.
+
+
+Trame Jupyter Extension
+#######################
+
+`Trame Jupyter Extension <https://github.com/Kitware/trame-jupyter-extension/>`_
+enables the trame server and client to communicate over the existing
+`Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/stable/comms.html>`_
+infrastructure, instead of creating a separate WebSocket connection.
+
+Using this extension removes the need for a secondary web server and thus
+``jupyter-server-proxy``.
+
+Using pip, you can install the extension:
+
+.. code::
+
+    pip install trame_jupyter_extension
+
+If using Jupyter Lab 3.x, make sure to install the version 1.x of the extension:
+
+.. code::
+
+    pip install "trame_jupyter_extension<2"
+
+Once the extension is installed, you can select whether PyVista will use it by
+setting the following flag to ``True`` or ``False``:
+
+* :py:attr:`pyvista.global_theme.trame.jupyter_extension_enabled
+  <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
+
 
 Other Considerations
 ++++++++++++++++++++
