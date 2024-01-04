@@ -653,6 +653,12 @@ class RenderWindowInteractor:
         }
 
         def _setup_callbacks(button, click, control, shift):
+            """Return callbacks for press and release events.
+
+            Callbacks are formed for a button and action for click,
+            control-click, and shift-click.
+
+            """
             button_press = button_press_map[button]
             button_release = button_release_map[button]
 
