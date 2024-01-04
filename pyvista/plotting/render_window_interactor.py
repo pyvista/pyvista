@@ -569,11 +569,12 @@ class RenderWindowInteractor:
         For each choice of button, control-button, and shift-button,
         the behavior when the mouse is moved can be chosen by passing the
         following strings:
-          - dolly
-          - environment_rotate
-          - pan
-          - rotate
-          - spin
+
+        * ``"dolly"``
+        * ``"environment_rotate"``
+        * ``"pan"``
+        * ``"rotate"``
+        * ``"spin"``
 
         ``None`` can also be passed, which also results in the default behavior.
 
