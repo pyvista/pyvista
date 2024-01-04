@@ -744,7 +744,7 @@ class RenderWindowInteractor:
 
         Examples
         --------
-        Create a simple scene with a plotter that has the
+        Create a simple scene with a plotter that has a
         ParaView-like 2D style:
 
         >>> import pyvista as pv
