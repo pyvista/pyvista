@@ -578,6 +578,8 @@ class RenderWindowInteractor:
 
         ``None`` can also be passed, which also results in the default behavior.
 
+        .. versionadded:: 0.44.0
+
         Parameters
         ----------
         left : str, default: "rotate"
