@@ -52,13 +52,13 @@ def assert_empty_kwargs(**kwargs):
     raise TypeError(message)
 
 
-def check_valid_vector(point: Vector[float], name: str = '') -> None:
+def check_valid_vector(vector: Vector, name: str = '') -> None:
     """
     Check if a vector contains three numerical elements.
 
     Parameters
     ----------
-    vector : Vector[float]
+    vector : Vector
         Input vector to check. Must be a sequence with exactly three numeric elements.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.

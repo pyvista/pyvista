@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from copy import deepcopy
 from functools import partial
 from typing import (
@@ -1123,7 +1122,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_axes(
         self,
-        axes: np.ndarray | VectorArray,
+        axes: Vector,
         point=(0.0, 0.0, 0.0),
         transform_all_input_vectors=False,
         inplace=False,
