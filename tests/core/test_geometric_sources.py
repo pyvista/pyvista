@@ -29,8 +29,8 @@ def test_cylinder_source():
     assert algo.height == 1.0
     assert algo.capping
     assert algo.resolution == 100
-    center = np.random.rand(3)
-    direction = np.random.rand(3)
+    center = np.random.default_rng().random(3)
+    direction = np.random.default_rng().random(3)
     algo.center = center
     algo.direction = direction
     assert np.array_equal(algo.center, center)

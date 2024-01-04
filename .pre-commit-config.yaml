@@ -6,7 +6,7 @@ ci:
 
 repos:
 - repo: https://github.com/psf/black
-  rev: 23.11.0
+  rev: 23.12.1
   hooks:
   - id: black
 
@@ -18,7 +18,7 @@ repos:
     exclude: pyvista/plotting/charts.py
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.12.0
+  rev: 5.13.2
   hooks:
   - id: isort
 
@@ -69,7 +69,7 @@ repos:
     files: ^pyvista/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.7.1
+  rev: v1.8.0
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
@@ -102,6 +102,12 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.2
+  rev: 0.27.3
   hooks:
     - id: check-github-workflows
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.9
+  hooks:
+    - id: ruff
+      args: [ --fix ]

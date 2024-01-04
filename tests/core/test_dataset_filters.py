@@ -1681,7 +1681,7 @@ def test_warp_by_vector():
 
 
 def test_invalid_warp_scalar(sphere):
-    sphere['cellscalars'] = np.random.random(sphere.n_cells)
+    sphere['cellscalars'] = np.random.default_rng().random(sphere.n_cells)
     sphere.point_data.clear()
     with pytest.raises(TypeError):
         sphere.warp_by_scalar()
@@ -2059,7 +2059,7 @@ def test_plot_over_line(tmpdir):
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
     mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_line(
         a,
         b,
@@ -2149,8 +2149,8 @@ def test_sample_over_circular_arc_normal():
     zmax = uniform.bounds[5]
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
-    angle = 90.0 * np.random.rand()
-    resolution = np.random.randint(10000)
+    angle = 90.0 * np.random.default_rng().random()
+    resolution = np.random.default_rng().integers(10000)
     center = [xmin, ymin, zmin]
     sampled_arc_normal = uniform.sample_over_circular_arc_normal(
         center, resolution=resolution, normal=normal, polar=polar, angle=angle, progress_bar=True
@@ -2187,7 +2187,7 @@ def test_plot_over_circular_arc(tmpdir):
     assert os.path.isfile(filename)
 
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc(
         a,
         b,
@@ -2230,7 +2230,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     assert os.path.isfile(filename)
 
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc_normal(
         center,
         polar=polar,
@@ -2360,8 +2360,8 @@ def test_slice_along_line_composite(composite):
 
 def test_interpolate():
     pdata = pv.PolyData()
-    pdata.points = np.random.random((10, 3))
-    pdata['scalars'] = np.random.random(10)
+    pdata.points = np.random.default_rng().random((10, 3))
+    pdata['scalars'] = np.random.default_rng().random(10)
     surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
     interp = surf.interpolate(pdata, radius=0.01, progress_bar=True)
     assert interp.n_points
@@ -2429,7 +2429,7 @@ def test_extract_surface():
     )
 
     # introduce a minor variation to the location of the mid-side points
-    quad_pts += np.random.random(quad_pts.shape) * 0.25
+    quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.25
     pts = np.vstack((lin_pts, quad_pts))
 
     cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
@@ -2942,10 +2942,10 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
-            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
 
         # deactivate any active vectors!
         # even if transform_all_input_vectors is False, vtkTransformfilter will
@@ -2981,10 +2981,10 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
-            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
 
         # track original untransformed dataset
         orig_dataset = dataset.copy(deep=True)
@@ -3030,11 +3030,11 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
-            dataset.cell_data[f"C{i}"] = np.random.randint(
+            dataset.cell_data[f"C{i}"] = np.random.default_rng().integers(
                 np.iinfo(int).max, size=(dataset.n_cells, 3)
             )
         for i in range(num_point_data):
-            dataset.point_data[f"P{i}"] = np.random.randint(
+            dataset.point_data[f"P{i}"] = np.random.default_rng().integers(
                 np.iinfo(int).max, size=(dataset.n_points, 3)
             )
         if not (num_cell_arrays == 0 and num_point_data == 0):

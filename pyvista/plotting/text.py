@@ -258,6 +258,18 @@ class TextProperty(_vtk.vtkTextProperty):
         Text's vertical justification.
         Should be either "bottom", "center" or "top".
 
+    italic : bool, default: False
+        Italicises title and bar labels.
+
+    bold : bool, default: True
+        Bolds title and bar labels.
+
+    background_color : pyvista.Color, optional
+        Background color of text.
+
+    background_opacity : pyvista.Color, optional
+        Background opacity of text.
+
     Examples
     --------
     Create a text's property.
@@ -291,6 +303,10 @@ class TextProperty(_vtk.vtkTextProperty):
         shadow=False,
         justification_horizontal=None,
         justification_vertical=None,
+        italic=False,
+        bold=False,
+        background_color=None,
+        background_opacity=None,
     ):
         """Initialize text's property."""
         super().__init__()
@@ -314,6 +330,12 @@ class TextProperty(_vtk.vtkTextProperty):
             self.justification_horizontal = justification_horizontal
         if justification_vertical is not None:
             self.justification_vertical = justification_vertical
+        self.italic = italic
+        self.bold = bold
+        if background_color is not None:
+            self.background_color = background_color
+        if background_opacity is not None:
+            self.background_opacity = background_opacity
 
     @property
     def color(self) -> Color:
@@ -558,3 +580,35 @@ class TextProperty(_vtk.vtkTextProperty):
                 f'Invalid {justification} for justification_vertical. '
                 'Should be either "bottom", "center" or "top".'
             )
+
+    @property
+    def italic(self) -> bool:
+        """Italic of text's property.
+
+        Returns
+        -------
+        bool
+            If text is italic.
+
+        """
+        return self.GetItalic()
+
+    @italic.setter
+    def italic(self, italic: bool):  # numpydoc ignore=GL08
+        self.SetItalic(italic)
+
+    @property
+    def bold(self) -> bool:
+        """Bold of text's property.
+
+        Returns
+        -------
+        bool
+            If text is bold.
+
+        """
+        return self.GetBold()
+
+    @bold.setter
+    def bold(self, bold: bool):  # numpydoc ignore=GL08
+        self.SetBold(bold)
