@@ -45,8 +45,8 @@ def test_actor_visibility(axes):
     assert not axes.actor.visibility
 
 
-def test_axes_origin(axes):
-    origin = np.random.random(3)
+def test_origin(axes):
+    origin = np.random.default_rng().random(3)
     axes.origin = origin
     assert np.all(axes.GetOrigin() == origin)
     assert np.all(axes.origin == origin)

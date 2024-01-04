@@ -94,6 +94,12 @@ interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_poi
 
 ###############################################################################
 # Visualize the results
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 vol_opac = [0, 0, 0.2, 0.2, 0.5, 0.5]
 
 p = pv.Plotter(shape=(1, 2), window_size=[1024 * 3, 768 * 2])

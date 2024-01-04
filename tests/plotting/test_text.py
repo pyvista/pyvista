@@ -40,7 +40,7 @@ def test_text_prop(text):
 
 
 def test_text_position(text):
-    position = np.random.random(2)
+    position = np.random.default_rng().random(2)
     text.position = position
     assert np.all(text.position == position)
 
@@ -160,3 +160,17 @@ def test_property_justification_invalid(prop):
         prop.justification_horizontal = "invalid"
     with pytest.raises(ValueError):
         prop.justification_vertical = "invalid"
+
+
+@pytest.mark.parametrize('italic', [True, False])
+def test_property_italic(prop, italic):
+    prop.italic = italic
+    assert prop.GetItalic() == italic
+    assert prop.italic == italic
+
+
+@pytest.mark.parametrize('bold', [True, False])
+def test_property_bold(prop, bold):
+    prop.bold = bold
+    assert prop.GetBold() == bold
+    assert prop.bold == bold

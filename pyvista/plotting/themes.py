@@ -142,7 +142,7 @@ class _ForceSlots(type):
     @classmethod
     def __prepare__(metaclass, name, bases, **kwargs):
         super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
-        super_prepared['__slots__'] = tuple()
+        super_prepared['__slots__'] = ()
         return super_prepared
 
 
@@ -3123,8 +3123,8 @@ class Theme(_ThemeConfig):
             :func:`pyvista.Plotter.add_logo_widget` will default to
             PyVista's logo if this is unset.
 
-        Example
-        -------
+        Examples
+        --------
         Set the logo file to a custom logo.
 
         >>> import pyvista as pv

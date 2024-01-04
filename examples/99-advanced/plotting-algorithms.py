@@ -26,6 +26,11 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# widgets do not currently work in interactive examples
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Use ``vtkConeSource`` as a source algorithm. This source will dynamically
 # create a cone object depending on the instances's parameters. In this
