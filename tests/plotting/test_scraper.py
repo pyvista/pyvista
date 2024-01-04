@@ -1,6 +1,7 @@
 import os
 import os.path as op
 
+from matplotlib.pyplot import imread
 import pytest
 
 import pyvista as pv
@@ -8,6 +9,62 @@ from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
+
+
+class QApplication:
+    def __init__(self, *args):
+        pass
+
+    def processEvents(self):
+        pass
+
+
+def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
+    pytest.importorskip('sphinx_gallery')
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    pv.close_all()
+
+    scraper = Scraper()
+
+    plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
+
+    # add cone, change view to test that it takes effect
+    plotters[0].iren.initialize()
+    plotters[0].app = QApplication([])  # fake QApplication
+    plotters[0].add_mesh(pv.Cone())
+    plotters[0].camera_position = 'xy'
+
+    plotters[1].add_mesh(pv.Cone())
+
+    src_dir = str(tmpdir)
+    out_dir = op.join(str(tmpdir), '_build', 'html')
+    img_fnames = [
+        op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
+    ]
+
+    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    target_file = op.join(src_dir, 'auto_examples', 'sg.py')
+    block = None
+    block_vars = dict(
+        image_path_iterator=iter(img_fnames),
+        example_globals=dict(a=1),
+        target_file=target_file,
+    )
+
+    os.makedirs(op.dirname(img_fnames[0]))
+    for img_fname in img_fnames:
+        assert not os.path.isfile(img_fname)
+
+    os.makedirs(out_dir)
+    scraper(block, block_vars, gallery_conf)
+    for img_fname in img_fnames:
+        assert os.path.isfile(img_fname)
+
+    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
+    assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
+
+    for plotter in plotters:
+        plotter.close()
 
 
 @pytest.mark.parametrize('n_win', [1, 2])

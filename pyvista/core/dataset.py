@@ -1499,7 +1499,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
+        >>> mesh.point_data['my_array'] = np.random.default_rng().random(
+        ...     mesh.n_points
+        ... )
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
         >>> mesh.point_data
         pyvista DataSetAttributes
@@ -1591,7 +1593,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['my_array'] = np.random.random(mesh.n_cells)
+        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(
+        ...     mesh.n_cells
+        ... )
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
         >>> mesh.cell_data
         pyvista DataSetAttributes
@@ -2405,7 +2409,7 @@ class DataSet(DataSetFilters, DataObject):
         Find the nearest cells to several random points that
         are centered on the origin.
 
-        >>> points = 2 * np.random.random((5000, 3)) - 1
+        >>> points = 2 * np.random.default_rng().random((5000, 3)) - 1
         >>> indices = mesh.find_closest_cell(points)
         >>> indices.shape
         (5000,)
@@ -2512,7 +2516,7 @@ class DataSet(DataSetFilters, DataObject):
         Find the cells that contain 1000 random points inside the mesh.
 
         >>> import numpy as np
-        >>> points = np.random.random((1000, 3))
+        >>> points = np.random.default_rng().random((1000, 3))
         >>> indices = mesh.find_containing_cell(points)
         >>> indices.shape
         (1000,)
@@ -2868,7 +2872,7 @@ class DataSet(DataSetFilters, DataObject):
         >>>
         >>> for i, connection in enumerate(["points", "edges"]):
         ...     pl.subplot(0, i)
-        ...     pl.view_yx()
+        ...     pl.view_xy()
         ...     _ = pl.add_title(
         ...         f"{connection.capitalize()} neighbors",
         ...         color="red",
@@ -2987,7 +2991,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     text_color="red",
         ...     font_size=40,
         ... )
-        >>> pl.camera_position = "yx"
+        >>> pl.camera_position = "xy"
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 
@@ -3068,7 +3072,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     )
         ...
         >>>
-        >>> pl.view_yx()
+        >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
         >>> pl.show()
         """
@@ -3168,7 +3172,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cells = mesh.extract_cells(other_ids, invert=True)
         >>> _ = pl.add_mesh(cells, color="white", show_edges=True)
         >>>
-        >>> pl.view_yx()
+        >>> pl.view_xy()
         >>> pl.camera.zoom(6.0)
         >>> pl.show()
         """

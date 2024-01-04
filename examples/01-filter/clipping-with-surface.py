@@ -16,6 +16,9 @@ the mesh geometries along the clip.
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
 import pyvista as pv
 from pyvista import examples
 
@@ -94,6 +97,11 @@ p.show()
 # Here is another example of clipping a mesh by a surface. This time, we'll
 # generate a :class:`pyvista.ImageData` around a topography surface and then
 # clip that grid using the surface to create a closed 3D model of the surface
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = False
+# sphinx_gallery_end_ignore
+
 surface = examples.load_random_hills()
 
 # Create a grid around that surface
