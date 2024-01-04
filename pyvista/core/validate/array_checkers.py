@@ -12,11 +12,10 @@ An array checker function typically:
 from numbers import Number, Real
 from typing import Any, List, Literal, Optional, Sequence, Sized, Tuple, Union, cast
 
-import numpy
 import numpy as np
 from numpy import typing as npt
 
-from pyvista.core._typing_core import FloatVector, IntVector
+from pyvista.core._typing import Array, NumpyArray, Vector, _NumberType, _NumericType
 from pyvista.core.utilities.arrays import cast_to_ndarray
 from pyvista.core.validate.type_checkers import check_contains, check_instance, check_iterable_items
 
@@ -29,7 +28,7 @@ Shape = Union[Tuple[()], Tuple[int, ...]]
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, npt.ArrayLike],
+    input_obj: Union[npt.DTypeLike, Array[_NumericType]],
     base_dtype: Union[npt.DTypeLike, Sequence],
     /,
     *,
@@ -39,7 +38,7 @@ def check_subdtype(
 
     Parameters
     ----------
-    input_obj : numpy.typing.DTypeLike | numpy.typing.ArrayLike
+    input_obj : numpy.typing.DTypeLike | Array[float]
         ``dtype`` object (or object coercible to one) or an array-like object.
         If array-like, the dtype of the array is used.
 
@@ -63,7 +62,7 @@ def check_subdtype(
 
     Examples
     --------
-    Check if ``int`` is a subtype of ``np.integer``.
+    Check if ``float`` is a subtype of ``np.floating``.
 
     >>> import numpy as np
     >>> from pyvista.core import validate
@@ -100,7 +99,10 @@ def check_subdtype(
     raise TypeError(msg)
 
 
-def check_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_numeric(
+    arr: Union[_NumericType, Array[_NumericType], npt.NDArray[np.number]], /, *, name: str = "Array"
+):
+    # TODO: rename and modify as 'check_complex'
     """Check if an array is float, integer, or complex type.
 
     Notes
@@ -111,8 +113,8 @@ def check_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -146,7 +148,9 @@ def check_numeric(arr: npt.ArrayLike, /, *, name: str = "Array"):
         raise TypeError(f"{name} must be numeric.") from e
 
 
-def check_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_real(
+    arr: Union[_NumericType, Array[_NumericType], npt.NDArray[np.number]], /, *, name: str = "Array"
+):
     """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
@@ -157,8 +161,8 @@ def check_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float] | NDArray[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -199,7 +203,7 @@ def check_real(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
 
 def check_sorted(
-    arr: npt.ArrayLike,
+    arr: Union[_NumericType, Array[_NumericType]],
     /,
     *,
     ascending: bool = True,
@@ -211,8 +215,8 @@ def check_sorted(
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     ascending : bool, default: True
         If ``True``, check if the array's elements are in ascending order.
@@ -303,13 +307,13 @@ def check_sorted(
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
-def check_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_finite(arr: Union[_NumericType, Array[_NumericType]], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | int | bool | Array[float] | Array[int] | Array[bool]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -336,13 +340,15 @@ def check_finite(arr: npt.ArrayLike, /, *, name: str = "Array"):
         raise ValueError(f"{name} must have finite values.")
 
 
-def check_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: str = "Array"):
+def check_integerlike(
+    arr: Union[_NumericType, Array[_NumericType]], /, *, strict: bool = False, name: str = "Array"
+):
     """Check if an array has integer or integer-like float values.
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     strict : bool, default: False
         If ``True``, the array's data must be a subtype of ``np.integer``
@@ -382,13 +388,13 @@ def check_integerlike(arr: npt.ArrayLike, /, *, strict: bool = False, name: str 
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
+def check_nonnegative(arr: Union[_NumericType, Array[_NumericType]], /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -418,14 +424,19 @@ def check_nonnegative(arr: npt.ArrayLike, /, *, name: str = "Array"):
 
 
 def check_greater_than(
-    arr: npt.ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
+    arr: Union[_NumericType, Array[_NumericType]],
+    /,
+    value: float,
+    *,
+    strict: bool = True,
+    name: str = "Array",
 ):
     """Check if an array's elements are all greater than some value.
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     value : float
         Value which the array's elements must be greater than.
@@ -467,14 +478,19 @@ def check_greater_than(
 
 
 def check_less_than(
-    arr: npt.ArrayLike, /, value: float, *, strict: bool = True, name: str = "Array"
+    arr: Union[_NumericType, Array[_NumericType]],
+    /,
+    value: float,
+    *,
+    strict: bool = True,
+    name: str = "Array",
 ):
     """Check if an array's elements are all less than some value.
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     value : float
         Value which the array's elements must be less than.
@@ -517,9 +533,9 @@ def check_less_than(
 
 
 def check_range(
-    arr: npt.ArrayLike,
+    arr: Union[_NumericType, Array[_NumericType]],
     /,
-    rng: FloatVector,
+    rng: Vector[float],
     *,
     strict_lower: bool = False,
     strict_upper: bool = False,
@@ -529,10 +545,10 @@ def check_range(
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
-    rng : FloatVector, optional
+    rng : Vector[float], optional
         Vector with two elements ``[min, max]`` specifying the minimum
         and maximum data values allowed, respectively. By default, the
         range endpoints are inclusive, i.e. values must be >= min
@@ -582,7 +598,7 @@ def check_range(
 
 
 def check_shape(
-    arr: npt.ArrayLike,
+    arr: Union[_NumericType, Array[_NumericType]],
     /,
     shape: Union[ShapeLike, List[ShapeLike]],
     *,
@@ -592,8 +608,8 @@ def check_shape(
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
     shape : ShapeLike | list[ShapeLike], optional
         A single shape or a list of any allowable shapes. If an integer,
@@ -661,10 +677,10 @@ def check_shape(
 
 
 def check_length(
-    arr: Union[npt.ArrayLike, Sized],
+    arr: Union[_NumericType, Array[_NumericType], Sized],
     /,
     *,
-    exact_length: Union[int, IntVector, None] = None,
+    exact_length: Union[int, Vector[int], None] = None,
     min_length: Optional[int] = None,
     max_length: Optional[int] = None,
     must_be_1d: bool = False,
@@ -682,10 +698,10 @@ def check_length(
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to check.
+    arr : float | Array[float]
+        Number or array to check.
 
-    exact_length : int | IntVector, optional
+    exact_length : int | Vector[int], optional
         Check if the array has the given length. If multiple
         numbers are given, the array's length must match one of the
         numbers.
@@ -741,14 +757,15 @@ def check_length(
             arr = arr.reshape((1,))
 
     check_instance(arr, (Sequence, np.ndarray), name=name)
+    arr = cast(Union[_NumericType, Array[_NumericType]], arr)
 
     if must_be_1d:
-        check_shape(arr, shape=(-1))  # type: ignore[arg-type]
+        check_shape(arr, shape=(-1))
 
     arr_len = len(cast(Sized, arr))
 
     if exact_length is not None:
-        exact_length = cast(np.ndarray, cast_to_ndarray(exact_length))
+        exact_length = cast_to_ndarray(exact_length)
         check_integerlike(exact_length, name="'exact_length'")
         if arr_len not in exact_length:
             raise ValueError(
@@ -758,13 +775,9 @@ def check_length(
 
     # Validate min/max length
     if min_length is not None:
-        min_length = cast_to_ndarray(min_length)  # type: ignore
-        check_scalar(min_length, name="Min length")
-        check_real(min_length, name="Min length")
+        check_finite(min_length, name="Min length")
     if max_length is not None:
-        max_length = cast_to_ndarray(max_length)  # type: ignore
-        check_scalar(max_length, name="Max length")
-        check_real(max_length, name="Max length")
+        check_finite(max_length, name="Max length")
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
 
@@ -934,7 +947,7 @@ def check_number(
 
 
 def check_scalar(
-    scalar: Union[float, int, complex, Number, np.number, np.ndarray],
+    scalar: Union[float, int, complex, Number, NumpyArray[_NumberType]],
     /,
     *,
     must_be_real: bool = True,
@@ -998,7 +1011,7 @@ def check_scalar(
                 raise ValueError(
                     f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
                 )
-            check_real(scalar, name=name) if must_be_real else check_numeric(scalar, name=name)
+            check_real(scalar, name=name) if must_be_real else check_numeric(scalar, name=name)  # type: ignore
         else:
             check_number(scalar, must_be_real=must_be_real)
     except TypeError:

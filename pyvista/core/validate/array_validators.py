@@ -16,10 +16,17 @@ import inspect
 from typing import Any, List, Optional, Union, cast
 
 import numpy as np
-import numpy.typing as npt
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import FloatMatrix, FloatVector, NumpyFltArray
+from pyvista.core._typing import (
+    Array,
+    Matrix,
+    NumpyArray,
+    TransformLike,
+    Vector,
+    _NumberType,
+    _NumericType,
+)
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 from pyvista.core.validate.array_checkers import (
     ShapeLike,
@@ -37,7 +44,7 @@ from pyvista.core.validate.type_checkers import check_contains, check_string
 
 
 def validate_array(
-    arr: npt.ArrayLike,
+    arr: Union[_NumericType, Array[_NumericType]],
     /,
     *,
     must_have_shape=None,
@@ -90,7 +97,7 @@ def validate_array(
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
+    arr : float | int | bool | Array[float] | Array[int] | Array[bool]
         Array to be validated, in any form that can be converted to
         a :class:`np.ndarray`. This includes lists, lists of tuples, tuples,
         tuples of tuples, tuples of lists and ndarrays.
@@ -111,7 +118,7 @@ def validate_array(
         array's data must be a subtype of. If a sequence, the array's data
         must be a subtype of at least one of the specified dtypes.
 
-    must_have_length : int | IntVector, optional
+    must_have_length : int | Vector[int], optional
         :func:`Check <pyvista.core.validate.check.check_has_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
@@ -166,7 +173,7 @@ def validate_array(
         along a different axis, use a ``dict`` with keyword arguments that
         will be passed to :func:`Check <pyvista.core.validate.check.check_is_sorted>`.
 
-    must_be_in_range : FloatVector, optional
+    must_be_in_range : Vector[float], optional
         :func:`Check <pyvista.core.validate.check.check_is_in_range>`
         if the array's values are all within a specific range. Range
         must be a vector with two elements specifying the minimum and
@@ -238,7 +245,7 @@ def validate_array(
 
     Returns
     -------
-    numpy.typing.ArrayLike
+    float | int | bool | Array[float] | Array[int] | Array[bool]
         Validated array. Returned object is:
 
         * an instance of ``np.ndarray`` (default), or
@@ -339,12 +346,12 @@ def validate_array(
 
 
 def validate_axes(
-    *axes: Union[FloatMatrix, FloatVector],
+    *axes: Union[Matrix[float], Vector[float]],
     normalize: bool = True,
     must_be_orthogonal: bool = True,
     must_have_orientation: Optional[str] = 'right',
     name: str = "Axes",
-) -> NumpyFltArray:
+) -> NumpyArray[float]:
     """Validate 3D axes vectors.
 
     By default, the axes are normalized and checked to ensure they are orthogonal and
@@ -352,7 +359,7 @@ def validate_axes(
 
     Parameters
     ----------
-    *axes : numpy.typing.ArrayLike
+    *axes : pyvista.core._typing.Matrix[float] | pyvista.core._typing.Vector[float]
         Axes to be validated. Axes may be specified as a single argument of a 3x3
         array of row vectors or as separate arguments for each 3-element axis vector.
         If only two vectors are given and ``must_have_orientation`` is not ``None``,
@@ -418,18 +425,18 @@ def validate_axes(
         raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
 
     # Validate axes array
-    axes_array: np.ndarray
+    axes_array: NumpyArray[float]
     if len(axes) == 1:
-        ax = cast(FloatMatrix, axes[0])
-        axes_array = validate_array(ax, must_have_shape=(3, 3), name=name, dtype_out=np.floating)  # type: ignore[arg-type]
+        ax = cast(Matrix[float], axes[0])
+        axes_array = validate_array(ax, must_have_shape=(3, 3), name=name, dtype_out=np.floating)
     else:
-        ax0 = cast(FloatVector, axes[0])
-        ax1 = cast(FloatVector, axes[1])
+        ax0 = cast(Vector[float], axes[0])
+        ax1 = cast(Vector[float], axes[1])
         axes_array = np.zeros((3, 3))
         axes_array[0] = validate_array3(ax0, name=f"{name} Vector[0]")
         axes_array[1] = validate_array3(ax1, name=f"{name} Vector[1]")
         if len(axes) == 3:
-            ax2 = cast(FloatVector, axes[2])
+            ax2 = cast(Vector[float], axes[2])
             axes_array[2] = validate_array3(ax2, name=f"{name} Vector[2]")
         else:  # len(axes) == 2
             if must_have_orientation == 'right':
@@ -469,12 +476,12 @@ def validate_axes(
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, name="Transform"):
+def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
     """Validate transform-like input as a 4x4 ndarray.
 
     Parameters
     ----------
-    transform : numpy.typing.ArrayLike | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
+    transform : pyvista.core._typing.Matrix[float] | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
 
@@ -526,12 +533,14 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     return arr
 
 
-def validate_transform3x3(transform, /, *, name="Transform"):
+def validate_transform3x3(
+    transform: Union[Matrix[float], _vtk.vtkMatrix3x3], /, *, name="Transform"
+):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
     ----------
-    transform : numpy.typing.ArrayLike | vtkMatrix3x3
+    transform : Matrix[float] | vtkMatrix3x3
         Transformation matrix as a 3x3 array or vtkMatrix3x3.
 
     name : str, default: "Transform"
@@ -566,7 +575,9 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     return arr
 
 
-def validate_number(num, /, *, reshape=True, **kwargs) -> Union[int, float, NumpyFltArray]:
+def validate_number(
+    num: Union[_NumberType, Vector[_NumberType]], /, *, reshape=True, **kwargs
+) -> _NumberType:
     """Validate a real, finite scalar number.
 
     By default, the number is checked to ensure it:
@@ -577,7 +588,7 @@ def validate_number(num, /, *, reshape=True, **kwargs) -> Union[int, float, Nump
 
     Parameters
     ----------
-    num : int | float | numpy.typing.ArrayLike
+    num : float | int | Vector[float] | Vector[int]
         Number to validate.
 
     reshape : bool, default: True
@@ -589,8 +600,8 @@ def validate_number(num, /, *, reshape=True, **kwargs) -> Union[int, float, Nump
 
     Returns
     -------
-    int | float | np.ndarray
-        Validated number. If an array, the array is 0-dimensional.
+    int | float
+        Validated number.
 
     See Also
     --------
@@ -631,10 +642,10 @@ def validate_number(num, /, *, reshape=True, **kwargs) -> Union[int, float, Nump
         shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
-    return validate_array(num, **kwargs)  # type: ignore
+    return validate_array(num, **kwargs)
 
 
-def validate_data_range(rng, /, **kwargs):
+def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
     """Validate a data range.
 
     By default, the data range is checked to ensure:
@@ -645,7 +656,7 @@ def validate_data_range(rng, /, **kwargs):
 
     Parameters
     ----------
-    rng : numpy.typing.ArrayLike[float, float]
+    rng : Vector[float]
         Range to validate in the form ``(lower_bound, upper_bound)``.
 
     **kwargs : dict, optional
@@ -683,7 +694,9 @@ def validate_data_range(rng, /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
+def validate_arrayNx3(
+    arr: Union[Matrix[_NumericType], Vector[_NumericType]], /, *, reshape=True, **kwargs
+) -> NumpyArray[_NumericType]:
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -697,8 +710,8 @@ def validate_arrayNx3(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike
-        Array to validate.
+    arr : Vector[float] | Matrix[float]
+        1D or 2D array to validate.
 
     reshape : bool, default: True
         If ``True``, 1D arrays with 3 elements are considered valid
@@ -755,7 +768,13 @@ def validate_arrayNx3(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
+def validate_arrayN(
+    arr: Union[_NumericType, Vector[_NumericType], Matrix[_NumericType]],
+    /,
+    *,
+    reshape=True,
+    **kwargs,
+):
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -769,8 +788,8 @@ def validate_arrayN(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike[float, ...]
-        Array to validate.
+    arr : float | Vector[float] | Matrix[float]
+        Array-like input to validate.
 
     reshape : bool, default: True
         If ``True``, 0-dimensional scalars are reshaped to ``(1,)`` and 2D
@@ -821,7 +840,7 @@ def validate_arrayN(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     """
     shape: Union[ShapeLike, List[ShapeLike]]
     if reshape:
-        shape = [(), (-1), (1, -1)]
+        shape = [(), (-1), (1, -1), (-1, 1)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     else:
         shape = -1
@@ -829,7 +848,13 @@ def validate_arrayN(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_uintlike(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
+def validate_arrayN_uintlike(
+    arr: Union[_NumericType, Vector[_NumericType], Matrix[_NumericType]],
+    /,
+    *,
+    reshape=True,
+    **kwargs,
+):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -845,8 +870,8 @@ def validate_arrayN_uintlike(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike[float, ...] | numpy.typing.ArrayLike[int, ...]
-        Array to validate.
+    arr : float | Vector[float] | Matrix[float]
+        0D, 1D, or 2D array to validate.
 
     reshape : bool, default: True
         If ``True``, 0-dimensional scalars are reshaped to ``(1,)`` and 2D
@@ -916,7 +941,14 @@ def validate_arrayN_uintlike(arr: npt.ArrayLike, /, *, reshape=True, **kwargs):
     return validate_arrayN(arr, reshape=reshape, **kwargs)
 
 
-def validate_array3(arr: npt.ArrayLike, /, *, reshape=True, broadcast=False, **kwargs):
+def validate_array3(
+    arr: Union[_NumericType, Vector[_NumericType], Matrix[_NumericType]],
+    /,
+    *,
+    reshape=True,
+    broadcast=False,
+    **kwargs,
+):
     """Validate a numeric 1D array with 3 elements.
 
     The array is checked to ensure its input values:
@@ -928,13 +960,13 @@ def validate_array3(arr: npt.ArrayLike, /, *, reshape=True, broadcast=False, **k
 
     Parameters
     ----------
-    arr : numpy.typing.ArrayLike[float, float, float]
+    arr : float | Vector[float] | Matrix[float]
         Array to validate.
 
     reshape : bool, default: True
-        If ``True``, 2D vectors with shape ``(1, 3)`` are considered valid
-        input, and are reshaped to ``(3,)`` to ensure the output is
-        consistently one-dimensional.
+        If ``True``, 2D vectors with shape ``(1, 3)`` or ``(3, 1)`` are
+        considered valid input, and are reshaped to ``(3,)`` to ensure
+        the output is consistently one-dimensional.
 
     broadcast : bool, default: False
         If ``True``, scalar values or 1D arrays with a single element

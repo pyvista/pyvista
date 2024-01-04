@@ -188,7 +188,7 @@ def check_instance(
         classinfo = get_args(classinfo)
 
     # Count num classes
-    if isinstance(classinfo, tuple) and all(map(lambda cls: isinstance(cls, type), classinfo)):
+    if isinstance(classinfo, tuple) and all(isinstance(cls, type) for cls in classinfo):
         num_classes = len(classinfo)
     else:
         num_classes = 1
