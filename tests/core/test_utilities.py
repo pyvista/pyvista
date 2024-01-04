@@ -22,7 +22,6 @@ from pyvista.core.utilities import (
     principal_axes_transform,
     principal_axes_vectors,
     random_sample_points,
-    transformations,
 )
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
@@ -1015,7 +1014,7 @@ def test_principal_axes_vectors_returns_right_handed_frame(x, y, z, order):
     directions = np.array((x, y, z))[list(order)]
 
     # test generally with random data
-    points = np.random.random_sample((10, 3))
+    points = np.random.default_rng().random((10, 3))
     axes = principal_axes_vectors(points)
     assert assert_valid_right_handed_frame(axes)
 
@@ -1209,7 +1208,7 @@ def test_principal_axes_vectors_precision(input_type, precision):
 @pytest.mark.skipif(platform.system() == 'Darwin', reason='Memory is stored virtually.')
 def test_principal_axes_vectors_memory_error():
     N_huge_RAM = 370000  # requires approx 1 TiB of RAM to compute without sampling
-    points = np.random.rand(N_huge_RAM, 3)
+    points = np.random.default_rng().random((N_huge_RAM, 3))
     axes = principal_axes_vectors(points)
     assert np.any(axes)
     axes = principal_axes_vectors(points, sample_count=11000)
@@ -1220,7 +1219,7 @@ def test_principal_axes_vectors_memory_error():
 
 def test_principal_axes_vectors_sample_count():
     N = 100
-    points = np.random.rand(N, 3)
+    points = np.random.default_rng().random((N, 3))
     axes = principal_axes_vectors(points, sample_count=N + 1)
     assert np.any(axes)
     axes = principal_axes_vectors(points, sample_count=N)
@@ -1230,13 +1229,13 @@ def test_principal_axes_vectors_sample_count():
 
     # test that None disables sampling
     N_below_default = 100
-    points = np.random.rand(N_below_default, 3)
+    points = np.random.default_rng().random((N_below_default, 3))
     axes1 = principal_axes_vectors(points)
     axes2 = principal_axes_vectors(points, sample_count=None)
     assert np.array_equal(axes1, axes2)
 
     N_above_default = 11000
-    points = np.random.rand(N_above_default, 3)
+    points = np.random.default_rng().random((N_above_default, 3))
     axes1 = principal_axes_vectors(points)
     axes2 = principal_axes_vectors(points, sample_count=None)
     assert not np.array_equal(axes1, axes2)
@@ -1398,7 +1397,8 @@ def test_random_sample(airplane):
     assert np.array_equal(sample, points)
     with pytest.raises(ValueError):
         random_sample_points(points, count=N + 1, pass_through=False)
-=======
+
+
 @pytest.mark.parametrize('as_any', [True, False])
 @pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize('dtype', [None, float])
