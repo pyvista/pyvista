@@ -695,31 +695,25 @@ class RenderWindowInteractor:
                 shift_release_action()
                 button_release()
 
-            return _press_callback, _release_callback
+            return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
             "left", left, control_left, shift_left
         )
-        callback = partial(try_callback, _left_button_press_callback)
-        self._style_class.add_observer('LeftButtonPressEvent', callback)
-        callback = partial(try_callback, _left_button_release_callback)
-        self._style_class.add_observer('LeftButtonReleaseEvent', callback)
+        self._style_class.add_observer('LeftButtonPressEvent', _left_button_press_callback)
+        self._style_class.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
             "middle", middle, control_middle, shift_middle
         )
-        callback = partial(try_callback, _middle_button_press_callback)
-        self._style_class.add_observer('MiddleButtonPressEvent', callback)
-        callback = partial(try_callback, _middle_button_release_callback)
-        self._style_class.add_observer('MiddleButtonReleaseEvent', callback)
+        self._style_class.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
+        self._style_class.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
             "right", right, control_right, shift_right
         )
-        callback = partial(try_callback, _right_button_press_callback)
-        self._style_class.add_observer('RightButtonPressEvent', callback)
-        callback = partial(try_callback, _right_button_release_callback)
-        self._style_class.add_observer('RightButtonReleaseEvent', callback)
+        self._style_class.add_observer('RightButtonPressEvent', _right_button_press_callback)
+        self._style_class.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
 
     def enable_2d_style(self):
         """Set the interactive style to 2D.
