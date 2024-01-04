@@ -972,12 +972,15 @@ def Plane(
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
+
+    # Rotate so the plane's normal points in the +x direction
     surf.rotate_y(90, inplace=True)
+    # The plane's i and j directions are under-defined, so we rotate again
+    # for special cases to maintain compatibility with older versions, see GH#5405
+    if np.allclose(np.abs(direction), (0, 1, 0)):
+        surf.rotate_x(90, inplace=True)
     translate(surf, center, direction)
 
-    # Patch to maintain compatibility with older versions, see GH#5405
-    if np.allclose(np.abs(direction), (0, 1, 0)):
-        surf.rotate_y(90, inplace=True)
     return surf
 
 
