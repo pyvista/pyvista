@@ -529,6 +529,11 @@ class RenderWindowInteractor:
         axis of the camera.  Alternatively, ctrl + shift + left button
         or mouse wheel zooms, and shift + left button pans.
 
+        See Also
+        --------
+        pyvista.Plotter.enable_custom_trackball_style
+            A style that can be customized for mouse actions.
+
         Examples
         --------
         Create a simple scene with a plotter that has the Trackball
@@ -592,6 +597,11 @@ class RenderWindowInteractor:
             Action when right button is clicked with shift key and mouse moved.
         control_right : str, default: "dolly"
             Action when right button is clicked with control key and mouse moved.
+
+        See Also
+        --------
+        pyvista.Plotter.enable_trackball_style
+            Base style.
 
         Examples
         --------
@@ -724,6 +734,13 @@ class RenderWindowInteractor:
 
         Recommended to use with
         :func:`pyvista.Plotter.enable_parallel_projection`.
+
+        See Also
+        --------
+        pyvista.Plotter.enable_parallel_projection
+            Set parallel projection, which is useful for 2D views.
+        pyvista.Plotter.enable_custom_trackball_style
+            A style that can be customized for mouse actions.
 
         Examples
         --------
