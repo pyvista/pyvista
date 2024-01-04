@@ -856,12 +856,12 @@ def fit_plane_to_points(
     --------
     Fit a plane to a random point cloud.
 
-    >>> import numpy.random
     >>> import pyvista as pv
     >>> import numpy as np
     >>>
     >>> # Create point cloud
-    >>> cloud = np.random.default_rng().random((10, 3))
+    >>> rng = np.random.default_rng(3)
+    >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane
@@ -884,7 +884,7 @@ def fit_plane_to_points(
 
     The plane's normal in this example points in the negative z direction
     >>> normal
-    array([-0.03064989, -0.01475286, -0.9994213 ])
+    array([-0.02878024, -0.01055844, -0.99953   ])
 
     To control the sign of the normal, specify the approximate normal
     direction when fitting the plane
@@ -892,7 +892,7 @@ def fit_plane_to_points(
     ...     cloud, return_meta=True, normal_direction='z'
     ... )
     >>> normal
-    array([0.03064989, 0.01475286, 0.9994213 ])
+    array([0.02878024, 0.01055844, 0.99953   ])
 
     Fit a plane to a mesh.
 
@@ -908,10 +908,10 @@ def fit_plane_to_points(
     ...     mesh.points, i_resolution=1, j_resolution=1
     ... )
     >>> plane.points
-    pyvista_ndarray([[-7.5869438e+01,  2.9497326e+01, -4.8396743e-08],
-                     [ 7.4705307e+01,  3.3273979e+01, -2.2577751e-07],
+    pyvista_ndarray([[-7.5869438e+01,  2.9497326e+01, -4.8396746e-08],
+                     [ 7.4705307e+01,  3.3273979e+01, -2.2577750e-07],
                      [-7.4325546e+01, -3.2057564e+01,  4.7211194e-07],
-                     [ 7.6249199e+01, -2.8280909e+01,  2.9473117e-07]],
+                     [ 7.6249199e+01, -2.8280909e+01,  2.9473119e-07]],
                     dtype=float32)
     >>>
     >>> # Plot the fitted plane
