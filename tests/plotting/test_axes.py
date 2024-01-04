@@ -540,7 +540,7 @@ def _compute_expected_bounds(axes_actor):
     )
 
 
-np.random.seed(42)
+rng = np.random.default_rng(42)
 
 
 @pytest.mark.parametrize('shaft_tip_length', [(0, 1), (0.2, 0.3), (0.3, 0.8), (0.4, 0.6), (1, 0)])
@@ -582,32 +582,32 @@ def test_axes_actor_GetBounds(shaft_tip_length, total_length, scale, position):
     assert np.allclose(actual, expected)
 
     # test that changing properties dynamically updates the axes
-    axes_actor.position = np.random.rand(3) * 2 - 1
+    axes_actor.position = rng.random(3) * 2 - 1
     expected = _compute_expected_bounds(axes_actor)
     actual = axes_actor.GetBounds()
     assert np.allclose(actual, expected)
 
-    axes_actor.scale = np.random.rand(3) * 2
+    axes_actor.scale = rng.random(3) * 2
     expected = _compute_expected_bounds(axes_actor)
     actual = axes_actor.GetBounds()
     assert np.allclose(actual, expected)
 
-    axes_actor.user_matrix = np.diag(np.append(np.random.rand(3), 1))
+    axes_actor.user_matrix = np.diag(np.append(rng.random(3), 1))
     expected = _compute_expected_bounds(axes_actor)
     actual = axes_actor.GetBounds()
     assert np.allclose(actual, expected)
 
-    axes_actor.tip_length = np.random.rand(3)
+    axes_actor.tip_length = rng.random(3)
     expected = _compute_expected_bounds(axes_actor)
     actual = axes_actor.GetBounds()
     assert np.allclose(actual, expected)
 
-    axes_actor.shaft_length = np.random.rand(3)
+    axes_actor.shaft_length = rng.random(3)
     expected = _compute_expected_bounds(axes_actor)
     actual = axes_actor.GetBounds()
     assert np.allclose(actual, expected)
 
-    axes_actor.total_length = np.random.rand(3) * 2
+    axes_actor.total_length = rng.random(3) * 2
     expected = _compute_expected_bounds(axes_actor)
     actual = axes_actor.GetBounds()
     assert np.allclose(actual, expected)
