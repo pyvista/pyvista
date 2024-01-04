@@ -87,7 +87,7 @@ class _AxesProp(ABC, Prop3D):
 
         # Init actor properties
         if properties is None:
-            properties = dict()
+            properties = {}
         if isinstance(properties, dict):
 
             def _new_property():
@@ -992,7 +992,7 @@ class _AxesProp(ABC, Prop3D):
         if part not in valid_part:
             raise ValueError(f"Part must be one of {valid_part}.")
 
-        props = dict()
+        props = {}
         for num, char in enumerate(['x', 'y', 'z']):
             if axis in [num, char, 'all']:
                 if part in [0, 'shaft', 'all']:
@@ -3071,7 +3071,8 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
     def _normalize_part(part: pyvista.DataSet) -> pyvista.DataSet:
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
-        part.points -= part.center
+        # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
+        part.points -= part.center  # type: ignore
 
         # Scale so bounding box edges have length one
         bnds = part.bounds

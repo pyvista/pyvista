@@ -1742,7 +1742,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> Vector:  # numpydoc ignore=RT01
+    def center(self) -> List[float]:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns

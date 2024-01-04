@@ -5,8 +5,8 @@ import os
 import platform
 import subprocess
 from subprocess import PIPE, Popen, TimeoutExpired
-import warnings
 import sys
+import warnings
 
 import numpy as np
 
