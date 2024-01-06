@@ -949,15 +949,23 @@ def Plane(
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
-    Notes
-    -----
-    Rotate the original plane surface 90 degrees with the y-axis,
-    so the plane's normal points in the +x direction.
-    The plane's i and j directions are under-defined,
-    so we rotate again when the direction is (0, 1, 0)
-    to maintain compatibility with older versions, see
-    https://github.com/pyvista/pyvista/issues/5405.
-
+    .. warning::
+    
+        :func:`~pyvista.Plane` is known to have an incorrect orientation 
+        when ``direction`` is exactly parallel to the y-axis, i.e. 
+        ``direction=(0, 1, 0)`` or `direction=(0, -1, 0)``. This behavior is 
+        maintained for compatibility with older versions, see 
+        `pyvista/#5405 <https://github.com/pyvista/pyvista/issues/5405>`_.
+    
+        To obtain the correct orientation for these special cases, it's necessary
+        to rotate the plane an additional 90 degrees along its normal axis after 
+        instantiation, e.g.
+    
+        .. code-block:: python
+        
+            mesh = pv.Plane(direction=(0, 1, 0))
+            mesh.rotate_y(90, inplace=True)
+ 
     Returns
     -------
     pyvista.PolyData
