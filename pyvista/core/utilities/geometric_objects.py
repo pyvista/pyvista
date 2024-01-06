@@ -929,6 +929,23 @@ def Plane(
 ):
     """Create a plane.
 
+    .. warning::
+
+        :func:`~pyvista.Plane` is known to have an incorrect orientation 
+        when ``direction`` is exactly parallel to the y-axis, i.e. 
+        ``direction=(0, 1, 0)`` or `direction=(0, -1, 0)``. This behavior is 
+        maintained for compatibility with older versions, see 
+        `pyvista/#5405 <https://github.com/pyvista/pyvista/issues/5405>`_.
+    
+        To obtain the correct orientation for these special cases, it's necessary
+        to rotate the plane an additional 90 degrees along its normal axis after 
+        instantiation, e.g.
+
+        .. code-block:: python
+        
+            mesh = pv.Plane(direction=(0, 1, 0))
+            mesh.rotate_y(90, inplace=True)
+
     Parameters
     ----------
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -948,23 +965,6 @@ def Plane(
 
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
-
-    .. warning::
-    
-        :func:`~pyvista.Plane` is known to have an incorrect orientation 
-        when ``direction`` is exactly parallel to the y-axis, i.e. 
-        ``direction=(0, 1, 0)`` or `direction=(0, -1, 0)``. This behavior is 
-        maintained for compatibility with older versions, see 
-        `pyvista/#5405 <https://github.com/pyvista/pyvista/issues/5405>`_.
-    
-        To obtain the correct orientation for these special cases, it's necessary
-        to rotate the plane an additional 90 degrees along its normal axis after 
-        instantiation, e.g.
-    
-        .. code-block:: python
-        
-            mesh = pv.Plane(direction=(0, 1, 0))
-            mesh.rotate_y(90, inplace=True)
  
     Returns
     -------
