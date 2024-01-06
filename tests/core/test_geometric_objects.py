@@ -334,8 +334,7 @@ def test_plane_direction(expected):
 
 
 def test_plane_with_y_direction():
-    # test plane orientation when direction is along y axis is consistent
-    # with older versions of pyvista
+    # https://github.com/pyvista/pyvista/pull/5435
     surf = pv.Plane(
         i_resolution=1,
         j_resolution=1,
@@ -343,8 +342,6 @@ def test_plane_with_y_direction():
         j_size=2.0,
         direction=(0, 1, 0),
     )
-    # long axis should be parallel to z-axis
-    # short axis should be parallel to x-axis
     assert surf.bounds == (-0.5, 0.5, 0.0, 0.0, -1.0, 1.0)
 
 
