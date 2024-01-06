@@ -981,7 +981,6 @@ def Plane(
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
-
     surf.rotate_y(90, inplace=True)
     # https://github.com/pyvista/pyvista/pull/5435
     if np.allclose(np.abs(direction), (0, 1, 0)):
