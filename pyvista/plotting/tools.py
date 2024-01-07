@@ -364,6 +364,7 @@ def create_axes_orientation_box(
     x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
     y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
     z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
+    edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
     x_face_color = Color(x_face_color)
     y_face_color = Color(y_face_color)
     z_face_color = Color(z_face_color)
