@@ -343,7 +343,9 @@ def create_axes_orientation_box(
 
     >>> import pyvista as pv
     >>> actor = pv.create_axes_orientation_box(
+    ...     line_width=1,
     ...     text_scale=0.53,
+    ...     edge_color='black',
     ...     x_color='k',
     ...     y_color=None,
     ...     z_color=None,
