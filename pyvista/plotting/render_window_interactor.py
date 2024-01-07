@@ -583,23 +583,31 @@ class RenderWindowInteractor:
         Parameters
         ----------
         left : str, default: "rotate"
-            Action when left button is clicked and mouse moved.
+            Action when the left button is clicked and the mouse is moved.
+
         shift_left : str, default: "pan"
-            Action when left button is clicked with shift key and mouse moved.
+            Action when the left button is clicked with the shift key and the mouse is moved.
+
         control_left : str, default: "spin"
-            Action when left button is clicked with control key and mouse moved.
+            Action when the left button is clicked with the control key and mouse moved.
+
         middle : str, default: "pan"
-            Action when middle button is clicked and mouse moved.
+            Action when the middle button is clicked and the mouse is moved.
+
         shift_middle : str, default: "pan"
-            Action when middle button is clicked with shift key and mouse moved.
+            Action when the middle button is clicked with the shift key and the mouse is moved.
+
         control_middle : str, default: "pan"
-            Action when middle button is clicked with control key and mouse moved.
+            Action when the middle button is clicked with the control key and mouse moved.
+
         right : str, default: "dolly"
-            Action when right button is clicked and mouse moved.
+            Action when the right button is clicked and the mouse is moved.
+
         shift_right : str, default: "environment_rotate"
-            Action when right button is clicked with shift key and mouse moved.
+            Action when the right button is clicked with the shift key and the mouse is moved.
+
         control_right : str, default: "dolly"
-            Action when right button is clicked with control key and mouse moved.
+            Action when the right button is clicked with the control key and the mouse is moved.
 
         See Also
         --------
@@ -668,7 +676,7 @@ class RenderWindowInteractor:
         def _setup_callbacks(button, click, control, shift):
             """Return callbacks for press and release events.
 
-            Callbacks are formed for a button and action for click,
+            Callbacks are formed for a button and action for a click,
             control-click, and shift-click.
 
             """
@@ -736,6 +744,7 @@ class RenderWindowInteractor:
         --------
         pyvista.Plotter.enable_parallel_projection
             Set parallel projection, which is useful for 2D views.
+
         pyvista.Plotter.enable_custom_trackball_style
             A style that can be customized for mouse actions.
 
