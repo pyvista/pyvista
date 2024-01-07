@@ -260,7 +260,9 @@ def create_axes_marker(
 
 
 def create_axes_orientation_box(
+    line_width=1,
     text_scale=0.366667,
+    edge_color='black',
     x_color=None,
     y_color=None,
     z_color=None,
