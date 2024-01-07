@@ -392,6 +392,7 @@ def create_axes_orientation_box(
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
+    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
         # Hide the text edges
