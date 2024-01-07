@@ -386,7 +386,7 @@ def create_axes_orientation_box(
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(show_text_edges)
 #   https://github.com/pyvista/pyvista/pull/5382
-#  axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
+#   axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
     axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
