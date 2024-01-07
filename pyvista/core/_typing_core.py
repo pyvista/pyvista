@@ -1,5 +1,5 @@
 """Type aliases for type hints."""
-# flake8: noqa: F401
+# noqa: F401
 from typing import Sequence, Tuple, Union
 
 import numpy as np
