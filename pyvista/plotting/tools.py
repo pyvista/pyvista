@@ -281,8 +281,14 @@ def create_axes_orientation_box(
 
     Parameters
     ----------
+    line_width : float, optional
+        The width of the marker lines.
+
     text_scale : float, optional
         Size of the text relative to the faces.
+
+    edge_color : ColorLike, optional
+        Color of the edges.
 
     x_color : ColorLike, optional
         Color of the x axis text.
