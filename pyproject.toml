@@ -319,6 +319,7 @@ extend-select = [
     "C4",
     "NPY",
     "PGH004",
+    "RSE",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]
