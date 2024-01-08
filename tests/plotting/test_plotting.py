@@ -3846,27 +3846,6 @@ def test_voxelize_volume():
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
-def test_create_axes_orientation_box():
-    actor = pv.create_axes_orientation_box(
-        line_width=4,
-        text_scale=0.53,
-        edge_color='red',
-        x_color='k',
-        y_color=None,
-        z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
-        color_box=False,
-        labels_off=False,
-        opacity=1.0,
-        show_text_edges=True,
-    )
-    plotter = pv.Plotter()
-    _ = plotter.add_actor(actor)
-    plotter.show()
-
-
 def test_enable_custom_trackball_style():
     def setup_plot():
         mesh = pv.Cube()
@@ -3979,3 +3958,24 @@ def test_enable_custom_trackball_style():
     pl.iren._mouse_right_button_release(*env_rotate)
     pl.iren._shift_key_release()
     pl.close()
+
+
+def test_create_axes_orientation_box():
+    actor = pv.create_axes_orientation_box(
+        line_width=4,
+        text_scale=0.53,
+        edge_color='red',
+        x_color='k',
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        color_box=False,
+        labels_off=False,
+        opacity=1.0,
+        show_text_edges=True,
+    )
+    plotter = pv.Plotter()
+    _ = plotter.add_actor(actor)
+    plotter.show()
