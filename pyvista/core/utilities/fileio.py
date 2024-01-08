@@ -590,10 +590,6 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         else:
             cells.append((cell_type, [cell]))
 
-    for k, c in enumerate(cells):
-        if not c[0].startswith("polyhedron"):
-            cells[k] = (c[0], np.array(c[1]))
-
     # Get point data
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_data.items()}
 
