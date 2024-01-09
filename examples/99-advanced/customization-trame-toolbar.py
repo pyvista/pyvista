@@ -9,7 +9,7 @@ Bring more of the power of trame to the jupyter view.
 import asyncio
 
 import pyvista as pv
-from pyvista.trame.ui.vuetify2 import button, divider, select, slider, text_field
+from pyvista.trame.ui.vuetify3 import button, divider, select, slider, text_field
 
 ###############################################################################
 # Let's first create the menu items we want to add to the trame's toolbar.

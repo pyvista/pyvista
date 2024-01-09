@@ -8,7 +8,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
 
 radius = 0.5
 
@@ -172,6 +172,25 @@ def test_invalid_file():
     with pytest.raises(IOError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pv.PolyData(filename)
+
+
+@pytest.mark.parametrize(
+    "arr,value",
+    [
+        ("faces", [3, 1, 2, 3, 3, 0, 1]),
+        ("strips", np.array([5, 4, 3, 2, 0])),
+        ("lines", [4, 0, 1, 2, 2, 3, 4]),
+        ("verts", [1, 0, 1]),
+        ("faces", [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
+        ("faces", [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
+    ],
+)
+def test_invalid_connectivity_arrays(arr, value):
+    generator = np.random.default_rng(seed=None)
+    points = generator.random((10, 3))
+    mesh = pv.PolyData(points)
+    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+        setattr(mesh, arr, value)
 
 
 def test_lines_on_init():

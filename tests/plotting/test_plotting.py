@@ -969,6 +969,22 @@ def test_add_point_labels_shape(shape, verify_image_cache):  # noqa: ARG001
     plotter.show()
 
 
+@pytest.mark.parametrize('justification_horizontal', ['left', 'center', 'right'])
+@pytest.mark.parametrize('justification_vertical', ['bottom', 'center', 'top'])
+def test_add_point_labels_justification(justification_horizontal, justification_vertical):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        justification_horizontal=justification_horizontal,
+        justification_vertical=justification_vertical,
+        shape_opacity=0.0,
+        background_color='grey',
+        background_opacity=1.0,
+    )
+    plotter.show()
+
+
 def test_set_background():
     plotter = pv.Plotter()
     plotter.set_background('k')
@@ -3830,12 +3846,24 @@ def test_voxelize_volume():
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
-def test_enable_2d_style():
+def test_enable_custom_trackball_style():
     def setup_plot():
         mesh = pv.Cube()
         mesh["face_id"] = np.arange(6)
         pl = pv.Plotter()
-        pl.enable_2d_style()
+        # mostly use the settings from `enable_2d_style`
+        # but also test environment_rotate
+        pl.enable_custom_trackball_style(
+            left="pan",
+            middle="spin",
+            right="dolly",
+            shift_left="dolly",
+            control_left="spin",
+            shift_middle="dolly",
+            control_middle="pan",
+            shift_right="environment_rotate",
+            control_right="rotate",
+        )
         pl.enable_parallel_projection()
         pl.add_mesh(mesh, scalars="face_id", show_scalar_bar=False)
         return pl
@@ -3845,7 +3873,7 @@ def test_enable_2d_style():
     pl.show()
 
     start = (100, 100)
-    pan = rotate = (150, 150)
+    pan = rotate = env_rotate = (150, 150)
     spin = (100, 150)
     dolly = (100, 25)
 
@@ -3921,11 +3949,12 @@ def test_enable_2d_style():
     pl.iren._control_key_release()
     pl.close()
 
-    # shift right click dollys, image 9
+    # shift right click environment rotate, image 9
+    # does nothing here
     pl = setup_plot()
     pl.show(auto_close=False)
     pl.iren._shift_key_press()
     pl.iren._mouse_right_button_press(*start)
-    pl.iren._mouse_right_button_release(*dolly)
+    pl.iren._mouse_right_button_release(*env_rotate)
     pl.iren._shift_key_release()
     pl.close()
