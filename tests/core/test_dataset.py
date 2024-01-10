@@ -285,7 +285,7 @@ def test_set_points():
     dataset.points = pv.vtk_points(points)
 
 
-def test_translate_should_fail_bad_points_or_transform(grid):
+def test_translate_should_fail_bad_points_or_transform():
     points = np.random.default_rng().random((10, 2))
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))

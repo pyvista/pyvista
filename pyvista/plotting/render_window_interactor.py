@@ -691,7 +691,7 @@ class RenderWindowInteractor:
             control_release_action = end_action_map[control]
             shift_release_action = end_action_map[shift]
 
-            def _press_callback(_obj, event):
+            def _press_callback(_obj, event):  # noqa: ARG001
                 if self.interactor.GetControlKey():
                     control_action()
                 elif self.interactor.GetShiftKey():
@@ -700,7 +700,7 @@ class RenderWindowInteractor:
                     click_action()
                 button_press()
 
-            def _release_callback(_obj, event):
+            def _release_callback(_obj, event):  # noqa: ARG001
                 click_release_action()
                 control_release_action()
                 shift_release_action()

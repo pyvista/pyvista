@@ -291,7 +291,7 @@ def test_measurement_widget():
     p.close()
 
 
-def test_widget_sphere(uniform):
+def test_widget_sphere():
     p = pv.Plotter()
     func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
@@ -322,7 +322,7 @@ def test_widget_closed(uniform):
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-def test_add_camera_orientation_widget(uniform):
+def test_add_camera_orientation_widget():
     p = pv.Plotter()
     p.add_camera_orientation_widget()
     assert p.camera_widgets
@@ -584,7 +584,7 @@ def test_affine_widget(sphere):
     assert not widget._arrows
 
 
-def test_logo_widget(verify_image_cache):
+def test_logo_widget(verify_image_cache):  # noqa: ARG001
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
     pl.add_logo_widget()
@@ -621,7 +621,7 @@ def test_outline_opacity(uniform, outline_opacity):
     p.close()
 
 
-def test_clear_box_widget(verify_image_cache):
+def test_clear_box_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -630,7 +630,7 @@ def test_clear_box_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_plane_widget(verify_image_cache):
+def test_clear_plane_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -639,7 +639,7 @@ def test_clear_plane_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_line_widget(verify_image_cache):
+def test_clear_line_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -648,7 +648,7 @@ def test_clear_line_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_slider_widget(verify_image_cache):
+def test_clear_slider_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -657,7 +657,7 @@ def test_clear_slider_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_spline_widget(verify_image_cache):
+def test_clear_spline_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -666,7 +666,7 @@ def test_clear_spline_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_measure_widget(verify_image_cache):
+def test_clear_measure_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -675,7 +675,7 @@ def test_clear_measure_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_sphere_widget(verify_image_cache):
+def test_clear_sphere_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -685,7 +685,7 @@ def test_clear_sphere_widget(verify_image_cache):
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-def test_clear_camera_widget(verify_image_cache):
+def test_clear_camera_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -694,7 +694,7 @@ def test_clear_camera_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_button_widget(verify_image_cache):
+def test_clear_button_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -703,7 +703,7 @@ def test_clear_button_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_logo_widget(verify_image_cache):
+def test_clear_logo_widget(verify_image_cache):  # noqa: ARG001
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)

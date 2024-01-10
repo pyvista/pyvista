@@ -345,7 +345,7 @@ class PlotError(RuntimeError):
     pass
 
 
-def _run_code(code, code_path, ns=None, function_name=None):
+def _run_code(code, code_path, ns=None, function_name=None):  # noqa: ARG001
     """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
     ```pyvista-plot::`` directive.  In the later case, the doctest parser will
     present the code-block again with the ```pyvista-plot::`` directive

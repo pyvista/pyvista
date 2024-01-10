@@ -56,7 +56,7 @@ def test_depth_silhouette_eq(default_theme):
     assert my_theme.silhouette != 1
 
 
-def test_depth_silhouette_opacity_outside_clamp(default_theme):
+def test_depth_silhouette_opacity_outside_clamp():
     my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):
         my_theme.silhouette.opacity = 10
@@ -444,7 +444,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
 
-    def fun(plotter):
+    def fun(plotter):  # noqa: ARG001
         pass
 
     dark_theme.before_close_callback = fun
@@ -509,7 +509,7 @@ def test_below_range_color(default_theme):
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
-def test_user_logo(default_theme, verify_image_cache):
+def test_user_logo(default_theme, verify_image_cache):  # noqa: ARG001
     default_theme.logo_file = download_file('vtk.png')
     pl = pv.Plotter()
     pl.add_logo_widget()

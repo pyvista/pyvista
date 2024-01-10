@@ -1126,7 +1126,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
                 label_color=color,
-                line_width=line_width,
                 x_color=x_color,
                 y_color=y_color,
                 z_color=z_color,

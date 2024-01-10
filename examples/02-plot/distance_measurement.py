@@ -17,7 +17,7 @@ pl.add_mesh(cube)
 pl.add_mesh(cube2)
 
 
-def callback(a, b, distance):
+def callback(a, b, distance):  # noqa: ARG001
     pl.add_text(f'Distance: {distance:.2f}', name='dist')
 
 

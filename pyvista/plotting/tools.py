@@ -260,7 +260,6 @@ def create_axes_marker(
 
 
 def create_axes_orientation_box(
-    line_width=1,
     text_scale=0.366667,
     edge_color='black',
     x_color=None,
@@ -282,9 +281,6 @@ def create_axes_orientation_box(
 
     Parameters
     ----------
-    line_width : float, optional
-        The width of the marker lines.
-
     text_scale : float, optional
         Size of the text relative to the faces.
 
@@ -347,7 +343,6 @@ def create_axes_orientation_box(
 
     >>> import pyvista as pv
     >>> actor = pv.create_axes_orientation_box(
-    ...     line_width=1,
     ...     text_scale=0.53,
     ...     edge_color='black',
     ...     x_color='k',

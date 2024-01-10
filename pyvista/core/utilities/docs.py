@@ -97,7 +97,7 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
 
 
 def pv_html_page_context(
-    app, pagename: str, templatename: str, context, doctree
+    app, pagename: str, templatename: str, context, doctree  # noqa: ARG001
 ) -> None:  # pragma: no cover
     """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
 

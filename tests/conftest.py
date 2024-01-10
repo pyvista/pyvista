@@ -221,7 +221,7 @@ def pytest_runtest_setup(item):
             skip(f'Test needs VTK {version_str} or newer.')
 
 
-def pytest_report_header(config):
+def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
 
     required = []

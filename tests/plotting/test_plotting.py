@@ -163,7 +163,7 @@ def test_import_vrml():
     pl.show()
 
 
-def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
+def test_export_vrml(tmpdir, sphere):
     filename = str(tmpdir.mkdir("tmpdir").join("tmp.wrl"))
 
     pl = pv.Plotter()
@@ -963,7 +963,7 @@ def test_add_point_labels_always_visible(always_visible):
 
 
 @pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
-def test_add_point_labels_shape(shape, verify_image_cache):
+def test_add_point_labels_shape(shape, verify_image_cache):  # noqa: ARG001
     plotter = pv.Plotter()
     plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
     plotter.show()
@@ -1607,7 +1607,7 @@ def test_link_views(sphere):
 
 
 @skip_windows
-def test_link_views_camera_set(sphere, verify_image_cache):
+def test_link_views_camera_set(verify_image_cache):  # noqa: ARG001
     p = pv.Plotter(shape=(1, 2))
     p.add_mesh(pv.Cone())
     assert not p.renderer.camera_set
@@ -3564,7 +3564,7 @@ def test_plot_volume_rgba(uniform):
     pl.show()
 
 
-def test_plot_window_size_context(sphere):
+def test_plot_window_size_context():
     pl = pv.Plotter()
     pl.add_mesh(pv.Cube())
     with pl.window_size_context((200, 200)):

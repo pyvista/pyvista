@@ -147,7 +147,7 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
-def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
     mock_show_progress.assert_called_once()
@@ -299,7 +299,7 @@ def test_voxelize_volume_invalid_density(rectilinear):
         pv.voxelize_volume(rectilinear, {0.5, 0.3})
 
 
-def test_voxelize_volume_no_face_mesh(rectilinear):
+def test_voxelize_volume_no_face_mesh():
     with pytest.raises(ValueError, match='must have faces'):
         pv.voxelize_volume(pv.PolyData())
 
