@@ -198,8 +198,8 @@ jobs:
         if: ${{ matrix.numpy-version != 'default' }}
         run: |
           pip uninstall numpy matplotlib -y
-          pip install --pre -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy matplotlib
-          pip install --pre -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy matplotlib
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
