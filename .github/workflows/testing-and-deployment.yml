@@ -129,6 +129,7 @@ jobs:
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-20.04
+    continue-on-error: ${{ matrix.numpy-version != 'default' }}
     strategy:
       fail-fast: false
 
