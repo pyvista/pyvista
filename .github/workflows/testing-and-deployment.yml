@@ -194,13 +194,6 @@ jobs:
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
 
-      - name: Set up numpy
-        if: ${{ matrix.numpy-version != 'default' }}
-        run: |
-          pip uninstall numpy matplotlib -y
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
-
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
         run: python -c "import pyvista; print(pyvista.Report());"
@@ -215,6 +208,13 @@ jobs:
       - name: Limit Matplotlib for VTK<9.2.2
         if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
         run: pip install 'matplotlib<3.6'
+
+      - name: Set up numpy 2.0
+        if: ${{ matrix.numpy-version != 'default' }}
+        run: |
+          pip uninstall numpy matplotlib -y
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista -v tests/core tests/examples
