@@ -81,14 +81,15 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
 
     The file names are taken from the ``image_path_iterator`` iterator.
 
-    If a plotter has a ``_gif_filename`` attribute, a gif will be created.
-    Else, depending on the value of ``dynamic``, either a ``.png`` static image
+    A gif will be created if a plotter has a ``_gif_filename`` attribute.
+    Otherwise, depending on the value of ``dynamic``, either a ``.png`` static image
     or a ``.vtksz`` file will be created.
 
     Parameters
     ----------
     image_path_iterator : Iterator[str]
         An iterator that yields the path to the next image to be saved.
+
     dynamic : bool, default: False
         Whether to save a static ``.png`` image or a ``.vtksz`` (interactive)
         file.
