@@ -2899,7 +2899,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return self.bounds
 
-    def cell_id(self, coords: Union[Array[int]]) -> Union[int, np.ndarray, None]:
+    def cell_id(self, coords: Array[int]) -> Union[int, np.ndarray, None]:
         """Return the cell ID.
 
         Parameters
