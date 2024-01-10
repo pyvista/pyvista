@@ -28,6 +28,8 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
+from .._typing_core import VTKAlgorithmHook
+
 
 @abstract_class
 class DataSetFilters:
@@ -40,12 +42,13 @@ class DataSetFilters:
         value=0.0,
         return_clipped=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         crinkle=False,
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
             # Add Cell IDs
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
 
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -59,7 +62,7 @@ class DataSetFilters:
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
-        _update_alg(alg, progress_bar, 'Clipping with Function')
+        _update_alg(alg, progress_bar, 'Clipping with Function', algo_hook=algo_hook)
 
         if return_clipped:
             a = _get_output(alg, oport=0)
@@ -189,6 +192,7 @@ class DataSetFilters:
         inplace=False,
         return_clipped=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         crinkle=False,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
@@ -260,7 +264,7 @@ class DataSetFilters:
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
         if origin is None:
-            origin = self.center
+            origin = self.center  # type: ignore[attr-defined]
         # create the plane for clipping
         function = generate_plane(normal, origin)
         # run the clip
@@ -271,14 +275,15 @@ class DataSetFilters:
             value=value,
             return_clipped=return_clipped,
             progress_bar=progress_bar,
+            algo_hook=algo_hook,
             crinkle=crinkle,
         )
         if inplace:
             if return_clipped:
-                self.copy_from(result[0], deep=False)
+                self.copy_from(result[0], deep=False)  # type: ignore[attr-defined]
                 return self, result[1]
             else:
-                self.copy_from(result, deep=False)
+                self.copy_from(result, deep=False)  # type: ignore[attr-defined]
                 return self
         return result
 
@@ -288,6 +293,7 @@ class DataSetFilters:
         invert=True,
         factor=0.35,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         merge_points=True,
         crinkle=False,
     ):
@@ -352,7 +358,7 @@ class DataSetFilters:
                 """Get a section of the given range (internal helper)."""
                 return dmax - ((dmax - dmin) * factor)
 
-            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
+            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
             xmin = _get_quarter(xmin, xmax)
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
@@ -375,10 +381,10 @@ class DataSetFilters:
         if len(bounds) not in [3, 6, 12]:
             raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) == 3:
-            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
+            xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -390,7 +396,7 @@ class DataSetFilters:
             # invert the clip if needed
             port = 1
             alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
+        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box', algo_hook=algo_hook)
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
@@ -485,7 +491,14 @@ class DataSetFilters:
         return result
 
     def clip_scalar(
-        self, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False
+        self,
+        scalars=None,
+        invert=True,
+        value=0.0,
+        inplace=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+        both=False,
     ):
         """Clip a dataset by a scalar.
 
@@ -557,18 +570,18 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         alg.SetValue(value)
         if scalars is None:
-            set_default_active_scalars(self)
+            set_default_active_scalars(self)  # type: ignore[arg-type]
         else:
-            self.set_active_scalars(scalars)
+            self.set_active_scalars(scalars)  # type: ignore[attr-defined]
 
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
 
-        _update_alg(alg, progress_bar, 'Clipping by a Scalar')
+        _update_alg(alg, progress_bar, 'Clipping by a Scalar', algo_hook=algo_hook)
         result0 = _get_output(alg)
 
         if inplace:
-            self.copy_from(result0, deep=False)
+            self.copy_from(result0, deep=False)  # type: ignore[attr-defined]
             result0 = self
 
         if both:
@@ -586,6 +599,7 @@ class DataSetFilters:
         value=0.0,
         compute_distance=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         crinkle=False,
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
@@ -650,7 +664,7 @@ class DataSetFilters:
             points = pyvista.convert_array(self.points)
             dists = _vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            self['implicit_distance'] = pyvista.convert_array(dists)
+            self['implicit_distance'] = pyvista.convert_array(dists)  # type: ignore[index]
         # run the clip
         result = DataSetFilters._clip_with_function(
             self,
@@ -658,12 +672,18 @@ class DataSetFilters:
             invert=invert,
             value=value,
             progress_bar=progress_bar,
+            algo_hook=algo_hook,
             crinkle=crinkle,
         )
         return result
 
     def slice_implicit(
-        self, implicit_function, generate_triangles=False, contour=False, progress_bar=False
+        self,
+        implicit_function,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Slice a dataset by a VTK implicit function.
 
@@ -713,7 +733,7 @@ class DataSetFilters:
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
         alg.SetGenerateTriangles(generate_triangles)
-        _update_alg(alg, progress_bar, 'Slicing')
+        _update_alg(alg, progress_bar, 'Slicing', algo_hook=algo_hook)
         output = _get_output(alg)
         if contour:
             return output.contour()
@@ -1405,7 +1425,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def outline(self, generate_faces=False, progress_bar=False):
+    def outline(self, generate_faces=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Produce an outline of the full extent for the input dataset.
 
         Parameters
@@ -1437,10 +1457,10 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(self)
         alg.SetGenerateFaces(generate_faces)
-        _update_alg(alg, progress_bar, 'Producing an outline')
+        _update_alg(alg, progress_bar, 'Producing an outline', algo_hook=algo_hook)
         return wrap(alg.GetOutputDataObject(0))
 
-    def outline_corners(self, factor=0.2, progress_bar=False):
+    def outline_corners(self, factor=0.2, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Produce an outline of the corners for the input dataset.
 
         Parameters
@@ -1471,10 +1491,15 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(self)
         alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
+        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners', algo_hook=algo_hook)
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
+    def extract_geometry(
+        self,
+        extent: Optional[Sequence[float]] = None,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1522,10 +1547,16 @@ class DataSetFilters:
         if extent is not None:
             alg.SetExtent(extent)
             alg.SetExtentClipping(True)
-        _update_alg(alg, progress_bar, 'Extracting Geometry')
+        _update_alg(alg, progress_bar, 'Extracting Geometry', algo_hook=algo_hook)
         return _get_output(alg)
 
-    def extract_all_edges(self, use_all_points=False, clear_data=False, progress_bar=False):
+    def extract_all_edges(
+        self,
+        use_all_points=False,
+        clear_data=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -1582,7 +1613,7 @@ class DataSetFilters:
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Extracting All Edges')
+        _update_alg(alg, progress_bar, 'Extracting All Edges', algo_hook=algo_hook)
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         output = _get_output(alg)
@@ -1598,6 +1629,7 @@ class DataSetFilters:
         preference='point',
         set_active=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Generate scalar values on a dataset.
 
@@ -1670,16 +1702,16 @@ class DataSetFilters:
         """
         # Fix the projection line:
         if low_point is None:
-            low_point = list(self.center)
-            low_point[2] = self.bounds[4]
+            low_point = list(self.center)  # type: ignore[attr-defined]
+            low_point[2] = self.bounds[4]  # type: ignore[attr-defined]
         if high_point is None:
-            high_point = list(self.center)
-            high_point[2] = self.bounds[5]
+            high_point = list(self.center)  # type: ignore[attr-defined]
+            high_point[2] = self.bounds[5]  # type: ignore[attr-defined]
         # Fix scalar_range:
         if scalar_range is None:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
-            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)
+            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
         elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
@@ -1692,12 +1724,12 @@ class DataSetFilters:
         alg.SetScalarRange(scalar_range)
         alg.SetLowPoint(low_point)
         alg.SetHighPoint(high_point)
-        _update_alg(alg, progress_bar, 'Computing Elevation')
+        _update_alg(alg, progress_bar, 'Computing Elevation', algo_hook=algo_hook)
         # Decide on updating active scalars array
         output = _get_output(alg)
         if not set_active:
             # 'Elevation' is automatically made active by the VTK filter
-            output.point_data.active_scalars_name = self.point_data.active_scalars_name
+            output.point_data.active_scalars_name = self.point_data.active_scalars_name  # type: ignore[attr-defined]
         return output
 
     def contour(
@@ -1711,6 +1743,7 @@ class DataSetFilters:
         preference='point',
         method='contour',
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Contour an input self by an array.
 
@@ -1838,7 +1871,7 @@ class DataSetFilters:
             scalars_name = scalars
         elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars
+            self[scalars_name] = scalars  # type: ignore[index]
         elif scalars is not None:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -1846,7 +1879,7 @@ class DataSetFilters:
             )
 
         # Make sure the input has scalars to contour on
-        if self.n_arrays < 1:
+        if self.n_arrays < 1:  # type: ignore[attr-defined]
             raise ValueError('Input dataset for the contour filter must have scalar.')
 
         alg.SetInputDataObject(self)
@@ -1855,8 +1888,8 @@ class DataSetFilters:
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars_name = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars_name = self.active_scalars_info  # type: ignore[attr-defined]
         else:
             field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
@@ -1873,7 +1906,7 @@ class DataSetFilters:
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars_name)
+                rng = self.get_data_range(scalars_name)  # type: ignore[attr-defined]
             alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
@@ -1881,7 +1914,7 @@ class DataSetFilters:
                 alg.SetValue(i, val)
         else:
             raise TypeError('isosurfaces not understood.')
-        _update_alg(alg, progress_bar, 'Computing Contour')
+        _update_alg(alg, progress_bar, 'Computing Contour', algo_hook=algo_hook)
         output = _get_output(alg)
 
         # some of these filters fail to correctly name the array
@@ -1900,6 +1933,7 @@ class DataSetFilters:
         name='Texture Coordinates',
         use_bounds=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Texture map this dataset to a user defined plane.
 
@@ -1950,7 +1984,7 @@ class DataSetFilters:
         """
         if use_bounds:
             if isinstance(use_bounds, (int, bool)):
-                b = self.GetBounds()
+                b = self.GetBounds()  # type: ignore[attr-defined]
             origin = [b[0], b[2], b[4]]  # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
             point_v = [b[0], b[3], b[4]]  # TOP LEFT CORNER
@@ -1962,19 +1996,19 @@ class DataSetFilters:
             alg.SetPoint1(point_u)  # BOTTOM RIGHT CORNER
             alg.SetPoint2(point_v)  # TOP LEFT CORNER
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Texturing Map to Plane')
+        _update_alg(alg, progress_bar, 'Texturing Map to Plane', algo_hook=algo_hook)
         output = _get_output(alg)
         if not inplace:
             return output
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
-        otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(texture_coordinates)
-        self.GetPointData().AddArray(texture_coordinates)
+        otc = self.GetPointData().GetTCoords()  # type: ignore[attr-defined]
+        self.GetPointData().SetTCoords(texture_coordinates)  # type: ignore[attr-defined]
+        self.GetPointData().AddArray(texture_coordinates)  # type: ignore[attr-defined]
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
-            self.GetPointData().AddArray(otc)
+            self.GetPointData().AddArray(otc)  # type: ignore[attr-defined]
         return self
 
     def texture_map_to_sphere(
@@ -1984,6 +2018,7 @@ class DataSetFilters:
         inplace=False,
         name='Texture Coordinates',
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Texture map this dataset to a user defined sphere.
 
@@ -2036,22 +2071,29 @@ class DataSetFilters:
             alg.SetCenter(center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Mapping texture to sphere')
+        _update_alg(alg, progress_bar, 'Mapping texture to sphere', algo_hook=algo_hook)
         output = _get_output(alg)
         if not inplace:
             return output
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
-        otc = self.GetPointData().GetTCoords()
-        self.GetPointData().SetTCoords(texture_coordinates)
-        self.GetPointData().AddArray(texture_coordinates)
+        otc = self.GetPointData().GetTCoords()  # type: ignore[attr-defined]
+        self.GetPointData().SetTCoords(texture_coordinates)  # type: ignore[attr-defined]
+        self.GetPointData().AddArray(texture_coordinates)  # type: ignore[attr-defined]
         # CRITICAL:
         if otc and otc.GetName() != name:
             # Add old ones back at the end if different name
-            self.GetPointData().AddArray(otc)
+            self.GetPointData().AddArray(otc)  # type: ignore[attr-defined]
         return self
 
-    def compute_cell_sizes(self, length=True, area=True, volume=True, progress_bar=False):
+    def compute_cell_sizes(
+        self,
+        length=True,
+        area=True,
+        volume=True,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Compute sizes for 1D (length), 2D (area) and 3D (volume) cells.
 
         Parameters
@@ -2096,10 +2138,10 @@ class DataSetFilters:
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(False)
-        _update_alg(alg, progress_bar, 'Computing Cell Sizes')
+        _update_alg(alg, progress_bar, 'Computing Cell Sizes', algo_hook=algo_hook)
         return _get_output(alg)
 
-    def cell_centers(self, vertex=True, progress_bar=False):
+    def cell_centers(self, vertex=True, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Generate points at the center of the cells in this dataset.
 
         These points can be used for placing glyphs or vectors.
@@ -2111,6 +2153,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        algo_hook : VTKAlgorithmHook, optional
+            Hook used to modify the underlying vtkAlgorithm
+            before update.
 
         Returns
         -------
@@ -2140,7 +2186,9 @@ class DataSetFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(self)
         alg.SetVertexCells(vertex)
-        _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
+        _update_alg(
+            alg, progress_bar, 'Generating Points at the Center of the Cells', algo_hook=algo_hook
+        )
         return _get_output(alg)
 
     def glyph(
@@ -2155,6 +2203,7 @@ class DataSetFilters:
         clamping=False,
         rng=None,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
 
@@ -2275,8 +2324,8 @@ class DataSetFilters:
         else:
             for index, subgeom in zip(indices, geom):
                 alg.SetSourceData(index, subgeom)
-            if dataset.active_scalars is not None:
-                if dataset.active_scalars.ndim > 1:
+            if dataset.active_scalars is not None:  # type: ignore[attr-defined]
+                if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
                     alg.SetIndexModeToVector()
                 else:
                     alg.SetIndexModeToScalar()
@@ -2284,11 +2333,11 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.set_active_scalars(scale, preference='cell')
+            dataset.set_active_scalars(scale, preference='cell')  # type: ignore[attr-defined]
             scale = True
         elif isinstance(scale, bool) and scale:
             try:
-                set_default_active_scalars(self)
+                set_default_active_scalars(self)  # type: ignore[arg-type]
             except MissingDataError:
                 warnings.warn("No data to use for scale. scale will be set to False.")
                 scale = False
@@ -2297,8 +2346,8 @@ class DataSetFilters:
                 scale = False
 
         if scale:
-            if dataset.active_scalars is not None:
-                if dataset.active_scalars.ndim > 1:
+            if dataset.active_scalars is not None:  # type: ignore[attr-defined]
+                if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
                     alg.SetScaleModeToScaleByVector()
                 else:
                     alg.SetScaleModeToScaleByScalar()
@@ -2306,16 +2355,16 @@ class DataSetFilters:
             alg.SetScaleModeToDataScalingOff()
 
         if isinstance(orient, str):
-            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:
+            if scale and dataset.active_scalars_info.association == FieldAssociation.CELL:  # type: ignore[attr-defined]
                 prefer = 'cell'
             else:
                 prefer = 'point'
-            dataset.set_active_vectors(orient, preference=prefer)
+            dataset.set_active_vectors(orient, preference=prefer)  # type: ignore[attr-defined]
             orient = True
 
         if orient:
             try:
-                pyvista.set_default_active_vectors(dataset)
+                pyvista.set_default_active_vectors(dataset)  # type: ignore[arg-type]
             except MissingDataError:
                 warnings.warn("No vector-like data to use for orient. orient will be set to False.")
                 orient = False
@@ -2326,14 +2375,14 @@ class DataSetFilters:
                 orient = False
 
         if scale and orient:
-            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
+            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:  # type: ignore[attr-defined]
                 raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
 
         source_data = dataset
         set_actives_on_source_data = False
 
-        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
-            orient and dataset.active_vectors_info.association == FieldAssociation.CELL
+        if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (  # type: ignore[attr-defined]
+            orient and dataset.active_vectors_info.association == FieldAssociation.CELL  # type: ignore[attr-defined]
         ):
             source_data = dataset.cell_centers()
             set_actives_on_source_data = True
@@ -2341,7 +2390,7 @@ class DataSetFilters:
         # Clean the points before glyphing
         if tolerance is not None:
             small = pyvista.PolyData(source_data.points)
-            small.point_data.update(source_data.point_data)
+            small.point_data.update(source_data.point_data)  # type: ignore[attr-defined]
             source_data = small.clean(
                 point_merging=True,
                 merge_tol=tolerance,
@@ -2358,9 +2407,9 @@ class DataSetFilters:
         # scalars/vectors, so set them again
         if set_actives_on_source_data:
             if scale:
-                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
+                source_data.set_active_scalars(dataset.active_scalars_name, preference='point')  # type: ignore[attr-defined]
             if orient:
-                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
+                source_data.set_active_vectors(dataset.active_vectors_name, preference='point')  # type: ignore[attr-defined]
 
         if rng is not None:
             alg.SetRange(rng)
@@ -2369,7 +2418,7 @@ class DataSetFilters:
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
-        _update_alg(alg, progress_bar, 'Computing Glyphs')
+        _update_alg(alg, progress_bar, 'Computing Glyphs', algo_hook=algo_hook)
         return _get_output(alg)
 
     def connectivity(
@@ -2387,6 +2436,7 @@ class DataSetFilters:
         closest_point=None,
         inplace=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         **kwargs,
     ):
         """Find and label connected regions.
@@ -2734,7 +2784,9 @@ class DataSetFilters:
                 f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
             )
 
-        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
+        _update_alg(
+            alg, progress_bar, 'Finding and Labeling Connected Regions.', algo_hook=algo_hook
+        )
         output = _get_output(alg)
 
         # Process output
@@ -3048,7 +3100,9 @@ class DataSetFilters:
         else:
             return warped_mesh
 
-    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False):
+    def cell_data_to_point_data(
+        self, pass_cell_data=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -3098,7 +3152,9 @@ class DataSetFilters:
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
-        _update_alg(alg, progress_bar, 'Transforming cell data into point data.')
+        _update_alg(
+            alg, progress_bar, 'Transforming cell data into point data.', algo_hook=algo_hook
+        )
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
@@ -3136,7 +3192,9 @@ class DataSetFilters:
             self, pass_cell_data=pass_cell_data, progress_bar=progress_bar, **kwargs
         )
 
-    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
+    def point_data_to_cell_data(
+        self, pass_point_data=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -3185,13 +3243,21 @@ class DataSetFilters:
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
-        _update_alg(alg, progress_bar, 'Transforming point data into cell data')
+        _update_alg(
+            alg, progress_bar, 'Transforming point data into cell data', algo_hook=algo_hook
+        )
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ptc(self, pass_point_data=False, progress_bar=False, **kwargs):
+    def ptc(
+        self,
+        pass_point_data=False,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+        **kwargs,
+    ):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -3220,10 +3286,14 @@ class DataSetFilters:
 
         """
         return DataSetFilters.point_data_to_cell_data(
-            self, pass_point_data=pass_point_data, progress_bar=progress_bar, **kwargs
+            self,
+            pass_point_data=pass_point_data,
+            progress_bar=progress_bar,
+            algo_hook=algo_hook,
+            **kwargs,
         )
 
-    def triangulate(self, inplace=False, progress_bar=False):
+    def triangulate(self, inplace=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -3258,15 +3328,22 @@ class DataSetFilters:
         """
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Converting to triangle mesh')
+        _update_alg(alg, progress_bar, 'Converting to triangle mesh', algo_hook=algo_hook)
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh, deep=False)
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return self
         return mesh
 
-    def delaunay_3d(self, alpha=0.0, tol=0.001, offset=2.5, progress_bar=False):
+    def delaunay_3d(
+        self,
+        alpha=0.0,
+        tol=0.001,
+        offset=2.5,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This filter can be used to generate a 3D tetrahedral mesh from
@@ -3317,11 +3394,17 @@ class DataSetFilters:
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
-        _update_alg(alg, progress_bar, 'Computing 3D Triangulation')
+        _update_alg(alg, progress_bar, 'Computing 3D Triangulation', algo_hook=algo_hook)
         return _get_output(alg)
 
     def select_enclosed_points(
-        self, surface, tolerance=0.001, inside_out=False, check_surface=True, progress_bar=False
+        self,
+        surface,
+        tolerance=0.001,
+        inside_out=False,
+        check_surface=True,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -3403,9 +3486,9 @@ class DataSetFilters:
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
-        _update_alg(alg, progress_bar, 'Selecting Enclosed Points')
+        _update_alg(alg, progress_bar, 'Selecting Enclosed Points', algo_hook=algo_hook)
         result = _get_output(alg)
-        out = self.copy()
+        out = self.copy()  # type: ignore[attr-defined]
         bools = result['SelectedPoints'].astype(np.uint8)
         if len(bools) < 1:
             bools = np.zeros(out.n_points, dtype=np.uint8)
@@ -3420,6 +3503,7 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         locator=None,
     ):
         """Sample data values at specified point locations.
@@ -3504,7 +3588,12 @@ class DataSetFilters:
         if locator:
             alg.SetCellLocatorPrototype(locator)
 
-        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
+        _update_alg(
+            alg,
+            progress_bar,
+            'Sampling Data Values at Specified Point Locations',
+            algo_hook=algo_hook,
+        )
         return _get_output(alg)
 
     def sample(
@@ -3515,6 +3604,7 @@ class DataSetFilters:
         pass_point_data=True,
         categorical=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         locator=None,
         pass_field_data=True,
         mark_blank=True,
@@ -3653,7 +3743,12 @@ class DataSetFilters:
                 alg.SnapToCellWithClosestPointOn()
             except AttributeError:  # pragma: no cover
                 raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
-        _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
+        _update_alg(
+            alg,
+            progress_bar,
+            'Resampling array Data from a Passed Mesh onto Mesh',
+            algo_hook=algo_hook,
+        )
         return _get_output(alg)
 
     def interpolate(
@@ -3667,6 +3762,7 @@ class DataSetFilters:
         pass_cell_data=True,
         pass_point_data=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -3798,7 +3894,7 @@ class DataSetFilters:
             raise ValueError(f'strategy `{strategy}` not supported.')
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
-        _update_alg(interpolator, progress_bar, 'Interpolating')
+        _update_alg(interpolator, progress_bar, 'Interpolating', algo_hook=algo_hook)
         return _get_output(interpolator)
 
     def streamlines(
@@ -4118,6 +4214,7 @@ class DataSetFilters:
         minimum_number_of_loop_points=4,
         compute_vorticity=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Generate evenly spaced streamlines on a 2D dataset.
 
@@ -4230,10 +4327,10 @@ class DataSetFilters:
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
         if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
+            self.set_active_scalars(vectors)  # type: ignore[attr-defined]
+            self.set_active_vectors(vectors)  # type: ignore[attr-defined]
         elif vectors is None:
-            pyvista.set_default_active_vectors(self)
+            pyvista.set_default_active_vectors(self)  # type: ignore[arg-type]
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -4275,10 +4372,17 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
-        _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
+        _update_alg(
+            alg,
+            progress_bar,
+            'Generating Evenly Spaced Streamlines on a 2D Dataset',
+            algo_hook=algo_hook,
+        )
         return _get_output(alg)
 
-    def decimate_boundary(self, target_reduction=0.5, progress_bar=False):
+    def decimate_boundary(
+        self, target_reduction=0.5, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Return a decimated version of a triangulation of the boundary.
 
         Only the outer surface of the input dataset will be considered.
@@ -4305,7 +4409,7 @@ class DataSetFilters:
 
         """
         return (
-            self.extract_geometry(progress_bar=progress_bar)
+            self.extract_geometry(progress_bar=progress_bar, algo_hook=algo_hook)
             .triangulate()
             .decimate(target_reduction)
         )
@@ -4929,7 +5033,9 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, invert=False, progress_bar=False):
+    def extract_cells(
+        self, ind, invert=False, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Return a subset of the grid.
 
         Parameters
@@ -4966,7 +5072,7 @@ class DataSetFilters:
         """
         if invert:
             _, ind = numpy_to_idarr(ind, return_ind=True)
-            ind = [i for i in range(self.n_cells) if i not in ind]
+            ind = [i for i in range(self.n_cells) if i not in ind]  # type: ignore[attr-defined]
 
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
@@ -4981,7 +5087,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Cells')
+        _update_alg(extract_sel, progress_bar, 'Extracting Cells', algo_hook=algo_hook)
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
@@ -4992,7 +5098,14 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(self, ind, adjacent_cells=True, include_cells=True, progress_bar=False):
+    def extract_points(
+        self,
+        ind,
+        adjacent_cells=True,
+        include_cells=True,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
+    ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -5037,9 +5150,9 @@ class DataSetFilters:
             adjacent_cells = True
         if not adjacent_cells:
             # Build array of point indices to be removed.
-            ind_rem = np.ones(self.n_points, dtype='bool')
+            ind_rem = np.ones(self.n_points, dtype='bool')  # type: ignore[attr-defined]
             ind_rem[ind] = False
-            ind = np.arange(self.n_points)[ind_rem]
+            ind = np.arange(self.n_points)[ind_rem]  # type: ignore[attr-defined]
             # Invert selection
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.INVERSE(), 1)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
@@ -5053,11 +5166,16 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Points')
+        _update_alg(extract_sel, progress_bar, 'Extracting Points', algo_hook=algo_hook)
         return _get_output(extract_sel)
 
     def extract_surface(
-        self, pass_pointid=True, pass_cellid=True, nonlinear_subdivision=1, progress_bar=False
+        self,
+        pass_pointid=True,
+        pass_cellid=True,
+        nonlinear_subdivision=1,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Extract surface mesh of the grid.
 
@@ -5141,10 +5259,10 @@ class DataSetFilters:
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
-        _update_alg(surf_filter, progress_bar, 'Extracting Surface')
+        _update_alg(surf_filter, progress_bar, 'Extracting Surface', algo_hook=algo_hook)
         return _get_output(surf_filter)
 
-    def surface_indices(self, progress_bar=False):
+    def surface_indices(self, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Return the surface indices of a grid.
 
         Parameters
@@ -5168,7 +5286,9 @@ class DataSetFilters:
         pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
 
         """
-        surf = DataSetFilters.extract_surface(self, pass_cellid=True, progress_bar=progress_bar)
+        surf = DataSetFilters.extract_surface(
+            self, pass_cellid=True, progress_bar=progress_bar, algo_hook=algo_hook
+        )
         return surf.point_data['vtkOriginalPointIds']
 
     def extract_feature_edges(
@@ -5180,6 +5300,7 @@ class DataSetFilters:
         manifold_edges=True,
         clear_data=False,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Extract edges from the surface of the mesh.
 
@@ -5249,7 +5370,7 @@ class DataSetFilters:
         featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
-        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
+        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges', algo_hook=algo_hook)
         output = _get_output(featureEdges)
         if clear_data:
             output.clear_data()
@@ -5263,6 +5384,7 @@ class DataSetFilters:
         inplace=False,
         main_has_priority=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Join one or many other grids to this grid.
 
@@ -5342,11 +5464,11 @@ class DataSetFilters:
         if main_has_priority:
             append_filter.AddInputData(self)
 
-        _update_alg(append_filter, progress_bar, 'Merging')
+        _update_alg(append_filter, progress_bar, 'Merging', algo_hook=algo_hook)
         merged = _get_output(append_filter)
         if inplace:
             if type(self) is type(merged):
-                self.deep_copy(merged)
+                self.deep_copy(merged)  # type: ignore[attr-defined]
                 return self
             else:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
@@ -5375,7 +5497,11 @@ class DataSetFilters:
         return merged
 
     def compute_cell_quality(
-        self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False
+        self,
+        quality_measure='scaled_jacobian',
+        null_value=-1.0,
+        progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -5501,7 +5627,7 @@ class DataSetFilters:
             )
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
-        _update_alg(alg, progress_bar, 'Computing Cell Quality')
+        _update_alg(alg, progress_bar, 'Computing Cell Quality', algo_hook=algo_hook)
         return _get_output(alg)
 
     def compute_derivative(
@@ -5514,6 +5640,7 @@ class DataSetFilters:
         faster=False,
         preference='point',
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Compute derivative-based quantities of point/cell scalar field.
 
@@ -5589,8 +5716,8 @@ class DataSetFilters:
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
@@ -5624,10 +5751,10 @@ class DataSetFilters:
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Derivative')
+        _update_alg(alg, progress_bar, 'Computing Derivative', algo_hook=algo_hook)
         return _get_output(alg)
 
-    def shrink(self, shrink_factor=1.0, progress_bar=False):
+    def shrink(self, shrink_factor=1.0, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Shrink the individual faces of a mesh.
 
         This filter shrinks the individual faces of a mesh rather than
@@ -5667,7 +5794,7 @@ class DataSetFilters:
         alg = _vtk.vtkShrinkFilter()
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
-        _update_alg(alg, progress_bar, 'Shrinking Mesh')
+        _update_alg(alg, progress_bar, 'Shrinking Mesh', algo_hook=algo_hook)
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
@@ -5744,6 +5871,7 @@ class DataSetFilters:
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
     ):
         """Transform this mesh with a 4x4 transform.
 
@@ -5897,7 +6025,7 @@ class DataSetFilters:
         f.SetTransform(t)
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
-        _update_alg(f, progress_bar, 'Transforming')
+        _update_alg(f, progress_bar, 'Transforming', algo_hook=algo_hook)
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
@@ -5974,7 +6102,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def integrate_data(self, progress_bar=False):
+    def integrate_data(self, progress_bar=False, algo_hook: VTKAlgorithmHook = None):
         """Integrate point and cell data.
 
         Area or volume is also provided in point data.
@@ -6020,7 +6148,7 @@ class DataSetFilters:
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
-        _update_alg(alg, progress_bar, 'Integrating Variables')
+        _update_alg(alg, progress_bar, 'Integrating Variables', algo_hook=algo_hook)
         return _get_output(alg)
 
     def partition(self, n_partitions, generate_global_id=False, as_composite=True):
@@ -6179,7 +6307,9 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
-    def extract_cells_by_type(self, cell_types, progress_bar=False):
+    def extract_cells_by_type(
+        self, cell_types, progress_bar=False, algo_hook: VTKAlgorithmHook = None
+    ):
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
@@ -6249,7 +6379,7 @@ class DataSetFilters:
             raise TypeError(
                 f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
             )
-        _update_alg(alg, progress_bar, 'Extracting cell types')
+        _update_alg(alg, progress_bar, 'Extracting cell types', algo_hook=algo_hook)
         return _get_output(alg)
 
     def sort_labels(
@@ -6258,6 +6388,7 @@ class DataSetFilters:
         preference='point',
         output_scalars=None,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         inplace=False,
     ):
         """Sort labeled data by number of points or cells.
@@ -6338,6 +6469,7 @@ class DataSetFilters:
             output_scalars=output_scalars,
             preference=preference,
             progress_bar=progress_bar,
+            algo_hook=algo_hook,
             inplace=inplace,
             sort=True,
         )
@@ -6349,6 +6481,7 @@ class DataSetFilters:
         preference='point',
         output_scalars=None,
         progress_bar=False,
+        algo_hook: VTKAlgorithmHook = None,
         inplace=False,
     ):
         """Renumber labeled data such that labels are contiguous.
@@ -6439,8 +6572,8 @@ class DataSetFilters:
         """
         # Set a input scalars
         if scalars is None:
-            set_default_active_scalars(self)
-            _, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
 
         field = get_array_association(self, scalars, preference=preference)
 
@@ -6463,27 +6596,27 @@ class DataSetFilters:
             alg.PassFieldDataOn()
             alg.PassCellDataOn()
             alg.PassPointDataOn()
-            _update_alg(alg, progress_bar, 'Packing labels')
+            _update_alg(alg, progress_bar, 'Packing labels', algo_hook=algo_hook)
             result = _get_output(alg)
 
             if output_scalars is not scalars:
                 # vtkPackLabels does not pass un-packed labels through to the
                 # output, so add it back here
                 if field == FieldAssociation.POINT:
-                    result.point_data[scalars] = self.point_data[scalars]
+                    result.point_data[scalars] = self.point_data[scalars]  # type: ignore[attr-defined]
                 else:
-                    result.cell_data[scalars] = self.cell_data[scalars]
+                    result.cell_data[scalars] = self.cell_data[scalars]  # type: ignore[attr-defined]
             result.rename_array("PackedLabels", output_scalars)
 
             if inplace:
-                self.copy_from(result, deep=False)
+                self.copy_from(result, deep=False)  # type: ignore[attr-defined]
                 return self
             return result
 
         else:  # Use numpy
             # Get mapping from input ID to output ID
             arr = get_array(self, scalars, preference=preference, err=True)
-            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
+            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)  # type: ignore[call-overload]
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
             label_range_in = np.arange(0, np.max(label_numbers_in))
@@ -6497,7 +6630,7 @@ class DataSetFilters:
             if inplace:
                 result = self
             else:
-                result = self.copy(deep=True)
+                result = self.copy(deep=True)  # type: ignore[attr-defined]
 
             # Add output to mesh
             if field == FieldAssociation.POINT:

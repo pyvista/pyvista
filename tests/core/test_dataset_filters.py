@@ -1,14 +1,21 @@
+from __future__ import annotations
+
+import functools
+import inspect
 import itertools
 import os
 import platform
-from unittest.mock import Mock, patch
+from typing import Callable
+from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pytest
+from pytest_cases import case, fixture, parametrize, parametrize_with_cases
+from pytest_mock import MockerFixture
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core import _vtk_core
+from pyvista.core import _vtk_core, filters
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import (
     MissingDataError,
@@ -66,6 +73,279 @@ def uniform_vec():
     mesh = pv.ImageData(dimensions=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
     mesh['vectors'] = mesh.points
     return mesh
+
+
+@pytest.fixture
+def algo_hook():
+    def func(algo):
+        algo.SetTest(True)
+
+    return func
+
+
+@pytest.mark.parametrize("with_algo_hook", [True, False])
+def test_update_alg(algo_hook, with_algo_hook: bool):
+    algo = MagicMock(_vtk_core.vtkAlgorithm)()
+
+    filters._update_alg(algo, algo_hook=algo_hook if with_algo_hook else None)
+
+    algo.Update.assert_called_once_with()
+
+    if with_algo_hook:
+        # Test that the hook is called before the update
+        expected_calls = [call.SetTest(True), call.Update()]
+        algo.assert_has_calls(expected_calls, any_order=False)
+    else:
+        algo.SetTest.assert_not_called()
+
+
+@fixture
+def mock_vtk(mocker: MockerFixture):
+    return mocker.patch.object(filters.data_set, "_vtk")
+
+
+class Cases_update_alg:
+    raw_funcs = [
+        "cell_centers",
+        "cell_data_to_point_data",
+        "compute_cell_quality",
+        "compute_cell_sizes",
+        "ctp",
+        "delaunay_3d",
+        "extract_all_edges",
+        "extract_geometry",
+        "extract_surface",
+        "integrate_data",
+        "merge",
+        "ptc",
+        "streamlines_evenly_spaced_2D",
+        "surface_indices",
+        "texture_map_to_plane",
+        "texture_map_to_sphere",
+        "triangulate",
+        "outline_corners",
+        "outline",
+        "point_data_to_cell_data",
+    ]
+
+    def _get_callable(self, func: str):
+        return getattr(filters.DataSetFilters, func)
+
+    def _get_default_kwargs(self, f: Callable):
+        sig = inspect.signature(f)
+
+        return {
+            k: MagicMock()
+            for k, v in sig.parameters.items()
+            if (v.kind not in (v.VAR_KEYWORD, v.VAR_POSITIONAL) and v.default is v.empty)
+        }
+
+    @case
+    @parametrize(func=raw_funcs)
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_raw(self, func: str, mocker: MockerFixture):
+        """Methods that do not require special inputs"""
+        f = self._get_callable(func)
+        kwargs = self._get_default_kwargs(f)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @pytest.mark.usefixtures("mock_vtk")
+    @pytest.mark.filterwarnings(
+        "ignore:probe filter is deprecated:pyvista.PyVistaDeprecationWarning"
+    )
+    def case_probe(self, mocker: MockerFixture):
+        f = self._get_callable("probe")
+        kwargs = self._get_default_kwargs(f)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @parametrize(func=["sort_labels", "pack_labels"])
+    def case_labels(self, mocker: MockerFixture, func: str, mock_vtk: Mock):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+
+        mock_vtk.vtkPackLabels = mocker.Mock()
+        _ = mocker.patch.object(filters.data_set, "get_array_association")
+
+        m = mocker.Mock()
+        m.active_scalars_info = "foo", "bar"
+        if func == "sort_labels":
+            m.pack_labels = functools.partial(filters.DataSetFilters.pack_labels, m)
+
+        kwargs["self"] = m
+        kwargs["output_scalars"] = "foo"
+        kwargs["scalars"] = kwargs["output_scalars"]
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    @parametrize(func=["sample", "interpolate"])
+    def case_interpolation(self, mocker: MockerFixture, func: str):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+        kwargs["target"] = mocker.MagicMock(pv.DataSet)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_elevation(self, mocker: MockerFixture):
+        f = self._get_callable("elevation")
+
+        kwargs = self._get_default_kwargs(f)
+        kwargs["low_point"] = [0, 0, 1]
+        kwargs["high_point"] = [0, 0, 1]
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    def case_glyph(self, mocker: MockerFixture):
+        f = self._get_callable("glyph")
+
+        mocker.patch.object(filters._vtk, "vtkGlyph3D")
+
+        kwargs = self._get_default_kwargs(f)
+        m = mocker.MagicMock()
+        m.active_scalars.ndim = 3
+        kwargs["self"] = m
+
+        kwargs["orient"] = False
+        kwargs["scale"] = False
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_contour(self, mocker: MockerFixture):
+        f = self._get_callable("contour")
+
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock()
+        m.n_arrays = 1
+        m.active_scalars_info = pv.FieldAssociation.POINT, "bar"
+        kwargs["self"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_decimate_boundary(self, mocker: MockerFixture):
+        f = self._get_callable("decimate_boundary")
+
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock(filters.DataSetFilters)
+        m.extract_geometry = functools.partial(filters.DataSetFilters.extract_geometry, m)
+        kwargs["self"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_clip_box(self, mocker: MockerFixture):
+        f = self._get_callable("clip_box")
+
+        kwargs = self._get_default_kwargs(f)
+        kwargs["bounds"] = [1.0] * 6
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    @parametrize(func=["extract_points", "extract_cells", "extract_cells_by_type"])
+    def case_extracts(self, mocker: MockerFixture, func: str):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+        k = "cell_types" if func == "extract_cells_by_type" else "ind"
+        kwargs[k] = [1]
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    @parametrize(func=["compute_derivative", "connectivity"])
+    def case_compute_derivative_and_connectivity(self, mocker: MockerFixture, func):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock()
+        m.active_scalars_info = "foo", "bar"
+        kwargs["self"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @parametrize(func=["clip_scalar", "_clip_with_function", "extract_feature_edges", "shrink"])
+    def case_clips_feat_shrink(self, mocker: MockerFixture, mock_vtk, func: str):
+        f = self._get_callable(func)
+
+        kwargs = self._get_default_kwargs(f)
+
+        mock_vtk.vtkPolyData = type(_vtk_core.vtkPolyData)
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    @pytest.mark.usefixtures("mock_vtk")
+    def case_select_enclosed_points(self, mocker: MockerFixture):
+        f = self._get_callable("select_enclosed_points")
+        kwargs = self._get_default_kwargs(f)
+
+        m = mocker.MagicMock(pv.PolyData)
+        m.n_open_edges = 0
+        kwargs["surface"] = m
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+    @case
+    def case_transform(self, mocker: MockerFixture):
+        f = self._get_callable("transform")
+
+        kwargs = self._get_default_kwargs(f)
+        mocker.patch.object(filters.data_set._vtk, "vtkTransformFilter")
+        mocker.patch.object(filters, "wrap")
+
+        m = mocker.MagicMock()
+        m.points.dtype = np.float32
+        kwargs["self"] = m
+        kwargs["trans"] = np.full((4, 4), 1)
+        kwargs["transform_all_input_vectors"] = True
+        kwargs["algo_hook"] = mocker.Mock()
+
+        return f, kwargs
+
+
+@parametrize_with_cases("f, kwargs", cases=Cases_update_alg)
+def test_update_alg_called(f: Callable, kwargs: dict, mocker: MockerFixture):
+    mock = mocker.patch.object(filters.data_set, "_update_alg")
+    _ = mocker.patch.object(filters.data_set, "_get_output")
+    _ = mocker.patch.object(filters.data_set, "wrap")
+
+    f(**kwargs)
+
+    # Only check the last call
+    mock.assert_called_with(*[mocker.ANY] * 3, algo_hook=kwargs["algo_hook"])
 
 
 def test_datasetfilters_init():

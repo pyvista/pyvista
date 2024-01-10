@@ -1,10 +1,10 @@
 """Type aliases for type hints."""
-from typing import Sequence, Tuple, Union
+from typing import Callable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
-from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
+from pyvista.core._vtk_core import vtkAlgorithm, vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
 NumpyNumArray = npt.NDArray[np.number]
 NumpyFltArray = npt.NDArray[np.floating]
@@ -24,3 +24,5 @@ IntMatrix = Union[NumpyIntArray, Sequence[IntVector]]
 FloatMatrix = Union[NumpyFltArray, Sequence[FloatVector]]
 TransformLike = Union[FloatMatrix, vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
 BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
+
+VTKAlgorithmHook = Optional[Callable[[vtkAlgorithm], None]]
