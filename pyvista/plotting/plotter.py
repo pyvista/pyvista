@@ -2727,7 +2727,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             line_width=line_width,
             opacity=opacity,
             culling=culling,
-            edge_opacity=edge_opacity,
         )
         actor.SetProperty(prop)
 
@@ -3612,7 +3611,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting=lighting,
             line_width=line_width,
             culling=culling,
-            edge_opacity=edge_opacity,
         )
 
         if isinstance(opacity, (float, int)):
