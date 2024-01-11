@@ -127,7 +127,7 @@ ctrl.view_update = widget.viewer.update
 
 # trame callbacks
 @state.change("play")
-async def _play(play, **kwargs):  # noqa: ARG001
+async def _play(play, **kwargs):
     while state.play:
         state.resolution += 1
         state.flush()
