@@ -50,7 +50,7 @@ def _validate_jupyter_backend(backend):
     return backend
 
 
-def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
+def set_jupyter_backend(backend, name=None, **kwargs):
     """Set the plotting backend for a jupyter notebook.
 
     Parameters
