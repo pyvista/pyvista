@@ -3,6 +3,6 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: ARG001
+def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
     pass
