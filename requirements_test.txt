@@ -1,14 +1,14 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
-cmocean<3.1
+cmocean @ git+https://github.com/matplotlib/cmocean.git@refs/pull/99/head
 colorcet<3.1.0
 hypothesis<6.92.3
 imageio<2.34.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
 ipywidgets<9.0.0
-meshio<5.4.0
+meshio @ git+https://github.com/nschloe/meshio.git@refs/pull/1451/head
 nest_asyncio<1.5.9
 numpydoc==1.6.0
 param<2.1.0
