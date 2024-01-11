@@ -763,6 +763,45 @@ class RenderWindowInteractor:
         >>> plotter.show()  # doctest:+SKIP
 
         """
+        self.enable_custom_trackball_style(
+            left="pan",
+            shift_left="dolly",
+            control_left="spin",
+            middle="spin",
+            shift_middle="dolly",
+            control_middle="pan",
+            right="dolly",
+            shift_right="dolly",
+            control_right="rotate",
+        )
+
+    def enable_trackball_actor_style(self):
+        """Set the interactive style to Trackball Actor.
+
+        This allows to rotate actors around the scene. The controls
+        are similar to the default Trackball Camera style, but
+        movements transform specific objects under the mouse cursor.
+
+        For a 3-button mouse, the left button is for rotation, the
+        right button for zooming, the middle button for panning, and
+        ctrl + left button for spinning objects around the axis
+        connecting the camera with the their center.  Alternatively,
+        shift + left button pans.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Trackball
+        Actor interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_trackball_actor_style()
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
         self._style = 'TrackballActor'
         self._style_class = None
         self.update_style()
