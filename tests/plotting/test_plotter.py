@@ -469,7 +469,7 @@ def test_plotter_update_coordinates(sphere):
             raise RuntimeError("Remove this method")
 
 
-def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):  # noqa: ARG001
+def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     pv.FIGURE_PATH = str(tmpdir)
     pv.ON_SCREENSHOT = True
 
