@@ -878,6 +878,6 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
             # object arrays, but on some systems it will not, so raise
             # error manually
             raise ValueError
-    except (ValueError, np.VisibleDeprecationWarning) as e:
+    except (ValueError, np.exceptions.VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     return out

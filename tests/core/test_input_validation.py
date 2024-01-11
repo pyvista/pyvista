@@ -773,7 +773,7 @@ def test_check_is_sorted(shape, axis, ascending, strict):
         # Create descending arrays
         arr_descending = np.flip(arr_ascending, axis=axis)
         arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
-    except np.AxisError:
+    except np.exceptions.AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'
