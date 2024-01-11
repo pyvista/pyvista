@@ -16,7 +16,7 @@ from .fileio import from_meshio, is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[np.ndarray, _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
+    dataset: Optional[Union[np.ndarray, _vtk.vtkDataSet, 'Trimesh', 'Mesh', list]]
 ) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -34,7 +34,7 @@ def wrap(
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
+    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet | list
         Dataset to wrap.
 
     Returns
@@ -109,6 +109,9 @@ def wrap(
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
         return dataset  # type: ignore
+
+    if isinstance(dataset, list):
+        dataset = np.array(dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
