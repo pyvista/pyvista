@@ -56,7 +56,7 @@ def test_depth_silhouette_eq(default_theme):
     assert my_theme.silhouette != 1
 
 
-def test_depth_silhouette_opacity_outside_clamp():
+def test_depth_silhouette_opacity_outside_clamp(default_theme):
     my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):
         my_theme.silhouette.opacity = 10

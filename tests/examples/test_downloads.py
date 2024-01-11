@@ -75,7 +75,7 @@ def test_file_copier(tmpdir):
         examples.downloads._file_copier('not a file', output_file, None)
 
 
-def test_local_file_cache():
+def test_local_file_cache(tmpdir):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
     basename = os.path.basename(examples.planefile)
     dirname = os.path.dirname(examples.planefile)

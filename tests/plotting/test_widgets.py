@@ -291,7 +291,7 @@ def test_measurement_widget():
     p.close()
 
 
-def test_widget_sphere():
+def test_widget_sphere(uniform):
     p = pv.Plotter()
     func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
@@ -322,7 +322,7 @@ def test_widget_closed(uniform):
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-def test_add_camera_orientation_widget():
+def test_add_camera_orientation_widget(uniform):
     p = pv.Plotter()
     p.add_camera_orientation_widget()
     assert p.camera_widgets

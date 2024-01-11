@@ -114,7 +114,7 @@ def make_two_char_img(text):
 
 
 @pytest.fixture()
-def cubemap():
+def cubemap(texture):
     """Sample texture as a cubemap."""
     return pv.Texture(
         [

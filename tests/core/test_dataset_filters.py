@@ -613,7 +613,7 @@ def test_wireframe_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-def test_delaunay_2d_unstructured():
+def test_delaunay_2d_unstructured(datasets):
     mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_points
@@ -2554,7 +2554,9 @@ def structured_grids_split_disconnected():
     return voi_1, voi_2
 
 
-def test_concatenate_structured(structured_grids_split_coincident):
+def test_concatenate_structured(
+    structured_grids_split_coincident, structured_grids_split_disconnected
+):
     voi_1, voi_2, structured = structured_grids_split_coincident
     joined = voi_1.concatenate(voi_2, axis=1)
     assert structured.points == pytest.approx(joined.points)

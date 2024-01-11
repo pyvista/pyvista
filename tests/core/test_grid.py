@@ -1115,7 +1115,7 @@ def test_grid_extract_selection_points(struct_grid):
     assert sub_grid.n_cells > 1
 
 
-def test_gaussian_smooth():
+def test_gaussian_smooth(hexbeam):
     uniform = examples.load_uniform()
     active = uniform.active_scalars_name
     values = uniform.active_scalars

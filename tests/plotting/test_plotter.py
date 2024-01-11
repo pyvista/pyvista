@@ -265,7 +265,7 @@ def test_deep_clean(cube):
     assert cube == cube_orig
 
 
-def test_disable_depth_of_field():
+def test_disable_depth_of_field(sphere):
     pl = pv.Plotter()
     pl.enable_depth_of_field()
     assert pl.renderer.GetPass() is not None
@@ -273,7 +273,7 @@ def test_disable_depth_of_field():
     assert pl.renderer.GetPass() is None
 
 
-def test_remove_blurring():
+def test_remove_blurring(sphere):
     pl = pv.Plotter()
     pl.add_blurring()
     assert pl.renderer.GetPass() is not None
@@ -305,7 +305,7 @@ def test_clear_actors(cube, sphere):
     assert len(pl.renderer.actors) == 0
 
 
-def test_anti_aliasing_multiplot():
+def test_anti_aliasing_multiplot(sphere):
     pl = pv.Plotter(shape=(1, 2))
     pl.enable_anti_aliasing('ssaa', all_renderers=False)
     assert 'vtkSSAAPass' in pl.renderers[0]._render_passes._passes

@@ -324,7 +324,8 @@ def test_validate_arrayN(reshape):
         validate_arrayN(((1, 2), (3, 4)), name="_input")
 
 
-def test_validate_arrayN_uintlike():
+@pytest.mark.parametrize('reshape', [True, False])
+def test_validate_arrayN_uintlike(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_uintlike(0.0)
     assert arr.shape == (1,)
