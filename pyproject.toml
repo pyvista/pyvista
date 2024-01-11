@@ -323,6 +323,3 @@ extend-select = [
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
-
-[tool.ruff.lint.flake8-unused-arguments]
-ignore-variadic-names = true
