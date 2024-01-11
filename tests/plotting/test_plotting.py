@@ -963,7 +963,7 @@ def test_add_point_labels_always_visible(always_visible):
 
 
 @pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
-def test_add_point_labels_shape(shape, verify_image_cache):  # noqa: ARG001
+def test_add_point_labels_shape(shape, verify_image_cache):
     plotter = pv.Plotter()
     plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
     plotter.show()
@@ -1602,7 +1602,7 @@ def test_link_views(sphere):
 
 
 @skip_windows
-def test_link_views_camera_set(verify_image_cache):  # noqa: ARG001
+def test_link_views_camera_set(verify_image_cache):
     p = pv.Plotter(shape=(1, 2))
     p.add_mesh(pv.Cone())
     assert not p.renderer.camera_set
