@@ -1045,7 +1045,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item):  # noqa: ARG002
+        def Initialize(self, item):
             # item is the _CustomContextItem subclass instance
             return True
 
@@ -1058,7 +1058,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, painter):  # noqa: ARG002
+    def paint(self, painter):
         return True
 
 
