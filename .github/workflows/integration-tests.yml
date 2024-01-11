@@ -82,7 +82,7 @@ jobs:
       run:
         shell: bash -l {0}
     env:
-      CARTOPY_FEATURE: 'https://raw.githubusercontent.com/SciTools/cartopy/main/tools/cartopy_feature_download.py'
+      CARTOPY_FEATURE: 'https://raw.githubusercontent.com/SciTools/cartopy/v0.22.x/tools/cartopy_feature_download.py'
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:

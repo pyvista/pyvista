@@ -273,3 +273,18 @@ def test_release_button_observers(event):
 
     pl.iren.interactor.GetInteractorStyle().InvokeEvent(event)
     assert cb._i == 2
+
+
+def test_enable_custom_trackball_style():
+    pl = pv.Plotter()
+    pl.enable_custom_trackball_style()
+    pl.close()
+
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match="Action 'not an option' not in the allowed"):
+        pl.enable_custom_trackball_style(left="not an option")
+
+
+def test_enable_2d_style():
+    pl = pv.Plotter()
+    pl.enable_2d_style()

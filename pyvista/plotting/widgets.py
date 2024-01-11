@@ -227,6 +227,8 @@ class WidgetHelper:
 
     def clear_box_widgets(self):
         """Remove all of the box widgets."""
+        for box_widget in self.box_widgets:
+            box_widget.Off()
         self.box_widgets.clear()
 
     def add_mesh_clip_box(
@@ -391,6 +393,7 @@ class WidgetHelper:
         test_callback=True,
         normal_rotation=True,
         interaction_event='end',
+        outline_opacity=None,
     ):
         """Add a plane widget to the scene.
 
@@ -465,6 +468,12 @@ class WidgetHelper:
 
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         Returns
         -------
@@ -549,6 +558,9 @@ class WidgetHelper:
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
 
+            if outline_opacity is not None:
+                plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
+
         else:
             # Position of the small plane
             source = _vtk.vtkPlaneSource()
@@ -615,6 +627,8 @@ class WidgetHelper:
 
     def clear_plane_widgets(self):
         """Remove all of the plane widgets."""
+        for plane_widget in self.plane_widgets:
+            plane_widget.Off()
         self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
@@ -633,6 +647,7 @@ class WidgetHelper:
         crinkle=False,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -703,6 +718,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -783,6 +804,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         if crinkle:
@@ -804,6 +826,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a volume using a plane widget.
@@ -862,6 +885,12 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
@@ -910,6 +939,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
         widget.GetPlane(plane)
         volume.mapper.AddClippingPlane(plane)
@@ -931,6 +961,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -989,6 +1020,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1055,6 +1092,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         return self.add_mesh(alg, **kwargs)
@@ -1253,6 +1291,8 @@ class WidgetHelper:
 
     def clear_line_widgets(self):
         """Remove all of the line widgets."""
+        for line_widget in self.line_widgets:
+            line_widget.Off()
         self.line_widgets.clear()
 
     def add_text_slider_widget(
@@ -1570,6 +1610,8 @@ class WidgetHelper:
 
     def clear_slider_widgets(self):
         """Remove all of the slider widgets."""
+        for slider_widget in self.slider_widgets:
+            slider_widget.Off()
         self.slider_widgets.clear()
 
     def add_mesh_threshold(
@@ -2013,6 +2055,8 @@ class WidgetHelper:
 
     def clear_spline_widgets(self):
         """Remove all of the spline widgets."""
+        for spline_widget in self.spline_widgets:
+            spline_widget.Off()
         self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
@@ -2222,6 +2266,8 @@ class WidgetHelper:
 
     def clear_measure_widgets(self):
         """Remove all of the measurement widgets."""
+        for distance_widget in self.distance_widgets:
+            distance_widget.Off()
         self.distance_widgets.clear()
 
     def add_sphere_widget(
@@ -2336,7 +2382,7 @@ class WidgetHelper:
             return
 
         if indices is None:
-            indices = [x for x in range(num)]
+            indices = list(range(num))
 
         for i in range(num):
             if center.ndim > 1:
@@ -2372,6 +2418,8 @@ class WidgetHelper:
 
     def clear_sphere_widgets(self):
         """Remove all of the sphere widgets."""
+        for sphere_widget in self.sphere_widgets:
+            sphere_widget.Off()
         self.sphere_widgets.clear()
 
     def add_affine_transform_widget(
@@ -2628,10 +2676,14 @@ class WidgetHelper:
 
     def clear_camera_widgets(self):
         """Remove all of the camera widgets."""
+        for camera_widget in self.camera_widgets:
+            camera_widget.Off()
         self.camera_widgets.clear()
 
     def clear_button_widgets(self):
         """Remove all of the button widgets."""
+        for button_widget in self.button_widgets:
+            button_widget.Off()
         self.button_widgets.clear()
 
     def add_logo_widget(
@@ -2705,6 +2757,8 @@ class WidgetHelper:
 
     def clear_logo_widgets(self):
         """Remove all of the logo widgets."""
+        for logo_widget in self.logo_widgets:
+            logo_widget.Off()
         self.logo_widgets.clear()
 
     def close(self):
