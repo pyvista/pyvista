@@ -147,7 +147,7 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
-def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
     mock_show_progress.assert_called_once()
