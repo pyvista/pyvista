@@ -316,7 +316,7 @@ def test_trame_jupyter_custom_size():
 
 
 def test_trame_jupyter_custom_handler():
-    def handler(viewer, src, **kwargs):  # noqa: ARG001
+    def handler(viewer, src, **kwargs):
         return IFrame(src, '75%', '500px')
 
     plotter = pv.Plotter(notebook=True)
@@ -352,7 +352,7 @@ def test_trame_export_html(tmpdir):
     assert os.path.isfile(filename)
 
 
-def test_export_single(tmpdir, skip_check_gc):  # noqa: ARG001
+def test_export_single(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
     data = examples.load_airplane()
     # Create the scene
@@ -363,7 +363,7 @@ def test_export_single(tmpdir, skip_check_gc):  # noqa: ARG001
     assert os.path.isfile(f'{filename}')
 
 
-def test_export_multi(tmpdir, skip_check_gc):  # noqa: ARG001
+def test_export_multi(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
     multi = pv.MultiBlock()
     # Add examples
@@ -380,7 +380,7 @@ def test_export_multi(tmpdir, skip_check_gc):  # noqa: ARG001
     assert os.path.isfile(f'{filename}')
 
 
-def test_export_texture(tmpdir, skip_check_gc):  # noqa: ARG001
+def test_export_texture(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = examples.load_globe()
     texture = examples.load_globe_texture()
@@ -392,7 +392,7 @@ def test_export_texture(tmpdir, skip_check_gc):  # noqa: ARG001
     assert os.path.isfile(f'{filename}')
 
 
-def test_export_verts(tmpdir, skip_check_gc):  # noqa: ARG001
+def test_export_verts(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
     data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
@@ -403,7 +403,7 @@ def test_export_verts(tmpdir, skip_check_gc):  # noqa: ARG001
     assert os.path.isfile(f'{filename}')
 
 
-def test_export_color(tmpdir, skip_check_gc):  # noqa: ARG001
+def test_export_color(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
     data = examples.load_airplane()
     # Create the scene
@@ -414,7 +414,7 @@ def test_export_color(tmpdir, skip_check_gc):  # noqa: ARG001
     assert os.path.isfile(f'{filename}')
 
 
-def test_embeddable_widget(skip_check_gc):  # noqa: ARG001
+def test_embeddable_widget(skip_check_gc):
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(pv.Sphere())
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
