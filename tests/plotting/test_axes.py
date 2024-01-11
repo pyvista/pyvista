@@ -5,7 +5,7 @@ import pyvista as pv
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: ARG001
+def skip_check_gc(skip_check_gc):
     """All the tests here fail gc."""
     pass
 
