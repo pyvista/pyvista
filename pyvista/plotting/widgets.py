@@ -818,7 +818,9 @@ class WidgetHelper:
         self,
         volume,
         normal='x',
+        invert=False,
         widget_color=None,
+        value=0.0,
         assign_to_axis=None,
         tubing=False,
         origin_translation=True,
@@ -842,8 +844,15 @@ class WidgetHelper:
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
 
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
+
         widget_color : ColorLike, optional
             Either a string, RGB list, or hex color string.
+
+        value : float, optional
+            Set the clipping value along the normal direction.
+            The default value is 0.0.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
