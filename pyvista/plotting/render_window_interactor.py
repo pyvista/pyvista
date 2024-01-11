@@ -579,7 +579,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-        def _left_button_press_callback(_obj, event):  # noqa: ARG001 # pragma: no cover
+        def _left_button_press_callback(_obj, event): # pragma: no cover
             """Left button press behavior."""
             if self.interactor.GetControlKey():
                 self._style_class.StartSpin()
@@ -589,14 +589,14 @@ class RenderWindowInteractor:
                 self._style_class.StartPan()
             self._style_class.OnLeftButtonDown()
 
-        def _left_button_release_callback(_obj, event):  # noqa: ARG001  # pragma: no cover
+        def _left_button_release_callback(_obj, event):  # pragma: no cover
             """Turn off all left button behavior."""
             self._style_class.EndSpin()
             self._style_class.EndPan()
             self._style_class.EndDolly()
             self._style_class.OnLeftButtonUp()
 
-        def _middle_button_press_callback(_obj, event):  # noqa: ARG001  # pragma: no cover
+        def _middle_button_press_callback(_obj, event):  # pragma: no cover
             """Middle button press behavior."""
             if self.interactor.GetControlKey():
                 self._style_class.StartPan()
@@ -606,14 +606,14 @@ class RenderWindowInteractor:
                 self._style_class.StartSpin()
             self._style_class.OnMiddleButtonDown()
 
-        def _middle_button_release_callback(_obj, event):  # noqa: ARG001  # pragma: no cover
+        def _middle_button_release_callback(_obj, event):  # pragma: no cover
             """Turn off all middle button behavior."""
             self._style_class.EndSpin()
             self._style_class.EndPan()
             self._style_class.EndDolly()
             self._style_class.OnMiddleButtonUp()
 
-        def _right_button_press_callback(_obj, event):  # noqa: ARG001  # pragma: no cover
+        def _right_button_press_callback(_obj, event):  # pragma: no cover
             """Right button press behavior."""
             if self.interactor.GetControlKey():
                 self._style_class.StartRotate()
@@ -624,7 +624,7 @@ class RenderWindowInteractor:
                 self._style_class.StartDolly()
             self._style_class.OnRightButtonDown()
 
-        def _right_button_release_callback(_obj, event):  # noqa: ARG001  # pragma: no cover
+        def _right_button_release_callback(_obj, event):  # pragma: no cover
             """Turn off all right button behavior."""
             self._style_class.EndRotate()
             self._style_class.EndDolly()
