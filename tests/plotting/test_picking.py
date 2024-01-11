@@ -420,7 +420,7 @@ def test_horizon_picking():
     pl.close()
 
 
-def test_fly_to_right_click(verify_image_cache, sphere):  # noqa: ARG001
+def test_fly_to_right_click(verify_image_cache, sphere):
     point = []
 
     def callback(click_point):
@@ -440,7 +440,7 @@ def test_fly_to_right_click(verify_image_cache, sphere):  # noqa: ARG001
     pl.close()
 
 
-def test_fly_to_right_click_multi_render(verify_image_cache, sphere):  # noqa: ARG001
+def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     point = []
 
@@ -460,7 +460,7 @@ def test_fly_to_right_click_multi_render(verify_image_cache, sphere):  # noqa: A
     pl.close()
 
 
-def test_fly_to_mouse_position(verify_image_cache, sphere):  # noqa: ARG001
+def test_fly_to_mouse_position(verify_image_cache, sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -482,7 +482,7 @@ def test_block_picking(multiblock_poly):
 
     picked_blocks = []
 
-    def turn_blue(index, dataset):  # noqa: ARG001
+    def turn_blue(index, dataset):
         mapper.block_attr[index].color = 'blue'
         picked_blocks.append(index)
 
