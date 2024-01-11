@@ -1028,6 +1028,7 @@ def test_add_list_points():
     plotter.add_points(
         points, scalars=np.arange(n), cmap=None, flip_scalars=True, show_scalar_bar=False
     )
+    plotter.show()
 
 
 def test_key_press_event():
