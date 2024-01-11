@@ -2114,6 +2114,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self.iren.enable_trackball_style()
 
+    @wraps(RenderWindowInteractor.enable_custom_trackball_style)
+    def enable_custom_trackball_style(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
+        self.iren.enable_custom_trackball_style(*args, **kwargs)
+
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
@@ -3395,6 +3400,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 roughness=roughness,
                 render=render,
                 show_vertices=show_vertices,
+                edge_opacity=edge_opacity,
                 **kwargs,
             )
             return actor
@@ -3450,6 +3456,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
+
+        if edge_opacity is None and pyvista.vtk_version_info >= (9, 3):
+            edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
             silhouette = self._theme.silhouette.enabled
@@ -3612,6 +3621,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting=lighting,
             line_width=line_width,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
 
         if isinstance(opacity, (float, int)):
@@ -5301,6 +5311,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera=None,
         always_visible=False,
         render=True,
+        justification_horizontal=None,
+        justification_vertical=None,
+        background_color=None,
+        background_opacity=None,
     ):
         """Create a point actor with one label from list labels assigned to each point.
 
@@ -5396,6 +5410,34 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        justification_horizontal : str, optional
+            Text's horizontal justification.
+            Should be either "left", "center" or "right".
+
+            .. warning::
+                If the justification is not default,
+                the shape will be out of alignment with the label.
+                If you use other than default,
+                Please use the background color.
+                See: https://github.com/pyvista/pyvista/pull/5407
+
+        justification_vertical : str, optional
+            Text's vertical justification.
+            Should be either "bottom", "center" or "top".
+
+            .. warning::
+                If the justification is not default,
+                the shape will be out of alignment with the label.
+                If you use other than default,
+                Please use the background color.
+                See: https://github.com/pyvista/pyvista/pull/5407
+
+        background_color : pyvista.Color, optional
+            Background color of text's property.
+
+        background_opacity : pyvista.Color, optional
+            Background opacity of text's property.
 
         Returns
         -------
@@ -5506,13 +5548,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         label_mapper.SetBackgroundOpacity(shape_opacity)
         label_mapper.SetMargin(margin)
 
-        textprop = hier.GetTextProperty()
-        textprop.SetItalic(italic)
-        textprop.SetBold(bold)
-        textprop.SetFontSize(font_size)
-        textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).float_rgb)
-        textprop.SetShadow(shadow)
+        text_property = pyvista.TextProperty(
+            italic=italic,
+            bold=bold,
+            font_size=font_size,
+            font_family=font_family,
+            color=text_color,
+            shadow=shadow,
+            justification_horizontal=justification_horizontal,
+            justification_vertical=justification_vertical,
+            background_color=background_color,
+            background_opacity=background_opacity,
+        )
+        hier.SetTextProperty(text_property)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
         self.remove_actor(f'{name}-labels', reset_camera=False)

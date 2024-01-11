@@ -8,7 +8,12 @@ import vtk
 
 import pyvista as pv
 from pyvista import CellType, examples
-from pyvista.core.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import (
+    AmbiguousDataError,
+    CellSizeError,
+    MissingDataError,
+    PyVistaDeprecationWarning,
+)
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -93,7 +98,14 @@ def test_init_bad_input():
         pv.UnstructuredGrid(np.array(1))
 
     with pytest.raises(TypeError, match="must be a numeric type"):
-        pv.UnstructuredGrid(np.array(1), np.array(1), 'woa')
+        pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
+
+    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+        rnd_generator = np.random.default_rng()
+        points = rnd_generator.random((4, 3))
+        celltypes = [pv.CellType.TETRA]
+        cells = np.array([5, 0, 1, 2, 3])
+        pv.UnstructuredGrid(cells, celltypes, points)
 
     with pytest.raises(TypeError, match="requires the following arrays"):
         pv.UnstructuredGrid(*range(5))

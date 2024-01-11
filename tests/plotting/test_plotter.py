@@ -500,3 +500,11 @@ def test_legend_font(sphere):
         labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
     )
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
+def test_edge_opacity(sphere):
+    edge_opacity = np.random.default_rng().random()
+    pl = pv.Plotter(sphere)
+    actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
+    assert actor.prop.edge_opacity == edge_opacity
