@@ -19,7 +19,7 @@ skip_mac = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: ARG001
+def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
     pass
 
@@ -979,7 +979,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @pytest.mark.skip_plotting
-def test_chart_mpl(pl, chart_mpl):  # noqa: ARG001
+def test_chart_mpl(pl, chart_mpl):
     import matplotlib.pyplot as plt
 
     size = (0.5, 0.5)
