@@ -212,7 +212,6 @@ class DynamicScraper:  # pragma: no cover
 
         dynamic = False if force_static else True
 
-        image_names = []
         image_path_iterator = block_vars["image_path_iterator"]
         image_names = generate_images(image_path_iterator, dynamic=dynamic)
 
