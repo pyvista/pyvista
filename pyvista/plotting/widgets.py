@@ -746,9 +746,6 @@ class WidgetHelper:
 
         if isinstance(mesh, _vtk.vtkPolyData):
             clipper = _vtk.vtkClipPolyData()
-        # elif isinstance(mesh, vtk.vtkImageData):
-        #     clipper = vtk.vtkClipVolume()
-        #     clipper.SetMixed3DCellGeneration(True)
         else:
             clipper = _vtk.vtkTableBasedClipDataSet()
         set_algorithm_input(clipper, algo)
@@ -796,7 +793,9 @@ class WidgetHelper:
         self,
         volume,
         normal='x',
+        invert=False,
         widget_color=None,
+        value=0.0,
         assign_to_axis=None,
         tubing=False,
         origin_translation=True,
@@ -819,8 +818,15 @@ class WidgetHelper:
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
 
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
+
         widget_color : ColorLike, optional
             Either a string, RGB list, or hex color string.
+
+        value : float, optional
+            Set the clipping value along the normal direction.
+            The default value is 0.0.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -868,6 +874,10 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
+        # TODO Try vtkClipVolume for invert and value.
+        # if isinstance(volume, vtk.vtkImageData):
+        #     clipper = vtk.vtkClipVolume()
+        #     clipper.SetMixed3DCellGeneration(True)
         if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
