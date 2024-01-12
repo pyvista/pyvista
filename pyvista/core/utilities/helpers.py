@@ -2,6 +2,8 @@
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
+from .._typing_core import Matrix
+
 if TYPE_CHECKING:  # pragma: no cover
     from trimesh import Trimesh
     from meshio import Mesh
