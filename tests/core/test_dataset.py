@@ -1730,7 +1730,7 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
             assert all(isinstance(id, int) for id in ids)
             assert all(0 <= id < grid.n_cells for id in ids)
             assert len(ids) > 0
-        assert len(cell_ids) == n_levels
+        assert len(list(cell_ids)) == n_levels
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
@@ -1754,7 +1754,7 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert all(isinstance(id, int) for id in ids)
             assert all(0 <= id < grid.n_points for id in ids)
             assert len(ids) > 0
-        assert len(point_ids) == n_levels
+        assert len(list(point_ids)) == n_levels
 
 
 @pytest.fixture()
