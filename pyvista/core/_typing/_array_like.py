@@ -25,7 +25,6 @@ from typing import Sequence, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 
-
 _NumericType = TypeVar('_NumericType', bool, int, float)
 _NumberType = TypeVar('_NumberType', int, float)
 
