@@ -8,7 +8,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import IntMatrix, IntVector, NumpyIntArray
+from ._typing_core import Matrix, NumpyArray, Vector
 from .celltype import CellType
 from .dataset import DataObject
 from .errors import CellSizeError
@@ -614,7 +614,7 @@ class CellArray(_vtk.vtkCellArray):
 
     def __init__(
         self,
-        cells: Optional[Union[IntMatrix, IntVector]] = None,
+        cells: Optional[Union[Matrix[int], Vector[int]]] = None,
         n_cells: Optional[int] = None,
         deep: bool = False,
     ):
@@ -624,7 +624,7 @@ class CellArray(_vtk.vtkCellArray):
         if cells is not None:
             self._set_cells(np.asarray(cells), n_cells, deep)
 
-    def _set_cells(self, cells: NumpyIntArray, n_cells: Optional[int], deep: bool) -> None:
+    def _set_cells(self, cells: NumpyArray[int], n_cells: Optional[int], deep: bool) -> None:
         """Set a vtkCellArray."""
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)  # type: ignore
 
@@ -675,7 +675,7 @@ class CellArray(_vtk.vtkCellArray):
         return self.GetNumberOfCells()
 
     @property
-    def connectivity_array(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def connectivity_array(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the array with the point ids that define the cells' connectivity.
 
         Returns
@@ -686,7 +686,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_connectivity_array(self)
 
     @property
-    def offset_array(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def offset_array(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the array used to store cell offsets.
 
         Returns
@@ -696,7 +696,9 @@ class CellArray(_vtk.vtkCellArray):
         """
         return _get_offset_array(self)
 
-    def _set_data(self, offsets: IntMatrix, connectivity: IntMatrix, deep: bool = False) -> None:
+    def _set_data(
+        self, offsets: Matrix[int], connectivity: Matrix[int], deep: bool = False
+    ) -> None:
         """Set the offsets and connectivity arrays."""
         vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
         vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
@@ -710,8 +712,8 @@ class CellArray(_vtk.vtkCellArray):
 
     @staticmethod
     def from_arrays(
-        offsets: IntMatrix,
-        connectivity: IntMatrix,
+        offsets: Matrix[int],
+        connectivity: Matrix[int],
         deep: bool = False,
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
@@ -738,7 +740,7 @@ class CellArray(_vtk.vtkCellArray):
         return cellarr
 
     @property
-    def regular_cells(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def regular_cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
 
         Returns
@@ -755,7 +757,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(cls, cells: IntMatrix, deep: bool = False) -> pyvista.CellArray:
+    def from_regular_cells(cls, cells: Matrix[int], deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -779,7 +781,7 @@ class CellArray(_vtk.vtkCellArray):
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls, cells: Sequence[IntVector]) -> pyvista.CellArray:
+    def from_irregular_cells(cls, cells: Sequence[Vector[int]]) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -804,7 +806,7 @@ class CellArray(_vtk.vtkCellArray):
 # returned as CellArrays
 
 
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return the array with the point ids that define the cells' connectivity."""
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
@@ -814,7 +816,7 @@ def _get_offset_array(cellarr: _vtk.vtkCellArray) -> np.ndarray:
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
 
-def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
@@ -825,7 +827,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
     return cells.reshape(-1, cell_size)
 
 
-def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> Tuple[NumpyIntArray, ...]:
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> Tuple[NumpyArray[int], ...]:
     """Return a tuple of length n_cells of each cell's point indices."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
