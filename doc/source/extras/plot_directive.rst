@@ -2,15 +2,16 @@
 
 Sphinx PyVista Plot Directive
 =============================
-You can generate static images of pyvista plots using the
+You can generate static and interactive scene of pyvista plots using the
 ``.. pyvista-plot::`` directive by adding the following to your
 ``conf.py`` when building your documentation using Sphinx.
 
 .. code:: python
 
    extensions = [
-       "sphinx.ext.napoleon",
        "pyvista.ext.plot_directive",
+       "pyvista.ext.viewer_directive",
+       "sphinx_design",
    ]
 
 You can then issue the plotting directive within your sphinx
@@ -34,6 +35,23 @@ Which will be rendered as:
    >>> sphere = pyvista.Sphere()
    >>> out = sphere.plot()
 
+.. note::
+
+   You need to install following packages to build interactive scene.
+
+   * `jupyter_sphinx>=0.5.3`
+   * `sphinx-design>=0.5.0`
+   * `trame>=3.5.0`
+   * `trame-vtk>=2.6.3`
+   * `trame-vuetify>=2.3.1`
+
+.. note::
+
+   You need to spin up a local http server to view the interactive scene in documentation.
+
+   .. code:: bash
+
+      python -m http.server 11000 --directory _build/html
 
 .. automodule::
    pyvista.ext.plot_directive
