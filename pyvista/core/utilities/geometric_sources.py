@@ -4,7 +4,6 @@ Also includes some pure-python helpers.
 
 """
 from typing import Sequence, Tuple, Union
-import warnings
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
