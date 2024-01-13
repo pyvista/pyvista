@@ -4091,7 +4091,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
 
 
 @pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_orientation_of_direction_objects(object_function):
+def test_direction_objects(object_function):
     name, func = object_function
 
     # Add required args if needed
@@ -4114,7 +4114,7 @@ def test_orientation_of_direction_objects(object_function):
             obj = obj.extract_surface()
 
         # Add scalars tied to point IDs as visual markers of object orientation
-        obj['cell_id'] = list(range(obj.n_points))
+        obj['point_id'] = list(range(obj.n_points))
 
         return obj
 
@@ -4129,25 +4129,28 @@ def test_orientation_of_direction_objects(object_function):
     plot.camera.zoom(zoom)
     plot.add_axes()
 
+    direction = (1, 0, 0)
     plot.subplot(1, 0)
-    plot.add_mesh(_create_object(direction=(1, 0, 0)))
-    plot.add_text('direction: +X', **text_kwargs)
+    plot.add_mesh(_create_object(direction=direction))
+    plot.add_text(f"direction={direction}", **text_kwargs)
     plot.view_yz()
     plot.camera.zoom(zoom)
     plot.add_axes(xlabel='')
 
-    plot.subplot(0, 1)
-    plot.add_mesh(_create_object(direction=(0, 0, 1)))
-    plot.add_text('direction: +Z', **text_kwargs)
-    plot.view_xy()
-    plot.camera.zoom(zoom)
-    plot.add_axes(zlabel='')
-
+    direction = (0, 1, 0)
     plot.subplot(1, 1)
-    plot.add_mesh(_create_object(direction=(0, 1, 0)))
-    plot.add_text('direction: +Y', **text_kwargs)
+    plot.add_mesh(_create_object(direction=direction))
+    plot.add_text(f"direction={direction}", **text_kwargs)
     plot.view_xz()
     plot.camera.zoom(zoom)
     plot.add_axes(ylabel='')
+
+    direction = (0, 0, 1)
+    plot.subplot(0, 1)
+    plot.add_mesh(_create_object(direction=direction))
+    plot.add_text(f"direction={direction}", **text_kwargs)
+    plot.view_xy()
+    plot.camera.zoom(zoom)
+    plot.add_axes(zlabel='')
 
     plot.show()
