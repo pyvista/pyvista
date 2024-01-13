@@ -4120,43 +4120,43 @@ def test_direction_objects(object_function):
             obj = obj.extract_surface()
 
         # Add scalars tied to point IDs as visual markers of object orientation
-        obj['point_id'] = list(range(obj.n_points))
+        scalars = np.arange(obj.n_points)
+        obj['scalars'] = scalars % 32
 
         return obj
 
     text_kwargs = dict(font_size=10)
-    zoom = 1.1
+    axes_kwargs = dict(viewport=(0, 0, 1.0, 1.0))
 
     plot = pv.Plotter(shape=(2, 2))
 
     plot.subplot(0, 0)
     plot.add_mesh(_create_object())
     plot.add_text(name, **text_kwargs)
-    plot.camera.zoom(zoom)
     plot.add_axes()
 
     direction = (1, 0, 0)
+    obj = _create_object(direction=direction)
     plot.subplot(1, 0)
-    plot.add_mesh(_create_object(direction=direction))
+    plot.add_mesh(obj)
     plot.add_text(f"{direction_param}={direction}", **text_kwargs)
     plot.view_yz()
-    plot.camera.zoom(zoom)
-    plot.add_axes(xlabel='')
+    plot.add_axes(**axes_kwargs)
 
     direction = (0, 1, 0)
+    obj = _create_object(direction=direction)
     plot.subplot(1, 1)
-    plot.add_mesh(_create_object(direction=direction))
+    plot.add_mesh(obj)
     plot.add_text(f"{direction_param}={direction}", **text_kwargs)
-    plot.view_xz()
-    plot.camera.zoom(zoom)
-    plot.add_axes(ylabel='')
+    plot.view_zx()
+    plot.add_axes(**axes_kwargs)
 
     direction = (0, 0, 1)
+    obj = _create_object(direction=direction)
     plot.subplot(0, 1)
-    plot.add_mesh(_create_object(direction=direction))
+    plot.add_mesh(obj)
     plot.add_text(f"{direction_param}={direction}", **text_kwargs)
     plot.view_xy()
-    plot.camera.zoom(zoom)
-    plot.add_axes(zlabel='')
+    plot.add_axes(**axes_kwargs)
 
     plot.show()
