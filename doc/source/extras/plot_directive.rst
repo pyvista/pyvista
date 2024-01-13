@@ -49,7 +49,7 @@ Which will be rendered as:
 
    You need to spin up a local server to view the interactive scene in the documentation.
 
-   .. code:: bash
+   .. code-block:: bash
 
       python -m http.server 11000 --directory _build/html
 
