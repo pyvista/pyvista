@@ -117,7 +117,7 @@ def wrap(
         dataset = validate_array(
             dataset,
             must_have_shape=(-1, 3),
-            must_have_dtype=[np.int32, np.int64, np.float32, np.float64],
+            must_have_dtype=np.number,
         )
 
     # Check if dataset is a numpy array.  We do this first since
