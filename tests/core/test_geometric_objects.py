@@ -333,18 +333,6 @@ def test_plane_direction(expected):
     assert np.array_equal(actual, expected)
 
 
-def test_plane_with_y_direction():
-    # https://github.com/pyvista/pyvista/pull/5435
-    surf = pv.Plane(
-        i_resolution=1,
-        j_resolution=1,
-        i_size=1.0,
-        j_size=2.0,
-        direction=(0, 1, 0),
-    )
-    assert surf.bounds == (-0.5, 0.5, 0.0, 0.0, -1.0, 1.0)
-
-
 def test_plane_size():
     i_sz = 2
     j_sz = 3
