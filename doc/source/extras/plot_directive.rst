@@ -47,7 +47,7 @@ Which will be rendered as:
 
 .. note::
 
-   You need to spin up a local http server to view the interactive scene in documentation.
+   You need to spin up a local server to view the interactive scene in the documentation.
 
    .. code:: bash
 
