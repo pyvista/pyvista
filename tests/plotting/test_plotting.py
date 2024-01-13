@@ -4101,12 +4101,18 @@ def test_direction_objects(object_function):
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
 
+    direction_param = None
+
     def _create_object(direction=None):
+        nonlocal direction_param
         try:
             # Create using `direction` param
+            direction_param = 'direction'
             obj = func(**kwargs) if direction is None else func(direction=direction, **kwargs)
+
         except TypeError:
             # Create using `normal` param
+            direction_param = 'normal'
             obj = func(**kwargs) if direction is None else func(normal=direction, **kwargs)
 
         if isinstance(obj, pv.UnstructuredGrid):
@@ -4132,7 +4138,7 @@ def test_direction_objects(object_function):
     direction = (1, 0, 0)
     plot.subplot(1, 0)
     plot.add_mesh(_create_object(direction=direction))
-    plot.add_text(f"direction={direction}", **text_kwargs)
+    plot.add_text(f"{direction_param}={direction}", **text_kwargs)
     plot.view_yz()
     plot.camera.zoom(zoom)
     plot.add_axes(xlabel='')
@@ -4140,7 +4146,7 @@ def test_direction_objects(object_function):
     direction = (0, 1, 0)
     plot.subplot(1, 1)
     plot.add_mesh(_create_object(direction=direction))
-    plot.add_text(f"direction={direction}", **text_kwargs)
+    plot.add_text(f"{direction_param}={direction}", **text_kwargs)
     plot.view_xz()
     plot.camera.zoom(zoom)
     plot.add_axes(ylabel='')
@@ -4148,7 +4154,7 @@ def test_direction_objects(object_function):
     direction = (0, 0, 1)
     plot.subplot(0, 1)
     plot.add_mesh(_create_object(direction=direction))
-    plot.add_text(f"direction={direction}", **text_kwargs)
+    plot.add_text(f"{direction_param}={direction}", **text_kwargs)
     plot.view_xy()
     plot.camera.zoom(zoom)
     plot.add_axes(zlabel='')
