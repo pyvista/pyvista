@@ -4,6 +4,7 @@ Also includes some pure-python helpers.
 
 """
 from typing import Sequence, Tuple, Union
+import warnings
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -691,6 +692,11 @@ class Text3DSource(vtkVectorText):
                     f'Attribute "{name}" does not exist and cannot be added to type '
                     f'{self.__class__.__name__}'
                 )
+
+    def __del__(self):
+        """Delete filters."""
+        self._tri_filter = None
+        self._extrude_filter = None
 
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
