@@ -4,12 +4,15 @@ This test module tests any functionality that requires plotting.
 See the image regression notes in doc/extras/developer_notes.rst
 
 """
+import inspect
 import io
 import os
 import pathlib
 import platform
 import re
 import time
+from types import FunctionType, ModuleType
+from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
 
 from PIL import Image
 import numpy as np
@@ -3945,3 +3948,172 @@ def test_enable_2d_style():
     pl.iren._mouse_right_button_release(*dolly)
     pl.iren._shift_key_release()
     pl.close()
+
+
+_TypeType = TypeVar('_TypeType', bound=Type)
+
+
+def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
+    """Get all members of a specified type which are defined locally inside a module."""
+
+    def is_local(obj):
+        return type(obj) is typ and obj.__module__ == module.__name__
+
+    return dict(inspect.getmembers(module, predicate=is_local))
+
+
+def _get_module_functions(module: ModuleType):
+    """Get all functions defined locally inside a module."""
+    return _get_module_members(module, typ=FunctionType)
+
+
+def _get_default_kwargs(call: Callable) -> dict[str, Any]:
+    """Get all args/kwargs and their default value"""
+    params = dict(inspect.signature(call).parameters)
+    # Get default value for positional or keyword args
+    return {
+        key: val.default
+        for key, val in params.items()
+        if val.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+    }
+
+
+def _has_param(call: Callable, param: str) -> bool:
+    kwargs = _get_default_kwargs(call)
+    if param in kwargs:
+        # Param is valid if it is explicitly named in function signature
+        return True
+    else:
+        # Try adding param as a new kwarg
+        kwargs[param] = None
+        try:
+            call(**kwargs)
+            return True
+        except BaseException as ex:
+            # Param is not valid only if a kwarg TypeError is raised
+            if 'TypeError' in repr(ex) and 'unexpected keyword argument' in repr(ex):
+                return False
+            else:
+                return True
+
+
+def _get_default_param_value(call: Callable, param: str) -> Any:
+    return _get_default_kwargs(call)[param]
+
+
+def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
+    """Generate a list of geometric or parametric object functions which have a direction."""
+    geo_functions = _get_module_functions(pv.core.geometric_objects)
+    para_functions = _get_module_functions(pv.core.parametric_objects)
+    functions = geo_functions | para_functions
+
+    # Only keep functions with capitalized first letter
+    # Only keep functions which accept `normal` or `direction` param
+    functions = {
+        name: func
+        for name, func in functions.items()
+        if name[0].isupper() and (_has_param(func, 'direction') or _has_param(func, 'normal'))
+    }
+
+    actual_names = functions.keys()
+    expected_names = [
+        'Arrow',
+        'CircularArcFromNormal',
+        'Cone',
+        'Cylinder',
+        'CylinderStructured',
+        'Disc',
+        'ParametricBohemianDome',
+        'ParametricBour',
+        'ParametricBoy',
+        'ParametricCatalanMinimal',
+        'ParametricConicSpiral',
+        'ParametricCrossCap',
+        'ParametricDini',
+        'ParametricEllipsoid',
+        'ParametricEnneper',
+        'ParametricFigure8Klein',
+        'ParametricHenneberg',
+        'ParametricKlein',
+        'ParametricKuen',
+        'ParametricMobius',
+        'ParametricPluckerConoid',
+        'ParametricPseudosphere',
+        'ParametricRandomHills',
+        'ParametricRoman',
+        'ParametricSuperEllipsoid',
+        'ParametricSuperToroid',
+        'ParametricTorus',
+        'Plane',
+        'Polygon',
+        'Sphere',
+    ]
+
+    major, minor, patch = pv._version.version_info
+    if major == 0 and minor >= 43:
+        expected_names += ['SolidSphere', 'SolidSphereGeneric', 'Text3D']
+    assert sorted(actual_names) == sorted(expected_names)
+    return list(functions.items())
+
+
+@pytest.mark.parametrize('object_function', _generate_direction_object_functions())
+def test_orientation_of_direction_objects(object_function):
+    name, func = object_function
+
+    # Add required args if needed
+    kwargs = {}
+    if name == 'CircularArcFromNormal':
+        kwargs['center'] = (0, 0, 0)
+    elif name == 'Text3D':
+        kwargs['string'] = 'Text3D'
+
+    def _create_object(direction=None):
+        try:
+            # Create using `direction` param
+            obj = func(**kwargs) if direction is None else func(direction=direction, **kwargs)
+        except TypeError:
+            # Create using `normal` param
+            obj = func(**kwargs) if direction is None else func(normal=direction, **kwargs)
+
+        if isinstance(obj, pv.UnstructuredGrid):
+            # We only want a surface view
+            obj = obj.extract_surface()
+
+        # Add scalars tied to point IDs as visual markers of object orientation
+        obj['cell_id'] = list(range(obj.n_points))
+
+        return obj
+
+    text_kwargs = dict(font_size=10)
+    zoom = 1.1
+
+    plot = pv.Plotter(shape=(2, 2))
+
+    plot.subplot(0, 0)
+    plot.add_mesh(_create_object())
+    plot.add_text(name, **text_kwargs)
+    plot.camera.zoom(zoom)
+    plot.add_axes()
+
+    plot.subplot(1, 0)
+    plot.add_mesh(_create_object(direction=(1, 0, 0)))
+    plot.add_text('direction: +X', **text_kwargs)
+    plot.view_yz()
+    plot.camera.zoom(zoom)
+    plot.add_axes(xlabel='')
+
+    plot.subplot(0, 1)
+    plot.add_mesh(_create_object(direction=(0, 0, 1)))
+    plot.add_text('direction: +Z', **text_kwargs)
+    plot.view_xy()
+    plot.camera.zoom(zoom)
+    plot.add_axes(zlabel='')
+
+    plot.subplot(1, 1)
+    plot.add_mesh(_create_object(direction=(0, 1, 0)))
+    plot.add_text('direction: +Y', **text_kwargs)
+    plot.view_xz()
+    plot.camera.zoom(zoom)
+    plot.add_axes(ylabel='')
+
+    plot.show()
