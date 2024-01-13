@@ -4001,7 +4001,7 @@ def _get_module_functions(module: ModuleType):
     return _get_module_members(module, typ=FunctionType)
 
 
-def _get_default_kwargs(call: Callable) -> dict[str, Any]:
+def _get_default_kwargs(call: Callable) -> Dict[str, Any]:
     """Get all args/kwargs and their default value"""
     params = dict(inspect.signature(call).parameters)
     # Get default value for positional or keyword args
