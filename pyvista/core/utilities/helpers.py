@@ -12,6 +12,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.input_validation.validate import validate_array
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
@@ -113,7 +114,11 @@ def wrap(
         return dataset  # type: ignore
 
     if isinstance(dataset, collections.abc.Sequence):
-        dataset = np.array(dataset)
+        dataset = validate_array(
+            dataset,
+            must_have_shape=(-1, 3),
+            must_have_dtype=[np.int32, np.int64, np.float32, np.float64],
+        )
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
