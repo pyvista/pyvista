@@ -3,10 +3,13 @@ colorcet
 imageio
 imageio-ffmpeg
 ipywidgets<9.0.0
-jupyter-server-proxy
 jupyterlab<5.0.0
 meshio
+nest_asyncio
 trame>=2.5.2
+trame-client>=2.12.7
+trame-jupyter-extension>=2.0.1
+trame-server>=2.11.7
 trame-vtk>=2.5.8
 trame-vuetify>=2.3.1
 trimesh

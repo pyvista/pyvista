@@ -2,6 +2,9 @@
 import logging
 
 logging.getLogger('trame.app').disabled = True
+# Further logging suppression for aiohttp
+logging.getLogger('aiohttp.web').disabled = True
+logging.getLogger('aiohttp.websocket').disabled = True
 
 from pyvista.trame.jupyter import elegantly_launch, launch_server, show_trame
 from pyvista.trame.ui import get_viewer, plotter_ui

@@ -16,6 +16,4 @@ RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osme
 
 WORKDIR $HOME
 
-# allow jupyterlab for ipyvtk
 ENV JUPYTER_ENABLE_LAB=yes
-ENV PYVISTA_TRAME_SERVER_PROXY_PREFIX='/proxy/'
