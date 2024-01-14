@@ -72,13 +72,13 @@ There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release. To install ``pyvista`` from the latest
 up-to-date development branch from github, use one of the following
 
-.. code::
+.. code-block:: bash
 
    pip install -U git+https://github.com/pyvista/pyvista.git@main
 
 Alternatively, you can clone the repository with git and install it with pip.
 
-.. code::
+.. code-block:: bash
 
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
