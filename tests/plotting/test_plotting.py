@@ -49,7 +49,7 @@ try:
             imageio.plugins.ffmpeg.download()
         else:
             raise err
-except:  # noqa: E722
+except:
     ffmpeg_failed = True
 
 
@@ -2994,7 +2994,7 @@ def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 
     # add in bool data
-    for i, block in enumerate(multiblock_poly):
+    for block in multiblock_poly:
         block['scalars'] = np.zeros(block.n_points, dtype=bool)
         block['scalars'][::2] = 1
 
