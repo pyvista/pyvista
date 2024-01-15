@@ -4090,9 +4090,9 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     return list(functions.items())
 
 
+@pytest.mark.parametrize('positive_dir', [True, False])
 @pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-@pytest.mark.parametrize('negative_dir', [False, True])
-def test_direction_objects(object_function, negative_dir):
+def test_direction_objects(object_function, positive_dir):
     name, func = object_function
 
     # Add required args if needed
@@ -4102,23 +4102,19 @@ def test_direction_objects(object_function, negative_dir):
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
 
-    direction_param = None
+    direction_param_name = None
 
-    def _create_object(direction=None):
-        nonlocal direction_param
+    def _create_object(_direction=None):
+        nonlocal direction_param_name
         try:
             # Create using `direction` param
-            direction_param = 'direction'
-            obj = func(**kwargs) if direction is None else func(direction=direction, **kwargs)
+            direction_param_name = 'direction'
+            obj = func(**kwargs) if _direction is None else func(direction=_direction, **kwargs)
 
         except TypeError:
             # Create using `normal` param
-            direction_param = 'normal'
-            obj = func(**kwargs) if direction is None else func(normal=direction, **kwargs)
-
-        if isinstance(obj, pv.UnstructuredGrid):
-            # We only want a surface view
-            obj = obj.extract_surface()
+            direction_param_name = 'normal'
+            obj = func(**kwargs) if _direction is None else func(normal=_direction, **kwargs)
 
         # Add scalars tied to point IDs as visual markers of object orientation
         scalars = np.arange(obj.n_points)
@@ -4136,27 +4132,27 @@ def test_direction_objects(object_function, negative_dir):
     plot.add_text(name, **text_kwargs)
     plot.add_axes()
 
-    direction = (-1, 0, 0) if negative_dir else (1, 0, 0)
-    obj = _create_object(direction=direction)
+    direction = (1, 0, 0) if positive_dir else (-1, 0, 0)
+    obj = _create_object(_direction=direction)
     plot.subplot(1, 0)
     plot.add_mesh(obj)
-    plot.add_text(f"{direction_param}={direction}", **text_kwargs)
+    plot.add_text(f"{direction_param_name}={direction}", **text_kwargs)
     plot.view_yz()
     plot.add_axes(**axes_kwargs)
 
-    direction = (0, -1, 0) if negative_dir else (0, 1, 0)
-    obj = _create_object(direction=direction)
+    direction = (0, 1, 0) if positive_dir else (0, -1, 0)
+    obj = _create_object(_direction=direction)
     plot.subplot(1, 1)
     plot.add_mesh(obj)
-    plot.add_text(f"{direction_param}={direction}", **text_kwargs)
+    plot.add_text(f"{direction_param_name}={direction}", **text_kwargs)
     plot.view_zx()
     plot.add_axes(**axes_kwargs)
 
-    direction = (0, 0, -1) if negative_dir else (0, 0, -1)
-    obj = _create_object(direction=direction)
+    direction = (0, 0, 1) if positive_dir else (0, 0, -1)
+    obj = _create_object(_direction=direction)
     plot.subplot(0, 1)
     plot.add_mesh(obj)
-    plot.add_text(f"{direction_param}={direction}", **text_kwargs)
+    plot.add_text(f"{direction_param_name}={direction}", **text_kwargs)
     plot.view_xy()
     plot.add_axes(**axes_kwargs)
 
