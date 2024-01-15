@@ -2265,7 +2265,7 @@ class PolyDataFilters(DataSetFilters):
         try:
             import pyembree  # noqa: F401
             import rtree  # noqa: F401
-            import trimesh  # noqa: F401
+            import trimesh
         except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

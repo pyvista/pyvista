@@ -31,7 +31,7 @@ try:
         PyVistaRemoteView,
         _BasePyVistaView,
     )
-except:  # noqa: E722
+except:
     has_trame = False
 
 # skip all tests if VTK<9.1.0

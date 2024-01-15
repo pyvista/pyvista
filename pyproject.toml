@@ -283,6 +283,7 @@ exclude = [
     'doc/examples',
     'doc/_build',
 ]
+external = ["E131", "D102", "D105"]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
@@ -316,10 +317,14 @@ ignore = [
 fixable = ["ALL"]
 unfixable = []
 extend-select = [
+    "B007",
+    "B010",
     "C4",
+    "F",
     "NPY",
     "PGH004",
     "RSE",
+    "RUF100",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]

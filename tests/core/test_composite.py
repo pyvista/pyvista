@@ -691,7 +691,7 @@ def test_set_active_scalars_components(multiblock_poly):
     multiblock_poly.set_active_scalars(None)
     multiblock_poly.set_active_scalars('data')
     for block in multiblock_poly:
-        assert multiblock_poly[0].point_data.active_scalars_name == 'data'
+        assert block.point_data.active_scalars_name == 'data'
 
     data = np.zeros((multiblock_poly[2].n_points, 3))
     multiblock_poly[2].point_data['data'] = data
