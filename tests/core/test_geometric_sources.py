@@ -52,7 +52,7 @@ def test_multiple_lines_source():
 
 @pytest.fixture()
 def bunny():
-    return examples.download_bunny()
+    return examples.download_bunny_coarse()
 
 
 @pytest.mark.parametrize("is_negative", (True, False))
@@ -69,12 +69,12 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
 
     if is_negative:
         assert np.allclose(points_in[:, 0], -points_out[:, 1])
-        assert np.allclose(points_in[:, 1], points_out[:, 0])
-        assert np.allclose(points_in[:, 2], points_out[:, 2])
+        assert np.allclose(points_in[:, 1], -points_out[:, 2])
+        assert np.allclose(points_in[:, 2], points_out[:, 0])
     else:
         assert np.allclose(points_in[:, 0], points_out[:, 1])
-        assert np.allclose(points_in[:, 1], -points_out[:, 0])
-        assert np.allclose(points_in[:, 2], points_out[:, 2])
+        assert np.allclose(points_in[:, 1], points_out[:, 2])
+        assert np.allclose(points_in[:, 2], points_out[:, 0])
 
 
 def test_text3d_source_empty_string():
