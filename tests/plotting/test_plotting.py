@@ -4091,7 +4091,8 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
 
 
 @pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_direction_objects(object_function):
+@pytest.mark.parametrize('negative_dir', [False, True])
+def test_direction_objects(object_function, negative_dir):
     name, func = object_function
 
     # Add required args if needed
@@ -4135,7 +4136,7 @@ def test_direction_objects(object_function):
     plot.add_text(name, **text_kwargs)
     plot.add_axes()
 
-    direction = (1, 0, 0)
+    direction = (-1, 0, 0) if negative_dir else (1, 0, 0)
     obj = _create_object(direction=direction)
     plot.subplot(1, 0)
     plot.add_mesh(obj)
@@ -4143,7 +4144,7 @@ def test_direction_objects(object_function):
     plot.view_yz()
     plot.add_axes(**axes_kwargs)
 
-    direction = (0, 1, 0)
+    direction = (0, -1, 0) if negative_dir else (0, 1, 0)
     obj = _create_object(direction=direction)
     plot.subplot(1, 1)
     plot.add_mesh(obj)
@@ -4151,7 +4152,7 @@ def test_direction_objects(object_function):
     plot.view_zx()
     plot.add_axes(**axes_kwargs)
 
-    direction = (0, 0, 1)
+    direction = (0, 0, -1) if negative_dir else (0, 0, -1)
     obj = _create_object(direction=direction)
     plot.subplot(0, 1)
     plot.add_mesh(obj)
