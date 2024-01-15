@@ -118,7 +118,7 @@ def Cylinder(
         resolution=resolution,
     )
     output = wrap(algo.output)
-    output.rotate_z(90, inplace=True)
+    output.rotate_z(-90, inplace=True)
     translate(output, center, direction)
     return output
 
