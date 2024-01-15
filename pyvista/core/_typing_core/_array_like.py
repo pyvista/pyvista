@@ -26,7 +26,7 @@ import numpy as np
 import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
-_NumType = TypeVar('_NumType', bool, int, float, np.bool_, np.int_, np.float_, np.uint8)
+_NumType = TypeVar('_NumType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
 NumpyArray = npt.NDArray[_NumType]
 
 # Define generic nested sequence
