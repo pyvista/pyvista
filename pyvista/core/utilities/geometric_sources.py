@@ -41,7 +41,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     if np.allclose(normx, [0, 1, 0]):
         normy_temp = [0.0, 0.0, 1.0]
     elif np.allclose(normx, [0, -1, 0]):
-        normy_temp = [0.0, 0.0, -1.0]
+        normy_temp = [0.0, 0.0, 1.0]
 
     normz = np.cross(normx, normy_temp)
     normz /= np.linalg.norm(normz)
