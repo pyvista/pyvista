@@ -211,8 +211,8 @@ def test_direction():
     assert np.allclose(points1[:, 2], points2[:, 0])
 
     assert np.allclose(points1[:, 0], -points3[:, 1])
-    assert np.allclose(points1[:, 1], -points3[:, 2])
-    assert np.allclose(points1[:, 2], points3[:, 0])
+    assert np.allclose(points1[:, 1], points3[:, 2])
+    assert np.allclose(points1[:, 2], -points3[:, 0])
 
 
 def test_surface_from_para():
