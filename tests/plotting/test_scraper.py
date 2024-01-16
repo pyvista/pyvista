@@ -5,7 +5,7 @@ from matplotlib.pyplot import imread
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.utilities.sphinx_gallery import Scraper
+from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper, Scraper
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -67,18 +67,24 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         plotter.close()
 
 
+@pytest.mark.parametrize('scraper_type', ['static', 'dynamic'])
 @pytest.mark.parametrize('n_win', [1, 2])
-def test_scraper(tmpdir, monkeypatch, n_win):
+def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
     plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
     plotter_gif = pv.Plotter()
 
-    scraper = Scraper()
-
-    # test stable repr
-    assert repr(scraper) == '<Scraper object>'
+    # Initialize scraper and check stable representation
+    if scraper_type == 'static':
+        scraper = Scraper()
+        assert repr(scraper) == '<Scraper object>'
+    elif scraper_type == 'dynamic':
+        scraper = DynamicScraper()
+        assert repr(scraper) == '<DynamicScraper object>'
+    else:
+        raise ValueError(f'Invalid scraper type: {scraper}')
 
     src_dir = str(tmpdir)
     out_dir = op.join(str(tmpdir), '_build', 'html')
@@ -94,10 +100,10 @@ def test_scraper(tmpdir, monkeypatch, n_win):
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = op.join(src_dir, 'auto_examples', 'sg.py')
-    block = None
+    block = ("empty_block", "", 0)
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
-        example_globals=dict(a=1),
+        example_globals=dict(a=1, PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT=True),
         target_file=target_file,
     )
 
