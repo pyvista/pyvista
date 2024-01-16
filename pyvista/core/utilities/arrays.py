@@ -9,7 +9,7 @@ import numpy.typing as npt
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Array, Matrix, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core import Array, Matrix, NumberType, NumpyArray, TransformLike, Vector
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -795,10 +795,7 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
     return transform_array
 
 
-from pyvista.core._typing._array_like import _NumericType
-
-
-def cast_to_list_array(arr: Array[_NumericType]) -> list:
+def cast_to_list_array(arr: Array[NumberType]) -> list:
     """Cast an array to a nested list.
 
     Parameters
@@ -814,7 +811,7 @@ def cast_to_list_array(arr: Array[_NumericType]) -> list:
     return cast_to_ndarray(arr).tolist()
 
 
-def cast_to_tuple_array(arr: Array[_NumericType]) -> tuple:
+def cast_to_tuple_array(arr: Array[NumberType]) -> tuple:
     """Cast an array to a nested tuple.
 
     Parameters
@@ -836,13 +833,13 @@ def cast_to_tuple_array(arr: Array[_NumericType]) -> tuple:
 
 
 def cast_to_ndarray(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[NumberType, Array[NumberType]],
     /,
     *,
     as_any: bool = True,
     dtype: Optional[npt.DTypeLike] = None,
     copy: bool = False,
-) -> NumpyArray[_NumericType]:
+) -> NumpyArray[NumberType]:
     """Cast array to a NumPy ndarray.
 
     Parameters
