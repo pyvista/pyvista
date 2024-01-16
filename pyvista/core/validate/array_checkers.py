@@ -15,7 +15,7 @@ from typing import Any, List, Literal, Optional, Sequence, Sized, Tuple, Union, 
 import numpy as np
 from numpy import typing as npt
 
-from pyvista.core._typing import Array, NumpyArray, Vector, _NumberType, _NumericType
+from pyvista.core._typing_core import Array, NumpyArray, Vector, NumberType
 from pyvista.core.utilities.arrays import cast_to_ndarray
 from pyvista.core.validate.type_checkers import check_contains, check_instance, check_iterable_items
 
@@ -28,7 +28,7 @@ Shape = Union[Tuple[()], Tuple[int, ...]]
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, Array[_NumericType]],
+    input_obj: Union[npt.DTypeLike, Array[NumberType]],
     base_dtype: Union[npt.DTypeLike, Sequence],
     /,
     *,
@@ -100,7 +100,7 @@ def check_subdtype(
 
 
 def check_numeric(
-    arr: Union[_NumericType, Array[_NumericType], npt.NDArray[np.number]], /, *, name: str = "Array"
+    arr: Union[NumberType, Array[NumberType], npt.NDArray[np.number]], /, *, name: str = "Array"
 ):
     # TODO: rename and modify as 'check_complex'
     """Check if an array is float, integer, or complex type.
@@ -149,7 +149,7 @@ def check_numeric(
 
 
 def check_real(
-    arr: Union[_NumericType, Array[_NumericType], npt.NDArray[np.number]], /, *, name: str = "Array"
+    arr: Union[NumberType, Array[NumberType], npt.NDArray[np.number]], /, *, name: str = "Array"
 ):
     """Check if an array has real numbers, i.e. float or integer type.
 
@@ -203,7 +203,7 @@ def check_real(
 
 
 def check_sorted(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[NumberType, Array[NumberType]],
     /,
     *,
     ascending: bool = True,
@@ -307,7 +307,7 @@ def check_sorted(
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
-def check_finite(arr: Union[_NumericType, Array[_NumericType]], /, *, name: str = "Array"):
+def check_finite(arr: Union[NumberType, Array[NumberType]], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
@@ -341,7 +341,7 @@ def check_finite(arr: Union[_NumericType, Array[_NumericType]], /, *, name: str 
 
 
 def check_integerlike(
-    arr: Union[_NumericType, Array[_NumericType]], /, *, strict: bool = False, name: str = "Array"
+    arr: Union[NumberType, Array[NumberType]], /, *, strict: bool = False, name: str = "Array"
 ):
     """Check if an array has integer or integer-like float values.
 
@@ -388,7 +388,7 @@ def check_integerlike(
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_nonnegative(arr: Union[_NumericType, Array[_NumericType]], /, *, name: str = "Array"):
+def check_nonnegative(arr: Union[NumberType, Array[NumberType]], /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -424,7 +424,7 @@ def check_nonnegative(arr: Union[_NumericType, Array[_NumericType]], /, *, name:
 
 
 def check_greater_than(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[NumberType, Array[NumberType]],
     /,
     value: float,
     *,
@@ -478,7 +478,7 @@ def check_greater_than(
 
 
 def check_less_than(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[NumberType, Array[NumberType]],
     /,
     value: float,
     *,
@@ -533,7 +533,7 @@ def check_less_than(
 
 
 def check_range(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[NumberType, Array[NumberType]],
     /,
     rng: Vector[float],
     *,
@@ -598,7 +598,7 @@ def check_range(
 
 
 def check_shape(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[NumberType, Array[NumberType]],
     /,
     shape: Union[ShapeLike, List[ShapeLike]],
     *,
@@ -677,7 +677,7 @@ def check_shape(
 
 
 def check_length(
-    arr: Union[_NumericType, Array[_NumericType], Sized],
+    arr: Union[NumberType, Array[NumberType], Sized],
     /,
     *,
     exact_length: Union[int, Vector[int], None] = None,
@@ -757,7 +757,7 @@ def check_length(
             arr = arr.reshape((1,))
 
     check_instance(arr, (Sequence, np.ndarray), name=name)
-    arr = cast(Union[_NumericType, Array[_NumericType]], arr)
+    arr = cast(Union[NumberType, Array[NumberType]], arr)
 
     if must_be_1d:
         check_shape(arr, shape=(-1))
@@ -947,7 +947,7 @@ def check_number(
 
 
 def check_scalar(
-    scalar: Union[float, int, complex, Number, NumpyArray[_NumberType]],
+    scalar: Union[float, int, complex, Number, NumpyArray[NumberType]],
     /,
     *,
     must_be_real: bool = True,
