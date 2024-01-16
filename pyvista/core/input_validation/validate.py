@@ -19,9 +19,9 @@ import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Array, Matrix, NumpyArray, TransformLike, Vector
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
-from pyvista.core.validate.array_checkers import (
+from pyvista.core.input_validation.check import (
     ShapeLike,
+    check_contains,
     check_finite,
     check_integerlike,
     check_length,
@@ -30,9 +30,10 @@ from pyvista.core.validate.array_checkers import (
     check_real,
     check_shape,
     check_sorted,
+    check_string,
     check_subdtype,
 )
-from pyvista.core.validate.type_checkers import check_contains, check_string
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 
 _NumericType = TypeVar('_NumericType', bool, int, float)
 _NumberType = TypeVar('_NumberType', int, float)

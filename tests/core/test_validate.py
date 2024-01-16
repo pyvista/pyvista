@@ -9,8 +9,7 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
-from pyvista.core.validate import (
+from pyvista.core.input_validation import (
     check_contains,
     check_finite,
     check_greater_than,
@@ -43,8 +42,9 @@ from pyvista.core.validate import (
     validate_transform3x3,
     validate_transform4x4,
 )
-from pyvista.core.validate.array_checkers import _validate_shape_value
-from pyvista.core.validate.array_validators import _set_default_kwarg_mandatory
+from pyvista.core.input_validation.check import _validate_shape_value
+from pyvista.core.input_validation.validate import _set_default_kwarg_mandatory
+from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
 
 
 @pytest.mark.parametrize(

@@ -1,9 +1,13 @@
 """Input validation functions."""
 
-from .array_checkers import (  # noqa: F401
+from .check import (  # noqa: F401
+    check_contains,
     check_finite,
     check_greater_than,
+    check_instance,
     check_integerlike,
+    check_iterable,
+    check_iterable_items,
     check_length,
     check_less_than,
     check_nonnegative,
@@ -12,11 +16,14 @@ from .array_checkers import (  # noqa: F401
     check_range,
     check_real,
     check_scalar,
+    check_sequence,
     check_shape,
     check_sorted,
+    check_string,
     check_subdtype,
+    check_type,
 )
-from .array_validators import (  # noqa: F401
+from .validate import (  # noqa: F401
     validate_array,
     validate_array3,
     validate_arrayN,
@@ -27,13 +34,4 @@ from .array_validators import (  # noqa: F401
     validate_number,
     validate_transform3x3,
     validate_transform4x4,
-)
-from .type_checkers import (  # noqa: F401
-    check_contains,
-    check_instance,
-    check_iterable,
-    check_iterable_items,
-    check_sequence,
-    check_string,
-    check_type,
 )
