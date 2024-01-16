@@ -741,11 +741,13 @@ def test_texture_map_to_sphere():
 
 def test_compute_cell_sizes(datasets):
     for dataset in datasets:
-        result = dataset.compute_cell_sizes(progress_bar=True)
+        result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True)
         assert result is not None
         assert isinstance(result, type(dataset))
+        assert 'Length' in result.array_names
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
+        assert 'VertexCount' in result.array_names
     # Test the volume property
     grid = pv.ImageData(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
