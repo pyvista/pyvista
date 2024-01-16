@@ -688,158 +688,6 @@ def check_shape(
     raise ValueError(msg)
 
 
-def check_length(
-    arr: Union[NumberType, Array[NumberType], Sized],
-    /,
-    *,
-    exact_length: Union[int, Vector[int], None] = None,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
-    must_be_1d: bool = False,
-    allow_scalar: bool = False,
-    name: str = "Array",
-):
-    """Check if the length of an array meets specific requirements.
-
-    Notes
-    -----
-    By default, this function operates on multidimensional arrays,
-    where ``len(arr)`` may differ from the number of elements in the
-    array. For one-dimensional cases (where ``len(arr) == arr.size``),
-    set ``must_be_1D=True``.
-
-    Parameters
-    ----------
-    arr : float | Array[float]
-        Number or array to check.
-
-    exact_length : int | Vector[int], optional
-        Check if the array has the given length. If multiple
-        numbers are given, the array's length must match one of the
-        numbers.
-
-    min_length : int, optional
-        Check if the array has this length or greater.
-
-    max_length : int, optional
-        Check if the array has this length or less.
-
-    must_be_1d : bool, default: False
-        If ``True``, check if the shape of the array is one-dimensional,
-        i.e. that the array's shape is ``(1,)``.
-
-    allow_scalar : bool, default: False
-        If ``True``, a scalar input will be reshaped to have a length
-        of 1. Otherwise, the check will fail since a scalar does not
-        have a length.
-
-    name : str, default: "Array"
-        Variable name to use in the error messages if any are raised.
-
-    Raises
-    ------
-    ValueError
-        If the array's length is outside the specified range.
-
-    See Also
-    --------
-    check_shape
-
-    Examples
-    --------
-    Check if an array has a length of 2 or 3.
-
-    >>> from pyvista.core import input_validation
-    >>> input_validation.check_length([1, 2], exact_length=[2, 3])
-
-    Check if an array has a minimum length of 3.
-
-    >>> input_validation.check_length((1, 2, 3), min_length=3)
-
-    Check if a multidimensional array has a maximum length of 2.
-
-    >>> input_validation.check_length([[1, 2, 3], [4, 5, 6]], max_length=2)
-
-    """
-    if allow_scalar:
-        # Reshape to 1D
-        if isinstance(arr, Number):
-            arr = np.array([arr])
-        elif isinstance(arr, np.ndarray) and arr.ndim == 0:
-            arr = arr.reshape((1,))
-
-    check_instance(arr, (Sequence, np.ndarray), name=name)
-    arr = cast(Union[NumberType, Array[NumberType]], arr)
-
-    if must_be_1d:
-        check_shape(arr, shape=(-1))
-
-    arr_len = len(cast(Sized, arr))
-
-    if exact_length is not None:
-        exact_length = cast_to_ndarray(exact_length)
-        check_integerlike(exact_length, name="'exact_length'")
-        if arr_len not in exact_length:
-            raise ValueError(
-                f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {arr_len} instead."
-            )
-
-    # Validate min/max length
-    if min_length is not None:
-        check_finite(min_length, name="Min length")
-    if max_length is not None:
-        check_finite(max_length, name="Max length")
-    if min_length is not None and max_length is not None:
-        check_sorted((min_length, max_length), name="Range")
-
-    if min_length is not None:
-        if arr_len < min_length:
-            raise ValueError(
-                f"{name} must have a minimum length of {min_length}. "
-                f"Got length {arr_len} instead."
-            )
-    if max_length is not None:
-        if arr_len > max_length:
-            raise ValueError(
-                f"{name} must have a maximum length of {max_length}. "
-                f"Got length {arr_len} instead."
-            )
-
-
-def _validate_shape_value(shape: ShapeLike) -> Shape:
-    """Validate shape-like input and return its tuple representation."""
-    if shape is None:
-        # `None` is used to mean `any shape is allowed` by the array
-        #  validation methods, so raise an error here.
-        #  Also, setting `None` as a shape is deprecated by NumPy.
-        raise TypeError("`None` is not a valid shape. Use `()` instead.")
-
-    # Return early for common inputs
-    if shape == ():
-        return cast(Shape, shape)
-    elif shape in [(-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
-        return cast(Shape, shape)
-
-    def _is_valid_dim(d):
-        return isinstance(d, int) and d >= -1
-
-    if _is_valid_dim(shape):
-        return (cast(int, shape),)
-    if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast(Shape, shape)
-
-    # Input is not valid at this point. Use checks to raise an
-    # appropriate error
-    check_instance(shape, (int, tuple), name='Shape')
-    if isinstance(shape, int):
-        shape = (shape,)
-    else:
-        check_iterable_items(shape, int, name='Shape')
-    check_greater_than(shape, -1, name="Shape", strict=False)
-    raise RuntimeError("This line should not be reachable.")  # pragma: no cover
-
-
 def check_number(
     num: Union[float, int, complex, np.number, Number],
     /,
@@ -957,79 +805,6 @@ def check_number(
     except TypeError:
         raise
 
-
-def check_scalar(
-    scalar: Union[float, int, complex, Number, NumpyArray[NumberType]],
-    /,
-    *,
-    must_be_real: bool = True,
-    name: str = "Scalar",
-):
-    """Check if an object is a scalar number.
-
-    By default, the number must be real, or a 0-dimensional :class:`numpy.ndarray`
-    of a real number. Optionally, the scalar can also be a complex
-
-    This check is similar to :func:`check_number` but also allows 0-dimensional
-    arrays.
-
-    Notes
-    -----
-    Values such as ``infinity`` and ``NaN`` are valid scalars and will not
-    raise an error. Use :func:`check_finite` to check for finite values.
-
-    Parameters
-    ----------
-    scalar : float | int | complex | Number | numpy.number | numpy.ndarray
-        Number or 0-dimensional numeric array.
-
-    must_be_real : bool, default: True
-        If ``True``, the scalar must be a real number, i.e. an integer or
-        floating type. Set to ``False`` to allow complex numbers.
-
-    name : str, default: "Scalar"
-        Variable name to use in the error messages if any are raised.
-
-    Raises
-    ------
-    TypeError
-        If input is not a number or a 0-dimensional number array.
-
-    See Also
-    --------
-    check_number
-        Similar function which does not allow 0-dimensional ndarrays.
-    check_numeric
-        Similar function for any dimensional array of numbers.
-    check_real
-        Similar function for any dimensional array of real numbers.
-    check_finite
-
-    Examples
-    --------
-    Check if an object is scalar.
-
-    >>> import numpy as np
-    >>> from pyvista.core import input_validation
-    >>> input_validation.check_scalar(0.0)
-    >>> input_validation.check_scalar(np.array(1))
-    >>> input_validation.check_scalar(np.array(1 + 2j), must_be_real=False)
-
-    """
-    try:
-        if isinstance(scalar, np.ndarray):
-            # TODO: check_ndim(scalar, 0)
-            if scalar.ndim > 0:
-                raise ValueError(
-                    f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
-                )
-            check_real(scalar, name=name) if must_be_real else check_numeric(scalar, name=name)  # type: ignore
-        else:
-            check_number(scalar, must_be_real=must_be_real)
-    except TypeError:
-        raise
-
-
 def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object'):
     """Check if an object is an instance of ``str``.
 
@@ -1070,7 +845,6 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
     except TypeError:
         raise
 
-
 def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Sequence``.
 
@@ -1106,7 +880,6 @@ def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
         check_instance(obj, Sequence, allow_subclass=True, name=name)
     except TypeError:
         raise
-
 
 def check_iterable(obj: Iterable, /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Iterable``.
@@ -1384,3 +1157,228 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
             qualifier = "in"
         msg = f"{name} '{obj}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
         raise ValueError(msg)
+
+
+def check_length(
+    arr: Union[NumberType, Array[NumberType], Sized],
+    /,
+    *,
+    exact_length: Union[int, Vector[int], None] = None,
+    min_length: Optional[int] = None,
+    max_length: Optional[int] = None,
+    must_be_1d: bool = False,
+    allow_scalar: bool = False,
+    name: str = "Array",
+):
+    """Check if the length of an array meets specific requirements.
+
+    Notes
+    -----
+    By default, this function operates on multidimensional arrays,
+    where ``len(arr)`` may differ from the number of elements in the
+    array. For one-dimensional cases (where ``len(arr) == arr.size``),
+    set ``must_be_1D=True``.
+
+    Parameters
+    ----------
+    arr : float | Array[float]
+        Number or array to check.
+
+    exact_length : int | Vector[int], optional
+        Check if the array has the given length. If multiple
+        numbers are given, the array's length must match one of the
+        numbers.
+
+    min_length : int, optional
+        Check if the array has this length or greater.
+
+    max_length : int, optional
+        Check if the array has this length or less.
+
+    must_be_1d : bool, default: False
+        If ``True``, check if the shape of the array is one-dimensional,
+        i.e. that the array's shape is ``(1,)``.
+
+    allow_scalar : bool, default: False
+        If ``True``, a scalar input will be reshaped to have a length
+        of 1. Otherwise, the check will fail since a scalar does not
+        have a length.
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    ValueError
+        If the array's length is outside the specified range.
+
+    See Also
+    --------
+    check_shape
+
+    Examples
+    --------
+    Check if an array has a length of 2 or 3.
+
+    >>> from pyvista.core import input_validation
+    >>> input_validation.check_length([1, 2], exact_length=[2, 3])
+
+    Check if an array has a minimum length of 3.
+
+    >>> input_validation.check_length((1, 2, 3), min_length=3)
+
+    Check if a multidimensional array has a maximum length of 2.
+
+    >>> input_validation.check_length([[1, 2, 3], [4, 5, 6]], max_length=2)
+
+    """
+    if allow_scalar:
+        # Reshape to 1D
+        if isinstance(arr, Number):
+            arr = np.array([arr])
+        elif isinstance(arr, np.ndarray) and arr.ndim == 0:
+            arr = arr.reshape((1,))
+
+    check_instance(arr, (Sequence, np.ndarray), name=name)
+    arr = cast(Union[NumberType, Array[NumberType]], arr)
+
+    if must_be_1d:
+        check_shape(arr, shape=(-1))
+
+    arr_len = len(cast(Sized, arr))
+
+    if exact_length is not None:
+        exact_length = cast_to_ndarray(exact_length)
+        check_integerlike(exact_length, name="'exact_length'")
+        if arr_len not in exact_length:
+            raise ValueError(
+                f"{name} must have a length equal to any of: {exact_length}. "
+                f"Got length {arr_len} instead."
+            )
+
+    # Validate min/max length
+    if min_length is not None:
+        check_finite(min_length, name="Min length")
+    if max_length is not None:
+        check_finite(max_length, name="Max length")
+    if min_length is not None and max_length is not None:
+        check_sorted((min_length, max_length), name="Range")
+
+    if min_length is not None:
+        if arr_len < min_length:
+            raise ValueError(
+                f"{name} must have a minimum length of {min_length}. "
+                f"Got length {arr_len} instead."
+            )
+    if max_length is not None:
+        if arr_len > max_length:
+            raise ValueError(
+                f"{name} must have a maximum length of {max_length}. "
+                f"Got length {arr_len} instead."
+            )
+
+
+def _validate_shape_value(shape: ShapeLike) -> Shape:
+    """Validate shape-like input and return its tuple representation."""
+    if shape is None:
+        # `None` is used to mean `any shape is allowed` by the array
+        #  validation methods, so raise an error here.
+        #  Also, setting `None` as a shape is deprecated by NumPy.
+        raise TypeError("`None` is not a valid shape. Use `()` instead.")
+
+    # Return early for common inputs
+    if shape == ():
+        return cast(Shape, shape)
+    elif shape in [(-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
+        return cast(Shape, shape)
+
+    def _is_valid_dim(d):
+        return isinstance(d, int) and d >= -1
+
+    if _is_valid_dim(shape):
+        return (cast(int, shape),)
+    if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
+        return cast(Shape, shape)
+
+    # Input is not valid at this point. Use checks to raise an
+    # appropriate error
+    check_instance(shape, (int, tuple), name='Shape')
+    if isinstance(shape, int):
+        shape = (shape,)
+    else:
+        check_iterable_items(shape, int, name='Shape')
+    check_greater_than(shape, -1, name="Shape", strict=False)
+    raise RuntimeError("This line should not be reachable.")  # pragma: no cover
+
+
+def check_scalar(
+    scalar: Union[float, int, complex, Number, NumpyArray[NumberType]],
+    /,
+    *,
+    must_be_real: bool = True,
+    name: str = "Scalar",
+):
+    """Check if an object is a scalar number.
+
+    By default, the number must be real, or a 0-dimensional :class:`numpy.ndarray`
+    of a real number. Optionally, the scalar can also be a complex
+
+    This check is similar to :func:`check_number` but also allows 0-dimensional
+    arrays.
+
+    Notes
+    -----
+    Values such as ``infinity`` and ``NaN`` are valid scalars and will not
+    raise an error. Use :func:`check_finite` to check for finite values.
+
+    Parameters
+    ----------
+    scalar : float | int | complex | Number | numpy.number | numpy.ndarray
+        Number or 0-dimensional numeric array.
+
+    must_be_real : bool, default: True
+        If ``True``, the scalar must be a real number, i.e. an integer or
+        floating type. Set to ``False`` to allow complex numbers.
+
+    name : str, default: "Scalar"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    TypeError
+        If input is not a number or a 0-dimensional number array.
+
+    See Also
+    --------
+    check_number
+        Similar function which does not allow 0-dimensional ndarrays.
+    check_numeric
+        Similar function for any dimensional array of numbers.
+    check_real
+        Similar function for any dimensional array of real numbers.
+    check_finite
+
+    Examples
+    --------
+    Check if an object is scalar.
+
+    >>> import numpy as np
+    >>> from pyvista.core import input_validation
+    >>> input_validation.check_scalar(0.0)
+    >>> input_validation.check_scalar(np.array(1))
+    >>> input_validation.check_scalar(np.array(1 + 2j), must_be_real=False)
+
+    """
+    try:
+        if isinstance(scalar, np.ndarray):
+            # TODO: check_ndim(scalar, 0)
+            if scalar.ndim > 0:
+                raise ValueError(
+                    f"{name} must be a 0-dimensional array, got `ndim={scalar.ndim}` instead."
+                )
+            check_real(scalar, name=name) if must_be_real else check_numeric(scalar, name=name)  # type: ignore
+        else:
+            check_number(scalar, must_be_real=must_be_real)
+    except TypeError:
+        raise
+
