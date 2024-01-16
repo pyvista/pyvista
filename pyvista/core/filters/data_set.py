@@ -2071,8 +2071,8 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         vertex_count : bool, default: False
-            Specify whether or not to computer the number of vertices
-            in 0D cells.
+            Specify whether or not to compute the number of vertices
+            of 0D cells.
 
         Returns
         -------
