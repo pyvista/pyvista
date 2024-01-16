@@ -805,6 +805,7 @@ def check_number(
     except TypeError:
         raise
 
+
 def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object'):
     """Check if an object is an instance of ``str``.
 
@@ -845,6 +846,7 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
     except TypeError:
         raise
 
+
 def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Sequence``.
 
@@ -880,6 +882,7 @@ def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
         check_instance(obj, Sequence, allow_subclass=True, name=name)
     except TypeError:
         raise
+
 
 def check_iterable(obj: Iterable, /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Iterable``.
@@ -1381,4 +1384,3 @@ def check_scalar(
             check_number(scalar, must_be_real=must_be_real)
     except TypeError:
         raise
-
