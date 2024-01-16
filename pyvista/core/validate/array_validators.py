@@ -13,20 +13,12 @@ An array validator function typically:
 
 """
 import inspect
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Optional, TypeVar, Union, cast
 
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing import (
-    Array,
-    Matrix,
-    NumpyArray,
-    TransformLike,
-    Vector,
-    _NumberType,
-    _NumericType,
-)
+from pyvista.core._typing_core import Array, Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 from pyvista.core.validate.array_checkers import (
     ShapeLike,
@@ -41,6 +33,9 @@ from pyvista.core.validate.array_checkers import (
     check_subdtype,
 )
 from pyvista.core.validate.type_checkers import check_contains, check_string
+
+_NumericType = TypeVar('_NumericType', bool, int, float)
+_NumberType = TypeVar('_NumberType', int, float)
 
 
 def validate_array(

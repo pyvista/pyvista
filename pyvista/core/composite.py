@@ -1110,7 +1110,7 @@ class MultiBlock(
         # Verify array consistency
         dims: Set[int] = set()
         dtypes: Set[np.dtype] = set()
-        for block in self:
+        for _ in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association
                 if field != field_asc:
