@@ -6,7 +6,7 @@ imageio==2.33.1
 imageio-ffmpeg==0.4.9
 jupyter_sphinx==0.5.3
 jupyterlab==4.0.10
-lxml==5.0.0
+lxml==5.1.0
 meshio==5.3.4
 mypy==1.8.0
 mypy-extensions==1.0.0
