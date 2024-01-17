@@ -2071,7 +2071,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         vertex_count : bool, default: False
-            Specify whether or not to compute sizes for vertices and 0D cells.
+            Specify whether or not to compute sizes for vertex and polyvertex cells (0D cells).
             The computed value is the number of points in the cell.
 
         Returns
