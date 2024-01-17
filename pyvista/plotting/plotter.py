@@ -3515,7 +3515,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Otherwise, make sure the mesh object's scalars are set
                 if field == FieldAssociation.POINT:
                     mesh.point_data.active_scalars_name = original_scalar_name
-
                 elif field == FieldAssociation.CELL:
                     mesh.cell_data.active_scalars_name = original_scalar_name
 
