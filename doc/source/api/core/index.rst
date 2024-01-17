@@ -53,4 +53,4 @@ PyVista has the following mesh types:
    cells
    helpers
    misc
-   validate
+   input_validation
