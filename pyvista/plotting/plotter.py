@@ -3500,6 +3500,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             self.mapper.scalar_map_mode = field.name
 
+            # set preference for downstream use with actual
+            if field == FieldAssociation.POINT:
+                preference = 'point'
+            elif field == FieldAssociation.CELL:
+                preference = 'cell'
+
             if algo is not None:
                 # Ensures that the right scalars are set as active on
                 # each pipeline request
@@ -3509,6 +3515,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Otherwise, make sure the mesh object's scalars are set
                 if field == FieldAssociation.POINT:
                     mesh.point_data.active_scalars_name = original_scalar_name
+
                 elif field == FieldAssociation.CELL:
                     mesh.cell_data.active_scalars_name = original_scalar_name
 
