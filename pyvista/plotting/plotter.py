@@ -706,7 +706,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except:  # noqa: E722
+                        except:  # pragma: no cover
                             pass
 
         exporter = vtkGLTFExporter()

@@ -11,7 +11,7 @@ from pyvista.examples.downloads import download_file
 
 HAS_IMAGEIO = True
 try:
-    import imageio  # noqa: F401
+    import imageio
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
@@ -513,7 +513,7 @@ def test_pvdreader_no_part_group():
 
     reader.set_active_time_value(1.0)
     assert len(reader.active_datasets) == 2
-    for i, dataset in enumerate(reader.active_datasets):
+    for dataset in reader.active_datasets:
         assert dataset.time == 1.0
         assert dataset.group == ""
         assert dataset.part == 0
