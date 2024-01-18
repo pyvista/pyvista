@@ -107,9 +107,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
     >>> mesh.point_data.set_array(range(4), 'my-data')
     >>> mesh.point_data.set_array(range(5, 9), 'my-other-data')
-    >>> vectors0 = np.random.random((4, 3))
+    >>> vectors0 = np.random.default_rng().random((4, 3))
     >>> mesh.point_data.set_vectors(vectors0, 'vectors0')
-    >>> vectors1 = np.random.random((4, 3))
+    >>> vectors1 = np.random.default_rng().random((4, 3))
     >>> mesh.point_data.set_vectors(vectors1, 'vectors1')
     >>> mesh.point_data
     pyvista DataSetAttributes
@@ -322,7 +322,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> mesh = pv.Cube()
-        >>> vectors = np.random.random((mesh.n_points, 3))
+        >>> vectors = np.random.default_rng().random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
         >>> vectors_out = mesh.point_data.active_vectors
         >>> vectors_out.shape
@@ -671,7 +671,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> vectors = np.random.random((mesh.n_points, 3))
+        >>> vectors = np.random.default_rng().random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
         >>> mesh.point_data
         pyvista DataSetAttributes
@@ -1022,7 +1022,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> n = len(mesh.point_data)
         >>> arrays = {
         ...     'foo': np.arange(mesh.n_points),
-        ...     'rand': np.random.random(mesh.n_points),
+        ...     'rand': np.random.default_rng().random(mesh.n_points),
         ... }
         >>> mesh.point_data.update(arrays)
         >>> mesh.point_data
@@ -1125,7 +1125,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import numpy as np
         >>> mesh = pv.Sphere()
         >>> mesh.point_data.set_vectors(
-        ...     np.random.random((mesh.n_points, 3)), 'my-vectors'
+        ...     np.random.default_rng().random((mesh.n_points, 3)),
+        ...     'my-vectors',
         ... )
         >>> mesh.point_data.active_vectors_name
         'my-vectors'

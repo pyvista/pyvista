@@ -337,7 +337,7 @@ try:
     import osmnx, fiona  # noqa: F401,E401 isort: skip
 
     has_osmnx = True
-except:  # noqa: E722
+except:
     pass
 
 
@@ -414,7 +414,7 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme  # noqa
+import pydata_sphinx_theme  # noqa: F401
 
 html_theme = "pydata_sphinx_theme"
 html_context = {

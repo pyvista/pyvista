@@ -106,7 +106,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:  # noqa: E722
+        except:
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -208,7 +208,7 @@ class ProgressMonitor:
     def __init__(self, algorithm, message=""):
         """Initialize observer."""
         try:
-            from tqdm import tqdm  # noqa
+            from tqdm import tqdm  # noqa: F401
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent

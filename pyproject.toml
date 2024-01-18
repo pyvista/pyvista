@@ -159,7 +159,7 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
-plugins = ['numpy.typing.mypy_plugin']
+plugins = ['numpy.typing.mypy_plugin','npt_promote']
 
 [tool.numpydoc_validation]
 checks = [
@@ -167,6 +167,8 @@ checks = [
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
+    "GL06",  # Found unknown section
+    "GL07",  # "Sections are in the wrong order. Correct order is: {correct_sections}",
     "GL09",  # Deprecation warning should precede extended summary (check broken)
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
@@ -281,6 +283,7 @@ exclude = [
     'doc/examples',
     'doc/_build',
 ]
+external = ["E131", "D102", "D105"]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
@@ -313,3 +316,16 @@ ignore = [
 ]
 fixable = ["ALL"]
 unfixable = []
+extend-select = [
+    "B007",
+    "B010",
+    "C4",
+    "F",
+    "NPY",
+    "PGH004",
+    "RSE",
+    "RUF100",
+]
+
+[tool.ruff.lint.flake8-comprehensions]
+allow-dict-calls-with-keyword-arguments = true
