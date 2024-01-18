@@ -18,3 +18,11 @@ jobs:
           github-token: ${{ github.token }}
           issue-inactive-days: "30"
           pr-inactive-days: "30"
+          issue-comment: >
+            This issue has been automatically locked since there
+            has not been any recent activity after it was closed.
+            Please open a new issue for related bugs.
+          pr-comment: >
+            This pull request has been automatically locked since there
+            has not been any recent activity after it was closed.
+            Please open a new issue for related bugs.
