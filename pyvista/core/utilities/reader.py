@@ -831,13 +831,14 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         self._filename = filename
         self.reader.SetCaseFileName(filename)
         self._update_information()
+        self.active_time_set = 0
 
     @property
     def number_time_points(self):  # noqa: D102  # numpydoc ignore=RT01
-        return self.reader.GetTimeSets().GetItem(0).GetSize()
+        return self.reader.GetTimeSets().GetItem(self.active_time_set).GetSize()
 
     def time_point_value(self, time_point):  # noqa: D102
-        return self.reader.GetTimeSets().GetItem(0).GetValue(time_point)
+        return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
 
     @property
     def active_time_value(self):  # noqa: D102  # numpydoc ignore=RT01
