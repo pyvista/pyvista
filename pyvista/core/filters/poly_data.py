@@ -532,7 +532,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
-                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                    merged.points, faces=merged.GetCells(), deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
                 # case. Store values to restore after updating.
