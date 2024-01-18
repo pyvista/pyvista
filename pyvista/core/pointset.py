@@ -1779,7 +1779,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         points = np.asarray(points)
 
         # Convert to vtk arrays
-        vtkcells = CellArray(cells, cell_type.size, deep)
+        vtkcells = CellArray(cells)
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
@@ -2649,7 +2649,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         points = vtk_points(points)
         self.SetDimensions(dims[0], dims[1], dims[2])
         self.SetPoints(points)
-        self.SetCells(CellArray(cells, ncells))
+        self.SetCells(CellArray(cells))
 
     def cast_to_unstructured_grid(self) -> 'UnstructuredGrid':
         """Cast to an unstructured grid.
