@@ -37,9 +37,11 @@ Which will be rendered as:
 
 .. note::
 
-   You need to install following packages to build interactive scene.
+   You need to install the following packages to build the interactive scene.
 
    * `jupyter_sphinx>=0.5.3`
+   * `jupyterlab>=4.0.10`
+   * `osmnx>=1.8.1`
    * `sphinx-design>=0.5.0`
    * `trame>=3.5.0`
    * `trame-vtk>=2.6.3`
