@@ -2363,6 +2363,10 @@ def test_scalar_cell_priorities():
     plotter.add_mesh(mesh, scalars='colors', rgb=True, preference='cell')
     plotter.show()
 
+    c = pv.Cone()
+    c.cell_data['ids'] = list(range(c.n_cells))
+    c.plot()
+
 
 def test_collision_plot(verify_image_cache):
     """Verify rgba arrays automatically plot"""
