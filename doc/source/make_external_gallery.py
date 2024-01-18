@@ -181,7 +181,7 @@ articles = dict(
     ),
     air_racing_optimization=Example(
         title="Air Racing Trajectory Optimization",
-        link="https://gemgis.readthedocs.io/en/latest",
+        link="https://github.com/peterdsharpe/air-racing-optimization",
         image="air_racing_optimization.png",
     ),
     # entry=Example(title="",
