@@ -2,7 +2,7 @@
 
 Sphinx PyVista Plot Directive
 =============================
-You can generate static and interactive scene of pyvista plots using the
+You can generate static and interactive scenes of pyvista plots using the
 ``.. pyvista-plot::`` directive by adding the following to your
 ``conf.py`` when building your documentation using Sphinx.
 
