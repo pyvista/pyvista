@@ -683,19 +683,19 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
 
-        for propname, propval in dict(verts=verts, strips=strips, faces=faces, lines=lines).items():
-            if propval is None:
+        for k, v in (('verts', verts), ('strips', strips), ('faces', faces), ('lines', lines)):
+            if v is None:
                 continue
 
             # These properties can be supplied as either arrays or pre-constructed `CellArray`s
-            if not isinstance(propval, _vtk.vtkCellArray):
+            if not isinstance(v, _vtk.vtkCellArray):
                 try:
-                    propval = CellArray(propval)
+                    v = CellArray(v)
                 except CellSizeError as err:
                     # Raise an additional error so user knows which property triggered the error
-                    raise CellSizeError(f"`{propname}` cell array size is invalid.") from err
+                    raise CellSizeError(f"`{v}` cell array size is invalid.") from err
 
-            setattr(self, propname, propval)
+            setattr(self, k, v)
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (
