@@ -200,6 +200,9 @@ def test_invalid_connectivity_arrays(arr, value):
     with pytest.raises(CellSizeError, match="Cell array size is invalid"):
         setattr(mesh, arr, value)
 
+    with pytest.raises(CellSizeError, match=f"`{arr}` cell array size is invalid"):
+        _ = pv.PolyData(points, **{arr: value})
+
 
 @pytest.mark.parametrize('lines_is_cell_array', (False, True))
 def test_lines_on_init(lines_is_cell_array):

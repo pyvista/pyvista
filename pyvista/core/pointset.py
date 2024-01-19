@@ -693,7 +693,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                     v = CellArray(v)
                 except CellSizeError as err:
                     # Raise an additional error so user knows which property triggered the error
-                    raise CellSizeError(f"`{v}` cell array size is invalid.") from err
+                    raise CellSizeError(f"`{k}` cell array size is invalid.") from err
 
             setattr(self, k, v)
 
