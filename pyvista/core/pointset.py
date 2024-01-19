@@ -786,7 +786,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return a pointer to the lines as a numpy array.
+        """Return the connectivity array of the lines of this PolyData.
+
+        Lines can also be set by assigning a ``pyvista.CellArray``.
 
         Examples
         --------
@@ -826,6 +828,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
+        Faces can also be set by assigning a ``pyvista.CellArray`` object instead of an array.
+
         Returns
         -------
         numpy.ndarray
@@ -834,6 +838,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         See Also
         --------
         pyvista.PolyData.regular_faces
+        pyvista.PolyData.irregular_faces
 
         Notes
         -----
@@ -867,13 +872,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> mesh.faces
         array([3, 0, 1, 2, 3, 3, 2, 1])
 
-        Faces can also be set by assigning a ``pyvista.CellArray``.
-        >>> mesh = pv.Plane(i_resolution=3, j_resolution=3)
-        >>> mesh.faces = pv.CellArray.from_regular_cells(
-        ...     np.arange(mesh.n_points).reshape(-1, 4)
-        ... )
-        >>> mesh.faces
-        array([4, 0, 1, 2, 3, 4, 4, 5, 6, 7, 4, 8, 9, 10, 11, 4, 12, 13, 14, 15])
         """
         array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
         # Flag this array as read only to ensure users do not attempt to write to it.
