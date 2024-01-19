@@ -1058,6 +1058,8 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()
         for ii, value in enumerate(self.values[:, 3]):
+            if not isinstance(value, np.uint8):
+                raise ValueError("not uint8 here")
             opacity_tf.AddPoint(ii, value / self.n_values)
         return opacity_tf
 
