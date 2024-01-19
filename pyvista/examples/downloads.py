@@ -3773,7 +3773,7 @@ def download_lshape(load=True):  # pragma: no cover
 
     Examples
     --------
-    Access displacement data stored in time set with index 1.
+    Load and plot the dataset.
 
     >>> from pyvista import examples
     >>> mesh = examples.download_lshape()["all"]
