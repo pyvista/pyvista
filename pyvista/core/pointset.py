@@ -656,8 +656,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     ...     inflated_points, faces=small_sphere.GetPolys()
     ... )
     >>> plotter = pv.Plotter()
-    >>> plotter.add_mesh(small_sphere, color='red', show_edges=True)
-    >>> plotter.add_mesh(
+    >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
+    >>> _ = plotter.add_mesh(
     ...     larger_sphere, color='blue', opacity=0.3, show_edges=True
     ... )
     >>> plotter.show()
