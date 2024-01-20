@@ -620,7 +620,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> mesh = pv.PolyData(
     ...     points, lines=pv.CellArray.from_regular_cells(lines)
     ... )
-    >>> mesh.cell_data['line_idx'] = np.arange(lines)
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
     >>> mesh.plot(scalars='line_idx')
 
     Construct a set of random triangle strips using a ``pv.CellArray``. Because each strip in this example can have a different number
