@@ -464,7 +464,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     - From a file
 
     .. deprecated:: 0.44.0
-       The parameters ``n_faces``, ``n_lines``, ``n_strips``, ``n_verts`` are deprecated and no longer used.
+       The parameters ``n_faces``, ``n_lines``, ``n_strips``, and ``n_verts`` are deprecated and no longer used.
        They were previously used to speed up the construction of the corresponding cell arrays but no longer
        provide any benefit.
 
@@ -485,8 +485,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ``PolyData`` object will be created with vertex cells with
         ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence, optional
-        Face connectivity array.  Faces must contain padding
+    faces : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        Polygonal faces of the mesh. Can be either a padded connectivity
+        array or an explicit cell array object.
+
+        In the padded array format, faces must contain padding
         indicating the number of points in the face.  For example, the
         two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
         represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
@@ -499,24 +502,28 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence, optional
-        The line connectivity array.  Like ``faces``, this array
-        requires padding indicating the number of points in a line
-        segment.  For example, the two line segments ``[0, 1]`` and
-        ``[1, 2, 3, 4]`` will be represented as
+    lines : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        Line connectivity. Like ``faces``, this can be either a padded
+        connectivity array or an explicit cell array object. The padded
+        array format requires padding indicating the number of points in
+        a line segment.  For example, the two line segments ``[0, 1]``
+        and ``[1, 2, 3, 4]`` will be represented as
         ``[2, 0, 1, 4, 1, 2, 3, 4]``.
 
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence, optional
-        Triangle strips connectivity array.  Triangle strips require an initial
-        triangle, and the following points of the strip. Each
-        triangle is built with the new point and the two previous
-        points. Just as in ``lines`` and ``faces``, this array requires a
-        padding indicating the number of points. For example,
-        a single triangle strip of ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
-        ``10`` and should input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
+    strips : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        Triangle strips connectivity.  Triangle strips require an initial
+        triangle, and the following points of the strip. Each triangle is
+        built with the new point and the two previous points.
+
+        Just as in ``lines`` and ``faces``, this connectivity can be
+        specified as either a padded array or an explicit cell array
+        object. The padded array requires a padding indicating the number
+        of points. For example, a single triangle strip of the 10 point
+        indices ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
+        ``10`` and should be input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
 
     n_strips : int, optional
         Deprecated. Not used.
@@ -538,12 +545,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence, optional
-        The verts connectivity array.  Like ``faces``, this array
-        requires padding indicating the number of vertices in each cell.
-        For example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
-        each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
-        polyvertex cells each with two points.
+    verts : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        The verts connectivity.  Like ``faces``, ``lines``, and ``strips``
+        this can be supplied as either a padded array or an explicit cell
+        array object. In the padded array format, the padding indicates
+        the number of vertices in each cell.  For example,
+        ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells each with one
+        point, and ``[2, 0, 1, 2, 2, 3]`` indicates two polyvertex cells
+        each with two points.
 
     n_verts : int, optional
         Deprecated. Not used.
@@ -597,6 +606,61 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     Initialize from a filename.
 
     >>> mesh = pv.PolyData(examples.antfile)
+
+    Construct a set of random line segments using a ``pv.CellArray`. Because every line in this example has the same
+    size, in this case two points, we can use ``pv.CellArray.from_regular_cells`` to construct the ``lines`` cell array.
+    This is the most efficient method to construct a cell array.
+
+    >>> n_points = 20
+    >>> n_lines = n_points // 2
+    >>> points = np.random.default_rng().random((n_points, 3))
+    >>> lines = np.random.default_rng().integers(
+    ...     low=0, high=n_points, size=(n_lines, 2)
+    ... )
+    >>> mesh = pv.PolyData(
+    ...     points, lines=pv.CellArray.from_regular_cells(lines)
+    ... )
+    >>> mesh.cell_data['line_idx'] = np.arange(lines)
+    >>> mesh.plot(scalars='line_idx')
+
+    Construct a set of random triangle strips using a ``pv.CellArray``. Because each strip in this example can have a different number
+    of points, we use ``pv.CellArray.from_irregular_cells`` to construct the ``strips`` cell array.
+
+    >>> n_strips = 4
+    >>> n_verts_per_strip = np.random.default_rng().integers(
+    ...     low=3, high=7, size=n_strips
+    ... )
+    >>> n_points = 10 * sum(n_verts_per_strip)
+    >>> points = np.random.default_rng().random((n_points, 3))
+    >>> strips = [
+    ...     np.random.default_rng().integers(low=0, high=n_points, size=nv)
+    ...     for nv in n_verts_per_strip
+    ... ]
+    >>> mesh = pv.PolyData(
+    ...     points, strips=pv.CellArray.from_irregular_cells(strips)
+    ... )
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
+    >>> mesh.plot(show_edges=True, scalars='strip_idx')
+
+    Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another mesh.
+    The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and ``GetVerts`` return the underlying
+    ``CellArray``s for the ``faces``, ``lines``, ``strips``, and ``verts`` properties respectively.
+    Reusing cell arrays like this can be a performance optimization for large meshes because it avoids
+    allocating new arrays.
+
+    >>> small_sphere = pv.Sphere().compute_normals()
+    >>> inflated_points = (
+    ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
+    ... )
+    >>> larger_sphere = pv.PolyData(
+    ...     inflated_points, faces=small_sphere.GetPolys()
+    ... )
+    >>> plotter = pv.Plotter()
+    >>> plotter.add_mesh(small_sphere, color='red', show_edges=True)
+    >>> plotter.add_mesh(
+    ...     larger_sphere, color='blue', opacity=0.3, show_edges=True
+    ... )
+    >>> plotter.show()
 
     See :ref:`create_poly` for more examples.
 
