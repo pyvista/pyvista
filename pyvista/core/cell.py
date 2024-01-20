@@ -661,7 +661,7 @@ class CellArray(_vtk.vtkCellArray):
             raise CellSizeError(
                 message=(
                     f"Cell array size is invalid. Size ({cells.size}) does not"
-                    f" match expected size ({self.cells.size}). This is likely"
+                    f" match expected size ({imported_size}). This is likely"
                     " due to invalid connectivity array."
                 )
             )
