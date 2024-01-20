@@ -464,9 +464,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     - From a file
 
     .. deprecated:: 0.44.0
-       The parameters ``n_faces``, ``n_lines``, ``n_strips``, and ``n_verts`` are deprecated and no longer used.
-       They were previously used to speed up the construction of the corresponding cell arrays but no longer
-       provide any benefit.
+       The parameters ``n_faces``, ``n_lines``, ``n_strips``, and
+       ``n_verts`` are deprecated and no longer used. They were
+       previously used to speed up the construction of the corresponding
+       cell arrays but no longer provide any benefit.
 
     Parameters
     ----------
@@ -480,10 +481,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         or ``'C:/Users/user/my_mesh.ply'``.
 
         Otherwise, this must be a points array or list containing one
-        or more points.  Each point must have 3 dimensions.  If ``faces``,
-        ``lines``, ``strips``, and ``verts`` are all ``None``, then the
-        ``PolyData`` object will be created with vertex cells with
-        ``n_verts`` equal to the number of ``points``.
+        or more points.  Each point must have 3 dimensions.  If
+        ``faces``, ``lines``, ``strips``, and ``verts`` are all
+        ``None``, then the ``PolyData`` object will be created with
+        vertex cells with ``n_verts`` equal to the number of ``points``.
 
     faces : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
         Polygonal faces of the mesh. Can be either a padded connectivity
@@ -514,16 +515,18 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         Deprecated. Not used.
 
     strips : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
-        Triangle strips connectivity.  Triangle strips require an initial
-        triangle, and the following points of the strip. Each triangle is
-        built with the new point and the two previous points.
+        Triangle strips connectivity.  Triangle strips require an
+        initial triangle, and the following points of the strip. Each
+        triangle is built with the new point and the two previous
+        points.
 
         Just as in ``lines`` and ``faces``, this connectivity can be
         specified as either a padded array or an explicit cell array
-        object. The padded array requires a padding indicating the number
-        of points. For example, a single triangle strip of the 10 point
-        indices ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
-        ``10`` and should be input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
+        object. The padded array requires a padding indicating the
+        number of points. For example, a single triangle strip of the 10
+        point indices ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires
+        padding of ``10`` and should be input as
+        ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
 
     n_strips : int, optional
         Deprecated. Not used.
@@ -546,13 +549,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         intermediate floats when transforming datasets.
 
     verts : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
-        The verts connectivity.  Like ``faces``, ``lines``, and ``strips``
-        this can be supplied as either a padded array or an explicit cell
-        array object. In the padded array format, the padding indicates
-        the number of vertices in each cell.  For example,
-        ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells each with one
-        point, and ``[2, 0, 1, 2, 2, 3]`` indicates two polyvertex cells
-        each with two points.
+        The verts connectivity.  Like ``faces``, ``lines``, and
+        ``strips`` this can be supplied as either a padded array or an
+        explicit cell array object. In the padded array format,
+        the padding indicates the number of vertices in each cell.  For
+        example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
+        each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
+        polyvertex cells each with two points.
 
     n_verts : int, optional
         Deprecated. Not used.
@@ -560,6 +563,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     See Also
     --------
     pyvista.PolyData.from_regular_faces
+    pyvista.PolyData.from_irregular_faces
 
     Examples
     --------
@@ -607,9 +611,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> mesh = pv.PolyData(examples.antfile)
 
-    Construct a set of random line segments using a ``pv.CellArray`. Because every line in this example has the same
-    size, in this case two points, we can use ``pv.CellArray.from_regular_cells`` to construct the ``lines`` cell array.
-    This is the most efficient method to construct a cell array.
+    Construct a set of random line segments using a ``pv.CellArray`.
+    Because every line in this example has the same size, in this case
+    two points, we can use ``pv.CellArray.from_regular_cells`` to
+    construct the ``lines`` cell array. This is the most efficient
+    method to construct a cell array.
 
     >>> n_points = 20
     >>> n_lines = n_points // 2
@@ -623,8 +629,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
     >>> mesh.plot(scalars='line_idx')
 
-    Construct a set of random triangle strips using a ``pv.CellArray``. Because each strip in this example can have a different number
-    of points, we use ``pv.CellArray.from_irregular_cells`` to construct the ``strips`` cell array.
+    Construct a set of random triangle strips using a ``pv.CellArray``.
+    Because each strip in this example can have a different number
+    of points, we use ``pv.CellArray.from_irregular_cells`` to construct
+    the ``strips`` cell array.
 
     >>> n_strips = 4
     >>> n_verts_per_strip = np.random.default_rng().integers(
@@ -642,11 +650,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
     >>> mesh.plot(show_edges=True, scalars='strip_idx')
 
-    Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another mesh.
-    The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and ``GetVerts`` return the underlying
-    ``CellArray``s for the ``faces``, ``lines``, ``strips``, and ``verts`` properties respectively.
-    Reusing cell arrays like this can be a performance optimization for large meshes because it avoids
-    allocating new arrays.
+    Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
+    mesh. The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and
+    ``GetVerts`` return the underlying ``CellArray``s for the ``faces``,
+    ``lines``, ``strips``, and ``verts`` properties respectively.
+    Reusing cell arrays like this can be a performance optimization for
+    large meshes because it avoids allocating new arrays.
 
     >>> small_sphere = pv.Sphere().compute_normals()
     >>> inflated_points = (
