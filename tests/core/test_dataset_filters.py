@@ -585,6 +585,15 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
+@pytest.mark.parametrize('point_dtype', ['float32', 'float64'])
+def test_extract_geometry_precision(datasets, composite, point_dtype):
+    for dataset in datasets:
+        geom = dataset.extract_geometry(point_dtype=point_dtype)
+        assert geom.points.dtype == point_dtype
+    output = composite.extract_geometry(point_dtype=point_dtype)
+    assert output.points.dtype == point_dtype
+
+
 def test_extract_all_edges(datasets):
     for dataset in datasets:
         edges = dataset.extract_all_edges()
