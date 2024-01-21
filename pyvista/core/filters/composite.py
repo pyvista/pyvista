@@ -29,7 +29,6 @@ class CompositeFilters:
         """
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
-        gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
     def combine(self, merge_points=False, tolerance=0.0):

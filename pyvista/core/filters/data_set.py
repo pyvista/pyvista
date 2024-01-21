@@ -1474,7 +1474,9 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
+    def extract_geometry(
+        self, extent: Optional[Sequence[float]] = None, point_dtype='float32', progress_bar=False
+    ):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1488,6 +1490,11 @@ class DataSetFilters:
         extent : sequence[float], optional
             Specify a ``(xmin, xmax, ymin, ymax, zmin, zmax)`` bounding box to
             clip data.
+
+        point_dtype : str, default: 'float32'
+            Set the desired output point types. Must be either 'float32' or 'float64'.
+
+            .. versionadded:: 0.44.0
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1519,6 +1526,13 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        if point_dtype not in ['float32', 'float64']:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+        precision = {
+            'float32': _vtk.vtkAlgorithm.SINGLE_PRECISION,
+            'float64': _vtk.vtkAlgorithm.DOUBLE_PRECISION,
+        }[point_dtype]
+        alg.SetOutputPointsPrecision(precision)
         if extent is not None:
             alg.SetExtent(extent)
             alg.SetExtentClipping(True)
