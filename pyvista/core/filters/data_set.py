@@ -1498,7 +1498,9 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         point_dtype : str, default: 'float32'
-            Set the desired output point types. Must be either 'float32' or 'float64'.
+            Set the desired output point types. It must be either 'float32' or 'float64'.
+            This only applies to data types where we create points (merging)
+            instead of passing them from input to output, such as unstructured grids.
 
             .. versionadded:: 0.44.0
 
@@ -2068,8 +2070,10 @@ class DataSetFilters:
             self.GetPointData().AddArray(otc)
         return self
 
-    def compute_cell_sizes(self, length=True, area=True, volume=True, progress_bar=False):
-        """Compute sizes for 1D (length), 2D (area) and 3D (volume) cells.
+    def compute_cell_sizes(
+        self, length=True, area=True, volume=True, progress_bar=False, vertex_count=False
+    ):
+        """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
         Parameters
         ----------
@@ -2085,12 +2089,16 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        vertex_count : bool, default: False
+            Specify whether or not to compute sizes for vertex and polyvertex cells (0D cells).
+            The computed value is the number of points in the cell.
+
         Returns
         -------
         pyvista.DataSet
-            Dataset with `cell_data` containing the ``"Length"``,
-            ``"Area"``, and ``"Volume"`` arrays if set in the
-            parameters.  Return type matches input.
+            Dataset with `cell_data` containing the ``"VertexCount"``,
+            ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
+            in the parameters.  Return type matches input.
 
         Notes
         -----
@@ -2112,7 +2120,7 @@ class DataSetFilters:
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
-        alg.SetComputeVertexCount(False)
+        alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar, 'Computing Cell Sizes')
         return _get_output(alg)
 
