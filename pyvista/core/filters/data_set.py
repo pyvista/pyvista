@@ -1495,7 +1495,9 @@ class DataSetFilters:
             clip data.
 
         point_dtype : str, default: 'float32'
-            Set the desired output point types. Must be either 'float32' or 'float64'.
+            Set the desired output point types. It must be either 'float32' or 'float64'.
+            This only applies to data types where we create points (merging)
+            instead of passing them from input to output, such as unstructured grids.
 
             .. versionadded:: 0.44.0
 
