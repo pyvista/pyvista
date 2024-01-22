@@ -1477,8 +1477,8 @@ class DataSetFilters:
     def extract_geometry(
         self,
         extent: Optional[Sequence[float]] = None,
-        point_dtype='float32',
         progress_bar=False,
+        point_dtype='float32',
     ):
         """Extract the outer surface of a volume or structured grid dataset.
 
@@ -1494,13 +1494,13 @@ class DataSetFilters:
             Specify a ``(xmin, xmax, ymin, ymax, zmin, zmax)`` bounding box to
             clip data.
 
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
         point_dtype : str, default: 'float32'
             Set the desired output point types. Must be either 'float32' or 'float64'.
 
             .. versionadded:: 0.44.0
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
 
         Returns
         -------

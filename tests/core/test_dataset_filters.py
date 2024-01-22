@@ -597,6 +597,7 @@ def test_extract_geometry_precision(datasets, point_dtype):
     geom = datasets[2].extract_geometry(point_dtype=point_dtype)
     assert geom.points.dtype == point_dtype
     # TODO: raise error when PolyData's `point_dtype` is `float64`.
+    # TODO: check point_dtype when input PolyData's point_dtype is `float64`.
     # geom = datasets[3].extract_geometry(point_dtype=point_dtype)
     # assert geom.points.dtype == point_dtype
     geom = datasets[4].extract_geometry(point_dtype=point_dtype)
