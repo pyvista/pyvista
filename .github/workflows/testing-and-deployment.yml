@@ -17,7 +17,7 @@ concurrency:
 
 env:
   ALLOW_PLOTTING: true
-  SHELLOPTS: 'errexit:pipefail'
+  SHELLOPTS: "errexit:pipefail"
 
 jobs:
   macOS:
@@ -25,7 +25,7 @@ jobs:
     name: Mac OS Unit Testing
     strategy:
       matrix:
-        python-version: ['3.9', '3.11']
+        python-version: ["3.9", "3.11"]
 
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +34,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
@@ -54,14 +54,13 @@ jobs:
       - name: Test Plotting
         run: pytest -v tests/plotting --fail_extra_image_cache
 
-
   LinuxConda:
     runs-on: ubuntu-20.04
     if: false
     env:
       CONDA_ALWAYS_YES: 1
       conda_env: pyvista-vtk
-      DISPLAY: ':99.0'
+      DISPLAY: ":99.0"
       PYVISTA_OFF_SCREEN: True
 
     steps:
@@ -93,7 +92,7 @@ jobs:
           conda update -n base conda
           conda install -n base conda-libmamba-solver
 
-      - name: 'Workaround for mamba-org/mamba#488'
+      - name: "Workaround for mamba-org/mamba#488"
         run: rm /usr/share/miniconda/pkgs/cache/*.json
 
       - name: Create Anaconda environment
@@ -135,16 +134,16 @@ jobs:
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
         include:
-          - python-version: '3.8'
-            vtk-version: '9.0.3'  # Requires numpy<1.24
-          - python-version: '3.9'
-            vtk-version: '9.1'
-          - python-version: '3.10'
-            vtk-version: '9.2.2'
-          - python-version: '3.11'
-            vtk-version: '9.2.6'
-          - python-version: '3.12'
-            vtk-version: 'latest'
+          - python-version: "3.8"
+            vtk-version: "9.0.3" # Requires numpy<1.24
+          - python-version: "3.9"
+            vtk-version: "9.1"
+          - python-version: "3.10"
+            vtk-version: "9.2.2"
+          - python-version: "3.11"
+            vtk-version: "9.2.6"
+          - python-version: "3.12"
+            vtk-version: "latest"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -154,8 +153,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
@@ -210,7 +209,7 @@ jobs:
           pip list
 
       - uses: codecov/codecov-action@v3
-        name: 'Upload coverage to CodeCov'
+        name: "Upload coverage to CodeCov"
 
       - name: Check package
         run: |
@@ -235,7 +234,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
@@ -243,8 +242,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
