@@ -598,8 +598,8 @@ def test_extract_geometry_precision(datasets, point_dtype):
     assert geom.points.dtype == point_dtype
     # geom = datasets[3].extract_geometry(point_dtype=point_dtype)
     # assert geom.points.dtype == point_dtype
-    # geom = datasets[4].extract_geometry(point_dtype=point_dtype)
-    # assert geom.points.dtype == point_dtype
+    geom = datasets[4].extract_geometry(point_dtype=point_dtype)
+    assert geom.points.dtype == point_dtype
 
 
 def test_extract_all_edges(datasets):
