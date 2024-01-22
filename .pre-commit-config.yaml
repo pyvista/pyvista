@@ -6,7 +6,7 @@ ci:
 
 repos:
 - repo: https://github.com/psf/black
-  rev: 23.11.0
+  rev: 23.12.1
   hooks:
   - id: black
 
@@ -18,7 +18,7 @@ repos:
     exclude: pyvista/plotting/charts.py
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.12.0
+  rev: 5.13.2
   hooks:
   - id: isort
 
@@ -69,14 +69,15 @@ repos:
     files: ^pyvista/
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.7.1
+  rev: v1.8.0
   hooks:
   - id: mypy
     exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
     additional_dependencies: [
-    "mypy-extensions==1.0.0",
-    "toml==0.10.2",
-    "numpy",
+      "mypy-extensions==1.0.0",
+      "toml==0.10.2",
+      "numpy>=1.21",
+      "npt-promote==0.1"
     ]
 
 - repo: https://github.com/asottile/pyupgrade
@@ -102,12 +103,12 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.2
+  rev: 0.27.3
   hooks:
     - id: check-github-workflows
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.7
+  rev: v0.1.9
   hooks:
     - id: ruff
       args: [ --fix ]

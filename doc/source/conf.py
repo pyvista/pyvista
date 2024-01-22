@@ -337,7 +337,7 @@ try:
     import osmnx, fiona  # noqa: F401,E401 isort: skip
 
     has_osmnx = True
-except:  # noqa: E722
+except:
     pass
 
 

@@ -665,7 +665,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 scalars = scalars.ravel()
 
         if scalars.dtype == np.bool_:
-            scalars = scalars.astype(np.float_)
+            scalars = scalars.astype(np.float64)
 
         # Set scalars range
         if clim is None:

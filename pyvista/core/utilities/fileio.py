@@ -528,7 +528,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
-    except:  # noqa: E722 pragma: no cover
+    except:  # pragma: no cover
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work

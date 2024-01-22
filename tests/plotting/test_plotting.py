@@ -49,7 +49,7 @@ try:
             imageio.plugins.ffmpeg.download()
         else:
             raise err
-except:  # noqa: E722
+except:
     ffmpeg_failed = True
 
 
@@ -966,6 +966,22 @@ def test_add_point_labels_always_visible(always_visible):
 def test_add_point_labels_shape(shape, verify_image_cache):
     plotter = pv.Plotter()
     plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
+    plotter.show()
+
+
+@pytest.mark.parametrize('justification_horizontal', ['left', 'center', 'right'])
+@pytest.mark.parametrize('justification_vertical', ['bottom', 'center', 'top'])
+def test_add_point_labels_justification(justification_horizontal, justification_vertical):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        justification_horizontal=justification_horizontal,
+        justification_vertical=justification_vertical,
+        shape_opacity=0.0,
+        background_color='grey',
+        background_opacity=1.0,
+    )
     plotter.show()
 
 
@@ -2363,6 +2379,10 @@ def test_scalar_cell_priorities():
     plotter.add_mesh(mesh, scalars='colors', rgb=True, preference='cell')
     plotter.show()
 
+    c = pv.Cone()
+    c.cell_data['ids'] = list(range(c.n_cells))
+    c.plot()
+
 
 def test_collision_plot(verify_image_cache):
     """Verify rgba arrays automatically plot"""
@@ -2653,11 +2673,20 @@ def test_plot_complex_value(plane, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
-    with pytest.warns(np.ComplexWarning):
+
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        ComplexWarning = np.exceptions.ComplexWarning
+    except:
+        ComplexWarning = np.ComplexWarning
+
+    with pytest.warns(ComplexWarning):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(np.ComplexWarning):
+    with pytest.warns(ComplexWarning):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
@@ -2942,8 +2971,16 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        ComplexWarning = np.exceptions.ComplexWarning
+    except:
+        ComplexWarning = np.ComplexWarning
+
     pl = pv.Plotter()
-    with pytest.warns(np.ComplexWarning, match='Casting complex'):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
     pl.show()
 
@@ -2966,7 +3003,7 @@ def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 
     # add in bool data
-    for i, block in enumerate(multiblock_poly):
+    for block in multiblock_poly:
         block['scalars'] = np.zeros(block.n_points, dtype=bool)
         block['scalars'][::2] = 1
 
@@ -3830,12 +3867,24 @@ def test_voxelize_volume():
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
-def test_enable_2d_style():
+def test_enable_custom_trackball_style():
     def setup_plot():
         mesh = pv.Cube()
         mesh["face_id"] = np.arange(6)
         pl = pv.Plotter()
-        pl.enable_2d_style()
+        # mostly use the settings from `enable_2d_style`
+        # but also test environment_rotate
+        pl.enable_custom_trackball_style(
+            left="pan",
+            middle="spin",
+            right="dolly",
+            shift_left="dolly",
+            control_left="spin",
+            shift_middle="dolly",
+            control_middle="pan",
+            shift_right="environment_rotate",
+            control_right="rotate",
+        )
         pl.enable_parallel_projection()
         pl.add_mesh(mesh, scalars="face_id", show_scalar_bar=False)
         return pl
@@ -3845,7 +3894,7 @@ def test_enable_2d_style():
     pl.show()
 
     start = (100, 100)
-    pan = rotate = (150, 150)
+    pan = rotate = env_rotate = (150, 150)
     spin = (100, 150)
     dolly = (100, 25)
 
@@ -3921,11 +3970,33 @@ def test_enable_2d_style():
     pl.iren._control_key_release()
     pl.close()
 
-    # shift right click dollys, image 9
+    # shift right click environment rotate, image 9
+    # does nothing here
     pl = setup_plot()
     pl.show(auto_close=False)
     pl.iren._shift_key_press()
     pl.iren._mouse_right_button_press(*start)
-    pl.iren._mouse_right_button_release(*dolly)
+    pl.iren._mouse_right_button_release(*env_rotate)
     pl.iren._shift_key_release()
     pl.close()
+
+
+def test_create_axes_orientation_box():
+    actor = pv.create_axes_orientation_box(
+        line_width=4,
+        text_scale=0.53,
+        edge_color='red',
+        x_color='k',
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        color_box=False,
+        labels_off=False,
+        opacity=1.0,
+        show_text_edges=True,
+    )
+    plotter = pv.Plotter()
+    _ = plotter.add_actor(actor)
+    plotter.show()
