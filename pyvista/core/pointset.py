@@ -300,7 +300,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def __init__(self, var_inp=None, deep=False, force_float=True):
         """Initialize the pointset."""
         _PointSet.__init__(self)
- 
+
         if var_inp is None:
             return
         elif isinstance(var_inp, _vtk.vtkPointSet):

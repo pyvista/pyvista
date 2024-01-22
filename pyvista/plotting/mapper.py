@@ -1075,6 +1075,7 @@ class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _Base
 
     blend_mode = _BaseVolumeMapper.blend_mode
 
+
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 

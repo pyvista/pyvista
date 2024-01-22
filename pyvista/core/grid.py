@@ -525,7 +525,6 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     cell_data = Grid.cell_data
     field_data = Grid.field_data
 
-
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(
