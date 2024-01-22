@@ -1477,8 +1477,8 @@ class DataSetFilters:
     def extract_geometry(
         self,
         extent: Optional[Sequence[float]] = None,
-        point_dtype: Optional[str] = 'float32',
-        progress_bar: bool = False,
+        point_dtype='float32',
+        progress_bar=False,
     ):
         """Extract the outer surface of a volume or structured grid dataset.
 
