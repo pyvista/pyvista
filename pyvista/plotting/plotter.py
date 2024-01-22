@@ -706,7 +706,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except:  # noqa: E722
+                        except:  # pragma: no cover
                             pass
 
         exporter = vtkGLTFExporter()
@@ -3499,6 +3499,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # the mapper. This should be refactored by 0.36.0
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             self.mapper.scalar_map_mode = field.name
+
+            # set preference for downstream use with actual
+            if field == FieldAssociation.POINT:
+                preference = 'point'
+            elif field == FieldAssociation.CELL:
+                preference = 'cell'
 
             if algo is not None:
                 # Ensures that the right scalars are set as active on

@@ -279,7 +279,7 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
                 f'{self.__class__.__name__}'
             )
 
-    setattr(cls, '__setattr__', __setattr__)
+    cls.__setattr__ = __setattr__
     return cls
 
 
