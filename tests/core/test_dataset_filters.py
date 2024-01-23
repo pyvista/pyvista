@@ -585,6 +585,9 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1), reason="https://github.com/pyvista/pyvista/pull/5502"
+)
 @pytest.mark.parametrize('point_dtype', ['float32', 'float64'])
 def test_extract_geometry_precision(datasets, point_dtype):
     # for dataset in datasets:
