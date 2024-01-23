@@ -422,6 +422,9 @@ def test_cone():
     cone = pv.Cone()
     assert np.any(cone.points)
     assert np.any(cone.faces)
+    point_dtype = 'float64'
+    cone = pv.Cone(point_dtype=point_dtype)
+    assert cone.points.dtype == point_dtype
 
 
 def test_box():

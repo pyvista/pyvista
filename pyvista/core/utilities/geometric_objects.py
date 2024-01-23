@@ -1263,6 +1263,7 @@ def Cone(
     capping=True,
     angle=None,
     resolution=6,
+    point_dtype='float32',
 ):
     """Create a cone.
 
@@ -1293,6 +1294,11 @@ def Cone(
     resolution : int, default: 6
         Number of facets used to represent the cone.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1314,6 +1320,7 @@ def Cone(
         angle=angle,
         radius=radius,
         resolution=resolution,
+        point_dtype=point_dtype,
     )
     return algo.output
 
