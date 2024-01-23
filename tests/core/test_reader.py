@@ -252,6 +252,30 @@ def test_ensightreader_timepoints():
         reader.set_active_time_value(1000.0)
 
 
+def test_ensightreader_time_sets():
+    filename = examples.download_lshape(load=False)
+
+    reader = pv.get_reader(filename)
+    assert reader.active_time_set == 0
+
+    reader.set_active_time_set(1)
+    assert reader.number_time_points == 11
+
+    mesh = reader.read()["all"]
+    assert reader.number_time_points == 11
+    assert np.isclose(mesh["displacement"][1, 1], 0.0, 1e-10)
+
+    reader.set_active_time_value(reader.time_values[-1])
+    mesh = reader.read()["all"]
+    assert np.isclose(mesh["displacement"][1, 1], 0.0028727285, 1e-10)
+
+    reader.set_active_time_set(0)
+    assert reader.number_time_points == 1
+
+    with pytest.raises(IndexError, match="Time set index"):
+        reader.set_active_time_set(2)
+
+
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
