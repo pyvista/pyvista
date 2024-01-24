@@ -243,3 +243,21 @@ def test_legend_using_add_legend_with_glyph(random_hills):
 
     pl.add_legend(legend_entries)
     pl.show()
+
+
+def test_legend_add_entry_warning():
+    pl = pv.Plotter()
+    legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
+
+    with pytest.warns(UserWarning, match="Some of the arguments given to legend are not used"):
+        pl.add_legend(legend_entries)
+        pl.show()
+
+
+def test_legend_add_entry_exception():
+    pl = pv.Plotter()
+    legend_entries = ["asdf"]  # Not allowed type
+
+    with raises(ValueError, match="The object passed to the legend"):
+        pl.add_legend(legend_entries)
+        pl.show()
