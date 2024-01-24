@@ -238,6 +238,8 @@ def test_legend_using_add_legend_with_glyph(random_hills):
     legend_entries.append(['my label 1', 'g'])
     legend_entries.append(['my label 2', 'blue', pv.Circle()])
     legend_entries.append({'text': "my label 3", "color": (0.0, 1.0, 1.0), "face": pv.Arrow()})
+    legend_entries.append({'text': "my label 3", "color": (0.0, 1.0, 1.0), "face": "circle"})
+    legend_entries.append({'text': "my label 3", "color": (0.0, 1.0, 1.0), "face": None})
 
     pl.add_legend(legend_entries)
     pl.show()

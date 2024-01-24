@@ -3283,7 +3283,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face=None,
+        face="triangle",
         font_family=None,
     ):
         """Add a legend to render window.
@@ -3301,9 +3301,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
+            legend. Each entry can contain one of the following:
+
+            * Two strings, [label, color], where ``label`` is the name of the
+              item to add, and ``color`` is the color of the label to add.
+            * Three strings, [label, color, face] where ``label`` is the name
+              of the item to add, ``color`` is the color of the label to add,
+              and ``face`` is string which defines the face.
+              Face could be also ``None`` (then it is the default pyramid), or a
+              :class:`pyvista.PolyData`.
+            * A dict with the key ``label``. Optionally you can add the
+              keys ``color`` and ``face``. The values of these keys can be
+              strings. For the ``face`` key, it can be also a
+              :class:`pyvista.PolyData`.
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
@@ -3414,8 +3424,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetNumberOfEntries(len(labels))
 
             for i, args in enumerate(labels):
-                face_ = make_legend_face("triangle")
-
+                face_ = None
                 if isinstance(args, list):
                     if len(args) == 2:
                         # format labels =  [[ text1, color1], [ text2, color2], etc]
@@ -3429,8 +3438,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     text = args.pop('text')
                     color = args.pop('color', None)
                     face_ = args.pop('face', None)
+                else:
+                    raise ValueError(
+                        f"The object passed to the legend ({type(args)}) is not valid."
+                    )
 
-                legend_face = face or face_
+                legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:
