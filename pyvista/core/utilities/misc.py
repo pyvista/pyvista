@@ -279,5 +279,31 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
                 f'{self.__class__.__name__}'
             )
 
-    setattr(cls, '__setattr__', __setattr__)
+    cls.__setattr__ = __setattr__
     return cls
+
+
+def _reciprocal(x, tol=1e-8):
+    """Compute the element-wise reciprocal and avoid division by zero.
+
+    The reciprocal of elements with an absolute value less than a
+    specified tolerance is computed as zero.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    tol : float
+        Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
+
+    Returns
+    -------
+    numpy.ndarray
+        Element-wise reciprocal of the input.
+
+    """
+    x = np.array(x)
+    zero = np.abs(x) < tol
+    x[~zero] = np.reciprocal(x[~zero])
+    x[zero] = 0
+    return x

@@ -741,11 +741,13 @@ def test_texture_map_to_sphere():
 
 def test_compute_cell_sizes(datasets):
     for dataset in datasets:
-        result = dataset.compute_cell_sizes(progress_bar=True)
+        result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True)
         assert result is not None
         assert isinstance(result, type(dataset))
+        assert 'Length' in result.array_names
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
+        assert 'VertexCount' in result.array_names
     # Test the volume property
     grid = pv.ImageData(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
@@ -1401,7 +1403,7 @@ def test_warp_by_vector():
 
 
 def test_invalid_warp_scalar(sphere):
-    sphere['cellscalars'] = np.random.random(sphere.n_cells)
+    sphere['cellscalars'] = np.random.default_rng().random(sphere.n_cells)
     sphere.point_data.clear()
     with pytest.raises(TypeError):
         sphere.warp_by_scalar()
@@ -1521,6 +1523,11 @@ def test_sample():
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
+    if pv.vtk_version_info >= (9, 3):
+        sample_test(snap_to_closest_point=True)
+    else:
+        with pytest.raises(VTKVersionError, match="snap_to_closest_point"):
+            sample_test(snap_to_closest_point=True)
 
 
 def test_sample_composite():
@@ -1774,7 +1781,7 @@ def test_plot_over_line(tmpdir):
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
     mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_line(
         a,
         b,
@@ -1864,8 +1871,8 @@ def test_sample_over_circular_arc_normal():
     zmax = uniform.bounds[5]
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
-    angle = 90.0 * np.random.rand()
-    resolution = np.random.randint(10000)
+    angle = 90.0 * np.random.default_rng().random()
+    resolution = np.random.default_rng().integers(10000)
     center = [xmin, ymin, zmin]
     sampled_arc_normal = uniform.sample_over_circular_arc_normal(
         center, resolution=resolution, normal=normal, polar=polar, angle=angle, progress_bar=True
@@ -1902,7 +1909,7 @@ def test_plot_over_circular_arc(tmpdir):
     assert os.path.isfile(filename)
 
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc(
         a,
         b,
@@ -1945,7 +1952,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     assert os.path.isfile(filename)
 
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc_normal(
         center,
         polar=polar,
@@ -2075,8 +2082,8 @@ def test_slice_along_line_composite(composite):
 
 def test_interpolate():
     pdata = pv.PolyData()
-    pdata.points = np.random.random((10, 3))
-    pdata['scalars'] = np.random.random(10)
+    pdata.points = np.random.default_rng().random((10, 3))
+    pdata['scalars'] = np.random.default_rng().random(10)
     surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
     interp = surf.interpolate(pdata, radius=0.01, progress_bar=True)
     assert interp.n_points
@@ -2144,7 +2151,7 @@ def test_extract_surface():
     )
 
     # introduce a minor variation to the location of the mid-side points
-    quad_pts += np.random.random(quad_pts.shape) * 0.25
+    quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.25
     pts = np.vstack((lin_pts, quad_pts))
 
     cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
@@ -2153,15 +2160,15 @@ def test_extract_surface():
 
     # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface(progress_bar=True)
-    assert surf.n_faces == 36
+    assert surf.n_faces_strict == 36
 
     # expect each face to be divided several more times than the linear extraction
     surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=True)
-    assert surf_subdivided.n_faces > surf.n_faces
+    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
 
     # No subdivision, expect one face per cell
     surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=True)
-    assert surf_no_subdivide.n_faces == 6
+    assert surf_no_subdivide.n_faces_strict == 6
 
 
 def test_merge_general(uniform):
@@ -2657,10 +2664,10 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
-            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
 
         # deactivate any active vectors!
         # even if transform_all_input_vectors is False, vtkTransformfilter will
@@ -2696,10 +2703,10 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
-            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
 
         # track original untransformed dataset
         orig_dataset = dataset.copy(deep=True)
@@ -2745,11 +2752,11 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
-            dataset.cell_data[f"C{i}"] = np.random.randint(
+            dataset.cell_data[f"C{i}"] = np.random.default_rng().integers(
                 np.iinfo(int).max, size=(dataset.n_cells, 3)
             )
         for i in range(num_point_data):
-            dataset.point_data[f"P{i}"] = np.random.randint(
+            dataset.point_data[f"P{i}"] = np.random.default_rng().integers(
                 np.iinfo(int).max, size=(dataset.n_points, 3)
             )
         if not (num_cell_arrays == 0 and num_point_data == 0):
@@ -2980,11 +2987,11 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces
+    orig_n_faces = sphere.n_faces_strict
     sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
-    assert sub.n_faces > orig_n_faces
+    assert sub.n_faces_strict > orig_n_faces
     if inplace:
-        assert sphere.n_faces == sub.n_faces
+        assert sphere.n_faces_strict == sub.n_faces_strict
 
 
 def test_invalid_subdivide_adaptive(cube):
@@ -3110,3 +3117,73 @@ def test_merge_points():
     assert (
         pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
     )
+
+
+@pytest.fixture
+def labeled_image():
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
+    return image
+
+
+def test_sort_labels(labeled_image):
+    sorted_ = labeled_image.sort_labels()
+    assert np.array_equal(sorted_['packed_labels'], [2, 0, 0, 0, 0, 2, 1, 1])
+
+    # test no data
+    with pytest.raises(ValueError):
+        pv.ImageData(dimensions=(2, 2, 2)).sort_labels()
+
+    # test single label
+    labeled_image['labels'] = [0, 0, 0, 0, 0, 0, 0, 0]
+    sorted_ = labeled_image.sort_labels(scalars='labels')
+    assert np.array_equal(sorted_['packed_labels'], [0, 0, 0, 0, 0, 0, 0, 0])
+
+
+def test_pack_labels(labeled_image):
+    labeled_image["misc"] = [0, 0, 0, 0, 0, 0, 0, 0]
+    packed = labeled_image.pack_labels(progress_bar=True)
+    assert np.array_equal(packed['packed_labels'], [0, 2, 2, 2, 2, 0, 1, 1])
+    assert 'labels' in packed.array_names
+    assert 'packed_labels' in packed.array_names
+
+
+def test_pack_labels_inplace(uniform):
+    assert uniform.pack_labels() is not uniform  # default False
+    assert uniform.pack_labels(inplace=False) is not uniform
+    assert uniform.pack_labels(inplace=True) is uniform
+
+
+def test_pack_labels_output_scalars(labeled_image):
+    packed = labeled_image.pack_labels(output_scalars='foo')
+    assert np.array_equal(packed['foo'], [0, 2, 2, 2, 2, 0, 1, 1])
+    assert 'labels' in packed.array_names
+    assert packed.active_scalars_name == 'foo'
+
+    with pytest.raises(TypeError):
+        labeled_image.pack_labels(output_scalars=1)
+
+
+def test_pack_labels_preference(uniform):
+    uniform.rename_array('Spatial Point Data', 'labels_in')
+    uniform.rename_array('Spatial Cell Data', 'labels_in')
+
+    mesh = uniform.copy()
+    packed = mesh.pack_labels(preference='point')
+    expected_shape = mesh.point_data['labels_in'].shape
+    actual_shape = packed.point_data['packed_labels'].shape
+    assert np.array_equal(actual_shape, expected_shape)
+
+    mesh = uniform.copy()
+    packed = mesh.pack_labels(preference='cell')
+    expected_shape = mesh.cell_data['labels_in'].shape
+    actual_shape = packed.cell_data['packed_labels'].shape
+    assert np.array_equal(actual_shape, expected_shape)
+
+    # test point preference without point data
+    mesh = uniform.copy()
+    mesh.point_data.remove('labels_in')
+    packed = mesh.pack_labels(preference='point')
+    expected_shape = mesh.cell_data['labels_in'].shape
+    actual_shape = packed.cell_data['packed_labels'].shape
+    assert np.array_equal(actual_shape, expected_shape)

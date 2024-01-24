@@ -83,7 +83,7 @@ def test_solid_sphere():
     assert np.any(sphere.points)
 
     # make sure cell creation gives positive volume.
-    for i, cell in enumerate(sphere.cell):
+    for cell in sphere.cell:
         assert cell.cast_to_unstructured_grid().volume > 0
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
@@ -480,9 +480,25 @@ def test_superquadric():
 
 
 def test_text_3d():
-    mesh = pv.Text3D("foo")
+    mesh = pv.Text3D("foo", 0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
     assert mesh.n_points
     assert mesh.n_cells
+
+    bnds = mesh.bounds
+    actual_width, actual_height, actual_depth = (
+        bnds[1] - bnds[0],
+        bnds[3] - bnds[2],
+        bnds[5] - bnds[4],
+    )
+    assert np.isclose(actual_width, 2.0)
+    assert np.isclose(actual_height, 3.0)
+    assert np.isclose(actual_depth, 0.5)
+    assert np.allclose(mesh.center, [1.0, 2.0, 3.0])
+
+    # Test setting empty string returns empty mesh with zeros as bounds
+    mesh = pv.Text3D(string="")
+    assert mesh.n_points == 1
+    assert mesh.bounds == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 
 def test_wavelet():
@@ -670,7 +686,7 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
     # verify type of solid
     assert solid_from_str.n_points == n_vertices
-    assert solid_from_str.n_faces == n_faces
+    assert solid_from_str.n_faces_strict == n_faces
 
 
 def test_platonic_invalids():
@@ -687,7 +703,7 @@ def test_tetrahedron():
     center = (1, -2, 3)
     solid = pv.Tetrahedron(radius=radius, center=center)
     assert solid.n_points == 4
-    assert solid.n_faces == 4
+    assert solid.n_faces_strict == 4
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Tetrahedron(radius=2 * radius, center=center)
@@ -699,7 +715,7 @@ def test_octahedron():
     center = (1, -2, 3)
     solid = pv.Octahedron(radius=radius, center=center)
     assert solid.n_points == 6
-    assert solid.n_faces == 8
+    assert solid.n_faces_strict == 8
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Octahedron(radius=2 * radius, center=center)
@@ -711,7 +727,7 @@ def test_dodecahedron():
     center = (1, -2, 3)
     solid = pv.Dodecahedron(radius=radius, center=center)
     assert solid.n_points == 20
-    assert solid.n_faces == 12
+    assert solid.n_faces_strict == 12
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Dodecahedron(radius=2 * radius, center=center)
@@ -723,7 +739,7 @@ def test_icosahedron():
     center = (1, -2, 3)
     solid = pv.Icosahedron(radius=radius, center=center)
     assert solid.n_points == 12
-    assert solid.n_faces == 20
+    assert solid.n_faces_strict == 20
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Icosahedron(radius=2 * radius, center=center)
@@ -739,4 +755,4 @@ def test_icosphere():
     assert np.allclose(np.linalg.norm(icosphere.points - icosphere.center, axis=1), radius)
 
     icosahedron = pv.Icosahedron()
-    assert icosahedron.n_faces * 4**nsub == icosphere.n_faces
+    assert icosahedron.n_faces_strict * 4**nsub == icosphere.n_faces_strict

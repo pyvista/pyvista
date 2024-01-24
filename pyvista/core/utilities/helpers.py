@@ -48,7 +48,7 @@ def wrap(
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> points = np.random.random((10, 3))
+    >>> points = np.random.default_rng().random((10, 3))
     >>> cloud = pv.wrap(points)
     >>> cloud
     PolyData (...)
@@ -150,11 +150,9 @@ def wrap(
     if dataset.__class__.__name__ == 'Trimesh':
         # trimesh doesn't pad faces
         dataset = cast('Trimesh', dataset)
-        n_face = dataset.faces.shape[0]
-        faces = np.empty((n_face, 4), dataset.faces.dtype)
-        faces[:, 1:] = dataset.faces
-        faces[:, 0] = 3
-        polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        polydata = pyvista.PolyData.from_regular_faces(
+            np.asarray(dataset.vertices), faces=dataset.faces
+        )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
             polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)  # type: ignore

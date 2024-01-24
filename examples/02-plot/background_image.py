@@ -10,6 +10,11 @@ Add a background image with :func:`pyvista.Plotter.add_background_image`.
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# background images do not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Plot an airplane with the map of the earth in the background
 earth_alt = examples.download_topo_global()

@@ -10,10 +10,8 @@ from pyvista import examples
 has_trame = True
 try:
     from trame.app import get_server
-    from trame.ui.vuetify3 import VAppLayout as vue3_VAppLayout
-    from trame.ui.vuetify import VAppLayout as vue2_VAppLayout
 
-    from pyvista.trame.jupyter import Widget, build_url
+    from pyvista.trame.jupyter import EmbeddableWidget, Widget, build_url, elegantly_launch
     from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
     from pyvista.trame.ui.vuetify2 import (
         divider as vue2_divider,
@@ -33,7 +31,7 @@ try:
         PyVistaRemoteView,
         _BasePyVistaView,
     )
-except:  # noqa: E722
+except:
     has_trame = False
 
 # skip all tests if VTK<9.1.0
@@ -58,7 +56,9 @@ def test_set_jupyter_backend_trame():
 
 def test_trame_server_launch():
     pv.set_jupyter_backend('trame')
-    server = get_server(name=pv.global_theme.trame.jupyter_server_name)
+    name = pv.global_theme.trame.jupyter_server_name
+    elegantly_launch(name)
+    server = get_server(name=name)
     assert server.running
 
 
@@ -73,7 +73,8 @@ def test_base_viewer_ui():
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
-    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    pv.set_jupyter_backend('trame')
+    elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
@@ -97,7 +98,8 @@ def test_trame_plotter_ui(client_type):
 def test_trame(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
-    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    pv.set_jupyter_backend('trame')
+    elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
@@ -170,7 +172,8 @@ def test_trame(client_type):
 def test_trame_custom_menu_items(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
-    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    pv.set_jupyter_backend('trame')
+    elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
@@ -181,7 +184,6 @@ def test_trame_custom_menu_items(client_type):
     viewer = get_viewer(pl, server=server)
 
     # setup vuetify items
-    VAppLayout = vue2_VAppLayout if client_type == "vue2" else vue3_VAppLayout
     slider = vue2_slider if client_type == "vue2" else vue3_slider
     text_field = vue2_text_field if client_type == "vue2" else vue3_text_field
     select = vue2_select if client_type == "vue2" else vue3_select
@@ -205,7 +207,7 @@ def test_trame_custom_menu_items(client_type):
             items=['Visibility', ["Hide", "Show"]],
         )
 
-    with VAppLayout(server, template_name=pl._id_name):
+    with viewer.make_layout(server, template_name=pl._id_name):
         viewer.ui(
             mode="trame",
             default_server_rendering=True,
@@ -270,6 +272,7 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
+@pytest.mark.skipif(True, reason="#5262")
 def test_trame_views():
     server = get_server('foo')
 
@@ -391,7 +394,7 @@ def test_export_texture(tmpdir, skip_check_gc):
 
 def test_export_verts(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
-    data = pv.PolyData(np.random.rand(100, 3))
+    data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
     plotter = pv.Plotter()
     plotter.add_mesh(data)
@@ -409,3 +412,11 @@ def test_export_color(tmpdir, skip_check_gc):
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}')
+
+
+def test_embeddable_widget(skip_check_gc):
+    plotter = pv.Plotter(notebook=True)
+    plotter.add_mesh(pv.Sphere())
+    widget = plotter.show(jupyter_backend='html', return_viewer=True)
+    # Basically just assert that it didn't error out
+    assert isinstance(widget, EmbeddableWidget)

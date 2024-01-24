@@ -49,7 +49,7 @@ try:
             imageio.plugins.ffmpeg.download()
         else:
             raise err
-except:  # noqa: E722
+except:
     ffmpeg_failed = True
 
 
@@ -630,7 +630,7 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info >= (0, 47):
             raise RuntimeError("Remove this method")
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
-        plotter.update_scalars(np.arange(sphere.n_faces))
+        plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info >= (0, 46):
             raise RuntimeError("Convert error this method")
         if pv._version.version_info >= (0, 47):
@@ -765,6 +765,14 @@ def test_plot_invalid_add_scalar_bar():
         plotter.add_scalar_bar()
 
 
+def test_add_scalar_bar_with_unconstrained_font_size(sphere):
+    sphere['test_scalars'] = sphere.points[:, 2]
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    actor = plotter.add_scalar_bar(unconstrained_font_size=True)
+    assert actor.GetUnconstrainedFontSize()
+
+
 def test_plot_list():
     sphere_a = pv.Sphere(0.5)
     sphere_b = pv.Sphere(1.0)
@@ -794,7 +802,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
-    movie_sphere["scalars"] = np.random.random(movie_sphere.n_faces)
+    movie_sphere["scalars"] = np.random.default_rng().random(movie_sphere.n_faces_strict)
 
     plotter = pv.Plotter()
     plotter.open_movie(filename)
@@ -805,10 +813,10 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     plotter.set_focus([0, 0, 0])
     for _ in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
-        random_points = np.random.random(movie_sphere.points.shape)
+        random_points = np.random.default_rng().random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
-        scalars = np.random.random(movie_sphere.n_faces)
+        scalars = np.random.default_rng().random(movie_sphere.n_faces_strict)
         movie_sphere["scalars"] = scalars
 
     # remove file
@@ -961,6 +969,22 @@ def test_add_point_labels_shape(shape, verify_image_cache):
     plotter.show()
 
 
+@pytest.mark.parametrize('justification_horizontal', ['left', 'center', 'right'])
+@pytest.mark.parametrize('justification_vertical', ['bottom', 'center', 'top'])
+def test_add_point_labels_justification(justification_horizontal, justification_vertical):
+    plotter = pv.Plotter()
+    plotter.add_point_labels(
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        justification_horizontal=justification_horizontal,
+        justification_vertical=justification_vertical,
+        shape_opacity=0.0,
+        background_color='grey',
+        background_opacity=1.0,
+    )
+    plotter.show()
+
+
 def test_set_background():
     plotter = pv.Plotter()
     plotter.set_background('k')
@@ -1032,13 +1056,13 @@ def test_show_axes():
 def test_plot_cell_data(sphere, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     plotter = pv.Plotter()
-    scalars = np.arange(sphere.n_faces)
+    scalars = np.arange(sphere.n_faces_strict)
     plotter.add_mesh(
         sphere,
         interpolate_before_map=True,
         scalars=scalars,
         n_colors=10,
-        rng=sphere.n_faces,
+        rng=sphere.n_faces_strict,
         show_scalar_bar=False,
     )
     plotter.show()
@@ -1046,7 +1070,7 @@ def test_plot_cell_data(sphere, verify_image_cache):
 
 def test_plot_clim(sphere):
     plotter = pv.Plotter()
-    scalars = np.arange(sphere.n_faces)
+    scalars = np.arange(sphere.n_faces_strict)
     plotter.add_mesh(
         sphere,
         interpolate_before_map=True,
@@ -1227,7 +1251,7 @@ def test_multi_block_plot(verify_image_cache):
     multi = pv.MultiBlock()
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
-    arr = np.random.rand(uni.n_cells)
+    arr = np.random.default_rng().random(uni.n_cells)
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
@@ -2016,7 +2040,7 @@ def test_plot_string_array(verify_image_cache):
 
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
-    table = pv.Table(np.random.rand(50, 3))
+    table = pv.Table(np.random.default_rng().random((50, 3)))
     with pytest.raises(TypeError):
         pv.plot(table)
     with pytest.raises(TypeError):
@@ -2355,6 +2379,10 @@ def test_scalar_cell_priorities():
     plotter.add_mesh(mesh, scalars='colors', rgb=True, preference='cell')
     plotter.show()
 
+    c = pv.Cone()
+    c.cell_data['ids'] = list(range(c.n_cells))
+    c.plot()
+
 
 def test_collision_plot(verify_image_cache):
     """Verify rgba arrays automatically plot"""
@@ -2645,11 +2673,20 @@ def test_plot_complex_value(plane, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
-    with pytest.warns(np.ComplexWarning):
+
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        ComplexWarning = np.exceptions.ComplexWarning
+    except:
+        ComplexWarning = np.ComplexWarning
+
+    with pytest.warns(ComplexWarning):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(np.ComplexWarning):
+    with pytest.warns(ComplexWarning):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
@@ -2934,8 +2971,16 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        ComplexWarning = np.exceptions.ComplexWarning
+    except:
+        ComplexWarning = np.ComplexWarning
+
     pl = pv.Plotter()
-    with pytest.warns(np.ComplexWarning, match='Casting complex'):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
     pl.show()
 
@@ -2958,7 +3003,7 @@ def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 
     # add in bool data
-    for i, block in enumerate(multiblock_poly):
+    for block in multiblock_poly:
         block['scalars'] = np.zeros(block.n_points, dtype=bool)
         block['scalars'][::2] = 1
 
@@ -3314,9 +3359,26 @@ def test_plot_points_gaussian_as_spheres(sphere):
         color='b',
         style='points_gaussian',
         render_points_as_spheres=True,
+        emissive=True,
         point_size=20,
         opacity=0.5,
     )
+
+
+@skip_windows
+def test_plot_points_gaussian_scale(sphere):
+    sphere["z"] = sphere.points[:, 2] * 0.1
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        style='points_gaussian',
+        render_points_as_spheres=True,
+        emissive=False,
+        show_scalar_bar=False,
+    )
+    actor.mapper.scale_array = 'z'
+    pl.view_xz()
+    pl.show()
 
 
 @skip_windows_mesa  # due to opacity
@@ -3789,3 +3851,152 @@ def test_no_empty_meshes():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Empty meshes'):
         pl.add_mesh(pv.PolyData())
+
+
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing fatal exception: access violation")
+def test_voxelize_volume():
+    mesh = examples.download_cow()
+    cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+
+    # Create an equal density voxel volume and plot the result.
+    vox = pv.voxelize_volume(mesh, density=0.15)
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    # Create a voxel volume from unequal density dimensions and plot result.
+    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+
+def test_enable_custom_trackball_style():
+    def setup_plot():
+        mesh = pv.Cube()
+        mesh["face_id"] = np.arange(6)
+        pl = pv.Plotter()
+        # mostly use the settings from `enable_2d_style`
+        # but also test environment_rotate
+        pl.enable_custom_trackball_style(
+            left="pan",
+            middle="spin",
+            right="dolly",
+            shift_left="dolly",
+            control_left="spin",
+            shift_middle="dolly",
+            control_middle="pan",
+            shift_right="environment_rotate",
+            control_right="rotate",
+        )
+        pl.enable_parallel_projection()
+        pl.add_mesh(mesh, scalars="face_id", show_scalar_bar=False)
+        return pl
+
+    # baseline, image
+    pl = setup_plot()
+    pl.show()
+
+    start = (100, 100)
+    pan = rotate = env_rotate = (150, 150)
+    spin = (100, 150)
+    dolly = (100, 25)
+
+    # Compare all images to baseline
+    # - Panning moves up and left
+    # - Spinning rotates while fixing the view direction
+    # - Dollying zooms out
+    # - Rotating rotates freely without fixing view direction
+
+    # left click pans, image 1
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*pan)
+    pl.close()
+
+    # middle click spins, image 2
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*spin)
+    pl.close()
+
+    # right click dollys, image 3
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*dolly)
+    pl.close()
+
+    # ctrl left click spins, image 4
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*spin)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift left click dollys, image 5
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_left_button_press(*start)
+    pl.iren._mouse_left_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
+
+    # ctrl middle click pans, image 6
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*pan)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift middle click dollys, image 7
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_middle_button_press(*start)
+    pl.iren._mouse_middle_button_release(*dolly)
+    pl.iren._shift_key_release()
+    pl.close()
+
+    # ctrl right click rotates, image 8
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._control_key_press()
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*rotate)
+    pl.iren._control_key_release()
+    pl.close()
+
+    # shift right click environment rotate, image 9
+    # does nothing here
+    pl = setup_plot()
+    pl.show(auto_close=False)
+    pl.iren._shift_key_press()
+    pl.iren._mouse_right_button_press(*start)
+    pl.iren._mouse_right_button_release(*env_rotate)
+    pl.iren._shift_key_release()
+    pl.close()
+
+
+def test_create_axes_orientation_box():
+    actor = pv.create_axes_orientation_box(
+        line_width=4,
+        text_scale=0.53,
+        edge_color='red',
+        x_color='k',
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        color_box=False,
+        labels_off=False,
+        opacity=1.0,
+        show_text_edges=True,
+    )
+    plotter = pv.Plotter()
+    _ = plotter.add_actor(actor)
+    plotter.show()

@@ -143,7 +143,7 @@ def test_multi_block_set_get_ers():
     pop = multi.pop(0)
     assert isinstance(pop, RectilinearGrid)
     assert multi.n_blocks == 3
-    assert all([k is None for k in multi.keys()])
+    assert all(k is None for k in multi.keys())
 
     multi["new key"] = pv.Sphere()
     assert multi.n_blocks == 4
@@ -190,12 +190,12 @@ def test_del_slice(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[0:10:2]
     assert len(multi) == 5
-    assert all([f"{i}" in multi.keys() for i in range(1, 10, 2)])
+    assert all(f"{i}" in multi.keys() for i in range(1, 10, 2))
 
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[5:2:-1]
     assert len(multi) == 7
-    assert all([f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9]])
+    assert all(f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9])
 
 
 def test_slicing_multiple_in_setitem(sphere):
@@ -396,7 +396,7 @@ def test_multi_io_erros(tmpdir):
     bad_ext_name = str(fdir.join('tmp.npy'))
     with pytest.raises(ValueError):
         multi.save(bad_ext_name)
-    arr = np.random.rand(10, 10)
+    arr = np.random.default_rng().random((10, 10))
     np.save(bad_ext_name, arr)
     # Load non existing file
     with pytest.raises(FileNotFoundError):
@@ -525,8 +525,8 @@ def test_multi_block_length(ant, sphere, uniform, airplane):
 
 def test_multi_block_save_lines(tmpdir):
     radius = 1
-    xr = np.random.random(10)
-    yr = np.random.random(10)
+    xr = np.random.default_rng().random(10)
+    yr = np.random.default_rng().random(10)
     x = radius * np.sin(yr) * np.cos(xr)
     y = radius * np.sin(yr) * np.sin(xr)
     z = radius * np.cos(yr)
@@ -691,7 +691,7 @@ def test_set_active_scalars_components(multiblock_poly):
     multiblock_poly.set_active_scalars(None)
     multiblock_poly.set_active_scalars('data')
     for block in multiblock_poly:
-        assert multiblock_poly[0].point_data.active_scalars_name == 'data'
+        assert block.point_data.active_scalars_name == 'data'
 
     data = np.zeros((multiblock_poly[2].n_points, 3))
     multiblock_poly[2].point_data['data'] = data

@@ -771,13 +771,21 @@ class DataSet(DataSetFilters, DataObject):
         if self.active_scalars_name == old_name:
             was_active = True
         if field == FieldAssociation.POINT:
-            self.point_data[new_name] = self.point_data.pop(old_name)
+            data = self.point_data
         elif field == FieldAssociation.CELL:
-            self.cell_data[new_name] = self.cell_data.pop(old_name)
+            data = self.cell_data
         elif field == FieldAssociation.NONE:
-            self.field_data[new_name] = self.field_data.pop(old_name)
+            data = self.field_data
         else:
             raise KeyError(f'Array with name {old_name} not found.')
+
+        arr = data.pop(old_name)
+        # Update the array's name before reassigning. This prevents taking a copy of the array
+        # in `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
+        # See issue #5244.
+        arr.VTKObject.SetName(new_name)
+        data[new_name] = arr
+
         if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
         return None
@@ -1491,7 +1499,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
+        >>> mesh.point_data['my_array'] = np.random.default_rng().random(
+        ...     mesh.n_points
+        ... )
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
         >>> mesh.point_data
         pyvista DataSetAttributes
@@ -1583,7 +1593,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['my_array'] = np.random.random(mesh.n_cells)
+        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(
+        ...     mesh.n_cells
+        ... )
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
         >>> mesh.cell_data
         pyvista DataSetAttributes
@@ -1644,8 +1656,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
-        in :class:`pyvista.PolyData`.
+        This returns the total number of cells -- for :class:`pyvista.PolyData`
+        this includes vertices, lines, triangle strips and polygonal faces.
 
         Examples
         --------
@@ -2397,7 +2409,7 @@ class DataSet(DataSetFilters, DataObject):
         Find the nearest cells to several random points that
         are centered on the origin.
 
-        >>> points = 2 * np.random.random((5000, 3)) - 1
+        >>> points = 2 * np.random.default_rng().random((5000, 3)) - 1
         >>> indices = mesh.find_closest_cell(points)
         >>> indices.shape
         (5000,)
@@ -2504,7 +2516,7 @@ class DataSet(DataSetFilters, DataObject):
         Find the cells that contain 1000 random points inside the mesh.
 
         >>> import numpy as np
-        >>> points = np.random.random((1000, 3))
+        >>> points = np.random.default_rng().random((1000, 3))
         >>> indices = mesh.find_containing_cell(points)
         >>> indices.shape
         (1000,)
@@ -2860,7 +2872,7 @@ class DataSet(DataSetFilters, DataObject):
         >>>
         >>> for i, connection in enumerate(["points", "edges"]):
         ...     pl.subplot(0, i)
-        ...     pl.view_yx()
+        ...     pl.view_xy()
         ...     _ = pl.add_title(
         ...         f"{connection.capitalize()} neighbors",
         ...         color="red",
@@ -2979,7 +2991,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     text_color="red",
         ...     font_size=40,
         ... )
-        >>> pl.camera_position = "yx"
+        >>> pl.camera_position = "xy"
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 
@@ -3060,7 +3072,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     )
         ...
         >>>
-        >>> pl.view_yx()
+        >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
         >>> pl.show()
         """
@@ -3084,7 +3096,7 @@ class DataSet(DataSetFilters, DataObject):
 
         n_levels : int, default: 1
             Number of levels to search for cell neighbors.
-            When equal to 1, it is equivalent to :func:`pyvista.DataSet.point_neighbors`.
+            When equal to 1, it is equivalent to :func:`pyvista.DataSet.cell_neighbors`.
 
         Returns
         -------
@@ -3160,7 +3172,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cells = mesh.extract_cells(other_ids, invert=True)
         >>> _ = pl.add_mesh(cells, color="white", show_edges=True)
         >>>
-        >>> pl.view_yx()
+        >>> pl.view_xy()
         >>> pl.camera.zoom(6.0)
         >>> pl.show()
         """

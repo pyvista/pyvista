@@ -11,7 +11,7 @@ from pyvista.examples.downloads import download_file
 
 HAS_IMAGEIO = True
 try:
-    import imageio  # noqa: F401
+    import imageio
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
@@ -250,6 +250,30 @@ def test_ensightreader_timepoints():
 
     with pytest.raises(ValueError, match="Not a valid time"):
         reader.set_active_time_value(1000.0)
+
+
+def test_ensightreader_time_sets():
+    filename = examples.download_lshape(load=False)
+
+    reader = pv.get_reader(filename)
+    assert reader.active_time_set == 0
+
+    reader.set_active_time_set(1)
+    assert reader.number_time_points == 11
+
+    mesh = reader.read()["all"]
+    assert reader.number_time_points == 11
+    assert np.isclose(mesh["displacement"][1, 1], 0.0, 1e-10)
+
+    reader.set_active_time_value(reader.time_values[-1])
+    mesh = reader.read()["all"]
+    assert np.isclose(mesh["displacement"][1, 1], 0.0028727285, 1e-10)
+
+    reader.set_active_time_set(0)
+    assert reader.number_time_points == 1
+
+    with pytest.raises(IndexError, match="Time set index"):
+        reader.set_active_time_set(2)
 
 
 def test_dcmreader(tmpdir):
@@ -513,7 +537,7 @@ def test_pvdreader_no_part_group():
 
     reader.set_active_time_value(1.0)
     assert len(reader.active_datasets) == 2
-    for i, dataset in enumerate(reader.active_datasets):
+    for dataset in reader.active_datasets:
         assert dataset.time == 1.0
         assert dataset.group == ""
         assert dataset.part == 0
@@ -916,6 +940,11 @@ def test_xdmf_reader():
     assert isinstance(reader, pv.XdmfReader)
     assert reader.path == filename
 
+    assert reader.number_time_points == 5
+    assert reader.time_values == [0.0, 0.25, 0.5, 0.75, 1.0]
+    assert reader.time_point_value(0) == 0.0
+    assert reader.time_point_value(1) == 0.25
+
     assert reader.number_grids == 6
     assert reader.number_point_arrays == 2
 
@@ -923,19 +952,30 @@ def test_xdmf_reader():
     assert reader.cell_array_names == ['a']
 
     blocks = reader.read()
+    assert reader.active_time_value == 0.0
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
     reader.set_active_time_value(0.25)
+    assert reader.active_time_value == 0.25
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.25, 0.25, 0.25, 0.25]))
     reader.set_active_time_value(0.5)
+    assert reader.active_time_value == 0.5
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.5, 0.5, 0.5, 0.5]))
     reader.set_active_time_value(0.75)
+    assert reader.active_time_value == 0.75
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.75, 0.75, 0.75, 0.75]))
     reader.set_active_time_value(1.0)
+    assert reader.active_time_value == 1.0
     blocks = reader.read()
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))
+
+    reader.set_active_time_point(0)
+    assert reader.active_time_value == 0.0
+
+    with pytest.raises(ValueError, match="Not a valid time"):
+        reader.set_active_time_value(1000.0)
 
 
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")

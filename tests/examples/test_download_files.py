@@ -845,6 +845,14 @@ def test_download_naca():
     assert isinstance(dataset, pv.MultiBlock)
 
 
+def test_download_lshape():
+    filename = examples.download_lshape(load=False)
+    assert os.path.isfile(filename)
+
+    dataset = examples.download_lshape()
+    assert isinstance(dataset, pv.MultiBlock)
+
+
 def test_download_wavy():
     filename = examples.download_wavy(load=False)
     assert os.path.isfile(filename)
