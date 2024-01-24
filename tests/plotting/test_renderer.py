@@ -192,3 +192,52 @@ def test_legend_from_glyph(sphere):
     pl.add_mesh(arrows, color='red', label='Magnitude')
     pl.add_mesh(sphere)
     pl.add_legend()
+
+
+def test_legend_from_multiple_glyph(random_hills):
+    pl = pv.Plotter()
+
+    random_hills["Normals2"] = -1 * random_hills["Normals"].copy()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    arrows2 = random_hills.glyph(scale="Normals", orient="Normals2", tolerance=0.05)
+    pl.add_mesh(arrows2, color="red", label="label 2")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    pl.add_legend()
+    pl.show()
+
+
+def test_legend_using_add_legend(random_hills):
+    pl = pv.Plotter()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    legend_entries = []
+    legend_entries.append(['my label 1', 'g'])
+    legend_entries.append(['my label 2', 'blue'])
+    pl.add_legend(legend_entries)
+    pl.show()
+
+
+def test_legend_using_add_legend_with_glyph(random_hills):
+    pl = pv.Plotter()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    legend_entries = []
+    legend_entries.append(['my label 1', 'g'])
+    legend_entries.append(['my label 2', 'blue', pv.Circle()])
+    legend_entries.append({'text': "my label 3", "color": (0.0, 1.0, 1.0), "face": pv.Arrow()})
+
+    pl.add_legend(legend_entries)
+    pl.show()
