@@ -1,3 +1,4 @@
+from numpy.random import default_rng
 import pytest
 from pytest import raises
 
@@ -177,3 +178,12 @@ def test_legend_face(sphere, face):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
+
+
+def test_add_legend_background_opacity(sphere):
+    rng = default_rng(0)
+    background_opacity = rng.random()
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, label='sphere')
+    actor = pl.add_legend(background_opacity=background_opacity)
+    assert actor.GetBackgroundOpacity() == background_opacity
