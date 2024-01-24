@@ -4,7 +4,7 @@ documentation:
     - any-glob-to-any-file: 'doc/**/*'
     - any-glob-to-any-file: 'examples/**/*'
     - any-glob-to-any-file: 'examples_trame/**/*'
-    - any-glob-to-any-file: './*.md'
+    - any-glob-to-any-file: '*.md'
 maintenance:
 - any:
   - changed-files:
