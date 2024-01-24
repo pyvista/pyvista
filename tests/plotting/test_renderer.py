@@ -181,8 +181,7 @@ def test_legend_face(sphere, face):
 
 
 def test_add_legend_background_opacity(sphere):
-    rng = default_rng(0)
-    background_opacity = rng.random()
+    background_opacity = default_rng(0).random()
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     actor = pl.add_legend(background_opacity=background_opacity)
