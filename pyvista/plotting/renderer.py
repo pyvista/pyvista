@@ -3408,18 +3408,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
                 if face is not None:
                     vtk_object = make_legend_face(face)
-
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
-            if face is None:
-                face = "triangle"
+            for i, args in enumerate(labels):
+                face_ = make_legend_face("triangle")
 
-            legend_face = make_legend_face(face)
+                if isinstance(args, list):
+                    if len(args) == 2:
+                        # format labels =  [[ text1, color1], [ text2, color2], etc]
+                        text, color = args
+                    else:
+                        # format labels =  [[ text1, color1, face1], [ text2, color2, face2], etc]
+                        # Pikcing only the first 3 elements
+                        text, color, face_ = args[:3]
+                elif isinstance(args, dict):
+                    # it is using a dict
+                    text = args.pop('text')
+                    color = args.pop('color', None)
+                    face_ = args.pop('face', None)
 
-            for i, (text, color) in enumerate(labels):
+                legend_face = face or face_
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:
