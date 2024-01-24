@@ -62,7 +62,7 @@ pl.add_mesh(arrows_inversed, color="red", label="Lower pressure")
 pl.add_mesh(mesh, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
 
 # adding legend
-legend = ["Top pressure", "Lower pressure"]
+legend = ["New top pressure", "New lower pressure"]
 
 # You can
 pl.add_legend(legend)
@@ -91,8 +91,8 @@ pl.add_mesh(mesh, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
 # You can use custom glyphs even if they don't match the plot.
 # You can use either ``list`` or ``dict`` for passing the data.
 legend = [
-    ["Top pressure", "blue"],
-    ["Middle point pressure", "red", "circle"],
+    ["Top pressure", "blue"],  # no custom glyph
+    ["Middle point pressure", "green", "circle"],  # Using a defaults glyph
     {"label": "Lower pressure", "color": "red", "face": pv.Box()},
 ]
 
