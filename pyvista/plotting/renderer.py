@@ -3303,12 +3303,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             List containing one entry for each item to be added to the
             legend. Each entry can contain one of the following:
 
-            * Two strings, [label, color], where ``label`` is the name of the
+            * Two strings ([label, color]), where ``label`` is the name of the
               item to add, and ``color`` is the color of the label to add.
-            * Three strings, [label, color, face] where ``label`` is the name
+            * Three strings ([label, color, face]) where ``label`` is the name
               of the item to add, ``color`` is the color of the label to add,
-              and ``face`` is string which defines the face.
-              Face could be also ``None`` (then it is the default pyramid), or a
+              and ``face`` is a string which defines the face (i.e. ``circle``,
+              ``triangle``, ``box``, etc.).
+              ``face`` could be also ``None`` (there is no face then), or a
               :class:`pyvista.PolyData`.
             * A dict with the key ``label``. Optionally you can add the
               keys ``color`` and ``face``. The values of these keys can be
@@ -3416,8 +3417,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is not None:
-                    vtk_object = make_legend_face(face)
+                vtk_object = make_legend_face(face)
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
