@@ -3425,7 +3425,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             for i, args in enumerate(labels):
                 face_ = None
-                if isinstance(args, list):
+                if isinstance(args, (list, tuple)):
                     if len(args) == 2:
                         # format labels =  [[ text1, color1], [ text2, color2], etc]
                         text, color = args
