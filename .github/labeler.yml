@@ -11,11 +11,7 @@ maintenance:
     - any-glob-to-any-file: '.github/**/*'
     - any-glob-to-any-file: 'codecov.yml'
     - any-glob-to-any-file: '.flake8'
-    - any-glob-to-any-file: '.coveragerc'
-    - any-glob-to-any-file: '.codecimate.yml'
     - any-glob-to-any-file: 'Makefile'
-    - any-glob-to-any-file: 'ignore_words.txt'
-    - any-glob-to-any-file: 'mypy.ini'
     - any-glob-to-any-file: 'pyproject.toml'
     - any-glob-to-any-file: '.pre-commit-config.yaml'
 dependencies:
