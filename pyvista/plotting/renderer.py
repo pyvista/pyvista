@@ -3283,7 +3283,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face='triangle',
+        face=None,
         font_family=None,
     ):
         """Add a legend to render window.
@@ -3417,7 +3417,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                vtk_object = make_legend_face(face)
+                if face is not None:
+                    vtk_object = make_legend_face(face)
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
@@ -3443,6 +3444,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         warnings.warn(
                             f"Some of the arguments given to legend are not used.\n{args}"
                         )
+                elif isinstance(args, str):
+                    # Only passing label
+                    text = args
+                    # taking the currents (if any)
+                    face_, _, color = list(self._labels.values())[i]
+
                 else:
                     raise ValueError(
                         f"The object passed to the legend ({type(args)}) is not valid."

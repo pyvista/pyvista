@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from pytest import raises
 
@@ -245,6 +246,20 @@ def test_legend_using_add_legend_with_glyph(random_hills):
     pl.show()
 
 
+def test_legend_using_add_legend_only_labels(random_hills):
+    pl = pv.Plotter()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    legend_entries = ["label 1", "label 2"]
+
+    pl.add_legend(legend_entries)
+    pl.show()
+
+
 def test_legend_add_entry_warning():
     pl = pv.Plotter()
     legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
@@ -256,7 +271,7 @@ def test_legend_add_entry_warning():
 
 def test_legend_add_entry_exception():
     pl = pv.Plotter()
-    legend_entries = ["asdf"]  # Not allowed type
+    legend_entries = np.array([1, 2])  # Not allowed type
 
     with raises(ValueError, match="The object passed to the legend"):
         pl.add_legend(legend_entries)
