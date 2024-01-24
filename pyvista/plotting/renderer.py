@@ -3435,9 +3435,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         text, color, face_ = args[:3]
                 elif isinstance(args, dict):
                     # it is using a dict
-                    text = args.pop('text')
+                    text = args.pop('label')
                     color = args.pop('color', None)
                     face_ = args.pop('face', None)
+
+                    if args:
+                        warnings.warn(
+                            f"Some of the arguments given to legend are not used.\n{args}"
+                        )
                 else:
                     raise ValueError(
                         f"The object passed to the legend ({type(args)}) is not valid."
