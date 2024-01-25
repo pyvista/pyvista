@@ -10,9 +10,9 @@ jobs:
     name: PR comment
     if: github.event.issue.pull_request &&
       contains(github.event.comment.body, '@pyvista-bot LGTM') && (
-        github.event.comment.user.login == 'banesullivan' ||
-        github.event.comment.user.login == 'tkoyama010' ||
-        github.event.comment.user.login == 'akaszynski'
+      github.event.comment.user.login == 'banesullivan' ||
+      github.event.comment.user.login == 'tkoyama010' ||
+      github.event.comment.user.login == 'akaszynski'
       )
     permissions:
       pull-requests: write
