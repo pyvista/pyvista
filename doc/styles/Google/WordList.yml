@@ -1,25 +1,25 @@
 extends: substitution
 message: "Use '%s' instead of '%s'."
-link: 'https://developers.google.com/style/word-list'
+link: "https://developers.google.com/style/word-list"
 level: warning
 ignorecase: false
 action:
   name: replace
 swap:
-  '(?:API Console|dev|developer) key': API key
-  '(?:cell ?phone|smart ?phone)': phone|mobile phone
-  '(?:dev|developer|APIs) console': API console
-  '(?:e-mail|Email|E-mail)': email
-  '(?:file ?path|path ?name)': path
-  '(?:kill|terminate|abort)': stop|exit|cancel|end
-  '(?:OAuth ?2|Oauth)': OAuth 2.0
-  '(?:ok|Okay)': OK|okay
-  '(?:WiFi|wifi)': Wi-Fi
+  "(?:API Console|dev|developer) key": API key
+  "(?:cell ?phone|smart ?phone)": phone|mobile phone
+  "(?:dev|developer|APIs) console": API console
+  "(?:e-mail|Email|E-mail)": email
+  "(?:file ?path|path ?name)": path
+  "(?:kill|terminate|abort)": stop|exit|cancel|end
+  "(?:OAuth ?2|Oauth)": OAuth 2.0
+  "(?:ok|Okay)": OK|okay
+  "(?:WiFi|wifi)": Wi-Fi
   '[\.]+apk': APK
   '3\-D': 3D
   'Google (?:I\-O|IO)': Google I/O
-  'tap (?:&|and) hold': touch & hold
-  'un(?:check|select)': clear
+  "tap (?:&|and) hold": touch & hold
+  "un(?:check|select)": clear
   above: preceding
   account name: username
   action bar: app bar
@@ -75,6 +75,6 @@ swap:
   tablename: table name
   tablet: device
   touch: tap
-  url:  URL
+  url: URL
   vs\.: versus
   World Wide Web: web
