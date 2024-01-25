@@ -1,5 +1,5 @@
 -r requirements.txt
-cmocean==3.0.3
+cmocean==3.1.3
 colorcet==3.0.1
 enum-tools==0.11.0
 imageio==2.33.1
@@ -29,4 +29,4 @@ sympy==1.12
 trame==3.5.1
 trame-vtk==2.7.0
 trame-vuetify==2.3.1
-trimesh==4.0.8
+trimesh==4.0.10
