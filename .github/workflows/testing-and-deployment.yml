@@ -205,10 +205,9 @@ jobs:
       - name: Set up numpy 2.0
         if: ${{ matrix.numpy-version != 'default' }}
         run: |
-          pip uninstall numpy matplotlib cmocean meshio -y
+          pip uninstall numpy matplotlib meshio -y
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
-          pip install --no-deps git+https://github.com/matplotlib/cmocean.git@main
           pip install --no-deps git+https://github.com/nschloe/meshio.git@refs/pull/1451/head
 
       - name: Core Testing (no GL)
