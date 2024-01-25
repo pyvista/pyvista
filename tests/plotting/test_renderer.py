@@ -177,7 +177,7 @@ def test_add_remove_legend(sphere):
 def test_legend_face(sphere, face):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
-    pl.add_legend(face=face)
+    pl.add_legend(face=face, size=(0.5, 0.5))
 
 
 def test_legend_from_glyph(sphere):
@@ -192,7 +192,7 @@ def test_legend_from_glyph(sphere):
     arrows = sphere.glyph(scale='scale', orient='normals', tolerance=0.05)
     pl.add_mesh(arrows, color='red', label='Magnitude')
     pl.add_mesh(sphere)
-    pl.add_legend()
+    pl.add_legend(size=(0.5, 0.5))
 
 
 def test_legend_from_multiple_glyph(random_hills):
@@ -208,7 +208,7 @@ def test_legend_from_multiple_glyph(random_hills):
 
     pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
 
-    pl.add_legend()
+    pl.add_legend(size=(0.5, 0.5))
     pl.show()
 
 
@@ -223,7 +223,7 @@ def test_legend_using_add_legend(random_hills):
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
     legend_entries.append(['my label 2', 'blue'])
-    pl.add_legend(legend_entries)
+    pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
 
 
@@ -242,7 +242,7 @@ def test_legend_using_add_legend_with_glyph(random_hills):
     legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": "circle"})
     legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": None})
 
-    pl.add_legend(legend_entries)
+    pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
 
 
@@ -256,7 +256,7 @@ def test_legend_using_add_legend_only_labels(random_hills):
 
     legend_entries = ["label 1", "label 2"]
 
-    pl.add_legend(legend_entries)
+    pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
 
 
@@ -265,7 +265,7 @@ def test_legend_add_entry_warning():
     legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
 
     with pytest.warns(UserWarning, match="Some of the arguments given to legend are not used"):
-        pl.add_legend(legend_entries)
+        pl.add_legend(legend_entries, size=(0.5, 0.5))
         pl.show()
 
 
