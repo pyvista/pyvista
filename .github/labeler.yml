@@ -15,13 +15,13 @@ maintenance:
     - any-glob-to-any-file: 'pyproject.toml'
     - any-glob-to-any-file: '.pre-commit-config.yaml'
 dependencies:
-- any:
-  - changed-files:
-    - any-glob-to-any-file: 'requirements*'
-    - any-glob-to-any-file: 'environment.yml'
-    - any-glob-to-any-file: '.pre-commit-config.yaml'
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: "requirements*"
+          - any-glob-to-any-file: "environment.yml"
+          - any-glob-to-any-file: ".pre-commit-config.yaml"
 docker:
-- any:
-  - changed-files:
-    - any-glob-to-any-file: 'docker/**/*'
-    - any-glob-to-any-file: '.dockerignore'
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: "docker/**/*"
+          - any-glob-to-any-file: ".dockerignore"
