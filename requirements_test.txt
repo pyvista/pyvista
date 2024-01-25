@@ -12,7 +12,7 @@ meshio<5.4.0
 nest_asyncio<1.5.10
 numpydoc==1.6.0
 param<2.1.0
-pydata-sphinx-theme<0.15.0
+pydata-sphinx-theme<0.16.0
 pytest<7.5.0
 pytest-cov<4.2.0
 pytest-memprof<0.3.0
