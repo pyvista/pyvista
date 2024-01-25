@@ -3448,7 +3448,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     # Only passing label
                     text = args
                     # taking the currents (if any)
-                    face_, _, color = list(self._labels.values())[i]
+                    try:
+                        face_, _, color = list(self._labels.values())[i]
+                    except (AttributeError, IndexError):
+                        # There are no values
+                        face_ = None
+                        color = None
 
                 else:
                     raise ValueError(
