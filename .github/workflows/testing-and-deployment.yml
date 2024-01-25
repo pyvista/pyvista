@@ -71,14 +71,14 @@ jobs:
         uses: pyvista/setup-headless-display-action@v2
 
       - name: Cache Conda Packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/anaconda3/pkgs
           key: Conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
           restore-keys: |
             ${{ runner.os }}-conda-
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -159,7 +159,7 @@ jobs:
             requirements.txt
             requirements_test.txt
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -266,7 +266,7 @@ jobs:
           echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
 
       - name: Cache example data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: Examples-1-${{ hashFiles('*') }}

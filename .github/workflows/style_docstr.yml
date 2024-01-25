@@ -22,7 +22,7 @@ jobs:
             requirements.txt
             requirements_test.txt
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-Data-${{ hashFiles('*') }}

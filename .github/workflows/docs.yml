@@ -66,14 +66,14 @@ jobs:
           pip list
 
       - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
