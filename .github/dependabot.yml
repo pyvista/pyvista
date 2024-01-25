@@ -29,3 +29,6 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    labels:
+      - "maintenance"
+      - "dependencies"
