@@ -28,5 +28,5 @@ sphinxcontrib-websupport==1.2.7
 sympy==1.12
 trame==3.5.1
 trame-vtk==2.7.0
-trame-vuetify==2.3.1
+trame-vuetify==2.4.2
 trimesh==4.0.10
