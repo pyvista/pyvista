@@ -874,6 +874,8 @@ class Text3DSource(vtkVectorText):
 class CubeSource(_vtk.vtkCubeSource):
     """Cube source algorithm class.
 
+    .. versionadded:: 0.44.0
+
     Parameters
     ----------
     center : sequence[float], default: (0.0, 0.0, 0.0)
