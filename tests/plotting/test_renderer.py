@@ -1,4 +1,3 @@
-from numpy.random import default_rng
 import pytest
 from pytest import raises
 
