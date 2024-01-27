@@ -3358,7 +3358,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
             <pyvista.plotting.themes._Font.family>`.
 
-        background_opacity : int | float, default: 1.0
+        background_opacity : float, default: 1.0
             Set background opacity.
 
         Returns
