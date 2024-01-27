@@ -42,6 +42,11 @@ from pyvista.core.input_validation import (
     validate_transform3x3,
     validate_transform4x4,
 )
+from pyvista.core.input_validation._array_like import (
+    _array_like_props,
+    _ArrayLikeEnum,
+    _ArrayLikeTuple,
+)
 from pyvista.core.input_validation.check import _validate_shape_value
 from pyvista.core.input_validation.validate import _set_default_kwarg_mandatory
 from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
@@ -964,3 +969,168 @@ def test_validate_axes_orthogonal(bias_index):
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=msg):
         validate_axes(axes_left, must_be_orthogonal=True)
+
+
+# from collections import namedtuple
+#
+# arraylike_types = namedtuple('arraylike_types', ['sequence_number', 'sequence_ndarray'])
+#
+# ragged_arraylike = arraylike_types(
+#     sequence_number=[[1, 2, 3], [4, 5], [6, 7, 8, 9]],
+#     sequence_ndarray=[np.array([1, 2, 3]), np.array([4, 5]), np.array([6, 7, 8, 9])],
+# )
+
+
+arraylike_shapes = [
+    (),
+    (0,),
+    (1,),
+    (
+        1,
+        0,
+    ),
+    (1, 1, 0),
+    (1, 1, 1, 0),
+    (
+        1,
+        2,
+    ),
+    (1, 2, 3),
+    (
+        1,
+        2,
+        3,
+        4,
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    'arraylike_type',
+    [
+        _ArrayLikeEnum.DTypeScalar,
+        _ArrayLikeEnum.NumpyArray,
+        _ArrayLikeEnum.NumpyArraySequence,
+        _ArrayLikeEnum.NumberSequence,
+    ],
+)
+@pytest.mark.parametrize('shape_in', arraylike_shapes)
+@pytest.mark.parametrize('dtype_in', [float, int, bool, np.float64, np.int_, np.bool_, np.uint8])
+def test_array_like_props(arraylike_type, shape_in, dtype_in):
+    # Skip tests for impossible scalar cases
+    is_scalar = shape_in == ()
+    sequence_types = arraylike_type in [
+        _ArrayLikeEnum.NumpyArraySequence,
+        _ArrayLikeEnum.NumberSequence,
+    ]
+    array_type_is_scalar = arraylike_type == _ArrayLikeEnum.DTypeScalar
+    if (is_scalar and sequence_types) or (not is_scalar and array_type_is_scalar):
+        pytest.skip("Scalar cannot be a sequence")
+
+    # Skip tests for equences of numpy dtypes
+    # This is done since sequences are generated using `array.tolist()`
+    # which will cast numpy dtypes to builtin types (which are tested separately)
+    if arraylike_type == _ArrayLikeEnum.NumberSequence and issubclass(dtype_in, np.generic):
+        pytest.skip("No tests for sequences of numpy dtypes.")
+
+    # Set up test array and keep track of special empty sequence cases
+    if is_scalar:
+        initial_array = dtype_in(0)
+        is_empty = False
+    else:
+        initial_array = np.zeros(shape=shape_in, dtype=dtype_in)
+        is_empty = initial_array.shape[-1] == 0
+
+    if arraylike_type == _ArrayLikeEnum.DTypeScalar:
+        array_out = initial_array
+        expected = _ArrayLikeTuple(
+            array=array_out, shape=shape_in, dtype=dtype_in, depth=0, atype=arraylike_type
+        )
+    elif arraylike_type == _ArrayLikeEnum.NumpyArray:
+        array_out = np.array(initial_array)
+        expected = _ArrayLikeTuple(
+            array=array_out,
+            shape=shape_in,
+            dtype=np.dtype(dtype_in).type,
+            depth=0,
+            atype=arraylike_type,
+        )
+    elif arraylike_type == _ArrayLikeEnum.NumpyArraySequence:
+        # convert to list array and replace items with numpy arrays
+        depth = initial_array.ndim
+        array_out = initial_array.tolist()
+        if depth == 4:
+            final_sequence = array_out[0][0][0]
+        elif depth == 3:
+            final_sequence = array_out[0][0]
+        elif depth == 2:
+            final_sequence = array_out[0]
+        elif depth == 1:
+            final_sequence = array_out
+        else:
+            raise RuntimeError('Unexpected test case.')
+
+        if is_empty:
+            final_sequence.append(initial_array)
+        else:
+            [
+                final_sequence.__setitem__(i, np.array(x, dtype=dtype_in))
+                for i, x in enumerate(final_sequence)
+            ]
+
+        expected = _ArrayLikeTuple(
+            array=array_out,
+            shape=np.array(array_out).shape,
+            dtype=np.dtype(dtype_in).type,
+            depth=depth,
+            atype=arraylike_type,
+        )
+
+    elif arraylike_type == _ArrayLikeEnum.NumberSequence:
+        if is_empty:
+            # Cannot infer dtype from an empty sequence at runtime,
+            # so we assume the dtype is float by default
+            dtype_out = float
+            # Check this matches default numpy behavior
+            assert np.array([()]).dtype.type is np.float64
+        else:
+            dtype_out = dtype_in
+        depth = initial_array.ndim
+        array_out = initial_array.tolist()
+        expected = _ArrayLikeTuple(
+            array=array_out, shape=shape_in, dtype=dtype_out, depth=depth, atype=arraylike_type
+        )
+    else:
+        raise RuntimeError("Unexpected test case.")
+
+    # Do test
+    actual = _array_like_props(array_out)
+    assert np.array_equal(actual.array, expected.array)
+    assert actual.shape == expected.shape
+    assert actual.dtype == expected.dtype
+    assert actual.depth == expected.depth
+    assert actual.atype == expected.atype
+
+
+# @pytest.mark.parametrize('ragged_array', ragged_arraylike)
+# def test_get_sequence_shape_raises_error_for_ragged_arrays(ragged_array):
+#     match = 'inhomogeneous shape'
+#     with pytest.raises(ValueError, match=match):
+#         _nested_sequence_props(ragged_array)
+#     # test this matches numpy array behavior
+#     with pytest.raises(ValueError, match=match):
+#         np.array(ragged_array)
+#
+#
+# arraylike_cases = [(),[],[1],[()],[1,2,3],[[1]],[[1,2,3]],[[1,2],[3,4]], [np.array([1,2]),np.array([3,4])],[np.array([1,2]),np.array([3,4]), [5,6]], [np.array([[1,2],[3,4]]), np.array([[5,6],[7,8]])],[np.array([[1,2],[3,4]]), np.array([[5,6],[7,8]])], [9,10,11,12]]
+# @pytest.mark.parametrize('array', arraylike_cases)
+# def test_get_sequence_shape(array):
+#     actual_shape, _, _= _nested_sequence_props(array)
+#     expected_shape = np.array(array).shape
+#     assert actual_shape == expected_shape
+#
+# @pytest.mark.parametrize('array', arraylike_cases)
+# def test_get_sequence_dtype(array):
+#     _, _, actual_dtype = _nested_sequence_props(array)
+#     expected_dtype = np.array(array).dtype.type
+#     assert np.dtype(actual_dtype).type is expected_dtype
