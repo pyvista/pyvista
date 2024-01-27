@@ -1,7 +1,7 @@
 """Functions for processing array-like inputs."""
 from collections import namedtuple
 from enum import Enum
-from typing import List, Literal, Sequence, Tuple, Type, Union, cast, overload
+from typing import List, Literal, Sequence, Tuple, Type, TypeVar, Union, cast, overload
 
 import numpy as np
 
@@ -330,16 +330,17 @@ def _array_like_props(
 # reveal_type(props1n[2])
 # reveal_type(props1n[3])
 
-_SequenceArgType = Union[Sequence[Sequence[_NumberType]], Sequence[NumpyArray[_NumberType]]]
+_SequenceArgType = TypeVar('_SequenceArgType', Sequence[Sequence], Sequence[np.ndarray])
 
 
 def _check_all_subarray_shapes(array: _SequenceArgType, sub_shape) -> None:
     # Type annotations cannot infer the shape or length of sub-arrays,
     # so we check this at runtime
-    if hasattr(array[0], 'shape'):
-        all_same = all(x.shape == sub_shape for x in array)  # type: ignore[union-attr]
+    if isinstance(array[0], Sequence):
+        all_same = all(len(x) == sub_shape for x in array)
     else:
-        all_same = all(len(x) for x in array)
+        all_same = all(x.shape == sub_shape for x in array)
+
     if not all_same:
         raise ValueError(
             "The nested sequence array has an inhomogeneous shape. "
