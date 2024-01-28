@@ -40,8 +40,10 @@ _FiniteNestedSequence = Union[  # Note: scalar types are excluded
     Sequence[Sequence[Sequence[Sequence[_T]]]],
 ]
 
-# Define nested sequences bound to numeric types only
 # Narrow sequence types to tuples and lists only
+_Sequence = Union[List[_T], Tuple[_T, ...]]
+
+# Define nested sequences bound to numeric types only
 _NumberSequence1D = Union[List[_NumberType], Tuple[_NumberType, ...]]
 _NumberSequence2D = Sequence[_NumberSequence1D[_NumberType]]
 _NumberSequence3D = Sequence[_NumberSequence2D[_NumberType]]
@@ -91,3 +93,5 @@ _ArrayLike = Union[
     _ArrayLike3D[_NumberType],
     _ArrayLike4D[_NumberType],
 ]
+
+_ArrayLikeOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]

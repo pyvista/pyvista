@@ -107,10 +107,10 @@ def test_check_subdtype():
     check_subdtype(np.array([1.0, 2, 3]), float)
     check_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
     check_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
-    msg = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
-    with pytest.raises(TypeError, match=msg):
+    msg = "Input has incorrect dtype of <class 'numpy.int32'>. The dtype must be a subtype of <class 'float'>."
+    with pytest.raises(TypeError, match=escape(msg)):
         check_subdtype(np.array([1, 2, 3]).astype('int32'), float)
-    msg = "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
+    msg = "Input has incorrect dtype of <class 'numpy.complex128'>. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     with pytest.raises(TypeError, match=escape(msg)):
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
@@ -668,7 +668,7 @@ def test_check_finite():
 def test_check_integerlike():
     check_integerlike(1)
     check_integerlike([2, 3.0])
-    msg = "Input has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'numpy.integer'>."
+    msg = "Input has incorrect dtype of <class 'numpy.float64'>. The dtype must be a subtype of <class 'numpy.integer'>."
     with pytest.raises(TypeError, match=msg):
         check_integerlike([2, 3.0], strict=True, name="_input")
     msg = "_input must have integer-like values."

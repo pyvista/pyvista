@@ -13,12 +13,13 @@ An array validator function typically:
 
 """
 import inspect
-from typing import Any, List, Optional, TypeVar, Union, cast
+from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Array, Matrix, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core._array_like import _NumberType
 from pyvista.core.input_validation.check import (
     ShapeLike,
     check_contains,
@@ -35,12 +36,9 @@ from pyvista.core.input_validation.check import (
 )
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 
-_NumericType = TypeVar('_NumericType', bool, int, float)
-_NumberType = TypeVar('_NumberType', int, float)
-
 
 def validate_array(
-    arr: Union[_NumericType, Array[_NumericType]],
+    arr: Union[_NumberType, Array[_NumberType]],
     /,
     *,
     must_have_shape=None,
@@ -93,8 +91,8 @@ def validate_array(
 
     Parameters
     ----------
-    arr : float | int | bool | Array[float] | Array[int] | Array[bool]
-        Array to be validated, in any form that can be converted to
+    arr : Number | Array
+        Number or array to be validated, in any form that can be converted to
         a :class:`np.ndarray`. This includes lists, lists of tuples, tuples,
         tuples of tuples, tuples of lists and ndarrays.
 
@@ -572,7 +570,7 @@ def validate_transform3x3(
 
 
 def validate_number(
-    num: Union[_NumberType, Vector[_NumberType]], /, *, reshape=True, **kwargs
+    num: Union[bool, int, float, _NumberType, Vector[_NumberType]], /, *, reshape=True, **kwargs
 ) -> _NumberType:
     """Validate a real, finite scalar number.
 
@@ -693,8 +691,8 @@ def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
 
 
 def validate_arrayNx3(
-    arr: Union[Matrix[_NumericType], Vector[_NumericType]], /, *, reshape=True, **kwargs
-) -> NumpyArray[_NumericType]:
+    arr: Union[Matrix[_NumberType], Vector[_NumberType]], /, *, reshape=True, **kwargs
+) -> NumpyArray[_NumberType]:
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -767,7 +765,7 @@ def validate_arrayNx3(
 
 
 def validate_arrayN(
-    arr: Union[_NumericType, Vector[_NumericType], Matrix[_NumericType]],
+    arr: Union[_NumberType, Vector[_NumberType], Matrix[_NumberType]],
     /,
     *,
     reshape=True,
@@ -847,7 +845,7 @@ def validate_arrayN(
 
 
 def validate_arrayN_uintlike(
-    arr: Union[_NumericType, Vector[_NumericType], Matrix[_NumericType]],
+    arr: Union[_NumberType, Vector[_NumberType], Matrix[_NumberType]],
     /,
     *,
     reshape=True,
@@ -940,7 +938,7 @@ def validate_arrayN_uintlike(
 
 
 def validate_array3(
-    arr: Union[_NumericType, Vector[_NumericType], Matrix[_NumericType]],
+    arr: Union[_NumberType, Vector[_NumberType], Matrix[_NumberType]],
     /,
     *,
     reshape=True,

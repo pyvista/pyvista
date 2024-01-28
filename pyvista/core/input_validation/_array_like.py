@@ -6,7 +6,7 @@ import numpy as np
 
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core._array_like import (
-    _ArrayLike,
+    _ArrayLikeOrScalar,
     _NumberSequence1D,
     _NumberSequence2D,
     _NumberSequence3D,
@@ -18,14 +18,26 @@ from pyvista.core._typing_core._array_like import (
     _NumpyArraySequence4D,
 )
 
-_ArrayOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]
+# Similar definitions to numpy._typing._shape but with modifications:
+#  - explicit support for empty tuples `()`
+#  - strictly uses tuples for indexing
+#  - our ShapeLike definition includes single integers (numpy's does not)
+
+ScalarShape = Tuple[()]
+ArrayShape = Tuple[int, ...]
+Shape = Union[ScalarShape, ArrayShape]
+ShapeLike = Union[int, Shape]
+
+# Similar to npt.DTypeLike but is bound to numeric types
+# and does not allow _SupportsDType protocol
+DTypeLike = Union[np.dtype, Type]
+
 
 # Store array-like props using named tuples
 # Use different names for different array types
 _ScalarDTypeTuple = namedtuple('_ScalarDTypeTuple', ['array', 'shape', 'dtype', 'ndim'])
 _NumpyArrayTuple = namedtuple('_NumpyArrayTuple', ['array', 'shape', 'dtype', 'ndim'])
 _NumberSequenceTuple = namedtuple('_NumberSequenceTuple', ['array', 'shape', 'dtype', 'ndim'])
-
 _NumpyArraySequenceTuple = namedtuple(
     '_NumpyArraySequenceTuple', ['array', 'shape', 'dtype', 'ndim']
 )
@@ -107,9 +119,9 @@ def _array_like_props(
 
 
 def _array_like_props(
-    array: _ArrayOrScalar[_NumberType],
-) -> Tuple[_ArrayOrScalar[_NumberType], Tuple[int, ...], Type[_NumberType], int]:
-    """Return ArrayLike info such as shape, dtype, and sequence depth (if applicable)."""
+    array: _ArrayLikeOrScalar[_NumberType],
+) -> Tuple[_ArrayLikeOrScalar[_NumberType], Tuple[int, ...], Type[_NumberType], int]:
+    """Return ArrayLike shape, dtype, and ndim."""
     # Note: This implementation is purposefully verbose and explicit
     # so that mypy can correctly infer the return types.
     shape: List[int] = []
@@ -232,10 +244,10 @@ def _array_like_props(
     elif isinstance(array, np.ndarray):
         # non-nested numpy array
         return _NumpyArrayTuple(
-            array,
-            array.shape,
-            array.dtype.type,
-            array.ndim,
+            array=array,
+            shape=array.shape,
+            dtype=array.dtype.type,
+            ndim=array.ndim,
         )
     else:
         # just a number/scalar type

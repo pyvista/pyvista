@@ -19,6 +19,7 @@ from typing import (
     Sequence,
     Sized,
     Tuple,
+    TypeVar,
     Union,
     cast,
     get_args,
@@ -26,22 +27,18 @@ from typing import (
 )
 
 import numpy as np
-from numpy import typing as npt
 
-from pyvista.core._typing_core import Array, NumberType, NumpyArray, Vector
+from pyvista.core._typing_core import Array, NumpyArray, Vector
+from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
+from pyvista.core.input_validation._array_like import DTypeLike, Shape, ShapeLike, _array_like_props
 from pyvista.core.utilities.arrays import cast_to_ndarray
 
-# Similar definitions to numpy._typing._shape but with modifications:
-#  - explicit support for empty tuples `()`
-#  - strictly uses tuples for indexing
-#  - our ShapeLike definition includes single integers (numpy's does not)
-ShapeLike = Union[int, Tuple[()], Tuple[int, ...]]
-Shape = Union[Tuple[()], Tuple[int, ...]]
+_T = TypeVar('_T')
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, Array[NumberType]],
-    base_dtype: Union[npt.DTypeLike, Sequence],
+    input_obj: Union[DTypeLike, _ArrayLikeOrScalar[_NumberType]],
+    base_dtype: Union[DTypeLike, Tuple[DTypeLike, ...], List[DTypeLike]],
     /,
     *,
     name: str = 'Input',
@@ -50,11 +47,11 @@ def check_subdtype(
 
     Parameters
     ----------
-    input_obj : numpy.typing.DTypeLike | Array[float]
+    input_obj : DType | Array | Scalar
         ``dtype`` object (or object coercible to one) or an array-like object.
         If array-like, the dtype of the array is used.
 
-    base_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike]
+    base_dtype : DType | Sequence[DType]
         ``dtype``-like object or a sequence of ``dtype``-like objects. The ``input_obj``
         must be a subtype of this value. If a sequence, ``input_obj`` must be a
         subtype of at least one of the specified dtypes.
@@ -90,30 +87,28 @@ def check_subdtype(
     >>> input_validation.check_subdtype(arr, np.integer)
 
     """
-    if isinstance(input_obj, np.dtype):
-        pass
-    elif isinstance(input_obj, np.ndarray):
-        input_obj = input_obj.dtype
+    input_dtype: DTypeLike
+    if isinstance(input_obj, (tuple, list, np.ndarray)):
+        _, _, input_dtype, _ = _array_like_props(input_obj)
     else:
-        input_obj = np.dtype(cast(npt.DTypeLike, input_obj))
-    input_obj = cast(np.dtype, input_obj)
+        input_dtype = cast(DTypeLike, input_obj)
 
-    if not isinstance(base_dtype, (list, tuple)):
+    if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
-    for d in base_dtype:
-        if np.issubdtype(input_obj, d):
-            return
-    msg = f"{name} has incorrect dtype of '{input_obj}'. "
-    if len(base_dtype) == 1:
-        msg += f"The dtype must be a subtype of {base_dtype[0]}."
+
+    if any(np.issubdtype(input_dtype, base) for base in base_dtype):
+        return None
     else:
-        msg += f"The dtype must be a subtype of at least one of \n{base_dtype}."
-    raise TypeError(msg)
+        # Not a subdtype, so raise error
+        msg = f"{name} has incorrect dtype of {input_dtype}. "
+        if len(base_dtype) == 1:
+            msg += f"The dtype must be a subtype of {base_dtype[0]}."
+        else:
+            msg += f"The dtype must be a subtype of at least one of \n{base_dtype}."
+        raise TypeError(msg)
 
 
-def check_numeric(
-    arr: Union[NumberType, Array[NumberType], npt.NDArray[np.number]], /, *, name: str = "Array"
-):
+def check_numeric(arr: _ArrayLikeOrScalar, /, *, name: str = "Array"):
     # TODO: rename and modify as 'check_complex'
     """Check if an array is float, integer, or complex type.
 
@@ -160,9 +155,7 @@ def check_numeric(
         raise TypeError(f"{name} must be numeric.") from e
 
 
-def check_real(
-    arr: Union[NumberType, Array[NumberType], npt.NDArray[np.number]], /, *, name: str = "Array"
-):
+def check_real(arr: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
@@ -215,7 +208,7 @@ def check_real(
 
 
 def check_sorted(
-    arr: Union[NumberType, Array[NumberType]],
+    arr: Union[_NumberType, Array[_NumberType]],
     /,
     *,
     ascending: bool = True,
@@ -319,7 +312,7 @@ def check_sorted(
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
-def check_finite(arr: Union[NumberType, Array[NumberType]], /, *, name: str = "Array"):
+def check_finite(arr: Union[_NumberType, Array[_NumberType]], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
@@ -353,7 +346,7 @@ def check_finite(arr: Union[NumberType, Array[NumberType]], /, *, name: str = "A
 
 
 def check_integerlike(
-    arr: Union[NumberType, Array[NumberType]], /, *, strict: bool = False, name: str = "Array"
+    arr: Union[_NumberType, Array[_NumberType]], /, *, strict: bool = False, name: str = "Array"
 ):
     """Check if an array has integer or integer-like float values.
 
@@ -375,7 +368,7 @@ def check_integerlike(
         If any element's value differs from its floor.
 
     TypeError
-        If ``strict=True`` and the array's dtype is not integral.
+        If ``strict=True`` and the array's dtype is not integr
 
     See Also
     --------
@@ -400,7 +393,7 @@ def check_integerlike(
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_nonnegative(arr: Union[NumberType, Array[NumberType]], /, *, name: str = "Array"):
+def check_nonnegative(arr: Union[_NumberType, Array[_NumberType]], /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -436,7 +429,7 @@ def check_nonnegative(arr: Union[NumberType, Array[NumberType]], /, *, name: str
 
 
 def check_greater_than(
-    arr: Union[NumberType, Array[NumberType]],
+    arr: Union[_NumberType, Array[_NumberType]],
     /,
     value: float,
     *,
@@ -490,7 +483,7 @@ def check_greater_than(
 
 
 def check_less_than(
-    arr: Union[NumberType, Array[NumberType]],
+    arr: Union[_NumberType, Array[_NumberType]],
     /,
     value: float,
     *,
@@ -545,9 +538,9 @@ def check_less_than(
 
 
 def check_range(
-    arr: Union[NumberType, Array[NumberType]],
+    arr: Union[_NumberType, Array[_NumberType]],
     /,
-    rng: Vector[float],
+    rng: Vector[_NumberType],
     *,
     strict_lower: bool = False,
     strict_upper: bool = False,
@@ -610,7 +603,7 @@ def check_range(
 
 
 def check_shape(
-    arr: Union[NumberType, Array[NumberType]],
+    arr: Union[_NumberType, Array[_NumberType]],
     /,
     shape: Union[ShapeLike, List[ShapeLike]],
     *,
@@ -645,7 +638,7 @@ def check_shape(
 
     Examples
     --------
-    Check if an array is one-dimensional.
+    Check if an array is one-dimension
 
     >>> import numpy as np
     >>> from pyvista.core import input_validation
@@ -1163,7 +1156,7 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
 
 
 def check_length(
-    arr: Union[NumberType, Array[NumberType], Sized],
+    arr: Union[_NumberType, Array[_NumberType], Sized],
     /,
     *,
     exact_length: Union[int, Vector[int], None] = None,
@@ -1243,7 +1236,7 @@ def check_length(
             arr = arr.reshape((1,))
 
     check_instance(arr, (Sequence, np.ndarray), name=name)
-    arr = cast(Union[NumberType, Array[NumberType]], arr)
+    arr = cast(Union[_NumberType, Array[_NumberType]], arr)
 
     if must_be_1d:
         check_shape(arr, shape=(-1))
@@ -1315,7 +1308,7 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
 
 
 def check_scalar(
-    scalar: Union[float, int, complex, Number, NumpyArray[NumberType]],
+    scalar: Union[float, int, complex, Number, NumpyArray[_NumberType]],
     /,
     *,
     must_be_real: bool = True,
@@ -1384,3 +1377,44 @@ def check_scalar(
             check_number(scalar, must_be_real=must_be_real)
     except TypeError:
         raise
+
+
+# from typing import Literal, Type, TypeVar
+#
+# _T = TypeVar('_T')
+
+
+# def _nested_sequence_props(seq: _FiniteNestedSequence[_T]) -> Tuple[int, Tuple[int, ...], Type[_T]]:
+#     """Return sequence depth, shape and type info.
+#
+#     Returns
+#     -------
+#     tuple(int, int)
+#         Sequence shape as (depth, length)
+#         Sequence depth.
+#     int
+#         Sequence length.
+#     type
+#         Type of the first item in the sequence.
+#
+#     """
+#     ndim, shape = 0, []
+#
+#     def _nested_sequence_depth(
+#         seq_: Union[_T, _FiniteNestedSequence[_T]]
+#     ) -> Tuple[int, Type[_T]]:
+#
+#         nonlocal shape
+#         depth = int(
+#             isinstance(seq_, Sequence)
+#             and max(map(lambda x: _nested_sequence_depth(x)[0], seq_)) + 1
+#         )
+#         if depth > 0:
+#             shape.append(len(seq_))
+#             return depth, type(seq_[0])
+#         else:
+#             shape.append(1)
+#             return depth, type(seq_)
+#
+#     depth, typ = _nested_sequence_depth(seq)
+#     return depth, tuple(shape[:-1]), typ
