@@ -1109,7 +1109,15 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     return wrap(tube_filter.GetOutput())
 
 
-def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
+def Cube(
+    center=(0.0, 0.0, 0.0),
+    x_length=1.0,
+    y_length=1.0,
+    z_length=1.0,
+    bounds=None,
+    clean=True,
+    point_dtype='float32',
+):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
@@ -1151,6 +1159,11 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
         .. versionadded:: 0.33.0
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1177,6 +1190,15 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
         src.SetXLength(x_length)
         src.SetYLength(y_length)
         src.SetZLength(z_length)
+
+    if point_dtype not in ['float32', 'float64']:
+        raise ValueError("Point dtype must be either 'float32' or 'float64'")
+    precision = {
+        'float32': _vtk.vtkAlgorithm.SINGLE_PRECISION,
+        'float64': _vtk.vtkAlgorithm.DOUBLE_PRECISION,
+    }[point_dtype]
+    src.SetOutputPointsPrecision(precision)
+
     src.Update()
     cube = wrap(src.GetOutput())
 
@@ -1241,6 +1263,7 @@ def Cone(
     capping=True,
     angle=None,
     resolution=6,
+    point_dtype='float32',
 ):
     """Create a cone.
 
@@ -1271,6 +1294,11 @@ def Cone(
     resolution : int, default: 6
         Number of facets used to represent the cone.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1292,6 +1320,7 @@ def Cone(
         angle=angle,
         radius=radius,
         resolution=resolution,
+        point_dtype=point_dtype,
     )
     return algo.output
 

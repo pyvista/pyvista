@@ -585,6 +585,28 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1), reason="https://github.com/pyvista/pyvista/pull/5502"
+)
+@pytest.mark.parametrize('point_dtype', ['float32', 'float64'])
+def test_extract_geometry_precision(datasets, point_dtype):
+    # for dataset in datasets:
+    #     geom = dataset.extract_geometry(point_dtype=point_dtype)
+    #     assert geom.points.dtype == point_dtype
+    geom = datasets[0].extract_geometry(point_dtype=point_dtype)
+    assert geom.points.dtype == point_dtype
+    geom = datasets[1].extract_geometry(point_dtype=point_dtype)
+    assert geom.points.dtype == point_dtype
+    geom = datasets[2].extract_geometry(point_dtype=point_dtype)
+    assert geom.points.dtype == point_dtype
+    # TODO: raise error when PolyData's `point_dtype` is `float64`.
+    # TODO: check point_dtype when input PolyData's point_dtype is `float64`.
+    # geom = datasets[3].extract_geometry(point_dtype=point_dtype)
+    # assert geom.points.dtype == point_dtype
+    geom = datasets[4].extract_geometry(point_dtype=point_dtype)
+    assert geom.points.dtype == point_dtype
+
+
 def test_extract_all_edges(datasets):
     for dataset in datasets:
         edges = dataset.extract_all_edges()

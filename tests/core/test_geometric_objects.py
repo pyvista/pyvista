@@ -413,12 +413,18 @@ def test_cube():
     assert np.any(cube.points)
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
+    point_dtype = 'float64'
+    cube = pv.Cube(point_dtype=point_dtype)
+    assert cube.points.dtype == point_dtype
 
 
 def test_cone():
     cone = pv.Cone()
     assert np.any(cone.points)
     assert np.any(cone.faces)
+    point_dtype = 'float64'
+    cone = pv.Cone(point_dtype=point_dtype)
+    assert cone.points.dtype == point_dtype
 
 
 def test_box():
