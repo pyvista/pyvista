@@ -22,7 +22,7 @@ _ArrayOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]
 
 # Store array-like props using named tuples
 # Use different names for different array types
-_ScalarTuple = namedtuple('_ScalarTuple', ['array', 'shape', 'dtype', 'ndim'])
+_ScalarDTypeTuple = namedtuple('_ScalarDTypeTuple', ['array', 'shape', 'dtype', 'ndim'])
 _NumpyArrayTuple = namedtuple('_NumpyArrayTuple', ['array', 'shape', 'dtype', 'ndim'])
 _NumberSequenceTuple = namedtuple('_NumberSequenceTuple', ['array', 'shape', 'dtype', 'ndim'])
 
@@ -239,7 +239,7 @@ def _array_like_props(
         )
     else:
         # just a number/scalar type
-        return _ScalarTuple(array=array, shape=tuple(shape), dtype=type(array), ndim=depth)
+        return _ScalarDTypeTuple(array=array, shape=tuple(shape), dtype=type(array), ndim=depth)
 
 
 # props0 = _array_like_props(0)

@@ -44,10 +44,10 @@ from pyvista.core.input_validation import (
 )
 from pyvista.core.input_validation._array_like import (
     _array_like_props,
-_ScalarTuple,
-_NumpyArrayTuple,
-_NumberSequenceTuple,
-_NumpyArraySequenceTuple
+    _NumberSequenceTuple,
+    _NumpyArraySequenceTuple,
+    _NumpyArrayTuple,
+    _ScalarDTypeTuple,
 )
 from pyvista.core.input_validation.check import _validate_shape_value
 from pyvista.core.input_validation.validate import _set_default_kwarg_mandatory
@@ -1010,7 +1010,7 @@ arraylike_shapes = [
 @pytest.mark.parametrize(
     'arraylike_type',
     [
-        _ScalarTuple,
+        _ScalarDTypeTuple,
         _NumpyArrayTuple,
         _NumpyArraySequenceTuple,
         _NumberSequenceTuple,
@@ -1021,12 +1021,12 @@ arraylike_shapes = [
 def test_array_like_props(arraylike_type, shape_in, dtype_in):
     # Skip tests for impossible scalar cases
     is_scalar = shape_in == ()
-    sequence_types = arraylike_type in [
+    is_sequence_type = arraylike_type in [
         _NumpyArraySequenceTuple,
         _NumberSequenceTuple,
     ]
-    array_type_is_scalar = arraylike_type is _ScalarTuple
-    if (is_scalar and sequence_types) or (not is_scalar and array_type_is_scalar):
+    is_scalar_type = arraylike_type is _ScalarDTypeTuple
+    if (is_scalar and is_sequence_type) or (not is_scalar and is_scalar_type):
         pytest.skip("Scalar cannot be a sequence")
 
     # Skip tests for equences of numpy dtypes
@@ -1043,10 +1043,9 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
         initial_array = np.zeros(shape=shape_in, dtype=dtype_in)
         is_empty = initial_array.shape[-1] == 0
 
-    if arraylike_type is _ScalarTuple:
+    if arraylike_type is _ScalarDTypeTuple:
         array_out = initial_array
-        expected = _ScalarTuple(
-            array=array_out, shape=shape_in, dtype=dtype_in, ndim=0)
+        expected = _ScalarDTypeTuple(array=array_out, shape=shape_in, dtype=dtype_in, ndim=0)
     elif arraylike_type is _NumpyArrayTuple:
         array_out = np.array(initial_array)
         expected = _NumpyArrayTuple(
@@ -1082,7 +1081,7 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
             array=array_out,
             shape=np.array(array_out).shape,
             dtype=np.dtype(dtype_in).type,
-            ndim=np.array(array_out).ndim
+            ndim=np.array(array_out).ndim,
         )
 
     elif arraylike_type is _NumberSequenceTuple:
@@ -1112,8 +1111,6 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
         assert type(actual) is arraylike_type
     except AssertionError:
         actual = _array_like_props(array_out)
-
-
 
 
 # @pytest.mark.parametrize('ragged_array', ragged_arraylike)
