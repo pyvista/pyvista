@@ -1110,15 +1110,12 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
         raise RuntimeError("Unexpected test case.")
 
     # Do test
-    try:
-        actual = _array_like_props(array_out)
-        assert np.array_equal(actual.array, expected.array)
-        assert actual.shape == expected.shape
-        assert actual.dtype == expected.dtype
-        assert actual.ndim == expected.ndim
-        assert type(actual) is arraylike_type
-    except AssertionError:
-        actual = _array_like_props(array_out)
+    actual = _array_like_props(array_out)
+    assert np.array_equal(actual.array, expected.array)
+    assert actual.shape == expected.shape
+    assert actual.dtype == expected.dtype
+    assert actual.ndim == expected.ndim
+    assert type(actual) is arraylike_type
 
 
 # @pytest.mark.parametrize('ragged_array', ragged_arraylike)
