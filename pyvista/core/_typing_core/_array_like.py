@@ -57,14 +57,14 @@ _NumberSequence = Union[
 
 # Define nested sequences of numpy arrays
 _NumpyArraySequence1D = Sequence[NumpyArray[_NumberType]]
-_NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
-_NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
-_NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]
+_NumpyArraySequence2D = Sequence[Sequence[NumpyArray[_NumberType]]]
+_NumpyArraySequence3D = Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]
+_NumpyArraySequence4D = Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]]
 _NumpyArraySequence = Union[
-    _NumpyArraySequence1D[_NumberType],
-    _NumpyArraySequence2D[_NumberType],
-    _NumpyArraySequence3D[_NumberType],
-    _NumpyArraySequence4D[_NumberType],
+    Sequence[NumpyArray[_NumberType]],
+    Sequence[Sequence[NumpyArray[_NumberType]]],
+    Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]],
+    Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]],
 ]
 
 _ArrayLike1D = Union[
