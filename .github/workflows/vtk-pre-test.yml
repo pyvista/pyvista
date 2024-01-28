@@ -4,7 +4,7 @@ on:
   push:
     branches:
       # To resolve issues on VTK master and test, use this branch name pattern
-      - 'maint/vtk-master*'
+      - "maint/vtk-master*"
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
@@ -15,7 +15,7 @@ concurrency:
 
 env:
   ALLOW_PLOTTING: true
-  SHELLOPTS: 'errexit:pipefail'
+  SHELLOPTS: "errexit:pipefail"
 
 jobs:
   VTK-master:
@@ -34,10 +34,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: "pip"
           cache-dependency-path: requirements_test.txt
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}

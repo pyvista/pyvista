@@ -17,9 +17,9 @@ jobs:
       && startsWith(github.event.comment.body, 'github-actions preview')
     runs-on: ubuntu-20.04
     env:
-      PYVISTA_OFF_SCREEN: 'True'
+      PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
-      SHELLOPTS: 'errexit:pipefail'
+      SHELLOPTS: "errexit:pipefail"
     steps:
       - uses: sushichop/action-repository-permission@v2
         with:
@@ -34,8 +34,8 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           cache-dependency-path: |
             requirements.txt
             requirements_docs.txt
@@ -62,14 +62,14 @@ jobs:
           pip list
 
       - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
