@@ -1,6 +1,5 @@
 """Functions for processing array-like inputs."""
 from collections import namedtuple
-from enum import Enum
 from typing import List, Literal, Sequence, Tuple, Type, TypeVar, Union, cast, overload
 
 import numpy as np
@@ -21,96 +20,56 @@ from pyvista.core._typing_core._array_like import (
 
 _ArrayOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]
 
+# Store array-like props using named tuples
+# Use different names for different array types
+_ScalarTuple = namedtuple('_ScalarTuple', ['array', 'shape', 'dtype', 'ndim'])
+_NumpyArrayTuple = namedtuple('_NumpyArrayTuple', ['array', 'shape', 'dtype', 'ndim'])
+_NumberSequenceTuple = namedtuple('_NumberSequenceTuple', ['array', 'shape', 'dtype', 'ndim'])
 
-class _ArrayLikeEnum(Enum):
-    DTypeScalar = 0
-    NumpyArray = 1
-    NumberSequence = 2
-    NumpyArraySequence = 3
-
-
-_ArrayLikeTuple = namedtuple(
-    '_ArrayLikeTuple',
-    ['array', 'shape', 'dtype', 'depth', 'atype'],
-    defaults=[None, None, None, None],
+_NumpyArraySequenceTuple = namedtuple(
+    '_NumpyArraySequenceTuple', ['array', 'shape', 'dtype', 'ndim']
 )
 
 
 @overload
 def _array_like_props(
     array: _NumberType,
-) -> Tuple[
-    _NumberType,
-    Tuple[()],
-    Type[_NumberType],
-    Literal[0],
-    Literal[_ArrayLikeEnum.DTypeScalar],
-]:
+) -> Tuple[_NumberType, Tuple[()], Type[_NumberType], Literal[0],]:
     ...
 
 
 @overload
 def _array_like_props(
     array: NumpyArray[_NumberType],
-) -> Tuple[
-    NumpyArray[_NumberType],
-    Union[Tuple[()], Tuple[int, ...]],
-    Type[_NumberType],
-    Literal[0],
-    Literal[_ArrayLikeEnum.NumpyArray],
-]:
+) -> Tuple[NumpyArray[_NumberType], Union[Tuple[()], Tuple[int, ...]], Type[_NumberType], int,]:
     ...
 
 
 @overload
 def _array_like_props(
     array: _NumpyArraySequence1D[_NumberType],
-) -> Tuple[
-    _NumpyArraySequence1D[_NumberType],
-    Tuple[int, ...],
-    Type[_NumberType],
-    Literal[1],
-    Literal[_ArrayLikeEnum.NumpyArraySequence],
-]:
+) -> Tuple[_NumpyArraySequence1D[_NumberType], Tuple[int, ...], Type[_NumberType], int,]:
     ...
 
 
 @overload
 def _array_like_props(
     array: _NumpyArraySequence2D[_NumberType],
-) -> Tuple[
-    _NumpyArraySequence2D[_NumberType],
-    Tuple[int, ...],
-    Type[_NumberType],
-    Literal[2],
-    Literal[_ArrayLikeEnum.NumpyArraySequence],
-]:
+) -> Tuple[_NumpyArraySequence2D[_NumberType], Tuple[int, ...], Type[_NumberType], int,]:
     ...
 
 
 @overload
 def _array_like_props(
     array: _NumpyArraySequence3D[_NumberType],
-) -> Tuple[
-    _NumpyArraySequence3D[_NumberType],
-    Tuple[int, ...],
-    Type[_NumberType],
-    Literal[3],
-    Literal[_ArrayLikeEnum.NumpyArraySequence],
-]:
+) -> Tuple[_NumpyArraySequence3D[_NumberType], Tuple[int, ...], Type[_NumberType], int,]:
     ...
 
 
 @overload
 def _array_like_props(
     array: _NumpyArraySequence4D[_NumberType],
-) -> Tuple[
-    _NumpyArraySequence4D[_NumberType],
-    Tuple[int, ...],
-    Type[_NumberType],
-    Literal[4],
-    Literal[_ArrayLikeEnum.NumpyArraySequence],
-]:
+) -> Tuple[_NumpyArraySequence4D[_NumberType], Tuple[int, ...], Type[_NumberType], int,]:
     ...
 
 
@@ -122,7 +81,6 @@ def _array_like_props(
     Tuple[int, int, int, int],
     Type[_NumberType],
     Literal[4],
-    Literal[_ArrayLikeEnum.NumberSequence],
 ]:
     ...
 
@@ -130,45 +88,27 @@ def _array_like_props(
 @overload
 def _array_like_props(
     array: _NumberSequence3D[_NumberType],
-) -> Tuple[
-    _NumberSequence3D[_NumberType],
-    Tuple[int, int, int],
-    Type[_NumberType],
-    Literal[3],
-    Literal[_ArrayLikeEnum.NumberSequence],
-]:
+) -> Tuple[_NumberSequence3D[_NumberType], Tuple[int, int, int], Type[_NumberType], Literal[3],]:
     ...
 
 
 @overload
 def _array_like_props(
     array: _NumberSequence2D[_NumberType],
-) -> Tuple[
-    _NumberSequence2D[_NumberType],
-    Tuple[int, int],
-    Type[_NumberType],
-    Literal[2],
-    Literal[_ArrayLikeEnum.NumberSequence],
-]:
+) -> Tuple[_NumberSequence2D[_NumberType], Tuple[int, int], Type[_NumberType], Literal[2],]:
     ...
 
 
 @overload
 def _array_like_props(
     array: _NumberSequence1D[_NumberType],
-) -> Tuple[
-    _NumberSequence1D[_NumberType],
-    Tuple[int],
-    Type[_NumberType],
-    Literal[1],
-    Literal[_ArrayLikeEnum.NumberSequence],
-]:
+) -> Tuple[_NumberSequence1D[_NumberType], Tuple[int], Type[_NumberType], Literal[1],]:
     ...
 
 
 def _array_like_props(
     array: _ArrayOrScalar[_NumberType],
-) -> Tuple[_ArrayOrScalar[_NumberType], Tuple[int, ...], Type[_NumberType], int, _ArrayLikeEnum]:
+) -> Tuple[_ArrayOrScalar[_NumberType], Tuple[int, ...], Type[_NumberType], int]:
     """Return ArrayLike info such as shape, dtype, and sequence depth (if applicable)."""
     # Note: This implementation is purposefully verbose and explicit
     # so that mypy can correctly infer the return types.
@@ -204,12 +144,11 @@ def _array_like_props(
                             sub_shape,
                         )
                         shape.extend(sub_shape)
-                        return _ArrayLikeTuple(
-                            array,
-                            tuple(shape),
-                            array[0][0][0][0].dtype.type,
-                            depth,
-                            _ArrayLikeEnum.NumpyArraySequence,
+                        return _NumpyArraySequenceTuple(
+                            array=array,
+                            shape=tuple(shape),
+                            dtype=array[0][0][0][0].dtype.type,
+                            ndim=len(shape),
                         )
                     else:
                         # 4D sequence of numbers
@@ -221,8 +160,8 @@ def _array_like_props(
                             dtype = cast(Type[_NumberType], type(array[0][0][0][0]))
                         except IndexError:
                             dtype = cast(Type[_NumberType], float)
-                        return _ArrayLikeTuple(
-                            array, tuple(shape), dtype, depth, _ArrayLikeEnum.NumberSequence
+                        return _NumberSequenceTuple(
+                            array=array, shape=tuple(shape), dtype=dtype, ndim=depth
                         )
 
                 elif _not_empty() and isinstance(array[0][0][0], np.ndarray):
@@ -232,12 +171,11 @@ def _array_like_props(
                         cast(Sequence[NumpyArray[_NumberType]], array[0][0]), sub_shape
                     )
                     shape.extend(sub_shape)
-                    return _ArrayLikeTuple(
-                        array,
-                        tuple(shape),
-                        array[0][0][0].dtype.type,
-                        depth,
-                        _ArrayLikeEnum.NumpyArraySequence,
+                    return _NumpyArraySequenceTuple(
+                        array=array,
+                        shape=tuple(shape),
+                        dtype=array[0][0][0].dtype.type,
+                        ndim=len(shape),
                     )
                 else:
                     # 3D sequence of numbers
@@ -249,8 +187,8 @@ def _array_like_props(
                         dtype = cast(Type[_NumberType], type(array[0][0][0]))
                     except IndexError:
                         dtype = cast(Type[_NumberType], float)
-                    return _ArrayLikeTuple(
-                        array, tuple(shape), dtype, depth, _ArrayLikeEnum.NumberSequence
+                    return _NumberSequenceTuple(
+                        array=array, shape=tuple(shape), dtype=dtype, ndim=depth
                     )
 
             elif _not_empty() and isinstance(array[0][0], np.ndarray):
@@ -260,12 +198,8 @@ def _array_like_props(
                     cast(Sequence[NumpyArray[_NumberType]], array[0]), sub_shape
                 )
                 shape.extend(sub_shape)
-                return _ArrayLikeTuple(
-                    array,
-                    tuple(shape),
-                    array[0][0].dtype.type,
-                    depth,
-                    _ArrayLikeEnum.NumpyArraySequence,
+                return _NumpyArraySequenceTuple(
+                    array=array, shape=tuple(shape), dtype=array[0][0].dtype.type, ndim=len(shape)
                 )
             else:
                 # 2D sequence of numbers
@@ -275,8 +209,8 @@ def _array_like_props(
                     dtype = cast(Type[_NumberType], type(array[0][0]))
                 except IndexError:
                     dtype = cast(Type[_NumberType], float)
-                return _ArrayLikeTuple(
-                    array, tuple(shape), dtype, depth, _ArrayLikeEnum.NumberSequence
+                return _NumberSequenceTuple(
+                    array=array, shape=tuple(shape), dtype=dtype, ndim=depth
                 )
 
         elif _not_empty() and isinstance(array[0], np.ndarray):
@@ -284,8 +218,8 @@ def _array_like_props(
             sub_shape = array[0].shape
             _check_all_subarray_shapes(cast(Sequence[NumpyArray[_NumberType]], array), sub_shape)
             shape.extend(array[0].shape)
-            return _ArrayLikeTuple(
-                array, tuple(shape), array[0].dtype.type, depth, _ArrayLikeEnum.NumpyArraySequence
+            return _NumpyArraySequenceTuple(
+                array=array, shape=tuple(shape), dtype=array[0].dtype.type, ndim=len(shape)
             )
         else:
             # 1D sequence of numbers
@@ -293,38 +227,41 @@ def _array_like_props(
                 dtype = cast(Type[_NumberType], type(array[0]))
             except IndexError:
                 dtype = cast(Type[_NumberType], float)
-            return _ArrayLikeTuple(array, tuple(shape), dtype, depth, _ArrayLikeEnum.NumberSequence)
+            return _NumberSequenceTuple(array=array, shape=tuple(shape), dtype=dtype, ndim=depth)
 
     elif isinstance(array, np.ndarray):
         # non-nested numpy array
-        return _ArrayLikeTuple(
-            array, array.shape, array.dtype.type, depth, _ArrayLikeEnum.NumpyArray
+        return _NumpyArrayTuple(
+            array,
+            array.shape,
+            array.dtype.type,
+            array.ndim,
         )
     else:
-        # just a number (float, int)
-        return _ArrayLikeTuple(array, tuple(shape), type(array), depth, _ArrayLikeEnum.DTypeScalar)
+        # just a number/scalar type
+        return _ScalarTuple(array=array, shape=tuple(shape), dtype=type(array), ndim=depth)
 
 
-# props0 = _nested_sequence_props(0)
+# props0 = _array_like_props(0)
 # reveal_type(props0[0])
 # reveal_type(props0[1])
 # reveal_type(props0[2])
 # reveal_type(props0[3])
 #
-# props0n = _nested_sequence_props(np.array([1], dtype=int))
+# props0n = _array_like_props(np.array([1], dtype=int))
 # reveal_type(props0n[0])
 # reveal_type(props0n[1])
 # reveal_type(props0n[2])
 # reveal_type(props0n[3])
 #
-# props1 = _nested_sequence_props([0])
+# props1 = _array_like_props([0])
 # reveal_type(props1[0])
 # reveal_type(props1[1])
 # reveal_type(props1[2])
 # reveal_type(props1[3])
 #
 # reveal_type([np.array(1, dtype=int)])
-# props1n = _nested_sequence_props([np.array(1, dtype=int)])
+# props1n = _array_like_props([np.array(1, dtype=int)])
 # reveal_type(props1n[0])
 # reveal_type(props1n[1])
 # reveal_type(props1n[2])
