@@ -907,7 +907,8 @@ class DiscSource(_vtk.vtkDiskSource):
     def __init__(self, center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
         super().__init__()
-        self.center = center
+        if pyvista.vtk_version_info >= (9, 2):
+            self.center = center
         self.inner = inner
         self.outer = outer
         self.r_res = r_res
