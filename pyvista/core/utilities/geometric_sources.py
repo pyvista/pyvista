@@ -902,6 +902,8 @@ class DiscSource(_vtk.vtkDiskSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
+    _new_attr_exceptions = ["center"]
+
     def __init__(self, center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
         super().__init__()

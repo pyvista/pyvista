@@ -1,6 +1,7 @@
 name: VTK Master Testing
 
 on:
+  pull_request:
   push:
     branches:
       # To resolve issues on VTK master and test, use this branch name pattern
@@ -19,6 +20,8 @@ env:
 
 jobs:
   VTK-master:
+    # only for pull requests, run only when 'vtk_master' label exists
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master') }}
     name: Linux VTK Master Testing
     runs-on: ubuntu-latest
     strategy:
