@@ -57,7 +57,9 @@ _NumberSequence = Union[
 
 # Define nested sequences of numpy arrays
 _NumpyArraySequence1D = Union[List[NumpyArray[_NumberType]], Tuple[NumpyArray[_NumberType], ...]]
-_NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
+_NumpyArraySequence2D = Union[
+    Sequence[List[NumpyArray[_NumberType]]], Sequence[Tuple[NumpyArray[_NumberType], ...]]
+]
 _NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
 _NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]
 _NumpyArraySequence = Union[
