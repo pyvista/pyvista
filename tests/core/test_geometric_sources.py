@@ -272,3 +272,13 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     points_after = text3d_source_with_text._output.GetPoints()
     assert text3d_source_with_text._modified
     assert points_before is points_after
+
+
+def test_disc_source():
+    algo = pv.DiscSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.inner == 0.25
+    assert algo.outer == 0.5
+    assert algo.normal == (0.0, 0.0, 1.0)
+    assert algo.r_res == 1
+    assert algo.c_res == 6
