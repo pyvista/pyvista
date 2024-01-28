@@ -3,7 +3,7 @@
 -r requirements.txt
 cmocean<3.2
 colorcet<3.1.0
-hypothesis<6.95.1
+hypothesis<6.97.1
 imageio<2.34.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
@@ -12,7 +12,7 @@ meshio<5.4.0
 nest_asyncio<1.5.10
 numpydoc==1.6.0
 param<2.1.0
-pydata-sphinx-theme<0.15.0
+pydata-sphinx-theme<0.16.0
 pytest<7.5.0
 pytest-cov<4.2.0
 pytest-memprof<0.3.0
@@ -25,5 +25,5 @@ sympy<1.13.0
 tqdm<4.67.0
 trame>=2.5.2,<3.6
 trame-vtk>=2.5.8,<2.8
-trame-vuetify>=2.3.1,<2.4
+trame-vuetify>=2.3.1,<2.5
 trimesh<4.1.0
