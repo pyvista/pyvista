@@ -897,7 +897,9 @@ def validate_arrayN_uintlike(
 
     >>> import numpy as np
     >>> from pyvista.core import input_validation
-    >>> arr = validate.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
+    >>> arr = input_validation.validate_arrayN_uintlike(
+    ...     (1.0, 2.0, 3.0, 4.0)
+    ... )
     >>> arr
     array([1, 2, 3, 4])
 
