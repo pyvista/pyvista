@@ -20,7 +20,8 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
-from typing import List, Sequence, Tuple, TypeVar, Union
+import sys
+from typing import TYPE_CHECKING, List, Sequence, Tuple, TypeVar, Union, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -56,15 +57,24 @@ _NumberSequence = Union[
 ]
 
 # Define nested sequences of numpy arrays
-_NumpyArraySequence1D = Sequence[NumpyArray[_NumberType]]
-_NumpyArraySequence2D = Sequence[Sequence[NumpyArray[_NumberType]]]
-_NumpyArraySequence3D = Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]
-_NumpyArraySequence4D = Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]]
+_NumpyArraySequence1D = Union[List[NumpyArray[_NumberType]], Tuple[NumpyArray[_NumberType], ...]]
+_NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
+_NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
+_NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]
+
+if not TYPE_CHECKING and sys.version_info.major == 3 and sys.version_info.minor <= 8:
+    # npt.NDArray can only be used as a GenericAlias in python3.9 or later
+    # as a workaround, use a broad Sequence annotation instead
+    _NumpyArraySequence1D = Sequence[Any]
+    _NumpyArraySequence2D = Sequence[Sequence[Any]]
+    _NumpyArraySequence3D = Sequence[Sequence[Sequence[Any]]]
+    _NumpyArraySequence4D = Sequence[Sequence[Sequence[Sequence[Any]]]]
+
 _NumpyArraySequence = Union[
-    Sequence[NumpyArray[_NumberType]],
-    Sequence[Sequence[NumpyArray[_NumberType]]],
-    Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]],
+    _NumpyArraySequence1D[_NumberType],
+    _NumpyArraySequence2D[_NumberType],
+    _NumpyArraySequence3D[_NumberType],
+    _NumpyArraySequence4D[_NumberType],
 ]
 
 _ArrayLike1D = Union[
