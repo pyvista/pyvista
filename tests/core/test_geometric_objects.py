@@ -490,10 +490,10 @@ def test_text_3d():
         bnds[3] - bnds[2],
         bnds[5] - bnds[4],
     )
-    assert actual_width == 2
-    assert actual_height == 3
-    assert actual_depth == 0.5
-    assert mesh.center == [1.0, 2.0, 3.0]
+    assert np.isclose(actual_width, 2.0)
+    assert np.isclose(actual_height, 3.0)
+    assert np.isclose(actual_depth, 0.5)
+    assert np.allclose(mesh.center, [1.0, 2.0, 3.0])
 
     # Test setting empty string returns empty mesh with zeros as bounds
     mesh = pv.Text3D(string="")

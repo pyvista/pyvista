@@ -3757,6 +3757,41 @@ def download_naca(load=True):  # pragma: no cover
     return pyvista.read(filename)
 
 
+def download_lshape(load=True):  # pragma: no cover
+    """Download LShape dataset in EnSight format.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load and plot the dataset.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_lshape()["all"]
+    >>> warped = mesh.warp_by_vector(factor=30)
+    >>> warped.plot(scalars="displacement")
+
+    """
+    filename = download_file('EnSight/LShape.case')
+    download_file('EnSight/LShape_geometry.geo')
+    download_file('EnSight/LShape_displacement.var')
+    if not load:
+        return filename
+    reader = pyvista.get_reader(filename)
+    reader.set_active_time_set(1)
+    reader.set_active_time_value(1.0)
+    return reader.read()
+
+
 def download_wavy(load=True):  # pragma: no cover
     """Download PVD file of a 2D wave.
 

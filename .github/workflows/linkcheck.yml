@@ -8,7 +8,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
   doc:
     name: Check Links
@@ -23,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.9"
-          cache: 'pip'
+          cache: "pip"
           cache-dependency-path: |
             requirements.txt
             requirements_docs.txt
@@ -39,7 +38,7 @@ jobs:
           pip install "$VTK_OSMESA_WHEEL_NAME"
           rm "$VTK_OSMESA_WHEEL_NAME"
         env:
-          VTK_OSMESA_WHEEL_NAME: 'vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl'
+          VTK_OSMESA_WHEEL_NAME: "vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl"
       - name: Install PyVista
         run: pip install -e . --no-deps
 

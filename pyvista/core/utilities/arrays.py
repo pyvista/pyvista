@@ -10,7 +10,7 @@ import numpy.typing as npt
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Array, Matrix, NumpyArray, TransformLike, Vector
-from pyvista.core._typing_core._array_like import _NumberType
+from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -833,35 +833,35 @@ def cast_to_tuple_array(arr: Array[_NumberType]) -> tuple:
     return _to_tuple(arr)
 
 
-from typing import overload
+# from typing import overload
 
 
-@overload  # number -> array
-def cast_to_ndarray(  # numpydoc ignore=GL08
-    arr: _NumberType,
-    /,
-    *,
-    as_any: bool = ...,
-    dtype: Optional[npt.DTypeLike] = ...,
-    copy: bool = ...,
-) -> NumpyArray[_NumberType]:
-    ...
-
-
-@overload  # array -> array
-def cast_to_ndarray(  # numpydoc ignore=GL08
-    arr: Array[_NumberType],
-    /,
-    *,
-    as_any: bool = ...,
-    dtype: Optional[npt.DTypeLike] = ...,
-    copy: bool = ...,
-) -> NumpyArray[_NumberType]:
-    ...
+# @overload  # number -> array
+# def cast_to_ndarray(  # numpydoc ignore=GL08
+#     arr: _NumberType,
+#     /,
+#     *,
+#     as_any: bool = ...,
+#     dtype: Optional[npt.DTypeLike] = ...,
+#     copy: bool = ...,
+# ) -> NumpyArray[_NumberType]:
+#     ...
+#
+#
+# @overload  # array -> array
+# def cast_to_ndarray(  # numpydoc ignore=GL08
+#     arr: Array[_NumberType],
+#     /,
+#     *,
+#     as_any: bool = ...,
+#     dtype: Optional[npt.DTypeLike] = ...,
+#     copy: bool = ...,
+# ) -> NumpyArray[_NumberType]:
+#     ...
 
 
 def cast_to_ndarray(
-    arr: Union[_NumberType, Array[_NumberType]],
+    arr: _ArrayLikeOrScalar[_NumberType],
     /,
     *,
     as_any: bool = True,
@@ -902,6 +902,15 @@ def cast_to_ndarray(
     """
     if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
         return arr
+
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
+    except AttributeError:
+        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+
     try:
         if as_any:
             out = np.asanyarray(arr, dtype=dtype)
@@ -914,6 +923,6 @@ def cast_to_ndarray(
             # object arrays, but on some systems it will not, so raise
             # error manually
             raise ValueError
-    except (ValueError, np.VisibleDeprecationWarning) as e:
+    except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     return out

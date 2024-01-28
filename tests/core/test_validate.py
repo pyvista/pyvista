@@ -764,13 +764,21 @@ def test_check_sorted(shape, axis, ascending, strict):
     num_elements = np.prod(shape)
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        AxisError = np.exceptions.AxisError
+    except AttributeError:
+        AxisError = np.AxisError
+
     try:
         # Create ascending array with duplicate values
         arr_ascending = np.repeat(arr_strict_ascending, 2, axis=axis)
         # Create descending arrays
         arr_descending = np.flip(arr_ascending, axis=axis)
         arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
-    except np.AxisError:
+    except AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'
