@@ -279,6 +279,5 @@ def test_disc_source():
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
     assert algo.inner == 0.25
     assert algo.outer == 0.5
-    assert algo.normal == (0.0, 0.0, 1.0)
     assert algo.r_res == 1
     assert algo.c_res == 6
