@@ -281,3 +281,16 @@ def test_disc_source():
     assert algo.outer == 0.5
     assert algo.r_res == 1
     assert algo.c_res == 6
+
+
+def test_cube_source():
+    algo = pv.CubeSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.x_length == 1.0
+    assert algo.y_length == 1.0
+    assert algo.z_length == 1.0
+    bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
+    algo = pv.CubeSource(bounds=bounds)
+    assert np.array_equal(algo.bounds, bounds)
+    with pytest.raises(TypeError):
+        algo = pv.CubeSource(bounds=0.0)

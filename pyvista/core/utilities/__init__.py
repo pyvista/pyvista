@@ -85,6 +85,7 @@ from .geometric_objects import (
 )
 from .geometric_sources import (
     ConeSource,
+    CubeSource,
     CylinderSource,
     DiscSource,
     MultipleLinesSource,
