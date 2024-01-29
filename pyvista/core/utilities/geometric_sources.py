@@ -1114,11 +1114,11 @@ class DiscSource(_vtk.vtkDiskSource):
     @property
     def inner(self) -> float:
         """Get the inner radius.
-            The inner radius.
 
         Returns
         -------
         float
+            The inner radius.
         """
         return self.GetInnerRadius()
 
