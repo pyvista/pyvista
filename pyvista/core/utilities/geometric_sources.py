@@ -907,7 +907,7 @@ class DiscSource(_vtk.vtkDiskSource):
     def __init__(self, center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
         super().__init__()
-        if pyvista.vtk_version_info >= (9, 2):
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             self.center = center
         self.inner = inner
         self.outer = outer
@@ -923,7 +923,7 @@ class DiscSource(_vtk.vtkDiskSource):
         sequence[float]
             Center in ``[x, y, z]``.
         """
-        if pyvista.vtk_version_info >= (9, 2):
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             return self.GetCenter()
         else:
             return (0.0, 0.0, 0.0)
@@ -937,9 +937,9 @@ class DiscSource(_vtk.vtkDiskSource):
         center : sequence[float]
             Center in ``[x, y, z]``.
         """
-        if pyvista.vtk_version_info >= (9, 2):
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             self.SetCenter(center)
-        else:  # pragma: no cover
+        else:
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
