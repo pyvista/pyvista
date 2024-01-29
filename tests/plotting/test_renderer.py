@@ -276,3 +276,11 @@ def test_legend_add_entry_exception():
     with raises(ValueError, match="The object passed to the legend"):
         pl.add_legend(legend_entries)
         pl.show()
+
+
+def test_add_legend_background_opacity(sphere):
+    background_opacity = 0.4
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, label='sphere')
+    actor = pl.add_legend(background_opacity=background_opacity)
+    assert actor.GetBackgroundOpacity() == background_opacity
