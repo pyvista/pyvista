@@ -5,7 +5,7 @@ vtkArrowSource
 CylinderSource
 vtkSphereSource
 vtkPlaneSource
-vtkLineSource
+LineSource
 vtkCubeSource
 ConeSource
 vtkDiskSource
@@ -29,6 +29,7 @@ from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
     ConeSource,
     CylinderSource,
+    LineSource,
     MultipleLinesSource,
     Text3DSource,
     translate,
@@ -1005,18 +1006,8 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     >>> mesh.plot(color='k', line_width=10)
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
-    src = _vtk.vtkLineSource()
-    src.SetPoint1(*pointa)
-    src.SetPoint2(*pointb)
-    src.SetResolution(resolution)
-    src.Update()
-    line = wrap(src.GetOutput())
+    src = LineSource(pointa, pointb, resolution)
+    line = src.output
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)

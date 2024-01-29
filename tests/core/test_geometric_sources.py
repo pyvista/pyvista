@@ -275,4 +275,7 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
 
 
 def test_line_source():
-    pass
+    algo = pv.LineSource()
+    assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
+    assert np.array_equal(algo.pointb, (0.5, 0.0, 0.0))
+    assert algo.resolution == 1
