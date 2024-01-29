@@ -174,13 +174,13 @@ def test_add_remove_legend(sphere):
 
 
 @pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
-def test_legend_face(sphere, face):
+def test_legend_face(sphere, face, verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face, size=(0.5, 0.5))
 
 
-def test_legend_from_glyph(sphere):
+def test_legend_from_glyph(sphere, verify_image_cache):
     pl = pv.Plotter()
     x = sphere.face_normals[:, 0] ** 2
     y = sphere.face_normals[:, 1] ** 2
@@ -195,7 +195,7 @@ def test_legend_from_glyph(sphere):
     pl.add_legend(size=(0.5, 0.5))
 
 
-def test_legend_from_multiple_glyph(random_hills):
+def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
     random_hills["Normals2"] = -1 * random_hills["Normals"].copy()
@@ -212,7 +212,7 @@ def test_legend_from_multiple_glyph(random_hills):
     pl.show()
 
 
-def test_legend_using_add_legend(random_hills):
+def test_legend_using_add_legend(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
     arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
@@ -227,7 +227,7 @@ def test_legend_using_add_legend(random_hills):
     pl.show()
 
 
-def test_legend_using_add_legend_with_glyph(random_hills):
+def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
     arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
@@ -246,7 +246,7 @@ def test_legend_using_add_legend_with_glyph(random_hills):
     pl.show()
 
 
-def test_legend_using_add_legend_only_labels(random_hills):
+def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
     arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
@@ -260,7 +260,7 @@ def test_legend_using_add_legend_only_labels(random_hills):
     pl.show()
 
 
-def test_legend_add_entry_warning():
+def test_legend_add_entry_warning(verify_image_cache):
     pl = pv.Plotter()
     legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
 
