@@ -272,3 +272,7 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     points_after = text3d_source_with_text._output.GetPoints()
     assert text3d_source_with_text._modified
     assert points_before is points_after
+
+
+def test_line_source():
+    pass
