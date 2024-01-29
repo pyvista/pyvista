@@ -1038,13 +1038,13 @@ class CubeSource(_vtk.vtkCubeSource):
 
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
-        Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     .. versionadded:: 0.44.0
 
     Parameters
     ----------
     center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     inner : float, default: 0.25
         The inner radius.
