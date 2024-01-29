@@ -1088,13 +1088,9 @@ class DiscSource(_vtk.vtkDiskSource):
             Center in ``[x, y, z]``.
         """
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
-            self.SetCenter(center)
+            return self.GetCenter()
         else:
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
-            )
+            return (0.0, 0.0, 0.0)
 
     @center.setter
     def center(self, center: Sequence[float]):
@@ -1105,7 +1101,14 @@ class DiscSource(_vtk.vtkDiskSource):
         center : sequence[float]
             Center in ``[x, y, z]``.
         """
-        self.SetCenter(center)
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
+            self.SetCenter(center)
+        else:
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+            )
 
     @property
     def inner(self) -> float:
