@@ -1035,6 +1035,7 @@ class CubeSource(_vtk.vtkCubeSource):
         self.Update()
         return wrap(self.GetOutput())
 
+
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
         Center in ``[x, y, z]``. Middle of the axis of the disc.
