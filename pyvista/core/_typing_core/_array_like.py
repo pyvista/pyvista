@@ -21,6 +21,7 @@ Some key differences include:
 
 """
 import sys
+import typing
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
@@ -30,7 +31,18 @@ import numpy.typing as npt
 _NumberType = TypeVar(
     '_NumberType', bound=Union[np.floating, np.integer, np.bool_, float, int, bool]
 )
-NumpyArray = npt.NDArray[_NumberType]
+
+if TYPE_CHECKING or sys.version_info >= (3, 9):
+    NumpyArray = npt.NDArray[_NumberType]
+else:
+    # Numpy's NDArray annotations use a customized generic alias type for
+    # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
+    # which makes it incompatible with built-in generic alias types, e.g.
+    # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
+    # the private typing._GenericAlias type instead, which was made public
+    # in python 3.9, and used directly by NumPy in 3.9
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, _NumberType))
+
 
 # Define generic nested sequence
 _T = TypeVar('_T')
@@ -56,22 +68,11 @@ _NumberSequence = Union[
     _NumberSequence4D[_NumberType],
 ]
 
-
-if not TYPE_CHECKING and sys.version_info.major == 3 and sys.version_info.minor <= 8:
-    # npt.NDArray can only be used as a GenericAlias in python3.9 or later
-    # as a workaround, use a broad Sequence annotation instead
-    _NumpyArraySequence1D = Sequence[Any]
-    _NumpyArraySequence2D = Sequence[Sequence[Any]]
-    _NumpyArraySequence3D = Sequence[Sequence[Sequence[Any]]]
-    _NumpyArraySequence4D = Sequence[Sequence[Sequence[Sequence[Any]]]]
-else:
-    # Define nested sequences of numpy arrays
-    _NumpyArraySequence1D = Union[
-        List[NumpyArray[_NumberType]], Tuple[NumpyArray[_NumberType], ...]
-    ]
-    _NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
-    _NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
-    _NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]
+# Define nested sequences of numpy arrays
+_NumpyArraySequence1D = Union[List[NumpyArray[_NumberType]], Tuple[NumpyArray[_NumberType], ...]]
+_NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
+_NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
+_NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]
 
 _NumpyArraySequence = Union[
     _NumpyArraySequence1D[_NumberType],
