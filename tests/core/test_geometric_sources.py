@@ -283,3 +283,5 @@ def test_cube_source():
     bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
     algo = pv.CubeSource(bounds=bounds)
     assert np.array_equal(algo.bounds, bounds)
+    with pytest.raises(TypeError):
+        algo = pv.CubeSource(bounds=0.0)
