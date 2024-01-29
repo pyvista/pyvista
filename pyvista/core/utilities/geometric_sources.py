@@ -1034,6 +1034,8 @@ class CubeSource(_vtk.vtkCubeSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 

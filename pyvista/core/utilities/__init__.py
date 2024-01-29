@@ -85,10 +85,9 @@ from .geometric_objects import (
 )
 from .geometric_sources import (
     ConeSource,
-    CylinderSource,
-    LineSource,
     CubeSource,
     CylinderSource,
+    LineSource,
     MultipleLinesSource,
     Text3DSource,
 )
