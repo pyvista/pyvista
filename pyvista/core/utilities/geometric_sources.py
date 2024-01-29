@@ -10,7 +10,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, Vector
+from pyvista.core._typing_core import BoundsLike, Matrix, Vector
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
@@ -868,3 +868,169 @@ class Text3DSource(vtkVectorText):
             translate(out, self.center, self.normal)
         else:
             out.points += self.center
+
+
+@no_new_attr
+class CubeSource(_vtk.vtkCubeSource):
+    """Cube source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    x_length : float, default: 1.0
+        Length of the cube in the x-direction.
+
+    y_length : float, default: 1.0
+        Length of the cube in the y-direction.
+
+    z_length : float, default: 1.0
+        Length of the cube in the z-direction.
+
+    bounds : sequence[float], optional
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    Examples
+    --------
+    Create a default CubeSource.
+
+    >>> import pyvista as pv
+    >>> source = pv.CubeSource()
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    _new_attr_exceptions = [
+        "bounds",
+        "_bounds",
+    ]
+
+    def __init__(
+        self, center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None
+    ):
+        """Initialize the cube source class."""
+        super().__init__()
+        if bounds is not None:
+            self.bounds = bounds
+        else:
+            self.center = center
+            self.x_length = x_length
+            self.y_length = y_length
+            self.z_length = z_length
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounding box of the cube."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        if np.array(bounds).size != 6:
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
+        self._bounds = bounds
+        self.SetBounds(bounds)
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def x_length(self) -> float:
+        """Get the x length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            XLength along the cone in its specified direction.
+        """
+        return self.GetXLength()
+
+    @x_length.setter
+    def x_length(self, x_length: float):
+        """Set the x length of the cube.
+
+        Parameters
+        ----------
+        x_length : float
+            XLength of the cone.
+        """
+        self.SetXLength(x_length)
+
+    @property
+    def y_length(self) -> float:
+        """Get the y length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            YLength along the cone in its specified direction.
+        """
+        return self.GetYLength()
+
+    @y_length.setter
+    def y_length(self, y_length: float):
+        """Set the y length of the cube.
+
+        Parameters
+        ----------
+        y_length : float
+            YLength of the cone.
+        """
+        self.SetYLength(y_length)
+
+    @property
+    def z_length(self) -> float:
+        """Get the z length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            ZLength along the cone in its specified direction.
+        """
+        return self.GetZLength()
+
+    @z_length.setter
+    def z_length(self, z_length: float):
+        """Set the z length of the cube.
+
+        Parameters
+        ----------
+        z_length : float
+            ZLength of the cone.
+        """
+        self.SetZLength(z_length)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Cube surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
