@@ -6,7 +6,7 @@ CylinderSource
 vtkSphereSource
 vtkPlaneSource
 LineSource
-vtkCubeSource
+CubeSource
 ConeSource
 vtkDiskSource
 vtkRegularPolygonSource
@@ -28,6 +28,7 @@ from pyvista.core import _vtk_core as _vtk
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
     ConeSource,
+    CubeSource,
     CylinderSource,
     LineSource,
     MultipleLinesSource,
@@ -1156,20 +1157,10 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkCubeSource()
-    if bounds is not None:
-        if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-            )
-        src.SetBounds(bounds)
-    else:
-        src.SetCenter(center)
-        src.SetXLength(x_length)
-        src.SetYLength(y_length)
-        src.SetZLength(z_length)
-    src.Update()
-    cube = wrap(src.GetOutput())
+    algo = CubeSource(
+        center=center, x_length=x_length, y_length=y_length, z_length=z_length, bounds=bounds
+    )
+    cube = algo.output
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility

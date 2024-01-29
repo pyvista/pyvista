@@ -87,6 +87,8 @@ from .geometric_sources import (
     ConeSource,
     CylinderSource,
     LineSource,
+    CubeSource,
+    CylinderSource,
     MultipleLinesSource,
     Text3DSource,
 )
