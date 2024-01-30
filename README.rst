@@ -41,6 +41,9 @@ PyVista is a NumFOCUS affiliated project
    :alt: NumFOCUS affiliated projects
    :height: 60px
 
+Status badges
+=============
+
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
    :target: https://zenodo.org/records/8415866
 
