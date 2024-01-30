@@ -1050,10 +1050,6 @@ class SphereSource(_vtk.vtkSphereSource):
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
-
     theta_resolution : int, default: 30
         Set the number of points in the azimuthal direction (ranging
         from ``start_theta`` to ``end_theta``).
@@ -1103,7 +1099,6 @@ class SphereSource(_vtk.vtkSphereSource):
         self,
         radius=0.5,
         center=None,
-        direction=(0.0, 0.0, 1.0),
         theta_resolution=30,
         phi_resolution=30,
         start_theta=0.0,
@@ -1116,7 +1111,6 @@ class SphereSource(_vtk.vtkSphereSource):
         self.radius = radius
         if center is not None:
             self.center = center
-        self.direction = direction
         self.theta_resolution = theta_resolution
         self.phi_resolution = phi_resolution
         self.start_theta = start_theta
