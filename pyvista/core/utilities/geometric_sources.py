@@ -1269,7 +1269,7 @@ class SphereSource(_vtk.vtkSphereSource):
         float
             The number of points in the polar direction.
         """
-        return self.GetStartTheta()
+        return self.GetStartPhi()
 
     @start_phi.setter
     def start_phi(self, start_phi: float):
@@ -1280,7 +1280,7 @@ class SphereSource(_vtk.vtkSphereSource):
         start_phi : float
             The number of points in the polar direction.
         """
-        self.SetStartTheta(start_phi)
+        self.SetStartPhi(start_phi)
 
     @property
     def end_phi(self) -> float:
@@ -1291,7 +1291,7 @@ class SphereSource(_vtk.vtkSphereSource):
         float
             The number of points in the polar direction.
         """
-        return self.GetEndTheta()
+        return self.GetEndPhi()
 
     @end_phi.setter
     def end_phi(self, end_phi: float):
@@ -1302,7 +1302,7 @@ class SphereSource(_vtk.vtkSphereSource):
         end_phi : float
             The number of points in the polar direction.
         """
-        self.SetEndTheta(end_phi)
+        self.SetEndPhi(end_phi)
 
     @property
     def output(self):
