@@ -29,19 +29,18 @@ import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
 _NumberType = TypeVar(
-    '_NumberType', bound=Union[np.floating, np.integer, np.bool_, float, int, bool]
+    '_NumberType', bound=Union[np.floating, np.integer, np.bool_, float, int, bool], covariant=True
 )
 
-if TYPE_CHECKING or sys.version_info >= (3, 9):
-    NumpyArray = npt.NDArray[_NumberType]
-else:
+if not TYPE_CHECKING and sys.version_info <= (3, 9):
     # Numpy's NDArray annotations use a customized generic alias type for
     # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
     # which makes it incompatible with built-in generic alias types, e.g.
     # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
-    # the private typing._GenericAlias type instead, which was made public
-    # in python 3.9, and used directly by NumPy in 3.9
+    # the private typing._GenericAlias type instead
     NumpyArray = typing._GenericAlias(np.ndarray, (Any, _NumberType))
+else:
+    NumpyArray = npt.NDArray[_NumberType]
 
 
 # Define generic nested sequence
@@ -109,3 +108,28 @@ _ArrayLike = Union[
 ]
 
 _ArrayLikeOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]
+#
+# from typing import TypeVar, Any, Callable, List, Tuple, Sequence
+# import numpy as np
+# _T1 = TypeVar('_T1')
+# _T2 = TypeVar('_T2')
+#
+# def pass_one_type_var(x: np.ndarray[_T1, _T2]) -> np.ndarray[Any, _T2]:
+#     ...
+#
+# single_typevar_ndarray = Callable[[np.ndarray[_T1, _T2]], np.ndarray[Any, _T2]]
+#
+# _ArrayLikeType = TypeVar('_ArrayLikeType',
+# List,
+# Tuple,
+# Sequence[List],
+# Sequence[Tuple],
+# Sequence[np.ndarray],
+# Sequence[Sequence[Sequence]],
+# Sequence[Sequence[Sequence[Sequence]]])
+#
+# def fun(x:_ArrayLikeType[_NumberType]):
+#     reveal_type(x)
+#     return x
+#
+# reveal_type(fun([2]))

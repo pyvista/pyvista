@@ -19,7 +19,6 @@ from typing import (
     Sequence,
     Sized,
     Tuple,
-    TypeVar,
     Union,
     cast,
     get_args,
@@ -31,14 +30,16 @@ import numpy as np
 from pyvista.core._typing_core import Array, NumpyArray, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core.utilities.arrays import cast_to_ndarray
-from pyvista.core.validation._array_like import DTypeLike, Shape, ShapeLike, _array_like_props
+from pyvista.core.validation._array_like import DTypeLike, Shape, ShapeLike, _ArrayLikeWrapper
 
-_T = TypeVar('_T')
+_AnyNumber = Union[np.number, float, int]
 
 
 def check_subdtype(
-    input_obj: Union[DTypeLike, _ArrayLikeOrScalar[_NumberType]],
-    base_dtype: Union[DTypeLike, Tuple[DTypeLike, ...], List[DTypeLike]],
+    input_obj: Union[DTypeLike[_AnyNumber], _ArrayLikeOrScalar[_NumberType]],
+    base_dtype: Union[
+        DTypeLike[_AnyNumber], Tuple[DTypeLike[_AnyNumber], ...], List[DTypeLike[_AnyNumber]]
+    ],
     /,
     *,
     name: str = 'Input',
@@ -89,7 +90,7 @@ def check_subdtype(
     """
     input_dtype: DTypeLike
     if isinstance(input_obj, (tuple, list, np.ndarray)):
-        _, _, input_dtype, _ = _array_like_props(input_obj)
+        input_dtype = _ArrayLikeWrapper(input_obj).dtype
     else:
         input_dtype = cast(DTypeLike, input_obj)
 
@@ -603,7 +604,7 @@ def check_range(
 
 
 def check_shape(
-    arr: Union[_NumberType, Array[_NumberType]],
+    arr: _ArrayLikeOrScalar[_NumberType],
     /,
     shape: Union[ShapeLike, List[ShapeLike]],
     *,

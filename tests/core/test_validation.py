@@ -44,11 +44,11 @@ from pyvista.core.validation import (
     validate_transform4x4,
 )
 from pyvista.core.validation._array_like import (
-    _array_like_props,
-    _NumberSequenceTuple,
-    _NumpyArraySequenceTuple,
-    _NumpyArrayTuple,
-    _ScalarDTypeTuple,
+    _ArrayLikeWrapper,
+    _NumberSequenceWrapper,
+    _NumpyArraySequenceWrapper,
+    _NumpyArrayWrapper,
+    _ScalarWrapper,
 )
 from pyvista.core.validation.check import _validate_shape_value
 from pyvista.core.validation.validate import _set_default_kwarg_mandatory
@@ -1014,14 +1014,16 @@ arraylike_shapes = [
     ),
 ]
 
+ArrayLikeTuple = namedtuple('ArrayLikeTuple', ['array', 'shape', 'dtype', 'ndim'])
+
 
 @pytest.mark.parametrize(
     'arraylike_type',
     [
-        _ScalarDTypeTuple,
-        _NumpyArrayTuple,
-        _NumpyArraySequenceTuple,
-        _NumberSequenceTuple,
+        _ScalarWrapper,
+        _NumpyArrayWrapper,
+        _NumpyArraySequenceWrapper,
+        _NumberSequenceWrapper,
     ],
 )
 @pytest.mark.parametrize('shape_in', arraylike_shapes)
@@ -1030,17 +1032,17 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
     # Skip tests for impossible scalar cases
     is_scalar = shape_in == ()
     is_sequence_type = arraylike_type in [
-        _NumpyArraySequenceTuple,
-        _NumberSequenceTuple,
+        _NumpyArraySequenceWrapper,
+        _NumberSequenceWrapper,
     ]
-    is_scalar_type = arraylike_type is _ScalarDTypeTuple
+    is_scalar_type = arraylike_type is _ScalarWrapper
     if (is_scalar and is_sequence_type) or (not is_scalar and is_scalar_type):
         pytest.skip("Scalar cannot be a sequence")
 
     # Skip tests for equences of numpy dtypes
     # This is done since sequences are generated using `array.tolist()`
     # which will cast numpy dtypes to builtin types (which are tested separately)
-    if arraylike_type is _NumberSequenceTuple and issubclass(dtype_in, np.generic):
+    if arraylike_type is _NumberSequenceWrapper and issubclass(dtype_in, np.generic):
         pytest.skip("No tests for sequences of numpy dtypes.")
 
     # Set up test array and keep track of special empty sequence cases
@@ -1051,18 +1053,18 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
         initial_array = np.zeros(shape=shape_in, dtype=dtype_in)
         is_empty = initial_array.shape[-1] == 0
 
-    if arraylike_type is _ScalarDTypeTuple:
+    if arraylike_type is _ScalarWrapper:
         array_out = initial_array
-        expected = _ScalarDTypeTuple(array=array_out, shape=shape_in, dtype=dtype_in, ndim=0)
-    elif arraylike_type is _NumpyArrayTuple:
+        expected = ArrayLikeTuple(array=array_out, shape=shape_in, dtype=dtype_in, ndim=0)
+    elif arraylike_type is _NumpyArrayWrapper:
         array_out = np.array(initial_array)
-        expected = _NumpyArrayTuple(
+        expected = ArrayLikeTuple(
             array=array_out,
             shape=shape_in,
             dtype=np.dtype(dtype_in).type,
             ndim=array_out.ndim,
         )
-    elif arraylike_type is _NumpyArraySequenceTuple:
+    elif arraylike_type is _NumpyArraySequenceWrapper:
         # convert to list array and replace items with numpy arrays
         depth = initial_array.ndim
         array_out = initial_array.tolist()
@@ -1085,14 +1087,11 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
                 for i, x in enumerate(final_sequence)
             ]
 
-        expected = _NumpyArraySequenceTuple(
-            array=array_out,
-            shape=np.array(array_out).shape,
-            dtype=np.dtype(dtype_in).type,
-            ndim=np.array(array_out).ndim,
+        expected = ArrayLikeTuple(
+            array_out, np.array(array_out).shape, np.dtype(dtype_in).type, np.array(array_out).ndim
         )
 
-    elif arraylike_type is _NumberSequenceTuple:
+    elif arraylike_type is _NumberSequenceWrapper:
         if is_empty:
             # Cannot infer dtype from an empty sequence at runtime,
             # so we assume the dtype is float by default
@@ -1103,14 +1102,12 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
             dtype_out = dtype_in
         depth = initial_array.ndim
         array_out = initial_array.tolist()
-        expected = _NumberSequenceTuple(
-            array=array_out, shape=shape_in, dtype=dtype_out, ndim=depth
-        )
+        expected = ArrayLikeTuple(array=array_out, shape=shape_in, dtype=dtype_out, ndim=depth)
     else:
         raise RuntimeError("Unexpected test case.")
 
     # Do test
-    actual = _array_like_props(array_out)
+    actual = _ArrayLikeWrapper(array_out)
     assert np.array_equal(actual.array, expected.array)
     assert actual.shape == expected.shape
     assert actual.dtype == expected.dtype
