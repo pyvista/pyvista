@@ -1134,7 +1134,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetRadius()
 
-    @property
+    @radius.setter
     def radius(self, radius: float):
         """Set sphere radius.
 
@@ -1156,7 +1156,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetThetaResolution()
 
-    @property
+    @theta_resolution.setter
     def theta_resolution(self, theta_resolution: int):
         """Set the number of points in the azimuthal direction.
 
@@ -1178,7 +1178,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetPhiResolution()
 
-    @property
+    @phi_resolution.setter
     def phi_resolution(self, phi_resolution: int):
         """Set the number of points in the polar direction.
 
@@ -1200,7 +1200,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetStartTheta()
 
-    @property
+    @start_theta.setter
     def start_theta(self, start_theta: float):
         """Set starting azimuthal angle in degrees ``[0, 360]``.
 
@@ -1222,7 +1222,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetEndTheta()
 
-    @property
+    @end_theta.setter
     def end_theta(self, end_theta: float):
         """Set ending azimuthal angle in degrees ``[0, 360]``.
 
@@ -1244,7 +1244,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetStartTheta()
 
-    @property
+    @start_phi.setter
     def start_phi(self, start_phi: float):
         """Set starting polar angle in degrees ``[0, 360]``.
 
@@ -1266,7 +1266,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         return self.GetEndTheta()
 
-    @property
+    @end_phi.setter
     def end_phi(self, end_phi: float):
         """Set ending polar angle in degrees ``[0, 360]``.
 
