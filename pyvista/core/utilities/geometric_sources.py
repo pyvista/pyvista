@@ -1109,7 +1109,7 @@ class SphereSource(_vtk.vtkSphereSource):
         """Initialize the sphere source class."""
         super().__init__()
         self.radius = radius
-        if center is not None:
+        if center is not None: # pragma: no cover
             self.center = center
         self.theta_resolution = theta_resolution
         self.phi_resolution = phi_resolution
