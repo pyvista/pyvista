@@ -72,25 +72,25 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         # Note: This implementation is purposefully verbose and explicit
         # so that mypy can correctly infer the return types.
 
-        shape: List[int] = []
-        depth: int = 0
+        _shape: List[int] = []
+        _depth: int = 0
 
         def _not_empty():
-            return shape[-1] > 0
+            return _shape[-1] > 0
 
         if isinstance(array, Sequence):
-            depth = 1
-            shape.append(len(array))
+            _depth = 1
+            _shape.append(len(array))
             if _not_empty() and isinstance(array[0], Sequence):
-                sub_shape: Union[Tuple[()], Tuple[int, ...], int]
-                depth = 2
-                shape.append(len(array[0]))
+                _sub_shape: Union[Tuple[()], Tuple[int, ...], int]
+                _depth = 2
+                _shape.append(len(array[0]))
                 if _not_empty() and isinstance(array[0][0], Sequence):
-                    depth = 3
-                    shape.append(len(array[0][0]))
+                    _depth = 3
+                    _shape.append(len(array[0][0]))
                     if _not_empty() and isinstance(array[0][0][0], Sequence):
-                        depth = 4
-                        shape.append(len(array[0][0][0]))
+                        _depth = 4
+                        _shape.append(len(array[0][0][0]))
                         if _not_empty() and isinstance(array[0][0][0][0], Sequence):
                             raise TypeError(
                                 "Nested sequences with more than 4 levels are not supported."
@@ -98,147 +98,147 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
 
                         elif _not_empty() and isinstance(array[0][0][0][0], np.ndarray):
                             # 4D sequence of numpy arrays
-                            sub_shape = array[0][0][0][0].shape
+                            _sub_shape = array[0][0][0][0].shape
                             _check_all_subarray_shapes_are_equal(
                                 cast(Sequence[NumpyArray[_NumberType]], array[0][0][0]),
-                                sub_shape,
+                                _sub_shape,
                             )
-                            shape.extend(sub_shape)
+                            _shape.extend(_sub_shape)
 
-                            numpy_sequence_wrapper4 = object.__new__(_NumpyArraySequenceWrapper)
-                            numpy_sequence_wrapper4.__setattr__('array', array)
-                            numpy_sequence_wrapper4.__setattr__('shape', tuple(shape))
-                            numpy_sequence_wrapper4.__setattr__(
+                            _numpy_sequence_wrapper4 = object.__new__(_NumpyArraySequenceWrapper)
+                            _numpy_sequence_wrapper4.__setattr__('array', array)
+                            _numpy_sequence_wrapper4.__setattr__('shape', tuple(_shape))
+                            _numpy_sequence_wrapper4.__setattr__(
                                 'dtype', array[0][0][0][0].dtype.type
                             )
-                            numpy_sequence_wrapper4.__setattr__('ndim', len(shape))
-                            return numpy_sequence_wrapper4
+                            _numpy_sequence_wrapper4.__setattr__('ndim', len(_shape))
+                            return _numpy_sequence_wrapper4
 
                         else:
                             # 4D sequence of numbers
-                            sub_shape = shape[3]
+                            _sub_shape = _shape[3]
                             _check_all_subarray_shapes_are_equal(
-                                cast(Sequence[Sequence[_NumberType]], array[0][0]), sub_shape
+                                cast(Sequence[Sequence[_NumberType]], array[0][0]), _sub_shape
                             )
                             try:
                                 dtype = cast(Type[_NumberType], type(array[0][0][0][0]))
                             except IndexError:
                                 dtype = cast(Type[_NumberType], float)
-                            num_sequence_wrapper4 = object.__new__(_NumberSequenceWrapper)
-                            num_sequence_wrapper4.__setattr__('array', array)
-                            num_sequence_wrapper4.__setattr__('shape', tuple(shape))
-                            num_sequence_wrapper4.__setattr__('dtype', dtype)
-                            num_sequence_wrapper4.__setattr__('ndim', depth)
-                            return num_sequence_wrapper4
+                            _num_sequence_wrapper4 = object.__new__(_NumberSequenceWrapper)
+                            _num_sequence_wrapper4.__setattr__('array', array)
+                            _num_sequence_wrapper4.__setattr__('shape', tuple(_shape))
+                            _num_sequence_wrapper4.__setattr__('dtype', dtype)
+                            _num_sequence_wrapper4.__setattr__('ndim', _depth)
+                            return _num_sequence_wrapper4
 
                     elif _not_empty() and isinstance(array[0][0][0], np.ndarray):
                         # 3D sequence of numpy arrays
-                        sub_shape = array[0][0][0].shape
+                        _sub_shape = array[0][0][0].shape
                         _check_all_subarray_shapes_are_equal(
-                            cast(Sequence[NumpyArray[_NumberType]], array[0][0]), sub_shape
+                            cast(Sequence[NumpyArray[_NumberType]], array[0][0]), _sub_shape
                         )
-                        shape.extend(sub_shape)
+                        _shape.extend(_sub_shape)
 
-                        numpy_sequence_wrapper3 = object.__new__(_NumpyArraySequenceWrapper)
-                        numpy_sequence_wrapper3.__setattr__('array', array)
-                        numpy_sequence_wrapper3.__setattr__('shape', tuple(shape))
-                        numpy_sequence_wrapper3.__setattr__('dtype', array[0][0][0].dtype.type)
-                        numpy_sequence_wrapper3.__setattr__('ndim', len(shape))
-                        return numpy_sequence_wrapper3
+                        _numpy_sequence_wrapper3 = object.__new__(_NumpyArraySequenceWrapper)
+                        _numpy_sequence_wrapper3.__setattr__('array', array)
+                        _numpy_sequence_wrapper3.__setattr__('shape', tuple(_shape))
+                        _numpy_sequence_wrapper3.__setattr__('dtype', array[0][0][0].dtype.type)
+                        _numpy_sequence_wrapper3.__setattr__('ndim', len(_shape))
+                        return _numpy_sequence_wrapper3
 
                     else:
                         # 3D sequence of numbers
-                        sub_shape = shape[2]
+                        _sub_shape = _shape[2]
                         _check_all_subarray_shapes_are_equal(
-                            cast(Sequence[Sequence[_NumberType]], array[0]), sub_shape
+                            cast(Sequence[Sequence[_NumberType]], array[0]), _sub_shape
                         )
                         try:
                             dtype = cast(Type[_NumberType], type(array[0][0][0]))
                         except IndexError:
                             dtype = cast(Type[_NumberType], float)
-                        num_sequence_wrapper3 = object.__new__(_NumberSequenceWrapper)
-                        num_sequence_wrapper3.__setattr__('array', array)
-                        num_sequence_wrapper3.__setattr__('shape', tuple(shape))
-                        num_sequence_wrapper3.__setattr__('dtype', dtype)
-                        num_sequence_wrapper3.__setattr__('ndim', depth)
-                        return num_sequence_wrapper3
+                        _num_sequence_wrapper3 = object.__new__(_NumberSequenceWrapper)
+                        _num_sequence_wrapper3.__setattr__('array', array)
+                        _num_sequence_wrapper3.__setattr__('shape', tuple(_shape))
+                        _num_sequence_wrapper3.__setattr__('dtype', dtype)
+                        _num_sequence_wrapper3.__setattr__('ndim', _depth)
+                        return _num_sequence_wrapper3
 
                 elif _not_empty() and isinstance(array[0][0], np.ndarray):
                     # 2D sequence of numpy arrays
-                    sub_shape = array[0][0].shape
+                    _sub_shape = array[0][0].shape
                     _check_all_subarray_shapes_are_equal(
-                        cast(Sequence[NumpyArray[_NumberType]], array[0]), sub_shape
+                        cast(Sequence[NumpyArray[_NumberType]], array[0]), _sub_shape
                     )
-                    shape.extend(sub_shape)
+                    _shape.extend(_sub_shape)
 
-                    numpy_sequence_wrapper2 = object.__new__(_NumpyArraySequenceWrapper)
-                    numpy_sequence_wrapper2.__setattr__('array', array)
-                    numpy_sequence_wrapper2.__setattr__('shape', tuple(shape))
-                    numpy_sequence_wrapper2.__setattr__('dtype', array[0][0].dtype.type)
-                    numpy_sequence_wrapper2.__setattr__('ndim', len(shape))
-                    return numpy_sequence_wrapper2
+                    _numpy_sequence_wrapper2 = object.__new__(_NumpyArraySequenceWrapper)
+                    _numpy_sequence_wrapper2.__setattr__('array', array)
+                    _numpy_sequence_wrapper2.__setattr__('shape', tuple(_shape))
+                    _numpy_sequence_wrapper2.__setattr__('dtype', array[0][0].dtype.type)
+                    _numpy_sequence_wrapper2.__setattr__('ndim', len(_shape))
+                    return _numpy_sequence_wrapper2
                 else:
                     # 2D sequence of numbers
-                    sub_shape = shape[1]
+                    _sub_shape = _shape[1]
                     _check_all_subarray_shapes_are_equal(
-                        cast(Sequence[Sequence[_NumberType]], array), sub_shape
+                        cast(Sequence[Sequence[_NumberType]], array), _sub_shape
                     )
                     try:
                         dtype = cast(Type[_NumberType], type(array[0][0]))
                     except IndexError:
                         dtype = cast(Type[_NumberType], float)
 
-                    num_sequence_wrapper2 = object.__new__(_NumberSequenceWrapper)
-                    num_sequence_wrapper2.__setattr__('array', array)
-                    num_sequence_wrapper2.__setattr__('shape', tuple(shape))
-                    num_sequence_wrapper2.__setattr__('dtype', dtype)
-                    num_sequence_wrapper2.__setattr__('ndim', depth)
-                    return num_sequence_wrapper2
+                    _num_sequence_wrapper2 = object.__new__(_NumberSequenceWrapper)
+                    _num_sequence_wrapper2.__setattr__('array', array)
+                    _num_sequence_wrapper2.__setattr__('shape', tuple(_shape))
+                    _num_sequence_wrapper2.__setattr__('dtype', dtype)
+                    _num_sequence_wrapper2.__setattr__('ndim', _depth)
+                    return _num_sequence_wrapper2
 
             elif _not_empty() and isinstance(array[0], np.ndarray):
                 # 1D sequence of numpy arrays
-                sub_shape = array[0].shape
+                _sub_shape = array[0].shape
                 _check_all_subarray_shapes_are_equal(
-                    cast(Sequence[NumpyArray[_NumberType]], array), sub_shape
+                    cast(Sequence[NumpyArray[_NumberType]], array), _sub_shape
                 )
-                shape.extend(array[0].shape)
+                _shape.extend(array[0].shape)
 
-                numpy_sequence_wrapper1 = object.__new__(_NumpyArraySequenceWrapper)
-                numpy_sequence_wrapper1.__setattr__('array', array)
-                numpy_sequence_wrapper1.__setattr__('shape', tuple(shape))
-                numpy_sequence_wrapper1.__setattr__('dtype', array[0].dtype.type)
-                numpy_sequence_wrapper1.__setattr__('ndim', len(shape))
-                return numpy_sequence_wrapper1
+                _numpy_sequence_wrapper1 = object.__new__(_NumpyArraySequenceWrapper)
+                _numpy_sequence_wrapper1.__setattr__('array', array)
+                _numpy_sequence_wrapper1.__setattr__('shape', tuple(_shape))
+                _numpy_sequence_wrapper1.__setattr__('dtype', array[0].dtype.type)
+                _numpy_sequence_wrapper1.__setattr__('ndim', len(_shape))
+                return _numpy_sequence_wrapper1
             else:
                 # 1D sequence of numbers
                 try:
                     dtype = cast(Type[_NumberType], type(array[0]))
                 except IndexError:
                     dtype = cast(Type[_NumberType], float)
-                num_sequence_wrapper1 = object.__new__(_NumberSequenceWrapper)
-                num_sequence_wrapper1.__setattr__('array', array)
-                num_sequence_wrapper1.__setattr__('shape', tuple(shape))
-                num_sequence_wrapper1.__setattr__('dtype', dtype)
-                num_sequence_wrapper1.__setattr__('ndim', depth)
-                return num_sequence_wrapper1
+                _num_sequence_wrapper1 = object.__new__(_NumberSequenceWrapper)
+                _num_sequence_wrapper1.__setattr__('array', array)
+                _num_sequence_wrapper1.__setattr__('shape', tuple(_shape))
+                _num_sequence_wrapper1.__setattr__('dtype', dtype)
+                _num_sequence_wrapper1.__setattr__('ndim', _depth)
+                return _num_sequence_wrapper1
 
         elif isinstance(array, np.ndarray):
             # non-nested numpy array
-            numpy_wrapper = object.__new__(_NumpyArrayWrapper)
-            numpy_wrapper.__setattr__('array', array)
-            numpy_wrapper.__setattr__('shape', array.shape)
-            numpy_wrapper.__setattr__('dtype', array.dtype.type)
-            numpy_wrapper.__setattr__('ndim', array.ndim)
-            return numpy_wrapper
+            _numpy_wrapper = object.__new__(_NumpyArrayWrapper)
+            _numpy_wrapper.__setattr__('array', array)
+            _numpy_wrapper.__setattr__('shape', array.shape)
+            _numpy_wrapper.__setattr__('dtype', array.dtype.type)
+            _numpy_wrapper.__setattr__('ndim', array.ndim)
+            return _numpy_wrapper
 
         else:
             # just a number/scalar type
-            scalar_wrapper = object.__new__(_ScalarWrapper)
-            scalar_wrapper.__setattr__('array', array)
-            scalar_wrapper.__setattr__('shape', tuple(shape))
-            scalar_wrapper.__setattr__('dtype', type(array))
-            scalar_wrapper.__setattr__('ndim', depth)
-            return scalar_wrapper
+            _scalar_wrapper = object.__new__(_ScalarWrapper)
+            _scalar_wrapper.__setattr__('array', array)
+            _scalar_wrapper.__setattr__('shape', tuple(_shape))
+            _scalar_wrapper.__setattr__('dtype', type(array))
+            _scalar_wrapper.__setattr__('ndim', _depth)
+            return _scalar_wrapper
 
 
 from typing import Any, Protocol, runtime_checkable

@@ -658,23 +658,18 @@ def check_shape(
     def _shape_is_allowed(a: Shape, b: Shape) -> bool:
         # a: array's actual shape
         # b: allowed shape (may have -1)
-        if len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)):
-            return True
-        else:
-            return False
-
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+        return len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b))
 
     if not isinstance(shape, list):
         shape = [shape]
 
-    array_shape = arr.shape
+    array_shape = _ArrayLikeWrapper(arr).shape
     for input_shape in shape:
         input_shape = _validate_shape_value(input_shape)
         if _shape_is_allowed(array_shape, input_shape):
             return
 
-    msg = f"{name} has shape {arr.shape} which is not allowed. "
+    msg = f"{name} has shape {array_shape} which is not allowed. "
     if len(shape) == 1:
         msg += f"Shape must be {shape[0]}."
     else:
@@ -1284,9 +1279,7 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
         raise TypeError("`None` is not a valid shape. Use `()` instead.")
 
     # Return early for common inputs
-    if shape == ():
-        return cast(Shape, shape)
-    elif shape in [(-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
+    if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
         return cast(Shape, shape)
 
     def _is_valid_dim(d):
