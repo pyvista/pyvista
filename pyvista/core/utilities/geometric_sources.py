@@ -1102,7 +1102,7 @@ class SphereSource(_vtk.vtkSphereSource):
     def __init__(
         self,
         radius=0.5,
-        center=(0.0, 0.0, 0.0),
+        center=None,
         direction=(0.0, 0.0, 1.0),
         theta_resolution=30,
         phi_resolution=30,
@@ -1114,7 +1114,8 @@ class SphereSource(_vtk.vtkSphereSource):
         """Initialize the sphere source class."""
         super().__init__()
         self.radius = radius
-        self.center = center
+        if center is not None:
+            self.center = center
         self.direction = direction
         self.theta_resolution = theta_resolution
         self.phi_resolution = phi_resolution
@@ -1123,6 +1124,38 @@ class SphereSource(_vtk.vtkSphereSource):
         self.start_phi = start_phi
         self.end_phi = end_phi
 
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2): 
+            return self.GetCenter()
+        else:  # pragma: no cover
+            return (0.0, 0.0, 0.0)
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2): 
+            self.SetCenter(center)
+        else:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+            )
+    
     @property
     def radius(self) -> float:
         """Get sphere radius.
