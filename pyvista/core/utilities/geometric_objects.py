@@ -390,7 +390,6 @@ def Sphere(
     """
     sphere = SphereSource(
         radius=radius,
-        center=center,
         theta_resolution=theta_resolution,
         phi_resolution=phi_resolution,
         start_theta=start_theta,
