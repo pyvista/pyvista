@@ -281,6 +281,10 @@ def test_disc_source():
     assert algo.outer == 0.5
     assert algo.r_res == 1
     assert algo.c_res == 6
+    if pv.vtk_version_info >= (9, 2):
+        center = (1.0, 2.0, 3.0)
+        algo = pv.SphereSource(center=center)
+        assert algo.center == center
 
 
 def test_cube_source():
