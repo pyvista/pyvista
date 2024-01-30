@@ -3,7 +3,7 @@
 **CONTAINS**
 vtkArrowSource
 CylinderSource
-vtkSphereSource
+SphereSource
 vtkPlaneSource
 vtkLineSource
 CubeSource
@@ -31,6 +31,7 @@ from .geometric_sources import (
     CubeSource,
     CylinderSource,
     MultipleLinesSource,
+    SphereSource,
     Text3DSource,
     translate,
 )
@@ -387,16 +388,18 @@ def Sphere(
     >>> out = sphere.plot(show_edges=True)
 
     """
-    sphere = _vtk.vtkSphereSource()
-    sphere.SetRadius(radius)
-    sphere.SetThetaResolution(theta_resolution)
-    sphere.SetPhiResolution(phi_resolution)
-    sphere.SetStartTheta(start_theta)
-    sphere.SetEndTheta(end_theta)
-    sphere.SetStartPhi(start_phi)
-    sphere.SetEndPhi(end_phi)
-    sphere.Update()
-    surf = wrap(sphere.GetOutput())
+    sphere = SphereSource(
+        radius=radius,
+        center=center,
+        direction=direction,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        start_theta=start_theta,
+        end_theta=end_theta,
+        start_phi=start_phi,
+        end_phi=end_phi,
+    )
+    surf = sphere.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf

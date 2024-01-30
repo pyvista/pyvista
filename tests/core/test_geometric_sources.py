@@ -285,3 +285,16 @@ def test_cube_source():
     assert np.array_equal(algo.bounds, bounds)
     with pytest.raises(TypeError):
         algo = pv.CubeSource(bounds=0.0)
+
+
+def test_sphere_source():
+    algo = pv.SphereSource()
+    assert algo.radius == 0.5
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.direction, (0.0, 0.0, 1.0))
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    assert algo.start_theta == 0.0
+    assert algo.end_theta == 360.0
+    assert algo.start_phi == 0.0
+    assert algo.end_phi == 180.0
