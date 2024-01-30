@@ -272,3 +272,16 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     points_after = text3d_source_with_text._output.GetPoints()
     assert text3d_source_with_text._modified
     assert points_before is points_after
+
+
+def test_cube_source():
+    algo = pv.CubeSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.x_length == 1.0
+    assert algo.y_length == 1.0
+    assert algo.z_length == 1.0
+    bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
+    algo = pv.CubeSource(bounds=bounds)
+    assert np.array_equal(algo.bounds, bounds)
+    with pytest.raises(TypeError):
+        algo = pv.CubeSource(bounds=0.0)
