@@ -285,3 +285,8 @@ def test_cube_source():
     assert np.array_equal(algo.bounds, bounds)
     with pytest.raises(TypeError):
         algo = pv.CubeSource(bounds=0.0)
+
+
+def test_platonic_solid_source():
+    algo = pv.PlatonicSolidSource()
+    assert algo.kind == 'tetrahedron'
