@@ -1155,7 +1155,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         int
             Number of sides of the polygon.
         """
-        return self.GetRadius()
+        return self.GetNumberOfSides()
 
     @n_sides.setter
     def n_sides(self, n_sides: int):
@@ -1166,7 +1166,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         n_sides : int
             Number of sides of the polygon.
         """
-        self.SetRadius(n_sides)
+        self.SetNumberOfSides(n_sides)
 
     @property
     def fill(self) -> bool:
