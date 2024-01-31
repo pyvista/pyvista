@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -28,8 +29,8 @@ def test_cylinder_source():
     assert algo.height == 1.0
     assert algo.capping
     assert algo.resolution == 100
-    center = np.random.rand(3)
-    direction = np.random.rand(3)
+    center = np.random.default_rng().random(3)
+    direction = np.random.default_rng().random(3)
     algo.center = center
     algo.direction = direction
     assert np.array_equal(algo.center, center)
@@ -74,3 +75,213 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 0], points_out[:, 1])
         assert np.allclose(points_in[:, 1], -points_out[:, 0])
         assert np.allclose(points_in[:, 2], points_out[:, 2])
+
+
+def test_text3d_source_empty_string():
+    # Test empty string is processed to have a single point
+    src = pv.Text3DSource(process_empty_string=True)
+    assert src.process_empty_string
+    out = src.output
+    assert out.n_points == 1
+
+    # Test setting an empty string is processed to have a single point
+    src.process_empty_string = False
+    assert not src.process_empty_string
+    out = src.output
+    assert out.n_points == 0
+
+    if pv.vtk_version_info == (9, 0, 3):
+        mx, mn = 1, -1
+    else:
+        mx, mn = vtk.VTK_DOUBLE_MAX, vtk.VTK_DOUBLE_MIN
+
+    assert out.bounds == (mx, mn, mx, mn, mx, mn)
+
+
+def test_text3d_source():
+    src = pv.Text3DSource(string='Text')
+    assert src.string == 'Text'
+    out = src.output
+    assert len(out.split_bodies()) == 4
+
+
+@pytest.mark.parametrize('string', [" ", 'TEXT'])
+@pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
+@pytest.mark.parametrize('height', [None, 0, 1, 2])
+@pytest.mark.parametrize('width', [None, 0, 1, 2])
+@pytest.mark.parametrize('depth', [None, 0, 1, 2])
+@pytest.mark.parametrize('normal', [(0, 0, 1)])
+def test_text3d_source_parameters(string, center, height, width, depth, normal):
+    src = pv.Text3DSource(
+        string=string, center=center, height=height, width=width, depth=depth, normal=normal
+    )
+    out = src.output
+    bnds = out.bounds
+    actual_width, actual_height, actual_depth = (
+        bnds[1] - bnds[0],
+        bnds[3] - bnds[2],
+        bnds[5] - bnds[4],
+    )
+
+    # Compute expected values
+    empty_string = string.isspace()
+    if empty_string:
+        expected_width, expected_height, expected_depth = 0.0, 0.0, 0.0
+    else:
+        expected_width, expected_height, expected_depth = width, height, depth
+
+        # Determine expected values for cases where width, height, or depth is None
+        if depth is None:
+            expected_depth = actual_height * 0.5
+
+        # For width and height, create an unscaled version for reference
+        src_not_scaled = pv.Text3DSource(string=string, center=center)
+        out_not_scaled = src_not_scaled.output
+        bnds = out_not_scaled.bounds
+        unscaled_width, unscaled_height = bnds[1] - bnds[0], bnds[3] - bnds[2]
+        if width is None and height is not None:
+            expected_width = unscaled_width * actual_height / unscaled_height
+        elif width is not None and height is None:
+            expected_height = unscaled_height * actual_width / unscaled_width
+        elif width is None and height is None:
+            expected_width = unscaled_width
+            expected_height = unscaled_height
+
+    assert np.allclose(actual_width, expected_width)
+    assert np.allclose(actual_height, expected_height)
+    assert np.allclose(actual_depth, expected_depth)
+    assert np.array_equal(out.center, center)
+
+    if not empty_string and width and height and depth == 0:
+        # Test normal direction for planar 2D meshes
+        actual_normal = np.mean(out.cell_normals, axis=0)
+        assert np.allclose(actual_normal, normal)
+
+        # Since `direction` param is under-determined and may swap the
+        # width and height, test normal again without testing the bounds
+        # We also use a symmetric text string since the oriented mesh's
+        # bounding box center and/or the mean of its points will otherwise
+        # vary and is challenging to test
+        new_normal = np.array((1, -2, 3))
+        src = pv.Text3DSource(string='I', center=center, normal=new_normal, depth=0)
+        out = src.output
+        actual_normal = np.mean(out.cell_normals, axis=0)
+        expected_normal = new_normal / np.linalg.norm(new_normal)
+        assert np.allclose(actual_normal, expected_normal, atol=1e-4)
+
+        points_center = np.mean(out.points, axis=0)
+        assert np.allclose(points_center, center, atol=1e-4)
+
+
+@pytest.fixture
+def text3d_source_with_text():
+    return pv.Text3DSource("TEXT")
+
+
+def test_text3d_source_update(text3d_source_with_text):
+    assert text3d_source_with_text._modified
+    assert text3d_source_with_text._output.n_points == 0
+    text3d_source_with_text.update()
+    assert not text3d_source_with_text._modified
+    assert text3d_source_with_text._output.n_points > 1
+
+    # Test calling update has no effect on output when modified flag is not set
+    points_before = text3d_source_with_text._output.GetPoints()
+    text3d_source_with_text.update()
+    points_after = text3d_source_with_text._output.GetPoints()
+    assert not text3d_source_with_text._modified
+    assert points_before is points_after
+
+
+def text3d_source_test_params():
+    return (
+        ('string', 'TEXT'),
+        ('center', (1, 2, 3)),
+        ('normal', (4, 5, 6)),
+        ('height', 2),
+        ('width', 3),
+        ('depth', 4),
+    )
+
+
+def test_text3d_source_output(text3d_source_with_text):
+    # Store initial object references
+    out1 = text3d_source_with_text._output
+    out1_points = out1.GetPoints()
+    assert out1.n_points == 0
+
+    # Test getting output triggers an update
+    assert text3d_source_with_text._modified
+    out2 = text3d_source_with_text.output
+    assert not text3d_source_with_text._modified
+
+    # Test that output object reference is unchanged
+    assert out2 is out1
+
+    # Test that output points object reference is changed
+    out2_points = out2.GetPoints()
+    assert out2_points is not out1_points
+
+    # Test correct output
+    assert len(out2.split_bodies()) == len(text3d_source_with_text.string)
+
+
+@pytest.mark.parametrize(
+    'kwarg_tuple',
+    text3d_source_test_params(),
+)
+def test_text3d_source_modified_init(kwarg_tuple):
+    # Test init modifies source but does not update output
+    name, value = kwarg_tuple
+    kwarg_dict = {name: value}
+
+    src = pv.Text3DSource(**kwarg_dict)
+    assert src._modified
+    assert src._output.n_points == 0
+
+
+@pytest.mark.parametrize(
+    'kwarg_tuple',
+    text3d_source_test_params(),
+)
+def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
+    # Set test param
+    name, value = kwarg_tuple
+    setattr(text3d_source_with_text, name, value)
+    assert text3d_source_with_text._modified
+
+    # Call update to clear modified flag
+    assert text3d_source_with_text._modified
+    text3d_source_with_text.update()
+    assert not text3d_source_with_text._modified
+
+    # Test that setting the same value does not set the modified flag
+    points_before = text3d_source_with_text._output.GetPoints()  # Manually set flag for test
+    setattr(text3d_source_with_text, name, value)
+    points_after = text3d_source_with_text._output.GetPoints()
+    assert not text3d_source_with_text._modified
+    assert points_before is points_after
+
+    # Test setting a new value sets modified flag but does not change output
+    if name == "string":
+        new_value = value + value
+    else:
+        new_value = np.array(value) * 2
+    points_before = text3d_source_with_text._output.GetPoints()
+    setattr(text3d_source_with_text, name, new_value)
+    points_after = text3d_source_with_text._output.GetPoints()
+    assert text3d_source_with_text._modified
+    assert points_before is points_after
+
+
+def test_cube_source():
+    algo = pv.CubeSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.x_length == 1.0
+    assert algo.y_length == 1.0
+    assert algo.z_length == 1.0
+    bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
+    algo = pv.CubeSource(bounds=bounds)
+    assert np.array_equal(algo.bounds, bounds)
+    with pytest.raises(TypeError):
+        algo = pv.CubeSource(bounds=0.0)

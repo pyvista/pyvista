@@ -15,13 +15,18 @@ Python due to its modularity.  If there's some limitation of pyvista
 of more than one module.
 
 """
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Wrap a point cloud composed of random points from numpy
 import numpy as np
 
 import pyvista as pv
 
-points = np.random.random((30, 3))
+points = np.random.default_rng().random((30, 3))
 cloud = pv.wrap(points)
 pv.plot(
     cloud,

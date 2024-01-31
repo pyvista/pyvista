@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumericArray, TransformLike, VectorArray
+from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -56,13 +56,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[NumericArray, VectorArray], copy: bool = False
+    points: Union[Matrix, Vector], copy: bool = False
 ) -> Tuple[np.ndarray, bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : array_like[float]
+    points : Matrix, Vector
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -232,7 +232,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.ndarray']:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -586,7 +586,7 @@ def convert_string_array(arr, name=None):
     ########################################
 
 
-def array_from_vtkmatrix(matrix):
+def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -753,7 +753,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
         )
 
 
-def _coerce_transformlike_arg(transform_like: TransformLike):
+def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
     """Check and coerce transform-like arg to a 4x4 numpy array.
 
     Parameters
@@ -768,7 +768,7 @@ def _coerce_transformlike_arg(transform_like: TransformLike):
         4x4 transformation matrix.
 
     """
-    transform_array = np.eye(4)
+    transform_array: NumpyArray[float] = np.eye(4)
     if isinstance(transform_like, _vtk.vtkMatrix4x4):
         transform_array = array_from_vtkmatrix(transform_like)
     elif isinstance(transform_like, _vtk.vtkMatrix3x3):
@@ -792,3 +792,101 @@ def _coerce_transformlike_arg(transform_like: TransformLike):
             '\t3x3 np.ndarray\n'
         )
     return transform_array
+
+
+def cast_to_list_array(arr):
+    """Cast an array to a nested list.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to cast.
+
+    Returns
+    -------
+    list
+        List or nested list array.
+    """
+    return cast_to_ndarray(arr).tolist()
+
+
+def cast_to_tuple_array(arr):
+    """Cast an array to a nested tuple.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to cast.
+
+    Returns
+    -------
+    tuple
+        Tuple or nested tuple array.
+    """
+    arr = cast_to_ndarray(arr).tolist()
+
+    def _to_tuple(s):
+        return tuple(_to_tuple(i) for i in s) if isinstance(s, list) else s
+
+    return _to_tuple(arr)
+
+
+def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
+    """Cast array to a NumPy ndarray.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to cast.
+
+    as_any : bool, default: True
+        Allow subclasses of ``np.ndarray`` to pass through without
+        making a copy.
+
+    dtype : dtype_like
+        The data-type of the returned array.
+
+    copy : bool, default: False
+        If ``True``, a copy of the array is returned. A copy is always
+        returned if the array:
+
+            * is a nested sequence
+            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
+
+    Raises
+    ------
+    ValueError
+        If input cannot be cast as a NumPy ndarray.
+
+    Returns
+    -------
+    np.ndarray
+        NumPy ndarray.
+
+    """
+    if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
+        return arr
+
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
+    except AttributeError:
+        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+
+    try:
+        if as_any:
+            out = np.asanyarray(arr, dtype=dtype)
+            if copy:
+                out = out.copy()
+        else:
+            out = np.array(arr, dtype=dtype, copy=copy)
+        if out.dtype.name == 'object':
+            # NumPy will normally raise ValueError automatically for
+            # object arrays, but on some systems it will not, so raise
+            # error manually
+            raise ValueError
+    except (ValueError, VisibleDeprecationWarning) as e:
+        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
+    return out

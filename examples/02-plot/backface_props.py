@@ -13,6 +13,12 @@ different color on the inside. Note that the notion of "inside" and "outside"
 depend on the orientation of the surface normals:
 """
 # sphinx_gallery_thumbnail_number = 1
+
+# sphinx_gallery_start_ignore
+# backface properties do not work in interactive
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 import pyvista as pv

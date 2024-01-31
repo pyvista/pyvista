@@ -3,13 +3,15 @@
 Also includes some pure-python helpers.
 
 """
-from typing import Sequence
+from typing import Sequence, Tuple, Union
 
 import numpy as np
+from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core._typing_core import BoundsLike, Matrix, Vector
+from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
@@ -543,17 +545,17 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
     @property
     def points(self) -> np.ndarray:
-        """Get the list of points defining a broken line.
+        """Return the points defining a broken line.
 
         Returns
         -------
         np.ndarray
-            List of points defining a broken line.
+            Points defining a broken line.
         """
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Sequence[Sequence[float]]):
+    def points(self, points: Union[Matrix, Vector]):
         """Set the list of points defining a broken line.
 
         Parameters
@@ -574,6 +576,461 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         -------
         pyvista.PolyData
             Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+class Text3DSource(vtkVectorText):
+    """3D text from a string.
+
+    Generate 3D text from a string with a specified width, height or depth.
+
+    .. versionadded:: 0.43
+
+    Parameters
+    ----------
+    string : str, default: ""
+        Text string of the source.
+
+    depth : float, optional
+        Depth of the text. If ``None``, the depth is set to half
+        the :attr:`height` by default. Set to ``0.0`` for planar
+        text.
+
+    width : float, optional
+        Width of the text. If ``None``, the width is scaled
+        proportional to :attr:`height`.
+
+    height : float, optional
+        Height of the text. If ``None``, the height is scaled
+        proportional to :attr:`width`.
+
+    center : Sequence[float], default: (0.0, 0.0, 0.0)
+        Center of the text, defined as the middle of the axis-aligned
+        bounding box of the text.
+
+    normal : Sequence[float], default: (0.0, 0.0, 1.0)
+        Normal direction of the text. The direction is parallel to the
+        :attr:`depth` of the text and points away from the front surface
+        of the text.
+
+    process_empty_string : bool, default: True
+        If ``True``, when :attr:`string` is empty the :attr:`output` is a
+        single point located at :attr:`center` instead of an empty mesh.
+        See :attr:`process_empty_string` for details.
+
+    """
+
+    _new_attr_exceptions = [
+        '_center',
+        '_height',
+        '_width',
+        '_depth',
+        '_normal',
+        '_process_empty_string',
+        '_output',
+        '_extrude_filter',
+        '_tri_filter',
+        '_modified',
+    ]
+
+    def __init__(
+        self,
+        string=None,
+        depth=None,
+        width=None,
+        height=None,
+        center=(0, 0, 0),
+        normal=(0, 0, 1),
+        process_empty_string=True,
+    ):
+        """Initialize source."""
+        super().__init__()
+
+        # Create output filters to make text 3D
+        extrude = _vtk.vtkLinearExtrusionFilter()
+        extrude.SetInputConnection(self.GetOutputPort())
+        extrude.SetExtrusionTypeToNormalExtrusion()
+        extrude.SetVector(0, 0, 1)
+        self._extrude_filter = extrude
+
+        tri_filter = _vtk.vtkTriangleFilter()
+        tri_filter.SetInputConnection(extrude.GetOutputPort())
+        self._tri_filter = tri_filter
+
+        self._output = pyvista.PolyData()
+
+        # Set params
+        self.string = "" if string is None else string
+        self._process_empty_string = process_empty_string
+        self._center = center
+        self._normal = normal
+        self._height = height
+        self._width = width
+        self._depth = depth
+        self._modified = True
+
+    def __setattr__(self, name, value):  # numpydoc ignore=GL08
+        """Override to set modified flag and disable setting new attributes."""
+        if hasattr(self, name) and name != '_modified':
+            # Set modified flag
+            old_value = getattr(self, name)
+            if not np.array_equal(old_value, value):
+                object.__setattr__(self, name, value)
+                object.__setattr__(self, '_modified', True)
+        else:
+            # Do not allow setting attributes.
+            # This is similar to using @no_new_attr decorator but without
+            # the __setattr__ override since this class defines its own override
+            # for setting the modified flag
+            if name in Text3DSource._new_attr_exceptions:
+                object.__setattr__(self, name, value)
+            else:
+                raise AttributeError(
+                    f'Attribute "{name}" does not exist and cannot be added to type '
+                    f'{self.__class__.__name__}'
+                )
+
+    @property
+    def string(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the text string."""
+        return self.GetText()
+
+    @string.setter
+    def string(self, string: str):  # numpydoc ignore=GL08
+        self.SetText("" if string is None else string)
+
+    @property
+    def process_empty_string(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set flag to control behavior when empty strings are set.
+
+        When :attr:`string` is empty or only contains whitespace, the :attr:`output`
+        mesh will be empty. This can cause the bounds of the output to be undefined.
+
+        If ``True``, the output is modified to instead have a single point located
+        at :attr:`center`.
+
+        """
+        return self._process_empty_string
+
+    @process_empty_string.setter
+    def process_empty_string(self, value: bool):  # numpydoc ignore=GL08
+        self._process_empty_string = value
+
+    @property
+    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the center of the text.
+
+        The center is defined as the middle of the axis-aligned bounding box
+        of the text.
+        """
+        return self._center
+
+    @center.setter
+    def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
+        self._center = float(center[0]), float(center[1]), float(center[2])
+
+    @property
+    def normal(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the normal direction of the text.
+
+        The normal direction is parallel to the :attr:`depth` of the text, and
+        points away from the front surface of the text.
+        """
+        return self._normal
+
+    @normal.setter
+    def normal(self, normal: Sequence[float]):  # numpydoc ignore=GL08
+        self._normal = float(normal[0]), float(normal[1]), float(normal[2])
+
+    @property
+    def width(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the width of the text."""
+        return self._width
+
+    @width.setter
+    def width(self, width: float):  # numpydoc ignore=GL08
+        _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
+        self._width = width
+
+    @property
+    def height(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the height of the text."""
+        return self._height
+
+    @height.setter
+    def height(self, height: float):  # numpydoc ignore=GL08
+        _check_range(
+            height, rng=(0, float('inf')), parm_name='height'
+        ) if height is not None else None
+        self._height = height
+
+    @property
+    def depth(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the depth of the text."""
+        return self._depth
+
+    @depth.setter
+    def depth(self, depth: float):  # numpydoc ignore=GL08
+        _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
+        self._depth = depth
+
+    def update(self):
+        """Update the output of the source."""
+        if self._modified:
+            is_empty_string = self.string == "" or self.string.isspace()
+            is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
+            if is_empty_string or is_2d:
+                # Do not apply filters
+                self.Update()
+                out = self.GetOutput()
+            else:
+                # 3D case, apply filters
+                self._tri_filter.Update()
+                out = self._tri_filter.GetOutput()
+
+            # Modify output object
+            self._output.copy_from(out)
+
+            # For empty strings, the bounds are either default values (+/- 1) initially or
+            # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
+            if is_empty_string and self.process_empty_string:
+                # Add a single point to 'fix' the bounds
+                self._output.points = (0.0, 0.0, 0.0)
+
+            self._transform_output()
+            self._modified = False
+
+    @property
+    def output(self) -> _vtk.vtkPolyData:  # numpydoc ignore=RT01
+        """Get the output of the source.
+
+        The source is automatically updated by :meth:`update` prior
+        to returning the output.
+        """
+        self.update()
+        return self._output
+
+    def _transform_output(self):
+        """Scale, rotate, and translate the output mesh."""
+        # Create aliases
+        out, width, height, depth = self._output, self.width, self.height, self.depth
+        width_set, height_set, depth_set = width is not None, height is not None, depth is not None
+
+        # Scale mesh
+        bnds = out.bounds
+        size_w, size_h, size_d = bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]
+        scale_w, scale_h, scale_d = _reciprocal((size_w, size_h, size_d))
+
+        # Scale width and height first
+        if width_set and height_set:
+            # Scale independently
+            scale_w *= width
+            scale_h *= height
+        elif not width_set and height_set:
+            # Scale proportional to height
+            scale_h *= height
+            scale_w = scale_h
+        elif width_set and not height_set:
+            # Scale proportional to width
+            scale_w *= width
+            scale_h = scale_w
+        else:
+            # Do not scale
+            scale_w = 1
+            scale_h = 1
+
+        out.points[:, 0] *= scale_w
+        out.points[:, 1] *= scale_h
+
+        # Scale depth
+        if depth_set:
+            if depth == 0:
+                # Do not scale since depth is already zero (no extrusion)
+                scale_d = 1
+            else:
+                scale_d *= depth
+        else:
+            # Scale to half the height by default
+            scale_d *= size_h * scale_h * 0.5
+
+        out.points[:, 2] *= scale_d
+
+        # Center points at origin
+        out.points -= out.center
+
+        # Move to final position.
+        # Only rotate if non-default normal.
+        if not np.array_equal(self.normal, (0, 0, 1)):
+            out.rotate_x(90, inplace=True)
+            out.rotate_z(90, inplace=True)
+            translate(out, self.center, self.normal)
+        else:
+            out.points += self.center
+
+
+@no_new_attr
+class CubeSource(_vtk.vtkCubeSource):
+    """Cube source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    x_length : float, default: 1.0
+        Length of the cube in the x-direction.
+
+    y_length : float, default: 1.0
+        Length of the cube in the y-direction.
+
+    z_length : float, default: 1.0
+        Length of the cube in the z-direction.
+
+    bounds : sequence[float], optional
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    Examples
+    --------
+    Create a default CubeSource.
+
+    >>> import pyvista as pv
+    >>> source = pv.CubeSource()
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    _new_attr_exceptions = [
+        "bounds",
+        "_bounds",
+    ]
+
+    def __init__(
+        self, center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None
+    ):
+        """Initialize the cube source class."""
+        super().__init__()
+        if bounds is not None:
+            self.bounds = bounds
+        else:
+            self.center = center
+            self.x_length = x_length
+            self.y_length = y_length
+            self.z_length = z_length
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounding box of the cube."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        if np.array(bounds).size != 6:
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
+        self._bounds = bounds
+        self.SetBounds(bounds)
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def x_length(self) -> float:
+        """Get the x length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            XLength along the cone in its specified direction.
+        """
+        return self.GetXLength()
+
+    @x_length.setter
+    def x_length(self, x_length: float):
+        """Set the x length of the cube.
+
+        Parameters
+        ----------
+        x_length : float
+            XLength of the cone.
+        """
+        self.SetXLength(x_length)
+
+    @property
+    def y_length(self) -> float:
+        """Get the y length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            YLength along the cone in its specified direction.
+        """
+        return self.GetYLength()
+
+    @y_length.setter
+    def y_length(self, y_length: float):
+        """Set the y length of the cube.
+
+        Parameters
+        ----------
+        y_length : float
+            YLength of the cone.
+        """
+        self.SetYLength(y_length)
+
+    @property
+    def z_length(self) -> float:
+        """Get the z length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            ZLength along the cone in its specified direction.
+        """
+        return self.GetZLength()
+
+    @z_length.setter
+    def z_length(self, z_length: float):
+        """Set the z length of the cube.
+
+        Parameters
+        ----------
+        z_length : float
+            ZLength of the cone.
+        """
+        self.SetZLength(z_length)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Cube surface.
         """
         self.Update()
         return wrap(self.GetOutput())

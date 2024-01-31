@@ -35,7 +35,9 @@ BUILDING_GALLERY = os.environ.get("PYVISTA_BUILDING_GALLERY", "false").lower() =
 REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
-FIGURE_PATH = None
+FIGURE_PATH = os.environ.get("PYVISTA_FIGURE_PATH", None)
+
+ON_SCREENSHOT = os.environ.get("PYVISTA_ON_SCREENSHOT", "false").lower() == "true"
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()
@@ -88,7 +90,7 @@ def __getattr__(name):
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
-    except AttributeError as e:
+    except AttributeError:
         raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 
     return feature

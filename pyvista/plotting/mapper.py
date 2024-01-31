@@ -1,6 +1,6 @@
 """An internal module for wrapping the use of mappers."""
 import sys
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import numpy as np
 
@@ -398,7 +398,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
     @property
     def dataset(self) -> Optional['pyvista.core.dataset.DataSet']:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return wrap(self.GetInputAsDataSet())
+        return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))
 
     @dataset.setter
     def dataset(
@@ -663,7 +663,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 scalars = scalars.ravel()
 
         if scalars.dtype == np.bool_:
-            scalars = scalars.astype(np.float_)
+            scalars = scalars.astype(np.float64)
 
         # Set scalars range
         if clim is None:
@@ -857,6 +857,55 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     def scale_factor(self, value: float):  # numpydoc ignore=GL08
         return self.SetScaleFactor(value)
 
+    @property
+    def scale_array(self) -> str:  # numpydoc ignore=RT01
+        """Set or return the name of the array used to scale the splats.
+
+        Scalars used to scale the gaussian points. Accepts a string
+        name of an array that is present on the mesh.
+
+        Notes
+        -----
+        Setting this automatically sets ``scale_factor = 1.0``.
+
+        Examples
+        --------
+        Plot spheres using `style='points_gaussian'` style and scale them by
+        radius.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> n_spheres = 1_000
+        >>> pos = np.random.random((n_spheres, 3))
+        >>> rad = np.random.random(n_spheres) * 0.01
+        >>> pdata = pv.PolyData(pos)
+        >>> pdata['radius'] = rad
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(
+        ...     pdata,
+        ...     style='points_gaussian',
+        ...     emissive=False,
+        ...     render_points_as_spheres=True,
+        ... )
+        >>> actor.mapper.scale_array = 'radius'
+        >>> pl.show()
+        """
+        return self.GetScaleArray()
+
+    @scale_array.setter
+    def scale_array(self, name: str):  # numpydoc ignore=GL08
+        if not self.dataset:  # pragma: no cover
+            raise RuntimeError('Missing dataset.')
+        if name not in self.dataset.point_data:
+            available_arrays = ", ".join(self.dataset.point_data.keys())
+            raise KeyError(
+                f'Point array "{name}" does not exist. '
+                f'Available point arrays are: {available_arrays}'
+            )
+
+        self.scale_factor = 1.0
+        return self.SetScaleArray(name)
+
     def use_circular_splat(self, opacity: float = 1.0):
         """Set the fragment shader code to create a circular splat.
 
@@ -882,7 +931,6 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             "}\n"
         )
         # maintain consistency with the default style
-        self.emissive = True
         self.scale_factor *= 1.5
 
     def use_default_splat(self):

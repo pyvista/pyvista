@@ -1579,11 +1579,12 @@ class DataSetFilters:
                     'This version of VTK does not support `use_all_points=True`. '
                     'VTK v9.1 or newer is required.'
                 )
-        # vtkExtractEdges improperly uses INFO for debugging messages
+        # Suppress improperly used INFO for debugging messages in vtkExtractEdges
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         _update_alg(alg, progress_bar, 'Extracting All Edges')
-        # Reset vtkLogger to default verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         output = _get_output(alg)
         if clear_data:
             output.clear_data()
@@ -2050,8 +2051,10 @@ class DataSetFilters:
             self.GetPointData().AddArray(otc)
         return self
 
-    def compute_cell_sizes(self, length=True, area=True, volume=True, progress_bar=False):
-        """Compute sizes for 1D (length), 2D (area) and 3D (volume) cells.
+    def compute_cell_sizes(
+        self, length=True, area=True, volume=True, progress_bar=False, vertex_count=False
+    ):
+        """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
         Parameters
         ----------
@@ -2067,12 +2070,16 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        vertex_count : bool, default: False
+            Specify whether or not to compute sizes for vertex and polyvertex cells (0D cells).
+            The computed value is the number of points in the cell.
+
         Returns
         -------
         pyvista.DataSet
-            Dataset with `cell_data` containing the ``"Length"``,
-            ``"Area"``, and ``"Volume"`` arrays if set in the
-            parameters.  Return type matches input.
+            Dataset with `cell_data` containing the ``"VertexCount"``,
+            ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
+            in the parameters.  Return type matches input.
 
         Notes
         -----
@@ -2094,7 +2101,7 @@ class DataSetFilters:
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
-        alg.SetComputeVertexCount(False)
+        alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar, 'Computing Cell Sizes')
         return _get_output(alg)
 
@@ -2829,7 +2836,7 @@ class DataSetFilters:
         more examples using this filter.
 
         .. seealso::
-            :func:`pyvista.DataSetFilter.connectivity`
+            :func:`pyvista.DataSetFilters.connectivity`
 
         """
         return DataSetFilters.connectivity(
@@ -3517,6 +3524,7 @@ class DataSetFilters:
         locator=None,
         pass_field_data=True,
         mark_blank=True,
+        snap_to_closest_point=False,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3573,6 +3581,12 @@ class DataSetFilters:
 
         mark_blank : bool, default: True
             Whether to mark blank points and cells in "vtkGhostType".
+
+        snap_to_closest_point : bool, default: False
+            Whether to snap to cell with closest point if no cell is found. Useful
+            when sampling from data with vertex cells. Requires vtk >=9.3.0.
+
+            .. versionadded:: 0.43
 
         Returns
         -------
@@ -3640,6 +3654,11 @@ class DataSetFilters:
                     ) from err
             alg.SetCellLocatorPrototype(locator)
 
+        if snap_to_closest_point:
+            try:
+                alg.SnapToCellWithClosestPointOn()
+            except AttributeError:  # pragma: no cover
+                raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -3730,12 +3749,12 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.seed(7)
-        >>> point_cloud = np.random.random((5, 3))
+        >>> rng = np.random.default_rng(7)
+        >>> point_cloud = rng.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
         >>> pdata = pv.PolyData(point_cloud)
-        >>> pdata['values'] = np.random.random(5)
+        >>> pdata['values'] = rng.random(5)
         >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
@@ -4330,12 +4349,12 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.seed(12)
-        >>> point_cloud = np.random.random((5, 3))
+        >>> rng = np.random.default_rng(12)
+        >>> point_cloud = rng.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
         >>> pdata = pv.PolyData(point_cloud)
-        >>> pdata['values'] = np.random.random(5)
+        >>> pdata['values'] = rng.random(5)
         >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
@@ -4485,12 +4504,12 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> np.random.seed(12)
-        >>> point_cloud = np.random.random((5, 3))
+        >>> rng = np.random.default_rng(12)
+        >>> point_cloud = rng.random((5, 3))
         >>> point_cloud[:, 2] = 0
         >>> point_cloud -= point_cloud.mean(0)
         >>> pdata = pv.PolyData(point_cloud)
-        >>> pdata['values'] = np.random.random(5)
+        >>> pdata['values'] = rng.random(5)
         >>> plane = pv.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
@@ -6238,6 +6257,264 @@ class DataSetFilters:
             )
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
+
+    def sort_labels(
+        self,
+        scalars=None,
+        preference='point',
+        output_scalars=None,
+        progress_bar=False,
+        inplace=False,
+    ):
+        """Sort labeled data by number of points or cells.
+
+        This filter renumbers scalar label data of any type with ``N`` labels
+        such that the output labels are contiguous from ``[0, N)`` and
+        sorted in descending order from largest to smallest (by label count).
+        I.e., the largest label will have a value of ``0`` and the smallest
+        label will have a value of ``N-1``.
+
+        The filter is a convenience method for :func:`pyvista.DataSetFilters.pack_labels`
+        with ``sort=True``.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to sort. Defaults to currently active scalars.
+
+        preference : str, default: "point"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, None
+            Name of the sorted output scalars. By default, the output is
+            saved to ``'packed_labels'``.
+
+        progress_bar : bool, default: False
+            If ``True``, display a progress bar. Has no effect if VTK
+            version is lower than 9.3.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.Dataset
+            Dataset with sorted labels.
+
+        Examples
+        --------
+        Sort segmented image labels.
+
+        Load image labels
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.download_frog_tissue()
+
+        Show label info for first four labels
+
+        >>> label_number, label_size = np.unique(
+        ...     image_labels['MetaImage'], return_counts=True
+        ... )
+        >>> label_number[:4]
+        pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
+        >>> label_size[:4]
+        array([30805713,    35279,    19172,    38129])
+
+        Sort labels
+
+        >>> sorted_labels = image_labels.sort_labels()
+
+        Show sorted label info for the four largest labels. Note
+        the difference in label size after sorting.
+
+        >>> sorted_label_number, sorted_label_size = np.unique(
+        ...     sorted_labels["packed_labels"], return_counts=True
+        ... )
+        >>> sorted_label_number[:4]
+        pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
+        >>> sorted_label_size[:4]
+        array([30805713,   438052,   204672,   133880])
+
+        """
+        return self.pack_labels(
+            scalars=scalars,
+            output_scalars=output_scalars,
+            preference=preference,
+            progress_bar=progress_bar,
+            inplace=inplace,
+            sort=True,
+        )
+
+    def pack_labels(
+        self,
+        sort=False,
+        scalars=None,
+        preference='point',
+        output_scalars=None,
+        progress_bar=False,
+        inplace=False,
+    ):
+        """Renumber labeled data such that labels are contiguous.
+
+        This filter renumbers scalar label data of any type with ``N`` labels
+        such that the output labels are contiguous from ``[0, N)``. The
+        output may optionally be sorted by label count.
+
+        The output array ``'packed_labels'`` is added to the output by default,
+        and is automatically set as the active scalars.
+
+        See Also
+        --------
+        sort_labels
+            Similar function with ``sort=True`` by default.
+
+        Notes
+        -----
+        This filter uses ``vtkPackLabels`` as the underlying method which
+        requires VTK version 9.3 or higher. If ``vtkPackLabels`` is not
+        available, packing is done with ``NumPy`` instead which may be
+        slower. For best performance, consider upgrading VTK.
+
+        .. versionadded:: 0.43
+
+        Parameters
+        ----------
+        sort : bool, default: False
+            Whether to sort the output by label count in descending order
+            (i.e. from largest to smallest).
+
+        scalars : str, optional
+            Name of scalars to pack. Defaults to currently active scalars.
+
+        preference : str, default: "point"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, None
+            Name of the packed output scalars. By default, the output is
+            saved to ``'packed_labels'``.
+
+        progress_bar : bool, default: False
+            If ``True``, display a progress bar. Has no effect if VTK
+            version is lower than 9.3.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.Dataset
+            Dataset with packed labels.
+
+        Examples
+        --------
+        Pack segmented image labels.
+
+        Load non-contiguous image labels
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.download_frog_tissue()
+
+        Show range of labels
+
+        >>> image_labels.get_data_range()
+        (0, 29)
+
+        Find 'gaps' in the labels
+
+        >>> label_numbers = np.unique(image_labels.active_scalars)
+        >>> label_max = np.max(label_numbers)
+        >>> missing_labels = set(range(label_max)) - set(label_numbers)
+        >>> len(missing_labels)
+        4
+
+        Pack labels to remove gaps
+
+        >>> packed_labels = image_labels.pack_labels()
+
+        Show range of packed labels
+
+        >>> packed_labels.get_data_range()
+        (0, 25)
+
+        """
+        # Set a input scalars
+        if scalars is None:
+            set_default_active_scalars(self)
+            _, scalars = self.active_scalars_info
+
+        field = get_array_association(self, scalars, preference=preference)
+
+        # Determine output scalars
+        default_output_scalars = "packed_labels"
+        if output_scalars is None:
+            output_scalars = default_output_scalars
+        elif isinstance(output_scalars, str):
+            output_scalars = output_scalars
+        else:
+            raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
+
+        # Do packing
+        if hasattr(_vtk, 'vtkPackLabels'):  # pragma: no cover
+            alg = _vtk.vtkPackLabels()
+            alg.SetInputDataObject(self)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+            if sort:
+                alg.SortByLabelCount()
+            alg.PassFieldDataOn()
+            alg.PassCellDataOn()
+            alg.PassPointDataOn()
+            _update_alg(alg, progress_bar, 'Packing labels')
+            result = _get_output(alg)
+
+            if output_scalars is not scalars:
+                # vtkPackLabels does not pass un-packed labels through to the
+                # output, so add it back here
+                if field == FieldAssociation.POINT:
+                    result.point_data[scalars] = self.point_data[scalars]
+                else:
+                    result.cell_data[scalars] = self.cell_data[scalars]
+            result.rename_array("PackedLabels", output_scalars)
+
+            if inplace:
+                self.copy_from(result, deep=False)
+                return self
+            return result
+
+        else:  # Use numpy
+            # Get mapping from input ID to output ID
+            arr = get_array(self, scalars, preference=preference, err=True)
+            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
+            if sort:
+                label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
+            label_range_in = np.arange(0, np.max(label_numbers_in))
+            label_numbers_out = label_range_in[: len(label_numbers_in)]
+
+            # Pack/sort array
+            packed_array = np.zeros_like(arr)
+            for num_in, num_out in zip(label_numbers_in, label_numbers_out):
+                packed_array[arr == num_in] = num_out
+
+            if inplace:
+                result = self
+            else:
+                result = self.copy(deep=True)
+
+            # Add output to mesh
+            if field == FieldAssociation.POINT:
+                result.point_data[output_scalars] = packed_array
+            else:
+                result.cell_data[output_scalars] = packed_array
+
+            # vtkPackLabels sets active scalars by default, so do the same here
+            result.set_active_scalars(output_scalars, preference=field)
+
+            return result
 
 
 def _set_threshold_limit(alg, value, method, invert):

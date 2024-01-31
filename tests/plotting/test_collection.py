@@ -24,7 +24,7 @@ def test_pyvistandarray_strides(sphere):
 
 def test_complex_collection(plane):
     name = 'my_data'
-    data = np.random.random((plane.n_points, 2)).view(np.complex128).ravel()
+    data = np.random.default_rng().random((plane.n_points, 2)).view(np.complex128).ravel()
     plane.point_data[name] = data
 
     # ensure shallow copy
@@ -48,10 +48,11 @@ def test_add_array(sphere):
 def test_plotting_collection():
     """Ensure that we don't leak Plotter, Renderer and Charts instances."""
     pl = pv.Plotter()
+    pl.add_chart(pv.Chart2D())
     ref_plotter = weakref.ref(pl)
     ref_renderers = weakref.ref(pl.renderers)
     ref_renderer = weakref.ref(pl.renderer)
-    ref_charts = weakref.ref(pl.renderer._charts)  # instantiated on the fly
+    ref_charts = weakref.ref(pl.renderer._charts)
 
     # delete known references to Plotter
     del pv.plotting.plotter._ALL_PLOTTERS[pl._id_name]

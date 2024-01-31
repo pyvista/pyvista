@@ -71,7 +71,7 @@ software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
 
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+You are also welcome to join us on `Slack <https://communityinviter.com/apps/pyvista/pyvista>`_,
 but Slack should be reserved for ad hoc conversations and community engagement
 rather than technical discussions.
 
@@ -208,17 +208,8 @@ the exception rather than the norm. A uniform code style is enforced
 by `black <https://github.com/psf/black>`_ to prevent energy wasted on
 style disagreements.
 
-As for docstrings, follow the guidelines specified in `PEP 8 Maximum
-Line
-Length <https://www.python.org/dev/peps/pep-0008/#maximum-line-length>`_
-of limiting docstrings to 72 characters per line. This follows the
-directive:
-
-   Some teams strongly prefer a longer line length. For code maintained
-   exclusively or primarily by a team that can reach agreement on this
-   issue, it is okay to increase the line length limit up to 99
-   characters, provided that comments and docstrings are still wrapped
-   at 72 characters.
+As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
+Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
@@ -671,6 +662,12 @@ The first time you build the documentation locally will take a while as all the
 examples need to be built. After the first build, the documentation should take
 a fraction of the time.
 
+To test this locally you need to run a http server in the html directory with:
+
+.. code:: bash
+
+   make serve-html
+
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -779,6 +776,17 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once you have make a Pull Request. You can comment
+`github-actions preview` on a pull request to preview documentation.
+Since this command is only available for
+`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
+new contributors kindly request them to comment command.
+This is essential to safeguard the deployment site against
+potentially harmful commits.
+
 Branching Model
 ~~~~~~~~~~~~~~~
 
@@ -861,10 +869,11 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the tag.
+8.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
+       git push origin HEAD
        git push origin --tags
 
 9.  Create a list of all changes for the release. It is often helpful to

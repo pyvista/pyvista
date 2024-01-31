@@ -8,7 +8,12 @@ import vtk
 
 import pyvista as pv
 from pyvista import CellType, examples
-from pyvista.core.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import (
+    AmbiguousDataError,
+    CellSizeError,
+    MissingDataError,
+    PyVistaDeprecationWarning,
+)
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -93,7 +98,14 @@ def test_init_bad_input():
         pv.UnstructuredGrid(np.array(1))
 
     with pytest.raises(TypeError, match="must be a numeric type"):
-        pv.UnstructuredGrid(np.array(1), np.array(1), 'woa')
+        pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
+
+    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+        rnd_generator = np.random.default_rng()
+        points = rnd_generator.random((4, 3))
+        celltypes = [pv.CellType.TETRA]
+        cells = np.array([5, 0, 1, 2, 3])
+        pv.UnstructuredGrid(cells, celltypes, points)
 
     with pytest.raises(TypeError, match="requires the following arrays"):
         pv.UnstructuredGrid(*range(5))
@@ -258,7 +270,7 @@ def test_cells_dict_hexbeam_file():
 def test_cells_dict_variable_length():
     cells_poly = np.concatenate([[5], np.arange(5)])
     cells_types = np.array([CellType.POLYGON])
-    points = np.random.normal(size=(5, 3))
+    points = np.random.default_rng().normal(size=(5, 3))
     grid = pv.UnstructuredGrid(cells_poly, cells_types, points)
 
     # Dynamic sizes cell types are currently unsupported
@@ -279,7 +291,7 @@ def test_cells_dict_empty_grid():
 def test_cells_dict_alternating_cells():
     cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])
     cells_types = np.array([CellType.QUAD, CellType.TRIANGLE, CellType.QUAD])
-    points = np.random.normal(size=(3 + 2 * 2, 3))
+    points = np.random.default_rng().normal(size=(3 + 2 * 2, 3))
     grid = pv.UnstructuredGrid(cells, cells_types, points)
 
     cells_dict = grid.cells_dict
@@ -500,7 +512,7 @@ def structured_points():
 
 
 def test_no_copy_polydata_init():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PolyData(source)
     pts = mesh.points
     pts /= 2
@@ -511,7 +523,7 @@ def test_no_copy_polydata_init():
 
 
 def test_no_copy_polydata_points_setter():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PolyData()
     mesh.points = source
     pts = mesh.points
@@ -549,7 +561,7 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
 
 @pointsetmark
 def test_no_copy_pointset_init():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PointSet(source)
     pts = mesh.points
     pts /= 2
@@ -561,7 +573,7 @@ def test_no_copy_pointset_init():
 
 @pointsetmark
 def test_no_copy_pointset_points_setter():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.PointSet()
     mesh.points = source
     pts = mesh.points
@@ -573,7 +585,7 @@ def test_no_copy_pointset_points_setter():
 
 
 def test_no_copy_unstructured_grid_points_setter():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     mesh = pv.UnstructuredGrid()
     mesh.points = source
     pts = mesh.points
@@ -1343,6 +1355,9 @@ def test_ExplicitStructuredGrid_cell_coords():
 
 def test_ExplicitStructuredGrid_neighbors():
     grid = examples.load_explicit_structured()
+
+    with pytest.raises(ValueError, match="Invalid value for `rel`"):
+        indices = grid.neighbors(0, rel='foo')
 
     indices = grid.neighbors(0, rel='topological')
     assert isinstance(indices, list)

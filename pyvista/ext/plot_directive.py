@@ -64,6 +64,9 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
+    force_static : bool
+        If specified, static images will be used instead of an interactive scene.
+
 Additionally, this directive supports all of the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
@@ -162,6 +165,7 @@ class PlotDirective(Directive):
         'nofigs': directives.flag,
         'encoding': directives.encoding,
         'caption': directives.unchanged,
+        'force_static': directives.flag,
     }
 
     def run(self):
@@ -207,6 +211,12 @@ def _contains_doctest(text):
     r = re.compile(r'^\s*>>>', re.M)
     m = r.search(text)
     return bool(m)
+
+
+def _contains_pyvista_plot(text):
+    if ".. pyvista-plot::" in text:
+        return True
+    return False
 
 
 def _strip_comments(code):
@@ -263,12 +273,31 @@ TEMPLATE = """
 .. only:: html
 
    {% for img in images %}
+   {% if img.extension == 'vtksz' %}
+
+   .. tab-set::
+
+       .. tab-item:: Static Scene
+
+           .. figure:: {{ build_dir }}/{{ img.stem }}.png
+              {% for option in options -%}
+              {{ option }}
+              {% endfor %}
+
+
+       .. tab-item:: Interactive Scene
+
+           .. offlineviewer:: {{ build_dir }}/{{ img.stem }}.vtksz
+
+   {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {% else %}
    .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
       {{ option }}
       {% endfor %}
 
-      {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {% endif %}
    {% endfor %}
 
 """
@@ -294,11 +323,20 @@ class ImageFile:
         """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
+        self.extension = Path(basename).suffix[1:]
 
     @property
     def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
+
+    @property
+    def stem(self):  # numpydoc ignore=RT01
+        """Return the basename without the suffix."""
+        return Path(self.basename).stem
+
+    def __repr__(self) -> str:  # pragma no cover
+        return self.filename
 
 
 class PlotError(RuntimeError):
@@ -308,13 +346,19 @@ class PlotError(RuntimeError):
 
 
 def _run_code(code, code_path, ns=None, function_name=None):
-    """Run a docstring example if it does not contain ``'doctest:+SKIP'``.
+    """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
+    ```pyvista-plot::`` directive.  In the later case, the doctest parser will
+    present the code-block again with the ```pyvista-plot::`` directive
+    and its options removed.
 
     Import a Python module from a path, and run the function given by
     name, if function_name is not None.
     """
     # do not execute code containing any SKIP directives
     if 'doctest:+SKIP' in code:
+        return ns
+
+    if 'pyvista-plot::' in code:
         return ns
 
     try:
@@ -335,6 +379,7 @@ def render_figures(
     context,
     function_name,
     config,
+    force_static,
 ):
     """Run a pyplot script and save the images in *output_dir*.
 
@@ -342,8 +387,16 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
     """
-    # Try to determine if all images already exist
-    is_doctest, code_pieces = _split_code_at_show(code)
+
+    # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
+    # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
+    # and its options properly parsed.
+    if _contains_pyvista_plot(code):
+        is_doctest = True
+        code_pieces = [code]
+    else:
+        # Try to determine if all images already exist
+        is_doctest, code_pieces = _split_code_at_show(code)
 
     # Otherwise, we didn't find the files, so build them
     results = []
@@ -380,6 +433,13 @@ def render_figures(
                     except RuntimeError:  # pragma no cover
                         # ignore closed, unrendered plotters
                         continue
+                    if force_static or (plotter.last_vtksz is None):
+                        images.append(image_file)
+                        continue
+                    else:
+                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
+                        with open(image_file.filename, "wb") as f:
+                            f.write(plotter.last_vtksz)
                 images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
@@ -397,6 +457,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
+    force_static = 'force_static' in options
 
     default_fmt = 'png'
 
@@ -495,7 +556,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     # make figures
     try:
         results = render_figures(
-            code, source_file_name, build_dir, output_base, keep_context, function_name, config
+            code,
+            source_file_name,
+            build_dir,
+            output_base,
+            keep_context,
+            function_name,
+            config,
+            force_static,
         )
         errors = []
     except PlotError as err:  # pragma: no cover
@@ -511,7 +579,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         errors = [sm]
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('      ' + line.strip() for line in caption.split('\n'))
+    caption = '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
 
     # generate output restructuredtext
     total_lines = []

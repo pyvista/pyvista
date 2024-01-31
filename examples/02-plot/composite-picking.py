@@ -21,12 +21,12 @@ import pyvista as pv
 def make_poly():
     """Create a superellipsoid in a random location."""
     poly = pv.ParametricSuperEllipsoid(
-        n1=np.random.random(),
-        n2=np.random.random() * 2,
+        n1=np.random.default_rng().random(),
+        n2=np.random.default_rng().random() * 2,
         u_res=50,
         v_res=50,
     )
-    poly.points += np.random.random(3) * 20
+    poly.points += np.random.default_rng().random(3) * 20
     return poly
 
 
@@ -41,6 +41,11 @@ blocks.plot()
 # fun, let's also enable physically based rendering and set the callback to set
 # the block color to red when the block is clicked and unset the color if the
 # color has already been set for the block.
+
+# sphinx_gallery_start_ignore
+# physically based rendering does not work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 pl = pv.Plotter()
 actor, mapper = pl.add_composite(blocks, color="w", pbr=True, metallic=True)

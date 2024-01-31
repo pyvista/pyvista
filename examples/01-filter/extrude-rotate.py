@@ -25,6 +25,11 @@ poly
 # Plot the extruded line
 # ~~~~~~~~~~~~~~~~~~~~~~
 
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 plotter = pyvista.Plotter(shape=(2, 1))
 plotter.subplot(0, 0)
 plotter.add_text("Line", font_size=24)

@@ -17,7 +17,7 @@ concurrency:
 
 env:
   ALLOW_PLOTTING: true
-  SHELLOPTS: 'errexit:pipefail'
+  SHELLOPTS: "errexit:pipefail"
 
 jobs:
   macOS:
@@ -25,17 +25,17 @@ jobs:
     name: Mac OS Unit Testing
     strategy:
       matrix:
-        python-version: ['3.9', '3.11']
+        python-version: ["3.9", "3.11"]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
@@ -54,14 +54,13 @@ jobs:
       - name: Test Plotting
         run: pytest -v tests/plotting --fail_extra_image_cache
 
-
   LinuxConda:
     runs-on: ubuntu-20.04
     if: false
     env:
       CONDA_ALWAYS_YES: 1
       conda_env: pyvista-vtk
-      DISPLAY: ':99.0'
+      DISPLAY: ":99.0"
       PYVISTA_OFF_SCREEN: True
 
     steps:
@@ -71,14 +70,14 @@ jobs:
         uses: pyvista/setup-headless-display-action@v2
 
       - name: Cache Conda Packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/anaconda3/pkgs
           key: Conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
           restore-keys: |
             ${{ runner.os }}-conda-
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -93,7 +92,7 @@ jobs:
           conda update -n base conda
           conda install -n base conda-libmamba-solver
 
-      - name: 'Workaround for mamba-org/mamba#488'
+      - name: "Workaround for mamba-org/mamba#488"
         run: rm /usr/share/miniconda/pkgs/cache/*.json
 
       - name: Create Anaconda environment
@@ -135,29 +134,31 @@ jobs:
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
         include:
-          - python-version: '3.8'
-            vtk-version: '9.0.3'  # Requires numpy<1.24
-          - python-version: '3.9'
-            vtk-version: '9.1'
-          - python-version: '3.10'
-            vtk-version: '9.2.2'
-          - python-version: '3.11'  # Added with VTK 9.2.5
-            vtk-version: 'latest'
+          - python-version: "3.8"
+            vtk-version: "9.0.3" # Requires numpy<1.24
+          - python-version: "3.9"
+            vtk-version: "9.1"
+          - python-version: "3.10"
+            vtk-version: "9.2.2"
+          - python-version: "3.11"
+            vtk-version: "9.2.6"
+          - python-version: "3.12"
+            vtk-version: "latest"
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -185,8 +186,8 @@ jobs:
         if: ${{ matrix.vtk-version == '9.0.3' }}
         run: pip install 'numpy<1.24'
 
-      - name: Limit Matplotlib for VTK<=9.2.2
-        if: ${{ matrix.vtk-version != 'latest' && matrix.vtk-version != '9.2.2' }}
+      - name: Limit Matplotlib for VTK<9.2.2
+        if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
         run: pip install 'matplotlib<3.6'
 
       - name: Core Testing (no GL)
@@ -208,7 +209,7 @@ jobs:
           pip list
 
       - uses: codecov/codecov-action@v3
-        name: 'Upload coverage to CodeCov'
+        name: "Upload coverage to CodeCov"
 
       - name: Check package
         run: |
@@ -233,16 +234,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
@@ -264,7 +265,7 @@ jobs:
           echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
 
       - name: Cache example data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: Examples-1-${{ hashFiles('*') }}

@@ -433,7 +433,10 @@ class MultiBlock(
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
-        dataset = wrap(dataset)
+        wrapped = wrap(dataset)
+        if isinstance(wrapped, pyvista_ndarray):
+            raise TypeError('dataset should not be or contain an array')
+        dataset = wrapped
         self.n_blocks += 1
         self[index] = dataset
         # No overwrite if name is None
@@ -1075,7 +1078,11 @@ class MultiBlock(
                     )
                 else:
                     try:
-                        field, scalars = block.set_active_scalars(name, preference)
+                        field, scalars_out = block.set_active_scalars(name, preference)
+                        if scalars_out is None:
+                            field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
+                        else:
+                            scalars = scalars_out
                     except KeyError as err:
                         if not allow_missing:
                             raise err
@@ -1103,7 +1110,7 @@ class MultiBlock(
         # Verify array consistency
         dims: Set[int] = set()
         dtypes: Set[np.dtype] = set()
-        for block in self:
+        for _ in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association
                 if field != field_asc:

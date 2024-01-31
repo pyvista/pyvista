@@ -7,43 +7,41 @@ jobs:
   triage:
     runs-on: ubuntu-20.04
     steps:
-    - name: Label based on changed files
-      uses: actions/labeler@v4
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        # https://github.com/actions/labeler/issues/112#issuecomment-1000491676
-        sync-labels: ''
+      - name: Label based on changed files
+        uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
-    # Label based on branch name
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'doc/') || startsWith(github.event.pull_request.head.ref, 'docs')
-      with:
-        labels: documentation
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'docker')
-      with:
-        labels: docker
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'maint') || startsWith(github.event.pull_request.head.ref, 'no-ci') || startsWith(github.event.pull_request.head.ref, 'ci')
-      with:
-        labels: maintenance
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'junk')
-      with:
-        labels: ignore-for-release
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'feat')
-      with:
-        labels: enhancement
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch') || startsWith(github.event.pull_request.head.ref, 'bug')
-      with:
-        labels: bug
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'release')
-      with:
-        labels: release
-    - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.event.pull_request.head.ref, 'breaking-change')
-      with:
-        labels: breaking-change
+      # Label based on branch name
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'doc/') || startsWith(github.event.pull_request.head.ref, 'docs')
+        with:
+          labels: documentation
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'docker')
+        with:
+          labels: docker
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'maint') || startsWith(github.event.pull_request.head.ref, 'no-ci') || startsWith(github.event.pull_request.head.ref, 'ci')
+        with:
+          labels: maintenance
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'junk') || github.actor == 'dependabot[bot]' || github.actor == 'github-actions[bot]' ||  github.actor == 'pre-commit-ci[bot]'
+        with:
+          labels: ignore-for-release
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'feat')
+        with:
+          labels: enhancement
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch') || startsWith(github.event.pull_request.head.ref, 'bug')
+        with:
+          labels: bug
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'release')
+        with:
+          labels: release
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: startsWith(github.event.pull_request.head.ref, 'breaking-change')
+        with:
+          labels: breaking-change

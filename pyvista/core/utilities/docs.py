@@ -3,9 +3,10 @@ import inspect
 import os
 import os.path as op
 import sys
+from typing import Dict, Optional
 
 
-def linkcode_resolve(domain, info, edit=False):
+def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -22,7 +23,7 @@ def linkcode_resolve(domain, info, edit=False):
     Returns
     -------
     str
-        The code URL.
+        The code URL. Empty string if there is no valid link.
 
     Notes
     -----
@@ -108,7 +109,7 @@ def pv_html_page_context(
 
     """
 
-    def fix_edit_link_button(link: str) -> str:
+    def fix_edit_link_button(link: str) -> Optional[str]:
         """Transform "edit on github" links to the correct url.
 
         This is specific to PyVista to ensure that the "edit this page" link

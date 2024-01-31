@@ -129,6 +129,21 @@ class AmbiguousDataError(ValueError):
         super().__init__(message)
 
 
+class CellSizeError(ValueError):
+    """Exception when a cell array size is invalid.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(self, message="Cell array size is invalid."):
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
 class PyVistaPipelineError(RuntimeError):
     """Exception when a VTK pipeline runs into an issue.
 

@@ -1,5 +1,6 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
+from typing import Literal, Optional, cast
 
 import numpy as np
 
@@ -8,7 +9,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
@@ -771,4 +772,142 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return wrap(alg.GetOutput())
+        return cast(pyvista.ImageData, wrap(alg.GetOutput()))
+
+    def contour_labeled(
+        self,
+        n_labels: Optional[int] = None,
+        smoothing: bool = False,
+        smoothing_num_iterations: int = 50,
+        smoothing_relaxation_factor: float = 0.5,
+        smoothing_constraint_distance: float = 1,
+        output_mesh_type: Literal['quads', 'triangles'] = 'quads',
+        output_style: Literal['default', 'boundary'] = 'default',
+        scalars: Optional[str] = None,
+        progress_bar: bool = False,
+    ) -> 'pyvista.PolyData':
+        """Generate labeled contours from 3D label maps.
+
+        SurfaceNets algorithm is used to extract contours preserving sharp
+        boundaries for the selected labels from the label maps.
+        Optionally, the boundaries can be smoothened to reduce the staircase
+        appearance in case of low resolution input label maps.
+
+        This filter requires that the :class:`ImageData` has integer point
+        scalars, such as multi-label maps generated from image segmentation.
+
+        .. note::
+           Requires ``vtk>=9.3.0``.
+
+        Parameters
+        ----------
+        n_labels : int, optional
+            Number of labels to be extracted (all are extracted if None is given).
+
+        smoothing : bool, default: False
+            Apply smoothing to the meshes.
+
+        smoothing_num_iterations : int, default: 50
+            Number of smoothing iterations.
+
+        smoothing_relaxation_factor : float, default: 0.5
+            Relaxation factor of the smoothing.
+
+        smoothing_constraint_distance : float, default: 1
+            Constraint distance of the smoothing.
+
+        output_mesh_type : str, default: 'quads'
+            Type of the output mesh. Must be either ``'quads'``, or ``'triangles'``.
+
+        output_style : str, default: 'default'
+            Style of the output mesh. Must be either ``'default'`` or ``'boundary'``.
+            When ``'default'`` is specified, the filter produces a mesh with both
+            interior and exterior polygons. When ``'boundary'`` is selected, only
+            polygons on the border with the background are produced (without interior
+            polygons). Note that style ``'selected'`` is currently not implemented.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            :class:`pyvista.PolyData` Labeled mesh with the segments labeled.
+
+        References
+        ----------
+        Sarah F. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation
+        of Sharp Boundaries, Journal of Computer Graphics Techniques (JCGT), vol. 11,
+        no. 1, 34-54, 2022. Available online http://jcgt.org/published/0011/01/03/
+
+        https://www.kitware.com/really-fast-isocontouring/
+
+        Examples
+        --------
+        See :ref:`contouring_example` for a full example using this filter.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.contour
+            Generalized contouring method which uses MarchingCubes or FlyingEdges.
+
+        pyvista.DataSetFilters.pack_labels
+            Function used internally by SurfaceNets to generate contiguous label data.
+
+        """
+        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+
+        alg = _vtk.vtkSurfaceNets3D()
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore
+            field, scalars = self.active_scalars_info  # type: ignore
+            if field != FieldAssociation.POINT:
+                raise ValueError('If `scalars` not given, active scalars must be point array.')
+        else:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore
+            if field != FieldAssociation.POINT:
+                raise ValueError(
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                )
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
+        alg.SetInputData(self)
+        if n_labels is not None:
+            alg.GenerateLabels(n_labels, 1, n_labels)
+        if output_mesh_type == 'quads':
+            alg.SetOutputMeshTypeToQuads()
+        elif output_mesh_type == 'triangles':
+            alg.SetOutputMeshTypeToTriangles()
+        else:
+            raise ValueError(
+                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
+            )
+        if output_style == 'default':
+            alg.SetOutputStyleToDefault()
+        elif output_style == 'boundary':
+            alg.SetOutputStyleToBoundary()
+        elif output_style == 'selected':
+            raise NotImplementedError(f'Output style "{output_style}" is not implemented')
+        else:
+            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
+        if smoothing:
+            alg.SmoothingOn()
+            alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
+            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
+            alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
+        else:
+            alg.SmoothingOff()
+        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        return cast(pyvista.PolyData, wrap(alg.GetOutput()))

@@ -1,5 +1,10 @@
 """Core helper utilities."""
 import collections
+from typing import TYPE_CHECKING, Optional, Union, cast
+
+if TYPE_CHECKING:  # pragma: no cover
+    from trimesh import Trimesh
+    from meshio import Mesh
 
 import numpy as np
 
@@ -10,7 +15,9 @@ from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
 
 
-def wrap(dataset):
+def wrap(
+    dataset: Optional[Union[np.ndarray, _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
+) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
@@ -41,7 +48,7 @@ def wrap(dataset):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> points = np.random.random((10, 3))
+    >>> points = np.random.default_rng().random((10, 3))
     >>> cloud = pv.wrap(points)
     >>> cloud
     PolyData (...)
@@ -97,11 +104,11 @@ def wrap(dataset):
     """
     # Return if None
     if dataset is None:
-        return
+        return None
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        return dataset
+        return dataset  # type: ignore
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -142,14 +149,13 @@ def wrap(dataset):
     # wrap trimesh
     if dataset.__class__.__name__ == 'Trimesh':
         # trimesh doesn't pad faces
-        n_face = dataset.faces.shape[0]
-        faces = np.empty((n_face, 4), dataset.faces.dtype)
-        faces[:, 1:] = dataset.faces
-        faces[:, 0] = 3
-        polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        dataset = cast('Trimesh', dataset)
+        polydata = pyvista.PolyData.from_regular_faces(
+            np.asarray(dataset.vertices), faces=dataset.faces
+        )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
-            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
+            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)  # type: ignore
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object

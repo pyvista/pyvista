@@ -1,15 +1,18 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 import warnings
 
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Number
+from ._typing_core import Array, Matrix
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -104,9 +107,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
     >>> mesh.point_data.set_array(range(4), 'my-data')
     >>> mesh.point_data.set_array(range(5, 9), 'my-other-data')
-    >>> vectors0 = np.random.random((4, 3))
+    >>> vectors0 = np.random.default_rng().random((4, 3))
     >>> mesh.point_data.set_vectors(vectors0, 'vectors0')
-    >>> vectors1 = np.random.random((4, 3))
+    >>> vectors1 = np.random.default_rng().random((4, 3))
     >>> mesh.point_data.set_vectors(vectors1, 'vectors1')
     >>> mesh.point_data
     pyvista DataSetAttributes
@@ -126,7 +129,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     """
 
     def __init__(
-        self, vtkobject: _vtk.vtkFieldData, dataset: _vtk.vtkDataSet, association: FieldAssociation
+        self,
+        vtkobject: _vtk.vtkFieldData,
+        dataset: Union[_vtk.vtkDataSet, 'DataSet'],
+        association: FieldAssociation,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
@@ -212,9 +218,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(
-        self, key: str, value: Union[np.ndarray, Sequence, float]
-    ):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key: str, value: Array):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -318,7 +322,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> mesh = pv.Cube()
-        >>> vectors = np.random.random((mesh.n_points, 3))
+        >>> vectors = np.random.default_rng().random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
         >>> vectors_out = mesh.point_data.active_vectors
         >>> vectors_out.shape
@@ -402,7 +406,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords
+        self.active_texture_coordinates = t_coords  # type: ignore
 
     @property
     def active_t_coords_name(self) -> Optional[str]:  # numpydoc ignore=RT01
@@ -513,9 +517,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             narray = narray.squeeze()
         return narray
 
-    def set_array(
-        self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy=False
-    ) -> None:
+    def set_array(self, data: Array, name: str, deep_copy=False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -529,9 +531,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        data : float | array_like[float]
-            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
-            ``list``, ``tuple`` or scalar value.
+        data : Array
+            Array of data.
 
         name : str
             Name to assign to the data.  If this name already exists,
@@ -579,9 +580,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(
-        self, scalars: Union[Sequence[Number], Number, np.ndarray], name='scalars', deep_copy=False
-    ):
+    def set_scalars(self, scalars: Array, name='scalars', deep_copy=False):
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -594,9 +593,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        scalars : float | array_like[float]
-            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`, ``list``,
-            ``tuple`` or scalar value.
+        scalars : Array
+            Array of data.
 
         name : str, default: 'scalars'
             Name to assign the scalars.
@@ -634,39 +632,32 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(
-        self, vectors: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy=False
-    ):
+    def set_vectors(self, vectors: Matrix, name: str, deep_copy=False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
         as normal vectors or a velocity field.
 
-        The vectors data must contain three components per cell or
-        point.  Use :func:`DataSetAttributes.set_scalars` when
-        adding non-directional data.
+        The vectors data must contain three components per cell or point.  Use
+        :func:`DataSetAttributes.set_scalars` when adding non-directional data.
 
         Parameters
         ----------
-        vectors : float | array_like[float]
-            A :class:`pyvista.pyvista_ndarray`, :class:`numpy.ndarray`,
-            ``list``, or ``tuple``.  Must match the number of cells or points
-            of the dataset.
+        vectors : Matrix
+            Data shaped ``(n, 3)`` where n matches the number of points or cells.
 
         name : str
             Name of the vectors.
 
         deep_copy : bool, default: False
-            When ``True`` makes a full copy of the array.  When
-            ``False``, the data references the original array
-            without copying it.
+            When ``True`` makes a full copy of the array.  When ``False``, the
+            data references the original array without copying it.
 
         Notes
         -----
-        PyVista and VTK treats vectors and scalars differently when
-        performing operations. Vector data, unlike scalar data, is
-        rotated along with the geometry when the DataSet is passed
-        through a transformation filter.
+        PyVista and VTK treats vectors and scalars differently when performing
+        operations. Vector data, unlike scalar data, is rotated along with the
+        geometry when the DataSet is passed through a transformation filter.
 
         When adding non-directional data (such temperature values or
         multi-component scalars like RGBA values), you can also use
@@ -680,7 +671,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> vectors = np.random.random((mesh.n_points, 3))
+        >>> vectors = np.random.default_rng().random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
         >>> mesh.point_data
         pyvista DataSetAttributes
@@ -713,8 +704,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def _prepare_array(
-        self, data: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy: bool
-    ) -> _vtk.vtkDataSet:  # numpydoc ignore=PR01,RT01
+        self, data: Array, name: str, deep_copy: bool
+    ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
         Notes
@@ -1031,7 +1022,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> n = len(mesh.point_data)
         >>> arrays = {
         ...     'foo': np.arange(mesh.n_points),
-        ...     'rand': np.random.random(mesh.n_points),
+        ...     'rand': np.random.default_rng().random(mesh.n_points),
         ... }
         >>> mesh.point_data.update(arrays)
         >>> mesh.point_data
@@ -1134,7 +1125,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import numpy as np
         >>> mesh = pv.Sphere()
         >>> mesh.point_data.set_vectors(
-        ...     np.random.random((mesh.n_points, 3)), 'my-vectors'
+        ...     np.random.default_rng().random((mesh.n_points, 3)),
+        ...     'my-vectors',
         ... )
         >>> mesh.point_data.active_vectors_name
         'my-vectors'
@@ -1197,8 +1189,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Returns
         -------
         pyvista_ndarray
-            Normals of this dataset attribute.  ``None`` if no
-            normals have been set.
+            Normals of this dataset attribute. ``None`` if no normals have been
+            set.
 
         Notes
         -----
@@ -1249,12 +1241,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: Union[Sequence[Number], np.ndarray]):  # numpydoc ignore=GL08
+    def active_normals(self, normals: Matrix):  # numpydoc ignore=GL08
         """Set the normals.
 
         Parameters
         ----------
-        normals : Union[Sequence[Number], np.ndarray]
+        normals : Matrix
             Normals of this dataset attribute.
 
         """

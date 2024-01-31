@@ -10,6 +10,12 @@ The slider widget can be enabled and disabled by the
 This is one of the most versatile widgets as it can control a value that can
 be used for just about anything.
 """
+
+# sphinx_gallery_start_ignore
+# widgets do not work in interactive examples
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # sphinx_gallery_thumbnail_number = 1
 
 ##############################################################################

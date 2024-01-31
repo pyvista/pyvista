@@ -5,6 +5,7 @@ from typing import Union
 import numpy as np
 
 from . import _vtk_core as _vtk
+from ._typing_core import Array
 from .utilities.arrays import FieldAssociation, convert_array
 
 
@@ -15,7 +16,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     Parameters
     ----------
-    array : Iterable or vtk.vtkAbstractArray
+    array : Array or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet
@@ -44,7 +45,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Iterable, _vtk.vtkAbstractArray],
+        array: Union[Array, _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):

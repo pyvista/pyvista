@@ -14,6 +14,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import Dict, Optional
+import uuid
 import warnings
 import weakref
 
@@ -64,7 +65,7 @@ from .scalar_bars import ScalarBars
 from .text import CornerAnnotation, Text, TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa
+from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa: F401
 from .utilities.algorithms import (
     active_scalars_algorithm,
     algorithm_to_mesh_handler,
@@ -139,6 +140,7 @@ def _warn_xserver():  # pragma: no cover
         # finally, check if using a backend that doesn't require an xserver
         if pyvista.global_theme.jupyter_backend in [
             'client',
+            'html',
         ]:
             return
 
@@ -636,7 +638,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point_cloud = np.random.random((100, 3))
+        >>> point_cloud = np.random.default_rng().random((100, 3))
         >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pv.Sphere(radius=0.02)
@@ -704,7 +706,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except:  # noqa: E722
+                        except:  # pragma: no cover
                             pass
 
         exporter = vtkGLTFExporter()
@@ -2009,7 +2011,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
 
-        if not all([isinstance(actor, _vtk.vtkActor) for actor in actors]):
+        if not all(isinstance(actor, _vtk.vtkActor) for actor in actors):
             raise TypeError(
                 f'Expected a vtkActor instance or a list of vtkActors, got '
                 f'{[type(actor) for actor in actors]} instead.'
@@ -2112,6 +2114,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self.iren.enable_trackball_style()
 
+    @wraps(RenderWindowInteractor.enable_custom_trackball_style)
+    def enable_custom_trackball_style(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
+        self.iren.enable_custom_trackball_style(*args, **kwargs)
+
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
@@ -2151,6 +2158,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def enable_rubber_band_2d_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
+
+    @wraps(RenderWindowInteractor.enable_2d_style)
+    def enable_2d_style(self):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_2d_style."""
+        self.iren.enable_2d_style()
 
     def enable_stereo_render(self):
         """Enable anaglyph stereo rendering.
@@ -2322,6 +2334,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color_missing_with_nan=False,
         copy_mesh=False,
         show_vertices=None,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add a composite dataset to the plotter.
@@ -2586,6 +2599,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2709,6 +2732,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             line_width=line_width,
             opacity=opacity,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
         actor.SetProperty(prop)
 
@@ -2846,6 +2870,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         copy_mesh=False,
         backface_params=None,
         show_vertices=None,
+        edge_opacity=None,
         **kwargs,
     ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3179,6 +3204,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+        edge_opacity : float, optional
+            Edge opacity of the mesh. A single float value that will be applied globally
+            edge opacity of the mesh and uniformly applied everywhere - should be
+            between 0 and 1.
+
+            .. note::
+                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
+                available, `edge_opacity` is set to 1.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3274,6 +3309,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     show_scalar_bar=False,
         ... )
 
+        Plot spheres using `points_gaussian` style and scale them by radius.
+
+        >>> N_SPHERES = 1_000_000
+        >>> pos = np.random.random((N_SPHERES, 3))
+        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> pdata = pv.PolyData(pos)
+        >>> pdata['radius'] = rad
+        >>> pdata.plot(
+        ...     style='points_gaussian',
+        ...     emissive=False,
+        ...     render_points_as_spheres=True,
+        ... )
+
         """
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
@@ -3352,6 +3400,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 roughness=roughness,
                 render=render,
                 show_vertices=show_vertices,
+                edge_opacity=edge_opacity,
                 **kwargs,
             )
             return actor
@@ -3408,6 +3457,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
+        if edge_opacity is None and pyvista.vtk_version_info >= (9, 3):
+            edge_opacity = self._theme.edge_opacity
+
         if silhouette is None:
             silhouette = self._theme.silhouette.enabled
         if silhouette:
@@ -3447,6 +3499,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # the mapper. This should be refactored by 0.36.0
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             self.mapper.scalar_map_mode = field.name
+
+            # set preference for downstream use with actual
+            if field == FieldAssociation.POINT:
+                preference = 'point'
+            elif field == FieldAssociation.CELL:
+                preference = 'cell'
 
             if algo is not None:
                 # Ensures that the right scalars are set as active on
@@ -3569,6 +3627,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting=lighting,
             line_width=line_width,
             culling=culling,
+            edge_opacity=edge_opacity,
         )
 
         if isinstance(opacity, (float, int)):
@@ -5258,6 +5317,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera=None,
         always_visible=False,
         render=True,
+        justification_horizontal=None,
+        justification_vertical=None,
+        background_color=None,
+        background_opacity=None,
     ):
         """Create a point actor with one label from list labels assigned to each point.
 
@@ -5353,6 +5416,34 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        justification_horizontal : str, optional
+            Text's horizontal justification.
+            Should be either "left", "center" or "right".
+
+            .. warning::
+                If the justification is not default,
+                the shape will be out of alignment with the label.
+                If you use other than default,
+                Please use the background color.
+                See: https://github.com/pyvista/pyvista/pull/5407
+
+        justification_vertical : str, optional
+            Text's vertical justification.
+            Should be either "bottom", "center" or "top".
+
+            .. warning::
+                If the justification is not default,
+                the shape will be out of alignment with the label.
+                If you use other than default,
+                Please use the background color.
+                See: https://github.com/pyvista/pyvista/pull/5407
+
+        background_color : pyvista.Color, optional
+            Background color of text's property.
+
+        background_opacity : pyvista.Color, optional
+            Background opacity of text's property.
 
         Returns
         -------
@@ -5463,13 +5554,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         label_mapper.SetBackgroundOpacity(shape_opacity)
         label_mapper.SetMargin(margin)
 
-        textprop = hier.GetTextProperty()
-        textprop.SetItalic(italic)
-        textprop.SetBold(bold)
-        textprop.SetFontSize(font_size)
-        textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).float_rgb)
-        textprop.SetShadow(shadow)
+        text_property = pyvista.TextProperty(
+            italic=italic,
+            bold=bold,
+            font_size=font_size,
+            font_family=font_family,
+            color=text_color,
+            shadow=shadow,
+            justification_horizontal=justification_horizontal,
+            justification_vertical=justification_vertical,
+            background_color=background_color,
+            background_opacity=background_opacity,
+        )
+        hier.SetTextProperty(text_property)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
         self.remove_actor(f'{name}-labels', reset_camera=False)
@@ -5570,7 +5667,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> points = np.random.random((10, 3))
+        >>> points = np.random.default_rng().random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(
         ...     points, render_points_as_spheres=True, point_size=100.0
@@ -5579,7 +5676,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot using the ``'points_gaussian'`` style
 
-        >>> points = np.random.random((10, 3))
+        >>> points = np.random.default_rng().random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(points, style='points_gaussian')
         >>> pl.show()
@@ -5621,8 +5718,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> cent = np.random.random((10, 3))
-        >>> direction = np.random.random((10, 3))
+        >>> cent = np.random.default_rng().random((10, 3))
+        >>> direction = np.random.default_rng().random((10, 3))
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()
@@ -6404,7 +6501,7 @@ class Plotter(BasePlotter):
                 notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
-        if self.notebook:
+        if self.notebook or pyvista.ON_SCREENSHOT:
             off_screen = True
         self.off_screen = off_screen
 
@@ -6553,6 +6650,7 @@ class Plotter(BasePlotter):
             * ``'none'`` : Do not display in the notebook.
             * ``'static'`` : Display a static figure.
             * ``'trame'`` : Display a dynamic figure with Trame.
+            * ``'html'`` : Use an ebeddable HTML scene.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
@@ -6760,7 +6858,11 @@ class Plotter(BasePlotter):
                     "A screenshot is unable to be taken as the render window is not current or rendering is suppressed."
                 )
         if _is_current:
-            self.last_image = self.screenshot(screenshot, return_img=True)
+            if pyvista.ON_SCREENSHOT:
+                filename = uuid.uuid4().hex
+                self.last_image = self.screenshot(filename, return_img=True)
+            else:
+                self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the

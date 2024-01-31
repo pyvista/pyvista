@@ -35,7 +35,7 @@ def test_actors(axes):
 
 
 def test_origin(axes):
-    origin = np.random.random(3)
+    origin = np.random.default_rng().random(3)
     axes.origin = origin
     assert np.all(axes.GetOrigin() == origin)
     assert np.all(axes.origin == origin)

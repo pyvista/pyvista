@@ -4,8 +4,11 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+import os
+
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
@@ -195,8 +198,8 @@ def test_active_scalars_remain(sphere, hexbeam):
     hexbeam.clear_data()
     point_data_name = "point_data"
     cell_data_name = "cell_data"
-    sphere[point_data_name] = np.random.random(sphere.n_points)
-    hexbeam[cell_data_name] = np.random.random(hexbeam.n_cells)
+    sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
+    hexbeam[cell_data_name] = np.random.default_rng().random(hexbeam.n_cells)
     assert sphere.point_data.active_scalars_name == point_data_name
     assert hexbeam.cell_data.active_scalars_name == cell_data_name
 
@@ -211,7 +214,7 @@ def test_active_scalars_remain(sphere, hexbeam):
 
 def test_no_added_with_scalar_bar(sphere):
     point_data_name = "data"
-    sphere[point_data_name] = np.random.random(sphere.n_points)
+    sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
     assert sphere.n_arrays == 1
@@ -240,7 +243,7 @@ def test_plotter_remains_shallow():
 
 def test_add_multiple(sphere):
     point_data_name = 'data'
-    sphere[point_data_name] = np.random.random(sphere.n_points)
+    sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     pl = pv.Plotter()
     pl.add_mesh(sphere, copy_mesh=True)
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_points), copy_mesh=True)
@@ -464,3 +467,44 @@ def test_plotter_update_coordinates(sphere):
             raise RuntimeError("Convert error this method")
         if pv._version.version_info >= (0, 47):
             raise RuntimeError("Remove this method")
+
+
+def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
+    pv.FIGURE_PATH = str(tmpdir)
+    pv.ON_SCREENSHOT = True
+
+    entries = os.listdir(pv.FIGURE_PATH)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show()
+    entries_after = os.listdir(pv.FIGURE_PATH)
+    assert len(entries) + 1 == len(entries_after)
+
+    res_file = list(set(entries_after) - set(entries))[0]
+    pv.ON_SCREENSHOT = False
+    sphere_screenshot = "sphere_screenshot.png"
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(screenshot=sphere_screenshot)
+    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
+    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    error = pv.compare_images(sphere_path, res_path)
+    assert error < 100
+
+
+def test_legend_font(sphere):
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    legend = plotter.add_legend(
+        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
+    )
+    assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
+def test_edge_opacity(sphere):
+    edge_opacity = np.random.default_rng().random()
+    pl = pv.Plotter(sphere)
+    actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
+    assert actor.prop.edge_opacity == edge_opacity

@@ -3,7 +3,9 @@
 from enum import Enum
 import os
 import platform
+import subprocess
 from subprocess import PIPE, Popen, TimeoutExpired
+import sys
 
 import numpy as np
 
@@ -274,6 +276,7 @@ def create_axes_orientation_box(
     label_color=None,
     labels_off=False,
     opacity=0.5,
+    show_text_edges=False,
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -330,6 +333,9 @@ def create_axes_orientation_box(
     opacity : float, optional
         Opacity in the range of ``[0, 1]`` of the orientation box.
 
+    show_text_edges : bool, optional
+        Enable or disable drawing the vector text edges.
+
     Returns
     -------
     vtk.vtkAnnotatedCubeActor
@@ -378,9 +384,10 @@ def create_axes_orientation_box(
         axes_actor.SetZPlusFaceText(f"+{zlabel}")
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
-    axes_actor.SetTextEdgesVisibility(False)
+    axes_actor.SetTextEdgesVisibility(show_text_edges)
+    # https://github.com/pyvista/pyvista/pull/5382
     # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
-    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
+    axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
@@ -389,7 +396,7 @@ def create_axes_orientation_box(
     axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
+    axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
@@ -682,7 +689,13 @@ def check_math_text_support():
         ``True`` if both MathText and LaTeX symbols are supported, ``False``
         otherwise.
     """
-    return (
-        _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-        and check_matplotlib_vtk_compatibility()
-    )
+    # Something seriously sketchy is happening with this VTK code
+    # It seems to hijack stdout and stderr?
+    # See https://github.com/pyvista/pyvista/issues/4732
+    # This is a hack to get around that by executing the code in a subprocess
+    # and capturing the output:
+    # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    _cmd = "import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());"
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
+    return math_text_support and check_matplotlib_vtk_compatibility()

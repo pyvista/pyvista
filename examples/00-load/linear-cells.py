@@ -15,6 +15,11 @@ For more details regarding what a :class:`pyvista.UnstructuredGrid` is, please
 see :ref:`point_sets_api`.
 
 """
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 import pyvista as pv

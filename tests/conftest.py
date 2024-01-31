@@ -11,6 +11,15 @@ from pyvista import examples
 pyvista.OFF_SCREEN = True
 
 
+@fixture()
+def global_variables_reset():
+    tmp_screenshots = pyvista.ON_SCREENSHOT
+    tmp_figurepath = pyvista.FIGURE_PATH
+    yield
+    pyvista.ON_SCREENSHOT = tmp_screenshots
+    pyvista.FIGURE_PATH = tmp_figurepath
+
+
 @fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""

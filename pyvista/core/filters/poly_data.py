@@ -523,7 +523,7 @@ class PolyDataFilters(DataSetFilters):
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
                 dataset_has_lines_strips = any(
-                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                    ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset
                 )
             else:
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
@@ -532,7 +532,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
-                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                    merged.points, faces=merged.GetCells(), deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
                 # case. Store values to restore after updating.
@@ -2165,11 +2165,12 @@ class PolyDataFilters(DataSetFilters):
         self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
-        if first_point and intersection_points.shape[0] >= 1:
+        has_intersection = intersection_points.shape[0] >= 1
+        if first_point and has_intersection:
             intersection_points = intersection_points[0]
 
         intersection_cells = []
-        if intersection_points.any():
+        if has_intersection:
             if first_point:
                 ncells = 1
             else:
@@ -2262,9 +2263,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa
-            import rtree  # noqa
-            import trimesh  # noqa
+            import pyembree  # noqa: F401
+            import rtree  # noqa: F401
+            import trimesh
         except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
@@ -2273,8 +2274,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        faces_as_array = self.faces.reshape((self.n_faces, 4))[:, 1:]
-        tmesh = trimesh.Trimesh(self.points, faces_as_array)
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins, directions, multiple_hits=not first_point
         )

@@ -89,6 +89,12 @@ scalars = np.linalg.norm(grid['B'], axis=1)
 # field nearby the coil
 opacity = 1 - np.geomspace(1.0, 0.05, 10)
 
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 # Add this all to the plotter
 pl = pv.Plotter()
 pl.add_mesh(

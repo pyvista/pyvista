@@ -22,6 +22,12 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# all but first and last image are black in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+
 ###############################################################################
 # Load the example Moon landing image and plot it.
 

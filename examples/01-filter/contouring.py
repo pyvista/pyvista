@@ -74,3 +74,15 @@ pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
 pl.add_mesh(contours, **dargs)
 pl.add_mesh(arrows, **dargs)
 pl.show()
+
+###############################################################################
+# Contours from a label map
+# +++++++++++++++++++++++++
+#
+# Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
+# using :func:`contour_labeled() <pyvista.ImageDataFilters.contour_labeled>`.
+# Requires VTK version 9.3
+if pv.vtk_version_info >= (9, 3):
+    label_map = pv.examples.download_frog_tissue()
+    mesh = label_map.contour_labeled()
+    mesh.plot(cmap="glasbey_warm", cpos="yx", show_scalar_bar=False)

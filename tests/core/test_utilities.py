@@ -11,11 +11,14 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples as ex
+from pyvista import examples as ex, pyvista_ndarray
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     _coerce_transformlike_arg,
+    cast_to_list_array,
+    cast_to_ndarray,
+    cast_to_tuple_array,
     copy_vtk_array,
     get_array,
     has_duplicates,
@@ -47,23 +50,23 @@ def test_version():
 
 
 def test_createvectorpolydata_error():
-    orig = np.random.random((3, 1))
-    vec = np.random.random((3, 1))
+    orig = np.random.default_rng().random((3, 1))
+    vec = np.random.default_rng().random((3, 1))
     with pytest.raises(ValueError):
         vector_poly_data(orig, vec)
 
 
 def test_createvectorpolydata_1D():
-    orig = np.random.random(3)
-    vec = np.random.random(3)
+    orig = np.random.default_rng().random(3)
+    vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
 
 
 def test_createvectorpolydata():
-    orig = np.random.random((100, 3))
-    vec = np.random.random((100, 3))
+    orig = np.random.default_rng().random((100, 3))
+    vec = np.random.default_rng().random((100, 3))
     vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_data['vectors'])
@@ -100,7 +103,7 @@ def test_read(tmpdir, use_pathlib):
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
-    arr = np.random.rand(10, 10)
+    arr = np.random.default_rng().random((10, 10))
     np.save(filename, arr)
     with pytest.raises(IOError):
         _ = pv.read(filename)
@@ -186,7 +189,7 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 
 def test_get_array_cell(hexbeam):
-    carr = np.random.rand(hexbeam.n_cells)
+    carr = np.random.default_rng().random(hexbeam.n_cells)
     hexbeam.cell_data.set_array(carr, 'test_data')
 
     data = get_array(hexbeam, 'test_data', preference='cell')
@@ -194,13 +197,13 @@ def test_get_array_cell(hexbeam):
 
 
 def test_get_array_point(hexbeam):
-    parr = np.random.rand(hexbeam.n_points)
+    parr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
     data = get_array(hexbeam, 'test_data', preference='point')
     assert np.allclose(parr, data)
 
-    oarr = np.random.rand(hexbeam.n_points)
+    oarr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(oarr, 'other')
 
     data = get_array(hexbeam, 'other')
@@ -210,20 +213,20 @@ def test_get_array_point(hexbeam):
 def test_get_array_field(hexbeam):
     hexbeam.clear_data()
     # no preference
-    farr = np.random.rand(hexbeam.n_points * hexbeam.n_cells)
+    farr = np.random.default_rng().random(hexbeam.n_points * hexbeam.n_cells)
     hexbeam.field_data.set_array(farr, 'data')
     data = get_array(hexbeam, 'data')
     assert np.allclose(farr, data)
 
     # preference and multiple data
-    hexbeam.point_data.set_array(np.random.rand(hexbeam.n_points), 'data')
+    hexbeam.point_data.set_array(np.random.default_rng().random(hexbeam.n_points), 'data')
 
     data = get_array(hexbeam, 'data', preference='field')
     assert np.allclose(farr, data)
 
 
 def test_get_array_error(hexbeam):
-    parr = np.random.rand(hexbeam.n_points)
+    parr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
     # invalid inputs
@@ -283,6 +286,22 @@ def test_voxelize_throws_point_cloud(hexbeam):
     with pytest.raises(ValueError, match='must have faces'):
         mesh = pv.PolyData(hexbeam.points)
         pv.voxelize(mesh)
+
+
+def test_voxelize_volume_default_density(uniform):
+    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
+    actual = pv.voxelize_volume(uniform).n_cells
+    assert actual == expected
+
+
+def test_voxelize_volume_invalid_density(rectilinear):
+    with pytest.raises(TypeError, match='expected number or array-like'):
+        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_volume_no_face_mesh(rectilinear):
+    with pytest.raises(ValueError, match='must have faces'):
+        pv.voxelize_volume(pv.PolyData())
 
 
 def test_report():
@@ -711,14 +730,14 @@ def test_cartesian_to_spherical():
             (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi))
         ).T
 
-    points = np.random.random((1000, 3))
+    points = np.random.default_rng().random((1000, 3))
     x, y, z = points.T
     r, phi, theta = pv.cartesian_to_spherical(x, y, z)
     assert np.allclose(polar2cart(r, phi, theta), points)
 
 
 def test_spherical_to_cartesian():
-    points = np.random.random((1000, 3))
+    points = np.random.default_rng().random((1000, 3))
     r, phi, theta = points.T
     x, y, z = pv.spherical_to_cartesian(r, phi, theta)
     assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
@@ -847,7 +866,7 @@ def test_coerce_point_like_arg_errors():
 
 
 def test_coerce_points_like_args_does_not_copy():
-    source = np.random.rand(100, 3)
+    source = np.random.default_rng().random((100, 3))
     output, _ = _coerce_pointslike_arg(source)  # test that copy=False is default
     output /= 2
     assert np.array_equal(output, source)
@@ -900,3 +919,48 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     with pytest.raises(TypeError, match="must be one of"):
         _coerce_transformlike_arg("abc")
+
+
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('dtype', [None, float])
+def test_cast_to_ndarray(as_any, copy, dtype):
+    array_in = pyvista_ndarray([1, 2])
+    array_out = cast_to_ndarray(array_in, copy=copy, as_any=as_any, dtype=dtype)
+    assert np.array_equal(array_out, array_in)
+    if as_any:
+        assert type(array_out) is pyvista_ndarray
+    else:
+        assert type(array_out) is np.ndarray
+
+    if copy:
+        assert array_out is not array_in
+
+    if dtype is None:
+        assert array_out.dtype.type is array_in.dtype.type
+    else:
+        assert array_out.dtype.type is np.dtype(dtype).type
+
+
+def test_cast_to_ndarray_raises():
+    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(ValueError, match=msg):
+        cast_to_ndarray([[1], [2, 3]])
+
+
+def test_cast_to_tuple_array():
+    array_in = np.zeros(shape=(2, 2, 3))
+    array_tuple = cast_to_tuple_array(array_in)
+    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    array_list = array_in.tolist()
+    assert np.array_equal(array_tuple, array_list)
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1, [2, 3]]])
+
+
+def test_cast_to_list_array():
+    array_in = np.zeros(shape=(3, 4, 5))
+    array_list = cast_to_list_array(array_in)
+    assert np.array_equal(array_in, array_list)
+    with pytest.raises(ValueError):
+        cast_to_tuple_array([[1, [2, 3]]])

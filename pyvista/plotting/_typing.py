@@ -6,13 +6,7 @@ from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import (  # noqa: F401
-    BoundsLike,
-    Number,
-    NumericArray,
-    Vector,
-    VectorArray,
-)
+from pyvista.core._typing_core import BoundsLike, Number  # noqa: F401
 
 from . import _vtk
 

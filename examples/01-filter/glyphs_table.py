@@ -21,6 +21,11 @@ import pyvista as pv
 # the table, and it has to be the same length as ``geom`` if specified. If it is
 # absent a default value of ``range(len(geom))`` is assumed.
 
+# sphinx_gallery_start_ignore
+# interactive plot has wrong lighting
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # get dataset for the glyphs: supertoroids in xy plane
 # use N random kinds of toroids over a mesh with 27 points
 N = 5

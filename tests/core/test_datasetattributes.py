@@ -97,7 +97,7 @@ def test_repr(hexbeam_point_attributes):
     assert str(data.dtype) in str(hexbeam_point_attributes)
 
     # ensure VECTOR in repr
-    vectors0 = np.random.random((sz, 3))
+    vectors0 = np.random.default_rng().random((sz, 3))
     hexbeam_point_attributes.set_vectors(vectors0, 'vectors0')
     assert 'VECTOR' in str(hexbeam_point_attributes)
 
@@ -176,7 +176,7 @@ def test_eq(sphere):
 
 def test_add_matrix(hexbeam):
     mat_shape = (hexbeam.n_points, 3, 2)
-    mat = np.random.random(mat_shape)
+    mat = np.random.default_rng().random(mat_shape)
     hexbeam.point_data.set_array(mat, 'mat')
     matout = hexbeam.point_data['mat'].reshape(mat_shape)
     assert np.allclose(mat, matout)
@@ -206,7 +206,7 @@ def test_set_active_scalars_fail(hexbeam):
 
 
 def test_set_active_vectors(hexbeam):
-    vectors = np.random.random((hexbeam.n_points, 3))
+    vectors = np.random.default_rng().random((hexbeam.n_points, 3))
     hexbeam['vectors'] = vectors
     hexbeam.set_active_vectors('vectors')
     assert np.allclose(hexbeam.active_vectors, vectors)
@@ -214,7 +214,7 @@ def test_set_active_vectors(hexbeam):
 
 def test_set_vectors(hexbeam):
     assert hexbeam.point_data.active_vectors is None
-    vectors = np.random.random((hexbeam.n_points, 3))
+    vectors = np.random.default_rng().random((hexbeam.n_points, 3))
     hexbeam.point_data.set_vectors(vectors, 'my-vectors')
     assert np.allclose(hexbeam.point_data.active_vectors, vectors)
 
@@ -225,7 +225,7 @@ def test_set_vectors(hexbeam):
 
 def test_set_invalid_vectors(hexbeam):
     # verify non-vector data does not become active vectors
-    not_vectors = np.random.random(hexbeam.n_points)
+    not_vectors = np.random.default_rng().random(hexbeam.n_points)
     with raises(ValueError):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
 
@@ -454,7 +454,7 @@ def test_length_should_be_0_on_clear(insert_arange_narray):
 def test_keys_should_be_strings(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for name in dsa.keys():
-        assert type(name) is str
+        assert isinstance(name, str)
 
 
 def test_key_should_exist(insert_arange_narray):
@@ -557,9 +557,9 @@ def test_add_two_vectors():
     mesh = pv.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
     mesh.point_data.set_array(range(5, 9), 'my-other-scalars')
-    vectors0 = np.random.random((4, 3))
+    vectors0 = np.random.default_rng().random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
-    vectors1 = np.random.random((4, 3))
+    vectors1 = np.random.default_rng().random((4, 3))
     mesh.point_data.set_vectors(vectors1, 'vectors1')
 
     assert 'vectors0' in mesh.point_data
@@ -569,9 +569,9 @@ def test_add_two_vectors():
 def test_active_vectors_name_setter():
     mesh = pv.Plane(i_resolution=1, j_resolution=1)
     mesh.point_data.set_array(range(4), 'my-scalars')
-    vectors0 = np.random.random((4, 3))
+    vectors0 = np.random.default_rng().random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
-    vectors1 = np.random.random((4, 3))
+    vectors1 = np.random.default_rng().random((4, 3))
     mesh.point_data.set_vectors(vectors1, 'vectors1')
 
     assert mesh.point_data.active_vectors_name == 'vectors1'
@@ -587,9 +587,9 @@ def test_active_vectors_name_setter():
 
 def test_active_vectors_eq():
     mesh = pv.Plane(i_resolution=1, j_resolution=1)
-    vectors0 = np.random.random((4, 3))
+    vectors0 = np.random.default_rng().random((4, 3))
     mesh.point_data.set_vectors(vectors0, 'vectors0')
-    vectors1 = np.random.random((4, 3))
+    vectors1 = np.random.default_rng().random((4, 3))
     mesh.point_data.set_vectors(vectors1, 'vectors1')
 
     other_mesh = mesh.copy(deep=True)
@@ -624,7 +624,7 @@ def test_complex(plane, dtype_str):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
     real_type = np.float32 if dtype == np.complex64 else np.float64
-    data = np.random.random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    data = np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
     plane.point_data[name] = data
     assert np.array_equal(plane.point_data[name], data)
 

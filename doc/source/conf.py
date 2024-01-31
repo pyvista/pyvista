@@ -20,6 +20,7 @@ make_tables.make_all_tables()
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
+from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -73,6 +74,7 @@ extensions = [
     "numpydoc",
     "pyvista.ext.coverage",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.viewer_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
@@ -335,7 +337,7 @@ try:
     import osmnx, fiona  # noqa: F401,E401 isort: skip
 
     has_osmnx = True
-except:  # noqa: E722
+except:
     pass
 
 
@@ -358,7 +360,7 @@ sphinx_gallery_conf = {
     "backreferences_dir": None,
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
-    "image_scrapers": ("pyvista", "matplotlib"),
+    "image_scrapers": (DynamicScraper(), "matplotlib"),
     "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
@@ -412,7 +414,7 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme  # noqa
+import pydata_sphinx_theme  # noqa: F401
 
 html_theme = "pydata_sphinx_theme"
 html_context = {
@@ -450,7 +452,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "Slack Community",
-            "url": "http://slack.pyvista.org",
+            "url": "https://communityinviter.com/apps/pyvista/pyvista",
             "icon": "fab fa-slack",
         },
         {

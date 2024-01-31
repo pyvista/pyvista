@@ -7,8 +7,8 @@ PyVista
    :alt: pyvista
 
 
-.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
-   :target: https://zenodo.org/badge/latestdoi/92974124
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
+   :target: https://zenodo.org/records/8415866
 
 .. |joss| image:: http://joss.theoj.org/papers/10.21105/joss.01450/status.svg
    :target: https://doi.org/10.21105/joss.01450
@@ -23,16 +23,16 @@ PyVista
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pyvista/pyvista
+   :target: https://app.codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
-   :target: https://www.codacy.com/gh/pyvista/pyvista/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pyvista/pyvista&amp;utm_campaign=Badge_Grade
+   :target: https://app.codacy.com/gh/pyvista/pyvista/dashboard
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/licenses/MIT
+   :target: https://opensource.org/license/mit/
 
 .. |slack| image:: https://img.shields.io/badge/Slack-pyvista-green.svg?logo=slack
-   :target: http://slack.pyvista.org
+   :target: https://communityinviter.com/apps/pyvista/pyvista
 
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/pyvista/
@@ -60,6 +60,9 @@ PyVista
 .. |pre-commit.ci status| image:: https://results.pre-commit.ci/badge/github/pyvista/pyvista/main.svg
    :target: https://results.pre-commit.ci/latest/github/pyvista/pyvista/main
 
+.. |Ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+   :target: https://github.com/astral-sh/ruff
+   :alt: Ruff
 
 +----------------------+------------------------+-------------+
 | Deployment           | |pypi|                 | |conda|     |
@@ -79,6 +82,8 @@ PyVista
 | Community            | |slack|                | |discuss|   |
 +----------------------+------------------------+-------------+
 | Formatter            | |black|                | |isort|     |
++----------------------+------------------------+-------------+
+| Linter               | |Ruff|                               |
 +----------------------+------------------------+-------------+
 | Affiliated           | |NumFOCUS Affiliated|                |
 +----------------------+------------------------+-------------+
@@ -166,7 +171,7 @@ where the community can collectively address your questions. You are also
 welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
-.. _Slack: http://slack.pyvista.org
+.. _Slack: https://communityinviter.com/apps/pyvista/pyvista
 
 
 Installation

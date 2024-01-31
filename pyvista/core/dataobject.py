@@ -3,13 +3,14 @@
 from abc import abstractmethod
 import collections.abc
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Type, Union
+from typing import Any, DefaultDict, Dict, Optional, Type, Union
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
+from ._typing_core import NumpyArray
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
 from .utilities.fileio import read, set_vtkwriter_mode
@@ -50,7 +51,7 @@ class DataObject:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
+    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.
 
         Parameters
@@ -60,8 +61,9 @@ class DataObject:
 
         """
         self.ShallowCopy(to_copy)
+        return None
 
-    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
+    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
 
         Parameters
@@ -71,6 +73,7 @@ class DataObject:
 
         """
         self.DeepCopy(to_copy)
+        return None
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         """Read data objects from file."""
@@ -87,7 +90,12 @@ class DataObject:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
         pass
 
-    def save(self, filename: str, binary=True, texture=None):
+    def save(
+        self,
+        filename: Union[Path, str],
+        binary: bool = True,
+        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
+    ) -> None:
         """Save this vtk object to file.
 
         Parameters
@@ -155,8 +163,9 @@ class DataObject:
             if self[array_name].shape[-1] == 4:  # type: ignore
                 writer.SetEnableAlpha(True)
         writer.Write()
+        return None
 
-    def _store_metadata(self):
+    def _store_metadata(self) -> None:
         """Store metadata as field data."""
         fdata = self.field_data
         for assoc_name in ('bitarray', 'complex'):
@@ -166,8 +175,9 @@ class DataObject:
                 if array_names:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
+        return None
 
-    def _restore_metadata(self):
+    def _restore_metadata(self) -> None:
         """Restore PyVista metadata from field data.
 
         Metadata is stored using ``_store_metadata`` and contains entries in
@@ -183,6 +193,7 @@ class DataObject:
                     assoc_data = getattr(self, f'_association_{assoc_name}_names')
                     assoc_data[assoc_type] = set(fdata[key])
                     del fdata[key]
+        return None
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
@@ -318,7 +329,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -349,7 +360,7 @@ class DataObject:
 
         return True
 
-    def add_field_data(self, array: np.ndarray, name: str, deep=True):
+    def add_field_data(self, array: np.ndarray, name: str, deep: bool = True):
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -432,7 +443,7 @@ class DataObject:
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
 
-    def clear_field_data(self):
+    def clear_field_data(self) -> None:
         """Remove all field data.
 
         Examples
@@ -453,6 +464,7 @@ class DataObject:
             raise NotImplementedError(f'`{type(self)}` does not support field data')
 
         self.field_data.clear()
+        return None
 
     @property
     def memory_address(self) -> str:  # numpydoc ignore=RT01
@@ -493,7 +505,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: _vtk.vtkDataSet):
+    def copy_structure(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Parameters
@@ -511,8 +523,9 @@ class DataObject:
 
         """
         self.CopyStructure(dataset)
+        return None
 
-    def copy_attributes(self, dataset: _vtk.vtkDataSet):
+    def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
@@ -531,6 +544,7 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
+        return None
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.

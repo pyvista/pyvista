@@ -1,10 +1,11 @@
 name: VTK Master Testing
 
 on:
+  pull_request:
   push:
     branches:
       # To resolve issues on VTK master and test, use this branch name pattern
-      - 'maint/vtk-master*'
+      - "maint/vtk-master*"
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
@@ -15,29 +16,31 @@ concurrency:
 
 env:
   ALLOW_PLOTTING: true
-  SHELLOPTS: 'errexit:pipefail'
+  SHELLOPTS: "errexit:pipefail"
 
 jobs:
   VTK-master:
+    # only for pull requests, run only when 'vtk_master' label exists
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master') }}
     name: Linux VTK Master Testing
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11"]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: "pip"
           cache-dependency-path: requirements_test.txt
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}

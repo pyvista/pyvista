@@ -76,7 +76,7 @@ def test_pointset(pointset):
     assert pointset.n_cells == 0
 
     arr_name = 'arr'
-    pointset.point_data[arr_name] = np.random.random(10)
+    pointset.point_data[arr_name] = np.random.default_rng().random(10)
     assert arr_name in pointset.point_data
 
     # test that points can be modified

@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 import numpy as np
 
 import pyvista
+from pyvista.core import _vtk_core as _vtk
 
 from .fileio import _get_ext_force, _process_filename
 from .helpers import wrap
@@ -830,13 +831,14 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         self._filename = filename
         self.reader.SetCaseFileName(filename)
         self._update_information()
+        self._active_time_set = 0
 
     @property
     def number_time_points(self):  # noqa: D102  # numpydoc ignore=RT01
-        return self.reader.GetTimeSets().GetItem(0).GetSize()
+        return self.reader.GetTimeSets().GetItem(self.active_time_set).GetSize()
 
     def time_point_value(self, time_point):  # noqa: D102
-        return self.reader.GetTimeSets().GetItem(0).GetValue(time_point)
+        return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
 
     @property
     def active_time_value(self):  # noqa: D102  # numpydoc ignore=RT01
@@ -851,6 +853,36 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
     def set_active_time_point(self, time_point):  # noqa: D102
         self.reader.SetTimeValue(self.time_point_value(time_point))
+
+    @property
+    def active_time_set(self) -> int:
+        """Return the index of the active time set of the reader.
+
+        Returns
+        -------
+        int
+            Index of the active time set.
+        """
+        return self._active_time_set
+
+    def set_active_time_set(self, time_set):
+        """Set the active time set by index.
+
+        Parameters
+        ----------
+        time_set : int
+            Index of the desired time set.
+
+        Raises
+        ------
+        IndexError
+            If the desired time set does not exist.
+        """
+        number_time_sets = self.reader.GetTimeSets().GetNumberOfItems()
+        if time_set in range(number_time_sets):
+            self._active_time_set = time_set
+        else:
+            raise IndexError(f"Time set index {time_set} not in {range(0, number_time_sets)}")
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -2406,7 +2438,7 @@ class GIFReader(BaseReader):
     _class_reader = _GIFReader
 
 
-class XdmfReader(BaseReader, PointCellDataSelection):
+class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
 
     Notes
@@ -2447,7 +2479,35 @@ class XdmfReader(BaseReader, PointCellDataSelection):
         return self.reader.GetNumberOfGrids()
 
     def set_active_time_value(self, time_value):  # noqa: D102
+        if time_value not in self.time_values:
+            raise ValueError(
+                f"Not a valid time {time_value} from available time values: {self.time_values}"
+            )
+        self._active_time_value = time_value
         self.reader.UpdateTimeStep(time_value)
+
+    @property
+    def number_time_points(self):  # noqa: D102
+        return len(self.time_values)
+
+    def time_point_value(self, time_point):  # noqa: D102
+        return self.time_values[time_point]
+
+    @property
+    def time_values(self):  # noqa: D102
+        info = self.reader.GetOutputInformation(0)
+        return list(info.Get(_vtk.vtkCompositeDataPipeline.TIME_STEPS()))
+
+    @property
+    def active_time_value(self):  # noqa: D102
+        return self._active_time_value
+
+    def set_active_time_point(self, time_point):  # noqa: D102
+        self.set_active_time_value(self.time_values[time_point])
+
+    def _set_defaults_post(self):
+        self._active_time_value = self.time_values[0]
+        self.set_active_time_value(self._active_time_value)
 
 
 CLASS_READERS = {
