@@ -285,3 +285,12 @@ def test_cube_source():
     assert np.array_equal(algo.bounds, bounds)
     with pytest.raises(TypeError):
         algo = pv.CubeSource(bounds=0.0)
+
+
+def test_polygon_source():
+    algo = pv.PolygonSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.radius == 1.0
+    assert np.array_equal(algo.normal, (0.0, 0.0, 1.0))
+    assert algo.n_sides == 6
+    assert algo.fill

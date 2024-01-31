@@ -197,7 +197,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.SetHeight(height)
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get base radius of the cone.
 
         Returns
@@ -1022,6 +1022,172 @@ class CubeSource(_vtk.vtkCubeSource):
             ZLength of the cone.
         """
         self.SetZLength(z_length)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Cube surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PolygonSource(_vtk.vtkRegularPolygonSource):
+    """Polygon source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``. Central axis of the polygon passes
+        through this point.
+
+    radius : float, default: 1.0
+        The radius of the polygon.
+
+    normal : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
+
+    n_sides : int, default: 6
+        Number of sides of the polygon.
+
+    fill : bool, default: True
+        Enable or disable producing filled polygons.
+
+    Examples
+    --------
+    Create an 8 sided polygon.
+
+    >>> import pyvista as pv
+    >>> source = pv.PolygonSourc(n_sides=8)
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    def __init__(
+        self, center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True
+    ):
+        """Initialize the polygon source class."""
+        super().__init__()
+        self.center = center
+        self.radius = radius
+        self.normal = normal
+        self.n_sides = n_sides
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def radius(self) -> float:
+        """Get the radius of the polygon.
+
+        Returns
+        -------
+        float
+            The radius of the polygon.
+        """
+        return self.GetRadius()
+
+    @radius.setter
+    def radius(self, radius: float):
+        """Set the radius of the polygon.
+
+        Parameters
+        ----------
+        radius : float
+            The radius of the polygon.
+        """
+        self.SetRadius(radius)
+
+    @property
+    def normal(self) -> Sequence[float]:
+        """Get the normal in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Normal in ``[x, y, z]``.
+        """
+        return self.GetNormal()
+
+    @normal.setter
+    def normal(self, normal: Sequence[float]):
+        """Set the normal in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        normal : sequence[float]
+            Normal in ``[x, y, z]``.
+        """
+        self.SetNormal(normal)
+
+    @property
+    def n_sides(self) -> int:
+        """Get number of sides of the polygon.
+
+        Returns
+        -------
+        int
+            Number of sides of the polygon.
+        """
+        return self.GetRadius()
+
+    @n_sides.setter
+    def n_sides(self, n_sides: int):
+        """Set number of sides of the polygon.
+
+        Parameters
+        ----------
+        n_sides : int
+            Number of sides of the polygon.
+        """
+        self.SetRadius(n_sides)
+
+    @property
+    def fill(self) -> bool:
+        """Get enable or disable producing filled polygons.
+
+        Returns
+        -------
+        bool
+            Enable or disable producing filled polygons.
+        """
+        return self.GetGeneratePolygon()
+
+    @fill.setter
+    def fill(self, fill: bool):
+        """Set enable or disable producing filled polygons.
+
+        Parameters
+        ----------
+        fill : bool, optional
+            Enable or disable producing filled polygons.
+        """
+        self.SetGeneratePolygon(fill)
 
     @property
     def output(self):
