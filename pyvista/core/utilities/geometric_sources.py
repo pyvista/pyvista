@@ -1078,6 +1078,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         self.radius = radius
         self.normal = normal
         self.n_sides = n_sides
+        self.fill = fill
 
     @property
     def center(self) -> Sequence[float]:
