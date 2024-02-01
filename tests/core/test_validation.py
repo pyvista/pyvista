@@ -980,16 +980,6 @@ def test_validate_axes_orthogonal(bias_index):
         validate_axes(axes_left, must_be_orthogonal=True)
 
 
-# from collections import namedtuple
-#
-# arraylike_types = namedtuple('arraylike_types', ['sequence_number', 'sequence_ndarray'])
-#
-# ragged_arraylike = arraylike_types(
-#     sequence_number=[[1, 2, 3], [4, 5], [6, 7, 8, 9]],
-#     sequence_ndarray=[np.array([1, 2, 3]), np.array([4, 5]), np.array([6, 7, 8, 9])],
-# )
-
-
 arraylike_shapes = [
     (),
     (0,),
@@ -1031,7 +1021,7 @@ class arraylike_types(Enum):
 @pytest.mark.parametrize('arraylike_type', arraylike_types)
 @pytest.mark.parametrize('shape_in', arraylike_shapes)
 @pytest.mark.parametrize('dtype_in', [float, int, bool, np.float64, np.int_, np.bool_, np.uint8])
-def test_array_like_props(arraylike_type, shape_in, dtype_in):
+def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     # Skip tests for impossible scalar cases
     is_scalar = shape_in == ()
     is_sequence_type = arraylike_type in [
@@ -1138,41 +1128,25 @@ def test_array_like_props(arraylike_type, shape_in, dtype_in):
         raise RuntimeError("Unexpected test case.")
 
     # Do test
-    try:
-        actual = _ArrayLikeWrapper(array_before_wrap)
-        assert np.array_equal(actual._array, expected.array)
-        assert actual.shape == expected.shape
-        assert actual.dtype == expected.dtype
-        assert actual.ndim == expected.ndim
-        assert type(actual) is expected.wrapper
-        # if expected.return_original:
-        #     assert actual.array is array_out
-        # else:
-        #     assert actual.array is array_out
-    except AttributeError:
-        actual = _ArrayLikeWrapper(array_before_wrap).dtype
-        raise
+    actual = _ArrayLikeWrapper(array_before_wrap)
+    assert np.array_equal(actual._array, expected.array)
+    assert actual.shape == expected.shape
+    assert actual.dtype == expected.dtype
+    assert actual.ndim == expected.ndim
+    assert type(actual) is expected.wrapper
 
 
-# @pytest.mark.parametrize('ragged_array', ragged_arraylike)
-# def test_get_sequence_shape_raises_error_for_ragged_arrays(ragged_array):
-#     match = 'inhomogeneous shape'
-#     with pytest.raises(ValueError, match=match):
-#         _nested_sequence_props(ragged_array)
-#     # test this matches numpy array behavior
-#     with pytest.raises(ValueError, match=match):
-#         np.array(ragged_array)
-#
-#
-# arraylike_cases = [(),[],[1],[()],[1,2,3],[[1]],[[1,2,3]],[[1,2],[3,4]], [np.array([1,2]),np.array([3,4])],[np.array([1,2]),np.array([3,4]), [5,6]], [np.array([[1,2],[3,4]]), np.array([[5,6],[7,8]])],[np.array([[1,2],[3,4]]), np.array([[5,6],[7,8]])], [9,10,11,12]]
-# @pytest.mark.parametrize('array', arraylike_cases)
-# def test_get_sequence_shape(array):
-#     actual_shape, _, _= _nested_sequence_props(array)
-#     expected_shape = np.array(array).shape
-#     assert actual_shape == expected_shape
-#
-# @pytest.mark.parametrize('array', arraylike_cases)
-# def test_get_sequence_dtype(array):
-#     _, _, actual_dtype = _nested_sequence_props(array)
-#     expected_dtype = np.array(array).dtype.type
-#     assert np.dtype(actual_dtype).type is expected_dtype
+ragged_arrays = (
+    [[1, 2, 3], [4, 5], [6, 7, 8, 9]],
+    [np.array([1, 2, 3]), np.array([4, 5]), np.array([6, 7, 8, 9])],
+)
+
+
+@pytest.mark.parametrize('ragged_array', ragged_arrays)
+def test_get_sequence_shape_raises_error_for_ragged_arrays(ragged_array):
+    match = 'inhomogeneous shape'
+    with pytest.raises(ValueError, match=match):
+        _ArrayLikeWrapper(ragged_array)
+    # test this matches numpy array behavior
+    with pytest.raises(ValueError, match=match):
+        np.array(ragged_array)
