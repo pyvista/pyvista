@@ -30,7 +30,12 @@ import numpy as np
 from pyvista.core._typing_core import Array, NumpyArray, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core.utilities.arrays import cast_to_ndarray
-from pyvista.core.validation._array_like import DTypeLike, Shape, ShapeLike, _ArrayLikeWrapper
+from pyvista.core.validation._array_like import (
+    DTypeLike,
+    Shape,
+    ShapeLike,
+    _ArrayLikeWrapper,
+)
 
 _AnyNumber = Union[np.number, float, int]
 
@@ -209,7 +214,7 @@ def check_real(arr: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
 
 
 def check_sorted(
-    arr: Union[_NumberType, Array[_NumberType]],
+    arr: _ArrayLikeOrScalar[_NumberType],
     /,
     *,
     ascending: bool = True,
@@ -313,7 +318,7 @@ def check_sorted(
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
 
 
-def check_finite(arr: Union[_NumberType, Array[_NumberType]], /, *, name: str = "Array"):
+def check_finite(arr: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
@@ -347,7 +352,7 @@ def check_finite(arr: Union[_NumberType, Array[_NumberType]], /, *, name: str = 
 
 
 def check_integerlike(
-    arr: Union[_NumberType, Array[_NumberType]], /, *, strict: bool = False, name: str = "Array"
+    arr: _ArrayLikeOrScalar[_NumberType], /, *, strict: bool = False, name: str = "Array"
 ):
     """Check if an array has integer or integer-like float values.
 
@@ -384,17 +389,17 @@ def check_integerlike(
     >>> validation.check_integerlike([1.0, 2.0])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    wrapped = _ArrayLikeWrapper(arr)
     if strict:
         try:
-            check_subdtype(arr, np.integer)
+            check_subdtype(wrapped.dtype, np.integer)
         except TypeError:
             raise
     elif not np.array_equal(arr, np.floor(arr)):
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_nonnegative(arr: Union[_NumberType, Array[_NumberType]], /, *, name: str = "Array"):
+def check_nonnegative(arr: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -430,7 +435,7 @@ def check_nonnegative(arr: Union[_NumberType, Array[_NumberType]], /, *, name: s
 
 
 def check_greater_than(
-    arr: Union[_NumberType, Array[_NumberType]],
+    arr: _ArrayLikeOrScalar[_NumberType],
     /,
     value: float,
     *,
@@ -484,7 +489,7 @@ def check_greater_than(
 
 
 def check_less_than(
-    arr: Union[_NumberType, Array[_NumberType]],
+    arr: _ArrayLikeOrScalar[_NumberType],
     /,
     value: float,
     *,
@@ -539,7 +544,7 @@ def check_less_than(
 
 
 def check_range(
-    arr: Union[_NumberType, Array[_NumberType]],
+    arr: _ArrayLikeOrScalar[_NumberType],
     /,
     rng: Vector[_NumberType],
     *,
@@ -1232,7 +1237,7 @@ def check_length(
             arr = arr.reshape((1,))
 
     check_instance(arr, (Sequence, np.ndarray), name=name)
-    arr = cast(Union[_NumberType, Array[_NumberType]], arr)
+    arr = cast(_ArrayLikeOrScalar[_NumberType], arr)
 
     if must_be_1d:
         check_shape(arr, shape=(-1))

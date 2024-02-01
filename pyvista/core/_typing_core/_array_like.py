@@ -108,28 +108,3 @@ _ArrayLike = Union[
 ]
 
 _ArrayLikeOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]
-#
-# from typing import TypeVar, Any, Callable, List, Tuple, Sequence
-# import numpy as np
-# _T1 = TypeVar('_T1')
-# _T2 = TypeVar('_T2')
-#
-# def pass_one_type_var(x: np.ndarray[_T1, _T2]) -> np.ndarray[Any, _T2]:
-#     ...
-#
-# single_typevar_ndarray = Callable[[np.ndarray[_T1, _T2]], np.ndarray[Any, _T2]]
-#
-# _ArrayLikeType = TypeVar('_ArrayLikeType',
-# List,
-# Tuple,
-# Sequence[List],
-# Sequence[Tuple],
-# Sequence[np.ndarray],
-# Sequence[Sequence[Sequence]],
-# Sequence[Sequence[Sequence[Sequence]]])
-#
-# def fun(x:_ArrayLikeType[_NumberType]):
-#     reveal_type(x)
-#     return x
-#
-# reveal_type(fun([2]))
