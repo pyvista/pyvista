@@ -1198,6 +1198,8 @@ class DiscSource(_vtk.vtkDiskSource):
             Number of points in circumferential direction.
         """
         self.SetCircumferentialResolution(c_res)
+
+
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
