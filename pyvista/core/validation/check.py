@@ -9,6 +9,7 @@ An array checker function typically:
 * Does not modify input or return anything.
 
 """
+import math
 from numbers import Number, Real
 from typing import (
     Any,
@@ -330,8 +331,13 @@ def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Arra
     >>> validation.check_finite([1, 2, 3])
 
     """
-    array = array if isinstance(array, np.ndarray) else cast_to_ndarray(array)
-    if not np.all(np.isfinite(array)):
+    wrapper = _ArrayLikeWrapper(array)
+    is_finite: Union[bool, np.bool_]
+    if isinstance(wrapper._array, np.ndarray):
+        is_finite = np.all(np.isfinite(wrapper._array))
+    else:
+        is_finite = all(math.isfinite(x) for x in wrapper.iterable)
+    if not is_finite:
         raise ValueError(f"{name} must have finite values.")
 
 
