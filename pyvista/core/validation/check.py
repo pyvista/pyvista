@@ -393,10 +393,12 @@ def check_integer(
             raise
 
     is_integer: Union[bool, np.bool_]
-    if isinstance(wrapped._array, np.ndarray):
+    try:
+        # `is_integer` only works for built-in types
+        is_integer = all(x.is_integer() for x in wrapped.iterable)  # type: ignore[union-attr]
+    except AttributeError:
         is_integer = np.array_equal(array, np.floor(array))
-    else:
-        is_integer = all(x.is_integer() for x in wrapped.iterable)
+
     if not is_integer:
         raise ValueError(f"{name} must have integer-like values.")
 
