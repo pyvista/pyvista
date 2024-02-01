@@ -1327,6 +1327,8 @@ class LineSource(_vtk.vtkLineSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 @no_new_attr
 class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
