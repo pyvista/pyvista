@@ -34,8 +34,8 @@ from pyvista.core.validation._array_wrapper import DTypeLike, Shape, ShapeLike, 
 
 
 def check_subdtype(
-    input_obj: Union[DTypeLike[Any], _ArrayLikeOrScalar[_NumberType]],
-    base_dtype: Union[DTypeLike[Any], Tuple[DTypeLike[Any], ...], List[DTypeLike[Any]]],
+    input_obj: Union[DTypeLike, _ArrayLikeOrScalar[_NumberType]],
+    base_dtype: Union[DTypeLike, Tuple[DTypeLike, ...], List[DTypeLike]],
     /,
     *,
     name: str = 'Input',

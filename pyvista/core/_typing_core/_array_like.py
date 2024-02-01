@@ -32,7 +32,7 @@ _NumberType = TypeVar(
     '_NumberType', bound=Union[np.floating, np.integer, np.bool_, float, int, bool], covariant=True
 )
 
-if not TYPE_CHECKING and sys.version_info <= (3, 9):
+if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # Numpy's NDArray annotations use a customized generic alias type for
     # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
     # which makes it incompatible with built-in generic alias types, e.g.

@@ -45,8 +45,7 @@ ShapeLike = Union[int, Shape]
 
 # Similar to npt.DTypeLike but is bound to numeric types
 # and does not allow _SupportsDType protocol
-_NumberType_co = TypeVar('_NumberType_co', bound=Union[float, int, np.number], covariant=True)
-DTypeLike = Union[np.dtype[_NumberType_co], Type[_NumberType_co], str]
+DTypeLike = Union[np.dtype[Any], Type[Any], str]
 
 
 # Define array protocol
