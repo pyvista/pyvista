@@ -300,6 +300,11 @@ def test_cube_source():
         algo = pv.CubeSource(bounds=0.0)
 
 
+def test_line_source():
+    algo = pv.LineSource()
+    assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
+    assert np.array_equal(algo.pointb, (0.5, 0.0, 0.0))
+    assert algo.resolution == 1
 def test_platonic_solid_source():
     algo = pv.PlatonicSolidSource()
     assert algo.kind == 'tetrahedron'
