@@ -305,3 +305,9 @@ def test_line_source():
     assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
     assert np.array_equal(algo.pointb, (0.5, 0.0, 0.0))
     assert algo.resolution == 1
+
+
+def test_plane_source():
+    algo = pv.PlaneSource()
+    assert algo.i_resolution == 10
+    assert algo.j_resolution == 10
