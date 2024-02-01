@@ -56,7 +56,7 @@ _DType_co = TypeVar('_DType_co', bound=np.generic, covariant=True)
 @runtime_checkable
 class _SupportsArray(Protocol[_DType_co]):
     def __array__(self) -> np.ndarray[Any, np.dtype[_DType_co]]:
-        ...
+        ...  # pragma: no cover
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
@@ -71,49 +71,49 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         cls,
         array: NumpyArray[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
         array: _NumberType,
     ) -> _ScalarWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
         array: _NumpyArraySequence[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         array: _NumberSequence1D[_NumberType],
     ) -> _NumberSequenceWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         array: _NumberSequence2D[_NumberType],
     ) -> _NumberSequenceWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         array: _NumberSequence3D[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         array: _NumberSequence4D[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
-        ...
+        ...  # pragma: no cover
 
     def __new__(
         cls,
