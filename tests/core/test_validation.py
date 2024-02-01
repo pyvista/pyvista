@@ -1143,7 +1143,7 @@ ragged_arrays = (
 
 
 @pytest.mark.skipif(
-    sys.platform == 'linux' and sys.version_info == (3, 8),
+    sys.platform == 'linux' and sys.version_info < (3, 9, 0),
     reason="Numpy raise a warning, not an error.",
 )
 @pytest.mark.parametrize('ragged_array', ragged_arrays)
