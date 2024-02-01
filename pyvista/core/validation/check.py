@@ -179,9 +179,13 @@ def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"
     --------
     check_numeric
         Similar function which allows complex numbers.
+    check_integer
+        Similar function for integer arrays.
     check_scalar
         Similar function for a single number or 0-dimensional ndarrays.
     check_finite
+        Check for finite values.
+
 
     Examples
     --------
@@ -264,7 +268,7 @@ def check_sorted(
         if not axis == -1:
             # Validate axis
             check_number(axis, name="Axis")
-            check_integerlike(axis, name="Axis")
+            check_integer(axis, name="Axis")
             axis = int(axis)
             try:
                 check_range(axis, rng=[-array.ndim, array.ndim - 1], name="Axis")
@@ -341,7 +345,7 @@ def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Arra
         raise ValueError(f"{name} must have finite values.")
 
 
-def check_integerlike(
+def check_integer(
     array: _ArrayLikeOrScalar[_NumberType], /, *, strict: bool = False, name: str = "Array"
 ):
     """Check if an array has integer or integer-like float values.
@@ -352,8 +356,9 @@ def check_integerlike(
         Number or array to check.
 
     strict : bool, default: False
-        If ``True``, the array's data must be a subtype of ``np.integer``
-        (i.e. float types are not allowed).
+        If ``True``, the array's data must be a subtype of `int` or
+        ``np.integer``. Otherwise, floats are allowed but must be
+        whole numbers.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -376,17 +381,23 @@ def check_integerlike(
     Check if an array has integer-like values.
 
     >>> from pyvista.core import validation
-    >>> validation.check_integerlike([1.0, 2.0])
+    >>> validation.check_integer([1.0, 2.0])
 
     """
     wrapped = _ArrayLikeWrapper(array)
     if strict:
         try:
             check_subdtype(wrapped.dtype, np.integer)
+            return None
         except TypeError:
             raise
-    # TODO: check sequence-types using is_integer()
-    elif not np.array_equal(array, np.floor(array)):
+
+    is_integer: Union[bool, np.bool_]
+    if isinstance(wrapped._array, np.ndarray):
+        is_integer = np.array_equal(array, np.floor(array))
+    else:
+        is_integer = all(x.is_integer() for x in wrapped.iterable)
+    if not is_integer:
         raise ValueError(f"{name} must have integer-like values.")
 
 
@@ -1239,7 +1250,7 @@ def check_length(
 
     if exact_length is not None:
         exact_length = cast_to_ndarray(exact_length)
-        check_integerlike(exact_length, name="'exact_length'")
+        check_integer(exact_length, name="'exact_length'")
         if array_len not in exact_length:
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "

@@ -15,7 +15,7 @@ from pyvista.core.validation import (
     check_finite,
     check_greater_than,
     check_instance,
-    check_integerlike,
+    check_integer,
     check_iterable,
     check_iterable_items,
     check_length,
@@ -666,14 +666,14 @@ def test_check_finite():
 
 
 def test_check_integerlike():
-    check_integerlike(1)
-    check_integerlike([2, 3.0])
+    check_integer(1)
+    check_integer([2, 3.0])
     msg = "Input has incorrect dtype of <class 'float'>. The dtype must be a subtype of <class 'numpy.integer'>."
     with pytest.raises(TypeError, match=msg):
-        check_integerlike([2, 3.0], strict=True, name="_input")
+        check_integer([2, 3.0], strict=True, name="_input")
     msg = "_input must have integer-like values."
     with pytest.raises(ValueError, match=msg):
-        check_integerlike([2, 3.4], strict=False, name="_input")
+        check_integer([2, 3.4], strict=False, name="_input")
 
 
 def test_check_sequence():

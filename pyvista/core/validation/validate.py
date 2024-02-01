@@ -25,7 +25,7 @@ from pyvista.core.validation.check import (
     ShapeLike,
     check_contains,
     check_finite,
-    check_integerlike,
+    check_integer,
     check_length,
     check_nonnegative,
     check_range,
@@ -312,7 +312,7 @@ def validate_array(
     if must_be_finite:
         check_finite(array_out, name=name)
     if must_be_integer_like:
-        check_integerlike(array_out, strict=False, name=name)
+        check_integer(array_out, strict=False, name=name)
     if must_be_in_range is not None:
         check_range(
             array_out,

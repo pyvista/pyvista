@@ -5,7 +5,7 @@ from .check import (  # noqa: F401
     check_finite,
     check_greater_than,
     check_instance,
-    check_integerlike,
+    check_integer,
     check_iterable,
     check_iterable_items,
     check_length,
