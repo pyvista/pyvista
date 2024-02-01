@@ -90,13 +90,6 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     ) -> _Sequence1DWrapper[_NumberType]:
         ...  # pragma: no cover
 
-    # @overload
-    # def __new__(
-    #     cls,
-    #     array: _NumberSequence1D[_NumberType],
-    # ) -> _Sequence1DWrapper[_NumberType]:
-    #     ...  # pragma: no cover
-
     @overload
     def __new__(
         cls,
@@ -144,6 +137,10 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         array.
 
         """
+        # Do the most common checks first to
+        # avoid making unnecessary checks
+        if isinstance(array, np.ndarray):
+            return object.__new__(_NumpyArrayWrapper)
         if _is_NumberSequence1D(array):
             return object.__new__(_Sequence1DWrapper)
         elif _is_NumberSequence2D(array):
@@ -158,7 +155,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         try:
             return self.__getattribute__(item)
         except AttributeError:
-            return getattr(self.__getattribute__('_array'), item)
+            return getattr(self._array, item)
 
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
@@ -186,6 +183,10 @@ class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
     @property
     def dtype(self) -> Type[_NumberType]:
         return type(self._array)
+
+    @property
+    def iterable(self) -> Iterable[_NumberType]:
+        return (self._array,)
 
 
 class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
