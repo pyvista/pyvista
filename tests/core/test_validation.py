@@ -1137,8 +1137,16 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     else:
         raise RuntimeError("Unexpected test case.")
 
-    # Do test
+    # Test abstract wrapper
     actual = _ArrayLikeWrapper(array_before_wrap)
+    assert np.array_equal(actual._array, expected.array)
+    assert actual.shape == expected.shape
+    assert actual.dtype == expected.dtype
+    assert actual.ndim == expected.ndim
+    assert type(actual) is expected.wrapper
+
+    # Test child wrapper
+    actual = expected.wrapper(array_before_wrap)
     assert np.array_equal(actual._array, expected.array)
     assert actual.shape == expected.shape
     assert actual.dtype == expected.dtype

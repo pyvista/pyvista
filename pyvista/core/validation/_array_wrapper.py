@@ -220,14 +220,6 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
 
     def __init__(self, array):
         self._array = array
-        # check all subarray shapes are equal
-        sub_shape = len(self._array[0])
-        all_same = all(len(sub_array) == sub_shape for sub_array in array)
-        if not all_same:
-            raise ValueError(
-                "The nested sequence array has an inhomogeneous shape. "
-                "All sub-arrays must have the same shape."
-            )
         self._dtype = None
 
     @property
@@ -251,8 +243,8 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
 
 def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
     # Note: This function assumes all elements are numeric."""
-    # create a set with all dtypes
 
+    # create a set with all dtypes
     # exit early if float
     dtypes = set()
     for element in iterable:
