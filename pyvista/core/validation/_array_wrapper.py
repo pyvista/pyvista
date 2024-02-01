@@ -10,7 +10,6 @@ from typing import (
     Literal,
     Protocol,
     Sequence,
-    Sized,
     Tuple,
     Type,
     TypeVar,
@@ -91,14 +90,14 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def __new__(
         cls,
         array: _NumberSequence1D[_NumberType],
-    ) -> _NumberSequenceWrapper[_NumberType]:
+    ) -> _Sequence1DWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         array: _NumberSequence2D[_NumberType],
-    ) -> _NumberSequenceWrapper[_NumberType]:
+    ) -> _Sequence2DWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
@@ -136,20 +135,24 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         """
         # Wrap 1D or 2D sequences as-is
         if isinstance(array, (tuple, list)):
-            if _is_number_sequence_1D(array) or _is_number_sequence_2D(array):
-                wrapped1 = object.__new__(_NumberSequenceWrapper)
+            if _is_number_sequence_1D(array):
+                wrapped1 = object.__new__(_Sequence1DWrapper)
                 wrapped1.__setattr__('_array', array)
                 return wrapped1
+            elif _is_number_sequence_2D(array):
+                wrapped2 = object.__new__(_Sequence2DWrapper)
+                wrapped2.__setattr__('_array', array)
+                return wrapped2
         # Wrap scalars as-is
         elif isinstance(array, (float, int, np.floating, np.integer, np.bool_)):
-            wrapped2 = object.__new__(_ScalarWrapper)
-            wrapped2.__setattr__('_array', array)
-            return wrapped2
+            wrapped3 = object.__new__(_ScalarWrapper)
+            wrapped3.__setattr__('_array', array)
+            return wrapped3
 
         # Everything else gets wrapped as (and possibly converted to) a numpy array
-        wrapped3 = object.__new__(_NumpyArrayWrapper)
-        wrapped3.__setattr__('_array', np.asanyarray(array))
-        return wrapped3
+        wrapped4 = object.__new__(_NumpyArrayWrapper)
+        wrapped4.__setattr__('_array', array)
+        return wrapped4
 
     def __getattr__(self, item):
         try:
@@ -169,6 +172,9 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
 class _ScalarWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: _NumberType
 
+    def __init__(self, array):
+        self._array = array
+
     @property
     def shape(self) -> Tuple[()]:
         return ()
@@ -182,59 +188,89 @@ class _ScalarWrapper(_ArrayLikeWrapper[_NumberType]):
         return type(self._array)
 
 
-class _NumberSequenceWrapper(_ArrayLikeWrapper[_NumberType]):
-    _array: Union[_NumberSequence1D[_NumberType], _NumberSequence2D[_NumberType]]
+class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
+    _array: _NumberSequence1D[_NumberType]
 
     def __init__(self, array):
-        if self.ndim == 2:
-            # check all subarray shapes are equal
-            sub_shape = len(self._array[0])
-            all_same = all(len(sub_array) == sub_shape for sub_array in array)
-            if not all_same:
-                raise ValueError(
-                    "The nested sequence array has an inhomogeneous shape. "
-                    "All sub-arrays must have the same shape."
-                )
+        self._array = array
+        self._dtype = None
 
     @property
-    def shape(self) -> Union[Tuple[int], Tuple[int, int]]:
-        if self.ndim == 1:
-            return (len(self._array),)
-        else:
-            return len(self._array), len(cast(Sized, self._array[0]))
+    def shape(self) -> Union[Tuple[int]]:
+        return (len(self._array),)
 
     @property
-    def ndim(self) -> Union[Literal[1], Literal[2]]:
-        if len(self._array) > 0 and isinstance(self._array[0], Sequence):
-            return 2
-        else:
-            return 1
+    def ndim(self) -> Literal[1]:
+        return 1
 
     @property
     def dtype(self) -> Type[_NumberType]:
-        iterable: Iterable
-        if self.ndim == 1:
-            iterable = self._array
-        else:
-            iterable = itertools.chain.from_iterable(self._array)  # type: ignore[arg-type]
+        if self._dtype is None:
+            self._dtype = _get_dtype_from_iterable(self._array)
+        return self._dtype
 
-        # create a set with all dtypes
-        # exit early if float
-        dtypes = set()
-        for element in iterable:  # type: ignore[union-attr]
-            dtype = type(element)
-            if dtype is float:
-                return cast(Type[_NumberType], float)
-            else:
-                dtypes.add(dtype)
-        if len(dtypes) == 0:
-            return cast(Type[_NumberType], float)
-        elif dtypes in [{int}, {bool, int}]:
-            return cast(Type[_NumberType], int)
-        elif dtypes == {bool}:
-            return cast(Type[_NumberType], bool)
+    @property
+    def iterable(self) -> Iterable:
+        return self._array
+
+
+class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
+    _array: _NumberSequence2D[_NumberType]
+
+    def __init__(self, array):
+        self._array = array
+        # check all subarray shapes are equal
+        sub_shape = len(self._array[0])
+        all_same = all(len(sub_array) == sub_shape for sub_array in array)
+        if not all_same:
+            raise ValueError(
+                "The nested sequence array has an inhomogeneous shape. "
+                "All sub-arrays must have the same shape."
+            )
+        self._dtype = None
+
+    @property
+    def shape(self) -> Tuple[int, int]:
+        return len(self._array), len(self._array[0])
+
+    @property
+    def ndim(self) -> Literal[2]:
+        return 2
+
+    @property
+    def dtype(self) -> Type[_NumberType]:
+        if self._dtype is None:
+            self._dtype = _get_dtype_from_iterable(self.iterable)
+        return self._dtype
+
+    @property
+    def iterable(self) -> Iterable:
+        return itertools.chain.from_iterable(self._array)
+
+
+_BuiltinNumberType = TypeVar('_BuiltinNumberType', float, int, bool, covariant=True)
+
+
+def _get_dtype_from_iterable(iterable: Iterable[_BuiltinNumberType]):
+    # Note: This function assumes all elements are numeric."""
+    # create a set with all dtypes
+
+    # exit early if float
+    dtypes = set()
+    for element in iterable:  # type: ignore[union-attr]
+        dtype = type(element)
+        if dtype is float:
+            return cast(Type[_BuiltinNumberType], float)
         else:
-            raise TypeError(f"Unexpected error: dtype should be numeric, got {dtypes} instead.")
+            dtypes.add(dtype)
+    if len(dtypes) == 0:
+        return cast(Type[_BuiltinNumberType], float)
+    elif dtypes in [{int}, {bool, int}]:
+        return cast(Type[_BuiltinNumberType], int)
+    elif dtypes == {bool}:
+        return cast(Type[_BuiltinNumberType], bool)
+    else:
+        raise TypeError(f"Unexpected error: dtype should be numeric, got {dtypes} instead.")
 
 
 # reveal_type(_ArrayLikeWrapper(1))

@@ -45,9 +45,10 @@ from pyvista.core.validation import (
 )
 from pyvista.core.validation._array_wrapper import (
     _ArrayLikeWrapper,
-    _NumberSequenceWrapper,
     _NumpyArrayWrapper,
     _ScalarWrapper,
+    _Sequence1DWrapper,
+    _Sequence2DWrapper,
 )
 from pyvista.core.validation.check import _validate_shape_value
 from pyvista.core.validation.validate import _set_default_kwarg_mandatory
@@ -1014,7 +1015,8 @@ from enum import Enum
 class arraylike_types(Enum):
     Scalar = 0
     NestedNumpy = 1
-    NestedSequence = 2
+    Sequence1D = 2
+    Sequence2D = 2
     NumpyArray = 3
 
 
@@ -1026,7 +1028,8 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     is_scalar = shape_in == ()
     is_sequence_type = arraylike_type in [
         arraylike_types.NestedNumpy,
-        arraylike_types.NestedSequence,
+        arraylike_types.Sequence1D,
+        arraylike_types.Sequence2D,
     ]
     is_scalar_type = arraylike_type is arraylike_types.Scalar
     if (is_scalar and is_sequence_type) or (not is_scalar and is_scalar_type):
@@ -1035,7 +1038,9 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     # Skip tests for sequences of numpy dtypes
     # This is done since sequences are generated using `array.tolist()`
     # which will cast numpy dtypes to builtin types (which are tested separately)
-    if arraylike_type is arraylike_types.NestedSequence and issubclass(dtype_in, np.generic):
+    if arraylike_type in [arraylike_types.Sequence1D, arraylike_types.Sequence2D] and issubclass(
+        dtype_in, np.generic
+    ):
         pytest.skip("No tests for sequences of numpy dtypes.")
 
     # Set up test array and keep track of special empty sequence cases
@@ -1093,7 +1098,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
             return_original=False,
         )
 
-    elif arraylike_type is arraylike_types.NestedSequence:
+    elif arraylike_type in [arraylike_types.Sequence1D, arraylike_types.Sequence2D]:
         if is_empty:
             # Cannot infer dtype from an empty sequence at runtime,
             # so we assume the dtype is float by default
@@ -1105,13 +1110,18 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
         depth = initial_array.ndim
         array_before_wrap = initial_array.tolist()
         if depth in (1, 2):
+            if depth == 1:
+                wrapper = _Sequence1DWrapper
+            else:
+                wrapper = _Sequence2DWrapper
+
             # sequence is expected as-is
             expected = ArrayLikePropsTuple(
                 array=array_before_wrap,
                 shape=shape_in,
                 dtype=dtype_out,
                 ndim=depth,
-                wrapper=_NumberSequenceWrapper,
+                wrapper=wrapper,
                 return_original=True,
             )
         else:
