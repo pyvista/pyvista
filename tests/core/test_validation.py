@@ -1142,6 +1142,10 @@ ragged_arrays = (
 )
 
 
+@pytest.mark.skipif(
+    sys.platform == 'linux' and sys.version_info == (3, 8),
+    reason="Numpy raise a warning, not an error.",
+)
 @pytest.mark.parametrize('ragged_array', ragged_arrays)
 def test_get_sequence_shape_raises_error_for_ragged_arrays(ragged_array):
     match = 'inhomogeneous shape'
