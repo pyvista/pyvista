@@ -73,7 +73,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def __new__(  # type: ignore[overload-overlap]
         cls,
         array: _NumberType,
-    ) -> _ScalarWrapper[_NumberType]:
+    ) -> _NumberWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
@@ -89,6 +89,13 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         array: _NumberSequence1D[_NumberType],
     ) -> _Sequence1DWrapper[_NumberType]:
         ...  # pragma: no cover
+
+    # @overload
+    # def __new__(
+    #     cls,
+    #     array: _NumberSequence1D[_NumberType],
+    # ) -> _Sequence1DWrapper[_NumberType]:
+    #     ...  # pragma: no cover
 
     @overload
     def __new__(
@@ -138,22 +145,14 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
 
         """
         if _is_NumberSequence1D(array):
-            wrapped1 = object.__new__(_Sequence1DWrapper)
-            wrapped1.__setattr__('_array', array)
-            return wrapped1
+            return object.__new__(_Sequence1DWrapper)
         elif _is_NumberSequence2D(array):
-            wrapped2 = object.__new__(_Sequence2DWrapper)
-            wrapped2.__setattr__('_array', array)
-            return wrapped2
+            return object.__new__(_Sequence2DWrapper)
         elif _is_Number(array):
-            wrapped3 = object.__new__(_ScalarWrapper)
-            wrapped3.__setattr__('_array', array)
-            return wrapped3
+            return object.__new__(_NumberWrapper)
 
         # Everything else gets wrapped as (and possibly converted to) a numpy array
-        wrapped4 = object.__new__(_NumpyArrayWrapper)
-        wrapped4.__setattr__('_array', array)
-        return wrapped4
+        return object.__new__(_NumpyArrayWrapper)
 
     def __getattr__(self, item):
         try:
@@ -166,11 +165,11 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: NumpyArray[_NumberType]
     dtype: np.dtype[_NumberType]
 
-    def __init__(self, array):
+    def __init__(self, array: NumpyArray[_NumberType]):
         self._array = np.asanyarray(array)
 
 
-class _ScalarWrapper(_ArrayLikeWrapper[_NumberType]):
+class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: _NumberType
 
     def __init__(self, array):
@@ -242,7 +241,7 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
 
 
 def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
-    # Note: This function assumes all elements are numeric."""
+    # Note: This function assumes all elements are numeric.
 
     # create a set with all dtypes
     # exit early if float
