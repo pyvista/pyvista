@@ -30,21 +30,12 @@ import numpy as np
 from pyvista.core._typing_core import Array, NumpyArray, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core.utilities.arrays import cast_to_ndarray
-from pyvista.core.validation._array_like import (
-    DTypeLike,
-    Shape,
-    ShapeLike,
-    _ArrayLikeWrapper,
-)
-
-_AnyNumber = Union[np.number, float, int]
+from pyvista.core.validation._array_wrapper import DTypeLike, Shape, ShapeLike, _ArrayLikeWrapper
 
 
 def check_subdtype(
-    input_obj: Union[DTypeLike[_AnyNumber], _ArrayLikeOrScalar[_NumberType]],
-    base_dtype: Union[
-        DTypeLike[_AnyNumber], Tuple[DTypeLike[_AnyNumber], ...], List[DTypeLike[_AnyNumber]]
-    ],
+    input_obj: Union[DTypeLike[Any], _ArrayLikeOrScalar[_NumberType]],
+    base_dtype: Union[DTypeLike[Any], Tuple[DTypeLike[Any], ...], List[DTypeLike[Any]]],
     /,
     *,
     name: str = 'Input',
@@ -106,7 +97,7 @@ def check_subdtype(
         return None
     else:
         # Not a subdtype, so raise error
-        msg = f"{name} has incorrect dtype of {input_dtype}. "
+        msg = f"{name} has incorrect dtype of {repr(input_dtype)}. "
         if len(base_dtype) == 1:
             msg += f"The dtype must be a subtype of {base_dtype[0]}."
         else:

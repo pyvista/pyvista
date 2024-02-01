@@ -636,7 +636,8 @@ def validate_number(
         shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
-    return validate_array(num, **kwargs)
+    # TODO: Do not ignore, fix returned type
+    return validate_array(num, **kwargs)  # type: ignore[misc]
 
 
 def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
