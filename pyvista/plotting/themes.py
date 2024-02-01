@@ -1095,14 +1095,14 @@ class _SliderStyleConfig(_ThemeConfig):
     def __init__(self):
         """Initialize the slider style configuration."""
         self._name = None
-        self._slider_length = None
-        self._slider_width = None
-        self._slider_color = None
-        self._tube_width = None
-        self._tube_color = None
-        self._cap_opacity = None
-        self._cap_length = None
-        self._cap_width = None
+        self.slider_length = 0.05
+        self.slider_width = 0.05
+        self.slider_color = (0, 0, 0)
+        self.tube_width = 0.04
+        self.tube_color = (0, 0, 0)
+        self.cap_opacity = 1.0
+        self.cap_length = 0.01
+        self.cap_width = 0.05
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
@@ -1120,7 +1120,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.cap_width = 0.02
+        >>> pv.global_theme.slider_style.cap_width = 0.02
 
         """
         return self._cap_width
@@ -1136,7 +1136,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.cap_length = 0.01
+        >>> pv.global_theme.slider_style.cap_length = 0.01
 
         """
         return self._cap_length
@@ -1152,7 +1152,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.cap_opacity = 1.0
+        >>> pv.global_theme.slider_style.cap_opacity = 1.0
 
         """
         return self._cap_opacity
@@ -1169,7 +1169,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.tube_color = 'black'
+        >>> pv.global_theme.slider_style.tube_color = 'black'
         """
         return self._tube_color
 
@@ -1184,7 +1184,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.tube_width = 0.005
+        >>> pv.global_theme.slider_style.tube_width = 0.005
 
         """
         return self._tube_width
@@ -1200,7 +1200,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_color = 'grey'
+        >>> pv.global_theme.slider_style.slider_color = 'grey'
 
         """
         return self._slider_color
@@ -1216,7 +1216,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_width = 0.04
+        >>> pv.global_theme.slider_style.slider_width = 0.04
 
         """
         return self._slider_width
@@ -1232,7 +1232,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_length = 0.02
+        >>> pv.global_theme.slider_style.slider_length = 0.02
 
         """
         return self._slider_length
@@ -1258,100 +1258,35 @@ class _SliderStyleConfig(_ThemeConfig):
             txt.append(f'        {name:<17}: {setting}')
         return '\n'.join(txt)
 
+    @classmethod
+    def classic(cls):
+        return cls.from_dict(
+            {
+                "slider_length": 0.02,
+                "slider_width": 0.04,
+                "slider_color": 'gray',
+                "tube_width": 0.005,
+                "tube_color": 'white',
+                "cap_opacity": 1,
+                "cap_length": 0.01,
+                "cap_width": 0.02,
+            }
+        )
 
-class _SliderConfig(_ThemeConfig):
-    """PyVista configuration encompassing all slider styles.
-
-    Examples
-    --------
-    Set the classic slider configuration.
-
-    >>> import pyvista as pv
-    >>> slider_styles = pv.global_theme.slider_styles
-    >>> slider_styles.classic.slider_length = 0.02
-    >>> slider_styles.classic.slider_width = 0.04
-    >>> slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
-    >>> slider_styles.classic.tube_width = 0.005
-    >>> slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
-    >>> slider_styles.classic.cap_opacity = 1
-    >>> slider_styles.classic.cap_length = 0.01
-    >>> slider_styles.classic.cap_width = 0.02
-
-    Set the modern slider configuration.
-
-    >>> slider_styles.modern.slider_length = 0.02
-    >>> slider_styles.modern.slider_width = 0.04
-    >>> slider_styles.modern.slider_color = (0.43, 0.44, 0.45)
-    >>> slider_styles.modern.tube_width = 0.04
-    >>> slider_styles.modern.tube_color = (0.69, 0.70, 0.709)
-    >>> slider_styles.modern.cap_opacity = 0
-    >>> slider_styles.modern.cap_length = 0.01
-    >>> slider_styles.modern.cap_width = 0.02
-
-    """
-
-    __slots__ = ['_classic', '_modern']
-
-    def __init__(self):
-        """Initialize the slider configuration."""
-        self._classic = _SliderStyleConfig()
-        self._classic.name = 'classic'
-        self._classic.slider_length = 0.02
-        self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'
-        self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'
-        self._classic.cap_opacity = 1
-        self._classic.cap_length = 0.01
-        self._classic.cap_width = 0.02
-
-        self._modern = _SliderStyleConfig()
-        self._modern.name = 'modern'
-        self._modern.slider_length = 0.02
-        self._modern.slider_width = 0.04
-        self._modern.slider_color = (110, 113, 117)
-        self._modern.tube_width = 0.04
-        self._modern.tube_color = (178, 179, 181)
-        self._modern.cap_opacity = 0
-        self._modern.cap_length = 0.01
-        self._modern.cap_width = 0.02
-
-    @property
-    def classic(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
-        """Return the Classic slider configuration."""
-        return self._classic
-
-    @classic.setter
-    def classic(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
-        if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
-        self._classic = config
-
-    @property
-    def modern(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
-        """Return the Modern slider configuration."""
-        return self._modern
-
-    @modern.setter
-    def modern(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
-        if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
-        self._modern = config
-
-    def __repr__(self):
-        txt = ['']
-        parm = {
-            'Classic': 'classic',
-            'Modern': 'modern',
-        }
-        for name, attr in parm.items():
-            setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-        return '\n'.join(txt)
-
-    def __iter__(self):
-        for style in [self._classic, self._modern]:
-            yield style.name
+    @classmethod
+    def modern(cls):
+        return cls.from_dict(
+            {
+                "slider_length": 0.02,
+                "slider_width": 0.04,
+                "slider_color": (110, 113, 117),
+                "tube_width": 0.04,
+                "tube_color": (178, 179, 181),
+                "cap_opacity": 0,
+                "cap_length": 0.01,
+                "cap_width": 0.02,
+            }
+        )
 
 
 class _TrameConfig(_ThemeConfig):
@@ -1591,7 +1526,7 @@ class Theme(_ThemeConfig):
         '_smooth_shading',
         '_depth_peeling',
         '_silhouette',
-        '_slider_styles',
+        '_slider_style',
         '_return_cpos',
         '_hidden_line_removal',
         '_anti_aliasing',
@@ -1680,7 +1615,7 @@ class Theme(_ThemeConfig):
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
-        self._slider_styles = _SliderConfig()
+        self._slider_style = _SliderStyleConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
         self._anti_aliasing = 'msaa'
@@ -2965,15 +2900,15 @@ class Theme(_ThemeConfig):
         self._silhouette = config
 
     @property
-    def slider_styles(self) -> _SliderConfig:  # numpydoc ignore=RT01
+    def slider_style(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
         """Return the default slider style configurations."""
-        return self._slider_styles
+        return self._slider_style
 
-    @slider_styles.setter
-    def slider_styles(self, config: _SliderConfig):  # numpydoc ignore=GL08
-        if not isinstance(config, _SliderConfig):
+    @slider_style.setter
+    def slider_style(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
+        if not isinstance(config, _SliderStyleConfig):
             raise TypeError('Configuration type must be `_SliderConfig`.')
-        self._slider_styles = config
+        self._slider_style = config
 
     @property
     def axes(self) -> _AxesConfig:  # numpydoc ignore=RT01
@@ -3086,7 +3021,7 @@ class Theme(_ThemeConfig):
             'Smooth shading': 'smooth_shading',
             'Depth peeling': 'depth_peeling',
             'Silhouette': 'silhouette',
-            'Slider Styles': 'slider_styles',
+            'Slider Style': 'slider_style',
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
             'Anti-Aliasing': '_anti_aliasing',

@@ -1543,6 +1543,16 @@ class WidgetHelper:
         pointa = normalize(pointa, self.renderer.GetViewport())
         pointb = normalize(pointb, self.renderer.GetViewport())
 
+        if style is not None:
+            # allow for string based selection of slider styles that differ from theme
+            if not isinstance(style, str):
+                raise TypeError(
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
+                )
+            slider_style = getattr(pyvista.global_theme.slider_style, style)()
+        else:
+            slider_style = pyvista.global_theme.slider_style
+
         slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
         slider_rep.SetMinimumValue(rng[0])
@@ -1550,32 +1560,20 @@ class WidgetHelper:
         slider_rep.SetValue(value)
         slider_rep.SetTitleText(title)
         slider_rep.GetTitleProperty().SetColor(color.float_rgb)
-        slider_rep.GetSliderProperty().SetColor(color.float_rgb)
+        slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.float_rgb)
         slider_rep.GetCapProperty().SetColor(color.float_rgb)
         slider_rep.GetLabelProperty().SetColor(color.float_rgb)
-        slider_rep.GetTubeProperty().SetColor(color.float_rgb)
+        slider_rep.GetTubeProperty().SetColor(slider_style.tube_color.float_rgb)
         slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint1Coordinate().SetValue(pointa[0], pointa[1])
         slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint2Coordinate().SetValue(pointb[0], pointb[1])
-        slider_rep.SetSliderLength(0.05)
-        slider_rep.SetSliderWidth(0.05)
-        slider_rep.SetEndCapLength(0.01)
-
-        if style is not None:
-            if not isinstance(style, str):
-                raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
-                )
-            slider_style = getattr(pyvista.global_theme.slider_styles, style)
-            slider_rep.SetSliderLength(slider_style.slider_length)
-            slider_rep.SetSliderWidth(slider_style.slider_width)
-            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.float_rgb)
-            slider_rep.SetTubeWidth(slider_style.tube_width)
-            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color.float_rgb)
-            slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
-            slider_rep.SetEndCapLength(slider_style.cap_length)
-            slider_rep.SetEndCapWidth(slider_style.cap_width)
+        slider_rep.SetSliderLength(slider_style.slider_length)
+        slider_rep.SetSliderWidth(slider_style.slider_width)
+        slider_rep.SetEndCapLength(slider_style.cap_length)
+        slider_rep.SetTubeWidth(slider_style.tube_width)
+        slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
+        slider_rep.SetEndCapWidth(slider_style.cap_width)
 
         if slider_width is not None:
             slider_rep.SetSliderWidth(slider_width)
