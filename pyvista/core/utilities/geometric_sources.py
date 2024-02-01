@@ -197,7 +197,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.SetHeight(height)
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get base radius of the cone.
 
         Returns
