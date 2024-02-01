@@ -248,10 +248,7 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
         return itertools.chain.from_iterable(self._array)
 
 
-_BuiltinNumberType = TypeVar('_BuiltinNumberType', float, int, bool, covariant=True)
-
-
-def _get_dtype_from_iterable(iterable: Iterable[_BuiltinNumberType]):
+def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
     # Note: This function assumes all elements are numeric."""
     # create a set with all dtypes
 
@@ -260,15 +257,15 @@ def _get_dtype_from_iterable(iterable: Iterable[_BuiltinNumberType]):
     for element in iterable:  # type: ignore[union-attr]
         dtype = type(element)
         if dtype is float:
-            return cast(Type[_BuiltinNumberType], float)
+            return cast(Type[_NumberType], float)
         else:
             dtypes.add(dtype)
     if len(dtypes) == 0:
-        return cast(Type[_BuiltinNumberType], float)
+        return cast(Type[_NumberType], float)
     elif dtypes in [{int}, {bool, int}]:
-        return cast(Type[_BuiltinNumberType], int)
+        return cast(Type[_NumberType], int)
     elif dtypes == {bool}:
-        return cast(Type[_BuiltinNumberType], bool)
+        return cast(Type[_NumberType], bool)
     else:
         raise TypeError(f"Unexpected error: dtype should be numeric, got {dtypes} instead.")
 
