@@ -1199,6 +1199,18 @@ class DiscSource(_vtk.vtkDiskSource):
         """
         self.SetCircumferentialResolution(c_res)
 
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
 
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
