@@ -8,7 +8,7 @@ vtkPlaneSource
 LineSource
 CubeSource
 ConeSource
-vtkDiskSource
+DiscSource
 vtkRegularPolygonSource
 vtkPyramid
 vtkPlatonicSolidSource
@@ -31,6 +31,7 @@ from .geometric_sources import (
     CubeSource,
     CylinderSource,
     LineSource,
+    DiscSource,
     MultipleLinesSource,
     Text3DSource,
     translate,
@@ -1364,15 +1365,10 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkDiskSource()
-    src.SetInnerRadius(inner)
-    src.SetOuterRadius(outer)
-    src.SetRadialResolution(r_res)
-    src.SetCircumferentialResolution(c_res)
-    src.Update()
+    algo = DiscSource(inner=inner, outer=outer, r_res=r_res, c_res=c_res)
     normal = np.array(normal)
     center = np.array(center)
-    surf = wrap(src.GetOutput())
+    surf = algo.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, normal)
     return surf

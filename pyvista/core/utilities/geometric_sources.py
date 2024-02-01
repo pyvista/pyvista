@@ -1036,6 +1036,168 @@ class CubeSource(_vtk.vtkCubeSource):
         return wrap(self.GetOutput())
 
 
+class DiscSource(_vtk.vtkDiskSource):
+    """Disc source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``. Middle of the axis of the disc.
+
+    inner : float, default: 0.25
+        The inner radius.
+
+    outer : float, default: 0.5
+        The outer radius.
+
+    r_res : int, default: 1
+        Number of points in radial direction.
+
+    c_res : int, default: 6
+        Number of points in circumferential direction.
+
+    Examples
+    --------
+    Create a disc with 50 points in the circumferential direction.
+
+    >>> import pyvista as pv
+    >>> source = pv.DiscSource(c_res=50)
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    _new_attr_exceptions = ["center"]
+
+    def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
+        """Initialize the disc source class."""
+        super().__init__()
+        if center is not None:
+            self.center = center
+        self.inner = inner
+        self.outer = outer
+        self.r_res = r_res
+        self.c_res = c_res
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
+            return self.GetCenter()
+        else:  # pragma: no cover
+            return (0.0, 0.0, 0.0)
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
+            self.SetCenter(center)
+        else:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+            )
+
+    @property
+    def inner(self) -> float:
+        """Get the inner radius.
+
+        Returns
+        -------
+        float
+            The inner radius.
+        """
+        return self.GetInnerRadius()
+
+    @inner.setter
+    def inner(self, inner: float):
+        """Set the inner radius.
+
+        Parameters
+        ----------
+        inner : float
+            The inner radius.
+        """
+        self.SetInnerRadius(inner)
+
+    @property
+    def outer(self) -> float:
+        """Get the outer radius.
+
+        Returns
+        -------
+        float
+            The outer radius.
+        """
+        return self.GetOuterRadius()
+
+    @outer.setter
+    def outer(self, outer: float):
+        """Set the outer radius.
+
+        Parameters
+        ----------
+        outer : float
+            The outer radius.
+        """
+        self.SetOuterRadius(outer)
+
+    @property
+    def r_res(self) -> int:
+        """Get number of points in radial direction.
+
+        Returns
+        -------
+        int
+            Number of points in radial direction.
+        """
+        return self.GetRadialResolution()
+
+    @r_res.setter
+    def r_res(self, r_res: int):
+        """Set number of points in radial direction.
+
+        Parameters
+        ----------
+        r_res : int
+            Number of points in radial direction.
+        """
+        self.SetRadialResolution(r_res)
+
+    @property
+    def c_res(self) -> int:
+        """Get number of points in circumferential direction.
+
+        Returns
+        -------
+        int
+            Number of points in circumferential direction.
+        """
+        return self.GetCircumferentialResolution()
+
+    @c_res.setter
+    def c_res(self, c_res: int):
+        """Set number of points in circumferential direction.
+
+        Parameters
+        ----------
+        c_res : int
+            Number of points in circumferential direction.
+        """
+        self.SetCircumferentialResolution(c_res)
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
@@ -1137,6 +1299,18 @@ class LineSource(_vtk.vtkLineSource):
         if resolution <= 0:
             raise ValueError('Resolution must be positive')
         self.SetResolution(resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
 
     @property
     def output(self):
