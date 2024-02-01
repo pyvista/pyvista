@@ -3,17 +3,21 @@ from __future__ import annotations
 
 import itertools
 from typing import (
+    Any,
     Generic,
     Iterable,
     List,
     Literal,
+    Protocol,
     Sequence,
+    Sized,
     Tuple,
     Type,
     TypeVar,
     Union,
     cast,
     overload,
+    runtime_checkable,
 )
 
 import numpy as np
@@ -27,8 +31,6 @@ from pyvista.core._typing_core._array_like import (
     _NumberSequence4D,
     _NumberType,
     _NumpyArraySequence,
-    _NumpyArraySequence1D,
-    _NumpyArraySequence2D,
 )
 
 # Similar definitions to numpy._typing._shape but with modifications:
@@ -47,25 +49,40 @@ _NumberType_co = TypeVar('_NumberType_co', bound=Union[float, int, np.number], c
 DTypeLike = Union[np.dtype[_NumberType_co], Type[_NumberType_co], str]
 
 
+# Define array protocol
+# This should match numpy's definition exactly
+_DType_co = TypeVar('_DType_co', bound=np.generic, covariant=True)
+
+
+@runtime_checkable
+class _SupportsArray(Protocol[_DType_co]):
+    def __array__(self) -> np.ndarray[Any, np.dtype[_DType_co]]:
+        ...
+
+
 class _ArrayLikeWrapper(Generic[_NumberType]):
     array: _ArrayLikeOrScalar[_NumberType]
 
+    # The input array-like types are complex and mypy cannot infer
+    # the return types correctly for each overload,so we ignore
+    # all [overload-overlap] errors and assume the annotations
+    # for the overloads are correct
     @overload
-    def __new__(
+    def __new__(  # type: ignore[overload-overlap]
         cls,
         array: NumpyArray[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...
 
     @overload
-    def __new__(
+    def __new__(  # type: ignore[overload-overlap]
         cls,
         array: _NumberType,
     ) -> _ScalarWrapper[_NumberType]:
         ...
 
     @overload
-    def __new__(
+    def __new__(  # type: ignore[overload-overlap]
         cls,
         array: _NumpyArraySequence[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
@@ -118,44 +135,31 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         array.
 
         """
-        # Wrap 1D or 2D sequences as-as
+        # Wrap 1D or 2D sequences as-is
         if isinstance(array, (tuple, list)):
-            array_out: Union[
-                _NumberSequence1D[_NumberType],
-                _NumberSequence2D[_NumberType],
-                _NumpyArraySequence1D[_NumberType],
-                _NumpyArraySequence2D[_NumberType],
-            ]
-            array_out = array
             if _is_number_sequence_1D(array) or _is_number_sequence_2D(array):
-                return object.__new__(_NumberSequenceWrapper)
+                wrapped1 = object.__new__(_NumberSequenceWrapper)
+                wrapped1.__setattr__('_array', array)
+                return wrapped1
         # Wrap scalars as-is
         elif isinstance(array, (np.floating, np.integer, np.bool_, float, int, bool)):
-            # reveal_type(array)
-            return object.__new__(_ScalarWrapper)
-        # Everything else gets wrapped as (and possibly converted to) a numpy array
-        # reveal_type(array)
-        return object.__new__(_NumpyArrayWrapper)
+            wrapped2 = object.__new__(_ScalarWrapper)
+            wrapped2.__setattr__('_array', array)
+            return wrapped2
 
-    def __init__(self, array):
-        self._array = array
+        # Everything else gets wrapped as (and possibly converted to) a numpy array
+        wrapped3 = object.__new__(_NumpyArrayWrapper)
+        wrapped3.__setattr__('_array', np.asanyarray(array))
+        return wrapped3
+
+    # def __init__(self, array):
+    #     self._array = array
 
     def __getattr__(self, item):
         try:
             return self.__getattribute__(item)
         except AttributeError:
             return getattr(self.__getattribute__('_array'), item)
-
-
-from typing import Any, Protocol, TypeVar, runtime_checkable
-
-_DType_co = TypeVar('_DType_co', bound=np.generic, covariant=True)
-
-
-@runtime_checkable
-class _SupportsArray(Protocol[_DType_co]):
-    def __array__(self) -> np.ndarray[Any, np.dtype[_DType_co]]:
-        ...
 
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
@@ -186,7 +190,6 @@ class _NumberSequenceWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: Union[_NumberSequence1D[_NumberType], _NumberSequence2D[_NumberType]]
 
     def __init__(self, array):
-        super().__init__(array)
         if self.ndim == 2:
             # check all subarray shapes are equal
             sub_shape = len(self._array[0])
@@ -202,7 +205,7 @@ class _NumberSequenceWrapper(_ArrayLikeWrapper[_NumberType]):
         if self.ndim == 1:
             return (len(self._array),)
         else:
-            return (len(self._array), len(self._array[0]))
+            return len(self._array), len(cast(Sized, self._array[0]))
 
     @property
     def ndim(self) -> Union[Literal[1], Literal[2]]:
@@ -213,15 +216,16 @@ class _NumberSequenceWrapper(_ArrayLikeWrapper[_NumberType]):
 
     @property
     def dtype(self) -> Type[_NumberType]:
+        iterable: Iterable
         if self.ndim == 1:
             iterable = self._array
         else:
-            iterable = itertools.chain.from_iterable(self._array)
+            iterable = itertools.chain.from_iterable(self._array)  # type: ignore[arg-type]
 
         # create a set with all dtypes
         # exit early if float
         dtypes = set()
-        for element in iterable:
+        for element in iterable:  # type: ignore[union-attr]
             dtype = type(element)
             if dtype is float:
                 return cast(Type[_NumberType], float)
@@ -236,18 +240,15 @@ class _NumberSequenceWrapper(_ArrayLikeWrapper[_NumberType]):
         else:
             raise TypeError(f"Unexpected error: dtype should be numeric, got {dtypes} instead.")
 
-    # class _NumpyArraySequenceWrapper(_ArrayLikeWrapper[_NumberType]):
-
-
-#     array: _NumpyArraySequence[_NumberType]
 
 # reveal_type(_ArrayLikeWrapper(1))
 # reveal_type(_ArrayLikeWrapper(np.array([1], dtype=int)))
-# reveal_type(_ArrayLikeWrapper(np.array([1], dtype=int)).array)
-# reveal_type(_ArrayLikeWrapper(1).array)
+# reveal_type(_ArrayLikeWrapper(np.array([1], dtype=int))._array)
+# reveal_type(_ArrayLikeWrapper(1)._array)
 # reveal_type(_ArrayLikeWrapper(1).dtype)
-# reveal_type(_ArrayLikeWrapper([1]).array)
+# reveal_type(_ArrayLikeWrapper([1])._array)
 # reveal_type(_ArrayLikeWrapper([[1]]))
+# reveal_type(_ArrayLikeWrapper([[[1]]]))
 
 _SequenceArgType = TypeVar('_SequenceArgType', Sequence[Sequence], Sequence[np.ndarray])
 
