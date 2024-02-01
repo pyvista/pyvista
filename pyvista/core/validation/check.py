@@ -190,16 +190,9 @@ def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"
     >>> validation.check_real([1, 2, 3])
 
     """
-    array = array if isinstance(array, np.ndarray) else cast_to_ndarray(array)
-
-    # Return early for common cases
-    if array.dtype.type in [np.int32, np.int64, np.float32, np.float64]:
-        return
-
-    # Do not use np.isreal as it will fail in some cases (e.g. scalars).
-    # Check dtype directly instead
+    dtype = _ArrayLikeWrapper(array).dtype
     try:
-        check_subdtype(array, (np.floating, np.integer), name=name)
+        check_subdtype(dtype, (np.floating, np.integer), name=name)
     except TypeError as e:
         raise TypeError(f"{name} must have real numbers.") from e
 
