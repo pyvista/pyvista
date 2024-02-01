@@ -1313,15 +1313,3 @@ class LineSource(_vtk.vtkLineSource):
         """
         self.Update()
         return wrap(self.GetOutput())
-
-    @property
-    def output(self):
-        """Get the output data object for a port on this algorithm.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Line mesh.
-        """
-        self.Update()
-        return wrap(self.GetOutput())
