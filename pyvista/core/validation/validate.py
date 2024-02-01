@@ -49,7 +49,7 @@ def validate_array(
     must_be_nonnegative=False,
     must_be_finite=False,
     must_be_real=True,
-    must_be_integer_like=False,
+    must_be_integer=False,
     must_be_sorted=False,
     must_be_in_range=None,
     strict_lower_bound=False,
@@ -149,7 +149,7 @@ def validate_array(
         if the array has real numbers, i.e. its data type is integer or
         floating.
 
-    must_be_integer_like : bool, default: False
+    must_be_integer : bool, default: False
         :func:`Check <pyvista.core.validate.check.check_is_integerlike>`
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
@@ -311,7 +311,7 @@ def validate_array(
         check_nonnegative(array_out, name=name)
     if must_be_finite:
         check_finite(array_out, name=name)
-    if must_be_integer_like:
+    if must_be_integer:
         check_integer(array_out, strict=False, name=name)
     if must_be_in_range is not None:
         check_range(
