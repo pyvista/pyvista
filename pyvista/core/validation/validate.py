@@ -266,30 +266,30 @@ def validate_array(
     array([ 1,  2,  3,  5,  8, 13])
 
     """
-    arr_out = cast_to_ndarray(array, as_any=as_any, copy=copy)
+    array_out = cast_to_ndarray(array, as_any=as_any, copy=copy)
 
     # Check type
     if must_be_real:
-        check_real(arr_out, name=name)
+        check_real(array_out, name=name)
     else:
         try:
-            check_subdtype(arr_out, np.number, name=name)
+            check_subdtype(array_out, np.number, name=name)
         except TypeError as e:
             raise TypeError(f"{name} must be numeric.") from e
 
     if must_have_dtype is not None:
-        check_subdtype(arr_out, must_have_dtype, name=name)
+        check_subdtype(array_out, must_have_dtype, name=name)
 
     # Check shape
     if must_have_shape is not None:
-        check_shape(arr_out, must_have_shape, name=name)
+        check_shape(array_out, must_have_shape, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
-    if reshape_to is not None and arr_out.shape != reshape_to:
-        arr_out = arr_out.reshape(reshape_to)
+    if reshape_to is not None and array_out.shape != reshape_to:
+        array_out = array_out.reshape(reshape_to)
 
-    if broadcast_to is not None and arr_out.shape != broadcast_to:
-        arr_out = np.broadcast_to(arr_out, broadcast_to, subok=True)
+    if broadcast_to is not None and array_out.shape != broadcast_to:
+        array_out = np.broadcast_to(array_out, broadcast_to, subok=True)
 
     # Check length _after_ reshaping otherwise length may be wrong
     if (
@@ -308,14 +308,14 @@ def validate_array(
 
     # Check data values
     if must_be_nonnegative:
-        check_nonnegative(arr_out, name=name)
+        check_nonnegative(array_out, name=name)
     if must_be_finite:
-        check_finite(arr_out, name=name)
+        check_finite(array_out, name=name)
     if must_be_integer_like:
-        check_integerlike(arr_out, strict=False, name=name)
+        check_integerlike(array_out, strict=False, name=name)
     if must_be_in_range is not None:
         check_range(
-            arr_out,
+            array_out,
             must_be_in_range,
             strict_lower=strict_lower_bound,
             strict_upper=strict_upper_bound,
@@ -323,20 +323,20 @@ def validate_array(
         )
     if must_be_sorted:
         if isinstance(must_be_sorted, dict):
-            check_sorted(arr_out, **must_be_sorted, name=name)
+            check_sorted(array_out, **must_be_sorted, name=name)
         else:
-            check_sorted(arr_out, name=name)
+            check_sorted(array_out, name=name)
 
     # Process output
     if dtype_out is not None:
         dtype_out = np.dtype(dtype_out)
         # Copy was done earlier, so don't do it again here
-        arr_out = arr_out.astype(dtype_out, copy=False)
+        array_out = array_out.astype(dtype_out, copy=False)
     if to_tuple:
-        return cast_to_tuple_array(arr_out)
+        return cast_to_tuple_array(array_out)
     if to_list:
-        return arr_out.tolist()
-    return arr_out
+        return array_out.tolist()
+    return array_out
 
 
 def validate_axes(
@@ -498,22 +498,22 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
 
     """
     check_string(name, name="Name")
-    arr = np.eye(4)  # initialize
+    array = np.eye(4)  # initialize
     if isinstance(transform, _vtk.vtkMatrix4x4):
-        arr = array_from_vtkmatrix(transform)
+        array = array_from_vtkmatrix(transform)
     elif isinstance(transform, _vtk.vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
+        array[:3, :3] = array_from_vtkmatrix(transform)
     elif isinstance(transform, _vtk.vtkTransform):
-        arr = array_from_vtkmatrix(transform.GetMatrix())
+        array = array_from_vtkmatrix(transform.GetMatrix())
     else:
         try:
-            valid_arr = validate_array(
+            valid_array = validate_array(
                 transform, must_have_shape=[(3, 3), (4, 4)], must_be_finite=True, name=name
             )
-            if valid_arr.shape == (3, 3):
-                arr[:3, :3] = valid_arr
+            if valid_array.shape == (3, 3):
+                array[:3, :3] = valid_array
             else:
-                arr = valid_arr
+                array = valid_array
         except ValueError:
             raise TypeError(
                 'Input transform must be one of:\n'
@@ -524,7 +524,7 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
                 '\t3x3 np.ndarray\n'
             )
 
-    return arr
+    return array
 
 
 def validate_transform3x3(
@@ -556,21 +556,21 @@ def validate_transform3x3(
 
     """
     check_string(name, name="Name")
-    arr = np.eye(3)  # initialize
+    array = np.eye(3)  # initialize
     if isinstance(transform, _vtk.vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
+        array[:3, :3] = array_from_vtkmatrix(transform)
     else:
         try:
-            arr = validate_array(transform, must_have_shape=(3, 3), name=name)
+            array = validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
             raise TypeError(
                 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
             )
-    return arr
+    return array
 
 
 def validate_number(
-    num: Union[bool, int, float, _NumberType, Vector[_NumberType]], /, *, reshape=True, **kwargs
+    num: Union[_NumberType, Vector[_NumberType]], /, *, reshape=True, **kwargs
 ) -> _NumberType:
     """Validate a real, finite scalar number.
 
@@ -896,7 +896,7 @@ def validate_arrayN_uintlike(
 
     >>> import numpy as np
     >>> from pyvista.core import validation
-    >>> arr = validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
+    >>> array = validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
     >>> array
     array([1, 2, 3, 4])
 

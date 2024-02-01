@@ -141,7 +141,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
                 wrapped1.__setattr__('_array', array)
                 return wrapped1
         # Wrap scalars as-is
-        elif isinstance(array, (np.floating, np.integer, np.bool_, float, int, bool)):
+        elif isinstance(array, (float, int, np.floating, np.integer, np.bool_)):
             wrapped2 = object.__new__(_ScalarWrapper)
             wrapped2.__setattr__('_array', array)
             return wrapped2
@@ -150,9 +150,6 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         wrapped3 = object.__new__(_NumpyArrayWrapper)
         wrapped3.__setattr__('_array', np.asanyarray(array))
         return wrapped3
-
-    # def __init__(self, array):
-    #     self._array = array
 
     def __getattr__(self, item):
         try:

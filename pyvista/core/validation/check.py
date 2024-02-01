@@ -80,8 +80,8 @@ def check_subdtype(
 
     Check an array's dtype.
 
-    >>> arr = np.array([1, 2, 3], dtype='uint8')
-    >>> validation.check_subdtype(arr, np.integer)
+    >>> array = np.array([1, 2, 3], dtype='uint8')
+    >>> validation.check_subdtype(array, np.integer)
 
     """
     input_dtype: DTypeLike
@@ -379,6 +379,7 @@ def check_integerlike(
             check_subdtype(wrapped.dtype, np.integer)
         except TypeError:
             raise
+    # TODO: check sequence-types using is_integer()
     elif not np.array_equal(array, np.floor(array)):
         raise ValueError(f"{name} must have integer-like values.")
 
@@ -732,6 +733,8 @@ def check_number(
 
     See Also
     --------
+    validate_number
+        Similar function which returns a validated number.
     check_scalar
         Similar function which allows 0-dimensional ndarrays.
     check_numeric
@@ -1226,15 +1229,15 @@ def check_length(
     if must_be_1d:
         check_shape(array, shape=(-1))
 
-    arr_len = len(cast(Sized, array))
+    array_len = len(cast(Sized, array))
 
     if exact_length is not None:
         exact_length = cast_to_ndarray(exact_length)
         check_integerlike(exact_length, name="'exact_length'")
-        if arr_len not in exact_length:
+        if array_len not in exact_length:
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {arr_len} instead."
+                f"Got length {array_len} instead."
             )
 
     # Validate min/max length
@@ -1246,16 +1249,16 @@ def check_length(
         check_sorted((min_length, max_length), name="Range")
 
     if min_length is not None:
-        if arr_len < min_length:
+        if array_len < min_length:
             raise ValueError(
                 f"{name} must have a minimum length of {min_length}. "
-                f"Got length {arr_len} instead."
+                f"Got length {array_len} instead."
             )
     if max_length is not None:
-        if arr_len > max_length:
+        if array_len > max_length:
             raise ValueError(
                 f"{name} must have a maximum length of {max_length}. "
-                f"Got length {arr_len} instead."
+                f"Got length {array_len} instead."
             )
 
 
