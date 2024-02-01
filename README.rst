@@ -2,10 +2,47 @@
 PyVista
 #######
 
+    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
+
 .. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
+PyVista is:
+
+* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
+PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
+through NumPy and direct array access through a variety of methods and classes.
+This package provides a Pythonic, well-documented interface exposing
+VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
+and visual integration of spatially referenced datasets.
+
+This module can be used for scientific plotting for presentations and research
+papers as well as a supporting module for other mesh 3D rendering dependent
+Python modules; see Connections for a list of projects that leverage
+PyVista.
+
+
+.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
+   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
+
+Share this project on X: |tweet|
+
+
+PyVista is a NumFOCUS affiliated project
+
+.. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
+   :alt: NumFOCUS affiliated projects
+   :height: 60px
+
+Status badges
+=============
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
    :target: https://zenodo.org/records/8415866
@@ -87,42 +124,6 @@ PyVista
 +----------------------+------------------------+-------------+
 | Affiliated           | |NumFOCUS Affiliated|                |
 +----------------------+------------------------+-------------+
-
-
-    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
-
-PyVista is:
-
-* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets
-* 3D plotting made simple and built for large/complex data geometries
-
-.. _Visualization Toolkit: https://vtk.org
-
-PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
-through NumPy and direct array access through a variety of methods and classes.
-This package provides a Pythonic, well-documented interface exposing
-VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
-and visual integration of spatially referenced datasets.
-
-This module can be used for scientific plotting for presentations and research
-papers as well as a supporting module for other mesh 3D rendering dependent
-Python modules; see Connections for a list of projects that leverage
-PyVista.
-
-
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on X: |tweet|
-
-
-PyVista is a NumFOCUS affiliated project
-
-.. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
-   :target: https://numfocus.org/sponsored-projects/affiliated-projects
-   :alt: NumFOCUS affiliated projects
-   :height: 60px
 
 
 Highlights
