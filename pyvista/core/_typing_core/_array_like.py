@@ -38,7 +38,8 @@ if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # which makes it incompatible with built-in generic alias types, e.g.
     # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
     # the private typing._GenericAlias type instead
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np.dtype))
+    dtype = typing._GenericAlias(np.dtype, _NumberType)
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, dtype[_NumberType]))
 else:
     NumpyArray = npt.NDArray[_NumberType]
 
