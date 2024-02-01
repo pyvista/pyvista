@@ -1600,7 +1600,7 @@ class SphereSource(_vtk.vtkSphereSource):
         Returns
         -------
         pyvista.PolyData
-            Cube surface.
+            Sphere surface.
         """
         self.Update()
         return wrap(self.GetOutput())
