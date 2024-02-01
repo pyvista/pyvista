@@ -1210,3 +1210,118 @@ class DiscSource(_vtk.vtkDiskSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+class LineSource(_vtk.vtkLineSource):
+    """Create a line.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
+        Location in ``[x, y, z]``.
+
+    pointb : sequence[float], default: (0.5, 0.0, 0.0)
+        Location in ``[x, y, z]``.
+
+    resolution : int, default: 1
+        Number of pieces to divide line into.
+
+    """
+
+    def __init__(
+        self,
+        pointa=(-0.5, 0.0, 0.0),
+        pointb=(0.5, 0.0, 0.0),
+        resolution=1,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.pointa = pointa
+        self.pointb = pointb
+        self.resolution = resolution
+
+    @property
+    def pointa(self) -> Sequence[float]:
+        """Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint1()
+
+    @pointa.setter
+    def pointa(self, pointa: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        if np.array(pointa).size != 3:
+            raise TypeError('Point A must be a length three tuple of floats.')
+        self.SetPoint1(*pointa)
+
+    @property
+    def pointb(self) -> Sequence[float]:
+        """Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint2()
+
+    @pointb.setter
+    def pointb(self, pointb: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        pointb : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        if np.array(pointb).size != 3:
+            raise TypeError('Point B must be a length three tuple of floats.')
+        self.SetPoint2(*pointb)
+
+    @property
+    def resolution(self) -> int:
+        """Number of pieces to divide line into.
+
+        Returns
+        -------
+        int
+            Number of pieces to divide line into.
+        """
+        return self.GetResolution()
+
+    @resolution.setter
+    def resolution(self, resolution):
+        """Set number of pieces to divide line into.
+
+        Parameters
+        ----------
+        resolution : int
+            Number of pieces to divide line into.
+        """
+        if resolution <= 0:
+            raise ValueError('Resolution must be positive')
+        self.SetResolution(resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())

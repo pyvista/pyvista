@@ -298,3 +298,10 @@ def test_cube_source():
     assert np.array_equal(algo.bounds, bounds)
     with pytest.raises(TypeError):
         algo = pv.CubeSource(bounds=0.0)
+
+
+def test_line_source():
+    algo = pv.LineSource()
+    assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
+    assert np.array_equal(algo.pointb, (0.5, 0.0, 0.0))
+    assert algo.resolution == 1
