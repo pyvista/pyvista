@@ -1325,6 +1325,8 @@ class LineSource(_vtk.vtkLineSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 @no_new_attr
 class SphereSource(_vtk.vtkSphereSource):
     """Sphere source algorithm class.

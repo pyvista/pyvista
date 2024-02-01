@@ -314,6 +314,8 @@ def test_sphere_source():
     if pv.vtk_version_info >= (9, 2):
         algo = pv.SphereSource(center=center)
         assert algo.center == center
+
+
 def test_line_source():
     algo = pv.LineSource()
     assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
