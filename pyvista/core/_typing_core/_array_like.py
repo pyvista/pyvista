@@ -33,12 +33,13 @@ _NumberType = TypeVar(
 )
 
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
-    # Numpy's NDArray annotations use a customized generic alias type for
+    # Numpy's type annotations use a customized generic alias type for
     # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
     # which makes it incompatible with built-in generic alias types, e.g.
     # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
     # the private typing._GenericAlias type instead
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, _NumberType))
+    dtype = typing._GenericAlias(np.dtype, Any)
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, dtype[_NumberType]))
 else:
     NumpyArray = npt.NDArray[_NumberType]
 
