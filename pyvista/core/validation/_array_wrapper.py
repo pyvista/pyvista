@@ -6,10 +6,8 @@ from typing import (
     Any,
     Generic,
     Iterable,
-    List,
     Literal,
     Protocol,
-    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -30,6 +28,11 @@ from pyvista.core._typing_core._array_like import (
     _NumberSequence4D,
     _NumberType,
     _NumpyArraySequence,
+)
+from pyvista.core._typing_core._type_guards import (
+    _is_Number,
+    _is_NumberSequence1D,
+    _is_NumberSequence2D,
 )
 
 # Similar definitions to numpy._typing._shape but with modifications:
@@ -62,15 +65,9 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     array: _ArrayLikeOrScalar[_NumberType]
 
     # The input array-like types are complex and mypy cannot infer
-    # the return types correctly for each overload,so we ignore
+    # the return types correctly for each overload, so we ignore
     # all [overload-overlap] errors and assume the annotations
     # for the overloads are correct
-    @overload
-    def __new__(  # type: ignore[overload-overlap]
-        cls,
-        array: NumpyArray[_NumberType],
-    ) -> _NumpyArrayWrapper[_NumberType]:
-        ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
@@ -114,6 +111,13 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...  # pragma: no cover
 
+    @overload
+    def __new__(  # type: ignore[overload-overlap]
+        cls,
+        array: NumpyArray[_NumberType],
+    ) -> _NumpyArrayWrapper[_NumberType]:
+        ...  # pragma: no cover
+
     def __new__(
         cls,
         array: _ArrayLikeOrScalar[_NumberType],
@@ -133,18 +137,15 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         array.
 
         """
-        # Wrap 1D or 2D sequences as-is
-        if isinstance(array, (tuple, list)):
-            if _is_number_sequence_1D(array):
-                wrapped1 = object.__new__(_Sequence1DWrapper)
-                wrapped1.__setattr__('_array', array)
-                return wrapped1
-            elif _is_number_sequence_2D(array):
-                wrapped2 = object.__new__(_Sequence2DWrapper)
-                wrapped2.__setattr__('_array', array)
-                return wrapped2
-        # Wrap scalars as-is
-        elif isinstance(array, (float, int, np.floating, np.integer, np.bool_)):
+        if _is_NumberSequence1D(array):
+            wrapped1 = object.__new__(_Sequence1DWrapper)
+            wrapped1.__setattr__('_array', array)
+            return wrapped1
+        elif _is_NumberSequence2D(array):
+            wrapped2 = object.__new__(_Sequence2DWrapper)
+            wrapped2.__setattr__('_array', array)
+            return wrapped2
+        elif _is_Number(array):
             wrapped3 = object.__new__(_ScalarWrapper)
             wrapped3.__setattr__('_array', array)
             return wrapped3
@@ -210,7 +211,7 @@ class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
         return self._dtype
 
     @property
-    def iterable(self) -> Iterable:
+    def iterable(self) -> Iterable[_NumberType]:
         return self._array
 
 
@@ -244,7 +245,7 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
         return self._dtype
 
     @property
-    def iterable(self) -> Iterable:
+    def iterable(self) -> Iterable[_NumberType]:
         return itertools.chain.from_iterable(self._array)
 
 
@@ -254,7 +255,7 @@ def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
 
     # exit early if float
     dtypes = set()
-    for element in iterable:  # type: ignore[union-attr]
+    for element in iterable:
         dtype = type(element)
         if dtype is float:
             return cast(Type[_NumberType], float)
@@ -278,30 +279,3 @@ def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
 # reveal_type(_ArrayLikeWrapper([1])._array)
 # reveal_type(_ArrayLikeWrapper([[1]]))
 # reveal_type(_ArrayLikeWrapper([[[1]]]))
-
-_SequenceArgType = TypeVar('_SequenceArgType', Sequence[Sequence], Sequence[np.ndarray])
-
-
-def _has_element_types(array: Iterable, types: Tuple[Type, ...], N=None):
-    """Check that iterable elements have the specified type.
-
-    Parameters
-    ----------
-    N : int
-        Only check the first `N` elements. Can be used to reduce the
-        performance cost of this check. Set to `None` to check all elements.
-    """
-    iterator = itertools.islice(array, N)
-    return all(isinstance(item, types) for item in iterator)
-
-
-def _is_number_sequence_1D(array: Union[Tuple, List], N=None):
-    return isinstance(array, (tuple, list)) and _has_element_types(array, (float, int), N=N)
-
-
-def _is_number_sequence_2D(array: Union[Tuple, List], N=None):
-    return (
-        isinstance(array, (tuple, list))
-        and len(array) > 0
-        and all(_is_number_sequence_1D(subarray, N=N) for subarray in array)
-    )
