@@ -3,6 +3,8 @@ import os
 import pathlib
 import pickle
 import shutil
+import subprocess
+import sys
 import unittest.mock as mock
 import warnings
 
@@ -964,3 +966,65 @@ def test_cast_to_list_array():
     assert np.array_equal(array_in, array_list)
     with pytest.raises(ValueError):
         cast_to_tuple_array([[1, [2, 3]]])
+
+
+def install_polars():
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "polars"])
+
+
+def uninstall_polars():
+    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", "polars"])
+
+
+@pytest.fixture
+def with_polars():
+    # setup
+    try:
+        import polars  # noqa: F401
+
+        already_installed = True
+    except ModuleNotFoundError:
+        already_installed = False
+        install_polars()
+
+    yield "Testing with 'polars' installed"
+
+    # teardown
+    if not already_installed:
+        uninstall_polars()
+
+
+def test_cast_to_ndarray_with_polars(with_polars):
+    import polars as pl
+
+    # Test with series
+    initial_array = [1, 2, 3]
+    array_in = pl.Series('points', initial_array)
+
+    # Test array values are not copies
+    array_out = cast_to_ndarray(array_in)
+    assert not array_out.flags.writeable
+    array_out.flags["WRITEABLE"] = True
+    array_out[0] = 99
+    assert array_in[0] == 99
+
+    # Test with dataframe, created naively
+    initial_array = [[1, 2, 3], [4, 5, 6]]
+    data = pl.DataFrame(dict(points=initial_array))
+    array_in = data['points']
+
+    # Test that a copy is made
+    array_out = cast_to_ndarray(array_in)
+    array_out[0, 0] = 99
+    assert array_in[0][0] != 99
+
+    # Test with dataframe, created by specifying schema
+    data = pl.DataFrame(dict(points=initial_array), schema=dict(points=pl.Array(pl.Float64, 3)))
+    array_in = data['points']
+
+    # Test array values are not copies
+    array_out = cast_to_ndarray(array_in)
+    assert not array_out.flags.writeable
+    array_out.flags["WRITEABLE"] = True
+    array_out[0, 0] = 99
+    assert array_in[0][0] == 99

@@ -889,4 +889,26 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
             raise ValueError
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
+    except Exception as e:
+        try:
+            import polars
+
+            if isinstance(e, polars.PolarsError):
+                try:
+                    out = arr.to_list()
+                    import warnings
+
+                    warnings.warn(
+                        'Polars data could not be directly cast to a numpy array and was copied'
+                        'instead. This may be due to non-contiguous data. To avoid making an '
+                        'explicit copy, consider setting the dtype or schema of the polars data '
+                        'to make your data contiguous before using it with PyVista.'
+                    )
+                except (AttributeError, polars.PolarsError):
+                    raise RuntimeError("Data from polars could not be cast as a numpy array.")
+            # try again
+            out = cast_to_ndarray(out, dtype=dtype, as_any=True, copy=False)
+            # NOTE: by default the output array is read-only
+        except ImportError:
+            pass
     return out
