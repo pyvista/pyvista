@@ -1150,7 +1150,7 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista import validation
-    >>> check_contains("A", ["A", "B", "C"])
+    >>> validation.check_contains("A", ["A", "B", "C"])
 
     """
     if obj not in container:
