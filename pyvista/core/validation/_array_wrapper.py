@@ -34,6 +34,7 @@ from pyvista.core._typing_core._type_guards import (
     _is_NumberSequence1D,
     _is_NumberSequence2D,
 )
+from pyvista.core.utilities.arrays import cast_to_ndarray
 
 # Similar definitions to numpy._typing._shape but with modifications:
 #  - explicit support for empty tuples `()`
@@ -137,19 +138,35 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         array.
 
         """
-        # Do the most common checks first to
-        # avoid making unnecessary checks
-        if isinstance(array, np.ndarray):
-            return object.__new__(_NumpyArrayWrapper)
-        if _is_NumberSequence1D(array):
-            return object.__new__(_Sequence1DWrapper)
+        # Note:
+        # __init__ is not used by this class or subclasses so that already-wrapped
+        # inputs can be returned as-is without re-initialization.
+        # Instead, attributes are initialized here with __setattr__
+        if isinstance(array, _ArrayLikeWrapper):
+            return array
+        elif isinstance(array, np.ndarray):
+            wrapped1 = object.__new__(_NumpyArrayWrapper)
+            wrapped1.__setattr__('_array', array)
+            return wrapped1
+        elif _is_NumberSequence1D(array):
+            wrapped2 = object.__new__(_Sequence1DWrapper)
+            wrapped2.__setattr__('_array', array)
+            wrapped2.__setattr__('_dtype', None)
+            return wrapped2
         elif _is_NumberSequence2D(array):
-            return object.__new__(_Sequence2DWrapper)
+            wrapped3 = object.__new__(_Sequence2DWrapper)
+            wrapped3.__setattr__('_array', array)
+            wrapped3.__setattr__('_dtype', None)
+            return wrapped3
         elif _is_Number(array):
-            return object.__new__(_NumberWrapper)
+            wrapped4 = object.__new__(_NumberWrapper)
+            wrapped4.__setattr__('_array', array)
+            return wrapped4
 
         # Everything else gets wrapped as (and possibly converted to) a numpy array
-        return object.__new__(_NumpyArrayWrapper)
+        wrapped5 = object.__new__(_NumpyArrayWrapper)
+        wrapped5.__setattr__('_array', cast_to_ndarray(array))
+        return wrapped5
 
     def __getattr__(self, item):
         try:
@@ -157,20 +174,17 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         except AttributeError:
             return getattr(self._array, item)
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self._array.__repr__()})'
+
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: NumpyArray[_NumberType]
     dtype: np.dtype[_NumberType]
 
-    def __init__(self, array: NumpyArray[_NumberType]):
-        self._array = np.asanyarray(array)
-
 
 class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: _NumberType
-
-    def __init__(self, array):
-        self._array = array
 
     @property
     def shape(self) -> Tuple[()]:
@@ -192,10 +206,6 @@ class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
 class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: _NumberSequence1D[_NumberType]
 
-    def __init__(self, array):
-        self._array = array
-        self._dtype = None
-
     @property
     def shape(self) -> Union[Tuple[int]]:
         return (len(self._array),)
@@ -206,6 +216,7 @@ class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
 
     @property
     def dtype(self) -> Type[_NumberType]:
+        self._dtype: Type[_NumberType]
         if self._dtype is None:
             self._dtype = _get_dtype_from_iterable(self._array)
         return self._dtype
@@ -218,10 +229,6 @@ class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
 class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: _NumberSequence2D[_NumberType]
 
-    def __init__(self, array):
-        self._array = array
-        self._dtype = None
-
     @property
     def shape(self) -> Tuple[int, int]:
         return len(self._array), len(self._array[0])
@@ -232,6 +239,7 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
 
     @property
     def dtype(self) -> Type[_NumberType]:
+        self._dtype: Type[_NumberType]
         if self._dtype is None:
             self._dtype = _get_dtype_from_iterable(self.iterable)
         return self._dtype
@@ -269,5 +277,6 @@ def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
 # reveal_type(_ArrayLikeWrapper(1)._array)
 # reveal_type(_ArrayLikeWrapper(1).dtype)
 # reveal_type(_ArrayLikeWrapper([1])._array)
+# reveal_type(_ArrayLikeWrapper([1]).dtype)
 # reveal_type(_ArrayLikeWrapper([[1]]))
 # reveal_type(_ArrayLikeWrapper([[[1]]]))

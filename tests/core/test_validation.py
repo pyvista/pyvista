@@ -1137,20 +1137,30 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
         raise RuntimeError("Unexpected test case.")
 
     # Test abstract wrapper
-    actual = _ArrayLikeWrapper(array_before_wrap)
-    assert np.array_equal(actual._array, expected.array)
-    assert actual.shape == expected.shape
-    assert actual.dtype == expected.dtype
-    assert actual.ndim == expected.ndim
-    assert type(actual) is expected.wrapper
+    wrapped_abstract = _ArrayLikeWrapper(array_before_wrap)
+    assert np.array_equal(wrapped_abstract._array, expected.array)
+    assert wrapped_abstract.shape == expected.shape
+    assert wrapped_abstract.dtype == expected.dtype
+    assert wrapped_abstract.ndim == expected.ndim
+    assert type(wrapped_abstract) is expected.wrapper
 
     # Test child wrapper
-    actual = expected.wrapper(array_before_wrap)
-    assert np.array_equal(actual._array, expected.array)
-    assert actual.shape == expected.shape
-    assert actual.dtype == expected.dtype
-    assert actual.ndim == expected.ndim
-    assert type(actual) is expected.wrapper
+    wrapped_child = expected.wrapper(array_before_wrap)
+    assert np.array_equal(wrapped_child._array, expected.array)
+    assert wrapped_child.shape == expected.shape
+    assert wrapped_child.dtype == expected.dtype
+    assert wrapped_child.ndim == expected.ndim
+    assert type(wrapped_child) is expected.wrapper
+
+    # Test wrapping self returns self
+    wrapped_wrapped = expected.wrapper(wrapped_child)
+    assert wrapped_wrapped is wrapped_child
+
+    assert np.array_equal(wrapped_wrapped._array, expected.array)
+    assert wrapped_wrapped.shape == expected.shape
+    assert wrapped_wrapped.dtype == expected.dtype
+    assert wrapped_wrapped.ndim == expected.ndim
+    assert type(wrapped_wrapped) is expected.wrapper
 
 
 ragged_arrays = (
@@ -1164,7 +1174,7 @@ ragged_arrays = (
     reason="Numpy raise a warning, not an error.",
 )
 @pytest.mark.parametrize('ragged_array', ragged_arrays)
-def test_get_sequence_shape_raises_error_for_ragged_arrays(ragged_array):
+def test_array_wrapper_ragged_array(ragged_array):
     match = 'inhomogeneous shape'
     with pytest.raises(ValueError, match=match):
         _ArrayLikeWrapper(ragged_array)
