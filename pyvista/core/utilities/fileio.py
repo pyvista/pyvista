@@ -597,7 +597,10 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = (
-        {k.replace(" ", "_"): [v[i1 : i2] for i1, i2 in zip(indices[:-1], indices[1:])] for k, v in vtk_cell_data.items()}
+        {
+            k.replace(" ", "_"): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+            for k, v in vtk_cell_data.items()
+        }
         if vtk_cell_data
         else {}
     )
