@@ -272,3 +272,52 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     points_after = text3d_source_with_text._output.GetPoints()
     assert text3d_source_with_text._modified
     assert points_before is points_after
+
+
+def test_disc_source():
+    algo = pv.DiscSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.inner == 0.25
+    assert algo.outer == 0.5
+    assert algo.r_res == 1
+    assert algo.c_res == 6
+    if pv.vtk_version_info >= (9, 2):
+        center = (1.0, 2.0, 3.0)
+        algo = pv.DiscSource(center=center)
+        assert algo.center == center
+
+
+def test_cube_source():
+    algo = pv.CubeSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.x_length == 1.0
+    assert algo.y_length == 1.0
+    assert algo.z_length == 1.0
+    bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
+    algo = pv.CubeSource(bounds=bounds)
+    assert np.array_equal(algo.bounds, bounds)
+    with pytest.raises(TypeError):
+        algo = pv.CubeSource(bounds=0.0)
+
+
+def test_sphere_source():
+    algo = pv.SphereSource()
+    assert algo.radius == 0.5
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    assert algo.start_theta == 0.0
+    assert algo.end_theta == 360.0
+    assert algo.start_phi == 0.0
+    assert algo.end_phi == 180.0
+    center = (1.0, 2.0, 3.0)
+    if pv.vtk_version_info >= (9, 2):
+        algo = pv.SphereSource(center=center)
+        assert algo.center == center
+
+
+def test_line_source():
+    algo = pv.LineSource()
+    assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
+    assert np.array_equal(algo.pointb, (0.5, 0.0, 0.0))
+    assert algo.resolution == 1

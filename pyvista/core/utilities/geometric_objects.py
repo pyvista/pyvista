@@ -3,12 +3,12 @@
 **CONTAINS**
 vtkArrowSource
 CylinderSource
-vtkSphereSource
+SphereSource
 vtkPlaneSource
-vtkLineSource
-vtkCubeSource
+LineSource
+CubeSource
 ConeSource
-vtkDiskSource
+DiscSource
 vtkRegularPolygonSource
 vtkPyramid
 vtkPlatonicSolidSource
@@ -28,8 +28,12 @@ from pyvista.core import _vtk_core as _vtk
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
     ConeSource,
+    CubeSource,
     CylinderSource,
+    DiscSource,
+    LineSource,
     MultipleLinesSource,
+    SphereSource,
     Text3DSource,
     translate,
 )
@@ -386,16 +390,16 @@ def Sphere(
     >>> out = sphere.plot(show_edges=True)
 
     """
-    sphere = _vtk.vtkSphereSource()
-    sphere.SetRadius(radius)
-    sphere.SetThetaResolution(theta_resolution)
-    sphere.SetPhiResolution(phi_resolution)
-    sphere.SetStartTheta(start_theta)
-    sphere.SetEndTheta(end_theta)
-    sphere.SetStartPhi(start_phi)
-    sphere.SetEndPhi(end_phi)
-    sphere.Update()
-    surf = wrap(sphere.GetOutput())
+    sphere = SphereSource(
+        radius=radius,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        start_theta=start_theta,
+        end_theta=end_theta,
+        start_phi=start_phi,
+        end_phi=end_phi,
+    )
+    surf = sphere.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
@@ -1005,18 +1009,8 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     >>> mesh.plot(color='k', line_width=10)
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
-    src = _vtk.vtkLineSource()
-    src.SetPoint1(*pointa)
-    src.SetPoint2(*pointb)
-    src.SetResolution(resolution)
-    src.Update()
-    line = wrap(src.GetOutput())
+    src = LineSource(pointa, pointb, resolution)
+    line = src.output
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
@@ -1165,20 +1159,10 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkCubeSource()
-    if bounds is not None:
-        if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-            )
-        src.SetBounds(bounds)
-    else:
-        src.SetCenter(center)
-        src.SetXLength(x_length)
-        src.SetYLength(y_length)
-        src.SetZLength(z_length)
-    src.Update()
-    cube = wrap(src.GetOutput())
+    algo = CubeSource(
+        center=center, x_length=x_length, y_length=y_length, z_length=z_length, bounds=bounds
+    )
+    cube = algo.output
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
@@ -1382,15 +1366,10 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkDiskSource()
-    src.SetInnerRadius(inner)
-    src.SetOuterRadius(outer)
-    src.SetRadialResolution(r_res)
-    src.SetCircumferentialResolution(c_res)
-    src.Update()
+    algo = DiscSource(inner=inner, outer=outer, r_res=r_res, c_res=c_res)
     normal = np.array(normal)
     center = np.array(center)
-    surf = wrap(src.GetOutput())
+    surf = algo.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, normal)
     return surf
