@@ -1684,11 +1684,6 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
 
     @radius.setter
     def radius(self, radius: float):
-        """
-        return self.GetRadius()
-
-    @radius.setter
-    def radius(self, radius: float):
         """Set the radius of the polygon.
 
         Parameters
