@@ -618,7 +618,7 @@ def validate_number(
     Additional checks can be added as needed.
 
     >>> validation.validate_number(
-    ...     10, must_be_in_range=[0, 10], must_be_integer_like=True
+    ...     10, must_be_in_range=[0, 10], must_be_integer=True
     ... )
     10
 
