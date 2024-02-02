@@ -3,7 +3,7 @@
 -r requirements.txt
 cmocean<3.2
 colorcet<3.1.0
-hypothesis<6.97.4
+hypothesis<6.97.5
 imageio<2.34.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
