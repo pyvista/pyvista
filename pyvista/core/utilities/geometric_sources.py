@@ -1606,6 +1606,8 @@ class SphereSource(_vtk.vtkSphereSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 class PolygonSource(_vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
