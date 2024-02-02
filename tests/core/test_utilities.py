@@ -3,8 +3,6 @@ import os
 import pathlib
 import pickle
 import shutil
-import subprocess
-import sys
 import unittest.mock as mock
 import warnings
 
@@ -968,33 +966,7 @@ def test_cast_to_list_array():
         cast_to_tuple_array([[1, [2, 3]]])
 
 
-def install_polars():
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "polars"])
-
-
-def uninstall_polars():
-    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", "polars"])
-
-
-@pytest.fixture
-def with_polars():
-    # setup
-    try:
-        import polars  # noqa: F401
-
-        already_installed = True
-    except ModuleNotFoundError:
-        already_installed = False
-        install_polars()
-
-    yield "Testing with 'polars' installed"
-
-    # teardown
-    if not already_installed:
-        uninstall_polars()
-
-
-def test_cast_to_ndarray_with_polars(with_polars):
+def test_cast_to_ndarray_with_polars():
     import polars as pl
 
     # Test with series
