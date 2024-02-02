@@ -88,7 +88,9 @@ from .geometric_sources import (
     CubeSource,
     CylinderSource,
     DiscSource,
+    LineSource,
     MultipleLinesSource,
+    SphereSource,
     Text3DSource,
 )
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
