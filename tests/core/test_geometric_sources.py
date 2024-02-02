@@ -300,13 +300,20 @@ def test_cube_source():
         algo = pv.CubeSource(bounds=0.0)
 
 
-def test_polygon_source():
-    algo = pv.PolygonSource()
+def test_sphere_source():
+    algo = pv.SphereSource()
+    assert algo.radius == 0.5
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-    assert algo.radius == 1.0
-    assert np.array_equal(algo.normal, (0.0, 0.0, 1.0))
-    assert algo.n_sides == 6
-    assert algo.fill
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    assert algo.start_theta == 0.0
+    assert algo.end_theta == 360.0
+    assert algo.start_phi == 0.0
+    assert algo.end_phi == 180.0
+    center = (1.0, 2.0, 3.0)
+    if pv.vtk_version_info >= (9, 2):
+        algo = pv.SphereSource(center=center)
+        assert algo.center == center
 
 
 def test_line_source():
@@ -314,3 +321,11 @@ def test_line_source():
     assert np.array_equal(algo.pointa, (-0.5, 0.0, 0.0))
     assert np.array_equal(algo.pointb, (0.5, 0.0, 0.0))
     assert algo.resolution == 1
+
+def test_polygon_source():
+    algo = pv.PolygonSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert algo.radius == 1.0
+    assert np.array_equal(algo.normal, (0.0, 0.0, 1.0))
+    assert algo.n_sides == 6
+    assert algo.fill
