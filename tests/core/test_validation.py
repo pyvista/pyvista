@@ -410,9 +410,7 @@ def numeric_array_test_cases():
             'must have finite values',
         ),
         Case(dict(must_be_real=True), 0, 1 + 1j, TypeError, 'must have real numbers'),
-        Case(
-            dict(must_be_integer_like=True), 0.0, 0.1, ValueError, 'must have integer-like values'
-        ),
+        Case(dict(must_be_integer=True), 0.0, 0.1, ValueError, 'must have integer-like values'),
         Case(dict(must_be_sorted=True), [0, 1], [1, 0], ValueError, 'must be sorted'),
         Case(
             dict(must_be_sorted=dict(ascending=True, strict=False, axis=-1)),

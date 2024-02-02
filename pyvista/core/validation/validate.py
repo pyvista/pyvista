@@ -150,7 +150,7 @@ def validate_array(
         floating.
 
     must_be_integer : bool, default: False
-        :func:`Check <pyvista.core.validate.check.check_is_integerlike>`
+        :func:`Check <pyvista.core.validate.check.check_is_integer>`
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
@@ -930,7 +930,7 @@ def validate_arrayN_uintlike(
     if kwargs['dtype_out'] is not int:
         check_subdtype(kwargs['dtype_out'], np.integer)
 
-    _set_default_kwarg_mandatory(kwargs, 'must_be_integer_like', True)
+    _set_default_kwarg_mandatory(kwargs, 'must_be_integer', True)
     _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)
 
     return validate_arrayN(array, reshape=reshape, **kwargs)
