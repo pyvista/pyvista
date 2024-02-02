@@ -1176,8 +1176,13 @@ ragged_arrays = (
 @pytest.mark.parametrize('ragged_array', ragged_arrays)
 def test_array_wrapper_ragged_array(ragged_array):
     match = 'inhomogeneous shape'
-    with pytest.raises(ValueError, match=match):
-        _ArrayLikeWrapper(ragged_array)
-    # test this matches numpy array behavior
+    # assert casting directly to numpy array raises error
     with pytest.raises(ValueError, match=match):
         np.array(ragged_array)
+
+    if isinstance(ragged_array[0], np.ndarray):
+        # errors for nested ndarrays caught by `cast_to_ndarray`
+        match = "Input cannot be cast as <class 'numpy.ndarray'>"
+
+    with pytest.raises(ValueError, match=match):
+        _ArrayLikeWrapper(ragged_array)

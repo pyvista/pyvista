@@ -9,6 +9,7 @@ from pyvista._version import __version__
 from pyvista.core import *
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
+import pyvista.core.validation as validation
 from pyvista.core.wrappers import _wrappers
 from pyvista.jupyter import set_jupyter_backend
 from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info

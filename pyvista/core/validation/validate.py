@@ -253,7 +253,7 @@ def validate_array(
     monotonically increasing (i.e. has strict ascending order), and
     is within some range.
 
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> array_in = (1, 2, 3, 5, 8, 13)
     >>> rng = (0, 20)
     >>> validation.validate_array(
@@ -388,7 +388,7 @@ def validate_axes(
     Validate an axes array.
 
     >>> import numpy as np
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> validation.validate_axes(np.eye(3))
     array([[1., 0., 0.],
            [0., 1., 0.],
@@ -606,7 +606,7 @@ def validate_number(
     --------
     Validate a number.
 
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> validation.validate_number(1)
     1
 
@@ -671,7 +671,7 @@ def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
     --------
     Validate a data range.
 
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> validation.validate_data_range([-5, 5])
     (-5, 5)
 
@@ -733,7 +733,7 @@ def validate_arrayNx3(
     --------
     Validate an Nx3 array.
 
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> validation.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
     array([[1, 2, 3],
            [4, 5, 6]])
@@ -812,7 +812,7 @@ def validate_arrayN(
     --------
     Validate a 1D array with four elements.
 
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> validation.validate_arrayN((1, 2, 3, 4))
     array([1, 2, 3, 4])
 
@@ -895,7 +895,7 @@ def validate_arrayN_uintlike(
     Validate a 1D array with four non-negative integer-like elements.
 
     >>> import numpy as np
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> array = validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
     >>> array
     array([1, 2, 3, 4])
@@ -991,7 +991,7 @@ def validate_array3(
     --------
     Validate a 1D array with three elements.
 
-    >>> from pyvista.core import validation
+    >>> from pyvista import validation
     >>> validation.validate_array3((1, 2, 3))
     array([1, 2, 3])
 
