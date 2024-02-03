@@ -9,7 +9,7 @@ LineSource
 CubeSource
 ConeSource
 DiscSource
-vtkRegularPolygonSource
+PolygonSource
 vtkPyramid
 vtkPlatonicSolidSource
 vtkSuperquadricSource
@@ -33,6 +33,7 @@ from .geometric_sources import (
     DiscSource,
     LineSource,
     MultipleLinesSource,
+    PolygonSource,
     SphereSource,
     Text3DSource,
     translate,
@@ -1315,14 +1316,8 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkRegularPolygonSource()
-    src.SetGeneratePolygon(fill)
-    src.SetCenter(center)
-    src.SetNumberOfSides(n_sides)
-    src.SetRadius(radius)
-    src.SetNormal(normal)
-    src.Update()
-    return wrap(src.GetOutput())
+    src = PolygonSource(fill=fill, center=center, n_sides=n_sides, radius=radius, normal=normal)
+    return src.output
 
 
 def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
