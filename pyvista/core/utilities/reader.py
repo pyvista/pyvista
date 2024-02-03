@@ -882,7 +882,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(0,number_time_sets)}")
+            raise IndexError(f"Time set index {time_set} not in {range(0, number_time_sets)}")
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
