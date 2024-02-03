@@ -45,7 +45,7 @@ from pyvista.core.validation import (
     validate_transform3x3,
     validate_transform4x4,
 )
-from pyvista.core.validation._cast_array import _cast_to_tuple
+from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 from pyvista.core.validation.check import _validate_shape_value
 from pyvista.core.validation.validate import _set_default_kwarg_mandatory
 
@@ -956,3 +956,48 @@ def test_validate_axes_orthogonal(bias_index):
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=msg):
         validate_axes(axes_left, must_be_orthogonal=True)
+
+
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('dtype', [None, float])
+def test__cast_to_numpy(as_any, copy, dtype):
+    array_in = pyvista_ndarray([1, 2])
+    array_out = _cast_to_numpy(array_in, copy=copy, as_any=as_any, dtype=dtype)
+    assert np.array_equal(array_out, array_in)
+    if as_any:
+        assert type(array_out) is pyvista_ndarray
+    else:
+        assert type(array_out) is np.ndarray
+
+    if copy:
+        assert array_out is not array_in
+
+    if dtype is None:
+        assert array_out.dtype.type is array_in.dtype.type
+    else:
+        assert array_out.dtype.type is np.dtype(dtype).type
+
+
+def test_cast_to_numpy_raises():
+    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(ValueError, match=msg):
+        _cast_to_numpy([[1], [2, 3]])
+
+
+def test_cast_to_tuple():
+    array_in = np.zeros(shape=(2, 2, 3))
+    array_tuple = _cast_to_tuple(array_in)
+    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    array_list = array_in.tolist()
+    assert np.array_equal(array_tuple, array_list)
+    with pytest.raises(ValueError):
+        _cast_to_tuple([[1, [2, 3]]])
+
+
+def test_cast_to_list():
+    array_in = np.zeros(shape=(3, 4, 5))
+    array_list = _cast_to_list(array_in)
+    assert np.array_equal(array_in, array_list)
+    with pytest.raises(ValueError):
+        _cast_to_tuple([[1, [2, 3]]])
