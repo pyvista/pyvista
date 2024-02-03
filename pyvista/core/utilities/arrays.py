@@ -9,7 +9,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError, MissingDataError, PyVistaEfficiencyWarning
 
 
 class FieldAssociation(enum.Enum):
@@ -890,25 +890,32 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     except Exception as e:
+        # If array-like is `polars` data, try to re-cast data to numpy array
+        polars_error = False
         try:
             import polars
 
             if isinstance(e, polars.PolarsError):
+                polars_error = True
                 try:
                     out = arr.to_list()
                     import warnings
 
                     warnings.warn(
-                        'Polars data could not be directly cast to a numpy array and was copied'
+                        'Polars data could not be directly cast to a numpy array and was copied '
                         'instead. This may be due to non-contiguous data. To avoid making an '
                         'explicit copy, consider setting the dtype or schema of the polars data '
-                        'to make your data contiguous before using it with PyVista.'
+                        'to make your data contiguous before using it with PyVista.',
+                        PyVistaEfficiencyWarning,
                     )
                 except (AttributeError, polars.PolarsError):
-                    raise RuntimeError("Data from polars could not be cast as a numpy array.")
-            # try again
+                    raise RuntimeError(f"Data type {type(arr)} could not be cast as a numpy array.")
+            # Try again
             out = cast_to_ndarray(out, dtype=dtype, as_any=True, copy=False)
-            # NOTE: by default the output array is read-only
-        except ImportError:
+            # NOTE: by default the output array from polars is read-only
+        except ModuleNotFoundError:
             pass
+        if not polars_error:
+            # Exception was not raised by polars, so re-raise
+            raise
     return out

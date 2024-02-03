@@ -1000,3 +1000,14 @@ def test_cast_to_ndarray_with_polars():
     array_out.flags["WRITEABLE"] = True
     array_out[0, 0] = 99
     assert array_in[0][0] == 99
+
+
+def test_cast_to_ndarray_with_polars_raises():
+    import polars as pl
+
+    initial_array = [[1, 2, 3], [4, 5, 6]]
+    data = pl.DataFrame(dict(points=initial_array))
+
+    msg = "Data type <class 'polars.dataframe.frame.DataFrame'> could not be cast as a numpy array."
+    with pytest.raises(RuntimeError, match=msg):
+        cast_to_ndarray(data)
