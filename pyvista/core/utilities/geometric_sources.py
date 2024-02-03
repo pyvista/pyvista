@@ -1327,6 +1327,7 @@ class LineSource(_vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class PlaneSource(_vtk.vtkPlaneSource):
     """Create a plane source.
 
