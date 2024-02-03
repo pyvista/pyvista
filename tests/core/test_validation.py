@@ -8,7 +8,7 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
@@ -45,6 +45,7 @@ from pyvista.core.validation import (
     validate_transform3x3,
     validate_transform4x4,
 )
+from pyvista.core.validation._cast_array import _cast_to_tuple
 from pyvista.core.validation.check import _validate_shape_value
 from pyvista.core.validation.validate import _set_default_kwarg_mandatory
 
@@ -455,8 +456,8 @@ def test_validate_array(
         invalid_array = np.stack((invalid_array, invalid_array), axis=1)
 
     if input_type is tuple:
-        valid_array = cast_to_tuple_array(valid_array)
-        invalid_array = cast_to_tuple_array(invalid_array)
+        valid_array = _cast_to_tuple(valid_array)
+        invalid_array = _cast_to_tuple(invalid_array)
     elif input_type is list:
         valid_array = valid_array.tolist()
         invalid_array = invalid_array.tolist()

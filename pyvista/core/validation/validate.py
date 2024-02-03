@@ -18,7 +18,7 @@ from typing import Any
 import numpy as np
 
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
@@ -32,6 +32,7 @@ from pyvista.core.validation import (
     check_is_string_in_iterable,
     check_is_subdtype,
 )
+from pyvista.core.validation._cast_array import _cast_to_numpy, _cast_to_tuple
 
 
 def validate_array(
@@ -260,7 +261,7 @@ def validate_array(
     array([ 1,  2,  3,  5,  8, 13])
 
     """
-    arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
+    arr_out = _cast_to_numpy(arr, as_any=as_any, copy=copy)
 
     # Check type
     if must_be_real:
@@ -327,7 +328,7 @@ def validate_array(
         # Copy was done earlier, so don't do it again here
         arr_out = arr_out.astype(dtype_out, copy=False)
     if to_tuple:
-        return cast_to_tuple_array(arr_out)
+        return _cast_to_tuple(arr_out)
     if to_list:
         return arr_out.tolist()
     return arr_out

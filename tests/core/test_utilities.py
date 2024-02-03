@@ -16,9 +16,6 @@ from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transform
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     _coerce_transformlike_arg,
-    cast_to_list_array,
-    cast_to_ndarray,
-    cast_to_tuple_array,
     copy_vtk_array,
     get_array,
     has_duplicates,
@@ -32,6 +29,11 @@ from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.validation._array_wrapper import (
+    cast_to_list_array,
+    cast_to_ndarray,
+    cast_to_tuple_array,
+)
 
 
 def test_version():
