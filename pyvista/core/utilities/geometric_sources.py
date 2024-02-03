@@ -581,6 +581,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class Text3DSource(vtkVectorText):
     """3D text from a string.
 
@@ -1036,6 +1037,7 @@ class CubeSource(_vtk.vtkCubeSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
 
@@ -1212,6 +1214,7 @@ class DiscSource(_vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
