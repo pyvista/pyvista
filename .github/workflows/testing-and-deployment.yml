@@ -208,7 +208,7 @@ jobs:
           which python
           pip list
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         name: "Upload coverage to CodeCov"
 
       - name: Check package
