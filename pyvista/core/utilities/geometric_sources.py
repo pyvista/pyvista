@@ -10,7 +10,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, Vector
+from pyvista.core._typing_core import BoundsLike, Matrix, Vector
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
@@ -197,7 +197,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.SetHeight(height)
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get base radius of the cone.
 
         Returns
@@ -873,3 +873,741 @@ class Text3DSource(vtkVectorText):
             translate(out, self.center, self.normal)
         else:
             out.points += self.center
+
+
+@no_new_attr
+class CubeSource(_vtk.vtkCubeSource):
+    """Cube source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    x_length : float, default: 1.0
+        Length of the cube in the x-direction.
+
+    y_length : float, default: 1.0
+        Length of the cube in the y-direction.
+
+    z_length : float, default: 1.0
+        Length of the cube in the z-direction.
+
+    bounds : sequence[float], optional
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    Examples
+    --------
+    Create a default CubeSource.
+
+    >>> import pyvista as pv
+    >>> source = pv.CubeSource()
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    _new_attr_exceptions = [
+        "bounds",
+        "_bounds",
+    ]
+
+    def __init__(
+        self, center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None
+    ):
+        """Initialize the cube source class."""
+        super().__init__()
+        if bounds is not None:
+            self.bounds = bounds
+        else:
+            self.center = center
+            self.x_length = x_length
+            self.y_length = y_length
+            self.z_length = z_length
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounding box of the cube."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        if np.array(bounds).size != 6:
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
+        self._bounds = bounds
+        self.SetBounds(bounds)
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def x_length(self) -> float:
+        """Get the x length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            XLength along the cone in its specified direction.
+        """
+        return self.GetXLength()
+
+    @x_length.setter
+    def x_length(self, x_length: float):
+        """Set the x length of the cube.
+
+        Parameters
+        ----------
+        x_length : float
+            XLength of the cone.
+        """
+        self.SetXLength(x_length)
+
+    @property
+    def y_length(self) -> float:
+        """Get the y length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            YLength along the cone in its specified direction.
+        """
+        return self.GetYLength()
+
+    @y_length.setter
+    def y_length(self, y_length: float):
+        """Set the y length of the cube.
+
+        Parameters
+        ----------
+        y_length : float
+            YLength of the cone.
+        """
+        self.SetYLength(y_length)
+
+    @property
+    def z_length(self) -> float:
+        """Get the z length along the cube in its specified direction.
+
+        Returns
+        -------
+        float
+            ZLength along the cone in its specified direction.
+        """
+        return self.GetZLength()
+
+    @z_length.setter
+    def z_length(self, z_length: float):
+        """Set the z length of the cube.
+
+        Parameters
+        ----------
+        z_length : float
+            ZLength of the cone.
+        """
+        self.SetZLength(z_length)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Cube surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+class DiscSource(_vtk.vtkDiskSource):
+    """Disc source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``. Middle of the axis of the disc.
+
+    inner : float, default: 0.25
+        The inner radius.
+
+    outer : float, default: 0.5
+        The outer radius.
+
+    r_res : int, default: 1
+        Number of points in radial direction.
+
+    c_res : int, default: 6
+        Number of points in circumferential direction.
+
+    Examples
+    --------
+    Create a disc with 50 points in the circumferential direction.
+
+    >>> import pyvista as pv
+    >>> source = pv.DiscSource(c_res=50)
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    _new_attr_exceptions = ["center"]
+
+    def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
+        """Initialize the disc source class."""
+        super().__init__()
+        if center is not None:
+            self.center = center
+        self.inner = inner
+        self.outer = outer
+        self.r_res = r_res
+        self.c_res = c_res
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
+            return self.GetCenter()
+        else:  # pragma: no cover
+            return (0.0, 0.0, 0.0)
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
+            self.SetCenter(center)
+        else:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+            )
+
+    @property
+    def inner(self) -> float:
+        """Get the inner radius.
+
+        Returns
+        -------
+        float
+            The inner radius.
+        """
+        return self.GetInnerRadius()
+
+    @inner.setter
+    def inner(self, inner: float):
+        """Set the inner radius.
+
+        Parameters
+        ----------
+        inner : float
+            The inner radius.
+        """
+        self.SetInnerRadius(inner)
+
+    @property
+    def outer(self) -> float:
+        """Get the outer radius.
+
+        Returns
+        -------
+        float
+            The outer radius.
+        """
+        return self.GetOuterRadius()
+
+    @outer.setter
+    def outer(self, outer: float):
+        """Set the outer radius.
+
+        Parameters
+        ----------
+        outer : float
+            The outer radius.
+        """
+        self.SetOuterRadius(outer)
+
+    @property
+    def r_res(self) -> int:
+        """Get number of points in radial direction.
+
+        Returns
+        -------
+        int
+            Number of points in radial direction.
+        """
+        return self.GetRadialResolution()
+
+    @r_res.setter
+    def r_res(self, r_res: int):
+        """Set number of points in radial direction.
+
+        Parameters
+        ----------
+        r_res : int
+            Number of points in radial direction.
+        """
+        self.SetRadialResolution(r_res)
+
+    @property
+    def c_res(self) -> int:
+        """Get number of points in circumferential direction.
+
+        Returns
+        -------
+        int
+            Number of points in circumferential direction.
+        """
+        return self.GetCircumferentialResolution()
+
+    @c_res.setter
+    def c_res(self, c_res: int):
+        """Set number of points in circumferential direction.
+
+        Parameters
+        ----------
+        c_res : int
+            Number of points in circumferential direction.
+        """
+        self.SetCircumferentialResolution(c_res)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+class LineSource(_vtk.vtkLineSource):
+    """Create a line.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
+        Location in ``[x, y, z]``.
+
+    pointb : sequence[float], default: (0.5, 0.0, 0.0)
+        Location in ``[x, y, z]``.
+
+    resolution : int, default: 1
+        Number of pieces to divide line into.
+
+    """
+
+    def __init__(
+        self,
+        pointa=(-0.5, 0.0, 0.0),
+        pointb=(0.5, 0.0, 0.0),
+        resolution=1,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.pointa = pointa
+        self.pointb = pointb
+        self.resolution = resolution
+
+    @property
+    def pointa(self) -> Sequence[float]:
+        """Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint1()
+
+    @pointa.setter
+    def pointa(self, pointa: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        if np.array(pointa).size != 3:
+            raise TypeError('Point A must be a length three tuple of floats.')
+        self.SetPoint1(*pointa)
+
+    @property
+    def pointb(self) -> Sequence[float]:
+        """Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint2()
+
+    @pointb.setter
+    def pointb(self, pointb: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        pointb : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        if np.array(pointb).size != 3:
+            raise TypeError('Point B must be a length three tuple of floats.')
+        self.SetPoint2(*pointb)
+
+    @property
+    def resolution(self) -> int:
+        """Number of pieces to divide line into.
+
+        Returns
+        -------
+        int
+            Number of pieces to divide line into.
+        """
+        return self.GetResolution()
+
+    @resolution.setter
+    def resolution(self, resolution):
+        """Set number of pieces to divide line into.
+
+        Parameters
+        ----------
+        resolution : int
+            Number of pieces to divide line into.
+        """
+        if resolution <= 0:
+            raise ValueError('Resolution must be positive')
+        self.SetResolution(resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class SphereSource(_vtk.vtkSphereSource):
+    """Sphere source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    radius : float, default: 0.5
+        Sphere radius.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center coordinate vector in ``[x, y, z]``.
+
+    theta_resolution : int, default: 30
+        Set the number of points in the azimuthal direction (ranging
+        from ``start_theta`` to ``end_theta``).
+
+    phi_resolution : int, default: 30
+        Set the number of points in the polar direction (ranging from
+        ``start_phi`` to ``end_phi``).
+
+    start_theta : float, default: 0.0
+        Starting azimuthal angle in degrees ``[0, 360]``.
+
+    end_theta : float, default: 360.0
+        Ending azimuthal angle in degrees ``[0, 360]``.
+
+    start_phi : float, default: 0.0
+        Starting polar angle in degrees ``[0, 180]``.
+
+    end_phi : float, default: 180.0
+        Ending polar angle in degrees ``[0, 180]``.
+
+    See Also
+    --------
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
+
+    Examples
+    --------
+    Create a sphere using default parameters.
+
+    >>> import pyvista as pv
+    >>> sphere = pv.SphereSource()
+    >>> sphere.output.plot(show_edges=True)
+
+    Create a quarter sphere by setting ``end_theta``.
+
+    >>> sphere = pv.SphereSource(end_theta=90)
+    >>> out = sphere.output.plot(show_edges=True)
+
+    Create a hemisphere by setting ``end_phi``.
+
+    >>> sphere = pv.SphereSource(end_phi=90)
+    >>> out = sphere.output.plot(show_edges=True)
+
+    """
+
+    def __init__(
+        self,
+        radius=0.5,
+        center=None,
+        theta_resolution=30,
+        phi_resolution=30,
+        start_theta=0.0,
+        end_theta=360.0,
+        start_phi=0.0,
+        end_phi=180.0,
+    ):
+        """Initialize the sphere source class."""
+        super().__init__()
+        self.radius = radius
+        if center is not None:  # pragma: no cover
+            self.center = center
+        self.theta_resolution = theta_resolution
+        self.phi_resolution = phi_resolution
+        self.start_theta = start_theta
+        self.end_theta = end_theta
+        self.start_phi = start_phi
+        self.end_phi = end_phi
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):
+            return self.GetCenter()
+        else:  # pragma: no cover
+            return (0.0, 0.0, 0.0)
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):
+            self.SetCenter(center)
+        else:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+            )
+
+    @property
+    def radius(self) -> float:
+        """Get sphere radius.
+
+        Returns
+        -------
+        float
+            Sphere radius.
+        """
+        return self.GetRadius()
+
+    @radius.setter
+    def radius(self, radius: float):
+        """Set sphere radius.
+
+        Parameters
+        ----------
+        radius : float
+            Sphere radius.
+        """
+        self.SetRadius(radius)
+
+    @property
+    def theta_resolution(self) -> int:
+        """Get the number of points in the azimuthal direction.
+
+        Returns
+        -------
+        int
+            The number of points in the azimuthal direction.
+        """
+        return self.GetThetaResolution()
+
+    @theta_resolution.setter
+    def theta_resolution(self, theta_resolution: int):
+        """Set the number of points in the azimuthal direction.
+
+        Parameters
+        ----------
+        theta_resolution : int
+            The number of points in the azimuthal direction.
+        """
+        self.SetThetaResolution(theta_resolution)
+
+    @property
+    def phi_resolution(self) -> int:
+        """Get the number of points in the polar direction.
+
+        Returns
+        -------
+        int
+            The number of points in the polar direction.
+        """
+        return self.GetPhiResolution()
+
+    @phi_resolution.setter
+    def phi_resolution(self, phi_resolution: int):
+        """Set the number of points in the polar direction.
+
+        Parameters
+        ----------
+        phi_resolution : int
+            The number of points in the polar direction.
+        """
+        self.SetPhiResolution(phi_resolution)
+
+    @property
+    def start_theta(self) -> float:
+        """Get starting azimuthal angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the azimuthal direction.
+        """
+        return self.GetStartTheta()
+
+    @start_theta.setter
+    def start_theta(self, start_theta: float):
+        """Set starting azimuthal angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        start_theta : float
+            The number of points in the azimuthal direction.
+        """
+        self.SetStartTheta(start_theta)
+
+    @property
+    def end_theta(self) -> float:
+        """Get ending azimuthal angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the azimuthal direction.
+        """
+        return self.GetEndTheta()
+
+    @end_theta.setter
+    def end_theta(self, end_theta: float):
+        """Set ending azimuthal angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        end_theta : float
+            The number of points in the azimuthal direction.
+        """
+        self.SetEndTheta(end_theta)
+
+    @property
+    def start_phi(self) -> float:
+        """Get starting polar angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the polar direction.
+        """
+        return self.GetStartPhi()
+
+    @start_phi.setter
+    def start_phi(self, start_phi: float):
+        """Set starting polar angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        start_phi : float
+            The number of points in the polar direction.
+        """
+        self.SetStartPhi(start_phi)
+
+    @property
+    def end_phi(self) -> float:
+        """Get ending polar angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the polar direction.
+        """
+        return self.GetEndPhi()
+
+    @end_phi.setter
+    def end_phi(self, end_phi: float):
+        """Set ending polar angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        end_phi : float
+            The number of points in the polar direction.
+        """
+        self.SetEndPhi(end_phi)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sphere surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())

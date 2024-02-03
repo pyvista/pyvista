@@ -8,8 +8,8 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.input_validation.check import (
-    _validate_shape_value,
+from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
+from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
     check_is_arraylike,
@@ -33,9 +33,6 @@ from pyvista.core.input_validation.check import (
     check_is_string_in_iterable,
     check_is_subdtype,
     check_is_type,
-)
-from pyvista.core.input_validation.validate import (
-    _set_default_kwarg_mandatory,
     validate_array,
     validate_array3,
     validate_arrayN,
@@ -48,7 +45,8 @@ from pyvista.core.input_validation.validate import (
     validate_transform3x3,
     validate_transform4x4,
 )
-from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
+from pyvista.core.validation.check import _validate_shape_value
+from pyvista.core.validation.validate import _set_default_kwarg_mandatory
 
 
 @pytest.mark.parametrize(
@@ -767,13 +765,21 @@ def test_check_is_sorted(shape, axis, ascending, strict):
     num_elements = np.prod(shape)
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        AxisError = np.exceptions.AxisError
+    except AttributeError:
+        AxisError = np.AxisError
+
     try:
         # Create ascending array with duplicate values
         arr_ascending = np.repeat(arr_strict_ascending, 2, axis=axis)
         # Create descending arrays
         arr_descending = np.flip(arr_ascending, axis=axis)
         arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
-    except np.AxisError:
+    except AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'

@@ -1,6 +1,7 @@
 from math import pi
 import os
 import pathlib
+from typing import Dict, List
 import warnings
 
 import numpy as np
@@ -59,17 +60,18 @@ def test_init_from_pdata(sphere):
     assert not np.allclose(sphere.points[0], mesh.points[0])
 
 
-def test_init_from_arrays():
+@pytest.mark.parametrize('faces_is_cell_array', (False, True))
+def test_init_from_arrays(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
     # mesh faces
     faces = np.hstack([[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]).astype(np.int8)
 
-    mesh = pv.PolyData(vertices, faces)
+    mesh = pv.PolyData(vertices, pv.CellArray(faces) if faces_is_cell_array else faces)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
-    mesh = pv.PolyData(vertices, faces, deep=True)
+    mesh = pv.PolyData(vertices, pv.CellArray(faces) if faces_is_cell_array else faces, deep=True)
     vertices[0] += 1
     assert not np.allclose(vertices[0], mesh.points[0])
 
@@ -83,28 +85,34 @@ def test_init_from_arrays():
 
     # attribute is mutable
     faces = [4, 0, 1, 2, 3]
-    mesh.faces = faces
+    mesh.faces = pv.CellArray(faces) if faces_is_cell_array else faces
     assert np.allclose(faces, mesh.faces)
 
 
-def test_init_from_arrays_with_vert():
+@pytest.mark.parametrize('faces_is_cell_array', (False, True))
+def test_init_from_arrays_with_vert(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]])
 
     # mesh faces
     faces = np.hstack(
         [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
+    if faces_is_cell_array:
+        faces = pv.CellArray(faces)
 
     mesh = pv.PolyData(vertices, faces)
     assert mesh.n_points == 6
     assert mesh.n_cells == 4
 
 
-def test_init_from_arrays_triangular():
+@pytest.mark.parametrize('faces_is_cell_array', (False, True))
+def test_init_from_arrays_triangular(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
     # mesh faces
     faces = np.vstack([[3, 0, 1, 2], [3, 0, 1, 4], [3, 1, 2, 4]])
+    if faces_is_cell_array:
+        faces = pv.CellArray(faces)
 
     mesh = pv.PolyData(vertices, faces)
     assert mesh.n_points == 5
@@ -192,57 +200,63 @@ def test_invalid_connectivity_arrays(arr, value):
     with pytest.raises(CellSizeError, match="Cell array size is invalid"):
         setattr(mesh, arr, value)
 
+    with pytest.raises(CellSizeError, match=f"`{arr}` cell array size is invalid"):
+        _ = pv.PolyData(points, **{arr: value})
 
-def test_lines_on_init():
-    lines = [2, 0, 1, 3, 2, 3, 4]
+
+@pytest.mark.parametrize('lines_is_cell_array', (False, True))
+def test_lines_on_init(lines_is_cell_array):
     points = np.random.default_rng().random((5, 3))
-    pd = pv.PolyData(points, lines=lines)
+    lines = [2, 0, 1, 3, 2, 3, 4]
+    pd = pv.PolyData(points, lines=pv.CellArray(lines) if lines_is_cell_array else lines)
     assert not pd.faces.size
     assert np.array_equal(pd.lines, lines)
     assert np.array_equal(pd.points, points)
 
 
-def test_verts():
+def _assert_verts_equal(
+    mesh: pv.PolyData,
+    verts: List[int],
+    n_verts: int,
+    cell_types: Dict[int, pv.CellType],
+):
+    assert np.array_equal(mesh.verts, verts)
+    assert mesh.n_verts == n_verts
+    for i, expected_typ in cell_types.items():
+        assert mesh.get_cell(i).type == expected_typ
+
+
+@pytest.mark.parametrize('verts_is_cell_array', (False, True))
+def test_verts(verts_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
-    mesh = pv.PolyData(vertices)
-    assert np.array_equal(mesh.verts, [1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
-    assert mesh.n_verts == 5
-    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+    verts = [1, 0, 1, 1, 1, 2, 1, 3, 1, 4]
 
-    mesh = pv.PolyData(vertices, verts=[1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
-    assert np.array_equal(mesh.verts, [1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
-    assert mesh.n_verts == 5
-    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+    if not verts_is_cell_array:
+        mesh = pv.PolyData(vertices)
+        _assert_verts_equal(mesh, verts, n_verts=5, cell_types={0: pv.CellType.VERTEX})
 
-    mesh = pv.PolyData(vertices, verts=[1, 0, 1, 1, 1, 2, 1, 3, 1, 4], n_verts=5)
-    assert np.array_equal(mesh.verts, [1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
-    assert mesh.n_verts == 5
-    assert mesh.get_cell(0).type == pv.CellType.VERTEX
+    mesh = pv.PolyData(vertices, verts=pv.CellArray(verts) if verts_is_cell_array else verts)
+    _assert_verts_equal(mesh, verts, n_verts=5, cell_types={0: pv.CellType.VERTEX})
 
-    mesh = pv.PolyData(
-        vertices,
-        verts=[
-            1,
-            0,
-        ],
+    verts = [1, 0]
+    mesh = pv.PolyData(vertices, verts=pv.CellArray(verts) if verts_is_cell_array else verts)
+    _assert_verts_equal(mesh, verts, n_verts=1, cell_types={0: pv.CellType.VERTEX})
+
+    verts = [2, 0, 1, 1, 2]
+    mesh = pv.PolyData(vertices, verts=pv.CellArray(verts) if verts_is_cell_array else verts)
+    _assert_verts_equal(
+        mesh, verts, n_verts=2, cell_types={0: pv.CellType.POLY_VERTEX, 1: pv.CellType.VERTEX}
     )
-    assert np.array_equal(mesh.verts, [1, 0])
-    assert mesh.n_verts == 1
-    assert mesh.get_cell(0).type == pv.CellType.VERTEX
-
-    mesh = pv.PolyData(vertices, verts=[2, 0, 1, 1, 2])
-    assert np.array_equal(mesh.verts, [2, 0, 1, 1, 2])
-    assert mesh.n_verts == 2
-    assert mesh.get_cell(0).type == pv.CellType.POLY_VERTEX
-    assert mesh.get_cell(1).type == pv.CellType.VERTEX
 
 
-def test_mixed_cell_polydata():
+@pytest.mark.parametrize('verts', ([1, 0], pv.CellArray([1, 0])))
+@pytest.mark.parametrize('lines', ([2, 1, 2], pv.CellArray([2, 1, 2])))
+@pytest.mark.parametrize('faces', ([3, 3, 4, 5], pv.CellArray([3, 3, 4, 5])))
+@pytest.mark.parametrize('strips', ([4, 6, 7, 8, 9], pv.CellArray([4, 6, 7, 8, 9])))
+def test_mixed_cell_polydata(verts, lines, faces, strips):
     points = np.zeros((10, 3))
     points[:, 0] = np.linspace(0, 9, 10)
-    a = pv.PolyData(
-        points, verts=[1, 0], lines=[2, 1, 2], faces=[3, 3, 4, 5], strips=[4, 6, 7, 8, 9]
-    )
+    a = pv.PolyData(points, verts=verts, lines=lines, faces=faces, strips=strips)
     assert np.array_equal(a.verts, [1, 0])
     assert np.array_equal(a.lines, [2, 1, 2])
     assert np.array_equal(a.faces, [3, 3, 4, 5])
@@ -1168,3 +1182,15 @@ def test_irregular_faces_mutable():
     mesh.irregular_faces[0][0] = 4
     expected = [(4, 1, 2, 3), *faces[1:]]
     _assert_irregular_faces_equal(mesh.irregular_faces, expected)
+
+
+@pytest.mark.parametrize('cells', ['faces', 'lines', 'strips', 'verts'])
+def test_n_faces_etc_deprecated(cells: str):
+    n_cells = 'n_' + cells
+    kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError(f"Convert `PolyData` `{n_cells}` deprecation warning to error")
+        if pv._version.version_info >= (0, 48):
+            raise RuntimeError(f"Remove `PolyData` `{n_cells} constructor kwarg")

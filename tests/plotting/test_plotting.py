@@ -2382,6 +2382,10 @@ def test_scalar_cell_priorities():
     plotter.add_mesh(mesh, scalars='colors', rgb=True, preference='cell')
     plotter.show()
 
+    c = pv.Cone()
+    c.cell_data['ids'] = list(range(c.n_cells))
+    c.plot()
+
 
 def test_collision_plot(verify_image_cache):
     """Verify rgba arrays automatically plot"""
@@ -2672,11 +2676,20 @@ def test_plot_complex_value(plane, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
-    with pytest.warns(np.ComplexWarning):
+
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        ComplexWarning = np.exceptions.ComplexWarning
+    except:
+        ComplexWarning = np.ComplexWarning
+
+    with pytest.warns(ComplexWarning):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(np.ComplexWarning):
+    with pytest.warns(ComplexWarning):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
@@ -2961,8 +2974,16 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        ComplexWarning = np.exceptions.ComplexWarning
+    except:
+        ComplexWarning = np.ComplexWarning
+
     pl = pv.Plotter()
-    with pytest.warns(np.ComplexWarning, match='Casting complex'):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
     pl.show()
 

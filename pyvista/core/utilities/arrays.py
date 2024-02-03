@@ -866,6 +866,15 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
     """
     if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
         return arr
+
+    # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
+    try:
+        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
+    except AttributeError:
+        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+
     try:
         if as_any:
             out = np.asanyarray(arr, dtype=dtype)
@@ -878,6 +887,6 @@ def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
             # object arrays, but on some systems it will not, so raise
             # error manually
             raise ValueError
-    except (ValueError, np.VisibleDeprecationWarning) as e:
+    except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     return out

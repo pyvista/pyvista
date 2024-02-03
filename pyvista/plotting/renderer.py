@@ -1890,7 +1890,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             kwargs = locals()
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
-        ranges = np.array(self.bounds).reshape(-1, 2).ptp(axis=1)
+        ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
         center = np.array(self.center)
         if face.lower() in '-z':
@@ -3285,6 +3285,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         loc='upper right',
         face='triangle',
         font_family=None,
+        background_opacity=1.0,
     ):
         """Add a legend to render window.
 
@@ -3356,6 +3357,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Font family.  Must be either ``'courier'``, ``'times'``,
             or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
             <pyvista.plotting.themes._Font.family>`.
+
+        background_opacity : float, default: 1.0
+            Set background opacity.
 
         Returns
         -------
@@ -3440,6 +3444,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         font_family = parse_font_family(font_family)
         self._legend.GetEntryTextProperty().SetFontFamily(font_family)
+
+        self._legend.SetBackgroundOpacity(background_opacity)
 
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend
