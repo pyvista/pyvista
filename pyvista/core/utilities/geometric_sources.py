@@ -199,7 +199,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.SetHeight(height)
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get base radius of the cone.
 
         Returns
@@ -1329,6 +1329,451 @@ class LineSource(_vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
+class SphereSource(_vtk.vtkSphereSource):
+    """Sphere source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    radius : float, default: 0.5
+        Sphere radius.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center coordinate vector in ``[x, y, z]``.
+
+    theta_resolution : int, default: 30
+        Set the number of points in the azimuthal direction (ranging
+        from ``start_theta`` to ``end_theta``).
+
+    phi_resolution : int, default: 30
+        Set the number of points in the polar direction (ranging from
+        ``start_phi`` to ``end_phi``).
+
+    start_theta : float, default: 0.0
+        Starting azimuthal angle in degrees ``[0, 360]``.
+
+    end_theta : float, default: 360.0
+        Ending azimuthal angle in degrees ``[0, 360]``.
+
+    start_phi : float, default: 0.0
+        Starting polar angle in degrees ``[0, 180]``.
+
+    end_phi : float, default: 180.0
+        Ending polar angle in degrees ``[0, 180]``.
+
+    See Also
+    --------
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
+
+    Examples
+    --------
+    Create a sphere using default parameters.
+
+    >>> import pyvista as pv
+    >>> sphere = pv.SphereSource()
+    >>> sphere.output.plot(show_edges=True)
+
+    Create a quarter sphere by setting ``end_theta``.
+
+    >>> sphere = pv.SphereSource(end_theta=90)
+    >>> out = sphere.output.plot(show_edges=True)
+
+    Create a hemisphere by setting ``end_phi``.
+
+    >>> sphere = pv.SphereSource(end_phi=90)
+    >>> out = sphere.output.plot(show_edges=True)
+
+    """
+
+    def __init__(
+        self,
+        radius=0.5,
+        center=None,
+        theta_resolution=30,
+        phi_resolution=30,
+        start_theta=0.0,
+        end_theta=360.0,
+        start_phi=0.0,
+        end_phi=180.0,
+    ):
+        """Initialize the sphere source class."""
+        super().__init__()
+        self.radius = radius
+        if center is not None:  # pragma: no cover
+            self.center = center
+        self.theta_resolution = theta_resolution
+        self.phi_resolution = phi_resolution
+        self.start_theta = start_theta
+        self.end_theta = end_theta
+        self.start_phi = start_phi
+        self.end_phi = end_phi
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):
+            return self.GetCenter()
+        else:  # pragma: no cover
+            return (0.0, 0.0, 0.0)
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        if pyvista.vtk_version_info >= (9, 2):
+            self.SetCenter(center)
+        else:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+            )
+
+    @property
+    def radius(self) -> float:
+        """Get sphere radius.
+
+        Returns
+        -------
+        float
+            Sphere radius.
+        """
+        return self.GetRadius()
+
+    @radius.setter
+    def radius(self, radius: float):
+        """Set sphere radius.
+
+        Parameters
+        ----------
+        radius : float
+            Sphere radius.
+        """
+        self.SetRadius(radius)
+
+    @property
+    def theta_resolution(self) -> int:
+        """Get the number of points in the azimuthal direction.
+
+        Returns
+        -------
+        int
+            The number of points in the azimuthal direction.
+        """
+        return self.GetThetaResolution()
+
+    @theta_resolution.setter
+    def theta_resolution(self, theta_resolution: int):
+        """Set the number of points in the azimuthal direction.
+
+        Parameters
+        ----------
+        theta_resolution : int
+            The number of points in the azimuthal direction.
+        """
+        self.SetThetaResolution(theta_resolution)
+
+    @property
+    def phi_resolution(self) -> int:
+        """Get the number of points in the polar direction.
+
+        Returns
+        -------
+        int
+            The number of points in the polar direction.
+        """
+        return self.GetPhiResolution()
+
+    @phi_resolution.setter
+    def phi_resolution(self, phi_resolution: int):
+        """Set the number of points in the polar direction.
+
+        Parameters
+        ----------
+        phi_resolution : int
+            The number of points in the polar direction.
+        """
+        self.SetPhiResolution(phi_resolution)
+
+    @property
+    def start_theta(self) -> float:
+        """Get starting azimuthal angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the azimuthal direction.
+        """
+        return self.GetStartTheta()
+
+    @start_theta.setter
+    def start_theta(self, start_theta: float):
+        """Set starting azimuthal angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        start_theta : float
+            The number of points in the azimuthal direction.
+        """
+        self.SetStartTheta(start_theta)
+
+    @property
+    def end_theta(self) -> float:
+        """Get ending azimuthal angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the azimuthal direction.
+        """
+        return self.GetEndTheta()
+
+    @end_theta.setter
+    def end_theta(self, end_theta: float):
+        """Set ending azimuthal angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        end_theta : float
+            The number of points in the azimuthal direction.
+        """
+        self.SetEndTheta(end_theta)
+
+    @property
+    def start_phi(self) -> float:
+        """Get starting polar angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the polar direction.
+        """
+        return self.GetStartPhi()
+
+    @start_phi.setter
+    def start_phi(self, start_phi: float):
+        """Set starting polar angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        start_phi : float
+            The number of points in the polar direction.
+        """
+        self.SetStartPhi(start_phi)
+
+    @property
+    def end_phi(self) -> float:
+        """Get ending polar angle in degrees ``[0, 360]``.
+
+        Returns
+        -------
+        float
+            The number of points in the polar direction.
+        """
+        return self.GetEndPhi()
+
+    @end_phi.setter
+    def end_phi(self, end_phi: float):
+        """Set ending polar angle in degrees ``[0, 360]``.
+
+        Parameters
+        ----------
+        end_phi : float
+            The number of points in the polar direction.
+        """
+        self.SetEndPhi(end_phi)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sphere surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+class PolygonSource(_vtk.vtkRegularPolygonSource):
+    """Polygon source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``. Central axis of the polygon passes
+        through this point.
+
+    radius : float, default: 1.0
+        The radius of the polygon.
+
+    normal : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
+
+    n_sides : int, default: 6
+        Number of sides of the polygon.
+
+    fill : bool, default: True
+        Enable or disable producing filled polygons.
+
+    Examples
+    --------
+    Create an 8 sided polygon.
+
+    >>> import pyvista as pv
+    >>> source = pv.PolygonSource(n_sides=8)
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    def __init__(
+        self, center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True
+    ):
+        """Initialize the polygon source class."""
+        super().__init__()
+        self.center = center
+        self.radius = radius
+        self.normal = normal
+        self.n_sides = n_sides
+        self.fill = fill
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def radius(self) -> float:
+        """Get the radius of the polygon.
+
+        Returns
+        -------
+        float
+            The radius of the polygon.
+        """
+        return self.GetRadius()
+
+    @radius.setter
+    def radius(self, radius: float):
+        """Set the radius of the polygon.
+
+        Parameters
+        ----------
+        radius : float
+            The radius of the polygon.
+        """
+        self.SetRadius(radius)
+
+    @property
+    def normal(self) -> Sequence[float]:
+        """Get the normal in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Normal in ``[x, y, z]``.
+        """
+        return self.GetNormal()
+
+    @normal.setter
+    def normal(self, normal: Sequence[float]):
+        """Set the normal in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        normal : sequence[float]
+            Normal in ``[x, y, z]``.
+        """
+        self.SetNormal(normal)
+
+    @property
+    def n_sides(self) -> int:
+        """Get number of sides of the polygon.
+
+        Returns
+        -------
+        int
+            Number of sides of the polygon.
+        """
+        return self.GetNumberOfSides()
+
+    @n_sides.setter
+    def n_sides(self, n_sides: int):
+        """Set number of sides of the polygon.
+
+        Parameters
+        ----------
+        n_sides : int
+            Number of sides of the polygon.
+        """
+        self.SetNumberOfSides(n_sides)
+
+    @property
+    def fill(self) -> bool:
+        """Get enable or disable producing filled polygons.
+
+        Returns
+        -------
+        bool
+            Enable or disable producing filled polygons.
+        """
+        return self.GetGeneratePolygon()
+
+    @fill.setter
+    def fill(self, fill: bool):
+        """Set enable or disable producing filled polygons.
+
+        Parameters
+        ----------
+        fill : bool, optional
+            Enable or disable producing filled polygons.
+        """
+        self.SetGeneratePolygon(fill)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Polygon surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
 @no_new_attr
 class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
