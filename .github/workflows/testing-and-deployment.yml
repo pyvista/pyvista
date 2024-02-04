@@ -210,6 +210,8 @@ jobs:
 
       - uses: codecov/codecov-action@v4
         name: "Upload coverage to CodeCov"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check package
         run: |
