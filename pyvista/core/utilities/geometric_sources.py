@@ -1872,3 +1872,86 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlaneSource(_vtk.vtkPlaneSource):
+    """Create a plane source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    i_resolution : int, default: 10
+        Number of points on the plane in the i direction.
+
+    j_resolution : int, default: 10
+        Number of points on the plane in the j direction.
+
+    """
+
+    def __init__(
+        self,
+        i_resolution=10,
+        j_resolution=10,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.i_resolution = i_resolution
+        self.j_resolution = j_resolution
+
+    @property
+    def i_resolution(self) -> int:
+        """Number of points on the plane in the i direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the i direction.
+        """
+        return self.GetXResolution()
+
+    @i_resolution.setter
+    def i_resolution(self, i_resolution: int):
+        """Set number of points on the plane in the i direction.
+
+        Parameters
+        ----------
+        i_resolution : int
+            Number of points on the plane in the i direction.
+        """
+        self.SetXResolution(i_resolution)
+
+    @property
+    def j_resolution(self) -> int:
+        """Number of points on the plane in the j direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the j direction.
+        """
+        return self.GetYResolution()
+
+    @j_resolution.setter
+    def j_resolution(self, j_resolution: int):
+        """Set number of points on the plane in the j direction.
+
+        Parameters
+        ----------
+        j_resolution : int
+            Number of points on the plane in the j direction.
+        """
+        self.SetYResolution(j_resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
