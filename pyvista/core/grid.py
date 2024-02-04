@@ -668,7 +668,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         dx, dy, dz = self.spacing
         # Now make the cell arrays
         ox, oy, oz = np.array(self.origin) + np.array(
-            [self.extent[0] * dx, self.extent[1] * dy, self.extent[2] * dz]
+            np.array([self.extent[::2][0] * dx, self.extent[::2][1] * dy, self.extent[::2][2] * dz])
         )
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
