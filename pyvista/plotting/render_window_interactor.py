@@ -1112,6 +1112,7 @@ class RenderWindowInteractor:
         if len(key) > 1:
             raise ValueError('Only accepts a single key')
         self.interactor.SetKeyCode(key)
+        self.interactor.SetKeySym(key)
         self.interactor.CharEvent()
 
     def _control_key_press(self):
