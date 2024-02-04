@@ -985,3 +985,15 @@ def test_xdmf_reader():
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
+
+
+def test_step_reader():
+    # https://github.com/CadQuery/cadquery/blob/master/tests/testdata/red_cube_blue_cylinder.step
+    filename = examples.download_red_cube_blue_cylinder_step(load=False)
+    reader = pv.get_reader(filename)
+    # https://vtk.org/doc/nightly/html/classvtkOCCTReader.html
+    assert isinstance(reader, pv.OCCTReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
