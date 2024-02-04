@@ -882,7 +882,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(0,number_time_sets)}")
+            raise IndexError(f"Time set index {time_set} not in {range(0, number_time_sets)}")
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -931,20 +931,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def decompose_polyhedra(self):  # numpydoc ignore=RT01
         """Whether polyhedra are to be decomposed when read.
 
+        .. warning::
+            Support for polyhedral decomposition has been deprecated
+            deprecated in VTK 9.3 and has been removed prior to VTK 9.4
+
         Returns
         -------
         bool
             If ``True``, decompose polyhedra into tetrahedra and pyramids.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> filename = examples.download_cavity(load=False)
-        >>> reader = pv.OpenFOAMReader(filename)
-        >>> reader.decompose_polyhedra = False
-        >>> reader.decompose_polyhedra
-        False
 
         """
         return bool(self.reader.GetDecomposePolyhedra())

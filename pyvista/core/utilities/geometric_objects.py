@@ -3,15 +3,15 @@
 **CONTAINS**
 vtkArrowSource
 CylinderSource
-vtkSphereSource
-vtkPlaneSource
-vtkLineSource
-vtkCubeSource
+SphereSource
+PlaneSource
+LineSource
+CubeSource
 ConeSource
-vtkDiskSource
-vtkRegularPolygonSource
+DiscSource
+PolygonSource
 vtkPyramid
-vtkPlatonicSolidSource
+PlatonicSolidSource
 vtkSuperquadricSource
 Text3DSource
 
@@ -28,8 +28,15 @@ from pyvista.core import _vtk_core as _vtk
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
     ConeSource,
+    CubeSource,
     CylinderSource,
+    DiscSource,
+    LineSource,
     MultipleLinesSource,
+    PlaneSource,
+    PlatonicSolidSource,
+    PolygonSource,
+    SphereSource,
     Text3DSource,
     translate,
 )
@@ -386,16 +393,16 @@ def Sphere(
     >>> out = sphere.plot(show_edges=True)
 
     """
-    sphere = _vtk.vtkSphereSource()
-    sphere.SetRadius(radius)
-    sphere.SetThetaResolution(theta_resolution)
-    sphere.SetPhiResolution(phi_resolution)
-    sphere.SetStartTheta(start_theta)
-    sphere.SetEndTheta(end_theta)
-    sphere.SetStartPhi(start_phi)
-    sphere.SetEndPhi(end_phi)
-    sphere.Update()
-    surf = wrap(sphere.GetOutput())
+    sphere = SphereSource(
+        radius=radius,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        start_theta=start_theta,
+        end_theta=end_theta,
+        start_phi=start_phi,
+        end_phi=end_phi,
+    )
+    surf = sphere.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
@@ -963,12 +970,8 @@ def Plane(
     >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
-    planeSource = _vtk.vtkPlaneSource()
-    planeSource.SetXResolution(i_resolution)
-    planeSource.SetYResolution(j_resolution)
-    planeSource.Update()
-
-    surf = wrap(planeSource.GetOutput())
+    planeSource = PlaneSource(i_resolution=i_resolution, j_resolution=j_resolution)
+    surf = planeSource.output
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
@@ -1005,18 +1008,8 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     >>> mesh.plot(color='k', line_width=10)
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
-    src = _vtk.vtkLineSource()
-    src.SetPoint1(*pointa)
-    src.SetPoint2(*pointb)
-    src.SetResolution(resolution)
-    src.Update()
-    line = wrap(src.GetOutput())
+    src = LineSource(pointa, pointb, resolution)
+    line = src.output
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
@@ -1165,20 +1158,10 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkCubeSource()
-    if bounds is not None:
-        if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-            )
-        src.SetBounds(bounds)
-    else:
-        src.SetCenter(center)
-        src.SetXLength(x_length)
-        src.SetYLength(y_length)
-        src.SetZLength(z_length)
-    src.Update()
-    cube = wrap(src.GetOutput())
+    algo = CubeSource(
+        center=center, x_length=x_length, y_length=y_length, z_length=z_length, bounds=bounds
+    )
+    cube = algo.output
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
@@ -1331,14 +1314,8 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkRegularPolygonSource()
-    src.SetGeneratePolygon(fill)
-    src.SetCenter(center)
-    src.SetNumberOfSides(n_sides)
-    src.SetRadius(radius)
-    src.SetNormal(normal)
-    src.Update()
-    return wrap(src.GetOutput())
+    src = PolygonSource(fill=fill, center=center, n_sides=n_sides, radius=radius, normal=normal)
+    return src.output
 
 
 def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
@@ -1382,15 +1359,10 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkDiskSource()
-    src.SetInnerRadius(inner)
-    src.SetOuterRadius(outer)
-    src.SetRadialResolution(r_res)
-    src.SetCircumferentialResolution(c_res)
-    src.Update()
+    algo = DiscSource(inner=inner, outer=outer, r_res=r_res, c_res=c_res)
     normal = np.array(normal)
     center = np.array(center)
-    surf = wrap(src.GetOutput())
+    surf = algo.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, normal)
     return surf
@@ -2122,27 +2094,11 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    kinds = {
-        'tetrahedron': 0,
-        'cube': 1,
-        'octahedron': 2,
-        'icosahedron': 3,
-        'dodecahedron': 4,
-    }
-    if isinstance(kind, str):
-        if kind not in kinds:
-            raise ValueError(f'Invalid Platonic solid kind "{kind}".')
-        kind = kinds[kind]
-    elif isinstance(kind, int) and kind not in range(5):
-        raise ValueError(f'Invalid Platonic solid index "{kind}".')
-    elif not isinstance(kind, int):
-        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
     check_valid_vector(center, 'center')
 
-    solid = _vtk.vtkPlatonicSolidSource()
-    solid.SetSolidType(kind)
-    solid.Update()
-    solid = wrap(solid.GetOutput())
+    source = PlatonicSolidSource()
+    source.kind = kind
+    solid = source.output
     # rename and activate cell scalars
     cell_data = solid.cell_data.get_array(0)
     solid.clear_data()

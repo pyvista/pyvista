@@ -83,7 +83,19 @@ from .geometric_objects import (
     Wavelet,
     translate,
 )
-from .geometric_sources import ConeSource, CylinderSource, MultipleLinesSource, Text3DSource
+from .geometric_sources import (
+    ConeSource,
+    CubeSource,
+    CylinderSource,
+    DiscSource,
+    LineSource,
+    MultipleLinesSource,
+    PlaneSource,
+    PlatonicSolidSource,
+    PolygonSource,
+    SphereSource,
+    Text3DSource,
+)
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,
