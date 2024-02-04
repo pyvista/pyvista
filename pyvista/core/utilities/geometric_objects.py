@@ -4,7 +4,7 @@
 vtkArrowSource
 CylinderSource
 SphereSource
-vtkPlaneSource
+PlaneSource
 LineSource
 CubeSource
 ConeSource
@@ -33,6 +33,7 @@ from .geometric_sources import (
     DiscSource,
     LineSource,
     MultipleLinesSource,
+    PlaneSource,
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
@@ -969,12 +970,8 @@ def Plane(
     >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
-    planeSource = _vtk.vtkPlaneSource()
-    planeSource.SetXResolution(i_resolution)
-    planeSource.SetYResolution(j_resolution)
-    planeSource.Update()
-
-    surf = wrap(planeSource.GetOutput())
+    planeSource = PlaneSource(i_resolution=i_resolution, j_resolution=j_resolution)
+    surf = planeSource.output
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
