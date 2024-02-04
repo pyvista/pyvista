@@ -11,7 +11,7 @@ ConeSource
 DiscSource
 PolygonSource
 vtkPyramid
-vtkPlatonicSolidSource
+PlatonicSolidSource
 vtkSuperquadricSource
 Text3DSource
 
@@ -33,6 +33,7 @@ from .geometric_sources import (
     DiscSource,
     LineSource,
     MultipleLinesSource,
+    PlatonicSolidSource,
     PolygonSource,
     SphereSource,
     Text3DSource,
@@ -2096,27 +2097,11 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    kinds = {
-        'tetrahedron': 0,
-        'cube': 1,
-        'octahedron': 2,
-        'icosahedron': 3,
-        'dodecahedron': 4,
-    }
-    if isinstance(kind, str):
-        if kind not in kinds:
-            raise ValueError(f'Invalid Platonic solid kind "{kind}".')
-        kind = kinds[kind]
-    elif isinstance(kind, int) and kind not in range(5):
-        raise ValueError(f'Invalid Platonic solid index "{kind}".')
-    elif not isinstance(kind, int):
-        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
     check_valid_vector(center, 'center')
 
-    solid = _vtk.vtkPlatonicSolidSource()
-    solid.SetSolidType(kind)
-    solid.Update()
-    solid = wrap(solid.GetOutput())
+    source = PlatonicSolidSource()
+    source.kind = kind
+    solid = source.output
     # rename and activate cell scalars
     cell_data = solid.cell_data.get_array(0)
     solid.clear_data()

@@ -90,6 +90,7 @@ from .geometric_sources import (
     DiscSource,
     LineSource,
     MultipleLinesSource,
+    PlatonicSolidSource,
     PolygonSource,
     SphereSource,
     Text3DSource,
