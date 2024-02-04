@@ -1868,6 +1868,8 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 @no_new_attr
 class PlaneSource(_vtk.vtkPlaneSource):
     """Create a plane source.
