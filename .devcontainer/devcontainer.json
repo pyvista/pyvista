@@ -2,7 +2,7 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "features": {
     "ghcr.io/devcontainers/features/desktop-lite:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
   },
   "forwardPorts": [6080],
   "onCreateCommand": "./.devcontainer/oncreatecommand.sh",
@@ -11,8 +11,8 @@
       "extensions": ["ms-python.python"],
       "settings": {
         "python.testing.pytestArgs": ["tests"],
-        "python.testing.pytestEnabled": true
-      }
-    }
-  }
+        "python.testing.pytestEnabled": true,
+      },
+    },
+  },
 }

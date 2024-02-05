@@ -14,6 +14,7 @@ easily add several widgets to a scene.
 
 Let's look at a few use cases that all update a surface mesh.
 """
+
 # sphinx_gallery_thumbnail_number = 3
 
 # sphinx_gallery_start_ignore

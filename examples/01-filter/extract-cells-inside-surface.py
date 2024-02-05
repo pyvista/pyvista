@@ -6,6 +6,7 @@ Extract the cells in a mesh that exist inside or outside a closed surface of
 another mesh
 
 """
+
 ###############################################################################
 
 # sphinx_gallery_thumbnail_number = 2

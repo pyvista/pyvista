@@ -1,4 +1,5 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
+
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
