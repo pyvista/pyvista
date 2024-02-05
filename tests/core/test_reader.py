@@ -988,10 +988,8 @@ def test_try_imageio_imread():
 
 
 def test_step_reader():
-    # https://github.com/CadQuery/cadquery/blob/master/tests/testdata/red_cube_blue_cylinder.step
-    filename = examples.download_red_cube_blue_cylinder_step(load=False)
+    filename = examples.download_red_cube_blue_cylinder(load=False)
     reader = pv.get_reader(filename)
-    # https://vtk.org/doc/nightly/html/classvtkOCCTReader.html
     assert isinstance(reader, pv.OCCTReader)
     assert reader.path == filename
 

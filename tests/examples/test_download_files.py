@@ -1011,6 +1011,12 @@ def test_download_coil_magnetic_field():
     assert dataset.n_points == 531441
 
 
+def test_download_red_cube_blue_cylinder():
+    filename = examples.download_red_cube_blue_cylinder(load=False)
+    assert os.path.isfile(filename)
+    assert filename.endswith('step')
+
+
 def test_load_sun():
     mesh = examples.planets.load_sun()
     assert mesh.n_cells

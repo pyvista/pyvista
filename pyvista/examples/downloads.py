@@ -5623,3 +5623,26 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
 
     """
     return _download_and_read('Victorian_Goblet_face_illusion/Vase.stl', load=load)
+
+
+def download_red_cube_blue_cylinder(load=True):
+    """Download red cube and blue cylinder.
+
+    Downloaded from https://github.com/CadQuery/cadquery
+    by CadQuery project.
+
+    This work is licensed under a  Apache License Version 2.0.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    """
+    return _download_and_read('cadquery/red_cube_blue_cylinder.step', load=load)
