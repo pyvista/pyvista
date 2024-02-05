@@ -3,6 +3,8 @@
 Also includes some pure-python helpers.
 
 """
+from __future__ import annotations
+
 from typing import Sequence, Tuple, Union
 
 import numpy as np
@@ -1769,6 +1771,183 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         pyvista.PolyData
             Polygon surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
+    """Platonic solid source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    kind : str | int, default: 'tetrahedron'
+        The kind of Platonic solid to create. Either the name of the
+        polyhedron or an integer index:
+
+            * ``'tetrahedron'`` or ``0``
+            * ``'cube'`` or ``1``
+            * ``'octahedron'`` or ``2``
+            * ``'icosahedron'`` or ``3``
+            * ``'dodecahedron'`` or ``4``
+
+    Examples
+    --------
+    Create and plot a dodecahedron.
+
+    >>> import pyvista as pv
+    >>> dodeca = pv.PlatonicSolidSource('dodecahedron')
+    >>> dodeca.output.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+
+    _new_attr_exceptions = ['_kinds']
+
+    def __init__(self, kind='tetrahedron'):
+        """Initialize the platonic solid source class."""
+        super().__init__()
+        self._kinds = {
+            'tetrahedron': 0,
+            'cube': 1,
+            'octahedron': 2,
+            'icosahedron': 3,
+            'dodecahedron': 4,
+        }
+        self.kind = kind
+
+    @property
+    def kind(self) -> str:
+        """Get the kind of Platonic solid to create.
+
+        Returns
+        -------
+        str
+            The kind of Platonic solid to create.
+        """
+        return list(self._kinds.keys())[self.GetSolidType()]
+
+    @kind.setter
+    def kind(self, kind: str | int):
+        """Set the kind of Platonic solid to create.
+
+        Parameters
+        ----------
+        kind : str | int, default: 'tetrahedron'
+            The kind of Platonic solid to create. Either the name of the
+            polyhedron or an integer index:
+
+                * ``'tetrahedron'`` or ``0``
+                * ``'cube'`` or ``1``
+                * ``'octahedron'`` or ``2``
+                * ``'icosahedron'`` or ``3``
+                * ``'dodecahedron'`` or ``4``
+        """
+        if isinstance(kind, str):
+            if kind not in self._kinds:
+                raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+            kind = self._kinds[kind]
+        elif isinstance(kind, int) and kind not in range(5):
+            raise ValueError(f'Invalid Platonic solid index "{kind}".')
+        elif not isinstance(kind, int):
+            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
+        self.SetSolidType(kind)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            PlatonicSolid surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlaneSource(_vtk.vtkPlaneSource):
+    """Create a plane source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    i_resolution : int, default: 10
+        Number of points on the plane in the i direction.
+
+    j_resolution : int, default: 10
+        Number of points on the plane in the j direction.
+
+    """
+
+    def __init__(
+        self,
+        i_resolution=10,
+        j_resolution=10,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.i_resolution = i_resolution
+        self.j_resolution = j_resolution
+
+    @property
+    def i_resolution(self) -> int:
+        """Number of points on the plane in the i direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the i direction.
+        """
+        return self.GetXResolution()
+
+    @i_resolution.setter
+    def i_resolution(self, i_resolution: int):
+        """Set number of points on the plane in the i direction.
+
+        Parameters
+        ----------
+        i_resolution : int
+            Number of points on the plane in the i direction.
+        """
+        self.SetXResolution(i_resolution)
+
+    @property
+    def j_resolution(self) -> int:
+        """Number of points on the plane in the j direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the j direction.
+        """
+        return self.GetYResolution()
+
+    @j_resolution.setter
+    def j_resolution(self, j_resolution: int):
+        """Set number of points on the plane in the j direction.
+
+        Parameters
+        ----------
+        j_resolution : int
+            Number of points on the plane in the j direction.
+        """
+        self.SetYResolution(j_resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
         """
         self.Update()
         return wrap(self.GetOutput())
