@@ -13,12 +13,13 @@ A ``validate`` function typically:
 
 """
 import inspect
-from typing import Any
+from itertools import product
+from typing import Any, Literal, Tuple, Union
 
 import numpy as np
 
+from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
@@ -488,11 +489,11 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     check_is_string(name, name="Name")
     arr = np.eye(4)  # initialize
     if isinstance(transform, vtkMatrix4x4):
-        arr = array_from_vtkmatrix(transform)
+        arr = _array_from_vtkmatrix(transform, shape=(4, 4))
     elif isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
+        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
     elif isinstance(transform, vtkTransform):
-        arr = array_from_vtkmatrix(transform.GetMatrix())
+        arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
     else:
         try:
             valid_arr = validate_array(
@@ -544,7 +545,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     check_is_string(name, name="Name")
     arr = np.eye(3)  # initialize
     if isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
+        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:
             arr = validate_array(transform, must_have_shape=(3, 3), name=name)
@@ -553,6 +554,17 @@ def validate_transform3x3(transform, /, *, name="Transform"):
                 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
             )
     return arr
+
+
+def _array_from_vtkmatrix(
+    matrix: Union[vtkMatrix3x3, vtkMatrix4x4],
+    shape: Union[Tuple[Literal[3], Literal[3]], Tuple[Literal[4], Literal[4]]],
+) -> NumpyArray[float]:
+    """Convert a vtk matrix to an array."""
+    array = np.zeros(shape)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
+    return array
 
 
 def validate_dtype(dtype_like):
