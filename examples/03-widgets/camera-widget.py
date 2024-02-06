@@ -30,22 +30,11 @@ render_window = plotter.render_window
 interactor = vtk.vtkRenderWindowInteractor()
 interactor.SetRenderWindow(render_window)
 
-# Camera widget and its representation
-camera3d_representation = vtk.vtkCamera3DRepresentation()
-camera3d_representation.SetCamera(camera3d_renderer.GetActiveCamera())
-camera3d_widget = vtk.vtkCamera3DWidget()
-camera3d_widget.SetInteractor(interactor)
-camera3d_widget.SetRepresentation(camera3d_representation)
-
-# If you want to set the camera, do it before placing the widget
-# Placing widget is optional, if you do, camera will be moved toward bounds
-# camera3d_representation.PlaceWidget(actor.GetBounds())
-# plotter.add_camera3d_widget()
+plotter.add_camera3d_widget(interactor)
 
 # Render
 interactor.Initialize()
 render_window.Render()
-camera3d_widget.On()
 
 # Begin mouse interaction
 interactor.Start()
