@@ -139,12 +139,10 @@ def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"
 
     See Also
     --------
-    check_numeric
-        Similar function which allows complex numbers.
     check_integer
         Similar function for integer arrays.
-    check_scalar
-        Similar function for a single number or 0-dimensional ndarrays.
+    check_number
+        Similar function for scalar values.
     check_finite
         Check for finite values.
 
@@ -678,8 +676,7 @@ def check_number(
 
     Notes
     -----
-    - This check fails for instances of :class:`numpy.ndarray`. Use :func:`check_scalar`
-      instead to also allow for 0-dimensional arrays.
+    - This check fails for 0-dimensional instances of :class:`numpy.ndarray`.
     - Values such as ``float('inf')`` and ``float('NaN')`` are valid numbers and
       will not raise an error. Use :func:`check_finite` to check for finite values.
 
@@ -729,13 +726,10 @@ def check_number(
     --------
     validate_number
         Similar function which returns a validated number.
-    check_scalar
-        Similar function which allows 0-dimensional ndarrays.
-    check_numeric
-        Similar function for any dimensional array of numbers.
     check_real
         Similar function for any dimensional array of real numbers.
     check_finite
+        Check for finite values.
 
 
     Examples
