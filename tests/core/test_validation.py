@@ -48,7 +48,7 @@ from pyvista.core.validation import (
 from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 from pyvista.core.validation.check import _validate_shape_value
 from pyvista.core.validation.validate import _set_default_kwarg_mandatory
-
+from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
 
 @pytest.mark.parametrize(
     'transform_like',
@@ -961,7 +961,7 @@ def test_validate_axes_orthogonal(bias_index):
 @pytest.mark.parametrize('as_any', [True, False])
 @pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize('dtype', [None, float])
-def test__cast_to_numpy(as_any, copy, dtype):
+def test_cast_to_numpy(as_any, copy, dtype):
     array_in = pyvista_ndarray([1, 2])
     array_out = _cast_to_numpy(array_in, copy=copy, as_any=as_any, dtype=dtype)
     assert np.array_equal(array_out, array_in)
@@ -983,6 +983,12 @@ def test_cast_to_numpy_raises():
     msg = "Input cannot be cast as <class 'numpy.ndarray'>."
     with pytest.raises(ValueError, match=msg):
         _cast_to_numpy([[1], [2, 3]])
+def test_cast_to_numpy_must_be_real():
+    _ = _cast_to_numpy([0, 1], must_be_real=True)
+
+    with pytest.raises(ValueError):
+        _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
+
 
 
 def test_cast_to_tuple():
@@ -1000,4 +1006,15 @@ def test_cast_to_list():
     array_list = _cast_to_list(array_in)
     assert np.array_equal(array_in, array_list)
     with pytest.raises(ValueError):
-        _cast_to_tuple([[1, [2, 3]]])
+
+@pytest.mark.parametrize(['cls', 'shape'], [
+    (vtkMatrix3x3, (3, 3)),
+    (vtkMatrix4x4, (4, 4)),
+])
+def test_vtkmatrix_from_array(cls, shape):
+    orig = np.random.default_rng().random(shape)
+    mat = cls()
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
+        mat.SetElement(i, j, orig[i, j])
+
+    assert np.array_equal(orig, _array_from_vtkmatrix(orig, shape=shape))
