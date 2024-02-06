@@ -624,7 +624,7 @@ def test_check_is_string():
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
 
-    if sys.version_info < (3, 9):
+    if sys.version_info < (3, 9) and sys.platform == 'linux':
         err = TypeError
         msg = "Object arrays are not supported."
     else:
