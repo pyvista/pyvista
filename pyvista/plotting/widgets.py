@@ -2761,12 +2761,12 @@ class WidgetHelper:
             logo_widget.Off()
         self.logo_widgets.clear()
 
-    def add_camera3d_widget(self, interactor):
+    def add_camera3d_widget(self, iren):
         """Add a camera3d widget.
 
         Parameters
         ----------
-        interactor : vtk.vtkRenderWindowInteractor
+        iren : vtk.vtkRenderWindowInteractor
             Interactor.
 
         Returns
@@ -2778,7 +2778,7 @@ class WidgetHelper:
         representation = _vtk.vtkCamera3DRepresentation()
         representation.SetCamera(self.renderer.GetActiveCamera())
         widget = _vtk.vtkCamera3DWidget()
-        widget.SetInteractor(interactor)
+        widget.SetInteractor(iren)
         widget.SetRepresentation(representation)
         widget.On()
         self.camera3d_widgets.append(widget)

@@ -24,9 +24,9 @@ plotter.add_mesh(sphere)
 
 camera3d_renderer = plotter.renderer
 render_window = plotter.render_window
-interactor = vtk.vtkRenderWindowInteractor()
-interactor.SetRenderWindow(render_window)
-plotter.add_camera3d_widget(interactor)
-interactor.Initialize()
+iren = vtk.vtkRenderWindowInteractor()
+iren.SetRenderWindow(render_window)
+plotter.add_camera3d_widget(iren)
+iren.Initialize()
 render_window.Render()
-interactor.Start()
+iren.Start()
