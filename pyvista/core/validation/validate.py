@@ -14,12 +14,13 @@ A ``validate`` function typically:
 """
 
 import inspect
-from typing import Any
+from itertools import product
+from typing import Any, Literal, Tuple, Union
 
 import numpy as np
 
+from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, cast_to_ndarray, cast_to_tuple_array
 from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
@@ -33,6 +34,7 @@ from pyvista.core.validation import (
     check_is_string_in_iterable,
     check_is_subdtype,
 )
+from pyvista.core.validation._cast_array import _cast_to_numpy, _cast_to_tuple
 
 
 def validate_array(
@@ -261,7 +263,7 @@ def validate_array(
     array([ 1,  2,  3,  5,  8, 13])
 
     """
-    arr_out = cast_to_ndarray(arr, as_any=as_any, copy=copy)
+    arr_out = _cast_to_numpy(arr, as_any=as_any, copy=copy)
 
     # Check type
     if must_be_real:
@@ -328,7 +330,7 @@ def validate_array(
         # Copy was done earlier, so don't do it again here
         arr_out = arr_out.astype(dtype_out, copy=False)
     if to_tuple:
-        return cast_to_tuple_array(arr_out)
+        return _cast_to_tuple(arr_out)
     if to_list:
         return arr_out.tolist()
     return arr_out
@@ -488,11 +490,11 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     check_is_string(name, name="Name")
     arr = np.eye(4)  # initialize
     if isinstance(transform, vtkMatrix4x4):
-        arr = array_from_vtkmatrix(transform)
+        arr = _array_from_vtkmatrix(transform, shape=(4, 4))
     elif isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
+        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
     elif isinstance(transform, vtkTransform):
-        arr = array_from_vtkmatrix(transform.GetMatrix())
+        arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
     else:
         try:
             valid_arr = validate_array(
@@ -544,7 +546,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     check_is_string(name, name="Name")
     arr = np.eye(3)  # initialize
     if isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = array_from_vtkmatrix(transform)
+        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:
             arr = validate_array(transform, must_have_shape=(3, 3), name=name)
@@ -553,6 +555,17 @@ def validate_transform3x3(transform, /, *, name="Transform"):
                 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
             )
     return arr
+
+
+def _array_from_vtkmatrix(
+    matrix: Union[vtkMatrix3x3, vtkMatrix4x4],
+    shape: Union[Tuple[Literal[3], Literal[3]], Tuple[Literal[4], Literal[4]]],
+) -> NumpyArray[float]:
+    """Convert a vtk matrix to an array."""
+    array = np.zeros(shape)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
+    return array
 
 
 def validate_dtype(dtype_like):
