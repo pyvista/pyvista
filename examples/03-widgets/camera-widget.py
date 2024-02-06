@@ -15,19 +15,36 @@ import vtk
 
 import pyvista as pv
 
-sphere = pv.Sphere()
+sphere_source = pv.SphereSource()
+cube_source = pv.CubeSource()
+cube_source.center = (0.0, 0.0, 2.0)
+source = vtk.vtkAppendPolyData()
+source.AddInputConnection(sphere_source.GetOutputPort())
+source.AddInputConnection(cube_source.GetOutputPort())
+source.Update()
+
+# Create mapper and actor
+mapper = vtk.vtkPolyDataMapper()
+mapper.SetInputConnection(source.GetOutputPort())
+actor = vtk.vtkActor()
+actor.SetMapper(mapper)
 
 # Renderers and one render window
-plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
-plotter.add_mesh(sphere)
-main_renderer = plotter.renderer
+main_renderer = vtk.vtkRenderer()
+main_renderer.SetViewport(0.0, 0.0, 0.5, 1.0)
+main_renderer.AddActor(actor)
+main_renderer.SetBackground(0.7, 0.7, 1.0)
 
-plotter.subplot(0, 1)
-plotter.add_mesh(sphere)
-camera_renderer = plotter.renderer
+camera_renderer = vtk.vtkRenderer()
+camera_renderer.SetViewport(0.5, 0.0, 1.0, 1.0)
 camera_renderer.InteractiveOff()
+camera_renderer.AddActor(actor)
+camera_renderer.SetBackground(0.8, 0.8, 1.0)
 
+plotter = pv.Plotter(window_size=[600, 300])
 render_window = plotter.render_window
+render_window.AddRenderer(main_renderer)
+render_window.AddRenderer(camera_renderer)
 render_window.SetWindowName("camera_widget")
 
 # An interactor
@@ -43,7 +60,7 @@ camera_widget.SetRepresentation(camera_representation)
 # If you want to set the camera, do it before placing the widget
 camera_representation.SetCamera(camera_renderer.GetActiveCamera())
 # Placing widget is optional, if you do, camera will be moved toward bounds
-# camera_representation.PlaceWidget(actor.GetBounds())
+camera_representation.PlaceWidget(actor.GetBounds())
 
 # Render
 render_window_interactor.Initialize()
