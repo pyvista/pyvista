@@ -13,12 +13,12 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 import vtk
 
-sphereSource = vtk.vtkSphereSource()
-cubeSource = vtk.vtkCubeSource()
-cubeSource.SetCenter(0.0, 0.0, 2.0)
+sphere_source = vtk.vtkSphereSource()
+cube_source = vtk.vtkCubeSource()
+cube_source.SetCenter(0.0, 0.0, 2.0)
 source = vtk.vtkAppendPolyData()
-source.AddInputConnection(sphereSource.GetOutputPort())
-source.AddInputConnection(cubeSource.GetOutputPort())
+source.AddInputConnection(sphere_source.GetOutputPort())
+source.AddInputConnection(cube_source.GetOutputPort())
 source.Update()
 
 # Create mapper and actor
@@ -28,42 +28,42 @@ actor = vtk.vtkActor()
 actor.SetMapper(mapper)
 
 # Renderers and one render window
-mainRenderer = vtk.vtkRenderer()
-mainRenderer.SetViewport(0.0, 0.0, 0.5, 1.0)
-mainRenderer.AddActor(actor)
-mainRenderer.SetBackground(0.7, 0.7, 1.0)
+main_renderer = vtk.vtkRenderer()
+main_renderer.SetViewport(0.0, 0.0, 0.5, 1.0)
+main_renderer.AddActor(actor)
+main_renderer.SetBackground(0.7, 0.7, 1.0)
 
-cameraRenderer = vtk.vtkRenderer()
-cameraRenderer.SetViewport(0.5, 0.0, 1.0, 1.0)
-cameraRenderer.InteractiveOff()
-cameraRenderer.AddActor(actor)
-cameraRenderer.SetBackground(0.8, 0.8, 1.0)
+camera_renderer = vtk.vtkRenderer()
+camera_renderer.SetViewport(0.5, 0.0, 1.0, 1.0)
+camera_renderer.InteractiveOff()
+camera_renderer.AddActor(actor)
+camera_renderer.SetBackground(0.8, 0.8, 1.0)
 
-renderWindow = vtk.vtkRenderWindow()
-renderWindow.SetSize(600, 300)
-renderWindow.AddRenderer(mainRenderer)
-renderWindow.AddRenderer(cameraRenderer)
-renderWindow.SetWindowName("cameraWidget")
+render_window = vtk.vtkRenderWindow()
+render_window.SetSize(600, 300)
+render_window.AddRenderer(main_renderer)
+render_window.AddRenderer(camera_renderer)
+render_window.SetWindowName("camera_widget")
 
 # An interactor
-renderWindowInteractor = vtk.vtkRenderWindowInteractor()
-renderWindowInteractor.SetRenderWindow(renderWindow)
+render_window_interactor = vtk.vtkRenderWindowInteractor()
+render_window_interactor.SetRenderWindow(render_window)
 
 # Camera widget and its representation
-cameraRepresentation = vtk.vtkCamera3DRepresentation()
-cameraWidget = vtk.vtkCamera3DWidget()
-cameraWidget.SetInteractor(renderWindowInteractor)
-cameraWidget.SetRepresentation(cameraRepresentation)
+camera_representation = vtk.vtkCamera3DRepresentation()
+camera_widget = vtk.vtkCamera3DWidget()
+camera_widget.SetInteractor(render_window_interactor)
+camera_widget.SetRepresentation(camera_representation)
 
 # If you want to set the camera, do it before placing the widget
-cameraRepresentation.SetCamera(cameraRenderer.GetActiveCamera())
+camera_representation.SetCamera(camera_renderer.GetActiveCamera())
 # Placing widget is optional, if you do, camera will be moved toward bounds
-cameraRepresentation.PlaceWidget(actor.GetBounds())
+camera_representation.PlaceWidget(actor.GetBounds())
 
 # Render
-renderWindowInteractor.Initialize()
-renderWindow.Render()
-cameraWidget.On()
+render_window_interactor.Initialize()
+render_window.Render()
+camera_widget.On()
 
 # Begin mouse interaction
-renderWindowInteractor.Start()
+render_window_interactor.Start()
