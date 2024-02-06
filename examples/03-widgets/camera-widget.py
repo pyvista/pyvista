@@ -23,7 +23,6 @@ plotter.add_mesh(sphere)
 plotter.subplot(0, 1)
 plotter.add_mesh(sphere)
 camera_renderer = plotter.renderer
-camera_renderer.InteractiveOff()
 
 render_window = plotter.render_window
 
