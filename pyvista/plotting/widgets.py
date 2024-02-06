@@ -2784,7 +2784,7 @@ class WidgetHelper:
         self.camera3d_widgets.append(widget)
         return widget
 
-    def clear_camera3d_widget(self):
+    def clear_camera3d_widgets(self):
         """Remove all of the camera3d widgets."""
         for camera3d_widget in self.camera3d_widgets:
             camera3d_widget.Off()
