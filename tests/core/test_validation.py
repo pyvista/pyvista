@@ -10,7 +10,7 @@ from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
@@ -1021,10 +1021,14 @@ def test_cast_to_list():
         (vtkMatrix4x4, (4, 4)),
     ],
 )
-def test_vtkmatrix_from_array(cls, shape):
-    orig = np.random.default_rng().random(shape)
+def test_array_from_vtkmatrix(cls, shape):
+    expected = np.random.default_rng().random(shape)
     mat = cls()
     for i, j in itertools.product(range(shape[0]), range(shape[1])):
-        mat.SetElement(i, j, orig[i, j])
+        mat.SetElement(i, j, expected[i, j])
+    actual = _array_from_vtkmatrix(mat, shape=shape)
+    assert np.array_equal(actual, expected)
 
-    assert np.array_equal(orig, _array_from_vtkmatrix(mat, shape=shape))
+    # Test this matches public function
+    expected = array_from_vtkmatrix(mat)
+    assert np.array_equal(actual, expected)
