@@ -6,6 +6,7 @@ from typing import (
     Any,
     Generic,
     Iterable,
+    List,
     Literal,
     Protocol,
     Tuple,
@@ -195,6 +196,10 @@ class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
         return 0
 
     @property
+    def size(self) -> Literal[1]:
+        return 1
+
+    @property
     def dtype(self) -> Type[_NumberType]:
         return type(self._array)
 
@@ -215,6 +220,10 @@ class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
         return 1
 
     @property
+    def size(self) -> int:
+        return len(self._array)
+
+    @property
     def dtype(self) -> Type[_NumberType]:
         self._dtype: Type[_NumberType]
         if self._dtype is None:
@@ -224,6 +233,9 @@ class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
     @property
     def iterable(self) -> Iterable[_NumberType]:
         return self._array
+
+    def sort(self) -> List[_NumberType]:
+        return sorted(self._array)
 
 
 class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
@@ -236,6 +248,10 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
     @property
     def ndim(self) -> Literal[2]:
         return 2
+
+    @property
+    def size(self) -> int:
+        return len(self._array) * len(self._array[0])
 
     @property
     def dtype(self) -> Type[_NumberType]:

@@ -11,6 +11,8 @@ An array checker function typically:
 """
 import math
 from numbers import Number, Real
+import operator
+import reprlib
 from typing import (
     Any,
     Iterable,
@@ -31,7 +33,14 @@ import numpy as np
 from pyvista.core._typing_core import NumpyArray, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core.utilities.arrays import cast_to_ndarray
-from pyvista.core.validation._array_wrapper import DTypeLike, Shape, ShapeLike, _ArrayLikeWrapper
+from pyvista.core.validation._array_wrapper import (
+    DTypeLike,
+    Shape,
+    ShapeLike,
+    _ArrayLikeWrapper,
+    _Sequence1DWrapper,
+    _Sequence2DWrapper,
+)
 
 
 def check_subdtype(
@@ -253,58 +262,71 @@ def check_sorted(
     >>> validation.check_sorted([1, 2, 3])
 
     """
-    array = array if isinstance(array, np.ndarray) else cast_to_ndarray(array)
+    wrapped = _ArrayLikeWrapper(array)
+    if isinstance(wrapped, _Sequence2DWrapper):
+        # It is challenging to implement an efficient sorting check for 2D
+        # sequences directly. For these cases, we do the checks using numpy.
+        wrapped = _ArrayLikeWrapper(np.asarray(wrapped._array))
 
-    if array.ndim == 0:
-        # Indexing will fail for scalars, so return early
+    ndim = wrapped.ndim
+    if ndim == 0:
+        # Scalars are always sorted
         return
 
     # Validate axis
-    if axis is None:
-        # Emulate np.sort(), which flattens array when axis is None
-        array = array.flatten()
-        axis = -1
-    else:
-        if not axis == -1:
-            # Validate axis
-            check_number(axis, name="Axis")
-            check_integer(axis, name="Axis")
-            axis = int(axis)
-            try:
-                check_range(axis, rng=[-array.ndim, array.ndim - 1], name="Axis")
-            except ValueError:
-                raise ValueError(f"Axis {axis} is out of bounds for ndim {array.ndim}.")
-        if axis < 0:
-            # Convert to positive axis index
-            axis = array.ndim + axis
+    if axis not in [-1, None]:
+        check_number(axis, name="Axis")
+        check_integer(axis, name="Axis")
+        axis = int(axis)
+        try:
+            check_range(axis, rng=[-ndim, ndim - 1], name="Axis")
+        except ValueError:
+            raise ValueError(f"Axis {axis} is out of bounds for ndim {ndim}.")
+
+    def _do_check(_func, _arg1, _arg2):
+        # Check sorting by comparing consecutive values with slicers
+        if ascending and not strict:
+            is_sorted = _func(operator.le, _arg1, _arg2)
+        elif ascending and strict:
+            is_sorted = _func(operator.lt, _arg1, _arg2)
+        elif not ascending and not strict:
+            is_sorted = _func(operator.ge, _arg1, _arg2)
+        else:  # not ascending and strict
+            is_sorted = _func(operator.gt, _arg1, _arg2)
+        return is_sorted
 
     # Create slicers to get a view along an axis
     # Create two slicers to compare consecutive elements with each other
-    first = [slice(None)] * array.ndim
-    first[axis] = slice(None, -1)
-    first = tuple(first)  # type: ignore
-
-    second = [slice(None)] * array.ndim
-    second[axis] = slice(1, None)
-    second = tuple(second)  # type: ignore
-
-    if ascending and not strict:
-        is_sorted = np.all(array[first] <= array[second])  # type: ignore
-    elif ascending and strict:
-        is_sorted = np.all(array[first] < array[second])  # type: ignore
-    elif not ascending and not strict:
-        is_sorted = np.all(array[first] >= array[second])  # type: ignore
-    else:  # not ascending and strict
-        is_sorted = np.all(array[first] > array[second])  # type: ignore
-    if not is_sorted:
-        if array.size <= 4:
-            # Show the array's elements in error msg if array is small
-            msg_body = f"{array}"
+    first_slice, second_slice = slice(None, -1), slice(1, None)
+    if isinstance(wrapped, _Sequence1DWrapper):
+        func_seq = lambda op, arg1, arg2: all(op(x, y) for (x, y) in zip(arg1, arg2))
+        is_sorted = _do_check(func_seq, wrapped._array[first_slice], wrapped._array[second_slice])
+    else:
+        if axis is None and ndim > 1:
+            # Emulate np.sort(), which flattens array when axis is None
+            array_check = wrapped._array.flatten()
+            ndim = 1
         else:
-            msg_body = f"with {array.size} elements"
+            array_check = cast(NumpyArray[_NumberType], wrapped._array)
+
+        # Slicers for numpy arrays
+        first = [slice(None)] * ndim
+        first[axis] = first_slice
+
+        second = [slice(None)] * ndim
+        second[axis] = second_slice
+
+        func_np = lambda op, arg1, arg2: np.all(op(arg1, arg2))
+        is_sorted = _do_check(func_np, array_check[tuple(first)], array_check[tuple(second)])
+
+    if not is_sorted:
+        msg_body = f"with {wrapped.size} elements"
         order = "ascending" if ascending else "descending"
-        strict = "strict " if strict else ""  # type: ignore
-        raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
+        strict_ = "strict " if strict else ""
+        raise ValueError(
+            f"{name} {msg_body} must be sorted in {strict_}{order} order. "
+            f"Got:\n    {reprlib.repr(array)}"
+        )
 
 
 def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):

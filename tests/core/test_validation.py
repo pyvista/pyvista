@@ -158,7 +158,7 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    msg = "Data Range [1 0] must be sorted in ascending order."
+    msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
     with pytest.raises(ValueError, match=escape(msg)):
         validate_data_range((1, 0))
 
@@ -720,7 +720,7 @@ def test_check_length():
     with pytest.raises(ValueError, match=msg):
         check_length((1,), min_length=2, name="_input")
 
-    msg = "Range [4 2] must be sorted in ascending order."
+    msg = 'Range with 2 elements must be sorted in ascending order. Got:\n    (4, 2)'
     with pytest.raises(ValueError, match=escape(msg)):
         check_length(
             (
@@ -749,7 +749,8 @@ def test_check_nonnegative():
 @pytest.mark.parametrize('axis', [None, -1, -2, -3, 0, 1, 2, 3])
 @pytest.mark.parametrize('ascending', [True, False])
 @pytest.mark.parametrize('strict', [True, False])
-def test_check_sorted(shape, axis, ascending, strict):
+@pytest.mark.parametrize('as_list', [True, False])
+def test_check_sorted(shape, axis, ascending, strict, as_list):
     def _check_sorted_params(arr):
         check_sorted(arr, axis=axis, strict=strict, ascending=ascending)
 
@@ -784,7 +785,21 @@ def test_check_sorted(shape, axis, ascending, strict):
             _check_sorted_params(arr_strict_ascending)
         return
 
-    if axis is None and arr_ascending.ndim > 1:
+    def maybe_as_list(_input):
+        if as_list and _input.ndim == 1:
+            return _input.tolist()
+        else:
+            pytest.skip(
+                'Only flat 1D sequences are tests as-is otherwise the '
+                'input is cast to numpy which is covered by other test cases.'
+            )
+
+    arr_ascending = maybe_as_list(arr_ascending)
+    arr_strict_ascending = maybe_as_list(arr_strict_ascending)
+    arr_descending = maybe_as_list(arr_descending)
+    arr_strict_descending = maybe_as_list(arr_strict_descending)
+
+    if axis is None and not as_list and arr_ascending.ndim > 1:
         # test that axis=None will flatten array and cause it not to be sorted for higher dimension arrays
         with pytest.raises(ValueError):
             _check_sorted_params(arr_ascending)
@@ -815,6 +830,13 @@ def test_check_sorted(shape, axis, ascending, strict):
         for a in [arr_ascending, arr_strict_ascending]:
             with pytest.raises(ValueError, match="must be sorted in descending order"):
                 _check_sorted_params(a)
+
+
+def test_check_sorted_error_repr():
+    array = np.zeros(shape=(10, 10))
+    msg = "Array with 100 elements must be sorted in strict ascending order. Got:\n    array([[0., 0... 0., 0., 0.]])"
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_sorted(array, ascending=True, strict=True)
 
 
 def test_check_iterable_items():

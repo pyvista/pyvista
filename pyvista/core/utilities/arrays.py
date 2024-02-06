@@ -914,7 +914,7 @@ def cast_to_ndarray(
     try:
         if as_any:
             out = np.asanyarray(arr, dtype=dtype)
-            if copy:
+            if copy and out is arr:
                 out = out.copy()
         else:
             out = np.array(arr, dtype=dtype, copy=copy)
