@@ -1,12 +1,13 @@
 """Functions for processing array-like inputs."""
 from __future__ import annotations
 
+from abc import abstractmethod
 import itertools
 from typing import (
     Any,
+    Callable,
     Generic,
     Iterable,
-    List,
     Literal,
     Protocol,
     Tuple,
@@ -64,7 +65,7 @@ class _SupportsArray(Protocol[_DType_co]):
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
-    array: _ArrayLikeOrScalar[_NumberType]
+    # array: _ArrayLikeOrScalar[_NumberType]
 
     # The input array-like types are complex and mypy cannot infer
     # the return types correctly for each overload, so we ignore
@@ -74,55 +75,55 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
-        array: _NumberType,
+        _array: _NumberType,
     ) -> _NumberWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
-        array: _NumpyArraySequence[_NumberType],
+        _array: _NumpyArraySequence[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
-        array: _NumberSequence1D[_NumberType],
+        _array: _NumberSequence1D[_NumberType],
     ) -> _Sequence1DWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
-        array: _NumberSequence2D[_NumberType],
+        _array: _NumberSequence2D[_NumberType],
     ) -> _Sequence2DWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
-        array: _NumberSequence3D[_NumberType],
+        _array: _NumberSequence3D[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
-        array: _NumberSequence4D[_NumberType],
+        _array: _NumberSequence4D[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
-        array: NumpyArray[_NumberType],
+        _array: NumpyArray[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...  # pragma: no cover
 
     def __new__(
         cls,
-        array: _ArrayLikeOrScalar[_NumberType],
+        _array: _ArrayLikeOrScalar[_NumberType],
     ):
         """Wrap array-like inputs to standardize the representation.
 
@@ -143,30 +144,30 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         # __init__ is not used by this class or subclasses so that already-wrapped
         # inputs can be returned as-is without re-initialization.
         # Instead, attributes are initialized here with __setattr__
-        if isinstance(array, _ArrayLikeWrapper):
-            return array
-        elif isinstance(array, np.ndarray):
+        if isinstance(_array, _ArrayLikeWrapper):
+            return _array
+        elif isinstance(_array, np.ndarray):
             wrapped1 = object.__new__(_NumpyArrayWrapper)
-            wrapped1.__setattr__('_array', array)
+            wrapped1.__setattr__('_array', _array)
             return wrapped1
-        elif _is_NumberSequence1D(array):
+        elif _is_NumberSequence1D(_array):
             wrapped2 = object.__new__(_Sequence1DWrapper)
-            wrapped2.__setattr__('_array', array)
+            wrapped2.__setattr__('_array', _array)
             wrapped2.__setattr__('_dtype', None)
             return wrapped2
-        elif _is_NumberSequence2D(array):
+        elif _is_NumberSequence2D(_array):
             wrapped3 = object.__new__(_Sequence2DWrapper)
-            wrapped3.__setattr__('_array', array)
+            wrapped3.__setattr__('_array', _array)
             wrapped3.__setattr__('_dtype', None)
             return wrapped3
-        elif _is_Number(array):
+        elif _is_Number(_array):
             wrapped4 = object.__new__(_NumberWrapper)
-            wrapped4.__setattr__('_array', array)
+            wrapped4.__setattr__('_array', _array)
             return wrapped4
 
         # Everything else gets wrapped as (and possibly converted to) a numpy array
         wrapped5 = object.__new__(_NumpyArrayWrapper)
-        wrapped5.__setattr__('_array', cast_to_ndarray(array))
+        wrapped5.__setattr__('_array', cast_to_ndarray(_array))
         return wrapped5
 
     def __getattr__(self, item):
@@ -178,13 +179,29 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def __repr__(self):
         return f'{self.__class__.__name__}({self._array.__repr__()})'
 
+    @abstractmethod
+    def all_func(self, func: Callable[[Any, Any], bool], arg):
+        ...
+
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: NumpyArray[_NumberType]
     dtype: np.dtype[_NumberType]
 
+    def all_func(self, func: Callable[[Any, Any], bool], arg):
+        return np.all(func(self._array, arg))
 
-class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
+
+class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
+    def all_func(self, func: Callable[[Any, Any], bool], arg):
+        return all(func(x, arg) for x in self.as_iterable())
+
+    @abstractmethod
+    def as_iterable(self) -> Iterable[_NumberType]:
+        ...
+
+
+class _NumberWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberType
 
     @property
@@ -203,12 +220,11 @@ class _NumberWrapper(_ArrayLikeWrapper[_NumberType]):
     def dtype(self) -> Type[_NumberType]:
         return type(self._array)
 
-    @property
-    def iterable(self) -> Iterable[_NumberType]:
+    def as_iterable(self) -> Iterable[_NumberType]:
         return (self._array,)
 
 
-class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
+class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberSequence1D[_NumberType]
 
     @property
@@ -227,18 +243,14 @@ class _Sequence1DWrapper(_ArrayLikeWrapper[_NumberType]):
     def dtype(self) -> Type[_NumberType]:
         self._dtype: Type[_NumberType]
         if self._dtype is None:
-            self._dtype = _get_dtype_from_iterable(self._array)
+            self._dtype = _get_dtype_from_iterable(self.as_iterable())
         return self._dtype
 
-    @property
-    def iterable(self) -> Iterable[_NumberType]:
+    def as_iterable(self) -> Iterable[_NumberType]:
         return self._array
 
-    def sort(self) -> List[_NumberType]:
-        return sorted(self._array)
 
-
-class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
+class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberSequence2D[_NumberType]
 
     @property
@@ -257,11 +269,10 @@ class _Sequence2DWrapper(_ArrayLikeWrapper[_NumberType]):
     def dtype(self) -> Type[_NumberType]:
         self._dtype: Type[_NumberType]
         if self._dtype is None:
-            self._dtype = _get_dtype_from_iterable(self.iterable)
+            self._dtype = _get_dtype_from_iterable(self.as_iterable())
         return self._dtype
 
-    @property
-    def iterable(self) -> Iterable[_NumberType]:
+    def as_iterable(self) -> Iterable[_NumberType]:
         return itertools.chain.from_iterable(self._array)
 
 

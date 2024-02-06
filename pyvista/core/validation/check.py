@@ -313,7 +313,7 @@ def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Arra
     if isinstance(wrapper._array, np.ndarray):
         is_finite = np.all(np.isfinite(wrapper._array))
     else:
-        is_finite = all(math.isfinite(x) for x in wrapper.iterable)
+        is_finite = all(math.isfinite(x) for x in wrapper.as_iterable())
     if not is_finite:
         raise ValueError(f"{name} must have finite values.")
 
@@ -368,7 +368,7 @@ def check_integer(
     is_integer: Union[bool, np.bool_]
     try:
         # `is_integer` only works for built-in types
-        is_integer = all(x.is_integer() for x in wrapped.iterable)  # type: ignore[union-attr]
+        is_integer = all(x.is_integer() for x in wrapped.as_iterable())  # type: ignore[union-attr]
     except AttributeError:
         is_integer = np.array_equal(array, np.floor(array))
 
@@ -456,13 +456,19 @@ def check_greater_than(
     >>> validation.check_greater_than([1, 2, 3], value=0)
 
     """
-    array = array if isinstance(array, np.ndarray) else cast_to_ndarray(array)
-    check_number(value)
-    check_real(value)
-    if strict and not np.all(array > value):
-        raise ValueError(f"{name} values must all be greater than {value}.")
-    elif not np.all(array >= value):
-        raise ValueError(f"{name} values must all be greater than or equal to {value}.")
+    wrapped = _ArrayLikeWrapper(array)
+    if strict:
+        func = operator.gt
+        msg = f"{name} values must all be greater than {value}."
+    else:
+        func = operator.ge
+        msg = f"{name} values must all be greater than or equal to {value}."
+
+    if not wrapped.all_func(func, value):
+        check_number(value, name="Value")
+        check_real(value, name="Value")
+        check_finite(value, name="Value")
+        raise ValueError(msg)
 
 
 def check_less_than(
