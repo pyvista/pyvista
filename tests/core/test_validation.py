@@ -990,9 +990,12 @@ def test_cast_to_numpy_raises():
 def test_cast_to_numpy_must_be_real():
     _ = _cast_to_numpy([0, 1], must_be_real=True)
     _ = _cast_to_numpy("abc", must_be_real=False)
-    with pytest.raises(TypeError):
+
+    msg = "Array must have real numbers. Got dtype <class 'numpy.complex128'>"
+    with pytest.raises(TypeError, match=msg):
         _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
-    with pytest.raises(TypeError):
+    msg = "Array must have real numbers. Got dtype <class 'numpy.str_'>"
+    with pytest.raises(TypeError, match=msg):
         _ = _cast_to_numpy("abc", must_be_real=True)
 
 
