@@ -36,7 +36,7 @@ from pyvista.core._typing_core._type_guards import (
     _is_NumberSequence1D,
     _is_NumberSequence2D,
 )
-from pyvista.core.utilities.arrays import cast_to_ndarray
+from pyvista.core.validation._cast_array import _cast_to_numpy
 
 # Similar definitions to numpy._typing._shape but with modifications:
 #  - explicit support for empty tuples `()`
@@ -167,7 +167,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
 
         # Everything else gets wrapped as (and possibly converted to) a numpy array
         wrapped5 = object.__new__(_NumpyArrayWrapper)
-        wrapped5.__setattr__('_array', cast_to_ndarray(_array))
+        wrapped5.__setattr__('_array', _cast_to_numpy(_array))
         return wrapped5
 
     def __getattr__(self, item):

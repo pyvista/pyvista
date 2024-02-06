@@ -5,12 +5,10 @@ from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
-import numpy.typing as npt
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Array, Matrix, NumpyArray, TransformLike, Vector
-from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
+from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -794,135 +792,3 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
             '\t3x3 np.ndarray\n'
         )
     return transform_array
-
-
-def cast_to_list_array(arr: Array[_NumberType]) -> list:
-    """Cast an array to a nested list.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    Returns
-    -------
-    list
-        List or nested list array.
-    """
-    return cast_to_ndarray(arr).tolist()
-
-
-def cast_to_tuple_array(arr: Array[_NumberType]) -> tuple:
-    """Cast an array to a nested tuple.
-
-    Parameters
-    ----------
-    arr : ArrayLike
-        Array to cast.
-
-    Returns
-    -------
-    tuple
-        Tuple or nested tuple array.
-    """
-    arr = cast_to_ndarray(arr).tolist()
-
-    def _to_tuple(s):
-        return tuple(_to_tuple(i) for i in s) if isinstance(s, list) else s
-
-    return _to_tuple(arr)
-
-
-# from typing import overload
-
-
-# @overload  # number -> array
-# def cast_to_ndarray(  # numpydoc ignore=GL08
-#     arr: _NumberType,
-#     /,
-#     *,
-#     as_any: bool = ...,
-#     dtype: Optional[npt.DTypeLike] = ...,
-#     copy: bool = ...,
-# ) -> NumpyArray[_NumberType]:
-#     ...
-#
-#
-# @overload  # array -> array
-# def cast_to_ndarray(  # numpydoc ignore=GL08
-#     arr: Array[_NumberType],
-#     /,
-#     *,
-#     as_any: bool = ...,
-#     dtype: Optional[npt.DTypeLike] = ...,
-#     copy: bool = ...,
-# ) -> NumpyArray[_NumberType]:
-#     ...
-
-
-def cast_to_ndarray(
-    arr: _ArrayLikeOrScalar[_NumberType],
-    /,
-    *,
-    as_any: bool = True,
-    dtype: Optional[npt.DTypeLike] = None,
-    copy: bool = False,
-) -> NumpyArray[_NumberType]:
-    """Cast array to a NumPy ndarray.
-
-    Parameters
-    ----------
-    arr : ArrayLike
-        Array to cast.
-
-    as_any : bool, default: True
-        Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy.
-
-    dtype : DTypeLike, optional
-        The data-type of the returned array.
-
-    copy : bool, default: False
-        If ``True``, a copy of the array is returned. A copy is always
-        returned if the array:
-
-            * is a nested sequence
-            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
-
-    Raises
-    ------
-    ValueError
-        If input cannot be cast as a NumPy ndarray.
-
-    Returns
-    -------
-    np.ndarray
-        NumPy ndarray.
-
-    """
-    if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
-        return arr
-
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
-    except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
-
-    try:
-        if as_any:
-            out = np.asanyarray(arr, dtype=dtype)
-            if copy and out is arr:
-                out = out.copy()
-        else:
-            out = np.array(arr, dtype=dtype, copy=copy)
-        if out.dtype.name == 'object':
-            # NumPy will normally raise ValueError automatically for
-            # object arrays, but on some systems it will not, so raise
-            # error manually
-            raise ValueError
-    except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    return out

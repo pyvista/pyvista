@@ -32,7 +32,6 @@ import numpy as np
 
 from pyvista.core._typing_core import NumpyArray, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
-from pyvista.core.utilities.arrays import cast_to_ndarray
 from pyvista.core.validation._array_wrapper import (
     DTypeLike,
     Shape,
@@ -41,6 +40,7 @@ from pyvista.core.validation._array_wrapper import (
     _Sequence1DWrapper,
     _Sequence2DWrapper,
 )
+from pyvista.core.validation._cast_array import _cast_to_numpy
 
 
 def check_subdtype(
@@ -517,7 +517,7 @@ def check_less_than(
     >>> validation.check_less_than([-1, -2, -3], value=0)
 
     """
-    array = array if isinstance(array, np.ndarray) else cast_to_ndarray(array)
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     check_number(value)
     check_real(value)
     if strict and not np.all(array < value):
@@ -579,11 +579,11 @@ def check_range(
     >>> validation.check_range([0, 0.5, 1], rng=[0, 1])
 
     """
-    rng_ = cast_to_ndarray(rng)
+    rng_ = _cast_to_numpy(rng)
     check_shape(rng_, 2, name="Range")
     check_sorted(rng_, name="Range")
 
-    array = array if isinstance(array, np.ndarray) else cast_to_ndarray(array)
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     try:
         check_greater_than(array, rng_[0], strict=strict_lower, name=name)
         check_less_than(array, rng_[1], strict=strict_upper, name=name)
@@ -1226,7 +1226,7 @@ def check_length(
     array_len = len(cast(Sized, array))
 
     if exact_length is not None:
-        exact_length = cast_to_ndarray(exact_length)
+        exact_length = _cast_to_numpy(exact_length)
         check_integer(exact_length, name="'exact_length'")
         if array_len not in exact_length:
             raise ValueError(
