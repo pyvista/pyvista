@@ -2762,12 +2762,28 @@ class WidgetHelper:
         self.logo_widgets.clear()
 
     def add_camera3d_widget(self):
-        """Add a camera3d widget.
+        """Add a camera3d widget allow to move the camera.
+
+        .. note::
+           This widget requires ``vtk>=9.3.0``.
 
         Returns
         -------
         vtkCamera3DWidget
             The camera3d widget.
+
+        Examples
+        --------
+        Add a camera3d widget to the scene.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> plotter.add_mesh(sphere)
+        >>> plotter.subplot(0, 1)
+        >>> plotter.add_mesh(sphere)
+        >>> plotter.add_camera3d_widget()
+        >>> plotter.show(cpos=plotter.camera_position)
 
         """
         try:
