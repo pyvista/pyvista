@@ -651,7 +651,7 @@ def test_check_is_greater_than():
 def test_check_is_real():
     check_is_real(1)
     check_is_real(-2.0)
-    check_is_real(np.array(-2.0, dtype="uint8"))
+    check_is_real(np.array(2.0, dtype="uint8"))
     msg = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=msg):
         check_is_real(1 + 1j)
