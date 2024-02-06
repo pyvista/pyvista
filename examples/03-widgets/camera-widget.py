@@ -20,15 +20,12 @@ sphere = pv.Sphere()
 # Renderers and one render window
 plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
 plotter.add_mesh(sphere)
-main_renderer = plotter.renderer
-
 plotter.subplot(0, 1)
 plotter.add_mesh(sphere)
 camera_renderer = plotter.renderer
 camera_renderer.InteractiveOff()
 
 render_window = plotter.render_window
-render_window.SetWindowName("camera_widget")
 
 # An interactor
 render_window_interactor = vtk.vtkRenderWindowInteractor()
