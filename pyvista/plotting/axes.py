@@ -1,5 +1,4 @@
 """Module containing pyvista implementation of vtkAxes."""
-
 from . import _vtk
 from .actor import Actor
 from .axes_actor import AxesActor

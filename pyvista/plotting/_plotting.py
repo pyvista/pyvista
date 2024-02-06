@@ -1,5 +1,4 @@
 """These are private methods we keep out of plotting.py to simplify the module."""
-
 import warnings
 
 import numpy as np

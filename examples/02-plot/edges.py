@@ -6,7 +6,6 @@ Show Edges
 
 Show the edges of all geometries within a mesh
 """
-
 ###############################################################################
 # Sometimes it can be useful to show all of the edges of a mesh when rendering
 # to communicate aspects of the dataset like resolution.

@@ -12,7 +12,6 @@ A ``validate`` function typically:
   output as a single representation with known properties.
 
 """
-
 import inspect
 from typing import Any
 

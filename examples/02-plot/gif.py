@@ -10,7 +10,6 @@ Generate a moving gif from an active plotter.
    "jittery" GIFs, especially for the scalar bar.
 
 """
-
 # sphinx_gallery_thumbnail_number = 2
 
 import numpy as np

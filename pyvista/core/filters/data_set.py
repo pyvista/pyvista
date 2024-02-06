@@ -1,5 +1,4 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
-
 import collections.abc
 from typing import Literal, Optional, Sequence, Union
 import warnings

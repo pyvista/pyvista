@@ -15,7 +15,6 @@ Examples
 >>> mesh.plot()
 
 """
-
 import logging
 import os
 from pathlib import PureWindowsPath

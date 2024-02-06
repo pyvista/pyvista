@@ -1,5 +1,4 @@
 """Module with enum options classes for plotting."""
-
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 

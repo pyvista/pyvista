@@ -7,7 +7,6 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
-
 # flake8: noqa: F401
 
 from vtkmodules.vtkChartsCore import (

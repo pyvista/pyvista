@@ -30,7 +30,6 @@ inside a cell of the top mesh.  This will be the shortest distance from the vert
 to the top surface, unlike the first two examples.
 
 """
-
 import numpy as np
 
 import pyvista as pv

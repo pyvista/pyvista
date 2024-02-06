@@ -1,5 +1,4 @@
 """Deprecated utilities subpackage."""
-
 import importlib
 import inspect
 import warnings

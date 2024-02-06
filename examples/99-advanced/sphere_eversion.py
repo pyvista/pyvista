@@ -21,7 +21,6 @@ order to unfold the sphere. It's not obvious that the transformation is truly
 smooth; this was proved in the paper by Bednorz and Bednorz.
 
 """
-
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
 

@@ -20,7 +20,6 @@ For headlights the :py:attr:`pyvista.Camera.position` and
 where you move the camera, the light always emanates from the view point:
 
 """
-
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples

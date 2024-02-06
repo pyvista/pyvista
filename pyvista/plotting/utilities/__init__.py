@@ -1,5 +1,4 @@
 """Plotting utilities."""
-
 # flake8: noqa: F401
 
 from .algorithms import (

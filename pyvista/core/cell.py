@@ -1,5 +1,4 @@
 """Contains the pyvista.Cell class."""
-
 from __future__ import annotations
 
 from typing import List, Optional, Sequence, Tuple, cast

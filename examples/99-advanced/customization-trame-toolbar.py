@@ -6,7 +6,6 @@ Customize Trame toolbar
 
 Bring more of the power of trame to the jupyter view.
 """
-
 import asyncio
 
 import pyvista as pv

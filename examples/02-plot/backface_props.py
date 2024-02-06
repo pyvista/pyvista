@@ -12,7 +12,6 @@ One straightforward example is when a closed (or close enough) surface has a
 different color on the inside. Note that the notion of "inside" and "outside"
 depend on the orientation of the surface normals:
 """
-
 # sphinx_gallery_thumbnail_number = 1
 
 # sphinx_gallery_start_ignore

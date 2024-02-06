@@ -6,7 +6,6 @@ Geodesic Paths
 
 Calculates the geodesic path between two vertices using Dijkstra's algorithm
 """
-
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples

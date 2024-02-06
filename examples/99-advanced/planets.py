@@ -19,7 +19,6 @@ This example is inspired by `planet3D-MATLAB
    if you wish to use Python for astronomical calculations.
 
 """
-
 import pyvista
 from pyvista import examples
 

@@ -1,5 +1,4 @@
 """Module implementing point transformations and their matrices."""
-
 import numpy as np
 
 

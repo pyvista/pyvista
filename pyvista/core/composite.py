@@ -3,7 +3,6 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-
 import collections.abc
 from itertools import zip_longest
 import pathlib

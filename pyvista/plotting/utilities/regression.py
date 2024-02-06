@@ -1,5 +1,4 @@
 """Image regression module."""
-
 from typing import Optional, cast
 
 import numpy as np

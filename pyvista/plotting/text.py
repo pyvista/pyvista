@@ -1,5 +1,4 @@
 """Contains the pyvista.Text class."""
-
 from __future__ import annotations
 
 import os

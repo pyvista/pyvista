@@ -1,5 +1,4 @@
 """Prop3D module."""
-
 from typing import Tuple, Union
 
 import numpy as np

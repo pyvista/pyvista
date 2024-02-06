@@ -1,7 +1,6 @@
 """
 Tests for non-spatially referenced objects
 """
-
 import numpy as np
 import pytest
 import vtk

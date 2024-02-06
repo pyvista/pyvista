@@ -1,5 +1,4 @@
 """Filters module with a class to manage filters/algorithms for unstructured grid datasets."""
-
 from functools import wraps
 
 from pyvista.core import _vtk_core as _vtk

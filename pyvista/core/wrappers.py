@@ -22,7 +22,6 @@ A user-defined Foo class is defined that extends the functionality of
 >>> pv._wrappers = default_wrappers  # reset back to default
 
 """
-
 from .composite import MultiBlock
 from .grid import ImageData, RectilinearGrid
 from .objects import Table

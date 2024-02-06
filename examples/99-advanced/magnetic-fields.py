@@ -18,7 +18,6 @@ example from the awesome `magpylib <https://github.com/magpylib/magpylib>`_
 library.
 
 """
-
 # sphinx_gallery_thumbnail_number = 3
 
 import numpy as np

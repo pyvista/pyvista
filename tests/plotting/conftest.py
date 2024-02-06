@@ -1,7 +1,6 @@
 """This conftest is here to allow for checking garbage collection and
 memory leaks for all plotting tests
 """
-
 import gc
 import inspect
 

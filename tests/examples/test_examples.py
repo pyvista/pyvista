@@ -1,5 +1,4 @@
 """Test examples that do not require downloading."""
-
 import numpy as np
 import pytest
 

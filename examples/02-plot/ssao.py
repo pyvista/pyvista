@@ -15,7 +15,6 @@ See `Kitware: Screen-Space Ambient Occlusion
 <https://www.kitware.com/ssao/>`_ for more details
 
 """
-
 # sphinx_gallery_thumbnail_number = 3
 
 # sphinx_gallery_start_ignore

@@ -1,5 +1,4 @@
 """Core routines."""
-
 # flake8: noqa: F401
 
 from . import _vtk_core

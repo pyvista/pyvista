@@ -6,7 +6,6 @@
 
 Integrate a vector field to generate streamlines on a 2D surface.
 """
-
 # sphinx_gallery_thumbnail_number = 3
 
 ###############################################################################

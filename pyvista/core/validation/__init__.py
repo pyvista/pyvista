@@ -1,5 +1,4 @@
 """Input validation functions."""
-
 from pyvista.core.validation.check import (  # noqa: F401
     check_has_length,
     check_has_shape,

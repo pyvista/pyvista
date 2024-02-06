@@ -20,7 +20,6 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
-
 from typing import Sequence, TypeVar, Union
 
 import numpy as np

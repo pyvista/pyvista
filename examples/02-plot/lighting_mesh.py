@@ -11,7 +11,6 @@ and Specular. These options only work if the ``lighting`` argument to
 You can turn off all lighting for the given mesh by passing ``lighting=False``
 to ``add_mesh``.
 """
-
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples

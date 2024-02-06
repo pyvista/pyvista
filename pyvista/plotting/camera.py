@@ -1,5 +1,4 @@
 """Module containing pyvista implementation of vtkCamera."""
-
 from __future__ import annotations
 
 from pathlib import Path

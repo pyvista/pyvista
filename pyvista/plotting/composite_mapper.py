@@ -1,5 +1,4 @@
 """Module containing composite data mapper."""
-
 from itertools import cycle
 import sys
 from typing import Optional
@@ -517,11 +516,9 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
-    (
-        _vtk.vtkCompositePolyDataMapper  # type: ignore
-        if vtk_version_info >= (9, 3)
-        else _vtk.vtkCompositePolyDataMapper2
-    ),  # type: ignore
+    _vtk.vtkCompositePolyDataMapper  # type: ignore
+    if vtk_version_info >= (9, 3)
+    else _vtk.vtkCompositePolyDataMapper2,  # type: ignore
     _BaseMapper,
 ):
     """Composite PolyData mapper.

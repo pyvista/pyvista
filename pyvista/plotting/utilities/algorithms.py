@@ -1,5 +1,4 @@
 """Internal vtkAlgorithm support helpers."""
-
 import traceback
 
 import numpy as np

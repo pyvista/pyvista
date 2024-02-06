@@ -8,7 +8,6 @@ Integrate data over a surface using the
 :func:`pyvista.DataSetFilters.integrate_data` filter.
 
 """
-
 import pyvista
 from pyvista import examples
 

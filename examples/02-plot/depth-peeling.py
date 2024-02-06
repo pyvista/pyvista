@@ -12,7 +12,6 @@ For this example, we will showcase the difference that depth peeling
 provides.
 
 """
-
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples

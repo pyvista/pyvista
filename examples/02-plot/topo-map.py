@@ -9,7 +9,6 @@ focused on plotting aerial imagery from a GeoTIFF on top of some topography
 mesh.
 
 """
-
 # sphinx_gallery_thumbnail_number = 4
 
 import matplotlib as mpl

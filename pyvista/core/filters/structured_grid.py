@@ -1,5 +1,4 @@
 """Filters module with class to manage filters/algorithms for structured grid datasets."""
-
 import numpy as np
 
 import pyvista

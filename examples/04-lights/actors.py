@@ -12,7 +12,6 @@ so they can be visualized using a cone.
 This is exactly the purpose of a ``vtk.vtkLightActor``, the
 functionality of which can be enabled for spotlights:
 """
-
 # sphinx_gallery_thumbnail_number = 1
 import numpy as np
 

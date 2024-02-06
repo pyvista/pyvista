@@ -1,5 +1,4 @@
 """Internal array utilities."""
-
 import collections.abc
 import enum
 from itertools import product

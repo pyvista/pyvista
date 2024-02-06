@@ -1,5 +1,4 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-
 import collections.abc
 from functools import wraps
 import numbers

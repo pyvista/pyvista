@@ -1,5 +1,4 @@
 """Module managing picking events."""
-
 from functools import partial, wraps
 from typing import Tuple, cast
 import warnings

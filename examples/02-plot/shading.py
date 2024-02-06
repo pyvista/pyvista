@@ -6,7 +6,6 @@ Types of Shading
 
 Comparison of default, flat shading vs. smooth shading.
 """
-
 # sphinx_gallery_thumbnail_number = 4
 import pyvista
 from pyvista import examples

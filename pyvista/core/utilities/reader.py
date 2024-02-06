@@ -1,5 +1,4 @@
 """Fine-grained control of reading data files."""
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import enum

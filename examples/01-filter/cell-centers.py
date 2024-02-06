@@ -9,7 +9,6 @@ Extract the coordinates of the centers of all cells or faces in a mesh.
 Here we use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>`.
 
 """
-
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 3

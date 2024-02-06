@@ -1,5 +1,4 @@
 """Module containing pyvista implementation of vtkProperty."""
-
 from . import _vtk
 from .opts import InterpolationType, RepresentationType
 

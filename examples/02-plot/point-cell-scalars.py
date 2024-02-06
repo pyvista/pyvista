@@ -9,7 +9,6 @@ a dataset.
 
 
 """
-
 import numpy as np
 
 from pyvista import examples

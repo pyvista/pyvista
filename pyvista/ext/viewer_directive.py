@@ -1,5 +1,4 @@
 """Viewer directive module."""
-
 import os
 import pathlib
 import shutil

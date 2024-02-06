@@ -1,5 +1,4 @@
 """PyVista volume module."""
-
 from . import _vtk
 from ._property import Property
 from .mapper import _BaseMapper

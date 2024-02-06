@@ -1,5 +1,4 @@
 """This module contains any tests which cause memory leaks."""
-
 import gc
 import weakref
 

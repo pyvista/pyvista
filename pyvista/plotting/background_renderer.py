@@ -1,5 +1,4 @@
 """Contains the BackgroundRenderer class."""
-
 import numpy as np
 
 import pyvista

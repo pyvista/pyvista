@@ -1,5 +1,4 @@
 """PyVista plotting module."""
-
 import collections.abc
 from contextlib import contextmanager
 from copy import deepcopy

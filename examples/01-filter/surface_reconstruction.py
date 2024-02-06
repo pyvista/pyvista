@@ -9,7 +9,6 @@ handled by :func:`pyvista.PolyDataFilters.reconstruct_surface`. This
 tends to perform much better than :func:`pyvista.DataSetFilters.delaunay_3d`.
 
 """
-
 import pyvista as pv
 
 ###############################################################################

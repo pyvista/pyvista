@@ -1,5 +1,4 @@
 """Test the CubeAxesActor wrapping."""
-
 import numpy as np
 import pytest
 

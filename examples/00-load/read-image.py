@@ -5,7 +5,6 @@ Read Image Files
 Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
-
 from pyvista import examples
 
 ###############################################################################

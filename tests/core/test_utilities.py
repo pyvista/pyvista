@@ -1,5 +1,4 @@
 """Test pyvista core utilities."""
-
 import os
 import pathlib
 import pickle

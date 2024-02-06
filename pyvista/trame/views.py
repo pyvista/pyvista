@@ -1,5 +1,4 @@
 """Trame view interface for PyVista."""
-
 import io
 import weakref
 

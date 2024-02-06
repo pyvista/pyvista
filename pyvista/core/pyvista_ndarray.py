@@ -1,5 +1,4 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
-
 from collections.abc import Iterable
 from typing import Union
 
