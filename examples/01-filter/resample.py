@@ -23,6 +23,7 @@ For :func:`pyvista.DataSetFilters.interpolate`, see :ref:`interpolate_example`.
 
 Resample one mesh's point/cell arrays onto another mesh's nodes.
 """
+
 ###############################################################################
 # This example will resample a volumetric mesh's scalar data onto the surface
 # of a sphere contained in that volume.
