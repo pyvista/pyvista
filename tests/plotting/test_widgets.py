@@ -727,6 +727,6 @@ def test_clear_camera3d_widget(verify_image_cache):
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
-    pl.add_camera3d_widget(None)
+    pl.add_camera3d_widget()
     pl.clear_camera3d_widgets()
     pl.show(cpos='xy')
