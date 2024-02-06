@@ -41,7 +41,8 @@ camera_renderer.InteractiveOff()
 camera_renderer.AddActor(actor)
 camera_renderer.SetBackground(0.8, 0.8, 1.0)
 
-render_window = vtk.vtkRenderWindow()
+plotter = pv.Plotter()
+render_window = plotter.render_window
 render_window.SetSize(600, 300)
 render_window.AddRenderer(main_renderer)
 render_window.AddRenderer(camera_renderer)
