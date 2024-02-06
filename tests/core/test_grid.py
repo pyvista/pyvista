@@ -1184,6 +1184,14 @@ def test_set_extent():
     assert np.array_equal(uni_grid.extent, extent)
 
 
+def test_set_extent_width_spacing():
+    grid = pv.ImageData(
+        dimensions=(10, 10, 10), origin=(-0.5, -0.3, -0.1), spacing=(0.1, 0.05, 0.01)
+    )
+    grid.extent = (5, 9, 0, 9, 0, 9)
+    assert np.allclose(grid.x[:5], [0.0, 0.1, 0.2, 0.3, 0.4])
+
+
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
