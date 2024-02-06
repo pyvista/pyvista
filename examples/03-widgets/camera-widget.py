@@ -13,9 +13,11 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 import vtk
 
-sphere_source = vtk.vtkSphereSource()
-cube_source = vtk.vtkCubeSource()
-cube_source.SetCenter(0.0, 0.0, 2.0)
+import pyvista as pv
+
+sphere_source = pv.SphereSource()
+cube_source = pv.CubeSource()
+cube_source.center = (0.0, 0.0, 2.0)
 source = vtk.vtkAppendPolyData()
 source.AddInputConnection(sphere_source.GetOutputPort())
 source.AddInputConnection(cube_source.GetOutputPort())
