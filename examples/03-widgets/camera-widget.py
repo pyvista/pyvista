@@ -11,7 +11,6 @@ Camera Widget
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-import vtk
 
 import pyvista as pv
 
@@ -21,9 +20,5 @@ plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
 plotter.add_mesh(sphere)
 plotter.subplot(0, 1)
 plotter.add_mesh(sphere)
-
-iren = vtk.vtkRenderWindowInteractor()
-iren.SetRenderWindow(plotter.render_window)
-plotter.add_camera3d_widget(iren)
-iren.Initialize()
-iren.Start()
+plotter.add_camera3d_widget()
+plotter.show(cpos=plotter.camera_position)
