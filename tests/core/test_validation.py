@@ -985,6 +985,9 @@ def test_cast_to_numpy_raises():
     msg = "Input cannot be cast as <class 'numpy.ndarray'>."
     with pytest.raises(ValueError, match=msg):
         _cast_to_numpy([[1], [2, 3]])
+    msg = "Object arrays are not supported."
+    with pytest.raises(TypeError, match=msg):
+        _cast_to_numpy(list)
 
 
 def test_cast_to_numpy_must_be_real():

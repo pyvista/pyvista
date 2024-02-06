@@ -81,7 +81,8 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
         If input cannot be cast as a NumPy ndarray.
         ValueError
     TypeError
-        If data is not real numbers and ``must_be_real`` is ``True``.
+        If an object array is created or if the data is not real numbers
+        and ``must_be_real`` is ``True``.
 
     Returns
     -------
@@ -104,13 +105,10 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
                 out = out.copy()
         else:
             out = np.array(arr, dtype=dtype, copy=copy)
-        if out.dtype.name == 'object':
-            # NumPy will normally raise ValueError automatically for
-            # object arrays, but on some systems it will not, so raise
-            # error manually
-            raise ValueError
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
+    elif out.dtype.name == 'object':
+        raise TypeError("Object arrays are not supported.")
     return out
