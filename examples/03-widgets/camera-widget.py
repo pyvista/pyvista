@@ -1,8 +1,8 @@
 """
-.. _camera_widget_example:
+.. _camera3d_widget_example:
 
 Camera Widget
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 """
 
@@ -22,7 +22,7 @@ plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
 plotter.add_mesh(sphere)
 plotter.subplot(0, 1)
 plotter.add_mesh(sphere)
-camera_renderer = plotter.renderer
+camera3d_renderer = plotter.renderer
 
 render_window = plotter.render_window
 
@@ -31,20 +31,21 @@ render_window_interactor = vtk.vtkRenderWindowInteractor()
 render_window_interactor.SetRenderWindow(render_window)
 
 # Camera widget and its representation
-camera_representation = vtk.vtkCamera3DRepresentation()
-camera_widget = vtk.vtkCamera3DWidget()
-camera_widget.SetInteractor(render_window_interactor)
-camera_widget.SetRepresentation(camera_representation)
+camera3d_representation = vtk.vtkCamera3DRepresentation()
+camera3d_representation.SetCamera(camera3d_renderer.GetActiveCamera())
+camera3d_widget = vtk.vtkCamera3DWidget()
+camera3d_widget.SetInteractor(render_window_interactor)
+camera3d_widget.SetRepresentation(camera3d_representation)
 
 # If you want to set the camera, do it before placing the widget
-camera_representation.SetCamera(camera_renderer.GetActiveCamera())
 # Placing widget is optional, if you do, camera will be moved toward bounds
-# camera_representation.PlaceWidget(actor.GetBounds())
+# camera3d_representation.PlaceWidget(actor.GetBounds())
+# plotter.add_camera3d_widget()
 
 # Render
 render_window_interactor.Initialize()
 render_window.Render()
-camera_widget.On()
+camera3d_widget.On()
 
 # Begin mouse interaction
 render_window_interactor.Start()

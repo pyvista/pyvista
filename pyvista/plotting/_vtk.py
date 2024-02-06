@@ -31,6 +31,8 @@ from vtkmodules.vtkCommonColor import vtkColorSeries
 from vtkmodules.vtkInteractionWidgets import (
     vtkBoxWidget,
     vtkButtonWidget,
+    vtkCamera3DRepresentation,
+    vtkCamera3DWidget,
     vtkDistanceRepresentation3D,
     vtkDistanceWidget,
     vtkImplicitPlaneWidget,
