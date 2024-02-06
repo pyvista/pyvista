@@ -22,3 +22,8 @@ plotter.subplot(0, 1)
 plotter.add_mesh(sphere)
 plotter.add_camera3d_widget()
 plotter.show(cpos=plotter.camera_position)
+
+##############################################################################
+# And here is a screen capture of a user interacting with this
+#
+# .. image:: ../../images/user-generated/camera3d-widget.png
