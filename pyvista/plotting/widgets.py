@@ -2770,9 +2770,18 @@ class WidgetHelper:
             The camera3d widget.
 
         """
-        representation = _vtk.vtkCamera3DRepresentation()
+        try:
+            from vtkmodules.vtkInteractionWidgets import (
+                vtkCamera3DRepresentation,
+                vtkCamera3DWidget,
+            )
+        except ImportError:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
+        representation = vtkCamera3DRepresentation()
         representation.SetCamera(self.renderer.GetActiveCamera())
-        widget = _vtk.vtkCamera3DWidget()
+        widget = vtkCamera3DWidget()
         widget.SetInteractor(self.iren.interactor)
         widget.SetRepresentation(representation)
         widget.On()
