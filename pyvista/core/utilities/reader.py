@@ -2435,10 +2435,6 @@ class GIFReader(BaseReader):
 class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
 
-    Notes
-    -----
-    We currently can't inspect the time values for this reader.
-
     Parameters
     ----------
     path : str
