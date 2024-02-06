@@ -632,11 +632,10 @@ def test_check_greater_than():
         check_greater_than(-1, 0, strict=False, name="_input")
 
 
-
-def test_check_is_real():
-    check_is_real(1)
-    check_is_real(-2.0)
-    check_is_real(np.array(2.0, dtype="uint8"))
+def test_check_real():
+    check_real(1)
+    check_real(-2.0)
+    check_real(np.array(2.0, dtype="uint8"))
     msg = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=msg):
         check_real(1 + 1j)
