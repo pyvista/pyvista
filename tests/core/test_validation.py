@@ -1082,7 +1082,7 @@ arraylike_shapes = [
 ]
 
 ArrayLikePropsTuple = namedtuple(
-    'ArrayLikeTuple', ['array', 'shape', 'dtype', 'ndim', 'wrapper', 'return_original']
+    'ArrayLikeTuple', ['array', 'shape', 'dtype', 'ndim', 'size', 'wrapper', 'return_original']
 )
 
 
@@ -1136,6 +1136,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
             shape=shape_in,
             dtype=dtype_in,
             ndim=0,
+            size=1,
             wrapper=_NumberWrapper,
             return_original=True,
         )
@@ -1146,6 +1147,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
             shape=shape_in,
             dtype=np.dtype(dtype_in),
             ndim=array_before_wrap.ndim,
+            size=array_before_wrap.size,
             wrapper=_NumpyArrayWrapper,
             return_original=True,
         )
@@ -1172,6 +1174,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
             shape=shape_out,
             dtype=np.array(array_before_wrap).dtype,
             ndim=np.array(array_before_wrap).ndim,
+            size=np.array(array_before_wrap).size,
             wrapper=_NumpyArrayWrapper,
             return_original=False,
         )
@@ -1199,6 +1202,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
                 shape=shape_in,
                 dtype=dtype_out,
                 ndim=depth,
+                size=initial_array.size,
                 wrapper=wrapper,
                 return_original=True,
             )
@@ -1209,6 +1213,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
                 shape=shape_in,
                 dtype=dtype_out,
                 ndim=depth,
+                size=initial_array.size,
                 wrapper=_NumpyArrayWrapper,
                 return_original=False,
             )
@@ -1221,6 +1226,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     assert wrapped_abstract.shape == expected.shape
     assert wrapped_abstract.dtype == expected.dtype
     assert wrapped_abstract.ndim == expected.ndim
+    assert wrapped_abstract.size == expected.size
     assert type(wrapped_abstract) is expected.wrapper
 
     # Test child wrapper
@@ -1229,6 +1235,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     assert wrapped_child.shape == expected.shape
     assert wrapped_child.dtype == expected.dtype
     assert wrapped_child.ndim == expected.ndim
+    assert wrapped_abstract.size == expected.size
     assert type(wrapped_child) is expected.wrapper
 
     # Test wrapping self returns self
@@ -1239,6 +1246,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     assert wrapped_wrapped.shape == expected.shape
     assert wrapped_wrapped.dtype == expected.dtype
     assert wrapped_wrapped.ndim == expected.ndim
+    assert wrapped_abstract.size == expected.size
     assert type(wrapped_wrapped) is expected.wrapper
 
 
