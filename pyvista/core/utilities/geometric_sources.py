@@ -3,6 +3,8 @@
 Also includes some pure-python helpers.
 
 """
+from __future__ import annotations
+
 from typing import Sequence, Tuple, Union
 
 import numpy as np
@@ -1608,6 +1610,349 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         pyvista.PolyData
             Sphere surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+class PolygonSource(_vtk.vtkRegularPolygonSource):
+    """Polygon source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``. Central axis of the polygon passes
+        through this point.
+
+    radius : float, default: 1.0
+        The radius of the polygon.
+
+    normal : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
+
+    n_sides : int, default: 6
+        Number of sides of the polygon.
+
+    fill : bool, default: True
+        Enable or disable producing filled polygons.
+
+    Examples
+    --------
+    Create an 8 sided polygon.
+
+    >>> import pyvista as pv
+    >>> source = pv.PolygonSource(n_sides=8)
+    >>> source.output.plot(show_edges=True, line_width=5)
+    """
+
+    def __init__(
+        self, center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True
+    ):
+        """Initialize the polygon source class."""
+        super().__init__()
+        self.center = center
+        self.radius = radius
+        self.normal = normal
+        self.n_sides = n_sides
+        self.fill = fill
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def radius(self) -> float:
+        """Get the radius of the polygon.
+
+        Returns
+        -------
+        float
+            The radius of the polygon.
+        """
+        return self.GetRadius()
+
+    @radius.setter
+    def radius(self, radius: float):
+        """Set the radius of the polygon.
+
+        Parameters
+        ----------
+        radius : float
+            The radius of the polygon.
+        """
+        self.SetRadius(radius)
+
+    @property
+    def normal(self) -> Sequence[float]:
+        """Get the normal in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Normal in ``[x, y, z]``.
+        """
+        return self.GetNormal()
+
+    @normal.setter
+    def normal(self, normal: Sequence[float]):
+        """Set the normal in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        normal : sequence[float]
+            Normal in ``[x, y, z]``.
+        """
+        self.SetNormal(normal)
+
+    @property
+    def n_sides(self) -> int:
+        """Get number of sides of the polygon.
+
+        Returns
+        -------
+        int
+            Number of sides of the polygon.
+        """
+        return self.GetNumberOfSides()
+
+    @n_sides.setter
+    def n_sides(self, n_sides: int):
+        """Set number of sides of the polygon.
+
+        Parameters
+        ----------
+        n_sides : int
+            Number of sides of the polygon.
+        """
+        self.SetNumberOfSides(n_sides)
+
+    @property
+    def fill(self) -> bool:
+        """Get enable or disable producing filled polygons.
+
+        Returns
+        -------
+        bool
+            Enable or disable producing filled polygons.
+        """
+        return self.GetGeneratePolygon()
+
+    @fill.setter
+    def fill(self, fill: bool):
+        """Set enable or disable producing filled polygons.
+
+        Parameters
+        ----------
+        fill : bool, optional
+            Enable or disable producing filled polygons.
+        """
+        self.SetGeneratePolygon(fill)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Polygon surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
+    """Platonic solid source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    kind : str | int, default: 'tetrahedron'
+        The kind of Platonic solid to create. Either the name of the
+        polyhedron or an integer index:
+
+            * ``'tetrahedron'`` or ``0``
+            * ``'cube'`` or ``1``
+            * ``'octahedron'`` or ``2``
+            * ``'icosahedron'`` or ``3``
+            * ``'dodecahedron'`` or ``4``
+
+    Examples
+    --------
+    Create and plot a dodecahedron.
+
+    >>> import pyvista as pv
+    >>> dodeca = pv.PlatonicSolidSource('dodecahedron')
+    >>> dodeca.output.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+
+    _new_attr_exceptions = ['_kinds']
+
+    def __init__(self, kind='tetrahedron'):
+        """Initialize the platonic solid source class."""
+        super().__init__()
+        self._kinds = {
+            'tetrahedron': 0,
+            'cube': 1,
+            'octahedron': 2,
+            'icosahedron': 3,
+            'dodecahedron': 4,
+        }
+        self.kind = kind
+
+    @property
+    def kind(self) -> str:
+        """Get the kind of Platonic solid to create.
+
+        Returns
+        -------
+        str
+            The kind of Platonic solid to create.
+        """
+        return list(self._kinds.keys())[self.GetSolidType()]
+
+    @kind.setter
+    def kind(self, kind: str | int):
+        """Set the kind of Platonic solid to create.
+
+        Parameters
+        ----------
+        kind : str | int, default: 'tetrahedron'
+            The kind of Platonic solid to create. Either the name of the
+            polyhedron or an integer index:
+
+                * ``'tetrahedron'`` or ``0``
+                * ``'cube'`` or ``1``
+                * ``'octahedron'`` or ``2``
+                * ``'icosahedron'`` or ``3``
+                * ``'dodecahedron'`` or ``4``
+        """
+        if isinstance(kind, str):
+            if kind not in self._kinds:
+                raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+            kind = self._kinds[kind]
+        elif isinstance(kind, int) and kind not in range(5):
+            raise ValueError(f'Invalid Platonic solid index "{kind}".')
+        elif not isinstance(kind, int):
+            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
+        self.SetSolidType(kind)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            PlatonicSolid surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlaneSource(_vtk.vtkPlaneSource):
+    """Create a plane source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    i_resolution : int, default: 10
+        Number of points on the plane in the i direction.
+
+    j_resolution : int, default: 10
+        Number of points on the plane in the j direction.
+
+    """
+
+    def __init__(
+        self,
+        i_resolution=10,
+        j_resolution=10,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.i_resolution = i_resolution
+        self.j_resolution = j_resolution
+
+    @property
+    def i_resolution(self) -> int:
+        """Number of points on the plane in the i direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the i direction.
+        """
+        return self.GetXResolution()
+
+    @i_resolution.setter
+    def i_resolution(self, i_resolution: int):
+        """Set number of points on the plane in the i direction.
+
+        Parameters
+        ----------
+        i_resolution : int
+            Number of points on the plane in the i direction.
+        """
+        self.SetXResolution(i_resolution)
+
+    @property
+    def j_resolution(self) -> int:
+        """Number of points on the plane in the j direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the j direction.
+        """
+        return self.GetYResolution()
+
+    @j_resolution.setter
+    def j_resolution(self, j_resolution: int):
+        """Set number of points on the plane in the j direction.
+
+        Parameters
+        ----------
+        j_resolution : int
+            Number of points on the plane in the j direction.
+        """
+        self.SetYResolution(j_resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
         """
         self.Update()
         return wrap(self.GetOutput())
