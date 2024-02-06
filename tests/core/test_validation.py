@@ -22,10 +22,8 @@ from pyvista.core.validation import (
     check_less_than,
     check_nonnegative,
     check_number,
-    check_numeric,
     check_range,
     check_real,
-    check_scalar,
     check_sequence,
     check_shape,
     check_sorted,
@@ -644,18 +642,6 @@ def test_check_real():
         check_real(1 + 1j, name="_input")
 
 
-def test_check_numeric():
-    check_numeric(1)
-    check_numeric(-2.0)
-    check_numeric(np.array(-2.0, dtype="uint8"))
-    msg = 'Array must be numeric.'
-    with pytest.raises(TypeError, match=msg):
-        check_numeric('abc')
-    msg = '_input must be numeric.'
-    with pytest.raises(TypeError, match=msg):
-        check_numeric(tuple('s'), name="_input")
-
-
 def test_check_finite():
     check_finite(0)
     msg = '_input must have finite values.'
@@ -894,20 +880,6 @@ def test_check_number_raises():
     msg = "Object must be"
     with pytest.raises(TypeError, match=msg):
         check_number(1 + 1j, must_be_real=True)
-
-
-def test_check_scalar():
-    check_scalar(1)
-    check_scalar(np.array(0))
-    check_scalar(np.array(1 + 2j), must_be_real=False)
-
-    msg = "Got <class 'list'> instead."
-    with pytest.raises(TypeError, match=msg):
-        check_scalar([1, 2])
-
-    msg = "Scalar must be a 0-dimensional array, got `ndim=1` instead."
-    with pytest.raises(ValueError, match=escape(msg)):
-        check_scalar(np.array([1]))
 
 
 def test_check_contains():
