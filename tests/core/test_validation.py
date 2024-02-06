@@ -988,7 +988,7 @@ def test_cast_to_numpy(as_any, copy, dtype):
 
 
 def test_cast_to_numpy_raises():
-    if sys.version_info < (3, 9):
+    if sys.version_info < (3, 9) and sys.platform == 'linux':
         err = TypeError
         msg = "Object arrays are not supported."
     else:
