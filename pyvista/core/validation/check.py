@@ -517,13 +517,19 @@ def check_less_than(
     >>> validation.check_less_than([-1, -2, -3], value=0)
 
     """
-    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
-    check_number(value)
-    check_real(value)
-    if strict and not np.all(array < value):
-        raise ValueError(f"{name} values must all be less than {value}.")
-    elif not np.all(array <= value):
-        raise ValueError(f"{name} values must all be less than or equal to {value}.")
+    wrapped = _ArrayLikeWrapper(array)
+    if strict:
+        func = operator.lt
+        msg = f"{name} values must all be less than {value}."
+    else:
+        func = operator.le
+        msg = f"{name} values must all be less than or equal to {value}."
+
+    if not wrapped.all_func(func, value):
+        check_number(value, name="Value")
+        check_real(value, name="Value")
+        check_finite(value, name="Value")
+        raise ValueError(msg)
 
 
 def check_range(
