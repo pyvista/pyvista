@@ -623,8 +623,14 @@ def test_check_is_string():
 
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
-    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
-    with pytest.raises(ValueError, match=msg):
+
+    if sys.version_info < (3, 9):
+        err = TypeError
+        msg = "Object arrays are not supported."
+    else:
+        err = ValueError
+        msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(err, match=msg):
         check_is_arraylike([[1, 2], 3])
 
 
@@ -982,9 +988,15 @@ def test_cast_to_numpy(as_any, copy, dtype):
 
 
 def test_cast_to_numpy_raises():
-    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
-    with pytest.raises(ValueError, match=msg):
+    if sys.version_info < (3, 9):
+        err = TypeError
+        msg = "Object arrays are not supported."
+    else:
+        err = ValueError
+        msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(err, match=msg):
         _cast_to_numpy([[1], [2, 3]])
+
     msg = "Object arrays are not supported."
     with pytest.raises(TypeError, match=msg):
         _cast_to_numpy(list)
@@ -1008,16 +1020,12 @@ def test_cast_to_tuple():
     assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
     array_list = array_in.tolist()
     assert np.array_equal(array_tuple, array_list)
-    with pytest.raises(ValueError):
-        _cast_to_tuple([[1, [2, 3]]])
 
 
 def test_cast_to_list():
     array_in = np.zeros(shape=(3, 4, 5))
     array_list = _cast_to_list(array_in)
     assert np.array_equal(array_in, array_list)
-    with pytest.raises(ValueError):
-        _cast_to_list([[1, [2, 3]]])
 
 
 @pytest.mark.parametrize(

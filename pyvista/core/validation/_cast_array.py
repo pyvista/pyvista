@@ -79,7 +79,6 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
     ------
     ValueError
         If input cannot be cast as a NumPy ndarray.
-        ValueError
     TypeError
         If an object array is created or if the data is not real numbers
         and ``must_be_real`` is ``True``.
