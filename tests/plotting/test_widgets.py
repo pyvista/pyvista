@@ -723,6 +723,7 @@ def test_clear_logo_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_clear_camera3d_widget(verify_image_cache):
     mesh = pv.Cube()
     pl = pv.Plotter()
