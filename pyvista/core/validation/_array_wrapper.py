@@ -184,6 +184,17 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def all_func(self, func: Callable[[Any, Any], bool], arg):
         ...
 
+    @abstractmethod
+    def __call__(self):
+        ...
+        # This method is used for statically mapping the wrapper type
+        # to its internal array type: Type[wrapper[T]] -> Type[array[T]].
+        # This effectively makes wrapped objects look like array objects
+        # so that mypy won't complain that a wrapped object is used where
+        # an array is expected.
+        # Otherwise, many `type: ignore`s would be needed, or the wrapper
+        # class would need to be added to the array-like type alias
+
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: NumpyArray[_NumberType]
@@ -191,6 +202,9 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
 
     def all_func(self, func: Callable[[Any, Any], bool], arg):
         return np.all(func(self._array, arg))
+
+    def __call__(self) -> NumpyArray[_NumberType]:
+        return self  # type: ignore[return-value]
 
 
 class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
@@ -224,6 +238,9 @@ class _NumberWrapper(_BuiltinWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return (self._array,)
 
+    def __call__(self) -> _NumberType:
+        return self  # type: ignore[return-value]
+
 
 class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberSequence1D[_NumberType]
@@ -250,6 +267,9 @@ class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return self._array
 
+    def __call__(self) -> _NumberSequence1D[_NumberType]:
+        return self  # type: ignore[return-value]
+
 
 class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberSequence2D[_NumberType]
@@ -275,6 +295,9 @@ class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
 
     def as_iterable(self) -> Iterable[_NumberType]:
         return itertools.chain.from_iterable(self._array)
+
+    def __call__(self) -> _NumberSequence2D[_NumberType]:
+        return self  # type: ignore[return-value]
 
 
 def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):

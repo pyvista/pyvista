@@ -585,14 +585,13 @@ def check_range(
     >>> validation.check_range([0, 0.5, 1], rng=[0, 1])
 
     """
-    rng_ = _cast_to_numpy(rng)
-    check_shape(rng_, 2, name="Range")
-    check_sorted(rng_, name="Range")
-
-    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+    wrapped_rng = _ArrayLikeWrapper(rng)
+    wrapped_arr = _ArrayLikeWrapper(array)
     try:
-        check_greater_than(array, rng_[0], strict=strict_lower, name=name)
-        check_less_than(array, rng_[1], strict=strict_upper, name=name)
+        check_shape(wrapped_rng(), 2, name="Range")
+        check_sorted(wrapped_rng(), name="Range")
+        check_greater_than(wrapped_arr(), wrapped_rng._array[0], strict=strict_lower, name=name)  # type: ignore[arg-type]
+        check_less_than(wrapped_arr(), wrapped_rng._array[1], strict=strict_upper, name=name)  # type: ignore[arg-type]
     except ValueError:
         raise
 
