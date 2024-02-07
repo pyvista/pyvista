@@ -180,7 +180,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         return f'{self.__class__.__name__}({self._array.__repr__()})'
 
     @abstractmethod
-    def all_func(self, func: Callable[[Any, Any], bool], arg):
+    def all_func(self, func: Callable, *args):
         ...
 
     @abstractmethod
@@ -203,8 +203,8 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: NumpyArray[_NumberType]
     dtype: np.dtype[_NumberType]
 
-    def all_func(self, func: Callable[[Any, Any], bool], arg):
-        return np.all(func(self._array, arg))
+    def all_func(self, func: Callable, *args):
+        return np.all(func(self._array, *args))
 
     def __call__(self) -> NumpyArray[_NumberType]:
         return self  # type: ignore[return-value]
@@ -214,8 +214,8 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
 
 
 class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
-    def all_func(self, func: Callable[[Any, Any], bool], arg):
-        return all(func(x, arg) for x in self.as_iterable())
+    def all_func(self, func: Callable, *args):
+        return all(func(x, *args) for x in self.as_iterable())
 
 
 class _NumberWrapper(_BuiltinWrapper[_NumberType]):

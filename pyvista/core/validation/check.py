@@ -314,9 +314,9 @@ def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Arra
     wrapper = _ArrayLikeWrapper(array)
     is_finite: Union[bool, np.bool_]
     if isinstance(wrapper._array, np.ndarray):
-        is_finite = np.all(np.isfinite(wrapper._array))
+        is_finite = wrapper.all_func(np.isfinite)
     else:
-        is_finite = all(math.isfinite(x) for x in wrapper.as_iterable())
+        is_finite = wrapper.all_func(math.isfinite)
     if not is_finite:
         raise ValueError(f"{name} must have finite values.")
 
