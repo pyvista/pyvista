@@ -373,7 +373,7 @@ def check_integer(
         # `is_integer` only works for built-in types
         is_integer = all(x.is_integer() for x in wrapped.as_iterable())  # type: ignore[union-attr]
     except AttributeError:
-        is_integer = np.array_equal(array, np.floor(array))
+        is_integer = np.array_equal(wrapped._array, np.floor(wrapped._array))
 
     if not is_integer:
         raise ValueError(f"{name} must have integer-like values.")
