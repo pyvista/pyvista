@@ -95,7 +95,7 @@ class _PointSet(DataSet):
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
-        return None
+        return
 
     def remove_cells(self, ind: Union[Vector[bool], Vector[int]], inplace=False) -> '_PointSet':
         """Remove cells.
@@ -789,7 +789,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
-        return None
+        return
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -2600,7 +2600,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())
-        return None
+        return
 
     def _reshape_point_array(self, array: np.ndarray) -> np.ndarray:
         """Reshape point data to a 3-D matrix."""

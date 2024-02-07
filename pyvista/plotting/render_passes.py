@@ -136,7 +136,7 @@ class RenderPasses:
 
         """
         if self._edl_pass is not None:
-            return
+            return None
         self._edl_pass = _vtk.vtkEDLShading()
         self._add_pass(self._edl_pass)
         return self._edl_pass
@@ -181,7 +181,7 @@ class RenderPasses:
         """
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
-            return
+            return None
         self._shadow_map_pass = _vtk.vtkShadowMapPass()
         self._pass_collection.AddItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.AddItem(self._shadow_map_pass)
@@ -212,7 +212,7 @@ class RenderPasses:
 
         """
         if self._dof_pass is not None:
-            return
+            return None
 
         if self._ssao_pass is not None:
             raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
@@ -253,7 +253,7 @@ class RenderPasses:
             raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
 
         if self._ssao_pass is not None:
-            return
+            return None
         self._ssao_pass = _vtk.vtkSSAOPass()
         self._ssao_pass.SetRadius(radius)
         self._ssao_pass.SetBias(bias)
@@ -279,7 +279,7 @@ class RenderPasses:
 
         """
         if self._ssaa_pass is not None:
-            return
+            return None
         self._ssaa_pass = _vtk.vtkSSAAPass()
         self._add_pass(self._ssaa_pass)
         return self._ssaa_pass

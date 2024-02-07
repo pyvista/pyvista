@@ -1140,7 +1140,7 @@ class _Chart(DocSubs):
         """
         # edge race case
         if self._renderer is None:  # pragma: no cover
-            return
+            return None
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()

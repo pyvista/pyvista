@@ -140,7 +140,7 @@ class PointPickingElementHandler:
         # cell_id = self.picker.GetCellId()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
         if cell_id < 0:
-            return  # TODO: this happens but shouldn't
+            return None  # TODO: this happens but shouldn't
         cell = mesh.extract_cells(cell_id)
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell

@@ -76,7 +76,7 @@ def check_valid_vector(point: Vector, name: str = '') -> None:
         if name == '':
             name = 'Vector'
         raise ValueError(f'{name} must be a length three iterable of floats.')
-    return None
+    return
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01

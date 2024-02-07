@@ -376,7 +376,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Subclass must set ``ren_win`` on initialization.
         """
         if not hasattr(self, 'ren_win'):
-            return
+            return None
         return self.ren_win
 
     @property
