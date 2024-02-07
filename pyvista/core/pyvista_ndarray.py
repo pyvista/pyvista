@@ -5,11 +5,11 @@ from typing import Union
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array
+from ._typing_core import Array, NumpyArray
 from .utilities.arrays import FieldAssociation, convert_array
 
 
-class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
+class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
@@ -45,7 +45,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Array, _vtk.vtkAbstractArray],
+        array: Union[Array[float], _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -88,7 +88,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, np.ndarray], value):
+    def __setitem__(self, key: Union[int, NumpyArray[int]], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

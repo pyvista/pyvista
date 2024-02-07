@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,
@@ -5746,7 +5747,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
+        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, NumpyArray[float]],
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,

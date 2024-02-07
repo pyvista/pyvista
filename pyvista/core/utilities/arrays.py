@@ -56,13 +56,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[Matrix, Vector], copy: bool = False
-) -> Tuple[np.ndarray, bool]:
+    points: Union[Matrix[float], Vector[float]], copy: bool = False
+) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : Matrix, Vector
+    points : Matrix[float] | Vector[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False

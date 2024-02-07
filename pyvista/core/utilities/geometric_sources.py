@@ -12,7 +12,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, Matrix, Vector
+from pyvista.core._typing_core import BoundsLike, Matrix, NumpyArray, Vector
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
@@ -546,7 +546,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         self.points = points
 
     @property
-    def points(self) -> np.ndarray:
+    def points(self) -> NumpyArray[float]:
         """Return the points defining a broken line.
 
         Returns
@@ -557,12 +557,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[Matrix, Vector]):
+    def points(self, points: Union[Matrix[float], Vector[float]]):
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
-        points : array_like[float]
+        points : Vector[float] | Matrix[float]
             List of points defining a broken line.
         """
         points, _ = _coerce_pointslike_arg(points)

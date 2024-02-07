@@ -1,4 +1,6 @@
 """Affine widget module."""
+from typing import Tuple, cast
+
 import numpy as np
 
 import pyvista
@@ -448,7 +450,7 @@ class AffineWidget3D:
             actor.user_matrix = matrix
 
     @property
-    def origin(self) -> tuple:
+    def origin(self) -> Tuple[float, float, float]:
         """Origin of the widget.
 
         This is where the origin of the widget will be located and where the
@@ -456,11 +458,11 @@ class AffineWidget3D:
 
         Returns
         -------
-        numpy.ndarray
+        tuple
             Widget origin.
 
         """
-        return tuple(self._origin)
+        return cast(Tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
     def origin(self, value):  # numpydoc ignore=GL08
