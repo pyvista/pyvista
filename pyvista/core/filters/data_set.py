@@ -2710,7 +2710,8 @@ class DataSetFilters:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
-            all(alg.AddSeed(i) for i in _unravel_and_validate_ids(cell_ids))  # type: ignore[func-returns-value]
+            for i in _unravel_and_validate_ids(point_ids):
+                alg.AddSeed(i)
 
         elif extraction_mode == 'point_seed':
             if point_ids is None:
@@ -2722,7 +2723,8 @@ class DataSetFilters:
                     point_ids = variable_input
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
-            all(alg.AddSeed(i) for i in _unravel_and_validate_ids(point_ids))  # type: ignore[func-returns-value]
+            for i in _unravel_and_validate_ids(point_ids):
+                alg.AddSeed(i)
 
         elif extraction_mode == 'closest':
             if closest_point is None:
