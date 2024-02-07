@@ -10,6 +10,7 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
+from pyvista.core._typing_core._type_guards import _is_NumberSequence2D
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.validation import (
@@ -22,6 +23,7 @@ from pyvista.core.validation import (
     check_iterable_items,
     check_length,
     check_less_than,
+    check_ndim,
     check_nonnegative,
     check_number,
     check_range,
@@ -211,6 +213,21 @@ def test_check_shape():
     msg = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
     with pytest.raises(ValueError, match=escape(msg)):
         check_shape((1, 2, 3), [(), (4, 5)])
+
+
+def test_check_ndim():
+    check_ndim(0, 0)
+    check_ndim(np.array(0), 0)
+    check_ndim((1, 2, 3), range(2))
+    check_ndim([[1, 2, 3]], (0, 2))
+
+    msg = 'Input has the incorrect number of dimensions. Got 1, expected 0.'
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_ndim((1, 2, 3), 0, name="Input")
+
+    msg = 'Array has the incorrect number of dimensions. Got 1, expected one of [4, 5].'
+    with pytest.raises(ValueError, match=escape(msg)):
+        check_ndim((1, 2, 3), [4, 5])
 
 
 def test_validate_shape_value():
@@ -1262,14 +1279,21 @@ ragged_arrays = (
 )
 @pytest.mark.parametrize('ragged_array', ragged_arrays)
 def test_array_wrapper_ragged_array(ragged_array):
+    # assert casting directly to numpy array raises error
+    with pytest.raises(ValueError, match='inhomogeneous shape'):
+        np.array(ragged_array)
+
+    msg = 'The following array is not valid:\n\t['
+    with pytest.raises(ValueError, match=escape(msg)):
+        _ArrayLikeWrapper(ragged_array)
+
+
+@pytest.mark.parametrize('ragged_array', [ragged_arrays[0]])
+def test_is_number_sequence_2d(ragged_array):
     match = 'inhomogeneous shape'
     # assert casting directly to numpy array raises error
     with pytest.raises(ValueError, match=match):
         np.array(ragged_array)
 
-    if isinstance(ragged_array[0], np.ndarray):
-        # errors for nested ndarrays caught by `cast_to_ndarray`
-        match = "Input cannot be cast as <class 'numpy.ndarray'>"
-
     with pytest.raises(ValueError, match=match):
-        _ArrayLikeWrapper(ragged_array)
+        _is_NumberSequence2D(ragged_array)

@@ -10,6 +10,7 @@ from .check import (  # noqa: F401
     check_iterable_items,
     check_length,
     check_less_than,
+    check_ndim,
     check_nonnegative,
     check_number,
     check_range,

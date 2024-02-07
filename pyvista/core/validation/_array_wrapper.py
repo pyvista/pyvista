@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 import itertools
+import reprlib
 from typing import (
     Any,
     Callable,
@@ -121,10 +122,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     ) -> _NumpyArrayWrapper[_NumberType]:
         ...  # pragma: no cover
 
-    def __new__(
-        cls,
-        _array: _ArrayLikeOrScalar[_NumberType],
-    ):
+    def __new__(cls, _array: _ArrayLikeOrScalar[_NumberType], description=None):
         """Wrap array-like inputs to standardize the representation.
 
         The following inputs are wrapped as-is without modification:
@@ -144,31 +142,34 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         # __init__ is not used by this class or subclasses so that already-wrapped
         # inputs can be returned as-is without re-initialization.
         # Instead, attributes are initialized here with __setattr__
-        if isinstance(_array, _ArrayLikeWrapper):
-            return _array
-        elif isinstance(_array, np.ndarray):
-            wrapped1 = object.__new__(_NumpyArrayWrapper)
-            wrapped1.__setattr__('_array', _array)
-            return wrapped1
-        elif _is_NumberSequence1D(_array):
-            wrapped2 = object.__new__(_Sequence1DWrapper)
-            wrapped2.__setattr__('_array', _array)
-            wrapped2.__setattr__('_dtype', None)
-            return wrapped2
-        elif _is_NumberSequence2D(_array):
-            wrapped3 = object.__new__(_Sequence2DWrapper)
-            wrapped3.__setattr__('_array', _array)
-            wrapped3.__setattr__('_dtype', None)
-            return wrapped3
-        elif _is_Number(_array):
-            wrapped4 = object.__new__(_NumberWrapper)
-            wrapped4.__setattr__('_array', _array)
-            return wrapped4
+        try:
+            if isinstance(_array, _ArrayLikeWrapper):
+                return _array
+            elif isinstance(_array, np.ndarray):
+                wrapped1 = object.__new__(_NumpyArrayWrapper)
+                wrapped1.__setattr__('_array', _array)
+                return wrapped1
+            elif _is_NumberSequence1D(_array):
+                wrapped2 = object.__new__(_Sequence1DWrapper)
+                wrapped2.__setattr__('_array', _array)
+                wrapped2.__setattr__('_dtype', None)
+                return wrapped2
+            elif _is_NumberSequence2D(_array):
+                wrapped3 = object.__new__(_Sequence2DWrapper)
+                wrapped3.__setattr__('_array', _array)
+                wrapped3.__setattr__('_dtype', None)
+                return wrapped3
+            elif _is_Number(_array):
+                wrapped4 = object.__new__(_NumberWrapper)
+                wrapped4.__setattr__('_array', _array)
+                return wrapped4
 
-        # Everything else gets wrapped as (and possibly converted to) a numpy array
-        wrapped5 = object.__new__(_NumpyArrayWrapper)
-        wrapped5.__setattr__('_array', _cast_to_numpy(_array))
-        return wrapped5
+            # Everything else gets wrapped as (and possibly converted to) a numpy array
+            wrapped5 = object.__new__(_NumpyArrayWrapper)
+            wrapped5.__setattr__('_array', _cast_to_numpy(_array))
+            return wrapped5
+        except (ValueError, TypeError) as e:
+            raise e.__class__(f"The following array is not valid:\n\t{reprlib.repr(_array)}") from e
 
     def __getattr__(self, item):
         try:

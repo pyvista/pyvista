@@ -31,7 +31,7 @@ from typing import (
 import numpy as np
 
 from pyvista.core._typing_core import NumpyArray, Vector
-from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
+from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType, _NumberSequence1D
 from pyvista.core.validation._array_wrapper import (
     DTypeLike,
     Shape,
@@ -630,10 +630,11 @@ def check_shape(
     See Also
     --------
     check_length
+    check_ndim
 
     Examples
     --------
-    Check if an array is one-dimension
+    Check if an array is one-dimensional
 
     >>> import numpy as np
     >>> from pyvista import validation
@@ -669,6 +670,76 @@ def check_shape(
     else:
         msg += f"Shape must be one of {shape}."
     raise ValueError(msg)
+
+
+def check_ndim(
+    array: _ArrayLikeOrScalar[_NumberType],
+    /,
+    ndim: Union[int, _NumberSequence1D[int]],
+    *,
+    name: str = "Array",
+):
+    """Check if an array has the specified number of dimensions.
+
+    A value of ``0`` is returned for scalar values.
+
+    Parameters
+    ----------
+    array : float | Array[float]
+        Number or array to check.
+
+    ndim : int | Sequence[int], optional
+        A single dimension or a sequence of allowable dimensions. If an
+        integer, the array must have this number of dimension(s). If a
+        sequence, the array must have at least one of the specified number
+        of dimensions.
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    ValueError
+        If the array does not have the required number of dimensions.
+
+    See Also
+    --------
+    check_length
+    check_shape
+
+    Examples
+    --------
+    Check if an array is one-dimensional
+
+    >>> import numpy as np
+    >>> from pyvista import validation
+    >>> validation.check_ndim([1, 2, 3], ndim=1)
+
+    Check if an array is two-dimensional or a scalar.
+
+    >>> validation.check_ndim(1, ndim=(0, 2))
+
+    """
+    if not isinstance(ndim, Sequence):
+        ndim_: _NumberSequence1D[int] = [ndim]
+    else:
+        ndim_ = ndim
+
+    array_ndim = _ArrayLikeWrapper(array).ndim
+    if array_ndim not in ndim_:
+        check_ndim(ndim, [0, 1], name='ndim')
+
+        if len(ndim_) == 1:
+            check_integer(ndim_[0], strict=True, name='ndim')
+            expected = f"{ndim}"
+        else:
+            check_integer(ndim, strict=True, name='ndim')
+            expected = f"one of {ndim}"
+        msg = (
+            f"{name} has the incorrect number of dimensions. "
+            f"Got {array_ndim}, expected {expected}."
+        )
+        raise ValueError(msg)
 
 
 def check_number(
