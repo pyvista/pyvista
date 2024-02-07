@@ -109,7 +109,7 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     except Exception as e:
-        # If array-like is `polars` data, try to re-cast data to numpy array
+        # If array-like is `polars` data, try to make a copy then re-cast to numpy array
         polars_error = False
         try:
             import polars
@@ -129,9 +129,9 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
                     )
                 except (AttributeError, polars.PolarsError):
                     raise RuntimeError(f"Data type {type(arr)} could not be cast as a numpy array.")
-            # Try again
-            out = cast_to_ndarray(out, dtype=dtype, as_any=True, copy=False)
-            # NOTE: by default the output array from polars is read-only
+                # Try again
+                out = _cast_to_numpy(out, dtype=dtype, as_any=True, copy=False)
+                # NOTE: by default the output array from polars is read-only
         except ModuleNotFoundError:
             pass
         if not polars_error:
@@ -142,66 +142,4 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':
         raise TypeError("Object arrays are not supported.")
-    return out
-
-
-def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
-    """Cast array to a NumPy ndarray.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    as_any : bool, default: True
-        Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy.
-
-    dtype : dtype_like
-        The data-type of the returned array.
-
-    copy : bool, default: False
-        If ``True``, a copy of the array is returned. A copy is always
-        returned if the array:
-
-            * is a nested sequence
-            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
-
-    Raises
-    ------
-    ValueError
-        If input cannot be cast as a NumPy ndarray.
-
-    Returns
-    -------
-    np.ndarray
-        NumPy ndarray.
-
-    """
-    if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
-        return arr
-
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
-    except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
-
-    try:
-        if as_any:
-            out = np.asanyarray(arr, dtype=dtype)
-            if copy:
-                out = out.copy()
-        else:
-            out = np.array(arr, dtype=dtype, copy=copy)
-        if out.dtype.name == 'object':
-            # NumPy will normally raise ValueError automatically for
-            # object arrays, but on some systems it will not, so raise
-            # error manually
-            raise ValueError
-    except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-
     return out
