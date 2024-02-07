@@ -11,6 +11,7 @@ options for beam customization.
 
 Consider two hemispheres:
 """
+
 # sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
 

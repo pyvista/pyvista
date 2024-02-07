@@ -12,6 +12,7 @@ An array validator function typically:
   output as a single representation with known properties.
 
 """
+
 import inspect
 from itertools import product
 from typing import Any, List, Literal, Optional, Tuple, Union

@@ -8,6 +8,7 @@ Create an animated GIF by generating glyphs using :func:`glyph()
 <pyvista.DataSetFilters.glyph>` using :func:`pyvista.Sphere`.
 
 """
+
 # sphinx_gallery_thumbnail_number = 1
 
 import numpy as np

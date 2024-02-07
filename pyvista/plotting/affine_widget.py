@@ -1,4 +1,5 @@
 """Affine widget module."""
+
 import numpy as np
 
 import pyvista

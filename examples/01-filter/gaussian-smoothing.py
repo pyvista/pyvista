@@ -14,6 +14,7 @@ to reduce noise or decrease the detail of an image dataset.
 See also :func:`pyvista.ImageDataFilters.gaussian_smooth`.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples

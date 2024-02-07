@@ -1,4 +1,5 @@
 """Start xvfb from Python."""
+
 import os
 import time
 
