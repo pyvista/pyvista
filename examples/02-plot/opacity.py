@@ -7,6 +7,7 @@ Plot with Opacity
 Plot a mesh's scalar array with an opacity transfer function or opacity mapping
 based on a scalar array.
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
