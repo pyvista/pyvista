@@ -1288,6 +1288,10 @@ def test_array_wrapper_ragged_array(ragged_array):
         _ArrayLikeWrapper(ragged_array)
 
 
+@pytest.mark.skipif(
+    sys.platform == 'linux' and sys.version_info < (3, 9, 0),
+    reason="Numpy raise a warning, not an error.",
+)
 @pytest.mark.parametrize('ragged_array', [ragged_arrays[0]])
 def test_is_number_sequence_2d(ragged_array):
     match = 'inhomogeneous shape'
