@@ -1,4 +1,5 @@
 """Functions for processing array-like inputs."""
+
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -61,8 +62,7 @@ _DType_co = TypeVar('_DType_co', bound=np.generic, covariant=True)
 
 @runtime_checkable
 class _SupportsArray(Protocol[_DType_co]):
-    def __array__(self) -> np.ndarray[Any, np.dtype[_DType_co]]:
-        ...  # pragma: no cover
+    def __array__(self) -> np.ndarray[Any, np.dtype[_DType_co]]: ...  # pragma: no cover
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
@@ -77,50 +77,43 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def __new__(  # type: ignore[overload-overlap]
         cls,
         _array: _NumberType,
-    ) -> _NumberWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _NumberWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
         _array: _NumpyArraySequence[_NumberType],
-    ) -> _NumpyArrayWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         _array: _NumberSequence1D[_NumberType],
-    ) -> _Sequence1DWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _Sequence1DWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         _array: _NumberSequence2D[_NumberType],
-    ) -> _Sequence2DWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _Sequence2DWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         _array: _NumberSequence3D[_NumberType],
-    ) -> _NumpyArrayWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
     def __new__(
         cls,
         _array: _NumberSequence4D[_NumberType],
-    ) -> _NumpyArrayWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
     def __new__(  # type: ignore[overload-overlap]
         cls,
         _array: NumpyArray[_NumberType],
-    ) -> _NumpyArrayWrapper[_NumberType]:
-        ...  # pragma: no cover
+    ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
 
     def __new__(cls, _array: _ArrayLikeOrScalar[_NumberType], description=None):
         """Wrap array-like inputs to standardize the representation.
@@ -180,12 +173,10 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         return f'{self.__class__.__name__}({self._array.__repr__()})'
 
     @abstractmethod
-    def all_func(self, func: Callable, *args):
-        ...
+    def all_func(self, func: Callable, *args): ...
 
     @abstractmethod
-    def as_iterable(self) -> Iterable[_NumberType]:
-        ...
+    def as_iterable(self) -> Iterable[_NumberType]: ...
 
     @abstractmethod
     def __call__(self):

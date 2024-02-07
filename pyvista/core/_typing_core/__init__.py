@@ -1,4 +1,5 @@
 """Type aliases for type hints."""
+
 from ._aliases import (  # noqa: F401
     Array,
     BoundsLike,
@@ -9,4 +10,3 @@ from ._aliases import (  # noqa: F401
     TransformLike,
     Vector,
 )
-from ._array_like import NumpyArray

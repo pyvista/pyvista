@@ -9,6 +9,7 @@ An array checker function typically:
 * Does not modify input or return anything.
 
 """
+
 import math
 from numbers import Number, Real
 import operator

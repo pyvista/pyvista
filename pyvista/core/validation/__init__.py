@@ -1,4 +1,5 @@
 """Input validation functions."""
+
 from .check import (  # noqa: F401
     check_contains,
     check_finite,

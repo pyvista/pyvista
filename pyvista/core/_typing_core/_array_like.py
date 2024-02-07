@@ -20,6 +20,7 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
+
 import sys
 import typing
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, TypeVar, Union
