@@ -1,4 +1,6 @@
 """Fine-grained control of reading data files."""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import enum
@@ -195,7 +197,7 @@ def get_reader(filename, force_ext=None):
 class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
-    def __init__(self):
+    def __init__(self: BaseVTKReader):
         self._data_object = None
         self._observers: List[Union[int, Callable]] = []
 

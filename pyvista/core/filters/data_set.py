@@ -2710,7 +2710,7 @@ class DataSetFilters:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
-            [alg.AddSeed(i) for i in _unravel_and_validate_ids(cell_ids)]
+            all(alg.AddSeed(i) for i in _unravel_and_validate_ids(cell_ids))  # type: ignore[func-returns-value]
 
         elif extraction_mode == 'point_seed':
             if point_ids is None:
@@ -2722,7 +2722,7 @@ class DataSetFilters:
                     point_ids = variable_input
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
-            [alg.AddSeed(i) for i in _unravel_and_validate_ids(point_ids)]
+            all(alg.AddSeed(i) for i in _unravel_and_validate_ids(point_ids))  # type: ignore[func-returns-value]
 
         elif extraction_mode == 'closest':
             if closest_point is None:
@@ -5922,7 +5922,7 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if isinstance(self, pyvista.Grid):
-            output = pyvista.StructuredGrid()
+            output: _vtk.vtkDataSet = pyvista.StructuredGrid()
         else:
             output = self.__class__()
         output.copy_from(res, deep=True)

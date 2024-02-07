@@ -649,7 +649,7 @@ class MultiBlock(
 
     def __setitem__(
         self,
-        index,
+        index: Union[int, str, slice],
         data,
     ):
         """Set a block with a VTK data object.
