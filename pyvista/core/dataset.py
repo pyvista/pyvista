@@ -1,4 +1,5 @@
 """Attributes common to PolyData and Grid Objects."""
+
 from __future__ import annotations
 
 from collections import namedtuple

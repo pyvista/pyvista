@@ -1,4 +1,5 @@
 """Points related utilities."""
+
 import warnings
 
 import numpy as np
