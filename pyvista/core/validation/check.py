@@ -31,7 +31,7 @@ from typing import (
 import numpy as np
 
 from pyvista.core._typing_core import NumpyArray, Vector
-from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType, _NumberSequence1D
+from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberSequence1D, _NumberType
 from pyvista.core.validation._array_wrapper import (
     DTypeLike,
     Shape,
