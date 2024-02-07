@@ -1,4 +1,5 @@
 from collections import namedtuple
+import itertools
 from re import escape
 import sys
 from typing import Union, get_args, get_origin
@@ -8,7 +9,8 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core.utilities.arrays import cast_to_tuple_array, vtkmatrix_from_array
+from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.validation import (
     check_has_length,
     check_has_shape,
@@ -45,8 +47,9 @@ from pyvista.core.validation import (
     validate_transform3x3,
     validate_transform4x4,
 )
+from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 from pyvista.core.validation.check import _validate_shape_value
-from pyvista.core.validation.validate import _set_default_kwarg_mandatory
+from pyvista.core.validation.validate import _array_from_vtkmatrix, _set_default_kwarg_mandatory
 
 
 @pytest.mark.parametrize(
@@ -455,8 +458,8 @@ def test_validate_array(
         invalid_array = np.stack((invalid_array, invalid_array), axis=1)
 
     if input_type is tuple:
-        valid_array = cast_to_tuple_array(valid_array)
-        invalid_array = cast_to_tuple_array(invalid_array)
+        valid_array = _cast_to_tuple(valid_array)
+        invalid_array = _cast_to_tuple(invalid_array)
     elif input_type is list:
         valid_array = valid_array.tolist()
         invalid_array = invalid_array.tolist()
@@ -620,8 +623,14 @@ def test_check_is_string():
 
 def test_check_is_arraylike():
     check_is_arraylike([1, 2])
-    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
-    with pytest.raises(ValueError, match=msg):
+
+    if sys.version_info < (3, 9) and sys.platform == 'linux':
+        err = TypeError
+        msg = "Object arrays are not supported."
+    else:
+        err = ValueError
+        msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(err, match=msg):
         check_is_arraylike([[1, 2], 3])
 
 
@@ -650,7 +659,7 @@ def test_check_is_greater_than():
 def test_check_is_real():
     check_is_real(1)
     check_is_real(-2.0)
-    check_is_real(np.array(-2.0, dtype="uint8"))
+    check_is_real(np.array(2.0, dtype="uint8"))
     msg = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=msg):
         check_is_real(1 + 1j)
@@ -955,3 +964,132 @@ def test_validate_axes_orthogonal(bias_index):
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=msg):
         validate_axes(axes_left, must_be_orthogonal=True)
+
+
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('dtype', [None, float])
+def test_cast_to_numpy(as_any, copy, dtype):
+    array_in = pyvista_ndarray([1, 2])
+    array_out = _cast_to_numpy(array_in, copy=copy, as_any=as_any, dtype=dtype)
+    assert np.array_equal(array_out, array_in)
+    if as_any:
+        assert type(array_out) is pyvista_ndarray
+    else:
+        assert type(array_out) is np.ndarray
+
+    if copy:
+        assert array_out is not array_in
+
+    if dtype is None:
+        assert array_out.dtype.type is array_in.dtype.type
+    else:
+        assert array_out.dtype.type is np.dtype(dtype).type
+
+
+def test_cast_to_numpy_raises():
+    if sys.version_info < (3, 9) and sys.platform == 'linux':
+        err = TypeError
+        msg = "Object arrays are not supported."
+    else:
+        err = ValueError
+        msg = "Input cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(err, match=msg):
+        _cast_to_numpy([[1], [2, 3]])
+
+    msg = "Object arrays are not supported."
+    with pytest.raises(TypeError, match=msg):
+        _cast_to_numpy(list)
+
+
+def test_cast_to_numpy_must_be_real():
+    _ = _cast_to_numpy([0, 1], must_be_real=True)
+    _ = _cast_to_numpy("abc", must_be_real=False)
+
+    msg = "Array must have real numbers. Got dtype <class 'numpy.complex128'>"
+    with pytest.raises(TypeError, match=msg):
+        _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
+    msg = "Array must have real numbers. Got dtype <class 'numpy.str_'>"
+    with pytest.raises(TypeError, match=msg):
+        _ = _cast_to_numpy("abc", must_be_real=True)
+
+
+def test_cast_to_numpy_with_polars():
+    import polars as pl
+
+    # Test with series
+    initial_array = [1, 2, 3]
+    array_in = pl.Series('points', initial_array)
+
+    # Test array values are not copies
+    array_out = _cast_to_numpy(array_in)
+    assert not array_out.flags.writeable
+    array_out.flags["WRITEABLE"] = True
+    array_out[0] = 99
+    assert array_in[0] == 99
+
+    # Test with dataframe, created naively
+    initial_array = [[1, 2, 3], [4, 5, 6]]
+    data = pl.DataFrame(dict(points=initial_array))
+    array_in = data['points']
+
+    # Test that a copy is made
+    array_out = _cast_to_numpy(array_in)
+    array_out[0, 0] = 99
+    assert array_in[0][0] != 99
+
+    # Test with dataframe, created by specifying schema
+    data = pl.DataFrame(dict(points=initial_array), schema=dict(points=pl.Array(pl.Float64, 3)))
+    array_in = data['points']
+
+    # Test array values are not copies
+    array_out = _cast_to_numpy(array_in)
+    assert not array_out.flags.writeable
+    array_out.flags["WRITEABLE"] = True
+    array_out[0, 0] = 99
+    assert array_in[0][0] == 99
+
+
+def test_cast_to_numpy_with_polars_raises():
+    import polars as pl
+
+    initial_array = [[1, 2, 3], [4, 5, 6]]
+    data = pl.DataFrame(dict(points=initial_array))
+
+    msg = "Data type <class 'polars.dataframe.frame.DataFrame'> could not be cast as a numpy array."
+    with pytest.raises(RuntimeError, match=msg):
+        _cast_to_numpy(data)
+
+
+def test_cast_to_tuple():
+    array_in = np.zeros(shape=(2, 2, 3))
+    array_tuple = _cast_to_tuple(array_in)
+    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    array_list = array_in.tolist()
+    assert np.array_equal(array_tuple, array_list)
+
+
+def test_cast_to_list():
+    array_in = np.zeros(shape=(3, 4, 5))
+    array_list = _cast_to_list(array_in)
+    assert np.array_equal(array_in, array_list)
+
+
+@pytest.mark.parametrize(
+    ['cls', 'shape'],
+    [
+        (vtkMatrix3x3, (3, 3)),
+        (vtkMatrix4x4, (4, 4)),
+    ],
+)
+def test_array_from_vtkmatrix(cls, shape):
+    expected = np.random.default_rng().random(shape)
+    mat = cls()
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
+        mat.SetElement(i, j, expected[i, j])
+    actual = _array_from_vtkmatrix(mat, shape=shape)
+    assert np.array_equal(actual, expected)
+
+    # Test this matches public function
+    expected = array_from_vtkmatrix(mat)
+    assert np.array_equal(actual, expected)
