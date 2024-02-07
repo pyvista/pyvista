@@ -10,3 +10,4 @@ from ._aliases import (  # noqa: F401
     TransformLike,
     Vector,
 )
+from ._array_like import NumpyArray  # noqa: F401

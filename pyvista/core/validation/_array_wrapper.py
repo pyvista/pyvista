@@ -1,5 +1,6 @@
 """Functions for processing array-like inputs."""
 
+# flake8: E704
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -62,7 +63,9 @@ _DType_co = TypeVar('_DType_co', bound=np.generic, covariant=True)
 
 @runtime_checkable
 class _SupportsArray(Protocol[_DType_co]):
-    def __array__(self) -> np.ndarray[Any, np.dtype[_DType_co]]: ...  # pragma: no cover
+    def __array__(
+        self,
+    ) -> np.ndarray[Any, np.dtype[_DType_co]]: ...  # pragma: no cover
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
