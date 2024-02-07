@@ -20,7 +20,6 @@ from typing import (
     Literal,
     Optional,
     Sequence,
-    Sized,
     Tuple,
     Union,
     cast,
@@ -31,7 +30,12 @@ from typing import (
 import numpy as np
 
 from pyvista.core._typing_core import NumpyArray, Vector
-from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberSequence1D, _NumberType
+from pyvista.core._typing_core._array_like import (
+    _ArrayLike,
+    _ArrayLikeOrScalar,
+    _NumberSequence1D,
+    _NumberType,
+)
 from pyvista.core.validation._array_wrapper import (
     DTypeLike,
     Shape,
@@ -40,7 +44,6 @@ from pyvista.core.validation._array_wrapper import (
     _Sequence1DWrapper,
     _Sequence2DWrapper,
 )
-from pyvista.core.validation._cast_array import _cast_to_numpy
 
 
 def check_subdtype(
@@ -1214,7 +1217,7 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
 
 
 def check_length(
-    array: Union[_ArrayLikeOrScalar[_NumberType], Sized],
+    array: _ArrayLikeOrScalar[_NumberType],
     /,
     *,
     exact_length: Union[int, Vector[int], None] = None,
@@ -1269,6 +1272,7 @@ def check_length(
     See Also
     --------
     check_shape
+    check_ndim
 
     Examples
     --------
@@ -1286,35 +1290,34 @@ def check_length(
     >>> validation.check_length([[1, 2, 3], [4, 5, 6]], max_length=2)
 
     """
-    if allow_scalar:
-        # Reshape to 1D
-        if isinstance(array, Number):
-            array = np.array([array])
-        elif isinstance(array, np.ndarray) and array.ndim == 0:
-            array = array.reshape((1,))
-
-    check_instance(array, (Sequence, np.ndarray), name=name)
-    array = cast(_ArrayLikeOrScalar[_NumberType], array)
+    wrapped = _ArrayLikeWrapper(array)
+    if wrapped.ndim == 0:
+        if allow_scalar:
+            wrapped = _ArrayLikeWrapper([cast(_NumberType, array)])
+        else:
+            try:
+                len(wrapped._array)  # type: ignore[arg-type]
+            except TypeError:
+                raise
 
     if must_be_1d:
-        check_shape(array, shape=(-1))
-
-    array_len = len(cast(Sized, array))
+        check_ndim(wrapped(), ndim=1)
+    array_len = len(cast(_ArrayLike[_NumberType], wrapped._array))
 
     if exact_length is not None:
-        exact_length = _cast_to_numpy(exact_length)
-        check_integer(exact_length, name="'exact_length'")
-        if array_len not in exact_length:
+        wrapped_exact_len = _ArrayLikeWrapper(exact_length)
+        check_integer(wrapped_exact_len(), name="'exact_length'")
+        if array_len not in wrapped_exact_len.as_iterable():
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
                 f"Got length {array_len} instead."
             )
 
     # Validate min/max length
-    if min_length is not None:
-        check_finite(min_length, name="Min length")
-    if max_length is not None:
-        check_finite(max_length, name="Max length")
+    # if min_length is not None:
+    #     check_finite(min_length, name="Min length")
+    # if max_length is not None:
+    #     check_finite(max_length, name="Max length")
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
 

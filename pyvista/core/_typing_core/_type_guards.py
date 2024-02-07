@@ -30,14 +30,7 @@ def _is_NumberSequence2D(array: _ArrayLikeOrScalar[_NumberType], N=None) -> bool
         # We have the correct type, now check all subarray shapes are equal
         array = cast(_NumberSequence2D[_NumberType], array)
         sub_shape = len(array[0])
-        all_same = all(len(sub_array) == sub_shape for sub_array in array)
-        if not all_same:
-            raise ValueError(
-                "The nested sequence array has an inhomogeneous shape. "
-                "All sub-arrays must have the same shape."
-            )
-        else:
-            return True
+        return all(len(sub_array) == sub_shape for sub_array in array)
     return False
 
 

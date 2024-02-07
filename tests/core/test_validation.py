@@ -10,7 +10,6 @@ import pytest
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
-from pyvista.core._typing_core._type_guards import _is_NumberSequence2D
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.validation import (
@@ -714,7 +713,7 @@ def test_check_length():
     msg = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=msg):
         check_length((1, 2), exact_length=1, name="_input")
-    msg = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
+    msg = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(msg)):
         check_length((1, 2), exact_length=[3, 4], name="_input")
 
@@ -738,7 +737,7 @@ def test_check_length():
             max_length=2,
         )
 
-    msg = "Shape must be -1."
+    msg = 'Array has the incorrect number of dimensions. Got 2, expected 1.'
     with pytest.raises(ValueError, match=escape(msg)):
         check_length(((1, 2), (3, 4)), must_be_1d=True)
 
@@ -1286,18 +1285,3 @@ def test_array_wrapper_ragged_array(ragged_array):
     msg = 'The following array is not valid:\n\t['
     with pytest.raises(ValueError, match=escape(msg)):
         _ArrayLikeWrapper(ragged_array)
-
-
-@pytest.mark.skipif(
-    sys.platform == 'linux' and sys.version_info < (3, 9, 0),
-    reason="Numpy raise a warning, not an error.",
-)
-@pytest.mark.parametrize('ragged_array', [ragged_arrays[0]])
-def test_is_number_sequence_2d(ragged_array):
-    match = 'inhomogeneous shape'
-    # assert casting directly to numpy array raises error
-    with pytest.raises(ValueError, match=match):
-        np.array(ragged_array)
-
-    with pytest.raises(ValueError, match=match):
-        _is_NumberSequence2D(ragged_array)

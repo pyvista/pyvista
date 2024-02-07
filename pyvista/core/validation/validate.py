@@ -14,7 +14,7 @@ An array validator function typically:
 """
 import inspect
 from itertools import product
-from typing import Any, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 
@@ -355,8 +355,8 @@ def validate_axes(
     Parameters
     ----------
     *axes : Matrix[float] | Vector[float]
-        Axes to be validated. Axes may be specified as a single argument of a 3x3
-        array of row vectors or as separate arguments for each 3-element axis vector.
+        Axes to be validated. Axes may be specified as a single array of row vectors
+        or as separate arguments for each 3-element axis vector.
         If only two vectors are given and ``must_have_orientation`` is not ``None``,
         the third vector is automatically calculated as the cross-product of the
         two vectors such that the axes have the correct orientation.
@@ -412,32 +412,45 @@ def validate_axes(
            [ 0.,  0., -1.]])
 
     """
-    # Validate number of args
-    check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
         check_contains(must_have_orientation, ['right', 'left'], name=f"{name} orientation")
-    elif must_have_orientation is None and len(axes) == 2:
-        raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
+
+    # Validate number of args
+    num_args = len(axes)
+    if num_args not in (1, 2, 3):
+        raise ValueError(
+            "Incorrect number of axes arguments. Number of arguments must be either:"
+            "    One arg (a single array),"
+            "    Two args (two vectors), or"
+            "    Three args (three vectors)."
+        )
 
     # Validate axes array
-    axes_array: NumpyArray[float]
-    if len(axes) == 1:
-        ax = cast(Matrix[float], axes[0])
-        axes_array = validate_array(ax, must_have_shape=(3, 3), name=name, dtype_out=np.floating)
+    vector2: Optional[NumpyArray[float]] = None
+    if num_args == 1:
+        axes_array = validate_array(
+            axes[0], must_have_shape=[(2, 3), (3, 3)], name=name, dtype_out=np.floating
+        )
+        vector0 = axes_array[0]
+        vector1 = axes_array[1]
+        if len(axes_array) == 3:
+            vector2 = axes_array[2]
     else:
-        ax0 = cast(Vector[float], axes[0])
-        ax1 = cast(Vector[float], axes[1])
-        axes_array = np.zeros((3, 3))
-        axes_array[0] = validate_array3(ax0, name=f"{name} Vector[0]")
-        axes_array[1] = validate_array3(ax1, name=f"{name} Vector[1]")
-        if len(axes) == 3:
-            ax2 = cast(Vector[float], axes[2])
-            axes_array[2] = validate_array3(ax2, name=f"{name} Vector[2]")
-        else:  # len(axes) == 2
-            if must_have_orientation == 'right':
-                axes_array[2] = np.cross(axes_array[0], axes_array[1])
-            else:
-                axes_array[2] = np.cross(axes_array[1], axes_array[0])
+        vector0 = validate_array3(axes[0], name=f"{name} Vector[0]")
+        vector1 = validate_array3(axes[1], name=f"{name} Vector[1]")
+        if num_args == 3:
+            vector2 = validate_array3(axes[2], name=f"{name} Vector[2]")
+
+    if vector2 is None:
+        if must_have_orientation is None:
+            raise ValueError(
+                f"{name} orientation must be specified when only two vectors are given."
+            )
+        elif must_have_orientation == 'right':
+            vector2 = np.cross(vector0, vector1)
+        else:
+            vector2 = np.cross(vector1, vector0)
+    axes_array = np.vstack((vector0, vector1, vector2))
     check_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(

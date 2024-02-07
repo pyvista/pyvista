@@ -163,13 +163,12 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
                 wrapped4 = object.__new__(_NumberWrapper)
                 wrapped4.__setattr__('_array', _array)
                 return wrapped4
-
             # Everything else gets wrapped as (and possibly converted to) a numpy array
             wrapped5 = object.__new__(_NumpyArrayWrapper)
             wrapped5.__setattr__('_array', _cast_to_numpy(_array))
             return wrapped5
-        except (ValueError, TypeError) as e:
-            raise e.__class__(f"The following array is not valid:\n\t{reprlib.repr(_array)}") from e
+        except (ValueError, TypeError):
+            raise ValueError(f"The following array is not valid:\n\t{reprlib.repr(_array)}")
 
     def __getattr__(self, item):
         try:
@@ -182,6 +181,10 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
 
     @abstractmethod
     def all_func(self, func: Callable[[Any, Any], bool], arg):
+        ...
+
+    @abstractmethod
+    def as_iterable(self) -> Iterable[_NumberType]:
         ...
 
     @abstractmethod
@@ -206,14 +209,13 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     def __call__(self) -> NumpyArray[_NumberType]:
         return self  # type: ignore[return-value]
 
+    def as_iterable(self) -> Iterable[_NumberType]:
+        return self._array.flatten()
+
 
 class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
     def all_func(self, func: Callable[[Any, Any], bool], arg):
         return all(func(x, arg) for x in self.as_iterable())
-
-    @abstractmethod
-    def as_iterable(self) -> Iterable[_NumberType]:
-        ...
 
 
 class _NumberWrapper(_BuiltinWrapper[_NumberType]):
