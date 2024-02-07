@@ -30,7 +30,6 @@ from pyvista.core.validation.check import (
     check_length,
     check_nonnegative,
     check_range,
-    check_real,
     check_shape,
     check_sorted,
     check_string,
@@ -150,6 +149,12 @@ def validate_array(
         if the array has real numbers, i.e. its data type is integer or
         floating.
 
+        .. warning::
+
+            Setting this parameter to ``False`` can result in unexpected
+            behavior and is not recommended. There is limited support
+            for complex number and/or string arrays.
+
     must_be_integer : bool, default: False
         :func:`Check <pyvista.core.validation.check.check_integer>`
         if the array's values are integer-like (i.e. that
@@ -267,16 +272,9 @@ def validate_array(
     array([ 1,  2,  3,  5,  8, 13])
 
     """
-    array_out = _cast_to_numpy(array, as_any=as_any, copy=copy)
-
-    # Check type
-    if must_be_real:
-        check_real(array_out, name=name)
-    else:
-        try:
-            check_subdtype(array_out, np.number, name=name)
-        except TypeError as e:
-            raise TypeError(f"{name} must be numeric.") from e
+    array_out = _cast_to_numpy(
+        array, as_any=as_any, copy=copy, must_be_real=must_be_real, name=name
+    )
 
     if must_have_dtype is not None:
         check_subdtype(array_out, must_have_dtype, name=name)
