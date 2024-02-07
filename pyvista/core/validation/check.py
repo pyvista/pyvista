@@ -920,13 +920,13 @@ def check_iterable_items(
         raise
 
 
-def check_contains(obj, /, container, *, name='Input'):
-    """Check if a given string is in an iterable of strings.
+def check_contains(item, /, container, *, name='Input'):
+    """Check if an item is in a container.
 
     Parameters
     ----------
-    obj : Any
-        Object to check.
+    item : Any
+        Item to check.
 
     container : Any
         Container the object is expected to be in.
@@ -952,12 +952,12 @@ def check_contains(obj, /, container, *, name='Input'):
     >>> validation.check_contains("A", ["A", "B", "C"])
 
     """
-    if obj not in container:
+    if item not in container:
         if isinstance(container, (list, tuple)):
             qualifier = "one of"
         else:
             qualifier = "in"
-        msg = f"{name} '{obj}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 
