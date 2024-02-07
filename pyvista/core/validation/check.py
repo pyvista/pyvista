@@ -9,6 +9,7 @@ A ``check`` function typically:
 * Does not modify input or return anything.
 
 """
+
 from collections.abc import Iterable, Sequence
 from numbers import Number
 from typing import Tuple, Union, get_args, get_origin

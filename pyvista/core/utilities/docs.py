@@ -1,4 +1,5 @@
 """Supporting functions for documentation build."""
+
 import inspect
 import os
 import os.path as op
