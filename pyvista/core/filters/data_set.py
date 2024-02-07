@@ -2710,7 +2710,7 @@ class DataSetFilters:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
-            for i in _unravel_and_validate_ids(point_ids):
+            for i in _unravel_and_validate_ids(cell_ids):
                 alg.AddSeed(i)
 
         elif extraction_mode == 'point_seed':
