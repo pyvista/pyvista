@@ -1,4 +1,5 @@
 """This is a helper module to generate tables that can be included in the documentation."""
+
 import io
 import os
 import textwrap

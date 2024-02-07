@@ -1,4 +1,5 @@
 """Module containing composite data mapper."""
+
 from itertools import cycle
 import sys
 from typing import Optional
