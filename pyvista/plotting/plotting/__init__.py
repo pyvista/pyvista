@@ -1,4 +1,5 @@
 """Deprecated pyvista.plotting.plotting module."""
+
 import importlib
 import inspect
 import warnings

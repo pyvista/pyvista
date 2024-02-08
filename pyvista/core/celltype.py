@@ -1,4 +1,5 @@
 """Define types of cells."""
+
 from enum import IntEnum
 
 from . import _vtk_core as _vtk
