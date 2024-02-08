@@ -159,6 +159,8 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+pretty = true
+show_error_context = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
 
 [tool.numpydoc_validation]
