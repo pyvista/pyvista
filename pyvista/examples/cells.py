@@ -1,4 +1,5 @@
 """Contains a variety of cells to serve as examples."""
+
 import pyvista
 from pyvista import CellType, UnstructuredGrid
 

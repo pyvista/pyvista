@@ -1,4 +1,5 @@
 """An internal module for wrapping the use of mappers."""
+
 import sys
 from typing import Optional, Tuple, Union, cast
 

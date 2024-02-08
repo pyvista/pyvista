@@ -8,6 +8,7 @@ PyVista allows you to set global and local plotting themes to easily
 set default plotting parameters.
 
 """
+
 import pyvista as pv
 from pyvista import examples
 

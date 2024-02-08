@@ -18,6 +18,7 @@ Text3DSource
 as well as some pure-python helpers.
 
 """
+
 from itertools import product
 
 import numpy as np
