@@ -5511,6 +5511,32 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
         return _get_output(alg)
 
+    def compute_boundary_mesh_quality(self, progress_bar=False):
+        """Compute metrics on the boundary faces of a mesh.
+
+        The metrics that can be computed on the boundary faces of the mesh and are:
+
+        - ``'distance from cell center to face center'``
+        - ``'distance from cell center to face plane'``
+        - ``'angle of faces plane normal and cell center to face center vector'``
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the computed metrics on the boundary faces of a mesh.
+            ``cell_data`` as the ``"CellQuality"`` array.
+
+        """
+        alg = _vtk.vtkBoundaryMeshQuality()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
+        return _get_output(alg)
+
     def compute_derivative(
         self,
         scalars=None,
