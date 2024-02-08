@@ -688,7 +688,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     def __init__(
         self,
-        var_inp: Union[_vtk.vtkPolyData, str, Matrix[float]] = None,
+        var_inp: Union[_vtk.vtkPolyData, str, Matrix[float], None] = None,
         faces: Optional[CellArrayLike] = None,
         n_faces: Optional[int] = None,
         lines: Optional[CellArrayLike] = None,

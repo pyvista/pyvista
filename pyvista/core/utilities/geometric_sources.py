@@ -6,7 +6,7 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -231,7 +231,7 @@ class ConeSource(_vtk.vtkConeSource):
             Enable or disable the capping the base of the cone with a
             polygon.
         """
-        return self.GetCapping()
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -429,7 +429,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self._direction = direction
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get radius of the cylinder.
 
         Returns
@@ -503,7 +503,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         bool
             Cap cylinder ends with polygons.
         """
-        return self.GetCapping()
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -1753,7 +1753,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         bool
             Enable or disable producing filled polygons.
         """
-        return self.GetGeneratePolygon()
+        return bool(self.GetGeneratePolygon())
 
     @fill.setter
     def fill(self, fill: bool):
@@ -1811,10 +1811,10 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     _new_attr_exceptions = ['_kinds']
 
-    def __init__(self, kind='tetrahedron'):
+    def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
         super().__init__()
-        self._kinds = {
+        self._kinds: Dict[str, int] = {
             'tetrahedron': 0,
             'cube': 1,
             'octahedron': 2,
