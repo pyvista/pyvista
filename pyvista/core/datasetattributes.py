@@ -506,12 +506,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
         if name in self.dataset._association_bitarray_names[self.association.name]:
-            narray = narray.view(np.bool_)  # type: ignore
+            narray = narray.view(np.bool_)
         elif name in self.dataset._association_complex_names[self.association.name]:
             if narray.dtype == np.float32:
-                narray = narray.view(np.complex64)  # type: ignore
+                narray = narray.view(np.complex64)
             if narray.dtype == np.float64:
-                narray = narray.view(np.complex128)  # type: ignore
+                narray = narray.view(np.complex128)
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()

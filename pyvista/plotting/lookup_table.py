@@ -946,7 +946,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """Return the lookup type."""
         if self.cmap:
             if hasattr(self.cmap, 'name'):
-                return f'{self.cmap.name}'  # type: ignore
+                return f'{self.cmap.name}'
             else:  # pragma: no cover
                 return f'{self.cmap}'
         elif self._values_manual:
