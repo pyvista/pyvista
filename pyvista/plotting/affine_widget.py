@@ -1,6 +1,6 @@
 """Affine widget module."""
-from typing import Tuple, cast
 
+from typing import Tuple, cast
 
 import numpy as np
 

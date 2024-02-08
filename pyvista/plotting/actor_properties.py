@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkProperty."""
+
 from typing import Tuple
 
 from . import _vtk

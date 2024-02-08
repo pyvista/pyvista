@@ -1,6 +1,6 @@
 """Wrap vtkLookupTable."""
-from typing import Any, Dict, Optional, Tuple, Union, cast
 
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import numpy as np
 
