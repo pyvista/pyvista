@@ -521,7 +521,7 @@ class CompositePolyDataMapper(
         _vtk.vtkCompositePolyDataMapper  # type: ignore
         if vtk_version_info >= (9, 3)
         else _vtk.vtkCompositePolyDataMapper2
-    ),  # type: ignore
+    ),
     _BaseMapper,
 ):
     """Composite PolyData mapper.
