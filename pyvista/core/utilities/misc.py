@@ -1,4 +1,5 @@
 """Miscellaneous core utilities."""
+
 from collections.abc import Sequence
 import enum
 from functools import lru_cache

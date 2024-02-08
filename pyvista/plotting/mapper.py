@@ -1,4 +1,5 @@
 """An internal module for wrapping the use of mappers."""
+
 import sys
 from typing import Optional, Union, cast
 
@@ -297,7 +298,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):  # numpydoc ignore=GL08
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
-        scalar_mode = scalar_mode.lower()  # type: ignore
+        scalar_mode = scalar_mode.lower()
         if scalar_mode == 'default':
             self.SetScalarModeToDefault()
         elif scalar_mode == 'point':

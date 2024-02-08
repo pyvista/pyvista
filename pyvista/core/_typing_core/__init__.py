@@ -1,4 +1,5 @@
 """Type aliases for type hints."""
+
 from ._aliases import (  # noqa: F401
     Array,
     BoundsLike,

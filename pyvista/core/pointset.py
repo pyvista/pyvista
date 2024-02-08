@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+
 import collections.abc
 from functools import wraps
 import numbers
@@ -80,7 +81,7 @@ class _PointSet(DataSet):
         alg.Update()
         return np.array(alg.GetCenter())
 
-    def shallow_copy(self, to_copy: DataSet) -> None:  # type: ignore[override]
+    def shallow_copy(self, to_copy: DataSet) -> None:
         """Create a shallow copy from a different dataset into this one.
 
         This method mutates this dataset and returns ``None``.
@@ -330,7 +331,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
                 pdata.point_data[key] = value
         return pdata
 
-    @wraps(DataSet.plot)  # type: ignore
+    @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
@@ -2726,7 +2727,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         shape1 = 2 * shape0
         ncells = np.prod(shape0)
         cells = 8 * np.ones((ncells, 9), dtype=int)
-        points, indices = np.unique(corners, axis=0, return_inverse=True)  # type: ignore
+        points, indices = np.unique(corners, axis=0, return_inverse=True)
         indices = indices.ravel()
         connectivity = np.asarray(
             [[0, 1, 1, 0, 0, 1, 1, 0], [0, 0, 1, 1, 0, 0, 1, 1], [0, 0, 0, 0, 1, 1, 1, 1]]

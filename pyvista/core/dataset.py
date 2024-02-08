@@ -1,4 +1,5 @@
 """Attributes common to PolyData and Grid Objects."""
+
 from __future__ import annotations
 
 from collections import namedtuple
@@ -395,7 +396,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore
-    def active_scalars_name(self) -> str:  # type: ignore  # numpydoc ignore=RT01
+    def active_scalars_name(self) -> str:  # numpydoc ignore=RT01
         """Return the name of the active scalars.
 
         Returns
@@ -1221,7 +1222,7 @@ class DataSet(DataSetFilters, DataObject):
             xyz = [xyz] * 3
 
         transform = _vtk.vtkTransform()
-        transform.Scale(xyz)  # type: ignore
+        transform.Scale(xyz)
         return self.transform(
             transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
