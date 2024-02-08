@@ -65,7 +65,7 @@ repos:
     rev: v1.8.0
     hooks:
       - id: mypy
-        args: [--warn-unused-ignores]
+        args: [--pretty, --show-error-context, --warn-unused-ignores]
         exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
           [
