@@ -156,7 +156,7 @@ def wrap(
         )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
-            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)  # type: ignore
+            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object

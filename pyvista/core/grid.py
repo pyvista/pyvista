@@ -247,7 +247,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
+    def points(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
         Returns
@@ -633,7 +633,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.spacing = (spacing[0], spacing[1], spacing[2])
 
     @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
+    def points(self) -> np.ndarray:  # numpydoc ignore=RT01
         """Build a copy of the implicitly defined points as a numpy array.
 
         Returns
