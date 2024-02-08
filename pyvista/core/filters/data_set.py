@@ -5516,9 +5516,9 @@ class DataSetFilters:
 
         The metrics that can be computed on the boundary faces of the mesh and are:
 
-        - ``'distance from cell center to face center'``
-        - ``'distance from cell center to face plane'``
-        - ``'angle of faces plane normal and cell center to face center vector'``
+        - Distance from cell center to face center
+        - Distance from cell center to face plane
+        - Angle of faces plane normal and cell center to face center vector
 
         Parameters
         ----------
