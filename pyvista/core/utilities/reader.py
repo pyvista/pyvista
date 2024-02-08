@@ -1,4 +1,5 @@
 """Fine-grained control of reading data files."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
