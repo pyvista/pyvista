@@ -21,4 +21,5 @@ ignore =
     B001, E722
     # we already check black
     BLK100,
+    # let black auto-format statements on one line
     E704
