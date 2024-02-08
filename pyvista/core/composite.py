@@ -1036,7 +1036,7 @@ class MultiBlock(
 
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
-    ) -> Tuple[FieldAssociation, NumpyArray[float]]:  # type: ignore
+    ) -> Tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
