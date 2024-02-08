@@ -113,7 +113,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
 
     @overload
-    def __new__(  # type: ignore[overload-overlap]
+    def __new__(
         cls,
         _array: NumpyArray[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
