@@ -16,7 +16,7 @@ An array validator function typically:
 from copy import deepcopy
 import inspect
 from itertools import product
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 

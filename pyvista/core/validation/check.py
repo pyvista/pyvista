@@ -746,7 +746,7 @@ def check_ndim(
 
 
 def check_number(
-    num: Union[float, int, complex, np.number, Number],
+    num: Union[float, int, complex, np.number[Any], Number],
     /,
     *,
     definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
@@ -902,7 +902,7 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
         raise
 
 
-def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
+def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -939,7 +939,7 @@ def check_sequence(obj: Sequence, /, *, name: str = 'Object'):
         raise
 
 
-def check_iterable(obj: Iterable, /, *, name: str = 'Object'):
+def check_iterable(obj: Iterable[Any], /, *, name: str = 'Object'):
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -1113,7 +1113,7 @@ def check_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: s
 
 
 def check_iterable_items(
-    iterable_obj: Iterable,
+    iterable_obj: Iterable[Any],
     /,
     item_type: Union[type, Tuple[type, ...]],
     *,

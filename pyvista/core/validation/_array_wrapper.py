@@ -54,7 +54,7 @@ ShapeLike = Union[int, Shape]
 
 # Similar to npt.DTypeLike but is bound to numeric types
 # and does not allow _SupportsDType protocol
-DTypeLike = Union[np.dtype, Type[Any], str]
+DTypeLike = Union[np.dtype[Any], Type[Any], str]
 
 
 # Define array protocol
@@ -191,7 +191,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def to_numpy(self): ...
 
     @abstractmethod
-    def all_func(self, func: Callable, *args): ...
+    def all_func(self, func: Callable[..., Any], *args): ...
 
     @abstractmethod
     def as_iterable(self) -> Iterable[_NumberType]: ...
@@ -236,7 +236,7 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     _array: NumpyArray[_NumberType]
     dtype: np.dtype[_NumberType]
 
-    def all_func(self, func: Callable, *args):
+    def all_func(self, func: Callable[..., Any], *args):
         return np.all(func(self._array, *args))
 
     def __call__(self) -> NumpyArray[_NumberType]:
@@ -262,7 +262,7 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
 
 
 class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
-    def all_func(self, func: Callable, *args):
+    def all_func(self, func: Callable[..., Any], *args):
         return all(func(x, *args) for x in self.as_iterable())
 
     def copy_array(self):

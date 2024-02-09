@@ -30,7 +30,9 @@ import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
 _NumberType = TypeVar(
-    '_NumberType', bound=Union[np.floating, np.integer, np.bool_, float, int, bool], covariant=True
+    '_NumberType',
+    bound=Union[np.floating[Any], np.integer[Any], np.bool_, float, int, bool],
+    covariant=True,
 )
 
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):

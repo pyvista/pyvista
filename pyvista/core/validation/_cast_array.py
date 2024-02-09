@@ -1,6 +1,6 @@
 """Array casting functions."""
 
-from typing import Optional
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -9,7 +9,7 @@ from pyvista.core._typing_core import Array, NumpyArray
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 
 
-def _cast_to_list(arr: _ArrayLikeOrScalar[_NumberType]) -> list:
+def _cast_to_list(arr: _ArrayLikeOrScalar[_NumberType]) -> List[Any]:
     """Cast an array to a nested list.
 
     Parameters
@@ -25,7 +25,7 @@ def _cast_to_list(arr: _ArrayLikeOrScalar[_NumberType]) -> list:
     return _cast_to_numpy(arr).tolist()
 
 
-def _cast_to_tuple(arr: Array[_NumberType]) -> tuple:
+def _cast_to_tuple(arr: Array[_NumberType]) -> Tuple[Any]:
     """Cast an array to a nested tuple.
 
     Parameters
