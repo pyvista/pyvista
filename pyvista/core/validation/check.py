@@ -921,7 +921,7 @@ def check_iterable_items(
         raise
 
 
-def check_contains(item, /, container, *, name='Input'):
+def check_contains(*, item, container, name='Input'):
     """Check if an item is in a container.
 
     Parameters
@@ -930,7 +930,7 @@ def check_contains(item, /, container, *, name='Input'):
         Item to check.
 
     container : Any
-        Container the object is expected to be in.
+        Container the item is expected to be in.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.

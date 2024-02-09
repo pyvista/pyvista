@@ -406,7 +406,9 @@ def validate_axes(
     # Validate number of args
     check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
-        check_contains(must_have_orientation, ['right', 'left'], name=f"{name} orientation")
+        check_contains(
+            item=must_have_orientation, container=['right', 'left'], name=f"{name} orientation"
+        )
     elif must_have_orientation is None and len(axes) == 2:
         raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
 
