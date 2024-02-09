@@ -63,10 +63,32 @@ _FiniteNestedSequence = Union[  # Note: scalar types are excluded
 _Sequence = Union[List[_T], Tuple[_T, ...]]
 
 # Define nested sequences bound to numeric types only
-_NumberSequence1D = Union[List[_NumberType], Tuple[_NumberType, ...]]
-_NumberSequence2D = Sequence[_NumberSequence1D[_NumberType]]
-_NumberSequence3D = Sequence[_NumberSequence2D[_NumberType]]
-_NumberSequence4D = Sequence[_NumberSequence3D[_NumberType]]
+_NumberList1D = List[_NumberType]
+_NumberList2D = List[List[_NumberType]]
+_NumberList3D = List[List[List[_NumberType]]]
+_NumberList4D = List[List[List[List[_NumberType]]]]
+_NumberList = Union[
+    _NumberList1D[_NumberType],
+    _NumberList2D[_NumberType],
+    _NumberList3D[_NumberType],
+    _NumberList4D[_NumberType],
+]
+
+_NumberTuple1D = Tuple[_NumberType, ...]
+_NumberTuple2D = Tuple[Tuple[_NumberType, ...]]
+_NumberTuple3D = Tuple[Tuple[Tuple[_NumberType, ...]]]
+_NumberTuple4D = Tuple[Tuple[Tuple[Tuple[_NumberType, ...]]]]
+_NumberTuple = Union[
+    _NumberTuple1D[_NumberType],
+    _NumberTuple2D[_NumberType],
+    _NumberTuple3D[_NumberType],
+    _NumberTuple4D[_NumberType],
+]
+
+_NumberSequence1D = Union[_NumberTuple1D[_NumberType], _NumberList1D[_NumberType]]
+_NumberSequence2D = Union[_NumberTuple2D[_NumberType], _NumberList2D[_NumberType]]
+_NumberSequence3D = Union[_NumberTuple3D[_NumberType], _NumberList3D[_NumberType]]
+_NumberSequence4D = Union[_NumberTuple4D[_NumberType], _NumberList4D[_NumberType]]
 _NumberSequence = Union[
     _NumberSequence1D[_NumberType],
     _NumberSequence2D[_NumberType],
@@ -75,7 +97,7 @@ _NumberSequence = Union[
 ]
 
 # Define nested sequences of numpy arrays
-_NumpyArraySequence1D = Union[List[NumpyArray[_NumberType]], Tuple[NumpyArray[_NumberType], ...]]
+_NumpyArraySequence1D = Sequence[NumpyArray[_NumberType]]
 _NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
 _NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
 _NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]

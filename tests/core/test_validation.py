@@ -447,12 +447,15 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('name', ["_array", "_input"])
 @pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('dtype_in', [float])
 @pytest.mark.parametrize('dtype_out', [float, int, np.float32, np.float64])
 @pytest.mark.parametrize('case', numeric_array_test_cases())
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
 @pytest.mark.parametrize('output_type', [tuple, list, np.ndarray])
-def test_validate_array(name, copy, as_any, dtype_out, case, stack_input, input_type, output_type):
+def test_validate_array(
+    name, copy, as_any, dtype_in, dtype_out, case, stack_input, input_type, output_type
+):
     # Set up
     valid_array = np.array(case.valid_array)
     invalid_array = np.array(case.invalid_array)
@@ -464,6 +467,9 @@ def test_validate_array(name, copy, as_any, dtype_out, case, stack_input, input_
         valid_array = np.stack((valid_array, valid_array), axis=1)
         invalid_array = np.stack((invalid_array, invalid_array), axis=0)
         invalid_array = np.stack((invalid_array, invalid_array), axis=1)
+
+    valid_array.astype(dtype_in)
+    invalid_array.astype(dtype_in)
 
     if input_type is tuple:
         valid_array = _cast_to_tuple(valid_array)
@@ -510,7 +516,7 @@ def test_validate_array(name, copy, as_any, dtype_out, case, stack_input, input_
     assert np.array_equal(array_out, array_in)
 
     # Check output
-    has_numpy_dtype = dtype_out not in (float, int, bool)
+    has_numpy_dtype = issubclass(dtype_out, np.generic)
     if np.array(array_in).ndim == 0 and output_type in (list, tuple) and not has_numpy_dtype:
         # test scalar input results in scalar output
         assert isinstance(array_out, float) or isinstance(array_out, int)

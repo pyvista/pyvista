@@ -417,11 +417,11 @@ def validate_array(
     # Cast array to desired output
     if output_type is not None:
         if output_type in ("numpy", np.ndarray):
-            array_out = wrapped.to_numpy()
+            return wrapped.to_numpy(array, copy)
         elif output_type in ("list", list):
-            array_out = wrapped.to_list()
+            return wrapped.to_list(array, copy)
         elif output_type in ("tuple", tuple):
-            array_out = wrapped.to_tuple()
+            return wrapped.to_tuple(array, copy)
         else:
             # Invalid type, raise error with check
             check_contains(output_type, ["numpy", "list", "tuple", np.ndarray, list, tuple])
@@ -432,20 +432,27 @@ def validate_array(
             _assert_never()
     elif rewrap_builtin:
         if isinstance(array, tuple):
-            array_out = wrapped.to_tuple()
+            return wrapped.to_tuple(array, copy)
         else:
             # to_list should cover lists as well as scalar inputs
-            array_out = wrapped.to_list()
+            return wrapped.to_list(array, copy)
         # reveal_type(array_out)
     else:
-        array_out = wrapped._array
-    # reveal_type(array_out)
-    if array_out is array and copy:
-        if isinstance(array_out, np.ndarray):
-            array_out = np.ndarray.copy(array_out)
-        else:
-            array_out = deepcopy(array_out)
-    return array_out
+        if copy:
+            if isinstance(array, np.ndarray):
+                return np.ndarray.copy(array)
+            else:
+                return deepcopy(array)
+        return wrapped._array
+    # # reveal_type(array_out)
+    # # T = TypeVar('T')
+    # # def _copy(in:T)
+    # if array_out is array and copy:
+    #     if isinstance(array_out, np.ndarray):
+    #         array_out = np.ndarray.copy(array_out)
+    #     else:
+    #         array_out = deepcopy(array_out)
+    # return array_out
 
 
 # reveal_type(validate_array([1]))
