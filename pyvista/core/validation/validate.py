@@ -16,7 +16,7 @@ An array validator function typically:
 from copy import deepcopy
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple, Union
 
 import numpy as np
 
@@ -68,11 +68,38 @@ def validate_array(
     """Check and validate a numeric array meets specific requirements.
 
     Validate an array to ensure it is numeric, has a specific shape,
-    data-type, and/or has values that meet specific
-    requirements such as being sorted, integer-like, or finite.
+    data-type, and/or has values that meet specific requirements such as
+    being sorted, having integer values, or is finite. The output type of
+    the array can also be explicitly set to standardize the array
+    representation.
+
+    By default, the output type of the array is the same as the input
+    when the input is a scalar, NumPy array, list, tuple, singly-nested
+    list or singly-nested tuple, i.e.:
+
+    * Scalars: ``T`` -> ``T``
+    * NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
+    * Sequences:
+
+        * ``tuple[T]`` -> ``tuple[T]``
+        * ``list[T]`` -> ``list[T]``
+        * ``tuple[tuple[[T]]`` -> ``tuple[tuple[T]]``
+        * ``list[list[[T]]`` -> ``list[list[T]]``
+
+    For the above inputs, this function will validate the array without
+    copying its data wherever posibble. Any other array-like inputs
+    are first cast to a NumPy array before validation and returned as
+    a NumPy array by default.
 
     The array's output can also be reshaped or broadcast, cast as a
     nested tuple or list array, or cast to a specific data type.
+
+    .. note::
+
+        This function is primarily designed to work with homogeneous
+        numeric arrays with a regular shape. Any other array-like
+        inputs (e.g. structured arrays, string arrays) are not
+        supported.
 
     See Also
     --------
@@ -84,6 +111,9 @@ def validate_array(
 
     validate_arrayN
         Specialized function for one-dimensional arrays.
+
+    validate_arrayN_uintlike
+        Specialized function for one-dimensional arrays with unsigned integers.
 
     validate_arrayNx3
         Specialized function for Nx3 dimensional arrays.
@@ -309,14 +339,15 @@ def validate_array(
     if dtype_out not in (None, float, int, bool):
         output_type = "numpy"
 
-    # Wrapped arrays allow subclasses of np.ndarray, so check if subclass
+    # Check if re-casting is needed in case subclasses are not allowed
     rewrap_numpy = as_any is False and type(wrapped._array) is np.ndarray
-    # Broadcasting and reshaping is only supported for numpy arrays,
-    # so cast builtins to numpy as needed
+
+    # Check if built-in types need to be cast to numpy in case broadcasting
+    # or reshaping is needed (these are only supported for numpy arrays)
     do_reshape = reshape_to is not None and wrapped.shape != reshape_to
     do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
-
     rewrap_builtin = isinstance(wrapped, _BuiltinWrapper) and (do_reshape or do_broadcast)
+
     if rewrap_numpy or rewrap_builtin or output_type in ("numpy", np.ndarray):
         wrapped = (
             _ArrayLikeWrapper(np.asanyarray(array))
@@ -382,7 +413,7 @@ def validate_array(
                     f"Cannot change dtype of {name} from {wrapped.dtype} to {dtype_out}.\n"
                     f"Float infinity cannot be converted to integer."
                 )
-
+    # reveal_type(wrapped())
     # Cast array to desired output
     if output_type is not None:
         if output_type in ("numpy", np.ndarray):
@@ -394,24 +425,30 @@ def validate_array(
         else:
             # Invalid type, raise error with check
             check_contains(output_type, ["numpy", "list", "tuple", np.ndarray, list, tuple])
-            # def _assert_never(arg: NoReturn) -> NoReturn:
-            #     raise AssertionError("Expected code to be unreachable")
-            # _assert_never(NoReturn)
+
+            def _assert_never() -> NoReturn:
+                raise AssertionError("Expected code to be unreachable")
+
+            _assert_never()
     elif rewrap_builtin:
         if isinstance(array, tuple):
             array_out = wrapped.to_tuple()
         else:
             # to_list should cover lists as well as scalar inputs
             array_out = wrapped.to_list()
+        # reveal_type(array_out)
     else:
         array_out = wrapped._array
-
+    # reveal_type(array_out)
     if array_out is array and copy:
         if isinstance(array_out, np.ndarray):
             array_out = np.ndarray.copy(array_out)
         else:
             array_out = deepcopy(array_out)
     return array_out
+
+
+# reveal_type(validate_array([1]))
 
 
 def validate_axes(
