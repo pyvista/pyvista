@@ -6,7 +6,7 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import Optional, Sequence, Tuple, Union, cast
+from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
 import warnings
 
 import numpy as np
@@ -54,7 +54,7 @@ class _PointSet(DataSet):
 
     _WRITERS = {".xyz": _vtk.vtkSimplePointsWriter}
 
-    def center_of_mass(self, scalars_weight: bool = False) -> np.ndarray:
+    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
         """Return the coordinates for the center of mass of the mesh.
 
         Parameters
@@ -174,7 +174,7 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(self, xyz: Vector, transform_all_input_vectors=False, inplace=None):
+    def translate(self, xyz: Vector[float], transform_all_input_vectors=False, inplace=None):
         """Translate the mesh.
 
         Parameters
@@ -1002,15 +1002,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
-    def from_regular_faces(cls, points: Matrix, faces: Matrix[int], deep=False):
+    def from_regular_faces(cls, points: Matrix[float], faces: Matrix[int], deep=False):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
 
         Parameters
         ----------
-        points : Matrix
+        points : Matrix[float]
             A (n_points, 3) array of points.
 
-        faces : IntMatrix
+        faces : Matrix[int]
             A (n_faces, face_size) array of face indices. For a triangle mesh, ``face_size = 3``.
 
         deep : bool, default: False
@@ -1070,7 +1070,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         self.faces = CellArray.from_irregular_cells(faces)
 
     @classmethod
-    def from_irregular_faces(cls, points: Matrix, faces: Sequence[Vector[int]]):
+    def from_irregular_faces(cls, points: Matrix[float], faces: Sequence[Vector[int]]):
         """Alternate `pyvista.PolyData` convenience constructor from point and ragged face arrays.
 
         Parameters
@@ -1078,7 +1078,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         points : Matrix
             A (n_points, 3) array of points.
 
-        faces : Sequence[IntVector]
+        faces : Sequence[Vector[int]]
             A sequence of face vectors containing point indices.
 
         Returns
@@ -1115,7 +1115,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return cls(points, faces=CellArray.from_irregular_cells(faces))
 
     @property
-    def strips(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return a pointer to the strips as a numpy array.
 
         Returns
@@ -1901,7 +1901,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             )
 
     @property
-    def cells(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the cell data as a numpy object.
 
         This is the old style VTK data layout::
@@ -1959,7 +1959,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
-    def cells_dict(self) -> dict:  # numpydoc ignore=RT01
+    def cells_dict(self) -> Dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -2002,7 +2002,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def cell_connectivity(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return a the vtk cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
@@ -2095,7 +2095,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return lgrid
 
     @property
-    def celltypes(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def celltypes(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the cell types array.
 
         Returns
@@ -2162,7 +2162,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
 
     @property
-    def offset(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the cell locations array.
 
         This is the location of the start of each cell in
@@ -2601,14 +2601,14 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
 
         # add but do not make active
-        self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())
+        self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
         return None
 
-    def _reshape_point_array(self, array: np.ndarray) -> np.ndarray:
+    def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
         return array.reshape(self.dimensions, order='F')
 
-    def _reshape_cell_array(self, array: np.ndarray) -> np.ndarray:
+    def _reshape_cell_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
@@ -2707,7 +2707,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """Return the standard ``str`` representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, dims: Vector[int], corners: Matrix) -> None:
+    def _from_arrays(self, dims: Vector[int], corners: Matrix[float]) -> None:
         """Create a VTK explicit structured grid from NumPy arrays.
 
         Parameters
@@ -2992,7 +2992,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return self.bounds
 
-    def cell_id(self, coords: Array[int]) -> Union[int, np.ndarray, None]:
+    def cell_id(self, coords: Array[int]) -> Union[int, NumpyArray[int], None]:
         """Return the cell ID.
 
         Parameters
@@ -3081,7 +3081,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return coords
         return None
 
-    def neighbors(self, ind: Union[int, Vector[int]], rel: str = 'connectivity') -> list:
+    def neighbors(self, ind: Union[int, Vector[int]], rel: str = 'connectivity') -> List[int]:
         """Return the indices of neighboring cells.
 
         Parameters
