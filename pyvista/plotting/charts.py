@@ -130,9 +130,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     Still, only methods can be marked for doc substitution (as for
     properties the docstring seems to be overwritten when specifying
     setters or deleters), hence this decorator should be applied
-    before the property decorator. And 'type: ignore' comments are
-    necessary because mypy cannot handle decorated properties (see
-    https://github.com/python/mypy/issues/1362)
+    before the property decorator.
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
