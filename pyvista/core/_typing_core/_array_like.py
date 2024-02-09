@@ -29,13 +29,16 @@ import numpy as np
 import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
+# TODO: remove # type: ignore once support for 3.8 is dropped
 _NumberType = TypeVar(
     '_NumberType',
-    bound=Union[np.floating[Any], np.integer[Any], np.bool_, float, int, bool],
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
     covariant=True,
 )
 
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
+    # TODO: Remove this conditional block once support for 3.8 is dropped
+
     # Numpy's type annotations use a customized generic alias type for
     # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
     # which makes it incompatible with built-in generic alias types, e.g.
