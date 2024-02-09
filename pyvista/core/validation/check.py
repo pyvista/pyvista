@@ -49,8 +49,8 @@ from pyvista.core.validation._array_wrapper import (
 
 def check_subdtype(
     input_obj: Union[DTypeLike, _ArrayLikeOrScalar[_NumberType]],
-    base_dtype: Union[DTypeLike, Tuple[DTypeLike, ...], List[DTypeLike]],
     /,
+    base_dtype: Union[DTypeLike, Tuple[DTypeLike, ...], List[DTypeLike]],
     *,
     name: str = 'Input',
 ):
@@ -280,7 +280,7 @@ def check_sorted(
         strict_ = "strict " if strict else ""
         raise ValueError(
             f"{name} {msg_body} must be sorted in {strict_}{order} order. "
-            f"Got:\n    {reprlib.repr(array)}"
+            f"Got:\n    {reprlib.repr(wrapped._array)}"
         )
 
 
@@ -1294,7 +1294,7 @@ def check_length(
     wrapped = _ArrayLikeWrapper(array)
     if wrapped.ndim == 0:
         if allow_scalar:
-            wrapped = _ArrayLikeWrapper([cast(_NumberType, array)])
+            wrapped = _ArrayLikeWrapper(cast(_NumberSequence1D[_NumberType], [wrapped._array]))
         else:
             try:
                 len(wrapped._array)  # type: ignore[arg-type]

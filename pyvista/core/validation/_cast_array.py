@@ -9,7 +9,7 @@ from pyvista.core._typing_core import Array, NumpyArray
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 
 
-def _cast_to_list(arr: Array[_NumberType]) -> list:
+def _cast_to_list(arr: _ArrayLikeOrScalar[_NumberType]) -> list:
     """Cast an array to a nested list.
 
     Parameters

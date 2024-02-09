@@ -137,7 +137,7 @@ def test_validate_number():
     assert num == 1
     assert isinstance(num, int)
 
-    num = validate_number(2.0, to_list=False, must_have_shape=(), reshape=False)
+    num = validate_number(2.0, output_type='numpy', must_have_shape=(), reshape=False)
     assert num == 2.0
     assert type(num) is np.ndarray
     assert num.dtype.type is np.float64
@@ -152,15 +152,20 @@ def test_validate_number():
 
 def test_validate_data_range():
     rng = validate_data_range([0, 1])
-    assert rng == (0, 1)
+    assert rng == [0, 1]
 
-    rng = validate_data_range((0, 2.5), to_list=True)
+    rng = validate_data_range((0, 2.5), output_type=list)
     assert rng == [0.0, 2.5]
+    assert isinstance(rng[0], int)
+    assert isinstance(rng[1], float)
 
-    rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
+    rng = validate_data_range((0, 2.5), dtype_out=float)
+    assert rng == (0.0, 2.5)
+
+    rng = validate_data_range((-10, -10), output_type='numpy', must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
+    msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    (1, 0)'
     with pytest.raises(ValueError, match=escape(msg)):
         validate_data_range((1, 0))
 
@@ -267,7 +272,7 @@ def test_validate_shape_value():
 @pytest.mark.parametrize('reshape', [True, False])
 def test_validate_arrayNx3(reshape):
     arr = validate_arrayNx3((1, 2, 3))
-    assert arr.shape == (1, 3)
+    assert np.shape(arr) == (1, 3)
     assert np.array_equal(arr, [[1, 2, 3]])
 
     if not reshape:
@@ -276,7 +281,7 @@ def test_validate_arrayNx3(reshape):
             validate_arrayNx3((1, 2, 3), reshape=False)
 
     arr = validate_arrayNx3([(1, 2, 3), (4, 5, 6)], reshape=reshape)
-    assert arr.shape == (2, 3)
+    assert np.shape(arr) == (2, 3)
 
     msg = (
         "Parameter 'must_have_shape' cannot be set for function `validate_arrayNx3`.\n"
@@ -295,16 +300,16 @@ def test_validate_arrayNx3(reshape):
 def test_validate_arrayN(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN(0)
-    assert arr.shape == (1,)
+    assert np.shape(arr) == (1,)
     assert np.array_equal(arr, [0])
 
     # test 2D input is reshaped to 1D by default
     arr = validate_arrayN([[1, 2, 3]])
-    assert arr.shape == (3,)
+    assert np.shape(arr) == (3,)
     assert np.array_equal(arr, [1, 2, 3])
 
     arr = validate_arrayN([[1], [2], [3]])
-    assert arr.shape == (3,)
+    assert np.shape(arr) == (3,)
     assert np.array_equal(arr, [1, 2, 3])
 
     if not reshape:
@@ -317,7 +322,7 @@ def test_validate_arrayN(reshape):
             validate_arrayN([[1, 2, 3]], reshape=False)
 
     arr = validate_arrayN((1, 2, 3, 4, 5, 6), reshape=reshape)
-    assert arr.shape == (6,)
+    assert np.shape(arr) == (6,)
 
     msg = (
         "Parameter 'must_have_shape' cannot be set for function `validate_arrayN`.\n"
@@ -337,9 +342,9 @@ def test_validate_arrayN(reshape):
 def test_validate_arrayN_uintlike(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_uintlike(0.0)
-    assert arr.shape == (1,)
+    assert np.shape(arr) == (1,)
     assert np.array_equal(arr, [0])
-    assert arr.dtype.type is np.int32 or arr.dtype.type is np.int64
+    assert isinstance(arr[0], int)
 
     arr = validate_arrayN_uintlike(0.0, dtype_out='uint8')
     assert arr.dtype.type is np.uint8
@@ -356,16 +361,16 @@ def test_validate_arrayN_uintlike(reshape):
 def test_validate_array3(reshape):
     # test 0D input is reshaped to len-3 1D vector with broadcasting enabled
     arr = validate_array3(0, broadcast=True)
-    assert arr.shape == (3,)
+    assert np.shape(arr) == (3,)
     assert np.array_equal(arr, [0, 0, 0])
 
     # test 2D input is reshaped to 1D by default
     arr = validate_array3([[1, 2, 3]])
-    assert arr.shape == (3,)
+    assert np.shape(arr) == (3,)
     assert np.array_equal(arr, [1, 2, 3])
 
     arr = validate_array3([[1], [2], [3]])
-    assert arr.shape == (3,)
+    assert np.shape(arr) == (3,)
     assert np.array_equal(arr, [1, 2, 3])
 
     if not reshape:
@@ -442,15 +447,12 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('name', ["_array", "_input"])
 @pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize('as_any', [True, False])
-@pytest.mark.parametrize('to_list', [True, False])
-@pytest.mark.parametrize('to_tuple', [True, False])
-@pytest.mark.parametrize('dtype_out', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_out', [float, int, np.float32, np.float64])
 @pytest.mark.parametrize('case', numeric_array_test_cases())
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
-def test_validate_array(
-    name, copy, as_any, to_list, to_tuple, dtype_out, case, stack_input, input_type
-):
+@pytest.mark.parametrize('output_type', [tuple, list, np.ndarray])
+def test_validate_array(name, copy, as_any, dtype_out, case, stack_input, input_type, output_type):
     # Set up
     valid_array = np.array(case.valid_array)
     invalid_array = np.array(case.invalid_array)
@@ -482,8 +484,6 @@ def test_validate_array(
         name=name,
         copy=copy,
         as_any=as_any,
-        to_list=to_list,
-        to_tuple=to_tuple,
         must_have_dtype=np.number,
         dtype_out=dtype_out,
         must_have_length=range(np.array(valid_array).size + 1),
@@ -494,6 +494,7 @@ def test_validate_array(
         broadcast_to=shape,
         must_be_in_range=(np.min(valid_array), np.max(valid_array)),
         must_be_nonnegative=np.all(np.array(valid_array) > 0),
+        output_type=output_type,
     )
 
     # Test raises correct error with invalid input
@@ -509,16 +510,18 @@ def test_validate_array(
     assert np.array_equal(array_out, array_in)
 
     # Check output
-    if np.array(array_in).ndim == 0 and (to_tuple or to_list):
+    has_numpy_dtype = dtype_out not in (float, int, bool)
+    if np.array(array_in).ndim == 0 and output_type in (list, tuple) and not has_numpy_dtype:
         # test scalar input results in scalar output
         assert isinstance(array_out, float) or isinstance(array_out, int)
-    elif to_tuple:
+    elif output_type is tuple and not has_numpy_dtype:
         assert type(array_out) is tuple
-    elif to_list:
+        # assert type(array_out[0]) is dtype_out
+    elif output_type is list and not has_numpy_dtype:
         assert isinstance(array_out, list)
-    else:
+    elif output_type is np.ndarray or has_numpy_dtype:
         assert isinstance(array_out, np.ndarray)
-        assert array_out.dtype.type is dtype_out
+        assert array_out.dtype.type is np.dtype(dtype_out).type
         if as_any:
             if input_type is pyvista_ndarray:
                 assert type(array_out) is pyvista_ndarray
@@ -534,9 +537,20 @@ def test_validate_array(
                 assert array_out is not array_in
         else:
             assert type(array_out) is np.ndarray
+    else:
+        assert type(array_in) is type(array_out)
 
     if copy:
-        assert array_out is not array_in
+        if isinstance(array_in, (int, float)):
+            # copying an int will not always create a unique instance
+            assert array_out == array_in
+        else:
+            assert array_out is not array_in
+
+
+# TODO: test for dtype out inf error
+#                 must_be_finite=False,
+#             TypeError, 'Float infinity cannot be converted to integer',
 
 
 @pytest.mark.parametrize('obj', [0, 0.0, "0"])

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+import copy
 import itertools
 import reprlib
 from typing import (
@@ -39,7 +40,7 @@ from pyvista.core._typing_core._type_guards import (
     _is_NumberSequence1D,
     _is_NumberSequence2D,
 )
-from pyvista.core.validation._cast_array import _cast_to_numpy
+from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 
 # Similar definitions to numpy._typing._shape but with modifications:
 #  - explicit support for empty tuples `()`
@@ -69,7 +70,7 @@ class _SupportsArray(Protocol[_DType_co]):
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
-    # array: _ArrayLikeOrScalar[_NumberType]
+    _array: _ArrayLikeOrScalar[_NumberType]
 
     # The input array-like types are complex and mypy cannot infer
     # the return types correctly for each overload, so we ignore
@@ -118,7 +119,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         _array: NumpyArray[_NumberType],
     ) -> _NumpyArrayWrapper[_NumberType]: ...  # pragma: no cover
 
-    def __new__(cls, _array: _ArrayLikeOrScalar[_NumberType], description=None):
+    def __new__(cls, _array: _ArrayLikeOrScalar[_NumberType]):
         """Wrap array-like inputs to standardize the representation.
 
         The following inputs are wrapped as-is without modification:
@@ -133,11 +134,16 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         depth > 2, nested sequences of numpy arrays) are cast as a numpy
         array.
 
+
         """
         # Note:
         # __init__ is not used by this class or subclasses so that already-wrapped
         # inputs can be returned as-is without re-initialization.
         # Instead, attributes are initialized here with __setattr__
+
+        # WARNING: Wrapped arrays of built-in types are assumed to be static and
+        # should not be mutated since their properties are not dynamically
+        # generated. Therefore, do not modify the underlying `_array`.
         try:
             if isinstance(_array, _ArrayLikeWrapper):
                 return _array
@@ -176,21 +182,54 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         return f'{self.__class__.__name__}({self._array.__repr__()})'
 
     @abstractmethod
+    def to_list(self): ...
+
+    @abstractmethod
+    def to_tuple(self): ...
+
+    @abstractmethod
+    def to_numpy(self): ...
+
+    @abstractmethod
     def all_func(self, func: Callable, *args): ...
 
     @abstractmethod
     def as_iterable(self) -> Iterable[_NumberType]: ...
 
     @abstractmethod
+    def copy_array(self): ...
+
+    @abstractmethod
+    def change_dtype(self, dtype): ...
+
+    @abstractmethod
     def __call__(self):
-        ...
-        # This method is used for statically mapping the wrapper type
-        # to its internal array type: Type[wrapper[T]] -> Type[array[T]].
-        # This effectively makes wrapped objects look like array objects
-        # so that mypy won't complain that a wrapped object is used where
-        # an array is expected.
-        # Otherwise, many `type: ignore`s would be needed, or the wrapper
-        # class would need to be added to the array-like type alias
+        """Return self if called.
+
+        This method is used for statically mapping the wrapper type
+        to its internal array type: Type[wrapper[T]] -> Type[array[T]].
+        This effectively makes wrapped objects look like array objects
+        so that mypy won't complain that a wrapped object is used where
+        an array is expected.
+        Otherwise, many `# type: ignore` comments would be needed, or the
+        private wrapper class would need to be added to the public array-like
+        type alias definition.
+
+        E.g. Pass a wrapped array where an array-like object is expected:
+
+        >>> import numpy as np
+        >>> from pyvista.core.validation._array_wrapper import (
+        ...     _ArrayLikeWrapper,
+        ... )
+        >>> from pyvista import validation
+        >>> wrapped = _ArrayLikeWrapper(np.array([1, 2, 3]))
+
+        # Call the wrapped arary with `()` instead of passing it directly
+
+        >>> validation.check_real(wrapped())
+
+        """
+        pass
 
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
@@ -206,10 +245,31 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return self._array.flatten()
 
+    def copy_array(self):
+        self._array = np.ndarray.copy(self._array)
+
+    def to_list(self):
+        return self._array.tolist()
+
+    def to_tuple(self):
+        return _cast_to_tuple(self._array)
+
+    def to_numpy(self):
+        return self._array
+
+    def change_dtype(self, dtype):
+        self._array = self._array.astype(dtype, copy=False)
+
 
 class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
     def all_func(self, func: Callable, *args):
         return all(func(x, *args) for x in self.as_iterable())
+
+    def copy_array(self):
+        self._array = copy.deepcopy(self._array)
+
+    def to_numpy(self):
+        return np.asarray(self._array)
 
 
 class _NumberWrapper(_BuiltinWrapper[_NumberType]):
@@ -236,6 +296,18 @@ class _NumberWrapper(_BuiltinWrapper[_NumberType]):
 
     def __call__(self) -> _NumberType:
         return self  # type: ignore[return-value]
+
+    def to_list(self):
+        return self._array
+
+    def to_tuple(self):
+        return self._array
+
+    def change_dtype(self, dtype):
+        if self.dtype is dtype:
+            return
+        else:
+            self._array = dtype(self._array)
 
 
 class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
@@ -266,6 +338,16 @@ class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
     def __call__(self) -> _NumberSequence1D[_NumberType]:
         return self  # type: ignore[return-value]
 
+    def to_list(self):
+        return self._array if isinstance(self._array, list) else list(self._array)
+
+    def to_tuple(self):
+        return self._array if isinstance(self._array, tuple) else tuple(self._array)
+
+    def change_dtype(self, dtype):
+        self._array = self._array.__class__(dtype(x) for x in self._array)
+        self._dtype = dtype
+
 
 class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberSequence2D[_NumberType]
@@ -294,6 +376,21 @@ class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
 
     def __call__(self) -> _NumberSequence2D[_NumberType]:
         return self  # type: ignore[return-value]
+
+    def to_list(self):
+        # TODO: implement
+        return _cast_to_list(self._array)
+
+    def to_tuple(self):
+        # TODO: implement
+        return _cast_to_tuple(self._array)
+
+    def change_dtype(self, dtype):
+        out = self._array.__class__(
+            sub_array.__class__(dtype(item) for item in sub_array) for sub_array in self._array
+        )
+        self._array = out
+        self._dtype = dtype
 
 
 def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):

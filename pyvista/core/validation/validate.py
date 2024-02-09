@@ -13,6 +13,7 @@ An array validator function typically:
 
 """
 
+from copy import deepcopy
 import inspect
 from itertools import product
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -22,7 +23,7 @@ import numpy as np
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
-from pyvista.core.validation._cast_array import _cast_to_numpy, _cast_to_tuple
+from pyvista.core.validation._array_wrapper import _ArrayLikeWrapper, _BuiltinWrapper
 from pyvista.core.validation.check import (
     ShapeLike,
     check_contains,
@@ -31,6 +32,7 @@ from pyvista.core.validation.check import (
     check_length,
     check_nonnegative,
     check_range,
+    check_real,
     check_shape,
     check_sorted,
     check_string,
@@ -60,8 +62,7 @@ def validate_array(
     dtype_out=None,
     as_any=True,
     copy=False,
-    to_list=False,
-    to_tuple=False,
+    output_type=None,
     name="Array",
 ):
     """Check and validate a numeric array meets specific requirements.
@@ -161,6 +162,11 @@ def validate_array(
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
+        .. note::
+
+            Arrays with a float values may pass this check. Set
+            ``dtype_out=int`` if the output must have an integer dtype.
+
     must_be_sorted : bool | dict, default: False
         :func:`Check <pyvista.core.validation.check.check_sorted>`
         if the array's values are sorted. If ``True``, the check is
@@ -216,7 +222,22 @@ def validate_array(
 
     dtype_out : numpy.typing.DTypeLike, optional
         Set the data-type of the returned array. By default, the
-        dtype is inferred from the input data.
+        dtype is inferred from the input data. If ``dtype_out`` differs
+        from the array's dtype, a copy of the array is made. The dtype
+        of the array is set after any ``must_be_real`` or ``must_have_dtype``
+        checks are made.
+
+        .. warning::
+
+            Setting this to a NumPy dtype (e.g. ``np.float64``) will implicitly
+            set ``output_type`` to ``numpy``. Set to ``float``, ``int``, or
+            ``bool`` to avoid this behavior.
+
+        .. warning::
+
+            Array validation can fail or result in silent integer overflow
+            if ``dtype_out`` is integral and the input has infinity values.
+            Consider setting ``must_be_finite=True`` for these cases.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
@@ -231,14 +252,18 @@ def validate_array(
 
         A copy may also be made to satisfy ``dtype_out`` requirements.
 
-    to_list : bool, default: False
-        Return the validated array as a ``list`` or nested ``list``. Scalar
-        values are always returned as type  ``int`` or ``float``. Has no
-        effect if ``to_tuple=True``.
+    output_type : str | type, optional
+        Convert the array to a specific type. The array may be copied.
 
-    to_tuple : bool, default: False
-        Return the validated array as a ``tuple`` or nested ``tuple``. Scalar
-        values are always returned as type ``int`` or ``float``.
+        * ``"numpy"`` or ``np.ndarray"
+        * ``"list"`` or ``list``
+        * ``"tuple"`` or ``tuple``
+
+        .. note::
+
+            For scalar inputs, setting the output type to ``list`` or
+            ``tuple`` will return a scalar, and not an actual ``list``
+            or ``tuple`` object.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any of the
@@ -273,23 +298,42 @@ def validate_array(
     array([ 1,  2,  3,  5,  8, 13])
 
     """
-    array_out = _cast_to_numpy(
-        array, as_any=as_any, copy=copy, must_be_real=must_be_real, name=name
-    )
+    wrapped = _ArrayLikeWrapper(array)
 
+    # Check dtype
+    if must_be_real:
+        check_real(wrapped(), name=name)
     if must_have_dtype is not None:
-        check_subdtype(array_out, must_have_dtype, name=name)
+        check_subdtype(wrapped(), base_dtype=must_have_dtype, name=name)
+
+    if dtype_out not in (None, float, int, bool):
+        output_type = "numpy"
+
+    # Wrapped arrays allow subclasses of np.ndarray, so check if subclass
+    rewrap_numpy = as_any is False and type(wrapped._array) is np.ndarray
+    # Broadcasting and reshaping is only supported for numpy arrays,
+    # so cast builtins to numpy as needed
+    do_reshape = reshape_to is not None and wrapped.shape != reshape_to
+    do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
+
+    rewrap_builtin = isinstance(wrapped, _BuiltinWrapper) and (do_reshape or do_broadcast)
+    if rewrap_numpy or rewrap_builtin or output_type in ("numpy", np.ndarray):
+        wrapped = (
+            _ArrayLikeWrapper(np.asanyarray(array))
+            if as_any
+            else _ArrayLikeWrapper(np.asarray(array))
+        )
 
     # Check shape
     if must_have_shape is not None:
-        check_shape(array_out, must_have_shape, name=name)
+        check_shape(wrapped(), shape=must_have_shape, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
-    if reshape_to is not None and array_out.shape != reshape_to:
-        array_out = array_out.reshape(reshape_to)
+    if do_reshape:
+        wrapped._array = np.reshape(wrapped._array, reshape_to)
 
-    if broadcast_to is not None and array_out.shape != broadcast_to:
-        array_out = np.broadcast_to(array_out, broadcast_to, subok=True)
+    if do_broadcast:
+        wrapped._array = np.broadcast_to(wrapped._array, broadcast_to, subok=True)
 
     # Check length _after_ reshaping otherwise length may be wrong
     if (
@@ -298,7 +342,7 @@ def validate_array(
         or must_have_max_length is not None
     ):
         check_length(
-            array,
+            wrapped(),
             exact_length=must_have_length,
             min_length=must_have_min_length,
             max_length=must_have_max_length,
@@ -308,14 +352,15 @@ def validate_array(
 
     # Check data values
     if must_be_nonnegative:
-        check_nonnegative(array_out, name=name)
+        check_nonnegative(wrapped(), name=name)
+    # Check finite before setting dtype since dtype change can fail with inf
     if must_be_finite:
-        check_finite(array_out, name=name)
+        check_finite(wrapped(), name=name)
     if must_be_integer:
-        check_integer(array_out, strict=False, name=name)
+        check_integer(wrapped(), strict=False, name=name)
     if must_be_in_range is not None:
         check_range(
-            array_out,
+            wrapped(),
             must_be_in_range,
             strict_lower=strict_lower_bound,
             strict_upper=strict_upper_bound,
@@ -323,19 +368,49 @@ def validate_array(
         )
     if must_be_sorted:
         if isinstance(must_be_sorted, dict):
-            check_sorted(array_out, **must_be_sorted, name=name)
+            check_sorted(wrapped(), **must_be_sorted, name=name)
         else:
-            check_sorted(array_out, name=name)
+            check_sorted(wrapped(), name=name)
 
-    # Process output
+    # Set dtype
     if dtype_out is not None:
-        dtype_out = np.dtype(dtype_out)
-        # Copy was done earlier, so don't do it again here
-        array_out = array_out.astype(dtype_out, copy=False)
-    if to_tuple:
-        return _cast_to_tuple(array_out)
-    if to_list:
-        return array_out.tolist()
+        try:
+            wrapped.change_dtype(dtype_out)
+        except OverflowError as e:
+            if 'cannot convert float infinity to integer' in repr(e):
+                raise TypeError(
+                    f"Cannot change dtype of {name} from {wrapped.dtype} to {dtype_out}.\n"
+                    f"Float infinity cannot be converted to integer."
+                )
+
+    # Cast array to desired output
+    if output_type is not None:
+        if output_type in ("numpy", np.ndarray):
+            array_out = wrapped.to_numpy()
+        elif output_type in ("list", list):
+            array_out = wrapped.to_list()
+        elif output_type in ("tuple", tuple):
+            array_out = wrapped.to_tuple()
+        else:
+            # Invalid type, raise error with check
+            check_contains(output_type, ["numpy", "list", "tuple", np.ndarray, list, tuple])
+            # def _assert_never(arg: NoReturn) -> NoReturn:
+            #     raise AssertionError("Expected code to be unreachable")
+            # _assert_never(NoReturn)
+    elif rewrap_builtin:
+        if isinstance(array, tuple):
+            array_out = wrapped.to_tuple()
+        else:
+            # to_list should cover lists as well as scalar inputs
+            array_out = wrapped.to_list()
+    else:
+        array_out = wrapped._array
+
+    if array_out is array and copy:
+        if isinstance(array_out, np.ndarray):
+            array_out = np.ndarray.copy(array_out)
+        else:
+            array_out = deepcopy(array_out)
     return array_out
 
 
@@ -419,7 +494,7 @@ def validate_axes(
     if num_args not in (1, 2, 3):
         raise ValueError(
             "Incorrect number of axes arguments. Number of arguments must be either:"
-            "    One arg (a single array),"
+            "    One arg (a single array with two or three vectors),"
             "    Two args (two vectors), or"
             "    Three args (three vectors)."
         )
@@ -478,9 +553,7 @@ def validate_axes(
         if must_have_orientation == 'left' and dot > 0:
             raise ValueError(f"{name} do not have a left-handed orientation.")
 
-    if normalize:
-        return axes_norm
-    return axes_array
+    return axes_norm if normalize else axes_array
 
 
 def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
@@ -521,7 +594,11 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
     else:
         try:
             valid_array = validate_array(
-                transform, must_have_shape=[(3, 3), (4, 4)], must_be_finite=True, name=name
+                transform,
+                must_have_shape=[(3, 3), (4, 4)],
+                must_be_finite=True,
+                name=name,
+                output_type='numpy',
             )
             if valid_array.shape == (3, 3):
                 array[:3, :3] = valid_array
@@ -574,7 +651,9 @@ def validate_transform3x3(
         array[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:
-            array = validate_array(transform, must_have_shape=(3, 3), name=name)
+            array = validate_array(
+                transform, must_have_shape=(3, 3), name=name, output_type="numpy"
+            )
         except ValueError:
             raise TypeError(
                 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
@@ -648,7 +727,6 @@ def validate_number(
 
     """
     kwargs.setdefault('name', 'Number')
-    kwargs.setdefault('to_list', True)
     kwargs.setdefault('must_be_finite', True)
     kwargs.setdefault('must_be_real', True)
 
@@ -695,20 +773,19 @@ def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
     Validate a data range.
 
     >>> from pyvista import validation
-    >>> validation.validate_data_range([-5, 5])
-    (-5, 5)
+    >>> validation.validate_data_range([-5, 5.0])
+    [-5, 5.0]
 
-    Add additional constraints if needed.
+    Add additional constraints if needed, e.g. to ensure the output
+    only contains floats.
 
-    >>> validation.validate_data_range([0, 1.0], must_be_nonnegative=True)
-    (0.0, 1.0)
+    >>> validation.validate_data_range([-5, 5.0], dtype_out=float)
+    [-5.0, 5.0]
 
     """
     kwargs.setdefault('name', 'Data Range')
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', 2)
     _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True)
-    if 'to_list' not in kwargs:
-        kwargs.setdefault('to_tuple', True)
     return validate_array(rng, **kwargs)
 
 
