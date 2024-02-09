@@ -295,7 +295,7 @@ def validate_array(
     ...     must_be_sorted=dict(strict=True),
     ...     must_be_in_range=rng,
     ... )
-    array([ 1,  2,  3,  5,  8, 13])
+    (1, 2, 3, 5, 8, 13)
 
     """
     wrapped = _ArrayLikeWrapper(array)
@@ -835,21 +835,19 @@ def validate_arrayNx3(
 
     >>> from pyvista import validation
     >>> validation.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
-    array([[1, 2, 3],
-           [4, 5, 6]])
+    ((1, 2, 3), (4, 5, 6))
 
     One-dimensional 3-element arrays are automatically reshaped to 2D.
 
     >>> validation.validate_arrayNx3([1, 2, 3])
-    array([[1, 2, 3]])
+    [[1, 2, 3]]
 
     Add additional constraints.
 
     >>> validation.validate_arrayNx3(
     ...     ((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10]
     ... )
-    array([[1, 2, 3],
-           [4, 5, 6]])
+    ((1, 2, 3), (4, 5, 6))
 
     """
     shape: Union[ShapeLike, List[ShapeLike]]
@@ -914,23 +912,23 @@ def validate_arrayN(
 
     >>> from pyvista import validation
     >>> validation.validate_arrayN((1, 2, 3, 4))
-    array([1, 2, 3, 4])
+    (1, 2, 3, 4)
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
     >>> validation.validate_arrayN(42.0)
-    array([42.0])
+    [42.0]
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
 
     >>> validation.validate_arrayN([[1, 2]])
-    array([1, 2])
+    [1, 2]
 
     Add additional constraints if needed.
 
     >>> validation.validate_arrayN((1, 2, 3), must_have_length=3)
-    array([1, 2, 3])
+    (1, 2, 3)
 
     """
     shape: Union[ShapeLike, List[ShapeLike]]
@@ -998,30 +996,30 @@ def validate_arrayN_uintlike(
     >>> from pyvista import validation
     >>> array = validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
     >>> array
-    array([1, 2, 3, 4])
+    (1, 2, 3, 4)
 
     Verify that the output data type is integral.
 
-    >>> np.issubdtype(array.dtype, int)
+    >>> isinstance(array[0], int)
     True
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
     >>> validation.validate_arrayN_uintlike(42)
-    array([42])
+    [42]
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
 
     >>> validation.validate_arrayN_uintlike([[1, 2]])
-    array([1, 2])
+    [1, 2]
 
     Add additional constraints if needed.
 
     >>> validation.validate_arrayN_uintlike(
     ...     (1, 2, 3), must_be_in_range=[1, 3]
     ... )
-    array([1, 2, 3])
+    (1, 2, 3)
 
     """
     # Set default dtype out but allow overriding as long as the dtype
@@ -1093,23 +1091,23 @@ def validate_array3(
 
     >>> from pyvista import validation
     >>> validation.validate_array3((1, 2, 3))
-    array([1, 2, 3])
+    (1, 2, 3)
 
     2D 3-element arrays are automatically reshaped to be 1D.
 
     >>> validation.validate_array3([[1, 2, 3]])
-    array([1, 2, 3])
+    [1, 2, 3]
 
     Scalar 0-dimensional values can be automatically broadcast as
     a 3-element 1D array.
 
     >>> validation.validate_array3(42.0, broadcast=True)
-    array([42.0, 42.0, 42.0])
+    [42.0, 42.0, 42.0]
 
     Add additional constraints if needed.
 
     >>> validation.validate_array3((1, 2, 3), must_be_nonnegative=True)
-    array([1, 2, 3])
+    (1, 2, 3)
 
     """
     shape: List[tuple[int, ...]]
