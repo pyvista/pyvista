@@ -4,7 +4,7 @@
 
 A ``validate`` function typically:
 
-* Uses :py:mod:`~pyvista.core.validation.check` functions to
+* Uses :py:mod:`~pyvista.core._validation.check` functions to
   check the type and/or value of input arguments.
 * Applies (optional) constraints, e.g. input or output must have a
   specific length, shape, type, data-type, etc.
@@ -20,8 +20,7 @@ from typing import Any, Dict, Literal, Tuple, Union
 import numpy as np
 
 from pyvista.core._typing_core._array_like import NumpyArray
-from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
-from pyvista.core.validation import (
+from pyvista.core._validation import (
     check_contains,
     check_finite,
     check_integer,
@@ -34,7 +33,8 @@ from pyvista.core.validation import (
     check_string,
     check_subdtype,
 )
-from pyvista.core.validation._cast_array import _cast_to_numpy, _cast_to_tuple
+from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
+from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
 
 def validate_array(
@@ -250,10 +250,10 @@ def validate_array(
     monotonically increasing (i.e. has strict ascending order), and
     is within some range.
 
-    >>> from pyvista import validation
+    >>> from pyvista import _validation
     >>> array_in = (1, 2, 3, 5, 8, 13)
     >>> rng = (0, 20)
-    >>> validation.validate_array(
+    >>> _validation.validate_array(
     ...     array_in,
     ...     must_have_shape=(-1),
     ...     must_have_min_length=2,
@@ -380,22 +380,22 @@ def validate_axes(
     Validate an axes array.
 
     >>> import numpy as np
-    >>> from pyvista import validation
-    >>> validation.validate_axes(np.eye(3))
+    >>> from pyvista import _validation
+    >>> _validation.validate_axes(np.eye(3))
     array([[1., 0., 0.],
            [0., 1., 0.],
            [0., 0., 1.]])
 
     Validate individual axes vectors as a 3x3 array.
 
-    >>> validation.validate_axes([1, 0, 0], [0, 1, 0], [0, 0, 1])
+    >>> _validation.validate_axes([1, 0, 0], [0, 1, 0], [0, 0, 1])
     array([[1., 0., 0.],
            [0., 1., 0.],
            [0., 0., 1.]])
 
     Create a validated left-handed axes array from two vectors.
 
-    >>> validation.validate_axes(
+    >>> _validation.validate_axes(
     ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
     ... )
     array([[ 1.,  0.,  0.],
@@ -602,18 +602,18 @@ def validate_number(num, /, *, reshape=True, **kwargs):
     --------
     Validate a number.
 
-    >>> from pyvista import validation
-    >>> validation.validate_number(1)
+    >>> from pyvista import _validation
+    >>> _validation.validate_number(1)
     1
 
     1D arrays are automatically reshaped.
 
-    >>> validation.validate_number([42.0])
+    >>> _validation.validate_number([42.0])
     42.0
 
     Additional checks can be added as needed.
 
-    >>> validation.validate_number(
+    >>> _validation.validate_number(
     ...     10, must_be_in_range=[0, 10], must_be_integer=True
     ... )
     10
@@ -664,13 +664,13 @@ def validate_data_range(rng, /, **kwargs):
     --------
     Validate a data range.
 
-    >>> from pyvista import validation
-    >>> validation.validate_data_range([-5, 5])
+    >>> from pyvista import _validation
+    >>> _validation.validate_data_range([-5, 5])
     (-5, 5)
 
     Add additional constraints if needed.
 
-    >>> validation.validate_data_range([0, 1.0], must_be_nonnegative=True)
+    >>> _validation.validate_data_range([0, 1.0], must_be_nonnegative=True)
     (0.0, 1.0)
 
     """
@@ -724,19 +724,19 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     --------
     Validate an Nx3 array.
 
-    >>> from pyvista import validation
-    >>> validation.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
+    >>> from pyvista import _validation
+    >>> _validation.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
     array([[1, 2, 3],
            [4, 5, 6]])
 
     One-dimensional 3-element arrays are automatically reshaped to 2D.
 
-    >>> validation.validate_arrayNx3([1, 2, 3])
+    >>> _validation.validate_arrayNx3([1, 2, 3])
     array([[1, 2, 3]])
 
     Add additional constraints.
 
-    >>> validation.validate_arrayNx3(
+    >>> _validation.validate_arrayNx3(
     ...     ((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10]
     ... )
     array([[1, 2, 3],
@@ -796,24 +796,24 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     --------
     Validate a 1D array with four elements.
 
-    >>> from pyvista import validation
-    >>> validation.validate_arrayN((1, 2, 3, 4))
+    >>> from pyvista import _validation
+    >>> _validation.validate_arrayN((1, 2, 3, 4))
     array([1, 2, 3, 4])
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
-    >>> validation.validate_arrayN(42.0)
+    >>> _validation.validate_arrayN(42.0)
     array([42.0])
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
 
-    >>> validation.validate_arrayN([[1, 2]])
+    >>> _validation.validate_arrayN([[1, 2]])
     array([1, 2])
 
     Add additional constraints if needed.
 
-    >>> validation.validate_arrayN((1, 2, 3), must_have_length=3)
+    >>> _validation.validate_arrayN((1, 2, 3), must_have_length=3)
     array([1, 2, 3])
 
     """
@@ -872,8 +872,8 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
     Validate a 1D array with four non-negative integer-like elements.
 
     >>> import numpy as np
-    >>> from pyvista import validation
-    >>> arr = validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
+    >>> from pyvista import _validation
+    >>> arr = _validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
     >>> arr
     array([1, 2, 3, 4])
 
@@ -884,18 +884,18 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
-    >>> validation.validate_arrayN_uintlike(42)
+    >>> _validation.validate_arrayN_uintlike(42)
     array([42])
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
 
-    >>> validation.validate_arrayN_uintlike([[1, 2]])
+    >>> _validation.validate_arrayN_uintlike([[1, 2]])
     array([1, 2])
 
     Add additional constraints if needed.
 
-    >>> validation.validate_arrayN_uintlike(
+    >>> _validation.validate_arrayN_uintlike(
     ...     (1, 2, 3), must_be_in_range=[1, 3]
     ... )
     array([1, 2, 3])
@@ -961,24 +961,24 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     --------
     Validate a 1D array with three elements.
 
-    >>> from pyvista import validation
-    >>> validation.validate_array3((1, 2, 3))
+    >>> from pyvista import _validation
+    >>> _validation.validate_array3((1, 2, 3))
     array([1, 2, 3])
 
     2D 3-element arrays are automatically reshaped to be 1D.
 
-    >>> validation.validate_array3([[1, 2, 3]])
+    >>> _validation.validate_array3([[1, 2, 3]])
     array([1, 2, 3])
 
     Scalar 0-dimensional values can be automatically broadcast as
     a 3-element 1D array.
 
-    >>> validation.validate_array3(42.0, broadcast=True)
+    >>> _validation.validate_array3(42.0, broadcast=True)
     array([42.0, 42.0, 42.0])
 
     Add additional constraints if needed.
 
-    >>> validation.validate_array3((1, 2, 3), must_be_nonnegative=True)
+    >>> _validation.validate_array3((1, 2, 3), must_be_nonnegative=True)
     array([1, 2, 3])
 
     """
