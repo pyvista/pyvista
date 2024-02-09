@@ -845,6 +845,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Vertex cells can also be set to a ``pyvista.CellArray``. The following
         ``verts`` assignment is equivalent to the one above.
+
         >>> mesh.verts = pv.CellArray.from_regular_cells(
         ...     np.arange(mesh.n_points).reshape((-1, 1))
         ... )
