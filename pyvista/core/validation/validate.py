@@ -1125,7 +1125,7 @@ def validate_array3(
     return validate_array(array, **kwargs)
 
 
-def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any):
+def _set_default_kwarg_mandatory(kwargs: Dict[str, Any], key: str, default: Any):
     """Set a kwarg and raise ValueError if not set to its default value."""
     val = kwargs.pop(key, default)
     if val != default:

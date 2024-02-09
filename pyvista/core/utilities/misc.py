@@ -52,13 +52,13 @@ def assert_empty_kwargs(**kwargs):
     raise TypeError(message)
 
 
-def check_valid_vector(point: Vector, name: str = '') -> None:
+def check_valid_vector(point: Vector[float], name: str = '') -> None:
     """
     Check if a vector contains three components.
 
     Parameters
     ----------
-    point : Iterable[float]
+    point : Vector[float]
         Input vector to check. Must be an iterable with exactly three components.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
