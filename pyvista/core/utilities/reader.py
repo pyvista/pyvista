@@ -200,7 +200,7 @@ class BaseVTKReader(ABC):
 
     def __init__(self: BaseVTKReader):
         self._data_object = None
-        self._observers: List[Union[int, Callable]] = []
+        self._observers: List[Union[int, Callable[[Any], Any]]] = []
 
     def SetFileName(self, filename):
         """Set file name."""

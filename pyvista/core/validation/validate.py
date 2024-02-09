@@ -15,7 +15,7 @@ A ``validate`` function typically:
 
 import inspect
 from itertools import product
-from typing import Any, Literal, Tuple, Union
+from typing import Any, Dict, Literal, Tuple, Union
 
 import numpy as np
 
@@ -994,7 +994,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def _set_default_kwarg_mandatory(kwargs: dict, key: str, default: Any):
+def _set_default_kwarg_mandatory(kwargs: Dict[str, Any], key: str, default: Any):
     """Set a kwarg and raise ValueError if not set to its default value."""
     val = kwargs.pop(key, default)
     if val != default:
