@@ -4,7 +4,7 @@ reader = vtk.vtkXMLUnstructuredGridReader()
 reader.SetFileName("Data/can.vtu")
 reader.Update()
 print(reader.GetOutput())
-# TODO @tkoyama010 check the warning reason of read function.
+# TODO @tkoyama010: check the warning reason of read function.
 # mesh = pv.read("Data/can.vtu")
 
 # quality = vtk.vtkBoundaryMeshQuality()
