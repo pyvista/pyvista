@@ -9,13 +9,14 @@ A ``check`` function typically:
 * Does not modify input or return anything.
 
 """
+
 from collections.abc import Iterable, Sequence
 from numbers import Number
 from typing import Tuple, Union, get_args, get_origin
 
 import numpy as np
 
-from pyvista.core.utilities.arrays import cast_to_ndarray
+from pyvista.core.validation._cast_array import _cast_to_numpy
 
 
 def check_is_subdtype(arg1, arg2, /, *, name='Input'):
@@ -127,7 +128,7 @@ def check_is_arraylike(arr):
 
     Notes
     -----
-    This check is done by calling :func:`~pyvista.core.utilities.arrays.cast_to_ndarray`
+    This check is done by calling :func:`~pyvista.core.utilities.arrays._cast_to_numpy`
     internally. Use that function directly if the cast array is needed
     for further processing.
 
@@ -154,7 +155,7 @@ def check_is_arraylike(arr):
 
     """
     try:
-        cast_to_ndarray(arr) if not isinstance(arr, np.ndarray) else None
+        _cast_to_numpy(arr) if not isinstance(arr, np.ndarray) else None
     except ValueError:
         raise
 
@@ -193,7 +194,7 @@ def check_is_real(arr, /, *, name="Array"):
     >>> validation.check_is_real([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
     # Return early for common cases
     if arr.dtype.type in [np.int32, np.int64, np.float32, np.float64]:
@@ -249,7 +250,7 @@ def check_is_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Arra
     >>> validation.check_is_sorted([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
     if arr.ndim == 0:
         # Indexing will fail for scalars, so return early
@@ -331,7 +332,7 @@ def check_is_finite(arr, /, *, name="Array"):
     >>> validation.check_is_finite([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
     if not np.all(np.isfinite(arr)):
         raise ValueError(f"{name} must have finite values.")
 
@@ -372,7 +373,7 @@ def check_is_integerlike(arr, /, *, strict=False, name="Array"):
     >>> validation.check_is_integerlike([1.0, 2.0])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
     if strict:
         try:
             check_is_subdtype(arr, np.integer)
@@ -455,8 +456,8 @@ def check_is_greater_than(arr, /, value, *, strict=True, name="Array"):
     >>> validation.check_is_greater_than([1, 2, 3], value=0)
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
-    value = cast_to_ndarray(value)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
+    value = _cast_to_numpy(value)
     check_has_shape(value, ())
     check_is_real(value)
     check_is_finite(value)
@@ -505,7 +506,7 @@ def check_is_less_than(arr, /, value, *, strict=True, name="Array"):
     >>> validation.check_is_less_than([-1, -2, -3], value=0)
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
     if strict and not np.all(arr < value):
         raise ValueError(f"{name} values must all be less than {value}.")
     elif not np.all(arr <= value):
@@ -557,12 +558,12 @@ def check_is_in_range(arr, /, rng, *, strict_lower=False, strict_upper=False, na
     >>> validation.check_is_in_range([0, 0.5, 1], rng=[0, 1])
 
     """
-    rng = cast_to_ndarray(rng)
+    rng = _cast_to_numpy(rng)
     check_has_shape(rng, 2, name="Range")
     check_is_real(rng, name="Range")
     check_is_sorted(rng, name="Range")
 
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
     try:
         check_is_greater_than(arr, rng[0], strict=strict_lower, name=name)
         check_is_less_than(arr, rng[1], strict=strict_upper, name=name)
@@ -630,7 +631,7 @@ def check_has_shape(
         else:
             return False
 
-    arr = arr if isinstance(arr, np.ndarray) else cast_to_ndarray(arr)
+    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
     if not isinstance(shape, list):
         shape = [shape]
@@ -1176,11 +1177,11 @@ def check_has_length(
 
     # Validate min/max length
     if min_length is not None:
-        min_length = cast_to_ndarray(min_length)
+        min_length = _cast_to_numpy(min_length)
         check_is_scalar(min_length, name="Min length")
         check_is_real(min_length, name="Min length")
     if max_length is not None:
-        max_length = cast_to_ndarray(max_length)
+        max_length = _cast_to_numpy(max_length)
         check_is_scalar(max_length, name="Max length")
         check_is_real(max_length, name="Max length")
     if min_length is not None and max_length is not None:

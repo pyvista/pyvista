@@ -1,4 +1,5 @@
 """Utilities routines."""
+
 # flake8: noqa: F401
 
 from .arrays import (
@@ -90,6 +91,8 @@ from .geometric_sources import (
     DiscSource,
     LineSource,
     MultipleLinesSource,
+    PlaneSource,
+    PlatonicSolidSource,
     PolygonSource,
     SphereSource,
     Text3DSource,

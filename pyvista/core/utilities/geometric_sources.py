@@ -3,14 +3,17 @@
 Also includes some pure-python helpers.
 
 """
-from typing import Sequence, Tuple, Union
+
+from __future__ import annotations
+
+from typing import Dict, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, Matrix, Vector
+from pyvista.core._typing_core import BoundsLike, Matrix, NumpyArray, Vector
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
@@ -228,7 +231,7 @@ class ConeSource(_vtk.vtkConeSource):
             Enable or disable the capping the base of the cone with a
             polygon.
         """
-        return self.GetCapping()
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -426,7 +429,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self._direction = direction
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get radius of the cylinder.
 
         Returns
@@ -500,7 +503,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         bool
             Cap cylinder ends with polygons.
         """
-        return self.GetCapping()
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -544,7 +547,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         self.points = points
 
     @property
-    def points(self) -> np.ndarray:
+    def points(self) -> NumpyArray[float]:
         """Return the points defining a broken line.
 
         Returns
@@ -555,12 +558,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[Matrix, Vector]):
+    def points(self, points: Union[Matrix[float], Vector[float]]):
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
-        points : array_like[float]
+        points : Vector[float] | Matrix[float]
             List of points defining a broken line.
         """
         points, _ = _coerce_pointslike_arg(points)
@@ -761,9 +764,11 @@ class Text3DSource(vtkVectorText):
 
     @height.setter
     def height(self, height: float):  # numpydoc ignore=GL08
-        _check_range(
-            height, rng=(0, float('inf')), parm_name='height'
-        ) if height is not None else None
+        (
+            _check_range(height, rng=(0, float('inf')), parm_name='height')
+            if height is not None
+            else None
+        )
         self._height = height
 
     @property
@@ -1748,7 +1753,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         bool
             Enable or disable producing filled polygons.
         """
-        return self.GetGeneratePolygon()
+        return bool(self.GetGeneratePolygon())
 
     @fill.setter
     def fill(self, fill: bool):
@@ -1769,6 +1774,183 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         pyvista.PolyData
             Polygon surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
+    """Platonic solid source algorithm class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    kind : str | int, default: 'tetrahedron'
+        The kind of Platonic solid to create. Either the name of the
+        polyhedron or an integer index:
+
+            * ``'tetrahedron'`` or ``0``
+            * ``'cube'`` or ``1``
+            * ``'octahedron'`` or ``2``
+            * ``'icosahedron'`` or ``3``
+            * ``'dodecahedron'`` or ``4``
+
+    Examples
+    --------
+    Create and plot a dodecahedron.
+
+    >>> import pyvista as pv
+    >>> dodeca = pv.PlatonicSolidSource('dodecahedron')
+    >>> dodeca.output.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+
+    _new_attr_exceptions = ['_kinds']
+
+    def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
+        """Initialize the platonic solid source class."""
+        super().__init__()
+        self._kinds: Dict[str, int] = {
+            'tetrahedron': 0,
+            'cube': 1,
+            'octahedron': 2,
+            'icosahedron': 3,
+            'dodecahedron': 4,
+        }
+        self.kind = kind
+
+    @property
+    def kind(self) -> str:
+        """Get the kind of Platonic solid to create.
+
+        Returns
+        -------
+        str
+            The kind of Platonic solid to create.
+        """
+        return list(self._kinds.keys())[self.GetSolidType()]
+
+    @kind.setter
+    def kind(self, kind: str | int):
+        """Set the kind of Platonic solid to create.
+
+        Parameters
+        ----------
+        kind : str | int, default: 'tetrahedron'
+            The kind of Platonic solid to create. Either the name of the
+            polyhedron or an integer index:
+
+                * ``'tetrahedron'`` or ``0``
+                * ``'cube'`` or ``1``
+                * ``'octahedron'`` or ``2``
+                * ``'icosahedron'`` or ``3``
+                * ``'dodecahedron'`` or ``4``
+        """
+        if isinstance(kind, str):
+            if kind not in self._kinds:
+                raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+            kind = self._kinds[kind]
+        elif isinstance(kind, int) and kind not in range(5):
+            raise ValueError(f'Invalid Platonic solid index "{kind}".')
+        elif not isinstance(kind, int):
+            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
+        self.SetSolidType(kind)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            PlatonicSolid surface.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class PlaneSource(_vtk.vtkPlaneSource):
+    """Create a plane source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    i_resolution : int, default: 10
+        Number of points on the plane in the i direction.
+
+    j_resolution : int, default: 10
+        Number of points on the plane in the j direction.
+
+    """
+
+    def __init__(
+        self,
+        i_resolution=10,
+        j_resolution=10,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.i_resolution = i_resolution
+        self.j_resolution = j_resolution
+
+    @property
+    def i_resolution(self) -> int:
+        """Number of points on the plane in the i direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the i direction.
+        """
+        return self.GetXResolution()
+
+    @i_resolution.setter
+    def i_resolution(self, i_resolution: int):
+        """Set number of points on the plane in the i direction.
+
+        Parameters
+        ----------
+        i_resolution : int
+            Number of points on the plane in the i direction.
+        """
+        self.SetXResolution(i_resolution)
+
+    @property
+    def j_resolution(self) -> int:
+        """Number of points on the plane in the j direction.
+
+        Returns
+        -------
+        int
+            Number of points on the plane in the j direction.
+        """
+        return self.GetYResolution()
+
+    @j_resolution.setter
+    def j_resolution(self, j_resolution: int):
+        """Set number of points on the plane in the j direction.
+
+        Parameters
+        ----------
+        j_resolution : int
+            Number of points on the plane in the j direction.
+        """
+        self.SetYResolution(j_resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
         """
         self.Update()
         return wrap(self.GetOutput())

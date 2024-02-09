@@ -330,3 +330,14 @@ def test_polygon_source():
     assert np.array_equal(algo.normal, (0.0, 0.0, 1.0))
     assert algo.n_sides == 6
     assert algo.fill
+
+
+def test_platonic_solid_source():
+    algo = pv.PlatonicSolidSource()
+    assert algo.kind == 'tetrahedron'
+
+
+def test_plane_source():
+    algo = pv.PlaneSource()
+    assert algo.i_resolution == 10
+    assert algo.j_resolution == 10

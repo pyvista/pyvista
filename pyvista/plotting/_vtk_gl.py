@@ -8,6 +8,7 @@ raise an ImportError if the user does not have libGL installed.
     ImportError: libGL.so.1: cannot open shared object file: No such file or directory
 
 """
+
 # flake8: noqa: F401
 
 try:
