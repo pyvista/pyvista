@@ -26,9 +26,8 @@ from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core._typing_core._array_like import (
     _ArrayLikeOrScalar,
     _NumberType,
-    np_dtype,
-    np_floating,
-    np_integer,
+    np_dtype_floating,
+    np_dtype_integer,
 )
 from pyvista.core.validation._array_wrapper import _ArrayLikeWrapper, _BuiltinWrapper
 from pyvista.core.validation.check import (
@@ -51,10 +50,10 @@ _DTypeLike = Union[
     Type[int],
     Type[bool],
     Type[str],
-    Type[np_dtype[np.floating[Any]]],
-    Type[np_dtype[np.integer[Any]]],
-    Type[np_floating[Any]],
-    Type[np_integer[Any]],
+    Type[np_dtype_floating],
+    Type[np_dtype_integer],
+    Type[np.floating],  # type: ignore[type-arg]
+    Type[np.integer],  # type: ignore[type-arg]
 ]
 
 _OutputTypeValues = Optional[

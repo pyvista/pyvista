@@ -37,7 +37,6 @@ from pyvista.core._typing_core._array_like import (
     _ArrayLikeOrScalar,
     _NumberSequence1D,
     _NumberType,
-    np_number,
 )
 from pyvista.core.validation._array_wrapper import (
     _ArrayLikeWrapper,
@@ -751,7 +750,7 @@ def check_ndim(
 
 
 def check_number(
-    num: Union[float, int, complex, np_number[Any], Number],
+    num: Union[float, int, complex, np.number, Number],  # type: ignore[type-arg]
     /,
     *,
     definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
