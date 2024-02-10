@@ -46,13 +46,13 @@ if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     np_dtype = typing._GenericAlias(np.dtype, _T)
     _np_floating = typing._GenericAlias(np.floating, _T)
     _np_integer = typing._GenericAlias(np.integer, _T)
-    np_dtype_floating = np.dtype[_np_floating]
-    np_dtype_integer = np.dtype[_np_integer]
+    np_dtype_floating = typing._GenericAlias(np.dtype, _np_floating[_T])
+    np_dtype_integer = typing._GenericAlias(np.floating, _np_integer[_T])
     NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[_T]))
 else:
     np_dtype = np.dtype[_T]
-    np_dtype_floating = np.dtype[np.floating]  # type: ignore[type-arg]
-    np_dtype_integer = np.dtype[np.integer]  # type: ignore[type-arg]
+    np_dtype_floating = np.dtype[np.floating[Any]]
+    np_dtype_integer = np.dtype[np.integer[Any]]
     NumpyArray = npt.NDArray[_NumberType]
 
 
