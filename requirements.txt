@@ -9,3 +9,4 @@ numpy<1.27.0
 pillow<10.3.0
 pooch<1.9.0
 scooby>=0.5.1,<0.10.0
+typing-extensions<4.10
