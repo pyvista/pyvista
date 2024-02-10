@@ -33,7 +33,6 @@ import numpy.typing as npt
 _NumberType = TypeVar(
     '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
-    covariant=True,
 )
 _T = TypeVar('_T')
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
@@ -48,7 +47,7 @@ if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     np_floating = typing._GenericAlias(np.floating, Any)
     np_integer = typing._GenericAlias(np.integer, Any)
     np_number = typing._GenericAlias(np.number, Any)
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[_NumberType]))
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype))
 else:
     np_dtype = np.dtype[_T]
     np_floating = np.floating[_T]

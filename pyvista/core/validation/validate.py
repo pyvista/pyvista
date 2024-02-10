@@ -16,9 +16,10 @@ An array validator function typically:
 from copy import deepcopy
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple, Type, Union, overload
 
 import numpy as np
+from typing_extensions import TypedDict, Unpack
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
@@ -55,6 +56,109 @@ _DTypeLike = Union[
     Type[np_floating[Any]],
     Type[np_integer[Any]],
 ]
+
+_OutputTypeValues = Optional[
+    Union[
+        Literal['numpy'],
+        Literal['tuple'],
+        Literal['list'],
+        Type[np.ndarray],  # type: ignore[type-arg]
+        Type[list],  # type: ignore[type-arg]
+        Type[tuple],  # type: ignore[type-arg]
+    ]
+]
+
+
+class _TypedKwargs(TypedDict, total=False):
+    must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]]
+    must_have_dtype: Optional[_DTypeLike]
+    must_have_length: Optional[Union[int, Vector[int]]]
+    must_have_min_length: Optional[int]
+    must_have_max_length: Optional[int]
+    must_be_nonnegative: bool
+    must_be_finite: bool
+    must_be_real: bool
+    must_be_integer: bool
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
+    must_be_in_range: Optional[Vector[float]]
+    strict_lower_bound: bool
+    strict_upper_bound: bool
+    reshape_to: Optional[_ShapeLike]
+    broadcast_to: Optional[_ShapeLike]
+    as_any: bool
+    copy: bool
+    name: str
+
+
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # ruff: noqa: D103   # numpydoc ignore=GL08
+    array: _NumberType,
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> _NumberType: ...
+
+
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: List[List[_NumberType]],
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[List[_NumberType]]: ...
+
+
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: List[_NumberType],
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[_NumberType]: ...
+
+
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[Tuple[_NumberType, ...]],
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Tuple[Tuple[_NumberType]]: ...
+
+
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[_NumberType, ...],
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Tuple[_NumberType, ...]: ...
+
+
+@overload
+def validate_array(  # numpydoc ignore=GL08
+    array: NumpyArray[_NumberType],
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> NumpyArray[_NumberType]: ...
+
+
+# Catch-all case to handle everything else.
+@overload
+def validate_array(  # numpydoc ignore=GL08
+    array: _ArrayLikeOrScalar[_NumberType],
+    *,
+    dtype_out=None,
+    output_type=None,
+    **kwargs: Unpack[_TypedKwargs],
+) -> NumpyArray[_NumberType]: ...
 
 
 def validate_array(
@@ -438,7 +542,6 @@ def validate_array(
                     f"Cannot change dtype of {name} from {wrapped.dtype} to {dtype_out}.\n"
                     f"Float infinity cannot be converted to integer."
                 )
-    # reveal_type(wrapped())
     # Cast array to desired output
     if output_type is not None:
         if output_type in ("numpy", np.ndarray):
@@ -460,13 +563,9 @@ def validate_array(
             return wrapped.to_tuple(array, copy)
         else:
             # to_list should cover lists as well as scalar inputs
-            # reveal_type(wrapped._array)
             out = wrapped.to_list(array, copy)
-            # reveal_type(out)
-            # x: int
-            # x = 2.0
+
             return out
-        # reveal_type(array_out)
     else:
         if copy:
             if isinstance(array, np.ndarray):
@@ -474,19 +573,21 @@ def validate_array(
             else:
                 return deepcopy(array)
         return wrapped._array
-    # # reveal_type(array_out)
-    # # T = TypeVar('T')
-    # # def _copy(in:T)
-    # if array_out is array and copy:
-    #     if isinstance(array_out, np.ndarray):
-    #         array_out = np.ndarray.copy(array_out)
-    #     else:
-    #         array_out = deepcopy(array_out)
-    # return array_out
 
 
-# x: List[int] = [1]
-# reveal_type(validate_array(x))
+# reveal_type(validate_array(1))
+# reveal_type(validate_array(np.array(1, dtype=int)))
+#
+# reveal_type(validate_array([1]))
+# reveal_type(validate_array([[1]]))
+# reveal_type(validate_array([[[1]]]))
+# reveal_type(validate_array([[[[1]]]]))
+#
+# reveal_type(validate_array((1,)))
+#
+# reveal_type(validate_array(((1,),)))
+# reveal_type(validate_array((((1,),),)))
+# reveal_type(validate_array(((((1,),),),)))
 
 
 def validate_axes(
@@ -813,7 +914,8 @@ def validate_number(
         shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
-    return validate_array(num, **kwargs)
+    # TODO: fix mypy ignore
+    return validate_array(num, **kwargs)  # type: ignore[return-value]
 
 
 def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
