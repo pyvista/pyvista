@@ -574,21 +574,6 @@ def validate_array(
         return wrapped._array
 
 
-# reveal_type(validate_array(1))
-# reveal_type(validate_array(np.array(1, dtype=int)))
-#
-# reveal_type(validate_array([1]))
-# reveal_type(validate_array([[1]]))
-# reveal_type(validate_array([[[1]]]))
-# reveal_type(validate_array([[[[1]]]]))
-#
-# reveal_type(validate_array((1,)))
-#
-# reveal_type(validate_array(((1,),)))
-# reveal_type(validate_array((((1,),),)))
-# reveal_type(validate_array(((((1,),),),)))
-
-
 def validate_axes(
     *axes: Union[Matrix[float], Vector[float]],
     normalize: bool = True,
