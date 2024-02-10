@@ -6,19 +6,7 @@ from abc import abstractmethod
 from copy import deepcopy
 import itertools
 import reprlib
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Iterable,
-    Literal,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import Any, Callable, Generic, Iterable, Literal, Tuple, Type, Union, cast, overload
 
 import numpy as np
 
@@ -45,25 +33,6 @@ from pyvista.core._typing_core._type_guards import (
     _is_NumberSequence2D,
 )
 from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
-
-# Similar definitions to numpy._typing._shape but with modifications:
-#  - explicit support for empty tuples `()`
-#  - strictly uses tuples for indexing
-#  - our ShapeLike definition includes single integers (numpy's does not)
-
-ScalarShape = Tuple[()]
-ArrayShape = Tuple[int, ...]
-Shape = Union[ScalarShape, ArrayShape]
-ShapeLike = Union[int, Shape]
-
-# Similar to npt.DTypeLike but is bound to numeric types
-# and does not allow _SupportsDType protocol
-DTypeLike = Union[np.dtype, Type[Any], str]  # type: ignore[type-arg]
-
-
-# Define array protocol
-# This should match numpy's definition exactly
-_DType_co = TypeVar('_DType_co', bound=np.generic, covariant=True)
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):

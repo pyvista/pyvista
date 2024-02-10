@@ -22,6 +22,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     Union,
     cast,
     get_args,
@@ -36,21 +37,25 @@ from pyvista.core._typing_core._array_like import (
     _ArrayLikeOrScalar,
     _NumberSequence1D,
     _NumberType,
+    np_number,
 )
 from pyvista.core.validation._array_wrapper import (
-    DTypeLike,
-    Shape,
-    ShapeLike,
     _ArrayLikeWrapper,
     _Sequence1DWrapper,
     _Sequence2DWrapper,
 )
 
+_ScalarShape = Tuple[()]
+_ArrayShape = Tuple[int, ...]
+_Shape = Union[_ScalarShape, _ArrayShape]
+_ShapeLike = Union[int, _Shape]
+_DTypeLike = Union[np.dtype, Type[Any], str]  # type: ignore[type-arg]
+
 
 def check_subdtype(
-    input_obj: Union[DTypeLike, _ArrayLikeOrScalar[_NumberType]],
+    input_obj: Union[_DTypeLike, _ArrayLikeOrScalar[_NumberType]],
     /,
-    base_dtype: Union[DTypeLike, Tuple[DTypeLike, ...], List[DTypeLike]],
+    base_dtype: Union[_DTypeLike, Tuple[_DTypeLike, ...], List[_DTypeLike]],
     *,
     name: str = 'Input',
 ):
@@ -98,11 +103,11 @@ def check_subdtype(
     >>> validation.check_subdtype(array, np.integer)
 
     """
-    input_dtype: DTypeLike
+    input_dtype: _DTypeLike
     if isinstance(input_obj, (tuple, list, np.ndarray)):
         input_dtype = _ArrayLikeWrapper(input_obj).dtype
     else:
-        input_dtype = cast(DTypeLike, input_obj)
+        input_dtype = cast(_DTypeLike, input_obj)
 
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
@@ -603,7 +608,7 @@ def check_range(
 def check_shape(
     array: _ArrayLikeOrScalar[_NumberType],
     /,
-    shape: Union[ShapeLike, List[ShapeLike]],
+    shape: Union[_ShapeLike, List[_ShapeLike]],
     *,
     name: str = "Array",
 ):
@@ -653,7 +658,7 @@ def check_shape(
 
     """
 
-    def _shape_is_allowed(a: Shape, b: Shape) -> bool:
+    def _shape_is_allowed(a: _Shape, b: _Shape) -> bool:
         # a: array's actual shape
         # b: allowed shape (may have -1)
         return len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b))
@@ -746,7 +751,7 @@ def check_ndim(
 
 
 def check_number(
-    num: Union[float, int, complex, np.number[Any], Number],
+    num: Union[float, int, complex, np_number[Any], Number],
     /,
     *,
     definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
@@ -1336,7 +1341,7 @@ def check_length(
             )
 
 
-def _validate_shape_value(shape: ShapeLike) -> Shape:
+def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     """Validate shape-like input and return its tuple representation."""
     if shape is None:
         # `None` is used to mean `any shape is allowed` by the array
@@ -1346,7 +1351,7 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
 
     # Return early for common inputs
     if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
-        return cast(Shape, shape)
+        return cast(_Shape, shape)
 
     def _is_valid_dim(d):
         return isinstance(d, int) and d >= -1
@@ -1354,7 +1359,7 @@ def _validate_shape_value(shape: ShapeLike) -> Shape:
     if _is_valid_dim(shape):
         return (cast(int, shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast(Shape, shape)
+        return cast(_Shape, shape)
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error

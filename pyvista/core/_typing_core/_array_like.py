@@ -35,7 +35,7 @@ _NumberType = TypeVar(
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
     covariant=True,
 )
-
+_T = TypeVar('_T')
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # TODO: Remove this conditional block once support for 3.8 is dropped
 
@@ -44,14 +44,21 @@ if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # which makes it incompatible with built-in generic alias types, e.g.
     # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
     # the private typing._GenericAlias type instead
-    dtype = typing._GenericAlias(np.dtype, _NumberType)
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, dtype[_NumberType]))
+    np_dtype = typing._GenericAlias(np.dtype, Any)
+    np_floating = typing._GenericAlias(np.floating, Any)
+    np_integer = typing._GenericAlias(np.integer, Any)
+    np_number = typing._GenericAlias(np.number, Any)
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[_NumberType]))
 else:
+    np_dtype = np.dtype[_T]
+    np_floating = np.floating[_T]
+    np_integer = np.integer[_T]
+    np_number = np.number[_T]
     NumpyArray = npt.NDArray[_NumberType]
 
 
 # Define generic nested sequence
-_T = TypeVar('_T')
+
 _FiniteNestedSequence = Union[  # Note: scalar types are excluded
     Sequence[_T],
     Sequence[Sequence[_T]],

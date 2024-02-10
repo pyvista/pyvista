@@ -22,7 +22,13 @@ import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
-from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
+from pyvista.core._typing_core._array_like import (
+    _ArrayLikeOrScalar,
+    _NumberType,
+    np_dtype,
+    np_floating,
+    np_integer,
+)
 from pyvista.core.validation._array_wrapper import _ArrayLikeWrapper, _BuiltinWrapper
 from pyvista.core.validation.check import (
     check_contains,
@@ -44,10 +50,10 @@ _DTypeLike = Union[
     Type[int],
     Type[bool],
     Type[str],
-    Type[np.dtype[np.floating[Any]]],
-    Type[np.dtype[np.integer[Any]]],
-    Type[np.floating[Any]],
-    Type[np.integer[Any]],
+    Type[np_dtype[np.floating[Any]]],
+    Type[np_dtype[np.integer[Any]]],
+    Type[np_floating[Any]],
+    Type[np_integer[Any]],
 ]
 
 
@@ -63,7 +69,7 @@ def validate_array(
     must_be_finite: bool = False,
     must_be_real: bool = True,
     must_be_integer: bool = False,
-    must_be_sorted: bool = False,
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
     must_be_in_range: Optional[Vector[float]] = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
@@ -418,7 +424,7 @@ def validate_array(
         )
     if must_be_sorted:
         if isinstance(must_be_sorted, dict):
-            check_sorted(wrapped(), **must_be_sorted, name=name)
+            check_sorted(wrapped(), **must_be_sorted, name=name)  # type: ignore[arg-type]
         else:
             check_sorted(wrapped(), name=name)
 
