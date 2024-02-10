@@ -3,6 +3,7 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
+
 import collections.abc
 from itertools import zip_longest
 import pathlib
@@ -13,7 +14,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
+from ._typing_core import BoundsLike, NumpyArray
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
@@ -25,7 +26,7 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence
+    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence  # type: ignore[type-arg]
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -177,7 +178,7 @@ class MultiBlock(
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        all_bounds = [cast(list, block.bounds) for block in self if block]
+        all_bounds = [cast(List[float], block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = np.array([0.0, 0.0, 0.0])
@@ -192,12 +193,12 @@ class MultiBlock(
         return cast(BoundsLike, tuple(the_bounds))
 
     @property
-    def center(self) -> Any:  # numpydoc ignore=RT01
+    def center(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
         -------
-        Any
+        np.ndarray
             Center of the bounding box.
 
         Examples
@@ -214,7 +215,7 @@ class MultiBlock(
 
         """
         # (typing.cast necessary to make mypy happy with np.reshape())
-        return np.reshape(cast(list, self.bounds), (3, 2)).mean(axis=1)
+        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
@@ -649,7 +650,7 @@ class MultiBlock(
 
     def __setitem__(
         self,
-        index,
+        index: Union[int, str, slice],
         data,
     ):
         """Set a block with a VTK data object.
@@ -1035,7 +1036,7 @@ class MultiBlock(
 
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
-    ) -> Tuple[FieldAssociation, np.ndarray]:  # type: ignore
+    ) -> Tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -1069,7 +1070,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: List[Tuple[FieldAssociation, np.ndarray, _TypeMultiBlockLeaf]] = []
+        data_assoc: List[Tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
@@ -1109,7 +1110,7 @@ class MultiBlock(
 
         # Verify array consistency
         dims: Set[int] = set()
-        dtypes: Set[np.dtype] = set()
+        dtypes: Set[np.dtype[Any]] = set()
         for _ in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association

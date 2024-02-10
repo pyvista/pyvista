@@ -1,4 +1,5 @@
 """PyVista Scalar bar module."""
+
 import weakref
 
 import numpy as np

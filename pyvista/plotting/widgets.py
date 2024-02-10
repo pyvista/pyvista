@@ -6,6 +6,7 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -2591,9 +2592,9 @@ class WidgetHelper:
             button = pyvista.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
-            arr[
-                border_size : dims[0] - border_size, border_size : dims[1] - border_size
-            ] = color3  # apply color3
+            arr[border_size : dims[0] - border_size, border_size : dims[1] - border_size] = (
+                color3  # apply color3
+            )
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
 
@@ -2688,8 +2689,8 @@ class WidgetHelper:
     def add_logo_widget(
         self,
         logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
-        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
+        position: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
