@@ -67,12 +67,13 @@ repos:
       - id: mypy
         args:
           [
+            --explicit-package-bases,
             --disallow-any-generics,
             --pretty,
             --show-error-context,
             --warn-unused-ignores,
           ]
-        exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
+        exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/|.*stubs/)
         additional_dependencies:
           [
             "mypy-extensions==1.0.0",

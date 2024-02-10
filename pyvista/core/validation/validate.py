@@ -16,7 +16,7 @@ An array validator function typically:
 from copy import deepcopy
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -25,7 +25,6 @@ from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core.validation._array_wrapper import _ArrayLikeWrapper, _BuiltinWrapper
 from pyvista.core.validation.check import (
-    ShapeLike,
     check_contains,
     check_finite,
     check_integer,
@@ -39,31 +38,51 @@ from pyvista.core.validation.check import (
     check_subdtype,
 )
 
+_ShapeLike = Union[int, Tuple[int, ...], Tuple[()]]
+_DTypeLike = Union[
+    Type[float],
+    Type[int],
+    Type[bool],
+    Type[str],
+    Type[np.dtype[np.floating[Any]]],
+    Type[np.dtype[np.integer[Any]]],
+    Type[np.floating[Any]],
+    Type[np.integer[Any]],
+]
+
 
 def validate_array(
     array: _ArrayLikeOrScalar[_NumberType],
-    /,
     *,
-    must_have_shape=None,
-    must_have_dtype=None,
-    must_have_length=None,
-    must_have_min_length=None,
-    must_have_max_length=None,
-    must_be_nonnegative=False,
-    must_be_finite=False,
-    must_be_real=True,
-    must_be_integer=False,
-    must_be_sorted=False,
-    must_be_in_range=None,
-    strict_lower_bound=False,
-    strict_upper_bound=False,
-    reshape_to=None,
-    broadcast_to=None,
-    dtype_out=None,
-    as_any=True,
-    copy=False,
-    output_type=None,
-    name="Array",
+    must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]] = None,
+    must_have_dtype: Optional[_DTypeLike] = None,
+    must_have_length: Optional[Union[int, Vector[int]]] = None,
+    must_have_min_length: Optional[int] = None,
+    must_have_max_length: Optional[int] = None,
+    must_be_nonnegative: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_be_integer: bool = False,
+    must_be_sorted: bool = False,
+    must_be_in_range: Optional[Vector[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    reshape_to: Optional[_ShapeLike] = None,
+    broadcast_to: Optional[_ShapeLike] = None,
+    dtype_out: Optional[_DTypeLike] = None,
+    as_any: bool = True,
+    copy: bool = False,
+    output_type: Optional[  # type: ignore[type-arg]
+        Union[
+            Literal['numpy'],
+            Literal['tuple'],
+            Literal['list'],
+            Type[np.ndarray],
+            Type[list],
+            Type[tuple],
+        ]
+    ] = None,
+    name: str = 'Array',
 ):
     """Check and validate a numeric array meets specific requirements.
 
@@ -361,10 +380,10 @@ def validate_array(
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
     if do_reshape:
-        wrapped._array = np.reshape(wrapped._array, reshape_to)
+        wrapped._array = np.reshape(wrapped._array, reshape_to)  # type: ignore[arg-type]
 
     if do_broadcast:
-        wrapped._array = np.broadcast_to(wrapped._array, broadcast_to, subok=True)
+        wrapped._array = np.broadcast_to(wrapped._array, broadcast_to, subok=True)  # type: ignore[arg-type]
 
     # Check length _after_ reshaping otherwise length may be wrong
     if (
@@ -780,7 +799,7 @@ def validate_number(
     kwargs.setdefault('must_be_finite', True)
     kwargs.setdefault('must_be_real', True)
 
-    shape: Union[ShapeLike, List[ShapeLike]]
+    shape: Union[_ShapeLike, List[_ShapeLike]]
     if reshape:
         shape = [(), (1,)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
@@ -900,7 +919,7 @@ def validate_arrayNx3(
     ((1, 2, 3), (4, 5, 6))
 
     """
-    shape: Union[ShapeLike, List[ShapeLike]]
+    shape: Union[_ShapeLike, List[_ShapeLike]]
     if reshape:
         shape = [3, (-1, 3)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
@@ -981,7 +1000,7 @@ def validate_arrayN(
     (1, 2, 3)
 
     """
-    shape: Union[ShapeLike, List[ShapeLike]]
+    shape: Union[_ShapeLike, List[_ShapeLike]]
     if reshape:
         shape = [(), (-1), (1, -1), (-1, 1)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
