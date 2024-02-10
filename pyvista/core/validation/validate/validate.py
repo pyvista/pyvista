@@ -435,7 +435,12 @@ def validate_array(
             return wrapped.to_tuple(array, copy)
         else:
             # to_list should cover lists as well as scalar inputs
-            return wrapped.to_list(array, copy)
+            # reveal_type(wrapped._array)
+            out = wrapped.to_list(array, copy)
+            # reveal_type(out)
+            # x: int
+            # x = 2.0
+            return out
         # reveal_type(array_out)
     else:
         if copy:
@@ -455,7 +460,8 @@ def validate_array(
     # return array_out
 
 
-# reveal_type(validate_array([1]))
+# x: List[int] = [1]
+# reveal_type(validate_array(x))
 
 
 def validate_axes(
