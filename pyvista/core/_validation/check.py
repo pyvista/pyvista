@@ -1209,7 +1209,7 @@ def check_contains(*, item: Any, container: Any, name: str = 'Input'):
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista import _validation
-    >>> _validation.check_contains("A", ["A", "B", "C"])
+    >>> _validation.check_contains(item="A", container=["A", "B", "C"])
 
     """
     if item not in container:
