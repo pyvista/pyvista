@@ -611,6 +611,17 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_camera3d_widget(verify_image_cache):
+    sphere = pv.Sphere()
+    plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
+    plotter.add_mesh(sphere)
+    plotter.subplot(0, 1)
+    plotter.add_mesh(sphere)
+    plotter.add_camera3d_widget()
+    plotter.show(cpos=plotter.camera_position)
+
+
 @pytest.mark.parametrize("outline_opacity", (True, False, np.random.default_rng(0).random()))
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
@@ -709,4 +720,14 @@ def test_clear_logo_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_logo_widget(None)
     pl.clear_logo_widgets()
+    pl.show(cpos='xy')
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_clear_camera3d_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_camera3d_widget()
+    pl.clear_camera3d_widgets()
     pl.show(cpos='xy')
