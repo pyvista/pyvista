@@ -56,7 +56,7 @@ _DTypeLike = Union[
     Type[np.integer],  # type: ignore[type-arg]
 ]
 
-_OutputTypeValues = Optional[
+_OutputTypeOptions = Optional[
     Union[
         Literal['numpy'],
         Literal['tuple'],
@@ -181,16 +181,7 @@ def validate_array(
     dtype_out: Optional[_DTypeLike] = None,
     as_any: bool = True,
     copy: bool = False,
-    output_type: Optional[  # type: ignore[type-arg]
-        Union[
-            Literal['numpy'],
-            Literal['tuple'],
-            Literal['list'],
-            Type[np.ndarray],
-            Type[list],
-            Type[tuple],
-        ]
-    ] = None,
+    output_type: Optional[_OutputTypeOptions] = None,
     name: str = 'Array',
 ):
     """Check and validate a numeric array meets specific requirements.
@@ -257,7 +248,7 @@ def validate_array(
         tuples of tuples, tuples of lists and ndarrays.
 
     must_have_shape : ShapeLike | list[ShapeLike], optional
-        :func:`Check <pyvista.core.validation.check.check_has_shape>`
+        :func:`Check <pyvista.core._validation.check.check_shape>`
         if the array has a specific shape. Specify a single shape
         or a ``list`` of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of ``-1`` for any
@@ -266,14 +257,14 @@ def validate_array(
         can have any shape (default).
 
     must_have_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike], optional
-        :func:`Check <pyvista.core.validation.check.check__subdtype>`
+        :func:`Check <pyvista.core._validation.check.check__subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`numpy.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a sequence, the array's data
         must be a subtype of at least one of the specified dtypes.
 
     must_have_length : int | Vector[int], optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
 
@@ -286,26 +277,26 @@ def validate_array(
             applicable.
 
     must_have_min_length : int, optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array's length is this value or greater. See note in
         ``must_have_length`` for details.
 
     must_have_max_length : int, optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array' length is this value or less. See note in
         ``must_have_length`` for details.
 
     must_be_nonnegative : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_nonnegative>`
+        :func:`Check <pyvista.core._validation.check.check_nonnegative>`
         if all elements of the array are nonnegative.
 
     must_be_finite : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 
     must_be_real : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_real>`
+        :func:`Check <pyvista.core._validation.check.check_real>`
         if the array has real numbers, i.e. its data type is integer or
         floating.
 
@@ -316,7 +307,7 @@ def validate_array(
             for complex number and/or string arrays.
 
     must_be_integer : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_integer>`
+        :func:`Check <pyvista.core._validation.check.check_integer>`
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
@@ -326,7 +317,7 @@ def validate_array(
             ``dtype_out=int`` if the output must have an integer dtype.
 
     must_be_sorted : bool | dict, default: False
-        :func:`Check <pyvista.core.validation.check.check_sorted>`
+        :func:`Check <pyvista.core._validation.check.check_sorted>`
         if the array's values are sorted. If ``True``, the check is
         performed with default parameters:
 
@@ -336,10 +327,10 @@ def validate_array(
 
         To check for descending order, enforce strict ordering, or to check
         along a different axis, use a ``dict`` with keyword arguments that
-        will be passed to :func:`Check <pyvista.core.validation.check.check_sorted>`.
+        will be passed to :func:`Check <pyvista.core._validation.check.check_sorted>`.
 
     must_be_in_range : Vector[float], optional
-        :func:`Check <pyvista.core.validation.check.check_range>`
+        :func:`Check <pyvista.core._validation.check.check_range>`
         if the array's values are all within a specific range. Range
         must be a vector with two elements specifying the minimum and
         maximum data values allowed, respectively. By default, the range
