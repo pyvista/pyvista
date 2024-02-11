@@ -436,7 +436,7 @@ def get_version_match(semver):
     if semver.endswith("dev0"):
         return "dev"
     major, minor, _ = semver.split(".")
-    return ".".join([major, minor])
+    return f"{major}.{minor}"
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
