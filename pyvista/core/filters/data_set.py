@@ -5514,7 +5514,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
         return _get_output(alg)
 
-    def compute_boundary_mesh_quality(self, progress_bar=False):
+    def compute_boundary_mesh_quality(self, *, progress_bar=False):
         """Compute metrics on the boundary faces of a mesh.
 
         The metrics that can be computed on the boundary faces of the mesh and are:
