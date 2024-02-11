@@ -8,7 +8,7 @@ import warnings
 from pyvista._plot import plot
 from pyvista._version import __version__
 from pyvista.core import *
-import pyvista.core._validation as validation
+import pyvista.core._validation as _validation
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers
