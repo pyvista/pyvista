@@ -6,6 +6,7 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -2689,8 +2690,8 @@ class WidgetHelper:
     def add_logo_widget(
         self,
         logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
-        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
+        position: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
