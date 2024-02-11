@@ -981,7 +981,6 @@ class MultiBlock(
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
-        pass
 
     def copy(self, deep=True):
         """Return a copy of the multiblock.

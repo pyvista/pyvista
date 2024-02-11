@@ -164,16 +164,10 @@ class PyVistaPipelineError(RuntimeError):
 class PyVistaDeprecationWarning(Warning):
     """Non-supressed Deprecation Warning."""
 
-    pass
-
 
 class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
 
-    pass
-
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
-
-    pass

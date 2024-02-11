@@ -88,7 +88,6 @@ class DataObject:
 
     def _post_file_load_processing(self):
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
-        pass
 
     def save(
         self,
@@ -290,7 +289,7 @@ class DataObject:
             Keyword arguments.
 
         """
-        pass  # called only by the inherited class
+        # called only by the inherited class
 
     def copy(self, deep=True):
         """Return a copy of the object.
