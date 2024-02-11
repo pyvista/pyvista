@@ -1146,7 +1146,7 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
@@ -2224,6 +2224,7 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()

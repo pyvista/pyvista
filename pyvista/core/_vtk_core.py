@@ -335,7 +335,12 @@ from vtkmodules.vtkFiltersSources import (
 )
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
-from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality, vtkCellQuality, vtkCellSizeFilter
+from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
+
+try:
+    from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
+except ImportError:  # pragma: no cover
+    pass
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
