@@ -88,6 +88,7 @@ class WidgetHelper:
         self.button_widgets = []
         self.distance_widgets = []
         self.logo_widgets = []
+        self.camera3d_widgets = []
 
     def add_box_widget(
         self,
@@ -2761,6 +2762,55 @@ class WidgetHelper:
             logo_widget.Off()
         self.logo_widgets.clear()
 
+    def add_camera3d_widget(self):
+        """Add a camera3d widget allow to move the camera.
+
+        .. note::
+           This widget requires ``vtk>=9.3.0``.
+
+        Returns
+        -------
+        vtkCamera3DWidget
+            The camera3d widget.
+
+        Examples
+        --------
+        Add a camera3d widget to the scene.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> _ = plotter.add_mesh(sphere, show_edges=True)
+        >>> plotter.subplot(0, 1)
+        >>> _ = plotter.add_mesh(sphere, show_edges=True)
+        >>> _ = plotter.add_camera3d_widget()
+        >>> plotter.show(cpos=plotter.camera_position)
+
+        """
+        try:
+            from vtkmodules.vtkInteractionWidgets import (
+                vtkCamera3DRepresentation,
+                vtkCamera3DWidget,
+            )
+        except ImportError:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
+        representation = vtkCamera3DRepresentation()
+        representation.SetCamera(self.renderer.GetActiveCamera())
+        widget = vtkCamera3DWidget()
+        widget.SetInteractor(self.iren.interactor)
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.camera3d_widgets.append(widget)
+        return widget
+
+    def clear_camera3d_widgets(self):
+        """Remove all of the camera3d widgets."""
+        for camera3d_widget in self.camera3d_widgets:
+            camera3d_widget.Off()
+        self.camera3d_widgets.clear()
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -2773,3 +2823,4 @@ class WidgetHelper:
         self.clear_camera_widgets()
         self.clear_measure_widgets()
         self.clear_logo_widgets()
+        self.clear_camera3d_widgets()
