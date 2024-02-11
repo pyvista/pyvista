@@ -1132,6 +1132,13 @@ def test_box_axes_color_box():
     plotter.show()
 
 
+def test_add_box_axes():
+    plotter = pv.Plotter()
+    plotter.add_box_axes()
+    plotter.add_mesh(pv.Sphere())
+    plotter.show()
+
+
 def test_screenshot(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
