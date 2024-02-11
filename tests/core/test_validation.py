@@ -139,7 +139,7 @@ def test_validate_number():
     assert num == 1
     assert isinstance(num, int)
 
-    num = validate_number(2.0, output_type='numpy', must_have_shape=(), reshape=False)
+    num = validate_number(2.0, return_type='numpy', must_have_shape=(), reshape=False)
     assert num == 2.0
     assert type(num) is np.ndarray
     assert num.dtype.type is np.float64
@@ -156,7 +156,7 @@ def test_validate_data_range():
     rng = validate_data_range([0, 1])
     assert rng == [0, 1]
 
-    rng = validate_data_range((0, 2.5), output_type=list)
+    rng = validate_data_range((0, 2.5), return_type=list)
     assert rng == [0.0, 2.5]
     assert isinstance(rng[0], int)
     assert isinstance(rng[1], float)
@@ -164,7 +164,7 @@ def test_validate_data_range():
     rng = validate_data_range((0, 2.5), dtype_out=float)
     assert rng == (0.0, 2.5)
 
-    rng = validate_data_range((-10, -10), output_type='numpy', must_have_shape=2)
+    rng = validate_data_range((-10, -10), return_type='numpy', must_have_shape=2)
     assert type(rng) is np.ndarray
 
     msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    (1, 0)'
@@ -454,9 +454,9 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('case', numeric_array_test_cases())
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
-@pytest.mark.parametrize('output_type', [tuple, list, np.ndarray])
+@pytest.mark.parametrize('return_type', [tuple, list, np.ndarray])
 def test_validate_array(
-    name, copy, as_any, dtype_in, dtype_out, case, stack_input, input_type, output_type
+    name, copy, as_any, dtype_in, dtype_out, case, stack_input, input_type, return_type
 ):
     # Set up
     valid_array = np.array(case.valid_array)
@@ -502,7 +502,7 @@ def test_validate_array(
         broadcast_to=shape,
         must_be_in_range=(np.min(valid_array), np.max(valid_array)),
         must_be_nonnegative=np.all(np.array(valid_array) > 0),
-        output_type=output_type,
+        return_type=return_type,
     )
 
     # Test raises correct error with invalid input
@@ -519,15 +519,15 @@ def test_validate_array(
 
     # Check output
     has_numpy_dtype = issubclass(dtype_out, np.generic)
-    if np.array(array_in).ndim == 0 and output_type in (list, tuple) and not has_numpy_dtype:
+    if np.array(array_in).ndim == 0 and return_type in (list, tuple) and not has_numpy_dtype:
         # test scalar input results in scalar output
         assert isinstance(array_out, float) or isinstance(array_out, int)
-    elif output_type is tuple and not has_numpy_dtype:
+    elif return_type is tuple and not has_numpy_dtype:
         assert type(array_out) is tuple
         # assert type(array_out[0]) is dtype_out
-    elif output_type is list and not has_numpy_dtype:
+    elif return_type is list and not has_numpy_dtype:
         assert isinstance(array_out, list)
-    elif output_type is np.ndarray or has_numpy_dtype:
+    elif return_type is np.ndarray or has_numpy_dtype:
         assert isinstance(array_out, np.ndarray)
         assert array_out.dtype.type is np.dtype(dtype_out).type
         if as_any:
