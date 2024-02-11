@@ -1,13 +1,6 @@
-import vtk
-
 import pyvista as pv
 
-reader = vtk.vtkXMLUnstructuredGridReader()
-reader.SetFileName("Data/can.vtu")
-reader.Update()
-# TODO @tkoyama010: check the warning reason of read function.
-# mesh = pv.read("Data/can.vtu")
-mesh = pv.wrap(reader.GetOutput())
+mesh = pv.read("Data/can.vtu")
 cqual = mesh.compute_boundary_mesh_quality()
 
 plotter = pv.Plotter(shape=(2, 2))
