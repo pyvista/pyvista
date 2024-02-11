@@ -119,7 +119,7 @@ def _cast_to_numpy(
 
     name : str, default: "Array"
         Variable name to use in the error messages if any of the
-        validation checks fail.
+        _validation checks fail.
 
     Raises
     ------

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 import numpy as np
-from pyvista.core.validation._array_wrapper import _ArrayLikeWrapper
-from pyvista.core.validation import validate_array
+from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
+from pyvista.core._validation import validate_array
 
 if TYPE_CHECKING:
     # scalars

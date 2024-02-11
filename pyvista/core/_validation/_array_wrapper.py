@@ -32,7 +32,7 @@ from pyvista.core._typing_core._type_guards import (
     _is_NumberSequence1D,
     _is_NumberSequence2D,
 )
-from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
+from pyvista.core._validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
@@ -176,12 +176,12 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         >>> from pyvista.core.validation._array_wrapper import (
         ...     _ArrayLikeWrapper,
         ... )
-        >>> from pyvista import validation
+        >>> from pyvista import _validation
         >>> wrapped = _ArrayLikeWrapper(np.array([1, 2, 3]))
 
         # Call the wrapped arary with `()` instead of passing it directly
 
-        >>> validation.check_real(wrapped())
+        >>> _validation.check_real(wrapped())
 
         """
         pass

@@ -13,9 +13,7 @@ from vtk import vtkTransform
 
 import pyvista
 from pyvista.core import pyvista_ndarray
-from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
-from pyvista.core.validation import (
+from pyvista.core._validation import (
     check_contains,
     check_finite,
     check_greater_than,
@@ -47,16 +45,18 @@ from pyvista.core.validation import (
     validate_transform3x3,
     validate_transform4x4,
 )
-from pyvista.core.validation._array_wrapper import (
+from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
     _NumberWrapper,
     _NumpyArrayWrapper,
     _Sequence1DWrapper,
     _Sequence2DWrapper,
 )
-from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
-from pyvista.core.validation.check import _validate_shape_value
-from pyvista.core.validation.validate import _array_from_vtkmatrix, _set_default_kwarg_mandatory
+from pyvista.core._validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
+from pyvista.core._validation.check import _validate_shape_value
+from pyvista.core._validation.validate import _array_from_vtkmatrix, _set_default_kwarg_mandatory
+from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
 
 @pytest.mark.parametrize(
@@ -1310,33 +1310,34 @@ def test_array_wrapper_ragged_array(ragged_array):
         _ArrayLikeWrapper(ragged_array)
 
 
-@pytest.fixture
-def _in_root_project_path():
-    cur = os.getcwd()
-    try:
-        root = os.path.dirname(os.path.dirname(pyvista.__file__))
-        os.chdir(root)
-        yield
-    finally:
-        os.chdir(cur)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(pyvista.__file__))
+MYPY_CONFIG_FILE = PROJECT_ROOT + '/pyproject.toml'
+REVEAL_TYPE_CODE_FILE = PROJECT_ROOT + '/tests/core/test_validation_reveal_type.txt'
 
 
 def reveal_type_from_code(code_snippet):
     # Call `mypy filename` using the project config file
     # current directory must be set to project root before calling
     # NOTE: running mypy can be slow, avoid making excessive calls
-    result = mypy_api.run(['--config-file', './pyproject.toml', '-c', code_snippet])
-    assert 'usage: mypy' not in result[1]
-    stdout = str(result[0])
-    match = findall(r'note: Revealed type is "([^"]+)"', stdout)
-    assert match is not None
-    return match
+    cur = os.getcwd()
+    try:
+        os.chdir(PROJECT_ROOT)
+
+        result = mypy_api.run(['--config-file', MYPY_CONFIG_FILE, '-c', code_snippet])
+        assert 'usage: mypy' not in result[1]
+        assert 'Cannot find implementation' not in result[0]
+        stdout = str(result[0])
+        match = findall(r'note: Revealed type is "([^"]+)"', stdout)
+        assert match is not None
+        return match
+
+    finally:
+        os.chdir(cur)
 
 
-@pytest.fixture
-def revealed_array_types(_in_root_project_path):
+def generate_reveal_type_test_cases():
     # Create code snippet for mypy to analyze
-    with open('./tests/core/test_validation_reveal_type.txt') as f:
+    with open(REVEAL_TYPE_CODE_FILE) as f:
         code = f.read()
 
     revealed_types = reveal_type_from_code(code)
@@ -1347,6 +1348,7 @@ def revealed_array_types(_in_root_project_path):
     return zip(reveal_type_args, revealed_types, expected_types)
 
 
-def test_revealed_array_types(revealed_array_types):
-    for arg, revealed, expected in revealed_array_types:
-        assert f"{arg}: {revealed}" == f"{arg}: {expected}"
+@pytest.mark.parametrize('test_case', generate_reveal_type_test_cases())
+def test_revealed_array_types(test_case):
+    arg, revealed, expected = test_case
+    assert f"{arg}: {revealed}" == f"{arg}: {expected}"
