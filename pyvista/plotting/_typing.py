@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
-import numpy as np
-
-from pyvista.core._typing_core import BoundsLike, Number  # noqa: F401
+from pyvista.core._typing_core import BoundsLike, Number, NumpyArray  # noqa: F401
 
 from . import _vtk
 
@@ -21,7 +19,7 @@ ColorLike = Union[
     Tuple[float, float, float, float],
     Sequence[int],
     Sequence[float],
-    np.ndarray,
+    NumpyArray[float],
     Dict[str, Union[int, float, str]],
     str,
     "Color",
