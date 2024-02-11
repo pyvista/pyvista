@@ -23,7 +23,7 @@ Some key differences include:
 
 import sys
 import typing
-from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Sequence, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -43,97 +43,37 @@ if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # which makes it incompatible with built-in generic alias types, e.g.
     # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
     # the private typing._GenericAlias type instead
-    np_dtype = typing._GenericAlias(np.dtype, _T)
+    np_dtype = typing._GenericAlias(np.dtype, _NumberType)
     _np_floating = typing._GenericAlias(np.floating, _T)
     _np_integer = typing._GenericAlias(np.integer, _T)
     np_dtype_floating = typing._GenericAlias(np.dtype, _np_floating[_T])
     np_dtype_integer = typing._GenericAlias(np.floating, _np_integer[_T])
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[_T]))
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[_NumberType]))
 else:
-    np_dtype = np.dtype[_T]
+    np_dtype = np.dtype[_NumberType]
     np_dtype_floating = np.dtype[np.floating[Any]]
     np_dtype_integer = np.dtype[np.integer[Any]]
     NumpyArray = npt.NDArray[_NumberType]
 
-
-# Define generic nested sequence
-
-_FiniteNestedSequence = Union[  # Note: scalar types are excluded
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
-]
-
-# Narrow sequence types to tuples and lists only
-_Sequence = Union[List[_T], Tuple[_T, ...]]
-
-# Define nested sequences bound to numeric types only
-_NumberList1D = List[_NumberType]
-_NumberList2D = List[List[_NumberType]]
-_NumberList3D = List[List[List[_NumberType]]]
-_NumberList4D = List[List[List[List[_NumberType]]]]
-_NumberList = Union[
-    _NumberList1D[_NumberType],
-    _NumberList2D[_NumberType],
-    _NumberList3D[_NumberType],
-    _NumberList4D[_NumberType],
-]
-
-_NumberTuple1D = Tuple[_NumberType, ...]
-_NumberTuple2D = Tuple[Tuple[_NumberType, ...]]
-_NumberTuple3D = Tuple[Tuple[Tuple[_NumberType, ...]]]
-_NumberTuple4D = Tuple[Tuple[Tuple[Tuple[_NumberType, ...]]]]
-_NumberTuple = Union[
-    _NumberTuple1D[_NumberType],
-    _NumberTuple2D[_NumberType],
-    _NumberTuple3D[_NumberType],
-    _NumberTuple4D[_NumberType],
-]
-
-_NumberSequence1D = Union[_NumberTuple1D[_NumberType], _NumberList1D[_NumberType]]
-_NumberSequence2D = Union[_NumberTuple2D[_NumberType], _NumberList2D[_NumberType]]
-_NumberSequence3D = Union[_NumberTuple3D[_NumberType], _NumberList3D[_NumberType]]
-_NumberSequence4D = Union[_NumberTuple4D[_NumberType], _NumberList4D[_NumberType]]
-_NumberSequence = Union[
-    _NumberSequence1D[_NumberType],
-    _NumberSequence2D[_NumberType],
-    _NumberSequence3D[_NumberType],
-    _NumberSequence4D[_NumberType],
-]
-
-# Define nested sequences of numpy arrays
-_NumpyArraySequence1D = Sequence[NumpyArray[_NumberType]]
-_NumpyArraySequence2D = Sequence[_NumpyArraySequence1D[_NumberType]]
-_NumpyArraySequence3D = Sequence[_NumpyArraySequence2D[_NumberType]]
-_NumpyArraySequence4D = Sequence[_NumpyArraySequence3D[_NumberType]]
-
-_NumpyArraySequence = Union[
-    _NumpyArraySequence1D[_NumberType],
-    _NumpyArraySequence2D[_NumberType],
-    _NumpyArraySequence3D[_NumberType],
-    _NumpyArraySequence4D[_NumberType],
-]
-
 _ArrayLike1D = Union[
     NumpyArray[_NumberType],
-    _NumberSequence1D[_NumberType],
-    _NumpyArraySequence1D[_NumberType],
+    Sequence[_NumberType],
+    Sequence[NumpyArray[_NumberType]],
 ]
 _ArrayLike2D = Union[
     NumpyArray[_NumberType],
-    _NumberSequence2D[_NumberType],
-    _NumpyArraySequence2D[_NumberType],
+    Sequence[Sequence[_NumberType]],
+    Sequence[Sequence[NumpyArray[_NumberType]]],
 ]
 _ArrayLike3D = Union[
     NumpyArray[_NumberType],
-    _NumberSequence3D[_NumberType],
-    _NumpyArraySequence3D[_NumberType],
+    Sequence[Sequence[Sequence[_NumberType]]],
+    Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]],
 ]
 _ArrayLike4D = Union[
     NumpyArray[_NumberType],
-    _NumberSequence4D[_NumberType],
-    _NumpyArraySequence4D[_NumberType],
+    Sequence[Sequence[Sequence[Sequence[_NumberType]]]],
+    Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]],
 ]
 _ArrayLike = Union[
     _ArrayLike1D[_NumberType],

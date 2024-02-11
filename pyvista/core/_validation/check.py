@@ -32,16 +32,11 @@ from typing import (
 import numpy as np
 
 from pyvista.core._typing_core import NumpyArray, Vector
-from pyvista.core._typing_core._array_like import (
-    _ArrayLike,
-    _ArrayLikeOrScalar,
-    _NumberSequence1D,
-    _NumberType,
-)
+from pyvista.core._typing_core._array_like import _ArrayLike, _ArrayLikeOrScalar, _NumberType
 from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
-    _Sequence1DWrapper,
-    _Sequence2DWrapper,
+    _NestedSequenceWrapper,
+    _SequenceWrapper,
 )
 
 _ScalarShape = Tuple[()]
@@ -222,7 +217,7 @@ def check_sorted(
 
     """
     wrapped = _ArrayLikeWrapper(array)
-    if isinstance(wrapped, _Sequence2DWrapper):
+    if isinstance(wrapped, _NestedSequenceWrapper):
         # It is challenging to implement an efficient sorting check for 2D
         # sequences directly. For these cases, we do the checks using numpy.
         wrapped = _ArrayLikeWrapper(np.asarray(wrapped._array))
@@ -257,7 +252,7 @@ def check_sorted(
     # Create slicers to get a view along an axis
     # Create two slicers to compare consecutive elements with each other
     first_slice, second_slice = slice(None, -1), slice(1, None)
-    if isinstance(wrapped, _Sequence1DWrapper):
+    if isinstance(wrapped, _SequenceWrapper):
         func_seq = lambda op, arg1, arg2: all(op(x, y) for (x, y) in zip(arg1, arg2))
         is_sorted = _do_check(func_seq, wrapped._array[first_slice], wrapped._array[second_slice])
     else:
@@ -598,8 +593,8 @@ def check_range(
     try:
         check_shape(wrapped_rng(), 2, name="Range")
         check_sorted(wrapped_rng(), name="Range")
-        check_greater_than(wrapped_arr(), wrapped_rng._array[0], strict=strict_lower, name=name)  # type: ignore[arg-type]
-        check_less_than(wrapped_arr(), wrapped_rng._array[1], strict=strict_upper, name=name)  # type: ignore[arg-type]
+        check_greater_than(wrapped_arr(), wrapped_rng._array[0], strict=strict_lower, name=name)
+        check_less_than(wrapped_arr(), wrapped_rng._array[1], strict=strict_upper, name=name)
     except ValueError:
         raise
 
@@ -682,7 +677,7 @@ def check_shape(
 def check_ndim(
     array: _ArrayLikeOrScalar[_NumberType],
     /,
-    ndim: Union[int, _NumberSequence1D[int]],
+    ndim: Union[int, Sequence[int]],
     *,
     name: str = "Array",
 ):
@@ -728,7 +723,7 @@ def check_ndim(
 
     """
     if not isinstance(ndim, Sequence):
-        ndim_: _NumberSequence1D[int] = [ndim]
+        ndim_: Sequence[int] = [ndim]
     else:
         ndim_ = ndim
 
@@ -1298,10 +1293,10 @@ def check_length(
     wrapped = _ArrayLikeWrapper(array)
     if wrapped.ndim == 0:
         if allow_scalar:
-            wrapped = _ArrayLikeWrapper(cast(_NumberSequence1D[_NumberType], [wrapped._array]))
+            wrapped = _ArrayLikeWrapper(cast(Sequence[_NumberType], [wrapped._array]))
         else:
             try:
-                len(wrapped._array)  # type: ignore[arg-type]
+                len(wrapped._array)
             except TypeError:
                 raise
 

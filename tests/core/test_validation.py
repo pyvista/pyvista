@@ -46,10 +46,10 @@ from pyvista.core._validation import (
 )
 from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
+    _NestedSequenceWrapper,
     _NumberWrapper,
     _NumpyArrayWrapper,
-    _Sequence1DWrapper,
-    _Sequence2DWrapper,
+    _SequenceWrapper,
 )
 from pyvista.core._validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
@@ -1230,9 +1230,9 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
         array_before_wrap = initial_array.tolist()
         if depth in (1, 2):
             if depth == 1:
-                wrapper = _Sequence1DWrapper
+                wrapper = _SequenceWrapper
             else:
-                wrapper = _Sequence2DWrapper
+                wrapper = _NestedSequenceWrapper
 
             # sequence is expected as-is
             expected = ArrayLikePropsTuple(

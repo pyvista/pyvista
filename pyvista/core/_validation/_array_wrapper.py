@@ -6,31 +6,29 @@ from abc import abstractmethod
 from copy import deepcopy
 import itertools
 import reprlib
-from typing import Any, Callable, Generic, Iterable, Literal, Tuple, Type, Union, cast, overload
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    List,
+    Literal,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+    overload,
+)
 
 import numpy as np
 
 from pyvista.core._typing_core import NumpyArray
-from pyvista.core._typing_core._array_like import (
-    _ArrayLikeOrScalar,
-    _NumberList,
-    _NumberList1D,
-    _NumberList2D,
-    _NumberList3D,
-    _NumberList4D,
-    _NumberSequence1D,
-    _NumberSequence2D,
-    _NumberTuple1D,
-    _NumberTuple2D,
-    _NumberTuple3D,
-    _NumberTuple4D,
-    _NumberType,
-    _NumpyArraySequence,
-)
+from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core._typing_core._type_guards import (
+    _is_NestedSequence,
     _is_Number,
-    _is_NumberSequence1D,
-    _is_NumberSequence2D,
+    _is_NumberSequence,
 )
 from pyvista.core._validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 
@@ -46,52 +44,39 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     def __new__(cls, _array: _NumberType) -> _NumberWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
 
     @overload
-    def __new__(
-        cls, _array: _NumpyArraySequence[_NumberType]
-    ) -> _NumpyArrayWrapper[_NumberType]: ...
+    def __new__(cls, _array: List[List[_NumberType]]) -> _NestedSequenceWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
 
     @overload
-    def __new__(cls, _array: _NumberList4D[_NumberType]) -> _NumpyArrayWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
+    def __new__(cls, _array: List[_NumberType]) -> _SequenceWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
 
     @overload
-    def __new__(cls, _array: _NumberList3D[_NumberType]) -> _NumpyArrayWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
+    def __new__(cls, _array: Tuple[Tuple[_NumberType, ...]]) -> _NestedSequenceWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
 
     @overload
-    def __new__(cls, _array: _NumberList2D[_NumberType]) -> _Sequence2DWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
-
-    @overload
-    def __new__(cls, _array: _NumberList1D[_NumberType]) -> _Sequence1DWrapper[_NumberType]: ...
-
-    @overload
-    def __new__(cls, _array: _NumberTuple4D[_NumberType]) -> _NumpyArrayWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
-
-    @overload
-    def __new__(cls, _array: _NumberTuple3D[_NumberType]) -> _NumpyArrayWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
-
-    @overload
-    def __new__(cls, _array: _NumberTuple2D[_NumberType]) -> _Sequence2DWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
-
-    @overload
-    def __new__(cls, _array: _NumberTuple1D[_NumberType]) -> _Sequence1DWrapper[_NumberType]: ...
+    def __new__(cls, _array: Tuple[_NumberType, ...]) -> _SequenceWrapper[_NumberType]: ...  # type: ignore[overload-overlap]
 
     @overload
     def __new__(cls, _array: NumpyArray[_NumberType]) -> _NumpyArrayWrapper[_NumberType]: ...
+
+    @overload
+    def __new__(
+        cls, _array: _ArrayLikeOrScalar[_NumberType]
+    ) -> _NumpyArrayWrapper[_NumberType]: ...
 
     def __new__(cls, _array: _ArrayLikeOrScalar[_NumberType]):
         """Wrap array-like inputs to standardize the representation.
 
         The following inputs are wrapped as-is without modification:
             - scalar dtypes (e.g. float, int)
-            - 1D numeric sequences
-            - 2D numeric nested sequences
+            - flat numeric sequences
+            - nested numeric sequences
 
-        The above types are also given `shape`, `dtype`, and `ndim`
-        attributes.
+        The above types are also given `shape`, `dtype`, and `ndim`,
+        size, and other generic array attributes.
 
         All other array-like inputs (e.g. nested numeric sequences with
         depth > 2, nested sequences of numpy arrays) are cast as a numpy
         array.
-
 
         """
         # Note:
@@ -109,13 +94,13 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
                 wrapped1 = object.__new__(_NumpyArrayWrapper)
                 wrapped1.__setattr__('_array', _array)
                 return wrapped1
-            elif _is_NumberSequence1D(_array):
-                wrapped2 = object.__new__(_Sequence1DWrapper)
+            elif _is_NumberSequence(_array):
+                wrapped2 = object.__new__(_SequenceWrapper)
                 wrapped2.__setattr__('_array', _array)
                 wrapped2.__setattr__('_dtype', None)
                 return wrapped2
-            elif _is_NumberSequence2D(_array):
-                wrapped3 = object.__new__(_Sequence2DWrapper)
+            elif _is_NestedSequence(_array):
+                wrapped3 = object.__new__(_NestedSequenceWrapper)
                 wrapped3.__setattr__('_array', _array)
                 wrapped3.__setattr__('_dtype', None)
                 return wrapped3
@@ -203,7 +188,7 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
 
     def to_list(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
-    ) -> _NumberList[_NumberType]:
+    ) -> List[_NumberType]:
         return self._array.tolist()
 
     def to_tuple(self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool):
@@ -267,8 +252,8 @@ class _NumberWrapper(_BuiltinWrapper[_NumberType]):
             self._array = dtype(self._array)
 
 
-class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
-    _array: _NumberSequence1D[_NumberType]
+class _SequenceWrapper(_BuiltinWrapper[_NumberType]):
+    _array: Sequence[_NumberType]
 
     @property
     def shape(self) -> Union[Tuple[int]]:
@@ -292,18 +277,18 @@ class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return self._array
 
-    def __call__(self) -> _NumberSequence1D[_NumberType]:
+    def __call__(self) -> Sequence[_NumberType]:
         return self  # type: ignore[return-value]
 
     def to_list(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
-    ) -> _NumberList1D[_NumberType]:
+    ) -> List[_NumberType]:
         out = self._array if isinstance(self._array, list) else list(self._array)
         return deepcopy(out) if copy and out is input_array else out
 
     def to_tuple(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
-    ) -> _NumberTuple1D[_NumberType]:
+    ) -> Tuple[_NumberType, ...]:
         out = self._array if isinstance(self._array, tuple) else tuple(self._array)
         return deepcopy(out) if copy and out is input_array else out
 
@@ -312,8 +297,8 @@ class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
         self._dtype = dtype
 
 
-class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
-    _array: _NumberSequence2D[_NumberType]
+class _NestedSequenceWrapper(_BuiltinWrapper[_NumberType]):
+    _array: Sequence[Sequence[_NumberType]]
 
     @property
     def shape(self) -> Tuple[int, int]:
@@ -337,18 +322,18 @@ class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return itertools.chain.from_iterable(self._array)
 
-    def __call__(self) -> _NumberSequence2D[_NumberType]:
+    def __call__(self) -> Sequence[Sequence[_NumberType]]:
         return self  # type: ignore[return-value]
 
     def to_list(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
-    ) -> _NumberList2D[_NumberType]:
+    ) -> List[List[_NumberType]]:
         # TODO: implement
         return _cast_to_list(self._array)
 
     def to_tuple(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
-    ) -> _NumberTuple2D[_NumberType]:
+    ) -> Tuple[Tuple[_NumberType, ...]]:
         # TODO: implement
         return _cast_to_tuple(self._array)
 
