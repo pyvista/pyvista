@@ -925,13 +925,13 @@ def test_check_number_raises():
 
 
 def test_check_contains():
-    check_contains("foo", ["foo", "bar"])
+    check_contains(item="foo", container=["foo", "bar"])
     msg = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(msg)):
-        check_contains("foo", ["cat", "bar"])
+        check_contains(item="foo", container=["cat", "bar"])
     msg = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
     with pytest.raises(ValueError, match=escape(msg)):
-        check_contains(5, range(4), name="_input")
+        check_contains(item=5, container=range(4), name="_input")
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])

@@ -2,10 +2,10 @@
 
 .. versionadded:: 0.44.0
 
-An array validator function typically:
+A ``validate`` function typically:
 
-* Uses array or type checkers to check the type and/or value of
-  input arguments.
+* Uses :py:mod:`~pyvista.core._validation.check` functions to
+  check the type and/or value of input arguments.
 * Applies (optional) constraints, e.g. input or output must have a
   specific length, shape, type, data-type, etc.
 * Accepts many different input types or values and standardizes the
@@ -551,7 +551,9 @@ def validate_array(
             return wrapped.to_tuple(array, copy)
         else:
             # Invalid type, raise error with check
-            check_contains(output_type, ["numpy", "list", "tuple", np.ndarray, list, tuple])
+            check_contains(
+                item=output_type, container=["numpy", "list", "tuple", np.ndarray, list, tuple]
+            )
 
             def _assert_never() -> NoReturn:
                 raise AssertionError("Expected code to be unreachable")
@@ -647,7 +649,9 @@ def validate_axes(
 
     """
     if must_have_orientation is not None:
-        check_contains(must_have_orientation, ['right', 'left'], name=f"{name} orientation")
+        check_contains(
+            item=must_have_orientation, container=['right', 'left'], name=f"{name} orientation"
+        )
 
     # Validate number of args
     num_args = len(axes)

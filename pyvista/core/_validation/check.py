@@ -2,9 +2,9 @@
 
 .. versionadded:: 0.44.0
 
-An array checker function typically:
+A ``check`` function typically:
 
-* Checks the type and/or value of a single input variable.
+* Performs a simple validation on a single input variable.
 * Raises an error if the check fails due to invalid input.
 * Does not modify input or return anything.
 
@@ -350,7 +350,7 @@ def check_integer(
         If any element's value differs from its floor.
 
     TypeError
-        If ``strict=True`` and the array's dtype is not integr
+        If ``strict=True`` and the array's dtype is not integral.
 
     See Also
     --------
@@ -847,7 +847,7 @@ def check_number(
     >>> _validation.check_number(num, must_be_real=False)
 
     """
-    check_contains(definition, ['abstract', 'builtin', 'numpy'])
+    check_contains(item=definition, container=['abstract', 'builtin', 'numpy'])
 
     valid_type: Any
     if definition == 'abstract':
@@ -1180,16 +1180,16 @@ def check_iterable_items(
         raise
 
 
-def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
-    """Check if an object is in a container.
+def check_contains(*, item: Any, container: Any, name: str = 'Input'):
+    """Check if an item is in a container.
 
     Parameters
     ----------
-    obj : Any
-        Object to check.
+    item : Any
+        Item to check.
 
     container : Any
-        Container the object is expected to be in.
+        Container the item is expected to be in.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -1212,12 +1212,12 @@ def check_contains(obj: Any, /, container: Any, *, name: str = 'Input'):
     >>> _validation.check_contains("A", ["A", "B", "C"])
 
     """
-    if obj not in container:
+    if item not in container:
         if isinstance(container, (list, tuple)):
             qualifier = "one of"
         else:
             qualifier = "in"
-        msg = f"{name} '{obj}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 
@@ -1319,10 +1319,10 @@ def check_length(
             )
 
     # Validate min/max length
-    # if min_length is not None:
-    #     check_finite(min_length, name="Min length")
-    # if max_length is not None:
-    #     check_finite(max_length, name="Max length")
+    if min_length is not None:
+        check_finite(min_length, name="Min length")
+    if max_length is not None:
+        check_finite(max_length, name="Max length")
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
 
