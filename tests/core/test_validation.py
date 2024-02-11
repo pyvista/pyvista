@@ -4,7 +4,7 @@ from numbers import Real
 import os
 from re import escape, findall
 import sys
-from typing import List, Union, get_args, get_origin
+from typing import Union, get_args, get_origin
 
 from mypy import api as mypy_api
 import numpy as np
@@ -1121,7 +1121,7 @@ arraylike_shapes = [
 ]
 
 ArrayLikePropsTuple = namedtuple(
-    'ArrayLikeTuple', ['array', 'shape', 'dtype', 'ndim', 'size', 'wrapper', 'return_original']
+    'ArrayLikePropsTuple', ['array', 'shape', 'dtype', 'ndim', 'size', 'wrapper', 'return_original']
 )
 
 
@@ -1321,11 +1321,11 @@ def _in_root_project_path():
         os.chdir(cur)
 
 
-def get_revealed_type_from_mypy(code: str):
-    # Call `mypy -c CODE_SNIPPET` using the project config file
+def reveal_type_from_code(code_snippet):
+    # Call `mypy filename` using the project config file
     # current directory must be set to project root before calling
     # NOTE: running mypy can be slow, avoid making excessive calls
-    result = mypy_api.run(['--config-file', './pyproject.toml', '-c', code])
+    result = mypy_api.run(['--config-file', './pyproject.toml', '-c', code_snippet])
     assert 'usage: mypy' not in result[1]
     stdout = str(result[0])
     match = findall(r'note: Revealed type is "([^"]+)"', stdout)
@@ -1333,108 +1333,20 @@ def get_revealed_type_from_mypy(code: str):
     return match
 
 
-def mypy_reveal_type_validate_array(arrays_in: List[str]):
+@pytest.fixture
+def revealed_array_types(_in_root_project_path):
     # Create code snippet for mypy to analyze
-    code_lines = ["import numpy as np; from pyvista.core.validation import validate_array"]
-    for array in arrays_in:
-        code_lines.append("reveal_type(validate_array(" + array + "))")
-    code_snippet = "\n".join(code_lines)
-    revealed_types = get_revealed_type_from_mypy(code_snippet)
-    assert len(revealed_types) == len(arrays_in)
-    return revealed_types
+    with open('./tests/core/test_validation_reveal_type.txt') as f:
+        code = f.read()
+
+    revealed_types = reveal_type_from_code(code)
+    expected_types = findall(r'# EXPECTED_TYPE: "([^"]+)"', code)
+    reveal_type_args = findall(r'reveal_type\((.*?)\s', code)
+    assert len(expected_types) == len(revealed_types)
+    assert len(expected_types) == len(reveal_type_args)
+    return zip(reveal_type_args, revealed_types, expected_types)
 
 
-@pytest.fixture
-def reveal_type_scalar(_in_root_project_path):
-    arrays_in = ['1.0', '1', 'True']
-    return mypy_reveal_type_validate_array(arrays_in)
-
-
-def test_validate_array_reveal_type_scalar(reveal_type_scalar):
-    revealed = reveal_type_scalar
-    assert "builtins.float" == revealed[0]
-    assert "builtins.int" == revealed[1]
-    assert "builtins.bool" == revealed[2]
-
-
-@pytest.fixture
-def reveal_type_numpy(_in_root_project_path):
-    arrays_in = [
-        'np.array(1.0, dtype=float)',
-        'np.array(1, dtype=int)',
-        'np.array(1.0, dtype=bool)',
-    ]
-    return mypy_reveal_type_validate_array(arrays_in)
-
-
-def test_validate_array_reveal_type_numpy(reveal_type_numpy):
-    revealed = reveal_type_numpy
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.float]]" == revealed[0]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.int]]" == revealed[1]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.bool]]" == revealed[2]
-
-
-@pytest.fixture
-def reveal_type_list(_in_root_project_path):
-    arrays_in = []
-    arrays_in.extend(['[1.0]', '[1]', '[True]'])
-    arrays_in.extend(['[[1.0]]', '[[1]]', '[[True]]'])
-    arrays_in.extend(['[[[1.0]]]', '[[[1]]]', '[[[True]]]'])
-    arrays_in.extend(['[[[[1.0]]]]', '[[[[1]]]]', '[[[[True]]]]'])
-    return mypy_reveal_type_validate_array(arrays_in)
-
-
-def test_validate_array_reveal_type_list(reveal_type_list):
-    revealed = reveal_type_list
-    # 1D lists
-    assert "builtins.list[builtins.float]" == revealed[0]
-    assert "builtins.list[builtins.int]" == revealed[1]
-    assert "builtins.list[builtins.bool]" == revealed[2]
-
-    # 2D lists
-    assert "builtins.list[builtins.list[builtins.float]]" == revealed[3]
-    assert "builtins.list[builtins.list[builtins.int]]" == revealed[4]
-    assert "builtins.list[builtins.list[builtins.bool]]" == revealed[5]
-
-    # 3D lists
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.float]]" == revealed[6]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.int]]" == revealed[7]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.bool]]" == revealed[8]
-
-    # 4D lists
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.float]]" == revealed[9]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.int]]" == revealed[10]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.bool]]" == revealed[11]
-
-
-@pytest.fixture
-def reveal_type_tuple(_in_root_project_path):
-    arrays_in = []
-    arrays_in.extend(['(1.0,)', '(1,)', '(True,)'])
-    arrays_in.extend(['((1.0,),)', '((1,),)', '((True,),)'])
-    arrays_in.extend(['(((1.0,),),)', '(((1,),),)', '(((True,),),)'])
-    arrays_in.extend(['((((1.0,),),),)', '((((1,),),),)', '((((True,),),),)'])
-    return mypy_reveal_type_validate_array(arrays_in)
-
-
-def test_validate_array_reveal_type_tuple(reveal_type_tuple):
-    revealed = reveal_type_tuple
-    # 1D tuples
-    assert "builtins.tuple[builtins.float, ...]" == revealed[0]
-    assert "builtins.tuple[builtins.int, ...]" == revealed[1]
-    assert "builtins.tuple[builtins.bool, ...]" == revealed[2]
-
-    # 2D tuples
-    assert "tuple[tuple[builtins.float]]" == revealed[3]
-    assert "tuple[tuple[builtins.int]]" == revealed[4]
-    assert "tuple[tuple[builtins.bool]]" == revealed[5]
-
-    # 3D tuples
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.float]]" == revealed[6]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.int]]" == revealed[7]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.bool]]" == revealed[8]
-
-    # 4D tuples
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.float]]" == revealed[9]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.int]]" == revealed[10]
-    assert "numpy.ndarray[Any, numpy.dtype[builtins.bool]]" == revealed[11]
+def test_revealed_array_types(revealed_array_types):
+    for arg, revealed, expected in revealed_array_types:
+        assert f"{arg}: {revealed}" == f"{arg}: {expected}"

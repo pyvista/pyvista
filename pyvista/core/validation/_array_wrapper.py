@@ -36,7 +36,6 @@ from pyvista.core.validation._cast_array import _cast_to_list, _cast_to_numpy, _
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
-    # _array: _ArrayLikeOrScalar[_NumberType]
 
     # The input array-like types are complex and mypy cannot infer
     # the return types correctly for each overload, so we ignore
@@ -155,9 +154,6 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
     @abstractmethod
     def as_iterable(self) -> Iterable[_NumberType]: ...
 
-    # @abstractmethod
-    # def copy_array(self): ...
-
     @abstractmethod
     def change_dtype(self, dtype): ...
 
@@ -204,9 +200,6 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return self._array.flatten()
 
-    # def copy_array(self):
-    #     self._array = np.ndarray.copy(self._array)
-
     def to_list(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
     ) -> _NumberList[_NumberType]:
@@ -228,9 +221,6 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
 class _BuiltinWrapper(_ArrayLikeWrapper[_NumberType]):
     def all_func(self, func: Callable[..., Any], *args):
         return all(func(x, *args) for x in self.as_iterable())
-
-    # def copy_array(self):
-    #     self._array = deepcopy(self._array)
 
     def to_numpy(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
@@ -324,23 +314,6 @@ class _Sequence1DWrapper(_BuiltinWrapper[_NumberType]):
 class _Sequence2DWrapper(_BuiltinWrapper[_NumberType]):
     _array: _NumberSequence2D[_NumberType]
 
-    # @overload
-    # def __init__(self, _array: _NumberTuple2D[_NumberType]): ...
-    # @overload
-    # def __init__(self, _array: _NumberList2D[_NumberType]): ...
-    # def __init__(self, _array: _NumberSequence2D[_NumberType]):
-    #     if TYPE_CHECKING:
-    #         reveal_type
-    #         if isinstance(_array, tuple) and isinstance(_array[0], tuple):
-    #             self._array = cast(_NumberTuple2D[_NumberType], _array)
-    #             return
-    #         elif isinstance(_array, list) and isinstance(_array[0], list):
-    #             self._array = cast(_NumberList2D[_NumberType], _array)
-    #             return
-    # @property
-    # def _array(self):
-    #     return _
-
     @property
     def shape(self) -> Tuple[int, int]:
         return len(self._array), len(self._array[0])
@@ -406,23 +379,3 @@ def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
         return cast(Type[_NumberType], bool)
     else:
         raise TypeError(f"Unexpected error: dtype should be numeric, got {dtypes} instead.")
-
-
-# reveal_type(_ArrayLikeWrapper(1))
-# reveal_type(_ArrayLikeWrapper(np.array([1], dtype=int)))
-# reveal_type(_ArrayLikeWrapper(np.array([1], dtype=int))._array)
-# reveal_type(_ArrayLikeWrapper(1)._array)
-# reveal_type(_ArrayLikeWrapper(1).dtype)
-#
-# reveal_type(_ArrayLikeWrapper([1]).dtype)
-# reveal_type(_ArrayLikeWrapper([1])._array)
-# reveal_type(_ArrayLikeWrapper([[1]])._array)
-# reveal_type(_ArrayLikeWrapper([[[1]]])._array)
-# reveal_type(_ArrayLikeWrapper([[[[1]]]])._array)
-#
-# reveal_type(_ArrayLikeWrapper((1,))._array)
-# reveal_type(_ArrayLikeWrapper(((1,),))._array)
-# reveal_type(_ArrayLikeWrapper((((1,),),))._array)
-# reveal_type(_ArrayLikeWrapper(((((1,),),),))._array)
-#
-# reveal_type(_ArrayLikeWrapper(((1,),))._get_array())
