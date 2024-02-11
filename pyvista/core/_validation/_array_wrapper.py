@@ -173,13 +173,14 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         E.g. Pass a wrapped array where an array-like object is expected:
 
         >>> import numpy as np
-        >>> from pyvista.core.validation._array_wrapper import (
+        >>> from pyvista.core._validation._array_wrapper import (
         ...     _ArrayLikeWrapper,
         ... )
         >>> from pyvista import _validation
         >>> wrapped = _ArrayLikeWrapper(np.array([1, 2, 3]))
 
-        # Call the wrapped arary with `()` instead of passing it directly
+        Pass the object to functions with `()` instead of passing it
+        directly as a variable, e.g.:
 
         >>> _validation.check_real(wrapped())
 
