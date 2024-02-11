@@ -1,15 +1,7 @@
-import vtk
-
 import pyvista as pv
 from pyvista import examples
 
-# mesh = examples.download_can_crushed_vtu()
-filename = examples.download_can_crushed_vtu(load=False)
-# mesh = pv.read(filename)
-reader = vtk.vtkXMLUnstructuredGridReader()
-reader.SetFileName(filename)
-reader.Update()
-mesh = pv.wrap(reader.GetOutput())
+mesh = examples.download_can_crushed_vtu()
 cqual = mesh.compute_boundary_mesh_quality()
 
 plotter = pv.Plotter(shape=(2, 2))
