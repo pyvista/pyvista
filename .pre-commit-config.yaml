@@ -90,12 +90,11 @@ repos:
         args: [--branch, main]
       - id: requirements-txt-fixer
       - id: trailing-whitespace
-        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv|Data/.*\.vtu)
+        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
       - id: check-docstring-first
       - id: end-of-file-fixer
-        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv|Data/.*\.vtu)
+        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
       - id: mixed-line-ending
-        exclude: ^(Data/.*\.vtu)
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
