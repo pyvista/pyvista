@@ -1,15 +1,23 @@
+import vtk
+
 import pyvista as pv
 from pyvista import examples
 
-mesh = examples.download_can_crushed_vtu()
+# mesh = examples.download_can_crushed_vtu()
+filename = examples.download_can_crushed_vtu(load=False)
+# mesh = pv.read(filename)
+reader = vtk.vtkXMLUnstructuredGridReader()
+reader.SetFileName(filename)
+reader.Update()
+mesh = pv.wrap(reader.GetOutput())
 cqual = mesh.compute_boundary_mesh_quality()
 
 plotter = pv.Plotter(shape=(2, 2))
-plotter.add_mesh(mesh)
+plotter.add_mesh(mesh, show_edges=True)
 plotter.subplot(1, 0)
-plotter.add_mesh(cqual.copy(), scalars="DistanceFromCellCenterToFaceCenter")
+plotter.add_mesh(cqual, scalars="DistanceFromCellCenterToFaceCenter")
 plotter.subplot(0, 1)
-plotter.add_mesh(cqual.copy(), scalars="DistanceFromCellCenterToFacePlane")
+plotter.add_mesh(cqual, scalars="DistanceFromCellCenterToFacePlane")
 plotter.subplot(1, 1)
-plotter.add_mesh(cqual.copy(), scalars="AngleFaceNormalAndCellCenterToFaceCenterVector")
+plotter.add_mesh(cqual, scalars="AngleFaceNormalAndCellCenterToFaceCenterVector")
 plotter.show()
