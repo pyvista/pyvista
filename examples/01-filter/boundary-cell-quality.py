@@ -1,6 +1,7 @@
 import pyvista as pv
+from pyvista import examples
 
-mesh = pv.read("Data/can.vtu")
+mesh = examples.download_can_crushed_vtu()
 cqual = mesh.compute_boundary_mesh_quality()
 
 plotter = pv.Plotter(shape=(2, 2))
