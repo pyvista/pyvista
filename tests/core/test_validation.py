@@ -11,7 +11,6 @@ import numpy as np
 import pytest
 from vtk import vtkTransform
 
-import pyvista
 from pyvista.core import pyvista_ndarray
 from pyvista.core._validation import (
     check_contains,
@@ -1310,23 +1309,22 @@ def test_array_wrapper_ragged_array(ragged_array):
         _ArrayLikeWrapper(ragged_array)
 
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(pyvista.__file__))
-MYPY_CONFIG_FILE = PROJECT_ROOT + '/pyproject.toml'
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 REVEAL_TYPE_CODE_FILE = PROJECT_ROOT + '/tests/core/test_validation_reveal_type.txt'
 
 
 def reveal_type_from_code(code_snippet):
-    # Call `mypy filename` using the project config file
-    # current directory must be set to project root before calling
+    # Call `mypy -c CODE` from the project root dir
+    # This ensures the config is loaded and imports are found
     # NOTE: running mypy can be slow, avoid making excessive calls
     cur = os.getcwd()
     try:
         os.chdir(PROJECT_ROOT)
 
-        result = mypy_api.run(['--config-file', MYPY_CONFIG_FILE, '-c', code_snippet])
+        result = mypy_api.run(['-c', code_snippet])
         assert 'usage: mypy' not in result[1]
         assert 'Cannot find implementation' not in result[0]
-        stdout = str(result[0])
+        stdout = str(result[0]).replace('Tuple', 'tuple')
         match = findall(r'note: Revealed type is "([^"]+)"', stdout)
         assert match is not None
         return match
