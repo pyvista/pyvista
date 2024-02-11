@@ -196,14 +196,10 @@ def validate_array(
     type for the cases below. Otherwise, the returned array is a
     NumPy array.
 
-    * Scalars: ``T`` -> ``T``
-    * NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
-    * Sequences:
-
-        * ``tuple[T]`` -> ``tuple[T]``
-        * ``list[T]`` -> ``list[T]``
-        * ``tuple[tuple[[T]]`` -> ``tuple[tuple[T]]``
-        * ``list[list[[T]]`` -> ``list[list[T]]``
+    - Scalars: ``T`` -> ``T``
+    - NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
+    - Sequences: ``Sequence[T]`` -> ``Sequence[T]``
+    - Nested sequences: ``Sequence[Sequence[[T]]`` -> ``Sequence[Sequence[T]]``
 
     Array validation is performed without copying its data wherever
     possible.

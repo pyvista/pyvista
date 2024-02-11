@@ -21,7 +21,7 @@ def _is_NumberSequence(array: _ArrayLikeOrScalar[_NumberType], N=None) -> bool:
     return isinstance(array, (tuple, list)) and _has_element_types(array, (float, int), N=N)
 
 
-def _is_NestedSequence(array: _ArrayLikeOrScalar[_NumberType], N=None) -> bool:
+def _is_NestedNumberSequence(array: _ArrayLikeOrScalar[_NumberType], N=None) -> bool:
     if (
         isinstance(array, (tuple, list))
         and len(array) > 0

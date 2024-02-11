@@ -26,7 +26,7 @@ import numpy as np
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
 from pyvista.core._typing_core._type_guards import (
-    _is_NestedSequence,
+    _is_NestedNumberSequence,
     _is_Number,
     _is_NumberSequence,
 )
@@ -99,7 +99,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
                 wrapped2.__setattr__('_array', _array)
                 wrapped2.__setattr__('_dtype', None)
                 return wrapped2
-            elif _is_NestedSequence(_array):
+            elif _is_NestedNumberSequence(_array):
                 wrapped3 = object.__new__(_NestedSequenceWrapper)
                 wrapped3.__setattr__('_array', _array)
                 wrapped3.__setattr__('_dtype', None)
