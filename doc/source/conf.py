@@ -84,7 +84,7 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
-    "sphinx_toolbox.more_autodoc.overload",
+    "sphinx_toolbox.more_autodoc.overloads",
 ]
 
 # Configuration of pyvista.ext.coverage
