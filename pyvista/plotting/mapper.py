@@ -384,6 +384,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     """
 
+    color_mode = _BaseMapper.color_mode
+
     _cmap = None
 
     def __init__(
@@ -392,7 +394,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         theme: Optional['pyvista.themes.Theme'] = None,
     ):
         """Initialize this class."""
-        super().__init__(theme=theme)
+        _BaseMapper.__init__(self, theme=theme)
         if dataset is not None:
             self.dataset = dataset
 
@@ -1072,25 +1074,25 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
-    pass
+    blend_mode = _BaseVolumeMapper.blend_mode
 
 
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
-    pass
+    blend_mode = _BaseVolumeMapper.blend_mode
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
-    pass
+    blend_mode = _BaseVolumeMapper.blend_mode
 
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
-    pass
+    blend_mode = _BaseVolumeMapper.blend_mode
 
 
 class UnstructuredGridVolumeRayCastMapper(
@@ -1098,4 +1100,4 @@ class UnstructuredGridVolumeRayCastMapper(
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
 
-    pass
+    blend_mode = _BaseVolumeMapper.blend_mode

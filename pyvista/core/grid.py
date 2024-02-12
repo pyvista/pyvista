@@ -128,13 +128,17 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     """
 
+    point_data = Grid.point_data
+    cell_data = Grid.cell_data
+    field_data = Grid.field_data
+
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
     def __init__(
         self, *args, check_duplicates=False, deep=False, **kwargs
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
-        super().__init__()
+        Grid.__init__(self)
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkRectilinearGrid):
@@ -523,6 +527,10 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
     """
 
+    point_data = Grid.point_data
+    cell_data = Grid.cell_data
+    field_data = Grid.field_data
+
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(
@@ -536,7 +544,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         **kwargs,
     ):
         """Initialize the uniform grid."""
-        super().__init__()
+        Grid.__init__(self)
 
         # permit old behavior
         if isinstance(uinput, Sequence) and not isinstance(uinput, str):

@@ -270,6 +270,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     """
 
+    points = _PointSet.points
+    point_data = _PointSet.point_data
+    cell_data = _PointSet.cell_data
+    field_data = _PointSet.field_data
+
     def __new__(cls, *args, **kwargs):
         """Construct a new PointSet object.
 
@@ -286,7 +291,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     def __init__(self, var_inp=None, deep=False, force_float=True):
         """Initialize the pointset."""
-        super().__init__()
+        _PointSet.__init__(self)
 
         if var_inp is None:
             return
@@ -676,6 +681,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     """
 
+    # Override the properties that come from VTK with pyvista
+    # ones.
+    points = _PointSet.points
+    point_data = _PointSet.point_data
+    cell_data = _PointSet.cell_data
+    field_data = _PointSet.field_data
+
     _USE_STRICT_N_FACES = False
     _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
@@ -703,7 +715,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
-        super().__init__()
+        _PointSet.__init__(self)
 
         # allow empty input
         if var_inp is None:
@@ -1721,11 +1733,16 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     """
 
+    points = PointGrid.points
+    point_data = PointGrid.point_data
+    cell_data = PointGrid.cell_data
+    field_data = PointGrid.field_data
+
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
     def __init__(self, *args, deep=False, **kwargs) -> None:
         """Initialize the unstructured grid."""
-        super().__init__()
+        PointGrid.__init__(self)
 
         if not len(args):
             return
@@ -2328,11 +2345,16 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     """
 
+    points = PointGrid.points
+    point_data = PointGrid.point_data
+    cell_data = PointGrid.cell_data
+    field_data = PointGrid.field_data
+
     _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
         """Initialize the structured grid."""
-        super().__init__()
+        PointGrid.__init__(self)
 
         if args:
             raise ValueError("Too many args to create StructuredGrid.")
@@ -2666,11 +2688,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     """
 
+    point_data = PointGrid.point_data
+    cell_data = PointGrid.cell_data
+    field_data = PointGrid.field_data
+    points = PointGrid.points
+
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
     def __init__(self, *args, deep: bool = False, **kwargs):
         """Initialize the explicit structured grid."""
-        super().__init__()
+        PointGrid.__init__(self)
         n = len(args)
         if n > 2:
             raise ValueError("Too many args to create ExplicitStructuredGrid.")
