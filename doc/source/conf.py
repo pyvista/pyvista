@@ -84,6 +84,7 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
+    "sphinx_toolbox.more_autodoc.overloads",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -173,6 +174,12 @@ coverage_ignore_modules = [
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLike"}
 
+# Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
+overloads_location = ["bottom"]
+
+# Display long function signatures with each param on a new line.
+# Helps make annotated signatures more readable.
+maximum_signature_line_length = 88
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True
