@@ -71,8 +71,8 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
             - flat numeric sequences
             - nested numeric sequences
 
-        The above types are also given `shape`, `dtype`, and `ndim`,
-        size, and other generic array attributes.
+        The above types are also given `shape`, `dtype`, `ndim`,
+        `size`, and other generic array attributes.
 
         All other array-like inputs (e.g. nested numeric sequences with
         depth > 2, nested sequences of numpy arrays) are cast as a numpy
@@ -147,7 +147,7 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         """Return self if called.
 
         This method is used for statically mapping the wrapper type
-        to its internal array type: Type[wrapper[T]] -> Type[array[T]].
+        to its internal array type: wrapper[T] -> array[T].
         This effectively makes wrapped objects look like array objects
         so that mypy won't complain that a wrapped object is used where
         an array is expected.
@@ -186,9 +186,12 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
     def as_iterable(self) -> Iterable[_NumberType]:
         return self._array.flatten()
 
-    def to_list(
-        self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
-    ) -> List[_NumberType]:
+    def to_list(self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool) -> Union[
+        List[_NumberType],
+        List[List[_NumberType]],
+        List[List[List[_NumberType]]],
+        List[List[List[List[_NumberType]]]],
+    ]:
         return self._array.tolist()
 
     def to_tuple(self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool):

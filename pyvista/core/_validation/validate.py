@@ -248,7 +248,7 @@ def validate_array(
         can have any shape (default).
 
     must_have_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike], optional
-        :func:`Check <pyvista.core._validation.check.check__subdtype>`
+        :func:`Check <pyvista.core._validation.check.check_subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`numpy.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a sequence, the array's data
@@ -396,7 +396,7 @@ def validate_array(
         Control the return type of the array. The array may be copied,
         but only if necessary. Must be one of:
 
-        * ``"numpy"`` or ``np.ndarray"
+        * ``"numpy"`` or ``np.ndarray``
         * ``"list"`` or ``list``
         * ``"tuple"`` or ``tuple``
 
