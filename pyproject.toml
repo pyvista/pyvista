@@ -327,6 +327,7 @@ extend-select = [
     "F",
     "NPY",
     "PGH004",
+    "PIE",
     "RSE",
     "RUF010",
     "RUF100",
