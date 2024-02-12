@@ -3237,6 +3237,6 @@ class _NATIVE_THEMES(Enum):
     document = DocumentTheme
     document_pro = DocumentProTheme
     dark = DarkTheme
-    default = DocumentTheme
+    default = document
     testing = _TestingTheme
     vtk = Theme
