@@ -288,12 +288,12 @@ exclude = [
     'doc/examples',
     'doc/_build',
 ]
-external = ["E131", "D102", "D105"]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
 
 [tool.ruff.lint]
+external = ["E131", "D102", "D105"]
 ignore = [
     # whitespace before ':'
     "E203",
