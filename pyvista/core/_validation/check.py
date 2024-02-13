@@ -110,7 +110,7 @@ def check_subdtype(
         return None
     else:
         # Not a subdtype, so raise error
-        msg = f"{name} has incorrect dtype of {repr(input_dtype)}. "
+        msg = f"{name} has incorrect dtype of {input_dtype!r}. "
         if len(base_dtype) == 1:
             msg += f"The dtype must be a subtype of {base_dtype[0]}."
         else:
