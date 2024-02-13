@@ -1,5 +1,6 @@
 from collections import namedtuple
 from enum import Enum, auto
+import importlib
 import itertools
 from numbers import Real
 import os
@@ -1316,6 +1317,8 @@ def reveal_type_from_code(code_snippet):
     # This ensures the config is loaded and imports are found
     # NOTE: running mypy can be slow, avoid making excessive calls
     cur = os.getcwd()
+    if importlib.util.find_spec('npt_promote') is None:
+        raise ModuleNotFoundError("Package 'npt-promote' is required for this test.")
     try:
         os.chdir(PROJECT_ROOT)
 
