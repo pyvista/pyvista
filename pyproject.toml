@@ -325,11 +325,13 @@ extend-select = [
     "B010",
     "C4",
     "F",
+    "FLY",
     "NPY",
     "PGH004",
     "PIE",
     "RSE",
     "RUF005",
+    "RUF010",
     "RUF100",
 ]
 
