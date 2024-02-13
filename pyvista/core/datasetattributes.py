@@ -158,7 +158,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
 
-                line = f'{name[:23]:<24}{str(array.dtype):<11}{str(array.shape):<20} {arr_type}'.strip()
+                line = f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
