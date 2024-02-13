@@ -1,4 +1,5 @@
 from collections import namedtuple
+from enum import Enum, auto
 import itertools
 from numbers import Real
 import os
@@ -1124,15 +1125,12 @@ ArrayLikePropsTuple = namedtuple(
 )
 
 
-from enum import Enum
-
-
 class arraylike_types(Enum):
-    Number = 0
-    NumpyArraySequence = 1
-    NumberSequence1D = 2
-    NumberSequence2D = 2 # noqa: PIE796
-    NumpyArray = 3
+    Number = auto()
+    NumpyArraySequence = auto()
+    NumberSequence1D = auto()
+    NumberSequence2D = auto()
+    NumpyArray = auto()
 
 
 @pytest.mark.parametrize('arraylike_type', arraylike_types)
