@@ -1901,8 +1901,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif face.lower() in '-y':
             center[1] = self.bounds[2] - (ranges[1] * offset)
             normal = (0, 1, 0)
-            i_size = ranges[0]
-            j_size = ranges[2]
+            i_size = ranges[2]
+            j_size = ranges[0]
         elif face.lower() in '-x':
             center[0] = self.bounds[0] - (ranges[0] * offset)
             normal = (1, 0, 0)
@@ -1916,8 +1916,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif face.lower() in '+y':
             center[1] = self.bounds[3] + (ranges[1] * offset)
             normal = (0, -1, 0)
-            i_size = ranges[0]
-            j_size = ranges[2]
+            i_size = ranges[2]
+            j_size = ranges[0]
         elif face.lower() in '+x':
             center[0] = self.bounds[1] + (ranges[0] * offset)
             normal = (-1, 0, 0)

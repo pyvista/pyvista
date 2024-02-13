@@ -126,7 +126,7 @@ def Cylinder(
         resolution=resolution,
     )
     output = wrap(algo.output)
-    output.rotate_z(-90, inplace=True)
+    output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
 
@@ -219,19 +219,27 @@ def CylinderStructured(
     grid.points = np.c_[xx, yy, zz]
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
-    # Orient properly in user direction
-    vx = np.array([0.0, 0.0, 1.0])
-    if not np.allclose(vx, direction):
-        direction /= np.linalg.norm(direction)
-        vx -= vx.dot(direction) * direction
-        vx /= np.linalg.norm(vx)
-        vy = np.cross(direction, vx)
-        rmtx = np.array([vx, vy, direction])
-        grid.points = grid.points.dot(rmtx)
+    # # Orient properly in user direction
+    # vx = np.array([0.0, 0.0, 1.0])
+    # if not np.allclose(vx, direction):
+    #     direction /= np.linalg.norm(direction)
+    #     vx -= vx.dot(direction) * direction
+    #     vx /= np.linalg.norm(vx)
+    #     vy = np.cross(direction, vx)
+    #     rmtx = np.array([vx, vy, direction])
+    #     grid.points = grid.points.dot(rmtx)
 
-    # Translate to given center
+    # Center at origin
     grid.points -= np.array(grid.center)
-    grid.points += np.array(center)
+
+    # rotate initially to face +X direction
+    grid.rotate_y(90, inplace=True)
+
+    # rotate points 180 for compatibility with previous versions
+    grid.rotate_x(180, inplace=True)
+
+    # move to final position
+    translate(grid, center=center, direction=direction)
     return grid
 
 
@@ -936,23 +944,6 @@ def Plane(
     j_resolution=10,
 ):
     """Create a plane.
-
-    .. warning::
-
-        :func:`~pyvista.Plane` is known to have an incorrect orientation
-        when ``direction`` is exactly parallel to the y-axis, i.e.
-        ``direction=(0, 1, 0)`` or `direction=(0, -1, 0)``. This behavior is
-        maintained for compatibility with older versions, see
-        `pyvista/#5405 <https://github.com/pyvista/pyvista/issues/5405>`_.
-
-        To obtain the correct orientation for these special cases, it's necessary
-        to rotate the plane an additional 90 degrees along its normal axis after
-        instantiation, e.g.
-
-        .. code-block:: python
-
-            mesh = pv.Plane(direction=(0, 1, 0))
-            mesh.rotate_y(90, inplace=True)
 
     Parameters
     ----------
