@@ -91,8 +91,6 @@ def test_wrappers():
     class Foo(pv.PolyData):
         """A user defined subclass of pv.PolyData."""
 
-        pass
-
     default_wrappers = pv._wrappers.copy()
     # Use try...finally to set and reset _wrappers
     try:
