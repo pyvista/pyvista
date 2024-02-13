@@ -193,7 +193,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:   0
 
         """
-        cells = [len(self.point_ids)] + list(range(len(self.point_ids)))
+        cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
         if self.dimension == 0:
             return pyvista.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
@@ -238,7 +238,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
                 cell_ids.extend(self.point_ids.index(i) for i in face.point_ids)
             cell_ids.insert(0, len(cell_ids))
         else:
-            cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
+            cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
         return pyvista.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
