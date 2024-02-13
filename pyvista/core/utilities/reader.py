@@ -208,7 +208,6 @@ class BaseVTKReader(ABC):
 
     def UpdateInformation(self):
         """Update Information from file."""
-        pass
 
     def AddObserver(self, event_type, callback):
         """Add Observer that can be triggered during Update."""
@@ -396,11 +395,9 @@ class BaseReader:
 
     def _set_defaults(self):
         """Set defaults on reader, if needed."""
-        pass
 
     def _set_defaults_post(self):
         """Set defaults on reader post setting file, if needed."""
-        pass
 
 
 class PointCellDataSelection:
@@ -885,7 +882,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(0, number_time_sets)}")
+            raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
