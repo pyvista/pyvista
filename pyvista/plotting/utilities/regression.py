@@ -1,9 +1,11 @@
 """Image regression module."""
+
 from typing import Optional, cast
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -66,7 +68,7 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> np.ndarray:
+def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]:
     """Run a ``vtkWindowToImageFilter`` and get output as array.
 
     Parameters

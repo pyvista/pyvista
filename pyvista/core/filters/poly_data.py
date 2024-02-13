@@ -1,4 +1,5 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
+
 import collections.abc
 import warnings
 
@@ -410,7 +411,7 @@ class PolyDataFilters(DataSetFilters):
         merged = _get_output(append_filter)
 
         if inplace:
-            self.deep_copy(merged)  # type: ignore
+            self.deep_copy(merged)
             return self
 
         return merged

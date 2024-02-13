@@ -1,4 +1,5 @@
 """Contains the pyvista.Text class."""
+
 from __future__ import annotations
 
 import os
@@ -591,7 +592,7 @@ class TextProperty(_vtk.vtkTextProperty):
             If text is italic.
 
         """
-        return self.GetItalic()
+        return bool(self.GetItalic())
 
     @italic.setter
     def italic(self, italic: bool):  # numpydoc ignore=GL08
@@ -607,7 +608,7 @@ class TextProperty(_vtk.vtkTextProperty):
             If text is bold.
 
         """
-        return self.GetBold()
+        return bool(self.GetBold())
 
     @bold.setter
     def bold(self, bold: bool):  # numpydoc ignore=GL08

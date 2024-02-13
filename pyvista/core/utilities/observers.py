@@ -1,4 +1,5 @@
 """Core error utilities."""
+
 import collections
 import logging
 import os
@@ -135,7 +136,7 @@ class Observer:
         except Exception:  # pragma: no cover
             try:
                 if len(message) > 120:
-                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
+                    message = f'{message[:100]!r} ... ({len(message)} characters)'
                 else:
                     message = repr(message)
                 print(

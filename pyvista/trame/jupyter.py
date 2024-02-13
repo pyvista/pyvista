@@ -1,4 +1,5 @@
 """Trame utilities for running in Jupyter."""
+
 import asyncio
 import logging
 import os
@@ -88,7 +89,7 @@ class Widget(HTML):  # numpydoc ignore=PR01
             "style": f"width: {width}; height: {height}; {border}",
         }
 
-        iframe_attrs_str = " ".join(f'{key}="{str(value)}"' for key, value in iframe_attrs.items())
+        iframe_attrs_str = " ".join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
 
         value = f'<iframe {iframe_attrs_str}></iframe>'
 
