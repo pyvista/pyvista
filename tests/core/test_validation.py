@@ -1131,7 +1131,7 @@ class arraylike_types(Enum):
     Number = 0
     NumpyArraySequence = 1
     NumberSequence1D = 2
-    NumberSequence2D = 2
+    NumberSequence2D = 2 # noqa: PIE796
     NumpyArray = 3
 
 
