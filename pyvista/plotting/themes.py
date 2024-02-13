@@ -35,7 +35,7 @@ from itertools import chain
 import json
 import os
 import pathlib
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 import warnings
 
 import pyvista
@@ -164,7 +164,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 setattr(inst, key, value)
         return inst
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Return theme config parameters as a dictionary.
 
         Returns
@@ -3237,6 +3237,6 @@ class _NATIVE_THEMES(Enum):
     document = DocumentTheme
     document_pro = DocumentProTheme
     dark = DarkTheme
-    default = DocumentTheme
+    default = document
     testing = _TestingTheme
     vtk = Theme

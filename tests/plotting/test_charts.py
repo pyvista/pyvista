@@ -21,7 +21,6 @@ skip_mac = pytest.mark.skipif(
 @pytest.fixture(autouse=True)
 def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
-    pass
 
 
 # skip all tests if VTK<9.2.0

@@ -4,6 +4,7 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+
 import os
 
 import numpy as np

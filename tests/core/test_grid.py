@@ -252,7 +252,7 @@ def test_init_polyhedron():
     nodes = np.array(polyhedron_nodes)
 
     polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
-    cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
+    cells = np.array([len(polyhedron_connectivity), *polyhedron_connectivity])
     cell_type = np.array([pv.CellType.POLYHEDRON])
     grid = pv.UnstructuredGrid(cells, cell_type, nodes)
 

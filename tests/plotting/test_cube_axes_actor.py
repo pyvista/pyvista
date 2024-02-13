@@ -1,4 +1,5 @@
 """Test the CubeAxesActor wrapping."""
+
 import numpy as np
 import pytest
 
@@ -8,7 +9,6 @@ import pyvista as pv
 @pytest.fixture(autouse=True)
 def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
-    pass
 
 
 @pytest.fixture

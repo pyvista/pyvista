@@ -159,6 +159,10 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+disallow_any_generics = true
+pretty = true
+show_error_context = true
+warn_unused_ignores = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
 
 [tool.numpydoc_validation]
@@ -283,12 +287,12 @@ exclude = [
     'doc/examples',
     'doc/_build',
 ]
-external = ["E131", "D102", "D105"]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
 
 [tool.ruff.lint]
+external = ["E131", "D102", "D105"]
 ignore = [
     # whitespace before ':'
     "E203",
@@ -321,9 +325,13 @@ extend-select = [
     "B010",
     "C4",
     "F",
+    "FLY",
     "NPY",
     "PGH004",
+    "PIE",
     "RSE",
+    "RUF005",
+    "RUF010",
     "RUF100",
 ]
 
