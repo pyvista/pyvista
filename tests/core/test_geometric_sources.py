@@ -78,10 +78,11 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
 
 
 def test_translate_precision():
+    """
+    Test that specifying a 64bit float as an arg, will not
+    introduce precision error for 32bit meshes.
+    """
     val = np.float64(29380 / 18)
-
-    # test that specifying a 64bit float as an arg, will not
-    # introduce precision error for 32bit meshes
 
     # test indirectly using Plane, which will yield a float32 mesh
     mesh = pv.Plane(center=[0, val / 2, 0], j_size=val, i_resolution=1, j_resolution=1)
