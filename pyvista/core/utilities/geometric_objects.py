@@ -219,27 +219,19 @@ def CylinderStructured(
     grid.points = np.c_[xx, yy, zz]
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
-    # # Orient properly in user direction
-    # vx = np.array([0.0, 0.0, 1.0])
-    # if not np.allclose(vx, direction):
-    #     direction /= np.linalg.norm(direction)
-    #     vx -= vx.dot(direction) * direction
-    #     vx /= np.linalg.norm(vx)
-    #     vy = np.cross(direction, vx)
-    #     rmtx = np.array([vx, vy, direction])
-    #     grid.points = grid.points.dot(rmtx)
+    # Orient properly in user direction
+    vx = np.array([0.0, 0.0, 1.0])
+    if not np.allclose(vx, direction):
+        direction /= np.linalg.norm(direction)
+        vx -= vx.dot(direction) * direction
+        vx /= np.linalg.norm(vx)
+        vy = np.cross(direction, vx)
+        rmtx = np.array([vx, vy, direction])
+        grid.points = grid.points.dot(rmtx)
 
-    # Center at origin
+    # Translate to given center
     grid.points -= np.array(grid.center)
-
-    # rotate initially to face +X direction
-    grid.rotate_y(90, inplace=True)
-
-    # rotate points 180 for compatibility with previous versions
-    grid.rotate_x(180, inplace=True)
-
-    # move to final position
-    translate(grid, center=center, direction=direction)
+    grid.points += np.array(center)
     return grid
 
 
