@@ -170,7 +170,6 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         >>> _validation.check_real(wrapped())
 
         """
-        pass
 
 
 class _NumpyArrayWrapper(_ArrayLikeWrapper[_NumberType]):
