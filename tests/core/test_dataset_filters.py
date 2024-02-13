@@ -1282,7 +1282,7 @@ def test_connectivity_specified(foot_bones):
     assert conn.n_cells == foot_bones.n_cells
 
     # test irrelevant region IDs
-    test_regions = all_regions + [77, 99]
+    test_regions = [*all_regions, 77, 99]
     conn = foot_bones.connectivity('specified', test_regions)
     assert conn.n_cells == foot_bones.n_cells
 
