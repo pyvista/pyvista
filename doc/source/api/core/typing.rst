@@ -4,7 +4,7 @@ Typing
 Type alias and type variable definitions used by PyVista.
 
 
-Numeric Array-like Types
+Numeric Array-Like Types
 ------------------------
 
 .. autotypevar:: pyvista.core._typing_core.NumberType
@@ -16,7 +16,7 @@ Numeric Array-like Types
 .. autoclass:: pyvista.core._typing_core.Matrix
 
 
-VTK-related Types
+VTK Related Types
 -----------------
 
 .. autoclass:: pyvista.core._typing_core.BoundsLike
