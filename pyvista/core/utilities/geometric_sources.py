@@ -1957,9 +1957,94 @@ class PlaneSource(_vtk.vtkPlaneSource):
 
 
 @no_new_attr
-class BoxSource:
+class BoxSource(_vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
 
+    Parameters
+    ----------
+    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounding box of the cube.
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    level : int, default: 0
+        Level of subdivision of the faces.
+
+    quads : bool, default: True
+        Flag to tell the source to generate either a quad or two
+        triangle for a set of four points.
+
     """
+
+    _new_attr_exceptions = [
+        "bounds",
+        "_bounds",
+    ]
+
+    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
+        """Initialize source."""
+        super().__init__()
+        self.bounds = bounds
+        self.level = level
+        self.quads = quads
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounding box of the cube."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        if np.array(bounds).size != 6:
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
+        self._bounds = bounds
+        self.SetBounds(bounds)
+
+    @property
+    def level(self) -> int:
+        """Get level of subdivision of the faces.
+
+        Returns
+        -------
+        int
+            Level of subdivision of the faces.
+        """
+        return self.GetLevel()
+
+    @level.setter
+    def level(self, level: int):
+        """Set level of subdivision of the faces.
+
+        Parameters
+        ----------
+        level : int
+            Level of subdivision of the faces.
+        """
+        self.SetLevel(level)
+
+    @property
+    def quads(self) -> bool:
+        """Flag to tell the source to generate either a quad or two triangle for a set of four points.
+
+        Returns
+        -------
+        bool
+            Flag to tell the source to generate either a quad or two
+            triangle for a set of four points.
+        """
+        return bool(self.GetQuads())
+
+    @quads.setter
+    def quads(self, quads: bool):
+        """Set flag to tell the source to generate either a quad or two triangle for a set of four points.
+
+        Parameters
+        ----------
+        quads : bool, optional
+            Flag to tell the source to generate either a quad or two
+            triangle for a set of four points.
+        """
+        self.SetQuads(quads)

@@ -364,4 +364,7 @@ def test_plane_source():
 
 
 def test_box_source():
-    _ = pv.BoxSource()
+    algo = pv.BoxSource()
+    assert np.array_equal(algo.bounds, [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0])
+    assert algo.level == 0
+    assert algo.quads
