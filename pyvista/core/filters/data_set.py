@@ -1,4 +1,5 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
+
 import collections.abc
 from typing import Literal, Optional, Sequence, Union
 import warnings
@@ -7,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,
@@ -2710,7 +2712,8 @@ class DataSetFilters:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
-            [alg.AddSeed(i) for i in _unravel_and_validate_ids(cell_ids)]
+            for i in _unravel_and_validate_ids(cell_ids):
+                alg.AddSeed(i)
 
         elif extraction_mode == 'point_seed':
             if point_ids is None:
@@ -2722,7 +2725,8 @@ class DataSetFilters:
                     point_ids = variable_input
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
-            [alg.AddSeed(i) for i in _unravel_and_validate_ids(point_ids)]
+            for i in _unravel_and_validate_ids(point_ids):
+                alg.AddSeed(i)
 
         elif extraction_mode == 'closest':
             if closest_point is None:
@@ -5746,7 +5750,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
+        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, NumpyArray[float]],
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -5922,7 +5926,7 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if isinstance(self, pyvista.Grid):
-            output = pyvista.StructuredGrid()
+            output: _vtk.vtkDataSet = pyvista.StructuredGrid()
         else:
             output = self.__class__()
         output.copy_from(res, deep=True)

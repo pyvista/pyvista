@@ -42,10 +42,10 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict = collections.defaultdict(set)
+        self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
-        self._association_complex_names: DefaultDict = collections.defaultdict(set)
+        self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -88,7 +88,6 @@ class DataObject:
 
     def _post_file_load_processing(self):
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
-        pass
 
     def save(
         self,
@@ -290,7 +289,7 @@ class DataObject:
             Keyword arguments.
 
         """
-        pass  # called only by the inherited class
+        # called only by the inherited class
 
     def copy(self, deep=True):
         """Return a copy of the object.
@@ -360,7 +359,7 @@ class DataObject:
 
         return True
 
-    def add_field_data(self, array: np.ndarray, name: str, deep: bool = True):
+    def add_field_data(self, array: NumpyArray[float], name: str, deep: bool = True):
         """Add field data.
 
         Use field data when size of the data you wish to associate

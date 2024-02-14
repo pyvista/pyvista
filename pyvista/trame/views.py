@@ -1,4 +1,5 @@
 """Trame view interface for PyVista."""
+
 import io
 import weakref
 
@@ -142,9 +143,8 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         )
         self._post_initialize()
 
-    def push_camera(self, *args, **kwargs):
+    def push_camera(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match local viewers."""
-        pass  # pragma: no cover
 
     def update_image(self, *args, **kwargs):
         """Wrap update call."""
@@ -192,9 +192,8 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
             [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
         )
 
-    def update_image(self, *args, **kwargs):
+    def update_image(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match remote viewers."""
-        pass  # pragma: no cover
 
 
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):

@@ -7,6 +7,7 @@ Decimation
 Decimate a mesh
 
 """
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
