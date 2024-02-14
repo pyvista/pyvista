@@ -364,4 +364,9 @@ def test_plane_source():
 
 
 def test_arrow_source():
-    _ = pv.ArrowSource()
+    algo = pv.ArrowSource()
+    assert algo.tip_length == 0.25
+    assert algo.tip_radius == 0.1
+    assert algo.tip_resolution == 20
+    assert algo.shaft_radius == 0.05
+    assert algo.shaft_resolution == 20
