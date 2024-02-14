@@ -2048,3 +2048,15 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
             triangle for a set of four points.
         """
         self.SetQuads(quads)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
