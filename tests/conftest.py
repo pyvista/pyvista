@@ -98,6 +98,11 @@ def spline():
 
 
 @fixture()
+def random_hills():
+    return examples.load_random_hills()
+
+
+@fixture()
 def tri_cylinder():
     """Triangulated cylinder"""
     return pyvista.Cylinder().triangulate()
