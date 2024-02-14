@@ -2224,8 +2224,8 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
-def test_compute_derivatives():
-    mesh = examples.load_random_hills()
+def test_compute_derivatives(random_hills):
+    mesh = random_hills
     vector = np.zeros((mesh.n_points, 3))
     vector[:, 1] = np.ones(mesh.n_points)
     mesh['vector'] = vector
