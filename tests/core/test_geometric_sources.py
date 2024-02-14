@@ -77,6 +77,26 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 2], points_out[:, 2])
 
 
+def test_translate_precision():
+    """
+    Test that specifying a 64bit float as an arg, will not
+    introduce precision error for 32bit meshes.
+    """
+    val = np.float64(29380 / 18)
+
+    # test indirectly using Plane, which will yield a float32 mesh
+    mesh = pv.Plane(center=[0, val / 2, 0], j_size=val, i_resolution=1, j_resolution=1)
+    assert mesh.points.dtype == np.float32
+
+    expected = np.array(
+        [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0], [-0.5, 1632.2222, 0.0], [0.5, 1632.2222, 0.0]],
+        dtype=np.float32,
+    )
+
+    # DO NOT USE np.all_close. This should match exactly
+    assert np.array_equal(mesh.points, expected)
+
+
 def test_text3d_source_empty_string():
     # Test empty string is processed to have a single point
     src = pv.Text3DSource(process_empty_string=True)
