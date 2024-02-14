@@ -85,6 +85,7 @@ extensions = [
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
     "sphinx_toolbox.more_autodoc.overloads",
+    "sphinx_toolbox.more_autodoc.typevars",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -172,7 +173,17 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLike"}
+autodoc_type_aliases = {
+    "Chart": "pyvista.Chart",
+    "ColorLike": "pyvista.ColorLike",
+    "Array": "pyvista.core._typing_core.Array",
+    "Vector": "pyvista.core._typing_core.Vector",
+    "Matrix": "pyvista.core._typing_core.Matrix",
+    "BoundsLike": "pyvista.core._typing_core.BoundsLike",
+    "CellsLike": "pyvista.core._typing_core.CellsLike",
+    "CellArrayLike": "pyvista.core._typing_core.CellArrayLike",
+    "TransformLike": "pyvista.core._typing_core.TransformLike",
+}
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ["bottom"]
