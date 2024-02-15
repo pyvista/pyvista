@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 import pathlib
-from collections.abc import Sequence
 
 import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr

@@ -1,9 +1,9 @@
 """Module containing geometry helper functions."""
 
 import collections.abc
+from collections.abc import Sequence
 import os
 import sys
-from collections.abc import Sequence
 
 import numpy as np
 

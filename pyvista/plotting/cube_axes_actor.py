@@ -1,6 +1,5 @@
 """Module containing the wrapping of CubeAxesActor."""
 
-
 import numpy as np
 
 import pyvista

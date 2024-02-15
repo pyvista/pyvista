@@ -17,8 +17,8 @@ import inspect
 from os import path
 import pickle
 import re
-from typing import IO, Any
 from re import Pattern
+from typing import IO, Any
 
 import sphinx
 from sphinx.application import Sphinx

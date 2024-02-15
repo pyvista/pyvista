@@ -1,13 +1,13 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 
 import collections.abc
+from collections.abc import Sequence
 from functools import wraps
 import numbers
 import os
 import pathlib
 from textwrap import dedent
 from typing import Optional, Union, cast
-from collections.abc import Sequence
 import warnings
 
 import numpy as np

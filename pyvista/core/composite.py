@@ -5,10 +5,10 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 
 import collections.abc
+from collections.abc import Iterable
 from itertools import zip_longest
 import pathlib
 from typing import Any, Optional, Union, cast, overload
-from collections.abc import Iterable
 
 import numpy as np
 

@@ -1,6 +1,5 @@
 """This module contains some convenience helper functions."""
 
-
 import numpy as np
 
 import pyvista

@@ -1,8 +1,8 @@
 """Module dedicated to widgets."""
 
+from collections.abc import Sequence
 import pathlib
 from typing import Optional, Union
-from collections.abc import Sequence
 
 import numpy as np
 

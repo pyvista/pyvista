@@ -1,7 +1,7 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from typing import TYPE_CHECKING, Any, Optional, Union
 from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any, Optional, Union
 import warnings
 
 import numpy as np

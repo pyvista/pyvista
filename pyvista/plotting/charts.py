@@ -1,11 +1,11 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
+from collections.abc import Sequence
 from functools import wraps
 import inspect
 import itertools
 import re
 from typing import Optional
-from collections.abc import Sequence
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg

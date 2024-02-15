@@ -4,17 +4,10 @@ from __future__ import annotations
 
 from collections import namedtuple
 import collections.abc
+from collections.abc import Generator, Iterable, Iterator, Sequence
 from copy import deepcopy
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Literal,
-    Optional,
-    Union,
-    cast,
-)
-from collections.abc import Generator, Iterable, Iterator, Sequence
+from typing import Any, Callable, Literal, Optional, Union, cast
 import warnings
 
 import numpy as np

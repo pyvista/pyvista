@@ -6,8 +6,8 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import Union
 from collections.abc import Sequence
+from typing import Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText

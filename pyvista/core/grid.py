@@ -1,9 +1,9 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 
+from collections.abc import Sequence
 from functools import wraps
 import pathlib
 from typing import Union
-from collections.abc import Sequence
 import warnings
 
 import numpy as np

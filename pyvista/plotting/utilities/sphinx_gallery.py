@@ -1,8 +1,8 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
+from collections.abc import Iterator
 import os
 import shutil
-from collections.abc import Iterator
 
 import pyvista
 
