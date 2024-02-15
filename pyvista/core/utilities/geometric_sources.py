@@ -58,7 +58,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
     surf.transform(trans)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center)
+        surf.points += np.array(center, dtype=surf.points.dtype)
 
 
 @no_new_attr
