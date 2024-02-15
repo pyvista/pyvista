@@ -1580,7 +1580,7 @@ class _CameraConfig(_ThemeConfig):
         >>> pv.global_theme.camera.viewup = [0.0, 0.0, 1.0]
 
         """
-        return self._position
+        return self._viewup
 
     @viewup.setter
     def viewup(self, viewup: Vector[float]):  # numpydoc ignore=GL08
