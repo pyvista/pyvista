@@ -7,7 +7,7 @@ import importlib
 import sys
 import threading
 import traceback
-from typing import Type, TypeVar, Union
+from typing import TypeVar, Union
 import warnings
 
 import numpy as np
@@ -139,7 +139,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(f"{cls.__name__} has no value matching {input_str}")
 
     @classmethod
-    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
+    def from_any(cls: type[T], value: Union[T, int, str]) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters

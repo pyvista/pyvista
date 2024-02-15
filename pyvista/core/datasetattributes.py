@@ -1,6 +1,7 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
+from collections.abc import Iterator
 import warnings
 
 import numpy as np
@@ -904,7 +905,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.remove(key)
         return narray
 
-    def items(self) -> List[Tuple[str, pyvista_ndarray]]:
+    def items(self) -> list[tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value) tuples.
 
         Returns
@@ -925,7 +926,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         return list(zip(self.keys(), self.values()))
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """Return the names of the arrays as a list.
 
         Returns
@@ -957,7 +958,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 keys.append(name)
         return keys
 
-    def values(self) -> List[pyvista_ndarray]:
+    def values(self) -> list[pyvista_ndarray]:
         """Return the arrays as a list.
 
         Returns
@@ -1000,7 +1001,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict: Union[Dict[str, NumpyArray[float]], 'DataSetAttributes']):
+    def update(self, array_dict: Union[dict[str, NumpyArray[float]], 'DataSetAttributes']):
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace

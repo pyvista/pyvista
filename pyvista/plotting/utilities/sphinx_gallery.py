@@ -2,7 +2,7 @@
 
 import os
 import shutil
-from typing import Iterator, List
+from collections.abc import Iterator
 
 import pyvista
 
@@ -76,7 +76,7 @@ def _process_events_before_scraping(plotter):
         plotter.update()
 
 
-def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> List[str]:
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:
     """Generate images from the current plotters.
 
     The file names are taken from the ``image_path_iterator`` iterator.

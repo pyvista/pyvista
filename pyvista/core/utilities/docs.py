@@ -4,10 +4,10 @@ import inspect
 import os
 import os.path as op
 import sys
-from typing import Dict, Optional
+from typing import Optional
 
 
-def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
+def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> Optional[str]:
     """Determine the URL corresponding to a Python object.
 
     Parameters

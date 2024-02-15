@@ -6,7 +6,8 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Tuple, Union
+from typing import Union
+from collections.abc import Sequence
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -722,7 +723,7 @@ class Text3DSource(vtkVectorText):
         self._process_empty_string = value
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the center of the text.
 
         The center is defined as the middle of the axis-aligned bounding box
@@ -735,7 +736,7 @@ class Text3DSource(vtkVectorText):
         self._center = float(center[0]), float(center[1]), float(center[2])
 
     @property
-    def normal(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the normal direction of the text.
 
         The normal direction is parallel to the :attr:`depth` of the text, and
@@ -1814,7 +1815,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
     def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
         super().__init__()
-        self._kinds: Dict[str, int] = {
+        self._kinds: dict[str, int] = {
             'tetrahedron': 0,
             'cube': 1,
             'octahedron': 2,

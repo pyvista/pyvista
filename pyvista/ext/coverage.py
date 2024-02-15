@@ -17,7 +17,8 @@ import inspect
 from os import path
 import pickle
 import re
-from typing import IO, Any, Dict, List, Pattern, Set, Tuple
+from typing import IO, Any
+from re import Pattern
 
 import sphinx
 from sphinx.application import Sphinx
@@ -36,7 +37,7 @@ def write_header(f: IO, text: str, char: str = '-') -> None:
     f.write(char * len(text) + '\n')
 
 
-def compile_regex_list(name: str, exps: str) -> List[Pattern]:
+def compile_regex_list(name: str, exps: str) -> list[Pattern]:
     lst = []
     for exp in exps:
         try:
@@ -69,19 +70,19 @@ class CoverageBuilder(Builder):
     )
 
     def init(self) -> None:
-        self.c_sourcefiles: List[str] = []
+        self.c_sourcefiles: list[str] = []
         for pattern in self.config.coverage_c_path:
             pattern = path.join(self.srcdir, pattern)
             self.c_sourcefiles.extend(glob.glob(pattern))
 
-        self.c_regexes: List[Tuple[str, Pattern]] = []
+        self.c_regexes: list[tuple[str, Pattern]] = []
         for name, exp in self.config.coverage_c_regexes.items():
             try:
                 self.c_regexes.append((name, re.compile(exp)))
             except Exception:
                 logger.warning(__('invalid regex %r in coverage_c_regexes'), exp)
 
-        self.c_ignorexps: Dict[str, List[Pattern]] = {}
+        self.c_ignorexps: dict[str, list[Pattern]] = {}
         for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
@@ -102,11 +103,11 @@ class CoverageBuilder(Builder):
         return 'coverage overview'
 
     def write(self, *ignored: Any) -> None:
-        self.py_undoc: Dict[str, Dict[str, Any]] = {}
+        self.py_undoc: dict[str, dict[str, Any]] = {}
         self.build_py_coverage()
         self.write_py_coverage()
 
-        self.c_undoc: Dict[str, Set[Tuple[str, str]]] = {}
+        self.c_undoc: dict[str, set[tuple[str, str]]] = {}
         self.build_c_coverage()
         self.write_c_coverage()
 
@@ -114,7 +115,7 @@ class CoverageBuilder(Builder):
         # Fetch all the info from the header files
         c_objects = self.env.domaindata['c']['objects']
         for filename in self.c_sourcefiles:
-            undoc: Set[Tuple[str, str]] = set()
+            undoc: set[tuple[str, str]] = set()
             with open(filename) as f:
                 for line in f:
                     for key, regex in self.c_regexes:
@@ -198,7 +199,7 @@ class CoverageBuilder(Builder):
                 continue
 
             funcs = []
-            classes: Dict[str, List[str]] = {}
+            classes: dict[str, list[str]] = {}
 
             for name, obj in inspect.getmembers(mod):
                 # diverse module attributes are ignored:
@@ -237,7 +238,7 @@ class CoverageBuilder(Builder):
                             classes[name] = []
                             continue
 
-                        attrs: List[str] = []
+                        attrs: list[str] = []
 
                         for attr_name in dir(obj):
                             if attr_name not in obj.__dict__:
@@ -363,7 +364,7 @@ class CoverageBuilder(Builder):
             pickle.dump((self.py_undoc, self.c_undoc), dumpfile)
 
 
-def setup(app: Sphinx) -> Dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, Any]:
     app.add_builder(CoverageBuilder)
     app.add_config_value('coverage_additional_modules', [], False)
     app.add_config_value('coverage_ignore_modules', [], False)

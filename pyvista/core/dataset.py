@@ -9,17 +9,12 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
     Literal,
     Optional,
-    Sequence,
-    Tuple,
     Union,
     cast,
 )
+from collections.abc import Generator, Iterable, Iterator, Sequence
 import warnings
 
 import numpy as np
@@ -601,7 +596,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def set_active_scalars(
         self, name: Optional[str], preference='cell'
-    ) -> Tuple[FieldAssociation, Optional[NumpyArray[float]]]:
+    ) -> tuple[FieldAssociation, Optional[NumpyArray[float]]]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -847,7 +842,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_data_range(
         self, arr_var: Optional[Union[str, NumpyArray[float]]] = None, preference='cell'
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
         Parameters
@@ -1743,7 +1738,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> List[int]:  # numpydoc ignore=RT01
+    def center(self) -> list[int]:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
@@ -1959,7 +1954,7 @@ class DataSet(DataSetFilters, DataObject):
             )
         return self.get_array(name, preference=preference)
 
-    def _ipython_key_completions_(self) -> List[str]:
+    def _ipython_key_completions_(self) -> list[str]:
         """Tab completion of IPython."""
         return self.array_names
 
@@ -2010,7 +2005,7 @@ class DataSet(DataSetFilters, DataObject):
         return n
 
     @property
-    def array_names(self) -> List[str]:  # numpydoc ignore=RT01
+    def array_names(self) -> list[str]:  # numpydoc ignore=RT01
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
@@ -2340,7 +2335,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         point: Union[Vector[float], Matrix[float]],
         return_closest_point: bool = False,
-    ) -> Union[int, NumpyArray[int], Tuple[Union[int, NumpyArray[int]], NumpyArray[int]]]:
+    ) -> Union[int, NumpyArray[int], tuple[Union[int, NumpyArray[int]], NumpyArray[int]]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -2447,8 +2442,8 @@ class DataSet(DataSetFilters, DataObject):
 
         cell = _vtk.vtkGenericCell()
 
-        closest_cells: List[int] = []
-        closest_points: List[List[float]] = []
+        closest_cells: list[int] = []
+        closest_points: list[list[float]] = []
 
         for node in point:
             closest_point = [0.0, 0.0, 0.0]
@@ -2804,7 +2799,7 @@ class DataSet(DataSetFilters, DataObject):
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
-    def cell_neighbors(self, ind: int, connections: str = "points") -> List[int]:
+    def cell_neighbors(self, ind: int, connections: str = "points") -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
         Concrete implementation of vtkDataSet's `GetCellNeighbors
@@ -2950,7 +2945,7 @@ class DataSet(DataSetFilters, DataObject):
 
         return list(neighbors)
 
-    def point_neighbors(self, ind: int) -> List[int]:
+    def point_neighbors(self, ind: int) -> list[int]:
         """Get the point neighbors of the ind-th point.
 
         Parameters
@@ -3009,7 +3004,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def point_neighbors_levels(
         self, ind: int, n_levels: int = 1
-    ) -> Generator[List[int], None, None]:
+    ) -> Generator[list[int], None, None]:
         """Get consecutive levels of point neighbors.
 
         Parameters
@@ -3084,7 +3079,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def cell_neighbors_levels(
         self, ind: int, connections: str = "points", n_levels: int = 1
-    ) -> Generator[List[int], None, None]:
+    ) -> Generator[list[int], None, None]:
         """Get consecutive levels of cell neighbors.
 
         Parameters
@@ -3184,7 +3179,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def _get_levels_neihgbors(
         self, ind: int, n_levels: int, method: Callable[[Any], Any]
-    ) -> Generator[List[int], None, None]:  # numpydoc ignore=PR01,RT01
+    ) -> Generator[list[int], None, None]:  # numpydoc ignore=PR01,RT01
         """Provide helper method that yields neighbors ids."""
         neighbors = set(method(ind))
         yield list(neighbors)
@@ -3205,7 +3200,7 @@ class DataSet(DataSetFilters, DataObject):
             yield list(neighbors.difference(all_visited))
             all_visited.update(neighbors)
 
-    def point_cell_ids(self, ind: int) -> List[int]:
+    def point_cell_ids(self, ind: int) -> list[int]:
         """Get the cell IDs that use the ind-th point.
 
         Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.

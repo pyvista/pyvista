@@ -35,7 +35,7 @@ from itertools import chain
 import json
 import os
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 import warnings
 
 import pyvista
@@ -150,7 +150,7 @@ class _ForceSlots(type):
 class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
-    __slots__: List[str] = []
+    __slots__: list[str] = []
 
     @classmethod
     def from_dict(cls, dict_):
@@ -164,7 +164,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 setattr(inst, key, value)
         return inst
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return theme config parameters as a dictionary.
 
         Returns
@@ -2071,7 +2071,7 @@ class Theme(_ThemeConfig):
         self._notebook = value
 
     @property
-    def window_size(self) -> List[int]:  # numpydoc ignore=RT01
+    def window_size(self) -> list[int]:  # numpydoc ignore=RT01
         """Return or set the default render window size.
 
         Examples
@@ -2085,7 +2085,7 @@ class Theme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: List[int]):  # numpydoc ignore=GL08
+    def window_size(self, window_size: list[int]):  # numpydoc ignore=GL08
         if len(window_size) != 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``.')
 

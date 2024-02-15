@@ -2,7 +2,8 @@
 
 import collections.abc
 from functools import partial, wraps
-from typing import Sequence, cast
+from typing import cast
+from collections.abc import Sequence
 import warnings
 
 import numpy as np

@@ -7,7 +7,8 @@ to VTK algorithms and PyVista filtering/plotting routines.
 import collections.abc
 from itertools import zip_longest
 import pathlib
-from typing import Any, Iterable, List, Optional, Set, Tuple, Union, cast, overload
+from typing import Any, Optional, Union, cast, overload
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -178,7 +179,7 @@ class MultiBlock(
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        all_bounds = [cast(List[float], block.bounds) for block in self if block]
+        all_bounds = [cast(list[float], block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = np.array([0.0, 0.0, 0.0])
@@ -215,7 +216,7 @@ class MultiBlock(
 
         """
         # (typing.cast necessary to make mypy happy with np.reshape())
-        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
+        return np.reshape(cast(list[float], self.bounds), (3, 2)).mean(axis=1)
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
@@ -302,7 +303,7 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore
+    def get_data_range(self, name: str, allow_missing: bool = False) -> tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
@@ -581,7 +582,7 @@ class MultiBlock(
             return meta.Get(_vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self) -> List[Optional[str]]:
+    def keys(self) -> list[Optional[str]]:
         """Get all the block names in the dataset.
 
         Returns
@@ -603,7 +604,7 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self) -> List[Optional[str]]:
+    def _ipython_key_completions_(self) -> list[Optional[str]]:
         return self.keys()
 
     def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:
@@ -1035,7 +1036,7 @@ class MultiBlock(
 
     def set_active_scalars(
         self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
-    ) -> Tuple[FieldAssociation, NumpyArray[float]]:
+    ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -1069,7 +1070,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: List[Tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
@@ -1108,8 +1109,8 @@ class MultiBlock(
                     break
 
         # Verify array consistency
-        dims: Set[int] = set()
-        dtypes: Set[np.dtype[Any]] = set()
+        dims: set[int] = set()
+        dtypes: set[np.dtype[Any]] = set()
         for _ in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association

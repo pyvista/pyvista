@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple, cast
+from typing import Optional, cast
+from collections.abc import Sequence
 import warnings
 
 import numpy as np
@@ -321,7 +322,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetNumberOfEdges()
 
     @property
-    def point_ids(self) -> List[int]:  # numpydoc ignore=RT01
+    def point_ids(self) -> list[int]:  # numpydoc ignore=RT01
         """Get the point IDs composing the cell.
 
         Returns
@@ -393,7 +394,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(self.GetEdge(index), deep=True)
 
     @property
-    def edges(self) -> List[Cell]:  # numpydoc ignore=RT01
+    def edges(self) -> list[Cell]:  # numpydoc ignore=RT01
         """Return a list of edges composing the cell.
 
         Returns
@@ -414,7 +415,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [self.get_edge(i) for i in range(self.n_edges)]
 
     @property
-    def faces(self) -> List[Cell]:  # numpydoc ignore=RT01
+    def faces(self) -> list[Cell]:  # numpydoc ignore=RT01
         """Return a list of faces composing the cell.
 
         Returns
@@ -469,7 +470,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(cell, deep=True, cell_type=cell.GetCellType())
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:  # numpydoc ignore=RT01
+    def bounds(self) -> tuple[float, float, float, float, float, float]:  # numpydoc ignore=RT01
         """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Returns
@@ -488,7 +489,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetBounds()
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the center of the cell.
 
         Uses parametric coordinate center to determine x-y-z center.
@@ -514,7 +515,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(Tuple[float, float, float], tuple(center))
+        return cast(tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -832,7 +833,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     return cells.reshape(-1, cell_size)
 
 
-def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> Tuple[NumpyArray[int], ...]:
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:
     """Return a tuple of length n_cells of each cell's point indices."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:

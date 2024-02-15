@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import pathlib
-from typing import Sequence
+from collections.abc import Sequence
 
 import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr

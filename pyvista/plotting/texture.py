@@ -1,7 +1,7 @@
 """This module provides a wrapper for vtk.vtkTexture."""
 
 from collections.abc import Sequence
-from typing import Tuple, Union
+from typing import Union
 import warnings
 
 import numpy as np
@@ -442,7 +442,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples

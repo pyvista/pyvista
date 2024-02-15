@@ -3,7 +3,7 @@
 import collections.abc
 import enum
 from itertools import product
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -58,7 +58,7 @@ def parse_field_choice(field):
 
 def _coerce_pointslike_arg(
     points: Union[Matrix[float], Vector[float]], copy: bool = False
-) -> Tuple[NumpyArray[float], bool]:
+) -> tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters

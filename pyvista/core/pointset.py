@@ -6,7 +6,8 @@ import numbers
 import os
 import pathlib
 from textwrap import dedent
-from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import Optional, Union, cast
+from collections.abc import Sequence
 import warnings
 
 import numpy as np
@@ -1040,7 +1041,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return cls(points, faces=CellArray.from_regular_cells(faces, deep=deep))
 
     @property
-    def irregular_faces(self) -> Tuple[NumpyArray[int], ...]:  # numpydoc ignore=RT01
+    def irregular_faces(self) -> tuple[NumpyArray[int], ...]:  # numpydoc ignore=RT01
         """Return a tuple of face arrays.
 
         Returns
@@ -1961,7 +1962,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
-    def cells_dict(self) -> Dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
+    def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -2932,7 +2933,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             grid.show_cells(inplace=True)
             return grid
 
-    def _dimensions(self) -> Tuple[int, int, int]:
+    def _dimensions(self) -> tuple[int, int, int]:
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
@@ -2941,7 +2942,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return int(dims[0]), int(dims[1]), int(dims[2])
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the topological dimensions of the grid.
 
         Returns
@@ -3040,7 +3041,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return ind
 
-    def cell_coords(self, ind: Union[int, Vector[int]]) -> Union[None, Tuple[int], Matrix[int]]:
+    def cell_coords(self, ind: Union[int, Vector[int]]) -> Union[None, tuple[int], Matrix[int]]:
         """Return the cell structured coordinates.
 
         Parameters
@@ -3083,7 +3084,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return coords
         return None
 
-    def neighbors(self, ind: Union[int, Vector[int]], rel: str = 'connectivity') -> List[int]:
+    def neighbors(self, ind: Union[int, Vector[int]], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.
 
         Parameters

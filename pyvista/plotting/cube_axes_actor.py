@@ -1,6 +1,5 @@
 """Module containing the wrapping of CubeAxesActor."""
 
-from typing import List, Tuple
 
 import numpy as np
 
@@ -249,30 +248,30 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.z_axis_range = float(bounds[4]), float(bounds[5])
 
     @property
-    def x_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def x_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the X axis range."""
         return self.GetXAxisRange()
 
     @x_axis_range.setter
-    def x_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
+    def x_axis_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
         self.SetXAxisRange(value)
 
     @property
-    def y_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def y_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the Y axis range."""
         return self.GetYAxisRange()
 
     @y_axis_range.setter
-    def y_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
+    def y_axis_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
         self.SetYAxisRange(value)
 
     @property
-    def z_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def z_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the Z axis range."""
         return self.GetZAxisRange()
 
     @z_axis_range.setter
-    def z_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
+    def z_axis_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
         self.SetZAxisRange(value)
 
     @property
@@ -537,17 +536,17 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetAxisLabels(2, self._empty_str)
 
     @property
-    def x_labels(self) -> List[str]:  # numpydoc ignore=RT01
+    def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x axis labels."""
         return convert_string_array(self.GetAxisLabels(0))
 
     @property
-    def y_labels(self) -> List[str]:  # numpydoc ignore=RT01
+    def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y axis labels."""
         return convert_string_array(self.GetAxisLabels(1))
 
     @property
-    def z_labels(self) -> List[str]:  # numpydoc ignore=RT01
+    def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z axis labels."""
         return convert_string_array(self.GetAxisLabels(2))
 

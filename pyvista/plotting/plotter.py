@@ -14,7 +14,7 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from typing import Dict, Optional
+from typing import Optional
 import uuid
 import warnings
 import weakref
@@ -7043,7 +7043,7 @@ class Plotter(BasePlotter):
 #
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
-_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+_ALL_PLOTTERS: dict[str, BasePlotter] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover

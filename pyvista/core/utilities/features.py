@@ -3,7 +3,7 @@
 import collections.abc
 import os
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 

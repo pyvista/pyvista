@@ -1,7 +1,8 @@
 """Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
 import collections
-from typing import Sequence, Union
+from typing import Union
+from collections.abc import Sequence
 
 import numpy as np
 

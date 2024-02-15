@@ -9,7 +9,7 @@ from functools import wraps
 import importlib
 import os
 import pathlib
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -200,7 +200,7 @@ class BaseVTKReader(ABC):
 
     def __init__(self: BaseVTKReader):
         self._data_object = None
-        self._observers: List[Union[int, Callable[[Any], Any]]] = []
+        self._observers: list[Union[int, Callable[[Any], Any]]] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -1743,7 +1743,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> List[str]:  # numpydoc ignore=RT01
+    def family_array_names(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the list of all family array names.
 
         Returns

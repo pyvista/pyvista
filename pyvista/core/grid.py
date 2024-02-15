@@ -2,7 +2,8 @@
 
 from functools import wraps
 import pathlib
-from typing import List, Sequence, Tuple, Union
+from typing import Union
+from collections.abc import Sequence
 import warnings
 
 import numpy as np
@@ -27,7 +28,7 @@ class Grid(DataSet):
         super().__init__()
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
@@ -236,7 +237,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> List[NumpyArray[float]]:  # numpydoc ignore=RT01
+    def meshgrid(self) -> list[NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -737,7 +738,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return self.points[:, 2]
 
     @property
-    def origin(self) -> Tuple[float]:  # numpydoc ignore=RT01
+    def origin(self) -> tuple[float]:  # numpydoc ignore=RT01
         """Return the origin of the grid (bottom southwest corner).
 
         Examples
@@ -775,7 +776,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.Modified()
 
     @property
-    def spacing(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def spacing(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the spacing for each axial direction.
 
         Notes
@@ -858,7 +859,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return grid
 
     @property
-    def extent(self) -> Tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
+    def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
