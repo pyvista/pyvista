@@ -6584,10 +6584,10 @@ class Plotter(BasePlotter):
         if self.theme.anti_aliasing:
             self.enable_anti_aliasing(self.theme.anti_aliasing)
 
-        if self.theme.parallel_projection:
+        if self.theme.camera.parallel_projection:
             self.enable_parallel_projection()
 
-        self.parallel_scale = self.theme.parallel_scale
+        self.parallel_scale = self.theme.camera.parallel_scale
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True

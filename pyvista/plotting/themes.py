@@ -1540,11 +1540,15 @@ class _CameraConfig(_ThemeConfig):
     __slots__ = [
         '_position',
         '_viewup',
+        '_parallel_projection',
+        '_parallel_scale',
     ]
 
     def __init__(self):
         self._position = [1.0, 1.0, 1.0]
         self._viewup = [0.0, 0.0, 1.0]
+        self._parallel_projection = False
+        self._parallel_scale = 1.0
 
     @property
     def position(self) -> Vector[float]:  # numpydoc ignore=RT01
@@ -1581,6 +1585,42 @@ class _CameraConfig(_ThemeConfig):
     @viewup.setter
     def viewup(self, viewup: Vector[float]):  # numpydoc ignore=GL08
         self._viewup = viewup
+
+    @property
+    def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set parallel projection mode.
+
+        Examples
+        --------
+        Enable parallel projection.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.camera.parallel_projection = True
+
+        """
+        return self._parallel_projection
+
+    @parallel_projection.setter
+    def parallel_projection(self, value: bool) -> None:  # numpydoc ignore=GL08
+        self._parallel_projection = value
+
+    @property
+    def parallel_scale(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set parallel scale.
+
+        Examples
+        --------
+        Set parallel scale.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.camera.parallel_scale = 2.0
+
+        """
+        return self._parallel_scale
+
+    @parallel_scale.setter
+    def parallel_scale(self, value: bool) -> None:  # numpydoc ignore=GL08
+        self._parallel_scale = value
 
 
 class Theme(_ThemeConfig):
@@ -1664,8 +1704,6 @@ class Theme(_ThemeConfig):
         '_before_close_callback',
         '_logo_file',
         '_edge_opacity',
-        '_parallel_projection',
-        '_parallel_scale',
     ]
 
     def __init__(self):
@@ -1674,8 +1712,6 @@ class Theme(_ThemeConfig):
         self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = _CameraConfig()
-        self._parallel_projection = False
-        self._parallel_scale = 1.0
 
         self._notebook = None
         self._window_size = [1024, 768]
@@ -2096,42 +2132,6 @@ class Theme(_ThemeConfig):
             raise TypeError(
                 f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}"
             )
-
-    @property
-    def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set parallel projection mode.
-
-        Examples
-        --------
-        Enable parallel projection.
-
-        >>> import pyvista as pv
-        >>> pv.global_theme.parallel_projection = True
-
-        """
-        return self._parallel_projection
-
-    @parallel_projection.setter
-    def parallel_projection(self, value: bool) -> None:  # numpydoc ignore=GL08
-        self._parallel_projection = value
-
-    @property
-    def parallel_scale(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set parallel scale.
-
-        Examples
-        --------
-        Set parallel scale.
-
-        >>> import pyvista as pv
-        >>> pv.global_theme.parallel_scale = 2.0
-
-        """
-        return self._parallel_scale
-
-    @parallel_scale.setter
-    def parallel_scale(self, value: bool) -> None:  # numpydoc ignore=GL08
-        self._parallel_scale = value
 
     @property
     def notebook(self) -> Union[bool, None]:  # numpydoc ignore=RT01
