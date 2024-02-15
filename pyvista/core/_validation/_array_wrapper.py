@@ -90,10 +90,6 @@ class _ArrayLikeWrapper(Generic[_NumberType]):
         try:
             if isinstance(_array, _ArrayLikeWrapper):
                 return _array
-            elif isinstance(_array, np.ndarray):
-                wrapped1 = object.__new__(_NumpyArrayWrapper)
-                wrapped1.__setattr__('_array', _array)
-                return wrapped1
             elif _is_NumberSequence(_array):
                 wrapped2 = object.__new__(_SequenceWrapper)
                 wrapped2.__setattr__('_array', _array)

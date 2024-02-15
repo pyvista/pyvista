@@ -1,4 +1,5 @@
 from collections import namedtuple
+from copy import deepcopy
 from enum import Enum, auto
 import importlib
 import itertools
@@ -343,7 +344,7 @@ def test_validate_arrayN(reshape):
 
 
 @pytest.mark.parametrize('reshape', [True, False])
-def test_validate_arrayN_uintlike(reshape):
+def test_validate_arrayN_unsigned(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_unsigned(0.0)
     assert np.shape(arr) == (1,)
@@ -456,7 +457,7 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('case', numeric_array_test_cases())
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
-@pytest.mark.parametrize('return_type', [tuple, list, np.ndarray])
+@pytest.mark.parametrize('return_type', [tuple, list, np.ndarray, None])
 def test_validate_array(
     name, copy, as_any, dtype_in, dtype_out, case, stack_input, input_type, return_type
 ):
@@ -487,6 +488,10 @@ def test_validate_array(
     else:  # pyvista_ndarray:
         valid_array = pyvista_ndarray(valid_array)
         invalid_array = pyvista_ndarray(invalid_array)
+
+    has_numpy_dtype = issubclass(dtype_out, np.generic)
+    if has_numpy_dtype and return_type not in [None, np.ndarray, 'numpy']:
+        pytest.xfail('NumPy dtype specified with non-numpy return type')
 
     shape = np.array(valid_array).shape
     common_kwargs = dict(
@@ -519,17 +524,15 @@ def test_validate_array(
     array_out = validate_array(array_in, **common_kwargs)
     assert np.array_equal(array_out, array_in)
 
-    # Check output
-    has_numpy_dtype = issubclass(dtype_out, np.generic)
-    if np.array(array_in).ndim == 0 and return_type in (list, tuple) and not has_numpy_dtype:
-        # test scalar input results in scalar output
-        assert isinstance(array_out, float) or isinstance(array_out, int)
-    elif return_type is tuple and not has_numpy_dtype:
-        assert type(array_out) is tuple
-        # assert type(array_out[0]) is dtype_out
-    elif return_type is list and not has_numpy_dtype:
-        assert isinstance(array_out, list)
-    elif return_type is np.ndarray or has_numpy_dtype:
+    # Check correct return type and dtype
+    ndim = np.array(array_in).ndim
+    numpy_expected = (
+        has_numpy_dtype
+        or return_type is np.ndarray
+        or (np.array(array_in).ndim > 2 and return_type is None)
+        or (isinstance(array_in, np.ndarray) and return_type is None)
+    )
+    if numpy_expected:
         assert isinstance(array_out, np.ndarray)
         assert array_out.dtype.type is np.dtype(dtype_out).type
         if as_any:
@@ -547,15 +550,38 @@ def test_validate_array(
                 assert array_out is not array_in
         else:
             assert type(array_out) is np.ndarray
+    elif return_type in (tuple, list, None):
+        if ndim == 0 and dtype_out is not None:
+            assert isinstance(array_out, dtype_out)
+        elif return_type in (tuple, list):
+            assert isinstance(array_out, return_type)
+            if ndim == 1:
+                assert isinstance(array_out[0], dtype_out)
+            elif ndim == 2:
+                assert isinstance(array_out[0][0], dtype_out)
+            elif ndim == 3:
+                assert isinstance(array_out[0][0][0], dtype_out)
+            elif ndim == 4:
+                assert isinstance(array_out[0][0][0][0], dtype_out)
+            else:
+                raise RuntimeError("Unexpected test case")
     else:
-        assert type(array_in) is type(array_out)
+        raise RuntimeError("Unexpected test case")
 
     if copy:
         if isinstance(array_in, (int, float)):
             # copying an int will not always create a unique instance
             assert array_out == array_in
         else:
-            assert array_out is not array_in
+            # Otherwise, expect a new instance
+            try:
+                assert array_out is not array_in
+            except AssertionError:
+                if deepcopy(array_out) is array_out:
+                    # Deepcopy will not copy when it's fully immutable
+                    assert array_out is array_in
+                else:
+                    assert array_out is not array_in
 
 
 # TODO: test for dtype out inf error

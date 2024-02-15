@@ -22,7 +22,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     Union,
     cast,
     get_args,
@@ -30,6 +29,7 @@ from typing import (
 )
 
 import numpy as np
+import numpy.typing as npt
 
 from pyvista.core._typing_core import NumpyArray, Vector
 from pyvista.core._typing_core._array_like import _ArrayLike, _ArrayLikeOrScalar, _NumberType
@@ -43,13 +43,12 @@ _ScalarShape = Tuple[()]
 _ArrayShape = Tuple[int, ...]
 _Shape = Union[_ScalarShape, _ArrayShape]
 _ShapeLike = Union[int, _Shape]
-_DTypeLike = Union[np.dtype, Type[Any], str]  # type: ignore[type-arg]
 
 
 def check_subdtype(
-    input_obj: Union[_DTypeLike, _ArrayLikeOrScalar[_NumberType]],
+    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[_NumberType]],
     /,
-    base_dtype: Union[_DTypeLike, Tuple[_DTypeLike, ...], List[_DTypeLike]],
+    base_dtype: Union[npt.DTypeLike, Tuple[npt.DTypeLike, ...], List[npt.DTypeLike]],
     *,
     name: str = 'Input',
 ):
@@ -97,11 +96,11 @@ def check_subdtype(
     >>> _validation.check_subdtype(array, np.integer)
 
     """
-    input_dtype: _DTypeLike
+    input_dtype: npt.DTypeLike
     if isinstance(input_obj, (tuple, list, np.ndarray)):
         input_dtype = _ArrayLikeWrapper(input_obj).dtype
     else:
-        input_dtype = cast(_DTypeLike, input_obj)
+        input_dtype = cast(npt.DTypeLike, input_obj)
 
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]

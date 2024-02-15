@@ -13,10 +13,9 @@ A ``validate`` function typically:
 
 """
 
-from copy import deepcopy
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple, Type, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union, overload
 
 import numpy as np
 from typing_extensions import TypedDict, Unpack
@@ -49,7 +48,7 @@ _DTypeLike = Union[
     Type[float],
     Type[int],
     Type[bool],
-    Type[str],
+    str,
     Type[np_dtype_floating],
     Type[np_dtype_integer],
     Type[np.floating],  # type: ignore[type-arg]
@@ -92,6 +91,7 @@ class _TypedKwargs(TypedDict, total=False):
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # ruff: noqa: D103   # numpydoc ignore=GL08
     array: _NumberType,
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -102,6 +102,7 @@ def validate_array(  # type: ignore[overload-overlap]  # ruff: noqa: D103   # nu
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[List[_NumberType]],
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -112,6 +113,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[_NumberType],
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -122,6 +124,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[Tuple[_NumberType, ...]],
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -132,6 +135,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[_NumberType, ...],
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -142,6 +146,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -153,6 +158,7 @@ def validate_array(  # numpydoc ignore=GL08
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: _ArrayLikeOrScalar[_NumberType],
+    /,
     *,
     dtype_out=None,
     return_type=None,
@@ -162,6 +168,7 @@ def validate_array(  # numpydoc ignore=GL08
 
 def validate_array(
     array: _ArrayLikeOrScalar[_NumberType],
+    /,
     *,
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]] = None,
     must_have_dtype: Optional[_DTypeLike] = None,
@@ -192,24 +199,37 @@ def validate_array(
     optionally be reshaped or broadcast, and the output type of
     the array can be explicitly set to standardize its representation.
 
-    By default, the return type of the array is the same as the input
-    type for the cases below. Otherwise, the returned array is a
-    NumPy array.
+    By default, this function is generic and returns an array with the
+    same type and dtype as the input array, i.e. ``Array[T] -> Array[T]``
+    for the common cases below. In most cases, it will also return the
+    array as-is without copying its data wherever possible.
 
     - Scalars: ``T`` -> ``T``
+    - Lists: ``List[T]`` -> ``List[T]``
+    - Nested lists: ``List[List[T]]`` -> ``List[List[T]]``
+    - Tuples: ``Tuple[T]`` -> ``Tuple[T]``
+    - Nested tuples: ``Tuple[Tuple[T]]`` -> ``Tuple[Tuple[T]]``
     - NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
-    - Sequences: ``Sequence[T]`` -> ``Sequence[T]``
-    - Nested sequences: ``Sequence[Sequence[[T]]`` -> ``Sequence[Sequence[T]]``
 
-    Array validation is performed without copying its data wherever
-    possible.
+    For all other input types, (e.g. ``range`` objects, nested lists with
+    depth > 2, NumPy protocol arrays, etc.), the returned array is a NumPy
+    array.
 
-    .. note::
+    Optionally, use ``return_type`` and/or ``dtype_out`` for non-generic
+    behavior to ensure the output array has a consistent type.
+
+    .. warning::
 
         This function is primarily designed to work with homogeneous
         numeric arrays with a regular shape. Any other array-like
         inputs (e.g. structured arrays, string arrays) are not
         supported.
+
+    .. note::
+
+        This function is very general. For common validation workflows, it is
+        recommended to use a wrapper function instead with pre-set default
+        parameters, or use one of the specialized functions below.
 
     See Also
     --------
@@ -230,6 +250,7 @@ def validate_array(
 
     validate_data_range
         Specialized function for data ranges.
+
 
     Parameters
     ----------
@@ -447,17 +468,28 @@ def validate_array(
     if must_have_dtype is not None:
         check_subdtype(wrapped(), base_dtype=must_have_dtype, name=name)
 
+    # Validate dtype_out
     if dtype_out not in (None, float, int, bool):
-        return_type = "numpy"
+        # Must be a numpy dtype
+        check_subdtype(dtype_out, base_dtype=np.generic, name='dtype_out')
+        if return_type is None:
+            # Always return numpy array for numpy dtypes
+            return_type = 'numpy'
+        elif return_type in (tuple, list, 'tuple', 'list'):
+            raise ValueError(
+                f"Return type {return_type} must be 'numpy' for dtype_out={dtype_out}.\n"
+                f"A list or tuple can only be returned if dtype_out is float, int, or bool."
+            )
 
     # Check if re-casting is needed in case subclasses are not allowed
-    rewrap_numpy = as_any is False and type(wrapped._array) is np.ndarray
+    rewrap_numpy = as_any is False and type(wrapped._array) is not np.ndarray
 
     # Check if built-in types need to be cast to numpy in case broadcasting
     # or reshaping is needed (these are only supported for numpy arrays)
     do_reshape = reshape_to is not None and wrapped.shape != reshape_to
     do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
-    rewrap_builtin = isinstance(wrapped, _BuiltinWrapper) and (do_reshape or do_broadcast)
+    is_builtin = isinstance(wrapped, _BuiltinWrapper)
+    rewrap_builtin = is_builtin and (do_reshape or do_broadcast)
 
     if rewrap_numpy or rewrap_builtin or return_type in ("numpy", np.ndarray):
         wrapped = (
@@ -471,7 +503,7 @@ def validate_array(
         check_shape(wrapped(), shape=must_have_shape, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
-    if do_reshape:
+    if do_reshape or do_broadcast:
         wrapped._array = np.reshape(wrapped._array, reshape_to)  # type: ignore[arg-type]
 
     if do_broadcast:
@@ -525,38 +557,25 @@ def validate_array(
                     f"Float infinity cannot be converted to integer."
                 )
     # Cast array to desired output
-    if return_type is not None:
-        if return_type in ("numpy", np.ndarray):
-            return wrapped.to_numpy(array, copy)
-        elif return_type in ("list", list):
-            return wrapped.to_list(array, copy)
-        elif return_type in ("tuple", tuple):
-            return wrapped.to_tuple(array, copy)
-        else:
-            # Invalid type, raise error with check
-            check_contains(
-                ["numpy", "list", "tuple", np.ndarray, list, tuple], must_contain=return_type
-            )
-
-            def _assert_never() -> NoReturn:
-                raise AssertionError("Expected code to be unreachable")
-
-            _assert_never()
-    elif rewrap_builtin:
-        if isinstance(array, tuple):
-            return wrapped.to_tuple(array, copy)
-        else:
-            # to_list should cover lists as well as scalar inputs
-            out = wrapped.to_list(array, copy)
-
-            return out
-    else:
-        if copy:
-            if isinstance(array, np.ndarray):
-                return np.ndarray.copy(array)
+    if return_type is None:
+        if is_builtin:
+            if isinstance(array, tuple):
+                return_type = tuple
             else:
-                return deepcopy(array)
-        return wrapped._array
+                return_type = list
+        else:
+            return_type = 'numpy'
+    if return_type in ("numpy", np.ndarray):
+        return wrapped.to_numpy(array, copy)
+    elif return_type in ("list", list):
+        return wrapped.to_list(array, copy)
+    elif return_type in ("tuple", tuple):
+        return wrapped.to_tuple(array, copy)
+    else:
+        # Invalid type, raise error with check
+        check_contains(
+            ["numpy", "list", "tuple", np.ndarray, list, tuple], must_contain=return_type
+        )
 
 
 def validate_axes(
