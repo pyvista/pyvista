@@ -2104,3 +2104,15 @@ class ArrowSource(_vtk.vtkArrowSource):
             The radius of the shaft.
         """
         self.SetShaftRadius(shaft_radius)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
