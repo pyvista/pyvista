@@ -609,6 +609,14 @@ def test_validate_array_return_type_raises():
     with pytest.raises(ValueError, match=msg(atype, dtype)):
         validate_array(0, return_type=atype, dtype_out=dtype)
 
+    msg = (
+        "Return type '0' is not valid. Return type must be one of: \n\t"
+        "['numpy', 'list', 'tuple', <class 'numpy.ndarray'>, <class 'list'>, <class 'tuple'>]"
+    )
+
+    with pytest.raises(ValueError, match=escape(msg)):
+        validate_array(0, return_type=0, dtype_out=float)
+
 
 def test_validate_array_overflow_raises():
     msg = (
@@ -824,6 +832,9 @@ def test_check_length():
     msg = 'Array has the incorrect number of dimensions. Got 2, expected 1.'
     with pytest.raises(ValueError, match=escape(msg)):
         check_length(((1, 2), (3, 4)), must_be_1d=True)
+
+    with pytest.raises(TypeError, match="object of type 'int' has no len()"):
+        check_length(0, allow_scalar=False)
 
 
 def test_check_nonnegative():
@@ -1051,6 +1062,21 @@ def test_validate_axes(name):
         ValueError, match=f"{name} orientation must be specified when only two vectors are given."
     ):
         validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None, name=name)
+
+    msg = "Axes has shape (3,) which is not allowed. Shape must be one of [(2, 3), (3, 3)]."
+    with pytest.raises(ValueError, match=escape(msg)):
+        validate_axes([1, 0, 0])
+
+    msg = (
+        'Incorrect number of axes arguments. Number of arguments must be either:\n'
+        '\tOne arg (a single array with two or three vectors),'
+        '\tTwo args (two vectors), or'
+        '\tThree args (three vectors).'
+    )
+    with pytest.raises(ValueError, match=escape(msg)):
+        validate_axes()
+    with pytest.raises(ValueError, match=escape(msg)):
+        validate_axes(0, 0, 0, 0)
 
 
 @pytest.mark.parametrize('bias_index', [(0, 1), (1, 0), (2, 0)])

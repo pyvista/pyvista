@@ -576,7 +576,9 @@ def validate_array(
     else:
         # Invalid type, raise error with check
         check_contains(
-            ["numpy", "list", "tuple", np.ndarray, list, tuple], must_contain=return_type
+            ["numpy", "list", "tuple", np.ndarray, list, tuple],
+            must_contain=return_type,
+            name='Return type',
         )
 
 
@@ -661,10 +663,10 @@ def validate_axes(
     num_args = len(axes)
     if num_args not in (1, 2, 3):
         raise ValueError(
-            "Incorrect number of axes arguments. Number of arguments must be either:"
-            "    One arg (a single array with two or three vectors),"
-            "    Two args (two vectors), or"
-            "    Three args (three vectors)."
+            "Incorrect number of axes arguments. Number of arguments must be either:\n"
+            "\tOne arg (a single array with two or three vectors),"
+            "\tTwo args (two vectors), or"
+            "\tThree args (three vectors)."
         )
 
     # Validate axes array
