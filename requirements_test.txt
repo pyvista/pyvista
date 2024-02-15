@@ -24,6 +24,6 @@ sphinx_design<0.6.0
 sympy<1.13.0
 tqdm<4.67.0
 trame>=2.5.2,<3.6
-trame-vtk>=2.5.8,<2.8.4
+trame-vtk>=2.5.8,<2.8.4 # 2.8.4 break compatibility with Python3.8
 trame-vuetify>=2.3.1,<2.5
 trimesh<4.2.0
