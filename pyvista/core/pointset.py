@@ -784,6 +784,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                     PyVistaDeprecationWarning,
                 )
 
+        self._glyph_geom = None
+
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and

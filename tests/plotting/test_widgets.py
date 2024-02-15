@@ -261,7 +261,7 @@ def test_widget_spline(uniform):
     p.close()
 
 
-def test_measurement_widget():
+def test_measurement_widget(random_hills):
     class DistanceCallback:
         def __init__(self):
             self.called = False
@@ -275,7 +275,7 @@ def test_measurement_widget():
             self.count += 1
 
     p = pv.Plotter(window_size=[1000, 1000])
-    p.add_mesh(examples.load_random_hills())
+    p.add_mesh(random_hills)
     distance_callback = DistanceCallback()
     p.add_measurement_widget(callback=distance_callback)
     p.view_xy()
