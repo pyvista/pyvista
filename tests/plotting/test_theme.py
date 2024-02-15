@@ -277,18 +277,15 @@ def test_window_size(default_theme):
 
 
 def test_camera(default_theme):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="camera value must either be a"):
         default_theme.camera = [1, 0, 0]
 
-    with pytest.raises(KeyError, match='Expected the "viewup"'):
-        default_theme.camera = {'position': [1, 0, 0]}
-
-    with pytest.raises(KeyError, match='Expected the "position"'):
-        default_theme.camera = {'viewup': [1, 0, 0]}
+    default_theme.camera = {'position': [1, 0, 0]}
+    default_theme.camera = {'viewup': [1, 0, 0]}
 
     camera = {'position': [1, 0, 0], 'viewup': [1, 0, 0]}
     default_theme.camera = camera
-    assert default_theme.camera == camera
+    assert default_theme.camera.to_dict() == camera
 
 
 def test_parallel_projection(default_theme):

@@ -39,7 +39,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import warnings
 
 import pyvista
-from pyvista.core._typing_core import Number
+from pyvista.core._typing_core import Number, Vector
 from pyvista.core.utilities.misc import _check_range
 
 from ._typing import ColorLike
@@ -1524,6 +1524,65 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = mode
 
 
+class _CameraConfig(_ThemeConfig):
+    """PyVista camera configuration.
+
+    Examples
+    --------
+    Set global camera parameters.
+
+    >>> import pyvista as pv
+    >>> pv.global_theme.camera.position = [1.0, 1.0, 1.0]
+    >>> pv.global_theme.camera.viewup = [0.0, 0.0, 1.0]
+
+    """
+
+    __slots__ = [
+        '_position',
+        '_viewup',
+    ]
+
+    def __init__(self):
+        self._position = [1.0, 1.0, 1.0]
+        self._viewup = [0.0, 0.0, 1.0]
+
+    @property
+    def position(self) -> Vector[float]:  # numpydoc ignore=RT01
+        """Return or set the camera position.
+
+        Examples
+        --------
+        Set camera position.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.camera.position = [1.0, 1.0, 1.0]
+
+        """
+        return self._position
+
+    @position.setter
+    def position(self, position: Vector[float]):  # numpydoc ignore=GL08
+        self._position = position
+
+    @property
+    def viewup(self) -> Vector[float]:  # numpydoc ignore=RT01
+        """Return or set the camera viewup.
+
+        Examples
+        --------
+        Set camera viewup.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.camera.viewup = [0.0, 0.0, 1.0]
+
+        """
+        return self._position
+
+    @viewup.setter
+    def viewup(self, viewup: Vector[float]):  # numpydoc ignore=GL08
+        self._viewup = viewup
+
+
 class Theme(_ThemeConfig):
     """Base VTK theme.
 
@@ -1614,10 +1673,7 @@ class Theme(_ThemeConfig):
         self._name = 'default'
         self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
-        self._camera = {
-            'position': [1, 1, 1],
-            'viewup': [0, 0, 1],
-        }
+        self._camera = _CameraConfig()
         self._parallel_projection = False
         self._parallel_scale = 1.0
 
@@ -2021,36 +2077,25 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Set both the position and view of the camera.
+        Set both the position and viewup of the camera.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.camera = {
-        ...     'position': [1, 1, 1],
-        ...     'viewup': [0, 0, 1],
-        ... }
-
-        Set the default position of the camera.
-
-        >>> pv.global_theme.camera['position'] = [1, 1, 1]
-
-        Set the default view of the camera.
-
-        >>> pv.global_theme.camera['viewup'] = [0, 0, 1]
+        >>> pv.global_theme.camera.position = [1.0, 1.0, 1.0]
+        >>> pv.global_theme.camera.viewup = [0.0, 0.0, 1.0]
 
         """
         return self._camera
 
     @camera.setter
     def camera(self, camera):  # numpydoc ignore=GL08
-        if not isinstance(camera, dict):
-            raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera).__name__}.')
-
-        if 'position' not in camera:
-            raise KeyError('Expected the "position" key in the camera dict.')
-        if 'viewup' not in camera:
-            raise KeyError('Expected the "viewup" key in the camera dict.')
-
-        self._camera = camera
+        if isinstance(camera, dict):
+            self._camera = _CameraConfig.from_dict(camera)
+        elif isinstance(camera, _CameraConfig):
+            self._camera = camera
+        else:
+            raise TypeError(
+                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}"
+            )
 
     @property
     def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
