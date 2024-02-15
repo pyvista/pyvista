@@ -291,6 +291,28 @@ def test_camera(default_theme):
     assert default_theme.camera == camera
 
 
+def test_parallel_projection(default_theme):
+    assert not default_theme.parallel_projection
+    pl = pv.Plotter(theme=default_theme)
+    assert not pl.parallel_projection
+
+    default_theme.parallel_projection = True
+    assert default_theme.parallel_projection
+    pl2 = pv.Plotter(theme=default_theme)
+    assert pl2.parallel_projection
+
+
+def test_parallel_scale(default_theme):
+    assert default_theme.parallel_scale == 1.0
+    pl = pv.Plotter(theme=default_theme)
+    assert pl.parallel_scale == 1.0
+
+    default_theme.parallel_scale = 2.0
+    assert default_theme.parallel_scale == 2.0
+    pl2 = pv.Plotter(theme=default_theme)
+    assert pl2.parallel_scale == 2.0
+
+
 def test_cmap(default_theme):
     cmap = 'jet'
     default_theme.cmap = cmap

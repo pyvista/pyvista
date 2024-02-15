@@ -1605,6 +1605,8 @@ class Theme(_ThemeConfig):
         '_before_close_callback',
         '_logo_file',
         '_edge_opacity',
+        '_parallel_projection',
+        '_parallel_scale',
     ]
 
     def __init__(self):
@@ -1616,6 +1618,8 @@ class Theme(_ThemeConfig):
             'position': [1, 1, 1],
             'viewup': [0, 0, 1],
         }
+        self._parallel_projection = False
+        self._parallel_scale = 1.0
 
         self._notebook = None
         self._window_size = [1024, 768]
@@ -2047,6 +2051,42 @@ class Theme(_ThemeConfig):
             raise KeyError('Expected the "viewup" key in the camera dict.')
 
         self._camera = camera
+
+    @property
+    def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set parallel projection mode.
+
+        Examples
+        --------
+        Enable parallel projection.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.parallel_projection = True
+
+        """
+        return self._parallel_projection
+
+    @parallel_projection.setter
+    def parallel_projection(self, value: bool) -> None:  # numpydoc ignore=GL08
+        self._parallel_projection = value
+
+    @property
+    def parallel_scale(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set parallel scale.
+
+        Examples
+        --------
+        Set parallel scale.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.parallel_scale = 2.0
+
+        """
+        return self._parallel_scale
+
+    @parallel_scale.setter
+    def parallel_scale(self, value: bool) -> None:  # numpydoc ignore=GL08
+        self._parallel_scale = value
 
     @property
     def notebook(self) -> Union[bool, None]:  # numpydoc ignore=RT01
