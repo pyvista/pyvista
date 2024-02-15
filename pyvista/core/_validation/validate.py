@@ -476,8 +476,10 @@ def validate_array(
             # Always return numpy array for numpy dtypes
             return_type = 'numpy'
         elif return_type in (tuple, list, 'tuple', 'list'):
+            if isinstance(dtype_out, str):
+                dtype_out = np.dtype(dtype_out)  # type: ignore[assignment]
             raise ValueError(
-                f"Return type {return_type} must be 'numpy' for dtype_out={dtype_out}.\n"
+                f"Return type {return_type} is not compatible with dtype_out={dtype_out}.\n"
                 f"A list or tuple can only be returned if dtype_out is float, int, or bool."
             )
 
@@ -1194,6 +1196,9 @@ def validate_arrayN_unsigned(
     kwargs.setdefault('dtype_out', int)
     if kwargs['dtype_out'] is not int:
         check_subdtype(kwargs['dtype_out'], np.integer)
+
+    # can overflow if not finite
+    kwargs.setdefault('must_be_finite', True)
 
     _set_default_kwarg_mandatory(kwargs, 'must_be_integer', True)
     _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)

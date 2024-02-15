@@ -584,9 +584,43 @@ def test_validate_array(
                     assert array_out is not array_in
 
 
-# TODO: test for dtype out inf error
-#                 must_be_finite=False,
-#             TypeError, 'Float infinity cannot be converted to integer',
+def test_validate_array_return_type_raises():
+    validate_array(0, return_type=None, dtype_out=np.float64)
+    validate_array(0, return_type='numpy', dtype_out=np.float64)
+    validate_array(0, return_type=np.ndarray, dtype_out=np.float64)
+    validate_array(0, return_type=list, dtype_out=float)
+
+    def msg(atype, dtype):
+        return (
+            f"Return type {atype} is not compatible with dtype_out={dtype}.\n"
+            f"A list or tuple can only be returned if dtype_out is float, int, or bool."
+        )
+
+    atype, dtype = 'list', np.float64
+    with pytest.raises(ValueError, match=msg(atype, dtype)):
+        validate_array(0, return_type=atype, dtype_out=dtype)
+    atype, dtype = list, np.float64
+    with pytest.raises(ValueError, match=msg(atype, dtype)):
+        validate_array(0, return_type=atype, dtype_out=dtype)
+    atype, dtype = 'tuple', 'float'
+    with pytest.raises(ValueError, match=msg(atype, np.dtype(dtype))):
+        validate_array(0, return_type=atype, dtype_out=dtype)
+    atype, dtype = tuple, np.float64
+    with pytest.raises(ValueError, match=msg(atype, dtype)):
+        validate_array(0, return_type=atype, dtype_out=dtype)
+
+
+def test_validate_array_overflow_raises():
+    msg = (
+        "Cannot change dtype of Array from <class 'float'> to <class 'int'>.\n"
+        "Float infinity cannot be converted to integer."
+    )
+    with pytest.raises(TypeError, match=msg):
+        validate_array(float('inf'), must_be_finite=False, dtype_out=int)
+
+    # no overflow raised
+    overflowed = validate_array(np.array(np.inf), must_be_finite=False, dtype_out=np.int64)
+    assert overflowed == 9223372036854775807
 
 
 @pytest.mark.parametrize('obj', [0, 0.0, "0"])
