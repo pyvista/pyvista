@@ -535,7 +535,7 @@ def validate_array(
         else:
             # Invalid type, raise error with check
             check_contains(
-                item=return_type, container=["numpy", "list", "tuple", np.ndarray, list, tuple]
+                ["numpy", "list", "tuple", np.ndarray, list, tuple], must_contain=return_type
             )
 
             def _assert_never() -> NoReturn:
@@ -633,7 +633,7 @@ def validate_axes(
     """
     if must_have_orientation is not None:
         check_contains(
-            item=must_have_orientation, container=['right', 'left'], name=f"{name} orientation"
+            ['right', 'left'], must_contain=must_have_orientation, name=f"{name} orientation"
         )
 
     # Validate number of args
