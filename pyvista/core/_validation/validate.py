@@ -402,20 +402,16 @@ def validate_array(
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy.
+        making a copy. Has no effect if the input is not a NumPy array.
 
     copy : bool, default: False
-        If ``True``, a copy of the array is returned. A copy is always
-        returned if the array:
-
-        * is a nested sequence
-        * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
-
-        A copy may also be made to satisfy ``dtype_out`` requirements.
+        If ``True``, a copy of the array is returned. In some cases, a copy may be
+        returned even if ``copy=False`` (e.g. to convert array type/dtype, reshape,
+        etc.). In cases where the array is immutable (e.g. tuple) the returned array
+        may not be a copy, even if ``copy=True``.
 
     return_type : str | type, optional
-        Control the return type of the array. The array may be copied,
-        but only if necessary. Must be one of:
+        Control the return type of the array. Must be one of:
 
         * ``"numpy"`` or ``np.ndarray``
         * ``"list"`` or ``list``
@@ -433,13 +429,11 @@ def validate_array(
 
     Returns
     -------
-    float | int | bool | Array[float] | Array[int] | Array[bool]
-        Validated array. Returned object is:
-
-        * an instance of ``np.ndarray`` (default), or
-        * a nested ``list`` (if ``to_list=True``), or
-        * a nested ``tuple`` (if ``to_tuple=True``), or
-        * a number (e.g. ``int`` or ``float``) if the input is a scalar.
+    Number | Array
+        Validated array of the same type and dtype as the input.
+        If ``return_type`` is not ``None``, the returned array has the specified type.
+        If ``dtype_out`` is not ``None``, the returned array has the specified dtype.
+        See function description for more details.
 
     Examples
     --------
