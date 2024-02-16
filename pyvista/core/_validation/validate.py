@@ -48,19 +48,19 @@ from pyvista.core._validation.check import (
 _FloatType = TypeVar('_FloatType', bound=float)
 _ShapeLike = Union[int, Tuple[int, ...], Tuple[()]]
 
-_ReturnNumpyType = Union[
+_NumpyReturnType = Union[
     Literal['numpy'],
     Type[np.ndarray],  # type: ignore[type-arg]
 ]
-_ReturnListType = Union[
+_ListReturnType = Union[
     Literal['list'],
     Type[list],  # type: ignore[type-arg]
 ]
-_ReturnTupleType = Union[
+_TupleReturnType = Union[
     Literal['tuple'],
     Type[tuple],  # type: ignore[type-arg]
 ]
-_ReturnType = Union[_ReturnNumpyType, _ReturnListType, _ReturnTupleType]
+_ArrayReturnType = Union[_NumpyReturnType, _ListReturnType, _TupleReturnType]
 
 
 class _TypedKwargs(TypedDict, total=False):
@@ -84,6 +84,7 @@ class _TypedKwargs(TypedDict, total=False):
     name: str
 
 
+### SCALAR OVERLOADS
 # dtype_out unset
 @overload
 def validate_array(  # numpydoc ignore=GL08
@@ -91,7 +92,7 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: None = None,
-    return_type: Optional[Union[_ReturnTupleType, _ReturnListType]] = ...,
+    return_type: Optional[Union[_TupleReturnType, _ListReturnType]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> _NumberType: ...
 
@@ -103,55 +104,110 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: Type[__NumberType] = ...,
-    return_type: Optional[Union[_ReturnTupleType, _ReturnListType]] = ...,
+    return_type: Optional[Union[_TupleReturnType, _ListReturnType]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> __NumberType: ...
 
 
+### LIST OVERLOADS
+# dtype_out unset
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[List[_NumberType]],
     /,
     *,
     dtype_out: None = None,
-    return_type: None = None,
+    return_type: Optional[_ListReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[List[_NumberType]]: ...
 
 
+# set dtype_out
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: List[List[_NumberType]],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[_ListReturnType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[List[__NumberType]]: ...
+
+
+# dtype_out unset
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[_NumberType],
     /,
     *,
     dtype_out: None = None,
-    return_type: None = None,
+    return_type: Optional[_ListReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[_NumberType]: ...
 
 
+# set dtype_out
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
-    array: Tuple[Tuple[_NumberType, ...]],
+    array: List[_NumberType],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[_ListReturnType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[__NumberType]: ...
+
+
+### TUPLE OVERLOADS
+# dtype_out unset
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[Tuple[_NumberType]],
     /,
     *,
     dtype_out: None = None,
-    return_type: None = None,
+    return_type: Optional[_TupleReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[Tuple[_NumberType]]: ...
 
 
+# set dtype_out
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[Tuple[_NumberType]],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[_TupleReturnType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Tuple[Tuple[__NumberType]]: ...
+
+
+# dtype_out unset
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[_NumberType, ...],
     /,
     *,
     dtype_out: None = None,
-    return_type: None = None,
+    return_type: Optional[_TupleReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
-) -> Tuple[_NumberType, ...]: ...
+) -> Tuple[_NumberType]: ...
 
 
+# set dtype_out
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[_NumberType, ...],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[_TupleReturnType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Tuple[__NumberType]: ...
+
+
+### NUMPY OVERLOADS
 # dtype_out unset
 @overload
 def validate_array(  # numpydoc ignore=GL08
@@ -159,7 +215,7 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: None = None,
-    return_type: Optional[_ReturnNumpyType] = ...,
+    return_type: Optional[_NumpyReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
@@ -171,15 +227,13 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: Type[__NumberType] = ...,
-    return_type: Optional[_ReturnNumpyType] = ...,
+    return_type: Optional[_NumpyReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
 
 
 ### CATCH-ALL CASES
 # Everything else is cast to numpy
-
-
 # dtype_out unset
 @overload
 def validate_array(  # numpydoc ignore=GL08
@@ -187,7 +241,7 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: None = None,
-    return_type: Optional[_ReturnNumpyType] = ...,
+    return_type: Optional[_NumpyReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
@@ -199,7 +253,7 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: Type[__NumberType] = ...,
-    return_type: Optional[_ReturnNumpyType] = ...,
+    return_type: Optional[_NumpyReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
 
@@ -226,7 +280,7 @@ def validate_array(
     dtype_out: Optional[Type[__NumberType]] = None,
     as_any: bool = True,
     copy: bool = False,
-    return_type: Optional[_ReturnType] = None,
+    return_type: Optional[_ArrayReturnType] = None,
     name: str = 'Array',
 ):
     """Check and validate a numeric array meets specific requirements.
