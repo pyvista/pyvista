@@ -58,9 +58,9 @@ def test_depth_silhouette_eq(default_theme):
 
 def test_depth_silhouette_opacity_outside_clamp(default_theme):
     my_theme = pv.plotting.themes.Theme()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = -1
 
 
@@ -77,7 +77,7 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
         ('cap_width', 0.04),
     ],
 )
-@pytest.mark.parametrize('style', ('modern', 'classic'))
+@pytest.mark.parametrize('style', [('modern'), ('classic')])
 def test_slider_style_config(default_theme, parm, style):
     attr, value = parm
 
@@ -99,7 +99,7 @@ def test_slider_style_eq(default_theme):
 
 
 def test_invalid_color_str_single_char():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('x')
 
 
@@ -110,14 +110,14 @@ def test_color_str():
     assert (0.0, 0.0, 0.0) == clr
     clr = colors.Color("white")
     assert (1.0, 1.0, 1.0) == clr
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
 
 
 def test_font():
     font = pv.parse_font_family('times')
     assert font == vtk.VTK_TIMES
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.parse_font_family('not a font')
 
 
@@ -135,7 +135,7 @@ def test_font_family(default_theme):
     default_theme.font.family = font
     assert default_theme.font.family == font
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         default_theme.font.family = 'bla'
 
 
@@ -240,7 +240,7 @@ def test_themes(theme):
 
 
 def test_invalid_theme():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.set_plot_theme('this is not a valid theme')
 
 
@@ -265,7 +265,7 @@ def test_invalid_load_theme(default_theme):
 
 
 def test_window_size(default_theme):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         default_theme.window_size = [1, 2, 3]
 
     with pytest.raises(ValueError, match='Window size must be a positive value'):
@@ -357,7 +357,7 @@ def test_theme_colorbar_orientation(default_theme):
     default_theme.colorbar_orientation = orient
     assert default_theme.colorbar_orientation == orient
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         default_theme.colorbar_orientation = 'invalid'
 
 
@@ -592,7 +592,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: PT011
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available

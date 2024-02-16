@@ -303,9 +303,9 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     assert filename.with_suffix(".png").is_file()
 
     # test invalid extension
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
-        pv.plot(sphere, screenshot=filename)
+    pv.plot(sphere, screenshot=filename)
 
 
 def test_plot_helper_volume(uniform, verify_image_cache):
@@ -361,7 +361,7 @@ def test_plot_volume_ugrid(verify_image_cache):
     mesh = examples.load_structured()  # wavy surface
     mesh['scalars'] = mesh.points[:, 1]
     pl = pv.Plotter()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pl.add_volume(mesh, scalars='scalars')
     pl.close()
 
@@ -380,12 +380,12 @@ def test_add_title(verify_image_cache):
 
 
 def test_plot_invalid_style(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.plot(sphere, style='not a style')
 
 
 @pytest.mark.parametrize(
-    'interaction, kwargs',
+    ('interaction', 'kwargs'),
     [
         ('trackball', {}),
         ('trackball_actor', {}),
@@ -469,13 +469,16 @@ def test_lighting_subplots(sphere):
 
     plotter.subplot(0)
     plotter.add_light(light, only_active=True)
-    assert renderers[0].lights and not renderers[1].lights
+    assert renderers[0].lights
+    assert not renderers[1].lights
     plotter.add_light(light, only_active=False)
-    assert renderers[0].lights and renderers[1].lights
+    assert renderers[0].lights
+    assert renderers[1].lights
     plotter.subplot(1)
     plotter.add_mesh(pv.Sphere())
     plotter.remove_all_lights(only_active=True)
-    assert renderers[0].lights and not renderers[1].lights
+    assert renderers[0].lights
+    assert not renderers[1].lights
 
     plotter.show()
 
@@ -511,18 +514,18 @@ def test_lighting_init_none(sphere):
 
 
 def test_lighting_init_invalid():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Plotter(lighting='invalid')
 
 
 def test_plotter_shape_invalid():
     # wrong size
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Plotter(shape=(1,))
     # not positive
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Plotter(shape=(1, 0))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Plotter(shape=(0, 2))
     # not a sequence
     with pytest.raises(TypeError):
@@ -624,13 +627,13 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info >= (0, 46):
             raise RuntimeError("Convert error this method")
         if pv._version.version_info >= (0, 47):
             raise RuntimeError("Remove this method")
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info >= (0, 46):
             raise RuntimeError("Convert error this method")
@@ -761,8 +764,8 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
 
 
 def test_plot_invalid_add_scalar_bar():
+    plotter = pv.Plotter()
     with pytest.raises(AttributeError):
-        plotter = pv.Plotter()
         plotter.add_scalar_bar()
 
 
@@ -790,7 +793,7 @@ def test_add_lines_invalid():
 @pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
 def test_open_gif_invalid():
     plotter = pv.Plotter()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.open_gif('file.abs')
 
 
@@ -830,7 +833,7 @@ def test_add_legend(sphere):
     with pytest.raises(TypeError):
         plotter.add_mesh(sphere, label=2)
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_legend()
     legend_labels = [['sphere', 'r']]
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1])
@@ -864,7 +867,7 @@ def test_legend_invalid_face(sphere):
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     face = "invalid_face"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_legend(
             labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
         )
@@ -943,7 +946,7 @@ def test_add_point_labels():
     points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0.5], [1, 1, 1]])
     n = points.shape[0]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
@@ -1041,7 +1044,7 @@ def test_left_button_down():
         and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
     ):
         # This only fails for VTK<9.2.3
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             plotter.left_button_down(None, None)
     else:
         plotter.left_button_down(None, None)
@@ -1085,10 +1088,10 @@ def test_plot_clim(sphere):
 
 
 def test_invalid_n_arrays(sphere):
-    with pytest.raises(ValueError):
-        plotter = pv.Plotter()
+    plotter = pv.Plotter()
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_mesh(sphere, scalars=np.arange(10))
-        plotter.show()
+    plotter.show()
 
 
 def test_plot_arrow():
@@ -1182,7 +1185,7 @@ def test_screenshot_scaled():
     assert img.shape == (h * 5, w * 5, 4)
     assert plotter.image_scale == factor, 'image_scale leaked from screenshot context'
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.image_scale = 0.5
 
     plotter.close()
@@ -1411,19 +1414,19 @@ def test_vector_array_fail_with_incorrect_component(multicomp_poly):
     # Non-Integer
     with pytest.raises(TypeError):
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=1.5)
-        p.show()
+    p.show()
 
     # Component doesn't exist
     p = pv.Plotter()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=3)
-        p.show()
+    p.show()
 
     # Component doesn't exist
     p = pv.Plotter()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
-        p.show()
+    p.show()
 
 
 def test_camera(sphere):
@@ -1499,14 +1502,14 @@ def test_multi_renderers_subplot_ind_1x2():
 
 
 def test_multi_renderers_bad_indices():
+    # Test bad indices
+    plotter = pv.Plotter(shape=(1, 2))
+    plotter.subplot(0, 0)
+    plotter.add_mesh(pv.Sphere())
     with pytest.raises(IndexError):
-        # Test bad indices
-        plotter = pv.Plotter(shape=(1, 2))
-        plotter.subplot(0, 0)
-        plotter.add_mesh(pv.Sphere())
         plotter.subplot(1, 0)
-        plotter.add_mesh(pv.Cube())
-        plotter.show()
+    plotter.add_mesh(pv.Cube())
+    plotter.show()
 
 
 def test_multi_renderers_subplot_ind_3x1():
@@ -1573,13 +1576,13 @@ def test_subplot_groups():
 
 def test_subplot_groups_fail():
     # Test group overlap
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         # Partial overlap
         pv.Plotter(shape=(3, 3), groups=[([1, 2], [0, 1]), ([0, 1], [1, 2])])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         # Full overlap (inner)
         pv.Plotter(shape=(4, 4), groups=[(np.s_[:], np.s_[:]), ([1, 2], [1, 2])])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         # Full overlap (outer)
         pv.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
@@ -1872,7 +1875,7 @@ def test_opacity_mismatched_fail(uniform):
 
     # Test using mismatched arrays
     p = pv.Plotter()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         # cell scalars vs point opacity
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
@@ -1907,7 +1910,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
     mapping = pv.opacity_transfer_function('foreground', 5)
     assert np.array_equal(mapping, [0, 255, 255, 255, 255])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mapping = pv.opacity_transfer_function('foo', n)
     with pytest.raises(RuntimeError):
         mapping = pv.opacity_transfer_function(np.linspace(0, 1, 2 * n), n)
@@ -1984,7 +1987,7 @@ def test_user_matrix_volume(uniform):
     volume = p.add_volume(uniform, user_matrix=shear)
     np.testing.assert_almost_equal(volume.user_matrix, shear)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         p.add_volume(uniform, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -1999,7 +2002,7 @@ def test_user_matrix_mesh(sphere):
     actor = p.add_mesh(sphere, user_matrix=shear)
     np.testing.assert_almost_equal(actor.user_matrix, shear)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         p.add_mesh(sphere, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -2044,8 +2047,8 @@ def test_fail_plot_table():
     table = pv.Table(np.random.default_rng().random((50, 3)))
     with pytest.raises(TypeError):
         pv.plot(table)
+    plotter = pv.Plotter()
     with pytest.raises(TypeError):
-        plotter = pv.Plotter()
         plotter.add_mesh(table)
 
 
@@ -2056,14 +2059,14 @@ def test_bad_keyword_arguments():
         pv.plot(mesh, foo=5)
     with pytest.raises(TypeError):
         pv.plot(mesh, scalar=mesh.active_scalars_name)
+    plotter = pv.Plotter()
     with pytest.raises(TypeError):
-        plotter = pv.Plotter()
         plotter.add_mesh(mesh, scalar=mesh.active_scalars_name)
-        plotter.show()
+    plotter.show()
+    plotter = pv.Plotter()
     with pytest.raises(TypeError):
-        plotter = pv.Plotter()
         plotter.add_mesh(mesh, foo="bad")
-        plotter.show()
+    plotter.show()
 
 
 def test_cmap_list(sphere, verify_image_cache):
@@ -2209,7 +2212,7 @@ def test_index_vs_loc():
         pl.renderers.loc_to_index((0, -1))
     with pytest.raises(TypeError):
         pl.renderers.loc_to_index({1, 2})
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pl.renderers.loc_to_index((1, 2, 3))
 
     # set active_renderer fails
@@ -3637,7 +3640,7 @@ def test_color_cycler():
     assert a1.prop.color.hex_rgb == pv.global_theme.color.hex_rgb
 
     pl = pv.Plotter()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pl.set_color_cycler('foo')
     with pytest.raises(TypeError):
         pl.set_color_cycler(5)
@@ -3845,8 +3848,8 @@ def test_radial_gradient_background():
     plotter.set_background('white', corner='black')
     plotter.show()
 
-    with pytest.raises(ValueError):
-        plotter = pv.Plotter()
+    plotter = pv.Plotter()
+    with pytest.raises(ValueError):  # noqa: PT011
         plotter.set_background('white', top='black', right='black')
 
 

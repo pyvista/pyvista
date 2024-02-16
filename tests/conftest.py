@@ -3,7 +3,7 @@ import re
 
 import numpy as np
 from numpy.random import default_rng
-from pytest import fixture, mark, skip
+import pytest
 
 import pyvista
 from pyvista import examples
@@ -11,8 +11,8 @@ from pyvista import examples
 pyvista.OFF_SCREEN = True
 
 
-@fixture()
-def global_variables_reset():
+@pytest.fixture()
+def global_variables_reset():  # noqa: PT004
     tmp_screenshots = pyvista.ON_SCREENSHOT
     tmp_figurepath = pyvista.FIGURE_PATH
     yield
@@ -20,8 +20,8 @@ def global_variables_reset():
     pyvista.FIGURE_PATH = tmp_figurepath
 
 
-@fixture(scope='session', autouse=True)
-def set_mpl():
+@pytest.fixture(scope='session', autouse=True)
+def set_mpl():  # noqa: PT004
     """Avoid matplotlib windows popping up."""
     try:
         import matplotlib
@@ -32,52 +32,52 @@ def set_mpl():
         matplotlib.use('agg', force=True)
 
 
-@fixture()
+@pytest.fixture()
 def cube():
     return pyvista.Cube()
 
 
-@fixture()
+@pytest.fixture()
 def airplane():
     return examples.load_airplane()
 
 
-@fixture()
+@pytest.fixture()
 def rectilinear():
     return examples.load_rectilinear()
 
 
-@fixture()
+@pytest.fixture()
 def sphere():
     return examples.load_sphere()
 
 
-@fixture()
+@pytest.fixture()
 def uniform():
     return examples.load_uniform()
 
 
-@fixture()
+@pytest.fixture()
 def ant():
     return examples.load_ant()
 
 
-@fixture()
+@pytest.fixture()
 def globe():
     return examples.load_globe()
 
 
-@fixture()
+@pytest.fixture()
 def hexbeam():
     return examples.load_hexbeam()
 
 
-@fixture()
+@pytest.fixture()
 def tetbeam():
     return examples.load_tetbeam()
 
 
-@fixture()
+@pytest.fixture()
 def struct_grid():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 2, dtype=np.float32),
@@ -87,28 +87,28 @@ def struct_grid():
     return pyvista.StructuredGrid(x, y, z)
 
 
-@fixture()
+@pytest.fixture()
 def plane():
     return pyvista.Plane(direction=(0, 0, -1))
 
 
-@fixture()
+@pytest.fixture()
 def spline():
     return examples.load_spline()
 
 
-@fixture()
+@pytest.fixture()
 def random_hills():
     return examples.load_random_hills()
 
 
-@fixture()
+@pytest.fixture()
 def tri_cylinder():
     """Triangulated cylinder"""
     return pyvista.Cylinder().triangulate()
 
 
-@fixture()
+@pytest.fixture()
 def datasets():
     return [
         examples.load_uniform(),  # ImageData
@@ -119,7 +119,7 @@ def datasets():
     ]
 
 
-@fixture()
+@pytest.fixture()
 def multiblock_poly():
     # format and order of data (including missing) is intentional
     mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
@@ -145,34 +145,34 @@ def multiblock_poly():
     return mblock
 
 
-@fixture()
+@pytest.fixture()
 def datasets_vtk9():
     return [
         examples.load_explicit_structured(),
     ]
 
 
-@fixture()
+@pytest.fixture()
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
 
 
-@fixture()
+@pytest.fixture()
 def multiblock_all(datasets):
     """Return datasets fixture combined in a pyvista multiblock."""
     return pyvista.MultiBlock(datasets)
 
 
-@fixture()
+@pytest.fixture()
 def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
 
 
-@fixture()
+@pytest.fixture()
 def texture():
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
@@ -183,7 +183,7 @@ def texture():
     return pyvista.Texture(pl.screenshot())
 
 
-@fixture()
+@pytest.fixture()
 def image(texture):
     return texture.to_image()
 
@@ -201,7 +201,7 @@ def pytest_collection_modifyitems(config, items):
 
     # skip all tests that need downloads
     if not test_downloads:
-        skip_downloads = mark.skip("Downloads not enabled with --test_downloads")
+        skip_downloads = pytest.mark.skip("Downloads not enabled with --test_downloads")
         for item in items:
             if 'needs_download' in marker_names(item):
                 item.add_marker(skip_downloads)
@@ -223,7 +223,7 @@ def pytest_runtest_setup(item):
             version_needed = args
         if pyvista.vtk_version_info < version_needed:
             version_str = '.'.join(map(str, version_needed))
-            skip(f'Test needs VTK {version_str} or newer.')
+            pytest.skip(f'Test needs VTK {version_str} or newer.')
 
 
 def pytest_report_header(config):
