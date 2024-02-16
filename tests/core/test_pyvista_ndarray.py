@@ -7,7 +7,7 @@ import vtk as _vtk
 from pyvista import examples, pyvista_ndarray
 
 
-@pytest.fixture
+@pytest.fixture()
 def pyvista_ndarray_1d():
     return pyvista_ndarray([1.0, 2.0, 3.0])
 

@@ -54,7 +54,7 @@ class GetOutput:
         return self._mock.call_args_list[-1][0][0]
 
 
-@pytest.fixture
+@pytest.fixture()
 def composite(datasets):
     return pv.MultiBlock(datasets)
 
@@ -1000,7 +1000,7 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
-@pytest.fixture
+@pytest.fixture()
 def connected_datasets():
     # This is similar to the datasets fixture, but the PolyData is fully connected
     return [
@@ -1012,12 +1012,12 @@ def connected_datasets():
     ]
 
 
-@pytest.fixture
+@pytest.fixture()
 def foot_bones():
     return examples.download_foot_bones()
 
 
-@pytest.fixture
+@pytest.fixture()
 def connected_datasets_single_disconnected_cell(connected_datasets):
     # Create datasets of MultiBlocks with either 'point' or 'cell' scalar
     # data, where a single cell (or its points) has a completely different
@@ -2224,8 +2224,8 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
-def test_compute_derivatives():
-    mesh = examples.load_random_hills()
+def test_compute_derivatives(random_hills):
+    mesh = random_hills
     vector = np.zeros((mesh.n_points, 3))
     vector[:, 1] = np.ones(mesh.n_points)
     mesh['vector'] = vector
@@ -2529,7 +2529,7 @@ def test_extract_subset_structured():
     assert voi.dimensions == (4, 4, 1)
 
 
-@pytest.fixture
+@pytest.fixture()
 def structured_grids_split_coincident():
     """Two structured grids which are coincident along second axis (axis=1), and
     the grid from which they were extracted."""
@@ -2543,7 +2543,7 @@ def structured_grids_split_coincident():
     return voi_1, voi_2, structured
 
 
-@pytest.fixture
+@pytest.fixture()
 def structured_grids_split_disconnected():
     """Two structured grids which are disconnected."""
     structured = examples.load_structured()
@@ -3119,7 +3119,7 @@ def test_merge_points():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def labeled_image():
     image = pv.ImageData(dimensions=(2, 2, 2))
     image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
