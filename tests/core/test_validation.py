@@ -568,8 +568,7 @@ def test_check_type():
         check_type("str", int)
     with pytest.raises(TypeError):
         check_type(0, int, name=1)
-    with pytest.raises(TypeError):
-        check_type(0, Union[int, float])
+    check_type(0, Union[int, float])
 
 
 @pytest.mark.skipif(
