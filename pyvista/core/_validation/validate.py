@@ -84,8 +84,9 @@ class _TypedKwargs(TypedDict, total=False):
     name: str
 
 
-@overload  # dtype as-is
-def validate_array(  # ruff: noqa: D103 # numpydoc ignore=GL08
+# dtype_out unset
+@overload
+def validate_array(  # numpydoc ignore=GL08
     array: _NumberType,
     /,
     *,
@@ -95,7 +96,8 @@ def validate_array(  # ruff: noqa: D103 # numpydoc ignore=GL08
 ) -> _NumberType: ...
 
 
-@overload  # set dtype_out
+# set dtype_out
+@overload
 def validate_array(  # numpydoc ignore=GL08
     array: _NumberType,
     /,
@@ -150,7 +152,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[_NumberType, ...]: ...
 
 
-@overload  # dtype as-is
+# dtype_out unset
+@overload
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
     /,
@@ -161,7 +164,8 @@ def validate_array(  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-@overload  # set dtype_out
+# set dtype_out
+@overload
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
     /,
@@ -174,7 +178,10 @@ def validate_array(  # numpydoc ignore=GL08
 
 ### CATCH-ALL CASES
 # Everything else is cast to numpy
-@overload  # dtype as-is
+
+
+# dtype_out unset
+@overload
 def validate_array(  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
     /,
@@ -185,7 +192,8 @@ def validate_array(  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-@overload  # set dtype_out
+# set dtype_out
+@overload
 def validate_array(  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
     /,
