@@ -602,9 +602,6 @@ def test_validate_array_return_type_raises():
     atype, dtype = list, np.float64
     with pytest.raises(ValueError, match=msg(atype, dtype)):
         validate_array(0, return_type=atype, dtype_out=dtype)
-    atype, dtype = 'tuple', 'float'
-    with pytest.raises(ValueError, match=msg(atype, np.dtype(dtype))):
-        validate_array(0, return_type=atype, dtype_out=dtype)
     atype, dtype = tuple, np.float64
     with pytest.raises(ValueError, match=msg(atype, dtype)):
         validate_array(0, return_type=atype, dtype_out=dtype)
@@ -1409,7 +1406,9 @@ def reveal_type_from_code(code_snippet):
     try:
         os.chdir(PROJECT_ROOT)
 
-        result = mypy_api.run(['-c', code_snippet])
+        result = mypy_api.run(
+            ['--warn-unreachable', '--disallow-any-unimported', '-c', code_snippet]
+        )
         assert 'usage: mypy' not in result[1]
         assert 'Cannot find implementation' not in result[0]
         stdout = str(result[0]).replace('Tuple', 'tuple')

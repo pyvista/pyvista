@@ -13,9 +13,11 @@ A ``validate`` function typically:
 
 """
 
+from __future__ import annotations
+
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, overload
 
 import numpy as np
 from typing_extensions import TypedDict, Unpack
@@ -23,10 +25,11 @@ from typing_extensions import TypedDict, Unpack
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
 from pyvista.core._typing_core._array_like import (
+    __NumberType,
+    _ArrayLike,
     _ArrayLikeOrScalar,
     _NumberType,
-    np_dtype_floating,
-    np_dtype_integer,
+    _NumberUnion,
 )
 from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper, _BuiltinWrapper
 from pyvista.core._validation.check import (
@@ -39,37 +42,30 @@ from pyvista.core._validation.check import (
     check_real,
     check_shape,
     check_sorted,
-    check_string,
     check_subdtype,
 )
 
+_FloatType = TypeVar('_FloatType', bound=float)
 _ShapeLike = Union[int, Tuple[int, ...], Tuple[()]]
-_DTypeLike = Union[
-    Type[float],
-    Type[int],
-    Type[bool],
-    str,
-    Type[np_dtype_floating],
-    Type[np_dtype_integer],
-    Type[np.floating],  # type: ignore[type-arg]
-    Type[np.integer],  # type: ignore[type-arg]
-]
 
-_OutputTypeOptions = Optional[
-    Union[
-        Literal['numpy'],
-        Literal['tuple'],
-        Literal['list'],
-        Type[np.ndarray],  # type: ignore[type-arg]
-        Type[list],  # type: ignore[type-arg]
-        Type[tuple],  # type: ignore[type-arg]
-    ]
+_ReturnNumpyType = Union[
+    Literal['numpy'],
+    Type[np.ndarray],  # type: ignore[type-arg]
 ]
+_ReturnListType = Union[
+    Literal['list'],
+    Type[list],  # type: ignore[type-arg]
+]
+_ReturnTupleType = Union[
+    Literal['tuple'],
+    Type[tuple],  # type: ignore[type-arg]
+]
+_ReturnType = Union[_ReturnNumpyType, _ReturnListType, _ReturnTupleType]
 
 
 class _TypedKwargs(TypedDict, total=False):
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]]
-    must_have_dtype: Optional[_DTypeLike]
+    must_have_dtype: Optional[_NumberUnion]
     must_have_length: Optional[Union[int, Vector[int]]]
     must_have_min_length: Optional[int]
     must_have_max_length: Optional[int]
@@ -88,15 +84,26 @@ class _TypedKwargs(TypedDict, total=False):
     name: str
 
 
-@overload
-def validate_array(  # type: ignore[overload-overlap]  # ruff: noqa: D103   # numpydoc ignore=GL08
+@overload  # dtype as-is
+def validate_array(  # ruff: noqa: D103 # numpydoc ignore=GL08
     array: _NumberType,
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: None = None,
+    return_type: Optional[Union[_ReturnTupleType, _ReturnListType]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> _NumberType: ...
+
+
+@overload  # set dtype_out
+def validate_array(  # numpydoc ignore=GL08
+    array: _NumberType,
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[Union[_ReturnTupleType, _ReturnListType]] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> __NumberType: ...
 
 
 @overload
@@ -104,8 +111,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[List[_NumberType]],
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: None = None,
+    return_type: None = None,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[List[_NumberType]]: ...
 
@@ -115,8 +122,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[_NumberType],
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: None = None,
+    return_type: None = None,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[_NumberType]: ...
 
@@ -126,8 +133,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[Tuple[_NumberType, ...]],
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: None = None,
+    return_type: None = None,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[Tuple[_NumberType]]: ...
 
@@ -137,33 +144,56 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[_NumberType, ...],
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: None = None,
+    return_type: None = None,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[_NumberType, ...]: ...
 
 
-@overload
+@overload  # dtype as-is
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: None = None,
+    return_type: Optional[_ReturnNumpyType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
 
-# Catch-all case to handle everything else.
-@overload
+@overload  # set dtype_out
 def validate_array(  # numpydoc ignore=GL08
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: NumpyArray[_NumberType],
     /,
     *,
-    dtype_out=None,
-    return_type=None,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[_ReturnNumpyType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> NumpyArray[__NumberType]: ...
+
+
+### CATCH-ALL CASES
+# Everything else is cast to numpy
+@overload  # dtype as-is
+def validate_array(  # numpydoc ignore=GL08
+    array: _ArrayLike[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: Optional[_ReturnNumpyType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
+
+
+@overload  # set dtype_out
+def validate_array(  # numpydoc ignore=GL08
+    array: _ArrayLike[_NumberType],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: Optional[_ReturnNumpyType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> NumpyArray[__NumberType]: ...
 
 
 def validate_array(
@@ -171,7 +201,7 @@ def validate_array(
     /,
     *,
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]] = None,
-    must_have_dtype: Optional[_DTypeLike] = None,
+    must_have_dtype: Optional[_NumberUnion] = None,
     must_have_length: Optional[Union[int, Vector[int]]] = None,
     must_have_min_length: Optional[int] = None,
     must_have_max_length: Optional[int] = None,
@@ -185,10 +215,10 @@ def validate_array(
     strict_upper_bound: bool = False,
     reshape_to: Optional[_ShapeLike] = None,
     broadcast_to: Optional[_ShapeLike] = None,
-    dtype_out: Optional[_DTypeLike] = None,
+    dtype_out: Optional[Type[__NumberType]] = None,
     as_any: bool = True,
     copy: bool = False,
-    return_type: Optional[_OutputTypeOptions] = None,
+    return_type: Optional[_ReturnType] = None,
     name: str = 'Array',
 ):
     """Check and validate a numeric array meets specific requirements.
@@ -470,8 +500,6 @@ def validate_array(
             # Always return numpy array for numpy dtypes
             return_type = 'numpy'
         elif return_type in (tuple, list, 'tuple', 'list'):
-            if isinstance(dtype_out, str):
-                dtype_out = np.dtype(dtype_out)  # type: ignore[assignment]
             raise ValueError(
                 f"Return type {return_type} is not compatible with dtype_out={dtype_out}.\n"
                 f"A list or tuple can only be returned if dtype_out is float, int, or bool."
@@ -558,9 +586,10 @@ def validate_array(
             if isinstance(array, tuple):
                 return_type = tuple
             else:
+                # to-list will handle scalars and lists
                 return_type = list
         else:
-            return_type = 'numpy'
+            return_type = np.ndarray
     if return_type in ("numpy", np.ndarray):
         return wrapped.to_numpy(array, copy)
     elif return_type in ("list", list):
@@ -747,7 +776,6 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
         Generic array _validation function.
 
     """
-    check_string(name, name="Name")
     array = np.eye(4)  # initialize
     if isinstance(transform, _vtk.vtkMatrix4x4):
         array = _array_from_vtkmatrix(transform, shape=(4, 4))
@@ -764,6 +792,7 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
                 name=name,
                 return_type='numpy',
             )
+            # reveal_type(valid_array)
             if valid_array.shape == (3, 3):
                 array[:3, :3] = valid_array
             else:
@@ -809,7 +838,6 @@ def validate_transform3x3(
         Generic array _validation function.
 
     """
-    check_string(name, name="Name")
     array = np.eye(3)  # initialize
     if isinstance(transform, _vtk.vtkMatrix3x3):
         array[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))

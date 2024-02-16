@@ -1,13 +1,11 @@
 """Type guards for checking array-like type definitions."""
 
-from typing import Any, Iterable, Sequence, Tuple, Type, TypeVar, cast
+from typing import Any, Iterable, Sequence, Tuple, Type, cast
 
 import numpy as np
 from typing_extensions import TypeGuard
 
-from ._array_like import _ArrayLikeOrScalar, _NumberType
-
-_BuiltinNumberType = TypeVar('_BuiltinNumberType', float, int, bool)
+from ._array_like import _ArrayLikeOrScalar, _NumberType, _PyNumberType
 
 
 def _is_Number(array: _ArrayLikeOrScalar[_NumberType]) -> TypeGuard[_NumberType]:
@@ -16,7 +14,7 @@ def _is_Number(array: _ArrayLikeOrScalar[_NumberType]) -> TypeGuard[_NumberType]
 
 def _is_NumberSequence(
     array: _ArrayLikeOrScalar[_NumberType],
-) -> TypeGuard[Sequence[_BuiltinNumberType]]:
+) -> TypeGuard[Sequence[_PyNumberType]]:
     return isinstance(array, (tuple, list)) and _has_element_types(array, (float, int))
 
 

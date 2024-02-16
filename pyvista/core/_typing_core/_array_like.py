@@ -30,10 +30,18 @@ import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
 # TODO: remove # type: ignore once support for 3.8 is dropped
+_NumberUnion = Union[np.floating, np.integer, np.bool_, float, int, bool]  # type: ignore[type-arg]
 _NumberType = TypeVar(
     '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
+__NumberType = TypeVar(
+    '__NumberType',
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+)
+_PyNumberType = TypeVar('_PyNumberType', float, int, bool)
+_NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)
+
 _T = TypeVar('_T')
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # TODO: Remove this conditional block once support for 3.8 is dropped
