@@ -10,7 +10,7 @@ from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_theme():
     return pv.plotting.themes.Theme()
 

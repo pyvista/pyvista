@@ -193,7 +193,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture
+@pytest.fixture()
 def text3d_source_with_text():
     return pv.Text3DSource("TEXT")
 
