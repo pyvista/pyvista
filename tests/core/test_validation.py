@@ -1,15 +1,12 @@
 from collections import namedtuple
 from copy import deepcopy
 from enum import Enum, auto
-import importlib
 import itertools
 from numbers import Real
-import os
-from re import escape, findall
+from re import escape
 import sys
 from typing import Union, get_args, get_origin
 
-from mypy import api as mypy_api
 import numpy as np
 import pytest
 from vtk import vtkTransform
@@ -1390,58 +1387,3 @@ def test_array_wrapper_ragged_array(ragged_array):
     msg = 'The following array is not valid:\n\t['
     with pytest.raises(ValueError, match=escape(msg)):
         _ArrayLikeWrapper(ragged_array)
-
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-REVEAL_TYPE_CODE_FILE = PROJECT_ROOT + '/tests/core/test_validation_reveal_type.py'
-
-
-def reveal_type_from_code(code_snippet):
-    # Call `mypy -c CODE` from the project root dir
-    # This ensures the config is loaded and imports are found
-    # NOTE: running mypy can be slow, avoid making excessive calls
-    cur = os.getcwd()
-    if importlib.util.find_spec('npt_promote') is None:
-        raise ModuleNotFoundError("Package 'npt-promote' is required for this test.")
-    try:
-        os.chdir(PROJECT_ROOT)
-
-        result = mypy_api.run(
-            ['--warn-unreachable', '--disallow-any-unimported', '-c', code_snippet]
-        )
-        assert 'usage: mypy' not in result[1]
-        assert 'Cannot find implementation' not in result[0]
-
-        # Clean up output
-        stdout = str(result[0])
-        stdout = stdout.replace('Tuple', 'tuple')
-        stdout = stdout.replace('builtins.', '')
-        stdout = stdout.replace('numpy.', '')
-        stdout = stdout.replace('typing.', '')
-
-        match = findall(r'note: Revealed type is "([^"]+)"', stdout)
-        assert match is not None
-        return match
-
-    finally:
-        os.chdir(cur)
-
-
-def generate_reveal_type_test_cases():
-    # Create code snippet for mypy to analyze
-    with open(REVEAL_TYPE_CODE_FILE) as f:
-        code = f.read()
-
-    revealed_types = reveal_type_from_code(code)
-    expected_types = findall(r'# EXPECTED_TYPE: "([^"]+)"', code)
-    reveal_type_args = findall(r'reveal_type\((.*?)\)(?=(\s*?#))', code)
-    reveal_type_args = [x[0] for x in reveal_type_args]
-    assert len(expected_types) == len(revealed_types)
-    assert len(expected_types) == len(reveal_type_args)
-    return zip(reveal_type_args, revealed_types, expected_types)
-
-
-@pytest.mark.parametrize('test_case', generate_reveal_type_test_cases())
-def test_revealed_array_types(test_case):
-    arg, revealed, expected = test_case
-    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"

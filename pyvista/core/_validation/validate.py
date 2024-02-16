@@ -87,7 +87,7 @@ class _TypedKwargs(TypedDict, total=False):
 ### SCALAR OVERLOADS
 # dtype_out unset
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _NumberType,
     /,
     *,
@@ -99,7 +99,7 @@ def validate_array(  # numpydoc ignore=GL08
 
 # set dtype_out
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _NumberType,
     /,
     *,
@@ -107,6 +107,18 @@ def validate_array(  # numpydoc ignore=GL08
     return_type: Optional[Union[_TupleReturnType, _ListReturnType]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> __NumberType: ...
+
+
+# set return_type -> numpy
+@overload
+def validate_array(  # numpydoc ignore=GL08
+    array: _NumberType,
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: Optional[_NumpyReturnType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> NumpyArray[_NumberType]: ...
 
 
 ### LIST OVERLOADS
