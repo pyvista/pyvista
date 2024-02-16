@@ -1393,7 +1393,7 @@ def test_array_wrapper_ragged_array(ragged_array):
 
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-REVEAL_TYPE_CODE_FILE = PROJECT_ROOT + '/tests/core/test_validation_reveal_type.txt'
+REVEAL_TYPE_CODE_FILE = PROJECT_ROOT + '/tests/core/test_validation_reveal_type.py'
 
 
 def reveal_type_from_code(code_snippet):
