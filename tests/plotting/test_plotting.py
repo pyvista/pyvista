@@ -303,9 +303,9 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     assert filename.with_suffix(".png").is_file()
 
     # test invalid extension
+    filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
     with pytest.raises(ValueError):  # noqa: PT011
-        filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
-    pv.plot(sphere, screenshot=filename)
+        pv.plot(sphere, screenshot=filename)
 
 
 def test_plot_helper_volume(uniform, verify_image_cache):
@@ -1091,7 +1091,6 @@ def test_invalid_n_arrays(sphere):
     plotter = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_mesh(sphere, scalars=np.arange(10))
-    plotter.show()
 
 
 def test_plot_arrow():
@@ -1414,19 +1413,16 @@ def test_vector_array_fail_with_incorrect_component(multicomp_poly):
     # Non-Integer
     with pytest.raises(TypeError):
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=1.5)
-    p.show()
 
     # Component doesn't exist
     p = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=3)
-    p.show()
 
     # Component doesn't exist
     p = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
-    p.show()
 
 
 def test_camera(sphere):
@@ -1504,12 +1500,8 @@ def test_multi_renderers_subplot_ind_1x2():
 def test_multi_renderers_bad_indices():
     # Test bad indices
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.subplot(0, 0)
-    plotter.add_mesh(pv.Sphere())
     with pytest.raises(IndexError):
         plotter.subplot(1, 0)
-    plotter.add_mesh(pv.Cube())
-    plotter.show()
 
 
 def test_multi_renderers_subplot_ind_3x1():
@@ -2062,11 +2054,9 @@ def test_bad_keyword_arguments():
     plotter = pv.Plotter()
     with pytest.raises(TypeError):
         plotter.add_mesh(mesh, scalar=mesh.active_scalars_name)
-    plotter.show()
     plotter = pv.Plotter()
     with pytest.raises(TypeError):
         plotter.add_mesh(mesh, foo="bad")
-    plotter.show()
 
 
 def test_cmap_list(sphere, verify_image_cache):
