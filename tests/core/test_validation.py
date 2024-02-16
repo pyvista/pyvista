@@ -628,7 +628,8 @@ def test_validate_array_overflow_raises():
 
     # no overflow raised
     overflowed = validate_array(np.array(np.inf), must_be_finite=False, dtype_out=np.int64)
-    assert np.abs(overflowed) > 1e6
+    info = np.iinfo(overflowed)
+    assert overflowed == info.min or overflowed == info.max
 
 
 @pytest.mark.parametrize('obj', [0, 0.0, "0"])
