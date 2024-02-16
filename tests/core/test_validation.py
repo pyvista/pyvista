@@ -628,7 +628,7 @@ def test_validate_array_overflow_raises():
 
     # no overflow raised
     overflowed = validate_array(np.array(np.inf), must_be_finite=False, dtype_out=np.int64)
-    info = np.iinfo(overflowed)
+    info = np.iinfo(overflowed.dtype)
     assert overflowed == info.min or overflowed == info.max
 
 
