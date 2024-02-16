@@ -1411,7 +1411,14 @@ def reveal_type_from_code(code_snippet):
         )
         assert 'usage: mypy' not in result[1]
         assert 'Cannot find implementation' not in result[0]
-        stdout = str(result[0]).replace('Tuple', 'tuple')
+
+        # Clean up output
+        stdout = str(result[0])
+        stdout = stdout.replace('Tuple', 'tuple')
+        stdout = stdout.replace('builtins.', '')
+        stdout = stdout.replace('numpy.', '')
+        stdout = stdout.replace('typing.', '')
+
         match = findall(r'note: Revealed type is "([^"]+)"', stdout)
         assert match is not None
         return match
@@ -1427,7 +1434,8 @@ def generate_reveal_type_test_cases():
 
     revealed_types = reveal_type_from_code(code)
     expected_types = findall(r'# EXPECTED_TYPE: "([^"]+)"', code)
-    reveal_type_args = findall(r'reveal_type\((.*?)\s', code)
+    reveal_type_args = findall(r'reveal_type\((.*?)\)(?=(\s*?#))', code)
+    reveal_type_args = [x[0] for x in reveal_type_args]
     assert len(expected_types) == len(revealed_types)
     assert len(expected_types) == len(reveal_type_args)
     return zip(reveal_type_args, revealed_types, expected_types)
@@ -1436,4 +1444,4 @@ def generate_reveal_type_test_cases():
 @pytest.mark.parametrize('test_case', generate_reveal_type_test_cases())
 def test_revealed_array_types(test_case):
     arg, revealed, expected = test_case
-    assert f"{arg}: {revealed}" == f"{arg}: {expected}"
+    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
