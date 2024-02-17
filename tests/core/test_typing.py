@@ -1,17 +1,39 @@
+"""Test static type annotations revealed by Mypy.
+
+This test will automatically analyze all files in the test cases directory.
+To add new test cases, simply add a new .py file with each test case following
+the format:
+
+    reveal_type(arg)  # EXPECTED_TYPE: "<T>>"
+
+where ``arg`` is callable, and <T> is the expected revealed type returned by
+mypy. (Note: the output types from mypy are truncated with the module names
+remove, e.g. `typing.Sequence` -> `Sequence`, `builtins.float` -> `float`,
+etc.
+
+"""
+
+from collections import namedtuple
 import importlib
 import os
-from re import findall
+import re
+from typing import List, Tuple
+
+_TestCaseTuple = namedtuple('_TestCaseTuple', ['file', 'line_num', 'arg', 'expected', 'revealed'])
 
 from mypy import api as mypy_api
 import pytest
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-TYPING_CASES_DIR = PROJECT_ROOT + '/tests/core/typing/'
+TYPING_CASES_REL_PATH = 'tests/core/typing'
+TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
+TYPING_CASES_ABS_PATH = os.path.join(PROJECT_ROOT, TYPING_CASES_REL_PATH)
+TEST_FILE_NAMES = os.listdir(TYPING_CASES_ABS_PATH)
 
 
-def _reveal_type_from_code(code_snippet: str):
-    # Call `mypy -c CODE` from the project root dir
-    # This ensures the config is loaded and imports are found
+def _reveal_types():
+    # Call mypy from the project root dir on the typing test case files
+    # Calling from root ensures the config is loaded and imports are found
     # NOTE: running mypy can be slow, avoid making excessive calls
     cur = os.getcwd()
     if importlib.util.find_spec('npt_promote') is None:
@@ -19,70 +41,123 @@ def _reveal_type_from_code(code_snippet: str):
     try:
         os.chdir(PROJECT_ROOT)
 
-        result = mypy_api.run(['-c', code_snippet])
+        result = mypy_api.run(['--show-absolute-path', '--package', TYPING_CASES_PACKAGE])
         assert 'usage: mypy' not in result[1]
         assert 'Cannot find implementation' not in result[0]
 
         # Clean up output
         stdout = str(result[0])
-        stdout = stdout.replace('Tuple', 'tuple')
-        stdout = stdout.replace('builtins.', '')
-        stdout = stdout.replace('numpy.', '')
-        stdout = stdout.replace('typing.', '')
 
-        match = findall(r'note: Revealed type is "([^"]+)"', stdout)
+        # group revealed types by (filepath), (line num), and (type)
+        pattern = r'^(.*?):(.*?):\snote: Revealed type is "([^"]+)"'
+        match = re.findall(pattern, stdout, re.MULTILINE)
         assert match is not None
+
+        # Make revealed types less verbose
+        for i, group in enumerate(match):
+            filepath, line_num, revealed = group
+            revealed = revealed.replace('Tuple', 'tuple')
+            revealed = revealed.replace('builtins.', '')
+            revealed = revealed.replace('numpy.', '')
+            revealed = revealed.replace('typing.', '')
+            match[i] = (filepath, line_num, revealed)
         return match
 
     finally:
         os.chdir(cur)
 
 
-def _generate_test_cases(test_case_filename: str):
-    # Create code snippet for mypy to analyze
-    with open(os.path.join(TYPING_CASES_DIR, test_case_filename)) as f:
-        code = f.read()
-
-    revealed_types = _reveal_type_from_code(code)
-    expected_types = findall(r'# EXPECTED_TYPE: "([^"]+)"', code)
-    reveal_type_args = findall(r'reveal_type\((.*?)\)(?=(\s*?#))', code)
-    reveal_type_args = [x[0] for x in reveal_type_args]
-    assert len(expected_types) == len(revealed_types)
-    assert len(expected_types) == len(reveal_type_args)
-    return zip(reveal_type_args, revealed_types, expected_types)
-
-
-@pytest.mark.parametrize('case', _generate_test_cases('case_array_wrapper.py'))
-def test_array_wrapper(case):
-    arg, revealed, expected = case
-    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
+def _get_expected_types():
+    """Parse all case files and extract expected types."""
+    cases = []
+    pattern = r'^\s.*?reveal_type\((.*?)\)\s*?#\sEXPECTED_TYPE: "([^"]+)"'
+    for file in TEST_FILE_NAMES:
+        with open(os.path.join(TYPING_CASES_ABS_PATH, file)) as f:
+            lines = f.read()
+        for line_num, line in enumerate(lines.split('\n')):
+            match = re.search(pattern, line)
+            if match is not None:
+                arg, expected = match.groups()
+                cases.append((file, line_num + 1, arg, expected))
+    assert cases is not None
+    return cases
 
 
-@pytest.mark.parametrize('case', _generate_test_cases('case_validate_array_default.py'))
-def test_validate_array_default(case):
-    arg, revealed, expected = case
-    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
+def _generate_test_cases():
+    """Generate a list of line-by-line test cases from the typing test directory.
+
+    This function:
+        (1) calls mypy to get the revealed types, and
+        (2) parses the code files to get the `reveal_type(arg)` argument and the
+            expected type.
+
+    The two outputs are then merged to create individual test cases.
+    """
+    test_cases_dict = {}
+
+    def add_to_dict(filepath, line_num: str, key: str, val: str):
+        # Function for stuffing parsed data into a dict.
+        # We use a dict to allow for any entry to be made based on line number alone.
+        # This way, we can defer checking for any errors with the parsed data to test time.
+        nonlocal test_cases_dict
+        filename = os.path.basename(filepath)
+        line_num = int(line_num)
+        try:
+            test_cases_dict[filename]
+        except KeyError:
+            test_cases_dict[filename] = {}
+        try:
+            test_cases_dict[filename][line_num]
+        except KeyError:
+            test_cases_dict[filename][line_num] = {}
+        test_cases_dict[filename][line_num][key] = val
+
+    # run mypy
+    revealed_types: List[Tuple[str, str, str]] = _reveal_types()
+    for filepath, line_num, revealed in revealed_types:
+        add_to_dict(filepath, line_num, 'revealed', revealed)
+
+    # parse code files
+    expected_types: List[Tuple[str, str, str, str]] = _get_expected_types()
+    for filepath, line_num, arg, expected in expected_types:
+        add_to_dict(filepath, line_num, 'arg', arg)
+        add_to_dict(filepath, line_num, 'expected', expected)
+
+    # flatten dict
+    test_cases_list = []
+    for file, lines in test_cases_dict.items():
+        for line_num, content in sorted(lines.items()):
+            arg = content['arg'] if 'arg' in content else None
+            rev = content['revealed'] if 'revealed' in content else None
+            exp = content['expected'] if 'expected' in content else None
+            test_case = _TestCaseTuple(
+                file=file, line_num=line_num, arg=arg, expected=exp, revealed=rev
+            )
+            test_cases_list.append(test_case)
+
+    return test_cases_list
 
 
-@pytest.mark.parametrize('case', _generate_test_cases('case_validate_array_dtype_out.py'))
-def test_validate_array_dtype_out(case):
-    arg, revealed, expected = case
-    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'test_case' in metafunc.fixturenames:
+        test_cases = _generate_test_cases()
+        # Name test cases with file line number
+        ids = [f"{case[0]}-line-{case[1]}" for case in test_cases]
+        metafunc.parametrize('test_case', test_cases, ids=ids)
 
 
-@pytest.mark.parametrize('case', _generate_test_cases('case_validate_array_return_numpy.py'))
-def test_validate_array_return_numpy(case):
-    arg, revealed, expected = case
-    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
-
-
-@pytest.mark.parametrize('case', _generate_test_cases('case_validate_array_return_list.py'))
-def test_validate_array_return_list(case):
-    arg, revealed, expected = case
-    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
-
-
-@pytest.mark.parametrize('case', _generate_test_cases('case_validate_array_return_tuple.py'))
-def test_validate_array_return_tuple(case):
-    arg, revealed, expected = case
+def test_typing(test_case):
+    file, line_num, arg, expected, revealed = test_case
+    # Test set-up
+    assert file in TEST_FILE_NAMES
+    assert isinstance(line_num, int)
+    if arg is None or revealed is None or expected is None:
+        pytest.fail(
+            f"Test setup failed for test case in {file}:{line_num}. Got:\n"
+            f"\targ: {arg}\n"
+            f"\texpected: {expected}\n"
+            f"\trevealed: {revealed}\n"
+        )
+    # Do test
     assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
