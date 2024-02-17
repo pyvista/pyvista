@@ -22,8 +22,8 @@ from typing import List, Tuple
 from mypy import api as mypy_api
 import pytest
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-TYPING_CASES_REL_PATH = 'tests/core/typing'
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+TYPING_CASES_REL_PATH = 'tests/core/typing/cases'
 TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
 TYPING_CASES_ABS_PATH = os.path.join(PROJECT_ROOT, TYPING_CASES_REL_PATH)
 TEST_FILE_NAMES = os.listdir(TYPING_CASES_ABS_PATH)
