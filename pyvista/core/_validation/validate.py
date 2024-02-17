@@ -28,6 +28,7 @@ from pyvista.core._typing_core._array_like import (
     __NumberType,
     _ArrayLike,
     _ArrayLikeOrScalar,
+    _FiniteNestedList,
     _NumberType,
     _NumberUnion,
 )
@@ -122,6 +123,17 @@ def validate_array(  # numpydoc ignore=GL08
 
 
 ### LIST OVERLOADS
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: List[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: Optional[_ListReturnType] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[_NumberType]: ...
+
+
 # dtype_out unset
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
@@ -183,6 +195,17 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[Tuple[_NumberType]]: ...
 
 
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[Tuple[_NumberType]],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[List[_NumberType]]: ...
+
+
 # set dtype_out
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
@@ -207,6 +230,17 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[_NumberType]: ...
 
 
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[_NumberType]: ...
+
+
 # set dtype_out
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
@@ -222,7 +256,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ### NUMPY OVERLOADS
 # dtype_out unset
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
     /,
     *,
@@ -234,7 +268,7 @@ def validate_array(  # numpydoc ignore=GL08
 
 # set dtype_out
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
     /,
     *,
@@ -242,13 +276,25 @@ def validate_array(  # numpydoc ignore=GL08
     return_type: Optional[_NumpyReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
+
+
+# set return_type -> list
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: NumpyArray[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> _FiniteNestedList[_NumberType]: ...
 
 
 ### CATCH-ALL CASES
 # Everything else is cast to numpy
 # dtype_out unset
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
     /,
     *,
@@ -260,7 +306,7 @@ def validate_array(  # numpydoc ignore=GL08
 
 # set dtype_out
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
     /,
     *,
@@ -268,6 +314,18 @@ def validate_array(  # numpydoc ignore=GL08
     return_type: Optional[_NumpyReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
+
+
+# set return_type -> list
+@overload
+def validate_array(  # numpydoc ignore=GL08
+    array: _ArrayLike[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> _FiniteNestedList[_NumberType]: ...
 
 
 def validate_array(
@@ -1004,8 +1062,7 @@ def validate_number(
         shape = ()
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
-    # TODO: fix mypy ignore
-    return validate_array(num, **kwargs)  # type: ignore[return-value]
+    return validate_array(num, **kwargs)
 
 
 def validate_data_range(rng: Vector[_NumberType], /, **kwargs):

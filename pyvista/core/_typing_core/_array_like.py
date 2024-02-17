@@ -23,7 +23,7 @@ Some key differences include:
 
 import sys
 import typing
-from typing import TYPE_CHECKING, Any, Sequence, TypeVar, Union
+from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -62,6 +62,20 @@ else:
     np_dtype_floating = np.dtype[np.floating[Any]]
     np_dtype_integer = np.dtype[np.integer[Any]]
     NumpyArray = npt.NDArray[_NumberType]
+
+_FiniteNestedList = Union[
+    List[_NumberType],
+    List[List[_NumberType]],
+    List[List[List[_NumberType]]],
+    List[List[List[List[_NumberType]]]],
+]
+
+_FiniteNestedTuple = Union[
+    Tuple[_NumberType],
+    Tuple[Tuple[_NumberType]],
+    Tuple[Tuple[Tuple[_NumberType]]],
+    Tuple[Tuple[Tuple[Tuple[_NumberType]]]],
+]
 
 _ArrayLike1D = Union[
     NumpyArray[_NumberType],
