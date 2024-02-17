@@ -52,7 +52,7 @@ def test_multiple_lines_source():
 
 @pytest.fixture()
 def bunny():
-    return examples.download_bunny()
+    return examples.download_bunny_coarse()
 
 
 @pytest.mark.parametrize("is_negative", (True, False))
