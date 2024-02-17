@@ -86,8 +86,8 @@ class _TypedKwargs(TypedDict, total=False):
     name: str
 
 
-### SCALAR OVERLOADS
-# dtype_out unset
+# """SCALAR OVERLOADS"""
+# T -> T
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _NumberType,
@@ -99,7 +99,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> _NumberType: ...
 
 
-# set dtype_out
+# T1 -> T2
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _NumberType,
@@ -111,7 +111,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> __NumberType: ...
 
 
-# set return_type -> numpy
+# T -> NDArray[T]
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: _NumberType,
@@ -123,8 +123,8 @@ def validate_array(  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-### LIST OVERLOADS
-# dtype_out unset
+# """LIST OVERLOADS"""
+# List[List[T]] -> List[List[T]]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[List[_NumberType]],
@@ -136,7 +136,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> List[List[_NumberType]]: ...
 
 
-# set dtype_out
+# List[List[T1]] -> List[List[T2]]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[List[_NumberType]],
@@ -148,6 +148,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> List[List[__NumberType]]: ...
 
 
+# List[List[T]] -> Tuple[Tuple[T]]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[List[_NumberType]],
@@ -159,7 +160,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[Tuple[_NumberType]]: ...
 
 
-# dtype_out unset
+# List[T] -> List[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[_NumberType],
@@ -171,7 +172,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> List[_NumberType]: ...
 
 
-# set dtype_out
+# List[T1] -> List[T2]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[_NumberType],
@@ -183,17 +184,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> List[__NumberType]: ...
 
 
-@overload
-def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
-    array: List[_NumberType],
-    /,
-    *,
-    dtype_out: None = None,
-    return_type: Optional[_ListReturnType] = ...,
-    **kwargs: Unpack[_TypedKwargs],
-) -> List[_NumberType]: ...
-
-
+# List[T] -> Tuple[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: List[_NumberType],
@@ -205,8 +196,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[_NumberType]: ...
 
 
-### TUPLE OVERLOADS
-# dtype_out unset
+# """TUPLE OVERLOADS"""
+# Tuple[Tuple[T]] -> Tuple[Tuple[T]]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[Tuple[_NumberType]],
@@ -218,6 +209,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[Tuple[_NumberType]]: ...
 
 
+# Tuple[Tuple[T]] -> List[List[T]]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[Tuple[_NumberType]],
@@ -229,7 +221,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> List[List[_NumberType]]: ...
 
 
-# set dtype_out
+# Tuple[Tuple[T1]] -> Tuple[Tuple[T2]]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[Tuple[_NumberType]],
@@ -241,7 +233,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[Tuple[__NumberType]]: ...
 
 
-# dtype_out unset
+# Tuple[T] -> Tuple[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[_NumberType, ...],
@@ -253,6 +245,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[_NumberType]: ...
 
 
+# Tuple[T] -> List[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[_NumberType],
@@ -264,7 +257,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> List[_NumberType]: ...
 
 
-# set dtype_out
+# Tuple[T1] -> Tuple[T2]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: Tuple[_NumberType, ...],
@@ -276,8 +269,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[__NumberType]: ...
 
 
-### NUMPY OVERLOADS
-# dtype_out unset
+# """NUMPY OVERLOADS"""
+# NDArray[T] -> NDArray[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -289,7 +282,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-# set dtype_out
+# NDArray[T1] -> NDArray[T2]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -301,7 +294,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> NumpyArray[__NumberType]: ...
 
 
-# set return_type -> list
+# NDArray[T] -> NestedList[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -313,6 +306,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> _FiniteNestedList[_NumberType]: ...
 
 
+# NDArray[T] -> NestedTuple[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -324,9 +318,9 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> _FiniteNestedTuple[_NumberType]: ...
 
 
-### CATCH-ALL CASES
-# Everything else is cast to numpy
-# dtype_out unset
+# """ARRAY-LIKE OVERLOADS"""
+# These are general catch-all cases for anything not overloaded explicitly
+# ArrayLike[T] -> NDArray[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
@@ -338,7 +332,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-# set dtype_out
+# ArrayLike[T1] -> NDArray[T2]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
@@ -350,7 +344,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> NumpyArray[__NumberType]: ...
 
 
-# set return_type -> list
+# ArrayLike[T] -> NestedList[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
@@ -362,7 +356,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> _FiniteNestedList[_NumberType]: ...
 
 
-# set return_type -> tuple
+# ArrayLike[T] -> NestedTuple[T]
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
