@@ -14,23 +14,23 @@ from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutu
 radius = 0.5
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere():
     # this shadows the main sphere fixture from conftest!
     return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere_shifted():
     return pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere_dense():
     return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 
-@pytest.fixture
+@pytest.fixture()
 def cube_dense():
     return pv.Cube()
 
@@ -1061,7 +1061,7 @@ def test_n_faces_strict():
     assert mesh.n_faces_strict == 1
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_n_faces():
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False

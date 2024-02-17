@@ -60,29 +60,29 @@ class PlotterChanged:
         return changed
 
 
-@pytest.fixture
+@pytest.fixture()
 def pl():
     p = pv.Plotter(window_size=(600, 600))
     p.background_color = 'w'
     return p
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_2d():
     return pv.Chart2D()
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_box():
     return pv.ChartBox([[1, 2, 3]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_pie():
     return pv.ChartPie([1, 2, 3])
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_mpl():
     import matplotlib.pyplot as plt
 
@@ -91,42 +91,42 @@ def chart_mpl():
     return pv.ChartMPL(f)
 
 
-@pytest.fixture
+@pytest.fixture()
 def line_plot_2d(chart_2d):
     return chart_2d.line([0, 1, 2], [3, 1, 2])
 
 
-@pytest.fixture
+@pytest.fixture()
 def scatter_plot_2d(chart_2d):
     return chart_2d.scatter([0, 1, 2], [3, 1, 2])
 
 
-@pytest.fixture
+@pytest.fixture()
 def area_plot(chart_2d):
     return chart_2d.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
 
 
-@pytest.fixture
+@pytest.fixture()
 def bar_plot(chart_2d):
     return chart_2d.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def stack_plot(chart_2d):
     return chart_2d.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def box_plot(chart_box):
     return chart_box.plot
 
 
-@pytest.fixture
+@pytest.fixture()
 def pie_plot(chart_pie):
     return chart_pie.plot
 
 
-@pytest.fixture
+@pytest.fixture()
 def axis(chart_2d):
     # Test properties, using the y axis of a 2D chart
     chart_2d.line([0, 1], [1, 10])
