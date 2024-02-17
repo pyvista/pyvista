@@ -80,3 +80,9 @@ def test_validate_array_return_numpy(case):
 def test_validate_array_return_list(case):
     arg, revealed, expected = case
     assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
+
+
+@pytest.mark.parametrize('case', _generate_test_cases('case_validate_array_return_tuple.py'))
+def test_validate_array_return_tuple(case):
+    arg, revealed, expected = case
+    assert f"{arg} -> {revealed}" == f"{arg} -> {expected}"
