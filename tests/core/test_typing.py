@@ -6,9 +6,10 @@ the format:
 
     reveal_type(arg)  # EXPECTED_TYPE: "<T>>"
 
-where ``arg`` is callable, and <T> is the expected revealed type returned by
-mypy. (Note: the output types from mypy are truncated with the module names
-remove, e.g. `typing.Sequence` -> `Sequence`, `builtins.float` -> `float`,
+where `arg` is any argument you want mypy to analyze, and <T> is the expected
+revealed type returned by mypy. (Note: the output types from mypy are truncated
+with the module names removed, e.g. `typing.Sequence` -> `Sequence`,
+`builtins.float` -> `float`,
 etc.
 
 """
@@ -19,8 +20,6 @@ import os
 import re
 from typing import List, Tuple
 
-_TestCaseTuple = namedtuple('_TestCaseTuple', ['file', 'line_num', 'arg', 'expected', 'revealed'])
-
 from mypy import api as mypy_api
 import pytest
 
@@ -29,6 +28,8 @@ TYPING_CASES_REL_PATH = 'tests/core/typing'
 TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
 TYPING_CASES_ABS_PATH = os.path.join(PROJECT_ROOT, TYPING_CASES_REL_PATH)
 TEST_FILE_NAMES = os.listdir(TYPING_CASES_ABS_PATH)
+
+_TestCaseTuple = namedtuple('_TestCaseTuple', ['file', 'line_num', 'arg', 'expected', 'revealed'])
 
 
 def _reveal_types():
@@ -73,8 +74,8 @@ def _get_expected_types():
     pattern = r'^\s.*?reveal_type\((.*?)\)\s*?#\sEXPECTED_TYPE: "([^"]+)"'
     for file in TEST_FILE_NAMES:
         with open(os.path.join(TYPING_CASES_ABS_PATH, file)) as f:
-            lines = f.read()
-        for line_num, line in enumerate(lines.split('\n')):
+            split_lines = f.read().splitlines()
+        for line_num, line in enumerate(split_lines):
             match = re.search(pattern, line)
             if match is not None:
                 arg, expected = match.groups()
