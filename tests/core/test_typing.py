@@ -7,10 +7,9 @@ the format:
     reveal_type(arg)  # EXPECTED_TYPE: "<T>>"
 
 where `arg` is any argument you want mypy to analyze, and <T> is the expected
-revealed type returned by mypy. (Note: the output types from mypy are truncated
+revealed type returned by mypy. Note: the output types from mypy are truncated
 with the module names removed, e.g. `typing.Sequence` -> `Sequence`,
-`builtins.float` -> `float`,
-etc.
+`builtins.float` -> `float`, etc.
 
 """
 
@@ -50,7 +49,7 @@ def _reveal_types():
         stdout = str(result[0])
 
         # group revealed types by (filepath), (line num), and (type)
-        pattern = r'^(.*?):(.*?):\snote: Revealed type is "([^"]+)"'
+        pattern = r'^(.*?):(\d*?):\snote: Revealed type is "([^"]+)"'
         match = re.findall(pattern, stdout, re.MULTILINE)
         assert match is not None
 
