@@ -101,5 +101,5 @@ jobs:
           overwrites-pull-request-comment: false
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN2 }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID2 }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID2 }}
         timeout-minutes: 10
