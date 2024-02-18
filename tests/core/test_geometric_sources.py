@@ -364,4 +364,13 @@ def test_plane_source():
 
 
 def test_superquadric_source():
-    _ = pv.SuperquadricSource()
+    algo = pv.SuperquadricSource()
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.scale == (1.0, 1.0, 1.0)
+    assert algo.size == 0.5
+    assert algo.theta_roundness == 1.0
+    assert algo.phi_roundness == 1.0
+    assert algo.theta_resolution == 16
+    assert algo.phi_resolution == 16
+    assert not algo.toroidal
+    assert algo.thickness == 1 / 3
