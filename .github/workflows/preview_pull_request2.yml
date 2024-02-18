@@ -11,11 +11,7 @@ jobs:
   doc:
     name: Build Documentation
     if: github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@pyvista-bot preview') && (
-      github.event.comment.user.login == 'banesullivan' ||
-      github.event.comment.user.login == 'tkoyama010' ||
-      github.event.comment.user.login == 'akaszynski'
-      )
+      contains(github.event.comment.body, '@pyvista-bot preview')
     permissions:
       pull-requests: write
     runs-on: ubuntu-20.04
