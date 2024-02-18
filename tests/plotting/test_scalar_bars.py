@@ -65,7 +65,7 @@ def test_clear(scalar_bars):
 
 def test_too_many_scalar_bars(sphere):
     pl = pv.Plotter()
-    with pytest.raises(RuntimeError, match='Maximum number of color'):
+    with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
         for i in range(100):
             mesh = pv.Sphere()
             mesh[str(i)] = range(mesh.n_points)
