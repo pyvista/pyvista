@@ -1954,3 +1954,11 @@ class PlaneSource(_vtk.vtkPlaneSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+@no_new_attr
+class SuperquadricSource:
+    """Create superquadric source.
+
+    .. versionadded:: 0.44
+    """
