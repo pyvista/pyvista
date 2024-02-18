@@ -1032,6 +1032,8 @@ def test_validate_axes(name):
     # test bad input
     with pytest.raises(ValueError, match=f"{name} cannot be parallel."):
         validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]], name=name)
+    with pytest.raises(ValueError, match=f"{name} cannot be parallel."):
+        validate_axes([[1, 2, 3], [2, 4, 6], [0, 1, 0]], name=name)
     with pytest.raises(ValueError, match="Axes cannot be parallel."):
         validate_axes([[0, 1, 0], [1, 0, 0], [0, 1, 0]])
     with pytest.raises(ValueError, match=f"{name} cannot be zeros."):

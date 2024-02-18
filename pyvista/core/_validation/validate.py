@@ -932,16 +932,19 @@ def validate_axes(
     axes_array = np.vstack((vector0, vector1, vector2))
     check_finite(axes_array, name=name)
 
-    if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
-        np.dot(axes_array[0], axes_array[2]), 1
-    ):
-        raise ValueError(f"{name} cannot be parallel.")
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
         raise ValueError(f"{name} cannot be zeros.")
 
-    # Check orthogonality and orientation using cross products
-    # Normalize axes first since norm values are needed for cross product calc
+    # Normalize axes for dot and cross product calcs
     axes_norm = axes_array / np.linalg.norm(axes_array, axis=1).reshape((3, 1))
+
+    # Check non-parallel
+    if np.isclose(np.dot(axes_norm[0], axes_norm[1]), 1) or np.isclose(
+        np.dot(axes_norm[0], axes_norm[2]), 1
+    ):
+        raise ValueError(f"{name} cannot be parallel.")
+
+    # Check orthogonality
     cross_0_1 = np.cross(axes_norm[0], axes_norm[1])
     cross_1_2 = np.cross(axes_norm[1], axes_norm[2])
 
@@ -951,6 +954,7 @@ def validate_axes(
     ):
         raise ValueError(f"{name} are not orthogonal.")
 
+    # Check orientation
     if must_have_orientation:
         dot = np.dot(cross_0_1, axes_norm[2])
         if must_have_orientation == 'right' and dot < 0:
