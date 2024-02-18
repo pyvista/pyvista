@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     reveal_type(validate_array(True, dtype_out=float))  # EXPECTED_TYPE: "float"
 
     # numpy arrays
-    reveal_type(validate_array(np.array(1.0), dtype_out=int))     # EXPECTED_TYPE: "ndarray[Any, dtype[int]]"
-    reveal_type(validate_array(np.array(1), dtype_out=bool))      # EXPECTED_TYPE: "ndarray[Any, dtype[bool]]"
-    reveal_type(validate_array(np.array(True), dtype_out=float))  # EXPECTED_TYPE: "ndarray[Any, dtype[float]]"
+    reveal_type(validate_array(np.array(1.0, dtype=float), dtype_out=int))    # EXPECTED_TYPE: "ndarray[Any, dtype[int]]"
+    reveal_type(validate_array(np.array(1, dtype=int), dtype_out=bool))       # EXPECTED_TYPE: "ndarray[Any, dtype[bool]]"
+    reveal_type(validate_array(np.array(True, dtype=bool), dtype_out=float))  # EXPECTED_TYPE: "ndarray[Any, dtype[float]]"
 
     # lists
     reveal_type(validate_array([1.0], dtype_out=int))           # EXPECTED_TYPE: "list[int]"

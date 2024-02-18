@@ -1183,7 +1183,7 @@ def check_iterable_items(
         raise
 
 
-def check_contains(container: Any, /, *, must_contain: Any, name: str = 'Input'):
+def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input'):
     """Check if an item is in a container.
 
     Parameters
