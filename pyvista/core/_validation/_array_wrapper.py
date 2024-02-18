@@ -359,4 +359,6 @@ def _get_dtype_from_iterable(iterable: Iterable[_NumberType]):
     elif dtypes == {bool}:
         return cast(Type[_NumberType], bool)
     else:
-        raise TypeError(f"Unexpected error: dtype should be numeric, got {dtypes} instead.")
+        raise TypeError(  # pragma: no cover
+            f"Unexpected error: dtype should be numeric, got {dtypes} instead."
+        )

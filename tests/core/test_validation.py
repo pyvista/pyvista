@@ -888,19 +888,10 @@ def test_check_sorted(shape, axis, ascending, strict, as_list):
             _check_sorted_params(arr_strict_ascending)
         return
 
-    def maybe_as_list(_input):
-        if as_list and _input.ndim == 1:
-            return _input.tolist()
-        else:
-            pytest.skip(
-                'Only flat 1D sequences are tests as-is otherwise the '
-                'input is cast to numpy which is covered by other test cases.'
-            )
-
-    arr_ascending = maybe_as_list(arr_ascending)
-    arr_strict_ascending = maybe_as_list(arr_strict_ascending)
-    arr_descending = maybe_as_list(arr_descending)
-    arr_strict_descending = maybe_as_list(arr_strict_descending)
+    arr_ascending = arr_ascending.tolist() if as_list else arr_ascending
+    arr_strict_ascending = arr_strict_ascending.tolist() if as_list else arr_strict_ascending
+    arr_descending = arr_descending.tolist() if as_list else arr_descending
+    arr_strict_descending = arr_strict_descending.tolist() if as_list else arr_strict_descending
 
     if axis is None and not as_list and arr_ascending.ndim > 1:
         # test that axis=None will flatten array and cause it not to be sorted for higher dimension arrays
@@ -1382,6 +1373,8 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     assert wrapped_wrapped.ndim == expected.ndim
     assert wrapped_abstract.size == expected.size
     assert type(wrapped_wrapped) is expected.wrapper
+
+    assert repr(wrapped_wrapped) == f"{expected.wrapper.__name__}({wrapped_wrapped._array!r})"
 
 
 ragged_arrays = (
