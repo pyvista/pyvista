@@ -4122,7 +4122,7 @@ def pytest_generate_tests(metafunc):
         negative_cases = [(name, func, 'neg') for name, func in functions]
         test_cases = [*positive_cases, *negative_cases]
 
-        # Name test cases with file line number
+        # Name test cases using object name and direction
         ids = [f"{case[0]}-{case[2]}" for case in test_cases]
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
