@@ -260,10 +260,11 @@ def check_sorted(
         func_seq = lambda op, arg1, arg2: all(op(x, y) for (x, y) in zip(arg1, arg2))
         is_sorted = _do_check(func_seq, wrapped._array[first_slice], wrapped._array[second_slice])
     else:
-        if axis is None and ndim > 1:
+        if axis is None and ndim >= 1:
             # Emulate np.sort(), which flattens array when axis is None
             array_check = wrapped._array.flatten()
             ndim = 1
+            axis = 0
         else:
             array_check = cast(NumpyArray[_NumberType], wrapped._array)
 
