@@ -93,7 +93,7 @@ jobs:
         with:
           publish-dir: doc/_build/html/
           production-deploy: false
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: true
           enable-commit-comment: false
