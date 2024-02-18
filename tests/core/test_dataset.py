@@ -976,7 +976,6 @@ def test_find_cells_intersecting_line():
     else:
         with pytest.raises(VTKVersionError):
             indices = mesh.find_cells_intersecting_line(linea, lineb)
-        assert len(indices) == 1
 
 
 def test_find_cells_within_bounds():

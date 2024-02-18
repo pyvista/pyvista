@@ -695,6 +695,11 @@ class Text3DSource(vtkVectorText):
                     f'{self.__class__.__name__}'
                 )
 
+    def __del__(self):
+        """Delete filters."""
+        self._tri_filter = None
+        self._extrude_filter = None
+
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
         """Return or set the text string."""

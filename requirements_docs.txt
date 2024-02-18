@@ -14,10 +14,10 @@ numpydoc==1.6.0
 osmnx==1.8.1
 pydata-sphinx-theme==0.15.2
 pypandoc==1.12
-pytest-sphinx==0.5.0
+pytest-sphinx==0.6.0
 scipy==1.12.0
 Sphinx==7.1.2
-sphinx-autobuild==2021.3.14
+sphinx-autobuild==2024.2.4
 sphinx-copybutton==0.5.2
 sphinx-design==0.5.0
 sphinx-gallery==0.15.0
@@ -26,7 +26,7 @@ sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.0
 sphinxcontrib-websupport==1.2.7
 sympy==1.12
-trame==3.5.1
-trame-vtk==2.8.0
+trame==3.5.2
+trame-vtk==2.8.5
 trame-vuetify==2.4.2
 trimesh==4.1.0
