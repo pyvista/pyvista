@@ -1029,6 +1029,12 @@ def test_validate_axes(name):
     assert np.array_equal(axes, axes_right)
     assert np.issubdtype(axes.dtype, np.floating)
 
+    # test with non-identity orthogonal axes
+    from pyvista.core.utilities.transformations import axis_angle_rotation
+
+    axes = axis_angle_rotation(axis=(1, 2, 3), angle=(30))[:3, :3]
+    _ = validate_axes(axes)
+
     # test bad input
     with pytest.raises(ValueError, match=f"{name} cannot be parallel."):
         validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]], name=name)
