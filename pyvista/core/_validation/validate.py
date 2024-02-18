@@ -124,9 +124,21 @@ def validate_array(  # numpydoc ignore=GL08
     /,
     *,
     dtype_out: None = None,
-    return_type: Optional[_NumpyReturnType] = ...,
+    return_type: _NumpyReturnType = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
+
+
+# T1 -> NDArray[T2]
+@overload
+def validate_array(  # numpydoc ignore=GL08
+    array: _NumberType,
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: _NumpyReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> NumpyArray[__NumberType]: ...
 
 
 # """LIST OVERLOADS"""
