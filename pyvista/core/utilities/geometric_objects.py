@@ -22,6 +22,7 @@ as well as some pure-python helpers.
 from itertools import product
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -404,6 +405,116 @@ def Sphere(
     surf = sphere.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
+    return surf
+
+
+def Capsule(
+    radius=0.5,
+    direction=(0.0, 0.0, 1.0),
+    fromto=((0.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
+    theta_resolution=30,
+    phi_resolution=30,
+    start_theta=0.0,
+    end_theta=360.0,
+    start_phi=0.0,
+    end_phi=180.0,
+):
+    """Create a capsule.
+
+    A capsule is a deformation of a spherical surface, where two
+    hemispheres are displaced at a specified length.
+
+    Parameters
+    ----------
+    radius : float, default: 0.5
+        The radius of the sphere before defomration; capsule's girth.
+
+    fromto : sequence[sequence[float]], default: ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0))
+        The two points that define the capsule's axis.
+        ``fromto=(a, b)`` specifies the length to be ||b - a|| and the hemisphere
+        centers to be at ``a`` and ``b``.
+        The center the capsule is computed as ``(a + b) / 2``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
+    theta_resolution : int, default: 30
+        Set the number of points in the azimuthal direction (ranging
+        from ``start_theta`` to ``end_theta``).
+
+    phi_resolution : int, default: 30
+        Set the number of points in the polar direction (ranging from
+        ``start_phi`` to ``end_phi``).
+
+    start_theta : float, default: 0.0
+        Starting azimuthal angle in degrees ``[0, 360]``.
+
+    end_theta : float, default: 360.0
+        Ending azimuthal angle in degrees ``[0, 360]``.
+
+    start_phi : float, default: 0.0
+        Starting polar angle in degrees ``[0, 180]``.
+
+    end_phi : float, default: 180.0
+        Ending polar angle in degrees ``[0, 180]``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Sphere mesh.
+
+    See Also
+    --------
+    pyvista.Icosphere : Sphere created from projection of icosahedron.
+    pyvista.SolidSphere : Sphere that fills 3D space.
+
+    Examples
+    --------
+    Create a capsule using default parameters.
+
+    >>> import pyvista as pv
+    >>> capsule = pv.Capsule()
+    >>> capsule.plot(show_edges=True)
+
+    Create a capsule pointing from (0, 1, 0) to (0, 0, 1) with a radius of 0.05.
+
+    >>> capsule = pv.Capsule(fromto=((0, 1, 0), (0, 0, 1)), radius=0.05)
+    >>> out = capsule.plot(show_edges=True)
+    """
+    sphere = SphereSource(
+        radius=radius,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        start_theta=start_theta,
+        end_theta=end_theta,
+        start_phi=start_phi,
+        end_phi=end_phi,
+    )
+    surf = sphere.output
+    surf.rotate_y(90, inplace=True)  # north pole points +z
+
+    # Length of the capsule is simply the L2 distance between from and to in `fromto`
+    displacement = np.array(fromto[1]) - np.array(fromto[0])
+    displacement[np.abs(displacement) < 1e-7] = 0  # Suppress small values for correct atan2
+    center = (np.array(fromto[0]) + np.array(fromto[1])) / 2
+    length = np.linalg.norm(displacement)
+
+    # Y-axis displacements applied to the two hemispheres according to the length
+    surf.points[:surf.n_points // 2, 1] += length / 2
+    surf.points[surf.n_points // 2:, 1] -= length / 2
+    surf.rotate_z(90, inplace=True)  # capsule points towards north pole
+
+    # Then we apply rotation to match the displacement vector
+    theta = -np.arccos(displacement[2] / length)
+    phi = -np.arctan2(displacement[1], displacement[0])
+    rot = Rotation.from_euler("YXZ", [theta, phi, 0], degrees=False)
+    m = rot.as_matrix()
+    surf.points = np.einsum("ij,ni->nj", m, surf.points)
+
+    # Then offset the surface
+    translate(surf, center, direction)
+
     return surf
 
 

@@ -76,6 +76,7 @@ from .geometric_objects import (
     SolidSphere,
     SolidSphereGeneric,
     Sphere,
+    Capsule,
     Superquadric,
     Tetrahedron,
     Text3D,
