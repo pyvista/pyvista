@@ -780,7 +780,7 @@ Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have make a Pull Request. You can comment
-`@pyvista-bot preview` on a pull request to preview documentation.
+`github-actions preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
 new contributors kindly request them to comment command.
