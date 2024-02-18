@@ -4,7 +4,7 @@ This test will automatically analyze all files in the test cases directory.
 To add new test cases, simply add a new .py file with each test case following
 the format:
 
-    reveal_type(arg)  # EXPECTED_TYPE: "<T>>"
+    reveal_type(arg)  # EXPECTED_TYPE: "<T>"
 
 where `arg` is any argument you want mypy to analyze, and <T> is the expected
 revealed type returned by mypy. Note: the output types from mypy are truncated

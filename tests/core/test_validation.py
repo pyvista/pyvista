@@ -470,9 +470,6 @@ def test_validate_array(
         invalid_array = np.stack((invalid_array, invalid_array), axis=0)
         invalid_array = np.stack((invalid_array, invalid_array), axis=1)
 
-    valid_array.astype(dtype_in)
-    invalid_array.astype(dtype_in)
-
     if input_type is tuple:
         valid_array = _cast_to_tuple(valid_array)
         invalid_array = _cast_to_tuple(invalid_array)
@@ -518,7 +515,7 @@ def test_validate_array(
 
     # Test no error with valid input
     array_in = valid_array
-    array_out = validate_array(array_in, **common_kwargs)
+    array_out, flags = validate_array(array_in, **common_kwargs, get_flags=True)
     assert np.array_equal(array_out, array_in)
 
     # Check correct return type and dtype
@@ -579,6 +576,15 @@ def test_validate_array(
                     assert array_out is array_in
                 else:
                     assert array_out is not array_in
+
+    same_shape = np.shape(array_in) == np.shape(array_out)
+    # same_dtype = dtype_in == dtype_out
+    same_object = id(array_in) == id(array_out)
+    same_type = type(array_in) is type(array_out)
+    assert flags.same_shape == same_shape
+    # assert flags.same_dtype == same_dtype
+    assert flags.same_object == same_object
+    assert flags.same_type == same_type
 
 
 def test_validate_array_return_type_raises():

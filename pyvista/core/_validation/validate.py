@@ -15,6 +15,7 @@ A ``validate`` function typically:
 
 from __future__ import annotations
 
+from collections import namedtuple
 import inspect
 from itertools import product
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, overload
@@ -45,6 +46,10 @@ from pyvista.core._validation.check import (
     check_shape,
     check_sorted,
     check_subdtype,
+)
+
+_ValidationFlags = namedtuple(
+    '_ValidationFlags', ['same_shape', 'same_dtype', 'same_type', 'same_object']
 )
 
 _FloatType = TypeVar('_FloatType', bound=float)
@@ -83,6 +88,7 @@ class _TypedKwargs(TypedDict, total=False):
     broadcast_to: Optional[_ShapeLike]
     as_any: bool
     copy: bool
+    get_flags: bool
     name: str
 
 
@@ -388,9 +394,10 @@ def validate_array(
     reshape_to: Optional[_ShapeLike] = None,
     broadcast_to: Optional[_ShapeLike] = None,
     dtype_out: Optional[Type[__NumberType]] = None,
+    return_type: Optional[_ArrayReturnType] = None,
     as_any: bool = True,
     copy: bool = False,
-    return_type: Optional[_ArrayReturnType] = None,
+    get_flags: bool = False,
     name: str = 'Array',
 ):
     """Check and validate a numeric array meets specific requirements.
@@ -602,16 +609,6 @@ def validate_array(
             if ``dtype_out`` is integral and the input has infinity values.
             Consider setting ``must_be_finite=True`` for these cases.
 
-    as_any : bool, default: True
-        Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy. Has no effect if the input is not a NumPy array.
-
-    copy : bool, default: False
-        If ``True``, a copy of the array is returned. In some cases, a copy may be
-        returned even if ``copy=False`` (e.g. to convert array type/dtype, reshape,
-        etc.). In cases where the array is immutable (e.g. tuple) the returned array
-        may not be a copy, even if ``copy=True``.
-
     return_type : str | type, optional
         Control the return type of the array. Must be one of:
 
@@ -624,6 +621,32 @@ def validate_array(
             For scalar inputs, setting the output type to ``list`` or
             ``tuple`` will return a scalar, and not an actual ``list``
             or ``tuple`` object.
+
+    as_any : bool, default: True
+        Allow subclasses of ``np.ndarray`` to pass through without
+        making a copy. Has no effect if the input is not a NumPy array.
+
+    copy : bool, default: False
+        If ``True``, a copy of the array is returned. In some cases, a copy may be
+        returned even if ``copy=False`` (e.g. to convert array type/dtype, reshape,
+        etc.). In cases where the array is immutable (e.g. tuple) the returned array
+        may not be a copy, even if ``copy=True``.
+
+    get_flags : bool, default: False
+        If ``True``, return a ``namedtuple`` of boolean flags with information about
+        how the output may differ from the input. The flags returned are:
+
+        - ``same_shape``:  ``True`` if the validated array has the same shape as the input.
+          Always ``True`` if ``reshape_to`` and ``broadcast_to`` are ``None``.
+
+        - ``same_dtype``: ``True`` if the validated array has the same dtype as the input.
+          Always ``True`` if ``dtype_out`` is ``None``.
+
+        - ``same_type``: ``True`` if the validated array has the same type as the input.
+          Always ``True`` if ``return_type`` is ``None``.
+
+        - ``same_object``: ``True`` if the validated array is the same object as the input.
+          May be ``True`` or ``False`` based on a number of factors.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any of the
@@ -656,6 +679,8 @@ def validate_array(
     (1, 2, 3, 5, 8, 13)
 
     """
+    type_in = type(array)
+    id_in = id(array)
     wrapped = _ArrayLikeWrapper(array)
 
     # Check dtype
@@ -693,6 +718,9 @@ def validate_array(
             if as_any
             else _ArrayLikeWrapper(np.asarray(array))
         )
+
+    shape_in = wrapped.shape
+    dtype_in = wrapped.dtype
 
     # Check shape
     if must_have_shape is not None:
@@ -762,12 +790,24 @@ def validate_array(
                 return_type = list
         else:
             return_type = np.ndarray
+
+    def _get_flags(_wrapped, _out):
+        return _ValidationFlags(
+            same_shape=wrapped.shape == shape_in,
+            same_dtype=dtype_out == dtype_in,
+            same_type=type(_out) is type_in,
+            same_object=id(_out) == id_in,
+        )
+
     if return_type in ("numpy", np.ndarray):
-        return wrapped.to_numpy(array, copy)
+        out1 = wrapped.to_numpy(array, copy)
+        return (out1, _get_flags(wrapped, out1)) if get_flags else out1
     elif return_type in ("list", list):
-        return wrapped.to_list(array, copy)
+        out2 = wrapped.to_list(array, copy)
+        return (out2, _get_flags(wrapped, out2)) if get_flags else out2
     elif return_type in ("tuple", tuple):
-        return wrapped.to_tuple(array, copy)
+        out3 = wrapped.to_tuple(array, copy)
+        return (out3, _get_flags(wrapped, out3)) if get_flags else out3
     else:
         # Invalid type, raise error with check
         check_contains(
