@@ -794,7 +794,7 @@ def validate_array(
     def _get_flags(_wrapped, _out):
         return _ValidationFlags(
             same_shape=wrapped.shape == shape_in,
-            same_dtype=dtype_out == dtype_in,
+            same_dtype=np.dtype(dtype_out) == np.dtype(dtype_in),
             same_type=type(_out) is type_in,
             same_object=id(_out) == id_in,
         )

@@ -580,7 +580,7 @@ def test_validate_array(
                     assert array_out is not array_in
 
     same_shape = np.shape(array_in) == np.shape(array_out)
-    same_dtype = dtype_in == dtype_out
+    same_dtype = np.array(array_in).dtype == np.dtype(dtype_out)
     same_object = id(array_in) == id(array_out)
     same_type = type(array_in) is type(array_out)
     assert flags.same_shape == same_shape
