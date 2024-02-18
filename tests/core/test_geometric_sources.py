@@ -361,3 +361,7 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+
+
+def test_superquadric_source():
+    _ = pv.SuperquadricSource()
