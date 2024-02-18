@@ -12,7 +12,7 @@ DiscSource
 PolygonSource
 vtkPyramid
 PlatonicSolidSource
-vtkSuperquadricSource
+SuperquadricSource
 Text3DSource
 
 as well as some pure-python helpers.
@@ -38,6 +38,7 @@ from .geometric_sources import (
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
+    SuperquadricSource,
     Text3DSource,
     translate,
 )
@@ -2042,18 +2043,18 @@ def Superquadric(
     >>> superquadric.plot(show_edges=True)
 
     """
-    superquadricSource = _vtk.vtkSuperquadricSource()
-    superquadricSource.SetCenter(center)
-    superquadricSource.SetScale(scale)
-    superquadricSource.SetSize(size)
-    superquadricSource.SetThetaRoundness(theta_roundness)
-    superquadricSource.SetPhiRoundness(phi_roundness)
-    superquadricSource.SetThetaResolution(round(theta_resolution / 4) * 4)
-    superquadricSource.SetPhiResolution(round(phi_resolution / 8) * 8)
-    superquadricSource.SetToroidal(toroidal)
-    superquadricSource.SetThickness(thickness)
-    superquadricSource.Update()
-    return wrap(superquadricSource.GetOutput())
+    source = SuperquadricSource(
+        center=center,
+        scale=scale,
+        size=size,
+        theta_roundness=theta_roundness,
+        phi_roundness=phi_roundness,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        toroidal=toroidal,
+        thickness=thickness,
+    )
+    return source.output
 
 
 def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):

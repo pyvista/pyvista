@@ -2221,3 +2221,15 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
             Superquadric ring thickness.
         """
         self.SetThickness(thickness)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
