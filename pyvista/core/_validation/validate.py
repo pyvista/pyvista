@@ -263,6 +263,18 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Tuple[Tuple[__NumberType]]: ...
 
 
+# Tuple[Tuple[T1]] -> List[List[T2]]
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[Tuple[_NumberType, ...]],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[List[__NumberType]]: ...
+
+
 # Tuple[T] -> Tuple[T]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
@@ -297,6 +309,18 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     return_type: Optional[_TupleReturnType] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[__NumberType]: ...
+
+
+# Tuple[T1] -> List[T2]
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: Tuple[_NumberType, ...],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> List[__NumberType]: ...
 
 
 # """NUMPY OVERLOADS"""
@@ -388,7 +412,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 
 # ArrayLike[T] -> NestedTuple[T]
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
     /,
     *,
@@ -398,8 +422,9 @@ def validate_array(  # numpydoc ignore=GL08
 ) -> _FiniteNestedTuple[_NumberType]: ...
 
 
+# ArrayLike[T1] -> NestedTuple[T2]
 @overload
-def validate_array(  # numpydoc ignore=GL08
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _ArrayLike[_NumberType],
     /,
     *,
@@ -407,6 +432,18 @@ def validate_array(  # numpydoc ignore=GL08
     return_type: _TupleReturnType = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> _FiniteNestedTuple[__NumberType]: ...
+
+
+# ArrayLike[T1] -> NestedList[T2]
+@overload
+def validate_array(  # numpydoc ignore=GL08
+    array: _ArrayLike[_NumberType],
+    /,
+    *,
+    dtype_out: Type[__NumberType] = ...,
+    return_type: _ListReturnType = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> _FiniteNestedList[__NumberType]: ...
 
 
 def validate_array(
