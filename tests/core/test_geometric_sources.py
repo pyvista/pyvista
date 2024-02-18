@@ -15,7 +15,7 @@ def test_cone_source():
     assert algo.radius == 0.5
     assert algo.capping
     assert algo.resolution == 6
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         algo = pv.ConeSource(angle=0.0, radius=0.0)
     algo = pv.ConeSource(angle=0.0)
     assert algo.angle == 0.0
@@ -55,8 +55,8 @@ def bunny():
     return examples.download_bunny_coarse()
 
 
-@pytest.mark.parametrize("is_negative", (True, False))
-@pytest.mark.parametrize("delta", ([0, 0, 0], [1e-8, 0, 0], [0, 0, 1e-8]))
+@pytest.mark.parametrize("is_negative", [True, False])
+@pytest.mark.parametrize("delta", [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
 def test_translate_direction_collinear(is_negative, delta, bunny):
     mesh_in = bunny
     direction = np.array([0.0, 1.0, 0.0]) + delta

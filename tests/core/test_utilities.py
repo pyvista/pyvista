@@ -50,7 +50,7 @@ def test_version():
 def test_createvectorpolydata_error():
     orig = np.random.default_rng().random((3, 1))
     vec = np.random.default_rng().random((3, 1))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         vector_poly_data(orig, vec)
 
 
@@ -71,7 +71,7 @@ def test_createvectorpolydata():
 
 
 @pytest.mark.parametrize(
-    'path, target_ext',
+    ('path', 'target_ext'),
     [
         ("/data/mesh.stl", ".stl"),
         ("/data/image.nii.gz", '.nii.gz'),
@@ -103,10 +103,10 @@ def test_read(tmpdir, use_pathlib):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.default_rng().random((10, 10))
     np.save(filename, arr)
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         _ = pv.read(filename)
     # read non existing file
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         _ = pv.read('this_file_totally_does_not_exist.vtk')
     # Now test reading lists of files as multi blocks
     multi = pv.read(fnames)
@@ -172,7 +172,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert len(data) == 0
 
     fname = ex.planefile
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         fileio.read(fname, force_ext='.not_supported')
 
 
@@ -230,7 +230,7 @@ def test_get_array_error(hexbeam):
     # invalid inputs
     with pytest.raises(TypeError):
         get_array(hexbeam, 'test_data', preference={'invalid'})
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         get_array(hexbeam, 'test_data', preference='invalid')
     with pytest.raises(ValueError, match='`preference` must be'):
         get_array(hexbeam, 'test_data', preference='row')
@@ -281,8 +281,8 @@ def test_voxelize_invalid_density(rectilinear):
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
+    mesh = pv.PolyData(hexbeam.points)
     with pytest.raises(ValueError, match='must have faces'):
-        mesh = pv.PolyData(hexbeam.points)
         pv.voxelize(mesh)
 
 
@@ -401,21 +401,21 @@ def test_vtkmatrix_to_from_array():
             assert array[i, j] == matrix.GetElement(i, j)
 
     # invalid cases
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         matrix = pv.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
+    invalid = vtk.vtkTransform()
     with pytest.raises(TypeError):
-        invalid = vtk.vtkTransform()
         array = pv.array_from_vtkmatrix(invalid)
 
 
 def test_assert_empty_kwargs():
     kwargs = {}
     assert assert_empty_kwargs(**kwargs)
+    kwargs = {"foo": 6}
     with pytest.raises(TypeError):
-        kwargs = {"foo": 6}
         assert_empty_kwargs(**kwargs)
+    kwargs = {"foo": 6, "goo": "bad"}
     with pytest.raises(TypeError):
-        kwargs = {"foo": 6, "goo": "bad"}
         assert_empty_kwargs(**kwargs)
 
 
@@ -465,10 +465,10 @@ def test_check_valid_vector():
 
 def test_cells_dict_utils():
     # No pyvista object
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
@@ -563,16 +563,16 @@ def test_axis_angle_rotation():
     assert np.allclose(actual, expected)
 
     # invalid cases
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.axis_angle_rotation([1, 0, 0, 0], angle)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.axis_angle_rotation([0, 0, 0], angle)
 
 
 @pytest.mark.parametrize(
-    "axis,angle,times",
+    ("axis", "angle", "times"),
     [
         ([1, 0, 0], 90, 4),
         ([1, 0, 0], 180, 2),
@@ -621,11 +621,11 @@ def test_reflection():
     assert np.allclose(actual, expected)
 
     # invalid cases
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.reflection([1, 0, 0, 0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.reflection(normal, point=[1, 0, 0, 0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.reflection([0, 0, 0])
 
 
@@ -697,7 +697,7 @@ def test_has_duplicates():
     assert has_duplicates(np.array([0, 1, 2, 2]))
     assert has_duplicates(np.array([[0, 1, 2], [0, 1, 2]]))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         raise_has_duplicates(np.array([0, 1, 2, 2]))
 
 
@@ -748,7 +748,7 @@ def test_set_pickle_format():
     pv.set_pickle_format('xml')
     assert pv.PICKLE_FORMAT == 'xml'
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.set_pickle_format('invalid_format')
 
 
@@ -844,7 +844,7 @@ def test_coerce_point_like_arg_copy():
 
 def test_coerce_point_like_arg_errors():
     # wrong length sequence
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg([1, 2])
 
     # wrong type
@@ -853,13 +853,13 @@ def test_coerce_point_like_arg_errors():
         _coerce_pointslike_arg({1, 2, 3})
 
     # wrong length ndarray
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg(np.empty(4))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg(np.empty([2, 4]))
 
     # wrong ndim ndarray
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg(np.empty([1, 3, 3]))
 
 
