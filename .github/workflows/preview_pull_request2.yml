@@ -1,4 +1,4 @@
-name: Preview Pull Request
+name: Preview Pull Request 2
 on:
   issue_comment:
     types:
@@ -10,11 +10,12 @@ env:
 jobs:
   doc:
     name: Build Documentation
-    if: |
-      github.event_name == 'issue_comment'
-      && github.event.action == 'created'
-      && github.event.issue.pull_request != null
-      && startsWith(github.event.comment.body, 'github-actions preview')
+    if: github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@pyvista-bot preview') && (
+      github.event.comment.user.login == 'tkoyama010' ||
+      )
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-20.04
     env:
       PYVISTA_OFF_SCREEN: "True"
@@ -94,7 +95,7 @@ jobs:
         with:
           publish-dir: doc/_build/html/
           production-deploy: false
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: true
           enable-commit-comment: false
