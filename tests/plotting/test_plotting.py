@@ -4114,10 +4114,22 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     return list(functions.items())
 
 
-@pytest.mark.parametrize('positive_dir', [True, False])
-@pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_direction_objects(object_function, positive_dir):
-    name, func = object_function
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'direction_obj_test_case' in metafunc.fixturenames:
+        functions = _generate_direction_object_functions()
+        positive_cases = [(name, func, 'pos') for name, func in functions]
+        negative_cases = [(name, func, 'neg') for name, func in functions]
+        test_cases = [*positive_cases, *negative_cases]
+
+        # Name test cases with file line number
+        ids = [f"{case[0]}-{case[2]}" for case in test_cases]
+        metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
+
+
+def test_direction_objects(direction_obj_test_case):
+    name, func, direction = direction_obj_test_case
+    positive_dir = direction == 'pos'
 
     # Add required args if needed
     kwargs = {}
