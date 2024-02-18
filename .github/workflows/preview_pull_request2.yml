@@ -10,10 +10,11 @@ env:
 jobs:
   doc:
     name: Build Documentation
-    if: github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@pyvista-bot preview')
-    permissions:
-      pull-requests: write
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.action == 'created'
+      && github.event.issue.pull_request != null
+      && startsWith(github.event.comment.body, 'github-actions preview')
     runs-on: ubuntu-20.04
     env:
       PYVISTA_OFF_SCREEN: "True"
