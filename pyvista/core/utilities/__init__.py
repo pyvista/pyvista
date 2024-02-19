@@ -86,6 +86,7 @@ from .geometric_objects import (
 )
 from .geometric_sources import (
     ArrowSource,
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,
