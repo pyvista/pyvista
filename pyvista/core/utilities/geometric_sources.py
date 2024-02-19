@@ -2121,6 +2121,8 @@ class ArrowSource(_vtk.vtkArrowSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 @no_new_attr
 class BoxSource(_vtk.vtkTessellatedBoxSource):
     """Create a box source.

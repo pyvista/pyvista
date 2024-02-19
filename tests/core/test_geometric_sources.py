@@ -370,6 +370,8 @@ def test_arrow_source():
     assert algo.tip_resolution == 20
     assert algo.shaft_radius == 0.05
     assert algo.shaft_resolution == 20
+
+
 def test_box_source():
     algo = pv.BoxSource()
     assert np.array_equal(algo.bounds, [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0])
