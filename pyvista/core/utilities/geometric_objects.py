@@ -1,7 +1,7 @@
 """Provides an easy way of generating several geometric objects.
 
 **CONTAINS**
-vtkArrowSource
+ArrowSource
 CylinderSource
 SphereSource
 PlaneSource
@@ -28,6 +28,7 @@ from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
+    ArrowSource,
     BoxSource,
     ConeSource,
     CubeSource,
@@ -287,15 +288,14 @@ def Arrow(
     >>> mesh.plot(show_edges=True)
 
     """
-    # Create arrow object
-    arrow = _vtk.vtkArrowSource()
-    arrow.SetTipLength(tip_length)
-    arrow.SetTipRadius(tip_radius)
-    arrow.SetTipResolution(tip_resolution)
-    arrow.SetShaftRadius(shaft_radius)
-    arrow.SetShaftResolution(shaft_resolution)
-    arrow.Update()
-    surf = wrap(arrow.GetOutput())
+    arrow = ArrowSource(
+        tip_length=tip_length,
+        tip_radius=tip_radius,
+        tip_resolution=tip_resolution,
+        shaft_radius=shaft_radius,
+        shaft_resolution=shaft_resolution,
+    )
+    surf = arrow.output
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
