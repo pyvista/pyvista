@@ -184,12 +184,10 @@ def test_typing(test_case):
         try:
             revealed_type = eval(revealed)
             runtime_val = eval(arg)
-        except Exception:
+        except Exception as e:
             pytest.fail(
-                f"Test setup failed for runtime test case in {file}:{line_num}. Got:\n"
-                f"\targ: {arg}\n"
-                f"\texpected: {expected}\n"
-                f"\trevealed: {revealed}\n"
+                f"Test setup failed for runtime test case in {file}:{line_num}.\n"
+                f"An exception was raised:\n{repr(e)}"
 
             )
         compat_error_msg = pyanalyze.runtime.get_compatibility_error(runtime_val, revealed_type)
