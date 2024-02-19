@@ -10,7 +10,7 @@ from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_theme():
     return pv.plotting.themes.Theme()
 
@@ -277,18 +277,41 @@ def test_window_size(default_theme):
 
 
 def test_camera(default_theme):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="camera value must either be a"):
         default_theme.camera = [1, 0, 0]
 
-    with pytest.raises(KeyError, match='Expected the "viewup"'):
-        default_theme.camera = {'position': [1, 0, 0]}
+    # test _CameraConfig usage
+    default_theme.camera = {'position': [1, 0, 0]}
+    default_theme.camera = {'viewup': [1, 0, 0]}
 
-    with pytest.raises(KeyError, match='Expected the "position"'):
-        default_theme.camera = {'viewup': [1, 0, 0]}
-
-    camera = {'position': [1, 0, 0], 'viewup': [1, 0, 0]}
+    # test dict style usage
+    camera = {'position': [1, 0, 1], 'viewup': [1, 0, 1]}
     default_theme.camera = camera
-    assert default_theme.camera == camera
+
+    assert default_theme.camera.position == camera['position']
+    assert default_theme.camera.viewup == camera['viewup']
+
+
+def test_camera_parallel_projection(default_theme):
+    assert not default_theme.camera.parallel_projection
+    pl = pv.Plotter(theme=default_theme)
+    assert not pl.parallel_projection
+
+    default_theme.camera.parallel_projection = True
+    assert default_theme.camera.parallel_projection
+    pl2 = pv.Plotter(theme=default_theme)
+    assert pl2.parallel_projection
+
+
+def test_camera_parallel_scale(default_theme):
+    assert default_theme.camera.parallel_scale == 1.0
+    pl = pv.Plotter(theme=default_theme)
+    assert pl.parallel_scale == 1.0
+
+    default_theme.camera.parallel_scale = 2.0
+    assert default_theme.camera.parallel_scale == 2.0
+    pl2 = pv.Plotter(theme=default_theme)
+    assert pl2.parallel_scale == 2.0
 
 
 def test_cmap(default_theme):

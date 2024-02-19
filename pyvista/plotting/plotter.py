@@ -6004,7 +6004,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         center = np.array(self.center)
         bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
@@ -6099,7 +6099,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if focus is None:
             focus = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
@@ -6583,6 +6583,11 @@ class Plotter(BasePlotter):
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
             self.enable_anti_aliasing(self.theme.anti_aliasing)
+
+        if self.theme.camera.parallel_projection:
+            self.enable_parallel_projection()
+
+        self.parallel_scale = self.theme.camera.parallel_scale
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True

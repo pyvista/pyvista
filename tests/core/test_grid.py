@@ -497,7 +497,7 @@ def test_init_structured(struct_grid):
     assert np.array_equal(grid_a.points, grid.points)
 
 
-@pytest.fixture
+@pytest.fixture()
 def structured_points():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)

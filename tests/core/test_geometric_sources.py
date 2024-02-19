@@ -52,7 +52,7 @@ def test_multiple_lines_source():
 
 @pytest.fixture()
 def bunny():
-    return examples.download_bunny()
+    return examples.download_bunny_coarse()
 
 
 @pytest.mark.parametrize("is_negative", (True, False))
@@ -193,7 +193,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture
+@pytest.fixture()
 def text3d_source_with_text():
     return pv.Text3DSource("TEXT")
 
