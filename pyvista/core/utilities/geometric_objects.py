@@ -28,6 +28,7 @@ from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,
@@ -1078,27 +1079,8 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     >>> mesh.plot()
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive.')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
-    line_src = _vtk.vtkLineSource()
-    line_src.SetPoint1(*pointa)
-    line_src.SetPoint2(*pointb)
-    line_src.SetResolution(resolution)
-    line_src.Update()
-
-    if n_sides < 3:
-        raise ValueError('Number of sides `n_sides` must be >= 3')
-    tube_filter = _vtk.vtkTubeFilter()
-    tube_filter.SetInputConnection(line_src.GetOutputPort())
-    tube_filter.SetRadius(radius)
-    tube_filter.SetNumberOfSides(n_sides)
-    tube_filter.Update()
-
-    return wrap(tube_filter.GetOutput())
+    line_src = LineSource(pointa, pointb, resolution)
+    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
 
 
 def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
@@ -1203,16 +1185,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     >>> mesh.plot(show_edges=True)
 
     """
-    if np.array(bounds).size != 6:
-        raise TypeError(
-            'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-        )
-    src = _vtk.vtkTessellatedBoxSource()
-    src.SetLevel(level)
-    src.SetQuads(quads)
-    src.SetBounds(bounds)
-    src.Update()
-    return wrap(src.GetOutput())
+    return BoxSource(level=level, quads=quads, bounds=bounds).output
 
 
 def Cone(

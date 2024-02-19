@@ -361,3 +361,10 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+
+
+def test_box_source():
+    algo = pv.BoxSource()
+    assert np.array_equal(algo.bounds, [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0])
+    assert algo.level == 0
+    assert algo.quads
