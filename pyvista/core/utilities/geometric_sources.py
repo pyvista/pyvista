@@ -1959,3 +1959,271 @@ class PlaneSource(_vtk.vtkPlaneSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ArrowSource(_vtk.vtkArrowSource):
+    """Create a arrow source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    tip_length : float, default: 0.25
+        Length of the tip.
+
+    tip_radius : float, default: 0.1
+        Radius of the tip.
+
+    tip_resolution : int, default: 20
+        Number of faces around the tip.
+
+    shaft_radius : float, default: 0.05
+        Radius of the shaft.
+
+    shaft_resolution : int, default: 20
+        Number of faces around the shaft.
+    """
+
+    def __init__(
+        self,
+        tip_length=0.25,
+        tip_radius=0.1,
+        tip_resolution=20,
+        shaft_radius=0.05,
+        shaft_resolution=20,
+    ):
+        """Initialize source."""
+        self.tip_length = tip_length
+        self.tip_radius = tip_radius
+        self.tip_resolution = tip_resolution
+        self.shaft_radius = shaft_radius
+        self.shaft_resolution = shaft_resolution
+
+    @property
+    def tip_length(self) -> int:
+        """Get the length of the tip.
+
+        Returns
+        -------
+        int
+            The length of the tip.
+        """
+        return self.GetTipLength()
+
+    @tip_length.setter
+    def tip_length(self, tip_length: int):
+        """Set the length of the tip.
+
+        Parameters
+        ----------
+        tip_length : int
+            The length of the tip.
+        """
+        self.SetTipLength(tip_length)
+
+    @property
+    def tip_radius(self) -> int:
+        """Get the radius of the tip.
+
+        Returns
+        -------
+        int
+            The radius of the tip.
+        """
+        return self.GetTipRadius()
+
+    @tip_radius.setter
+    def tip_radius(self, tip_radius: int):
+        """Set the radius of the tip.
+
+        Parameters
+        ----------
+        tip_radius : int
+            The radius of the tip.
+        """
+        self.SetTipRadius(tip_radius)
+
+    @property
+    def tip_resolution(self) -> int:
+        """Get the number of faces around the tip.
+
+        Returns
+        -------
+        int
+            The number of faces around the tip.
+        """
+        return self.GetTipResolution()
+
+    @tip_resolution.setter
+    def tip_resolution(self, tip_resolution: int):
+        """Set the number of faces around the tip.
+
+        Parameters
+        ----------
+        tip_resolution : int
+            The number of faces around the tip.
+        """
+        self.SetTipResolution(tip_resolution)
+
+    @property
+    def shaft_resolution(self) -> int:
+        """Get the number of faces around the shaft.
+
+        Returns
+        -------
+        int
+            The number of faces around the shaft.
+        """
+        return self.GetShaftResolution()
+
+    @shaft_resolution.setter
+    def shaft_resolution(self, shaft_resolution: int):
+        """Set the number of faces around the shaft.
+
+        Parameters
+        ----------
+        shaft_resolution : int
+            The number of faces around the shaft.
+        """
+        self.SetShaftResolution(shaft_resolution)
+
+    @property
+    def shaft_radius(self) -> int:
+        """Get the radius of the shaft.
+
+        Returns
+        -------
+        int
+            The radius of the shaft.
+        """
+        return self.GetShaftRadius()
+
+    @shaft_radius.setter
+    def shaft_radius(self, shaft_radius: int):
+        """Set the radius of the shaft.
+
+        Parameters
+        ----------
+        shaft_radius : int
+            The radius of the shaft.
+        """
+        self.SetShaftRadius(shaft_radius)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class BoxSource(_vtk.vtkTessellatedBoxSource):
+    """Create a box source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounding box of the cube.
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    level : int, default: 0
+        Level of subdivision of the faces.
+
+    quads : bool, default: True
+        Flag to tell the source to generate either a quad or two
+        triangle for a set of four points.
+
+    """
+
+    _new_attr_exceptions = [
+        "bounds",
+        "_bounds",
+    ]
+
+    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
+        """Initialize source."""
+        super().__init__()
+        self.bounds = bounds
+        self.level = level
+        self.quads = quads
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounding box of the cube."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        if np.array(bounds).size != 6:
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
+        self._bounds = bounds
+        self.SetBounds(bounds)
+
+    @property
+    def level(self) -> int:
+        """Get level of subdivision of the faces.
+
+        Returns
+        -------
+        int
+            Level of subdivision of the faces.
+        """
+        return self.GetLevel()
+
+    @level.setter
+    def level(self, level: int):
+        """Set level of subdivision of the faces.
+
+        Parameters
+        ----------
+        level : int
+            Level of subdivision of the faces.
+        """
+        self.SetLevel(level)
+
+    @property
+    def quads(self) -> bool:
+        """Flag to tell the source to generate either a quad or two triangle for a set of four points.
+
+        Returns
+        -------
+        bool
+            Flag to tell the source to generate either a quad or two
+            triangle for a set of four points.
+        """
+        return bool(self.GetQuads())
+
+    @quads.setter
+    def quads(self, quads: bool):
+        """Set flag to tell the source to generate either a quad or two triangle for a set of four points.
+
+        Parameters
+        ----------
+        quads : bool, optional
+            Flag to tell the source to generate either a quad or two
+            triangle for a set of four points.
+        """
+        self.SetQuads(quads)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())

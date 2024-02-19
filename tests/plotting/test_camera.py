@@ -178,9 +178,9 @@ def test_clipping_range(camera):
     assert camera.GetClippingRange() == points
     assert camera.clipping_range == points
 
-    with pytest.raises(ValueError):
-        far_point = near_point - np.random.default_rng().random(1)
-        points = (near_point, far_point)
+    far_point = near_point - np.random.default_rng().random(1)
+    points = (near_point, far_point)
+    with pytest.raises(ValueError):  # noqa: PT011
         camera.clipping_range = points
 
 
