@@ -146,13 +146,6 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
 
-    def __init_subclass__(cls, **kwargs):
-        """Initialize the subclass."""
-        super().__init_subclass__(**kwargs)
-        cls.point_data = DataSet.point_data
-        cls.cell_data = DataSet.cell_data
-        cls.points = DataSet.points
-
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)

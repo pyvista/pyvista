@@ -43,10 +43,6 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             'interpolate_before_map', self._theme.interpolate_before_map
         )
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.color_mode = _BaseMapper.color_mode
-
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of this mapper.
@@ -970,10 +966,6 @@ class _BaseVolumeMapper(_BaseMapper):
         super().__init__(theme=theme)
         self._lut = LookupTable()
         self._scalar_range = (0.0, 256.0)
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.blend_mode = _BaseVolumeMapper.blend_mode
 
 
     @property
