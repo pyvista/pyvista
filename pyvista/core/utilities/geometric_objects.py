@@ -28,6 +28,7 @@ from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,
@@ -1184,16 +1185,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     >>> mesh.plot(show_edges=True)
 
     """
-    if np.array(bounds).size != 6:
-        raise TypeError(
-            'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-        )
-    src = _vtk.vtkTessellatedBoxSource()
-    src.SetLevel(level)
-    src.SetQuads(quads)
-    src.SetBounds(bounds)
-    src.Update()
-    return wrap(src.GetOutput())
+    return BoxSource(level=level, quads=quads, bounds=bounds).output
 
 
 def Cone(

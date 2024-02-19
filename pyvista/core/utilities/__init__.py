@@ -85,6 +85,7 @@ from .geometric_objects import (
     translate,
 )
 from .geometric_sources import (
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,
