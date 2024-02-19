@@ -17,6 +17,7 @@ from collections import namedtuple
 import importlib
 import os
 import re
+import sys
 from typing import List, Tuple
 
 from mypy import api as mypy_api
@@ -154,7 +155,7 @@ def pytest_generate_tests(metafunc):
         ids = [f"{file.split('.py')[0]} : line {line} : {static_or_runtime}" for file, line, _, _, _, static_or_runtime in all_cases]
         metafunc.parametrize('test_case', all_cases, ids=ids)
 
-
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Type subscription requires python >= 3.9")
 def test_typing(test_case):
     file, line_num, arg, expected, revealed, static_or_runtime = test_case
     # Test set-up
@@ -192,7 +193,7 @@ def test_typing(test_case):
             )
         compat_error_msg = pyanalyze.runtime.get_compatibility_error(runtime_val, revealed_type)
         if compat_error_msg:
-            error_prefix = (f"\nRuntime evaluation:\n"
+            error_prefix = (f"\nRuntime value:\n"
                          f"\t{arg} = {runtime_val}\n"
                          f"is not compatible with statically revealed type:\n"
                          f"\t{revealed_type}\n\n"
