@@ -1,8 +1,5 @@
 """Core type aliases."""
 
-# Necessary for autodoc_type_aliases to recognize the type aliases
-from __future__ import annotations
-
 from typing import Tuple, Union
 
 from pyvista.core import _vtk_core as _vtk
