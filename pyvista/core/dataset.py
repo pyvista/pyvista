@@ -140,11 +140,18 @@ class DataSet(DataSetFilters, DataObject):
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self._last_active_scalars_name: Optional[str] = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+
+    def __init_subclass__(cls, **kwargs):
+        """Initialize the subclass."""
+        super().__init_subclass__(**kwargs)
+        cls.point_data = DataSet.point_data
+        cls.cell_data = DataSet.cell_data
+        cls.points = DataSet.points
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""

@@ -26,7 +26,7 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence  # type: ignore[type-arg]
+    CompositeFilters, DataObject, collections.abc.MutableSequence, _vtk.vtkMultiBlockDataSet  # type: ignore[type-arg]
 ):
     """A composite class to hold many data sets which can be iterated over.
 

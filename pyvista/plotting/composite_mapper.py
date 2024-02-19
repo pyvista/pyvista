@@ -517,12 +517,12 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
+    _BaseMapper,
     (
         _vtk.vtkCompositePolyDataMapper  # type: ignore
         if vtk_version_info >= (9, 3)
         else _vtk.vtkCompositePolyDataMapper2
     ),
-    _BaseMapper,
 ):
     """Composite PolyData mapper.
 

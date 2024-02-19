@@ -39,13 +39,18 @@ class DataObject:
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+
+    def __init_subclass__(cls, **kwargs):
+        """Initialize the subclass."""
+        super().__init_subclass__(**kwargs)
+        cls.field_data = DataObject.field_data
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""

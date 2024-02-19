@@ -27,7 +27,7 @@ def _get_vtk_id_type():
     return np.int32
 
 
-class Cell(_vtk.vtkGenericCell, DataObject):
+class Cell(DataObject, _vtk.vtkGenericCell):
     """Wrapping of vtkCell.
 
     This class provides the capability to access a given cell topology and can
@@ -624,6 +624,7 @@ class CellArray(_vtk.vtkCellArray):
         deep: Optional[bool] = None,
     ):
         """Initialize a vtkCellArray."""
+        super().__init__()
         self.__offsets: Optional[_vtk.vtkIdTypeArray] = None
         self.__connectivity: Optional[_vtk.vtkIdTypeArray] = None
         if cells is not None:
