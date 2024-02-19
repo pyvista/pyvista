@@ -125,6 +125,8 @@ def check_subdtype(
 def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
+    ``numpy.bool`` and ``bool`` are considered real numbers for this check.
+
     Notes
     -----
     Arrays with ``infinity`` or ``NaN`` values are considered real and
@@ -164,7 +166,7 @@ def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"
     """
     dtype = _ArrayLikeWrapper(array).dtype
     try:
-        check_subdtype(dtype, (np.floating, np.integer), name=name)
+        check_subdtype(dtype, (np.floating, np.integer, np.bool_), name=name)
     except TypeError as e:
         raise TypeError(f"{name} must have real numbers.") from e
 

@@ -14,6 +14,7 @@ nest_asyncio<1.6.1
 npt-promote==0.1
 numpydoc==1.6.0
 param<2.1.0
+pyanalyze<=0.12
 pydata-sphinx-theme<0.16.0
 pytest<8.1.0
 pytest-cov<4.2.0
