@@ -88,7 +88,7 @@ Status badges
   :target: https://github.com/psf/black
   :alt: black
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
@@ -179,7 +179,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.8::
+using ``pip`` on Python >= 3.9::
 
     pip install pyvista
 

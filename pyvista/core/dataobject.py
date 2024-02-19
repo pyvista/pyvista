@@ -3,7 +3,7 @@
 from abc import abstractmethod
 import collections.abc
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Optional, Type, Union
+from typing import Any, DefaultDict, Optional, Union
 
 import numpy as np
 
@@ -35,7 +35,7 @@ class DataObject:
 
     """
 
-    _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
+    _WRITERS: dict[str, Union[type[_vtk.vtkXMLWriter], type[_vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""

@@ -4,7 +4,7 @@ The data objects does not have any sort of spatial reference.
 
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -344,7 +344,7 @@ class Table(_vtk.vtkTable, DataObject):
 
     def get_data_range(
         self, arr: Optional[str] = None, preference: str = 'row'
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
         Parameters

@@ -2,7 +2,7 @@
 
 from collections import deque
 from itertools import count, islice
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 
@@ -37,7 +37,7 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 
 def numpy_to_idarr(
     ind: Matrix[int], deep: bool = False, return_ind: bool = False
-) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
+) -> Union[tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
     Parameters

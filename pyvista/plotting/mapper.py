@@ -1,7 +1,7 @@
 """An internal module for wrapping the use of mappers."""
 
 import sys
-from typing import Optional, Tuple, Union, cast
+from typing import Optional, Union, cast
 
 import numpy as np
 
@@ -81,7 +81,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return new_mapper
 
     @property
-    def scalar_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def scalar_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the scalar range.
 
         Examples
@@ -997,7 +997,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = lut
 
     @property
-    def scalar_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def scalar_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the scalar range."""
         return self._scalar_range
 

@@ -1,6 +1,6 @@
 """Core type aliases."""
 
-from typing import Tuple, Union
+from typing import Union
 
 from pyvista.core._vtk_core import vtkCellArray, vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
@@ -15,6 +15,6 @@ Array = Union[
 ]
 
 TransformLike = Union[Matrix[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
-BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
+BoundsLike = tuple[Number, Number, Number, Number, Number, Number]
 CellsLike = Union[Matrix[int], Vector[int]]
 CellArrayLike = Union[CellsLike, vtkCellArray]
